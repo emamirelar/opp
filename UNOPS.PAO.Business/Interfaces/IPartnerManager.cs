@@ -81,6 +81,14 @@ public interface IPartnerManager
 
     Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user);
     
+    /// <summary>
+    /// Gets a partner by name
+    /// </summary>
+    /// <param name="user">The current user's claims principal</param>
+    /// <param name="name">The partner name to search for (case-insensitive)</param>
+    /// <returns>The partner model if found, null otherwise</returns>
+    Task<PartnerModel?> GetPartnerByNameAsync(ClaimsPrincipal user, string name);
+    
     // Partner Status Management Methods
     Task<PartnerModel?> ActivatePartnerAsync(ClaimsPrincipal user, int id, ActivatePartnerRequest request);
     Task<PartnerModel?> ClosePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request);

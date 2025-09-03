@@ -5,12 +5,12 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
     CardService.newMaterialIcon().setName('corporate_fare'),
   );
 
-  const personIconImage = CardService.newIconImage().setMaterialIcon(
-    CardService.newMaterialIcon().setName('person'),
+  const contactIconImage = CardService.newIconImage().setMaterialIcon(
+    CardService.newMaterialIcon().setName('contacts'),
   );
 
   const userIconImage = CardService.newIconImage().setMaterialIcon(
-    CardService.newMaterialIcon().setName('account_circle'),
+    CardService.newMaterialIcon().setName('person'),
   );
   
   // Create a new card builder
@@ -80,7 +80,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
                       
         // Add widgets to section 1
         const decoratedText = CardService.newDecoratedText()
-          .setStartIcon(personIconImage)
+          .setStartIcon(contactIconImage)
           .setTopLabel(partnerName)
           .setText(emailAddress)
           .setSwitchControl(
@@ -205,7 +205,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
         if(contact.canRead) {
           weKnowSection.addWidget(
             CardService.newDecoratedText()
-              .setStartIcon(personIconImage)
+              .setStartIcon(contactIconImage)
               .setTopLabel(contact.emailAddress)
               .setText(contact.name)
           );
@@ -213,7 +213,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
         else {
           weKnowSection.addWidget(
             CardService.newDecoratedText()
-              .setStartIcon(personIconImage)
+              .setStartIcon(contactIconImage)
               .setTopLabel(contact.emailAddress)
               .setText(`${CONTACT_READ_ERROR_MSG}`)
           );
@@ -281,7 +281,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
         if(contact.canRead) {
           const currentChip = CardService.newChip()
                                           .setLabel(contact.name)
-                                          .setIcon(personIconImage).setOnClickAction(
+                                          .setIcon(contactIconImage).setOnClickAction(
                                                 CardService.newAction()
                                                     .setFunctionName('onContactChipSelected')
                                                     .setParameters({ contact: JSON.stringify(contact) }) // Pass the object JSON as a parameter
@@ -291,7 +291,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
         else {
           const currentChip = CardService.newChip()
                                           .setLabel(contact.emailAddress)
-                                          .setIcon(personIconImage)
+                                          .setIcon(contactIconImage)
                                           .setDisabled(true);
           chipList.addChip(currentChip);
         }
@@ -325,23 +325,42 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
 
     card.addSection(weKnowSection);
 
-    // Add fixed footer
-    card.setFixedFooter(
-      CardService.newFixedFooter()
-        .setPrimaryButton(
-          CardService.newTextButton()
-            .setText('Log this')
+    // Add fixed footer with conditional button based on existing interaction
+    if(messageData.existingInteraction) {
+      const viewUrl = `${getBaseUrl()}/#/partnerships/interactions/${messageData.existingInteraction.id}`;
+
+      const footerButton = CardService.newTextButton()
+            .setText('View')
+            .setMaterialIcon(CardService.newMaterialIcon().setName('open_in_new'))
+            .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
             .setBackgroundColor('#006699')
-            .setOnClickAction(
-              CardService.newAction()
-                .setFunctionName('createOrUpdateInteraction')
-                .setParameters({ 
-                  messageData: JSON.stringify(messageData),
-                  relatedRecords: JSON.stringify(relatedRecords)
-                })
-            )
-        )
-    );
+            .setOpenLink(CardService.newOpenLink()
+              .setUrl(viewUrl)
+              .setOpenAs(CardService.OpenAs.FULL_SIZE)
+            );      
+
+      card.setFixedFooter(
+        CardService.newFixedFooter()
+          .setPrimaryButton(footerButton)
+      );
+    }
+    else {
+      const footerButton = CardService.newTextButton()
+          .setText('Log this')
+          .setBackgroundColor('#006699')
+          .setOnClickAction(
+            CardService.newAction()
+              .setFunctionName('createOrUpdateInteraction')
+              .setParameters({ 
+                messageData: JSON.stringify(messageData),
+                relatedRecords: JSON.stringify(relatedRecords)
+              })
+          );
+      card.setFixedFooter(
+        CardService.newFixedFooter()
+          .setPrimaryButton(footerButton)
+      );
+    }
   }
   else {
     var errorSection = CardService.newCardSection()
@@ -372,6 +391,20 @@ function handleAddSelected(e) {
     var relatedRecords = JSON.parse(e.parameters.relatedRecords);
     var messageData = JSON.parse(e.parameters.messageData);
     
+    // Create a mapping from email addresses to their parsed name information
+    var emailToNameInfo = {};
+    if (messageData.parsedEmailNames) {
+      messageData.parsedEmailNames.forEach(function(parsedEmail) {
+        emailToNameInfo[parsedEmail.email.toLowerCase()] = {
+          firstName: parsedEmail.firstName || '',
+          middleName: parsedEmail.middleName || '',
+          lastName: parsedEmail.lastName || ''
+        };
+      });
+    }
+    
+    Logger.log('Email to name info mapping: ' + JSON.stringify(emailToNameInfo));
+    
     // Collect selected emails
     var selectedEmails = [];
     var unmatchedEmailsData = relatedRecords.unmatchedEmails;
@@ -384,12 +417,20 @@ function handleAddSelected(e) {
       
       // Check if this checkbox is selected
       if (formInputs[fieldName] && formInputs[fieldName].length > 0) {
+        // Use pre-parsed name information
+        var nameInfo = emailToNameInfo[emailAddress.toLowerCase()] || { firstName: '', middleName: '', lastName: '' };
+        
+        Logger.log('For email ' + emailAddress + ', using parsed name info: ' + JSON.stringify(nameInfo));
+        
         selectedEmails.push({
           emailAddress: emailAddress,
           partnerName: unmatchedEmailsData[i].partnerName || '',
           partnerId: unmatchedEmailsData[i].partnerId !== undefined && unmatchedEmailsData[i].partnerId !== null 
                     ? unmatchedEmailsData[i].partnerId 
-                    : null
+                    : null,
+          firstName: nameInfo.firstName,
+          middleName: nameInfo.middleName,
+          lastName: nameInfo.lastName
         });
       }
     }

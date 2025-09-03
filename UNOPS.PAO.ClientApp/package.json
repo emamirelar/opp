@@ -48,6 +48,7 @@
     "primeicons": "^7.0.0",
     "primeng": "^19.1.0",
     "prismjs": "^1.30.0",
+    "quill": "^2.0.3",
     "run-script-os": "*",
     "rxjs": "~7.8.0",
     "tailwindcss-primeui": "^0.3.2",

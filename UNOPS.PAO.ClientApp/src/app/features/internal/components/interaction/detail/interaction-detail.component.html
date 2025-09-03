@@ -211,9 +211,9 @@
           <div class="flex flex-col gap-4">
             @if (interaction()!.description) {
               @if (showFullDescription() || isDescriptionShort()) {
-                <p class="text-gray-800 leading-relaxed whitespace-pre-line">{{ interaction()!.description }}</p>
+                <div class="text-gray-800 leading-relaxed whitespace-pre-line interaction-description" [innerHTML]="interaction()!.description"></div>
               } @else {
-                <p class="text-gray-800 leading-relaxed whitespace-pre-line">{{ getTruncatedDescription(interaction()!.description!) }}</p>
+                <div class="text-gray-800 leading-relaxed whitespace-pre-line interaction-description" [innerHTML]="getTruncatedDescription(interaction()!.description!)"></div>
               }
 
               <!-- See More Button -->

@@ -14,7 +14,6 @@ public class InteractionModel
 
     public string? Description { get; set; }
     
-    public int ContactId { get; set; }
     public string? ContactName { get; set; }
     public string Status { get; set; }
     public virtual List<string>? EmailAddresses { get; set; } = new List<string>();

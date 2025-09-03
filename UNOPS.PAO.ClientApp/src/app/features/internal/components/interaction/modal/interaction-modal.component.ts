@@ -5,7 +5,7 @@ import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
 import { Button } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import {Textarea} from 'primeng/textarea';
+import { Editor } from 'primeng/editor';
 import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { InteractionType, INTERACTION_TYPE_TRANSLATION_KEYS } from '../../../models/interaction-type.enum';
@@ -79,7 +79,7 @@ interface DuplicateDetectionResponse {
     FormsModule,
     CalendarModule,
     InputTextModule,
-    Textarea,
+    Editor,
     SelectModule,
     MultiSelectModule,
     DocumentComponent,
@@ -341,6 +341,7 @@ export class InteractionModalComponent {
       organizationHierarchyIds = record.organizationUnitRelationships.map(rel => rel.organizationHierarchyId);
     }
 
+    
     this.formGroup.patchValue({
       id: record.id,
       type: record.type,

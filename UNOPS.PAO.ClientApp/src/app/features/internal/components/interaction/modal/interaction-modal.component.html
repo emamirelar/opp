@@ -122,13 +122,13 @@
 
         <div class="col-span-full flex flex-col gap-2">
           <label for="description">{{ 'label.interaction.description' | translate }}</label>
-          <textarea id="description"
-                    pTextarea
-                    formControlName="description"
-                    [disabled]="!recordPermissions()?.permissions?.canUpdate"
-                    class="w-full"
-                    rows="10"
-                    [autoResize]="true"></textarea>
+          <p-editor 
+            id="description"
+            formControlName="description"
+            [readonly]="!recordPermissions()?.permissions?.canUpdate"
+            [style]="{ height: '300px' }"
+            placeholder="Enter interaction description...">
+          </p-editor>
         </div>
 
       </div>
