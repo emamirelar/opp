@@ -29,6 +29,7 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IUserInfoService _userInfoService;
     private readonly ILogger<UNOPSGmailAddonManager>? _logger;
+    private readonly NotificationManager _notificationManager;
 
     public UNOPSGmailAddonManager(IMapper mapper, UNOPSAppDbContext context,
         IContactManager contactManager,
@@ -39,7 +40,8 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
         IConfiguration configuration,
         IHttpContextAccessor httpContextAccessor,
         IUserInfoService userInfoService,
-        ILogger<UNOPSGmailAddonManager> logger)
+        ILogger<UNOPSGmailAddonManager> logger,
+        NotificationManager notificationManager)
         : base(mapper, context, configuration, null, null, permissionService, httpContextAccessor)
     {
         _contactManager = contactManager;
@@ -51,6 +53,7 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
         _httpContextAccessor = httpContextAccessor;
         _userInfoService = userInfoService;
         _logger = logger;
+        _notificationManager = notificationManager;
     }
 
     public async Task<GmailRelatedRecordsResponse> FindRelatedRecordsAsync(GmailRelatedRecordsRequest input, ClaimsPrincipal user)
@@ -110,6 +113,9 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
 
             // Update existing interaction with new contact and partner IDs
             await UpdateExistingInteractionAsync(request, user, state);
+
+            // Send in-app notifications for created records
+            await SendCreationNotificationsAsync(user, state);
 
             // Build and return the result
             return BuildCreateRecordsResult(state);
@@ -844,6 +850,122 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
     }
 
 
+
+    /// <summary>
+    /// Sends in-app notifications for created contacts and partners
+    /// </summary>
+    private async Task SendCreationNotificationsAsync(ClaimsPrincipal user, CreationState state)
+    {
+        try
+        {
+            var userId = GetUserIdFromClaims(user);
+            if (userId == 0)
+            {
+                _logger?.LogWarning("Could not extract user ID from claims for notifications");
+                return;
+            }
+
+            // Send combined notification if both were created
+            if (state.CreatedContacts.Any() && state.NewPartnersCreated > 0)
+            {
+                var combinedMessage = $"Created {state.CreatedContacts.Count} contact(s) and {state.NewPartnersCreated} partner(s) from Gmail";
+
+                await _notificationManager.CreateNotification(
+                    userId,
+                    combinedMessage,
+                    "gmail_records_creation",
+                    "GmailCreation",
+                    new
+                    {
+                        ContactCount = state.CreatedContacts.Count,
+                        PartnerCount = state.NewPartnersCreated,
+                        ContactNames = state.CreatedContacts.Select(c => $"{c.FirstName} {c.LastName}".Trim()).ToList(),
+                        PartnerNames = state.CreatedPartners.Keys.ToList(),
+                        Source = "Gmail"
+                    });
+            }
+            // Send notification for created contacts
+            else if (state.CreatedContacts.Any())
+            {
+                var contactMessage = state.CreatedContacts.Count == 1 
+                    ? $"New contact '{state.CreatedContacts.First().FirstName} {state.CreatedContacts.First().LastName}' created from Gmail"
+                    : $"{state.CreatedContacts.Count} new contacts created from Gmail";
+
+                await _notificationManager.CreateNotification(
+                    userId,
+                    contactMessage,
+                    "gmail_contact_creation",
+                    "Contact",
+                    new
+                    {
+                        ContactIds = state.CreatedContacts.Select(c => c.Id).ToList(),
+                        ContactNames = state.CreatedContacts.Select(c => $"{c.FirstName} {c.LastName}".Trim()).ToList(),
+                        CreatedCount = state.CreatedContacts.Count,
+                        Source = "Gmail"
+                    });
+            }
+
+            // Send notification for created partners
+            else if (state.NewPartnersCreated > 0)
+            {
+                var partnerNames = state.CreatedPartners.Keys.ToList();
+                var partnerMessage = state.NewPartnersCreated == 1 
+                    ? $"New partner '{partnerNames.First()}' created from Gmail"
+                    : $"{state.NewPartnersCreated} new partners created from Gmail";
+
+                await _notificationManager.CreateNotification(
+                    userId,
+                    partnerMessage,
+                    "gmail_partner_creation",
+                    "Partner",
+                    new
+                    {
+                        PartnerNames = partnerNames,
+                        CreatedCount = state.NewPartnersCreated,
+                        Source = "Gmail"
+                    });
+            }
+
+            _logger?.LogInformation("Successfully sent Gmail creation notifications for user {UserId}: {ContactCount} contacts, {PartnerCount} partners",
+                userId, state.CreatedContacts.Count, state.NewPartnersCreated);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error sending Gmail creation notifications");
+            // Don't rethrow - notifications are not critical to the main flow
+        }
+    }
+
+    /// <summary>
+    /// Helper method to extract user ID from claims
+    /// </summary>
+    private int GetUserIdFromClaims(ClaimsPrincipal user)
+    {
+        if (user == null) return 0;
+        
+        // Try multiple claim types that might contain the user ID
+        var userIdClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ??
+                         user.FindFirst("sub")?.Value ??
+                         user.FindFirst("userId")?.Value;
+        
+        if (userIdClaim != null && int.TryParse(userIdClaim, out int userId))
+        {
+            return userId;
+        }
+        
+        // Try to get from email-based lookup if direct ID not available
+        var email = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ??
+                   user.FindFirst("email")?.Value;
+        
+        if (!string.IsNullOrEmpty(email))
+        {
+            // This would require a user lookup service which may not be available here
+            // For now, log and return 0
+            _logger?.LogWarning("User ID not found in claims, only email available: {Email}", email);
+        }
+        
+        return 0;
+    }
 
     #endregion
 

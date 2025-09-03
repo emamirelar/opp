@@ -58,6 +58,8 @@ public class UNOPSManagerWrapper : ManagerWrapper
         var partnerTreeRepository = new DataRepository<UNOPSPartnerTree>(opsContext);
         var partnerTreeService = new PartnerTreeService(partnerTreeRepository, memoryCache);
 
+        var notificationManager = serviceProvider.GetRequiredService<NotificationManager>();
+
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
         contactManager = new UNOPSContactManager(mapper, opsContext, configuration, permissionService, httpContextAccessor, contactManagerLogger, serviceProvider);
         interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, permissionService, httpContextAccessor, serviceProvider);
@@ -71,7 +73,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         
         // Create GmailAddonManager with required dependencies (no longer needs GmailAddonHelper)
         var gmailAddonManagerLogger = loggerFactory.CreateLogger<UNOPSGmailAddonManager>();
-        gmailAddonManager = new UNOPSGmailAddonManager(mapper, opsContext, contactManager, partnerManager, UserDataManager, interactionManager, permissionService, configuration, httpContextAccessor, userInfoService, gmailAddonManagerLogger);
+        gmailAddonManager = new UNOPSGmailAddonManager(mapper, opsContext, contactManager, partnerManager, UserDataManager, interactionManager, permissionService, configuration, httpContextAccessor, userInfoService, gmailAddonManagerLogger, notificationManager);
     }
 
     public override ISystemAdminManager SystemAdminManager => systemAdminManager;
