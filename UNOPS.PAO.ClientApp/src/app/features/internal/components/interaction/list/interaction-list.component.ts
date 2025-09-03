@@ -95,6 +95,10 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     entityName: 'Interaction',
     scrollable: true,
     scrollHeight: 'flex',
+    sortableFields: [
+      { field: 'createdBy', label: 'Created By' },
+      { field: 'lastModifiedBy', label: 'Last Updated By' }
+    ],
     searchConfig: {
       useAdvancedSearch: true,
       placeholder: 'Search interactions...',

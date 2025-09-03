@@ -587,6 +587,16 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
   // Sort methods
   sortableFields(): ListViewColumn[] {
+    // Use custom sortable fields if provided, otherwise use columns
+    if (this.config.sortableFields && this.config.sortableFields.length > 0) {
+      return this.config.sortableFields.map(field => ({
+        field: field.field,
+        label: field.label,
+        sortable: true,
+        type: 'text'
+      } as ListViewColumn));
+    }
+    
     return this.columns().filter(col => col.sortable);
   }
 

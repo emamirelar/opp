@@ -94,6 +94,10 @@ export class ContactListComponent implements OnInit, OnDestroy {
     entityName: 'Contact',
     scrollable: true,
     scrollHeight: 'flex',
+    sortableFields: [
+      { field: 'createdBy', label: 'Created By' },
+      { field: 'lastModifiedBy', label: 'Last Updated By' }
+    ],
           searchConfig: {
         useAdvancedSearch: true,
         placeholder: 'search.contactsPlaceholder',

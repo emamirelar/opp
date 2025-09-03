@@ -194,6 +194,15 @@ export interface ListViewConfig {
      */
     placeholder?: string;
   };
+  
+  /**
+   * Custom sortable fields to override the default column-based sorting
+   * If provided, only these fields will be available in the sort dropdown
+   */
+  sortableFields?: Array<{
+    field: string;
+    label: string;
+  }>;
   exportOptions?: {
     /**
      * Whether to show the export button (defaults to true if enableExport is true)
