@@ -10,6 +10,8 @@ using UNOPS.PAO.Domain.Enums;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -18,6 +20,8 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly RoleManager<PAOIdentityRole> _roleManager;
     private readonly IPermissionService _permissionService;
+    private readonly IGeminiManager _geminiManager;
+    private readonly ILogger<UNOPSUserManagementManager> _logger;
 
     public UNOPSUserManagementManager(
         IMapper mapper,
@@ -25,12 +29,16 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         IConfiguration configuration,
         UserManager<PAOIdentityUser> userManager,
         RoleManager<PAOIdentityRole> roleManager,
-        IPermissionService permissionService)
+        IPermissionService permissionService,
+        IGeminiManager geminiManager,
+        ILogger<UNOPSUserManagementManager> logger)
         : base(mapper, context, configuration, userManager)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _permissionService = permissionService;
+        _geminiManager = geminiManager;
+        _logger = logger;
     }
 
     public async Task<PaginationResponse<UserManagementModel>> GetUsersAsync(ClaimsPrincipal user, UserManagementRequest request)
@@ -407,5 +415,185 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             LastModifiedDate = DateTime.UtcNow, // Use current time since we don't track this in UserProfile
             IsActive = true
         };
+    }
+
+    public async Task<object> AnalyzeUserRoleFileAsync(ClaimsPrincipal user, AnalyseFileRequest request)
+    {
+        try
+        {
+            // Get current user ID
+            var currentUserId = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            
+            // Use the GeminiManager to analyze the file
+            var analysisResult = await _geminiManager.ExtractDataAfterAnalysis(request, currentUserId);
+            
+            return analysisResult;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to analyze user role file: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<object> BulkUploadUserRolesAsync(ClaimsPrincipal user, BulkUploadRequest request)
+    {
+        try
+        {
+            if (request.Records == null || !request.Records.Any())
+            {
+                throw new ArgumentException("No records provided for import");
+            }
+
+            var successCount = 0;
+            var errorCount = 0;
+            var errors = new List<string>();
+
+            foreach (var record in request.Records)
+            {
+                try
+                {
+                    var recordJson = JsonConvert.SerializeObject(record);
+                    var userRoleData = JsonConvert.DeserializeObject<dynamic>(recordJson);
+                    
+                    // Extract user ID and role IDs from the processed data
+                    var userId = userRoleData.userId?.ToObject<int?>();
+                    var roleIds = userRoleData.roleIds?.ToObject<List<string>>();
+                    
+                    if (userId == null)
+                    {
+                        errors.Add("No valid user ID found in record");
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    if (roleIds == null || !roleIds.Any())
+                    {
+                        errors.Add("No valid role IDs found in record");
+                        errorCount++;
+                        continue;
+                    }
+
+                    // Process the user-role assignment
+                    var updateRequest = new UpdateUserRolesRequest
+                    {
+                        Roles = roleIds.ToArray()
+                    };
+                    
+                    await UpdateUserRolesAsync(user, userId.Value.ToString(), updateRequest);
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    errorCount++;
+                    errors.Add($"Error processing record: {ex.Message}");
+                }
+            }
+
+            var result = new
+            {
+                IsSuccess = errorCount == 0,
+                SuccessCount = successCount,
+                ErrorCount = errorCount,
+                Errors = errors,
+                Message = errorCount == 0 ? 
+                    $"Successfully imported {successCount} user role assignments" :
+                    $"Imported {successCount} user role assignments with {errorCount} errors"
+            };
+
+            return new { message = JsonConvert.SerializeObject(result) };
+        }
+        catch (Exception ex)
+        {
+            var errorResult = new
+            {
+                IsSuccess = false,
+                SuccessCount = 0,
+                ErrorCount = 1,
+                Errors = new[] { ex.Message },
+                Message = $"Bulk upload failed: {ex.Message}"
+            };
+
+            return new { message = JsonConvert.SerializeObject(errorResult) };
+        }
+    }
+
+    public async Task<Dictionary<int, object>> ResolveUsersAsync(ClaimsPrincipal user, ResolveUsersRequest request)
+    {
+        var result = new Dictionary<int, object>();
+        
+        foreach (var userId in request.UserIds)
+        {
+            try
+            {
+                var userProfile = await _context.UserProfile
+                    .Where(u => u.UserId == userId)
+                    .FirstOrDefaultAsync();
+                
+                if (userProfile != null)
+                {
+                    // Use the computed Name property from the entity
+                    var displayName = !string.IsNullOrEmpty(userProfile.Name) ? userProfile.Name : userProfile.UserEmail;
+                    
+                    result[userId] = new { 
+                        name = !string.IsNullOrEmpty(displayName) ? displayName : $"User {userId}", 
+                        email = userProfile.UserEmail ?? ""
+                    };
+                }
+                else
+                {
+                    result[userId] = new { 
+                        name = $"User {userId}", 
+                        email = "Unknown" 
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resolving user ID {UserId}", userId);
+                result[userId] = new { 
+                    name = $"User {userId}", 
+                    email = "Error" 
+                };
+            }
+        }
+        
+        return result;
+    }
+
+    public async Task<Dictionary<int, object>> ResolveRolesAsync(ClaimsPrincipal user, ResolveRolesRequest request)
+    {
+        var result = new Dictionary<int, object>();
+        
+        foreach (var roleId in request.RoleIds)
+        {
+            try
+            {
+                var role = await _roleManager.FindByIdAsync(roleId.ToString());
+                
+                if (role != null)
+                {
+                    result[roleId] = new { 
+                        name = role.Name, 
+                        description = role.Description ?? role.Name 
+                    };
+                }
+                else
+                {
+                    result[roleId] = new { 
+                        name = $"Role {roleId}", 
+                        description = "Unknown" 
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                result[roleId] = new { 
+                    name = $"Role {roleId}", 
+                    description = "Error" 
+                };
+            }
+        }
+        
+        return result;
     }
 } 

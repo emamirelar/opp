@@ -71,8 +71,8 @@ function underscoreValidator(control: AbstractControl): ValidationErrors | null 
   if (!value) return null;
   
   // Check if the value contains only lowercase letters, numbers, and underscores
-  // and doesn't start or end with underscore
-  const underscorePattern = /^[a-z0-9]+(_[a-z0-9]+)*$/;
+  // Must contain at least one underscore and no other special characters or spaces
+  const underscorePattern = /^[a-z0-9]+(_[a-z0-9]+)+$/;
   
   if (!underscorePattern.test(value)) {
     return { underscoreFormat: true };
@@ -202,6 +202,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
 
   // Auto-switch to test data mode when function is not available
   shouldUseTestData = computed(() => !this.showEntityIdOption());
+
+  // Disable test section for new prompts (when currentPrompt is null)
+  isTestSectionDisabled = computed(() => !this.currentPrompt());
 
   // Get max tokens for the selected model
   selectedModelMaxTokens = computed(() => {

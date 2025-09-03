@@ -6,6 +6,7 @@ using UNOPS.PAO.Domain.Entities;
 
 public class Project : BaseBusinessEntity
 {
+    public string? BaseEngagement { get; set; }
     public string ProjectNumber { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }

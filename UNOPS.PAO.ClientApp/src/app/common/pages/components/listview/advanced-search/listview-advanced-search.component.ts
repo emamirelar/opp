@@ -74,30 +74,30 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
 
   // Dropdown options
   logicalOperators = [
-    { label: 'search.logicalOperators.and', value: 'AND' },
-    { label: 'search.logicalOperators.or', value: 'OR' }
+    { label: 'entityCards.logicalOperators.and', value: 'AND' },
+    { label: 'entityCards.logicalOperators.or', value: 'OR' }
   ];
 
   // All available comparison operators by type
   private allOperators = {
     text: [
-      { label: 'search.operators.equals', value: 'is' },
-      { label: 'search.operators.notEquals', value: 'is not' },
-      { label: 'search.operators.contains', value: 'like' },
-      { label: 'search.operators.notContains', value: 'not like' }
+      { label: 'entityCards.operators.equals', value: 'is' },
+      { label: 'entityCards.operators.notEquals', value: 'is not' },
+      { label: 'entityCards.operators.contains', value: 'like' },
+      { label: 'entityCards.operators.notContains', value: 'not like' }
     ],
     date: [
-      { label: 'search.operators.after', value: 'after' },
-      { label: 'search.operators.before', value: 'before' },
-      { label: 'search.operators.between', value: 'between' },
+      { label: 'entityCards.operators.after', value: 'after' },
+      { label: 'entityCards.operators.before', value: 'before' },
+      { label: 'entityCards.operators.between', value: 'between' },
     ],
     number: [
-      { label: 'search.operators.equals', value: 'is' },
-      { label: 'search.operators.notEquals', value: 'is not' },
-      { label: 'search.operators.greaterThan', value: '>' },
-      { label: 'search.operators.lessThan', value: '<' },
-      { label: 'search.operators.greaterThanOrEqual', value: '>=' },
-      { label: 'search.operators.lessThanOrEqual', value: '<=' }
+      { label: 'entityCards.operators.equals', value: 'is' },
+      { label: 'entityCards.operators.notEquals', value: 'is not' },
+      { label: 'entityCards.operators.greaterThan', value: '>' },
+      { label: 'entityCards.operators.lessThan', value: '<' },
+      { label: 'entityCards.operators.greaterThanOrEqual', value: '>=' },
+      { label: 'entityCards.operators.lessThanOrEqual', value: '<=' }
     ]
   };
 

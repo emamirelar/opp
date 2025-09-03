@@ -64,6 +64,8 @@ export class ImportService {
       return `${this.apiUrl}/contact`;   // Singular: /api/contact
     } else if (type.includes('interaction')) {
       return `${this.apiUrl}/interactions`; // Plural: /api/interactions
+    } else if (type.includes('user_role')) {
+      return `${this.apiUrl}/user-management`; // User role imports: /api/user-management
     } else {
       // Default to the original import endpoint if entity cannot be determined
       console.warn(`Unknown import type: ${type}. Using default import endpoint.`);

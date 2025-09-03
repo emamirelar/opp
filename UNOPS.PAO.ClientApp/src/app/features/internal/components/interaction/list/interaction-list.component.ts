@@ -95,6 +95,10 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     entityName: 'Interaction',
     scrollable: true,
     scrollHeight: 'flex',
+    sortableFields: [
+      { field: 'createdBy', label: 'Created By' },
+      { field: 'lastModifiedBy', label: 'Last Updated By' }
+    ],
     searchConfig: {
       useAdvancedSearch: true,
       placeholder: 'Search interactions...',
@@ -128,6 +132,18 @@ export class InteractionListComponent implements OnInit, OnDestroy {
           label: 'Partner',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
+        },
+        {
+          field: 'createdDate',
+          label: 'Created Date',
+          type: 'date',
+          operators: ['after', 'before', 'between']
+        },
+        {
+          field: 'lastModifiedDate',
+          label: 'Last Modified Date',
+          type: 'date',
+          operators: ['after', 'before', 'between']
         }
       ] as SearchField[]
     }
