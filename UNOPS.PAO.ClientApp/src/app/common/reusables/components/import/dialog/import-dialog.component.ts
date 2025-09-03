@@ -141,29 +141,8 @@ export class ImportDialogComponent implements OnInit {
     { field: 'partnerGroupCode', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'text', sortable: false },
     { field: 'liaisonOfficeId', header: 'partner.liaisonOffice', required: false, label: 'Liaison Office', type: 'text', sortable: false },
     { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPoint', required: false, label: 'Partner Focal Point', type: 'text', sortable: false },
-    
-    // ERP Integration (readonly but needed for import)
-    { field: 'erpDimValue', header: 'partner.erpDimValue', required: false, label: 'ERP Dimension Value', type: 'number', sortable: false },
-    
     // Status & Operational
     { field: 'status', header: 'partner.status', required: false, label: 'Status', type: 'text', sortable: false },
-    { field: 'pooledFund', header: 'partner.pooledFund', required: false, label: 'Pooled Fund', type: 'text', sortable: false },
-    { field: 'canCreateNewOpportunities', header: 'partner.canCreateNewOpportunities', required: false, label: 'Can Create New Opportunities', type: 'text', sortable: false },
-    { field: 'reasonForNoNewOpportunity', header: 'partner.reasonForNoNewOpportunity', required: false, label: 'Reason For No New Opportunity', type: 'text', sortable: false },
-    
-    // UN & State Entity Fields
-    { field: 'unAndStateEntity', header: 'partner.unStateEntity', required: false, label: 'UN & State Entity', type: 'text', sortable: false },
-    { field: 'keyGlobalPartner', header: 'partner.keyGlobalPartner', required: false, label: 'Key Global Partner', type: 'text', sortable: false },
-    { field: 'unSecretariatPartner', header: 'partner.unSecretariatPartner', required: false, label: 'UN Secretariat Partner', type: 'text', sortable: false },
-    
-    // Due Diligence & Compliance
-    { field: 'dueDiligenceRequired', header: 'partner.dueDiligenceRequired', required: false, label: 'Due Diligence Required', type: 'text', sortable: false },
-    { field: 'dueDiligenceApproval', header: 'partner.dueDiligenceApproval', required: false, label: 'Due Diligence Approval', type: 'text', sortable: false },
-    
-    // Levy Fields
-    { field: 'partnerLevyStatus', header: 'partner.partnerLevyStatus', required: false, label: 'Partner Levy Status', type: 'text', sortable: false },
-    { field: 'reasonForLevy', header: 'partner.reasonForLevy', required: false, label: 'Reason For Levy', type: 'text', sortable: false },
-    { field: 'levyTreatment', header: 'partner.levyTreatment', required: false, label: 'Levy Treatment', type: 'text', sortable: false },
   ];
 
   // Filtered partner columns based on user permissions
