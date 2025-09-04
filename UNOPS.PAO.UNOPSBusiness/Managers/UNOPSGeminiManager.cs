@@ -74,6 +74,7 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly IUserProfileCacheService _userProfileCacheService;
     private readonly IScreenContextCacheService _screenContextCacheService;
     private readonly IGeoTimeCacheService _geoTimeCacheService;
+    private IManagerWrapper _managerWrapper;
 
     public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService)
     {
@@ -102,6 +103,11 @@ public class UNOPSGeminiManager : IGeminiManager
 
         _ttsService = new GoogleTextToSpeechService();
         _aiService = new AiContextualService(configuration, _context, _credentials);
+    }
+
+    public void SetManagerWrapper(IManagerWrapper managerWrapper)
+    {
+        _managerWrapper = managerWrapper;
     }
 
     // Map AiPromptModel to AiPrompt entity
@@ -1047,13 +1053,37 @@ public class UNOPSGeminiManager : IGeminiManager
     public async Task<string> BulkInsertRecordsAsync(BulkUploadRequest request)
     {
         var type = request.Type;
-        var camelCaseType = char.ToUpper(type[0]) + type.Substring(1).ToLower();
         
         // Special handling for User Role Import (ASP.NET Core Identity User-Role assignments)
         if (type.Equals("user_role_import", StringComparison.OrdinalIgnoreCase))
         {
             return await BulkInsertUserRolesAsync(request);
         }
+
+        // Use specific manager methods instead of generic entity mapping
+        if (type.Equals("interaction", StringComparison.OrdinalIgnoreCase))
+        {
+            return await BulkInsertInteractionsAsync(request);
+        }
+        
+        if (type.Equals("partner", StringComparison.OrdinalIgnoreCase))
+        {
+            return await BulkInsertPartnersAsync(request);
+        }
+        
+        if (type.Equals("contact", StringComparison.OrdinalIgnoreCase))
+        {
+            return await BulkInsertContactsAsync(request);
+        }
+
+        // Fallback to generic method for other types
+        return await BulkInsertGenericRecordsAsync(request);
+    }
+
+    private async Task<string> BulkInsertGenericRecordsAsync(BulkUploadRequest request)
+    {
+        var type = request.Type;
+        var camelCaseType = char.ToUpper(type[0]) + type.Substring(1).ToLower();
 
         var assembly = typeof(UNOPSContact).Assembly;
         var modelType = assembly.GetType($"UNOPS.PAO.UNOPSDomain.Entities.UNOPS{camelCaseType}", throwOnError: false, ignoreCase: true);
@@ -1291,6 +1321,386 @@ public class UNOPSGeminiManager : IGeminiManager
             Formatting = Formatting.Indented,
             Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
         });
+    }
+
+    private async Task<string> BulkInsertInteractionsAsync(BulkUploadRequest request)
+    {
+        var successList = new List<object>();
+        var errorMessages = new List<string>();
+        var isSuccess = true;
+
+        try
+        {
+            foreach (var record in request.Records)
+            {
+                try
+                {
+                    // Convert JsonElement to JObject for property access
+                    JObject recordObj;
+                    if (record is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+                    {
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonElement.GetRawText());
+                        recordObj = JObject.FromObject(dictionary);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unsupported record format. Expected JSON object.");
+                    }
+
+                    // Convert JObject to InteractionRequest
+                    var interactionRequest = recordObj.ToObject<UpdateInteractionRequest>();
+                    
+                    if (interactionRequest == null)
+                    {
+                        errorMessages.Add("Failed to convert record to InteractionRequest");
+                        isSuccess = false;
+                        continue;
+                    }
+
+                    // Check if this is an update (has ID) or create (no ID or ID = 0)
+                    if (interactionRequest.Id > 0)
+                    {
+                        // Update existing interaction
+                        var updateRequest = new UpdateInteractionRequest
+                        {
+                            Id = interactionRequest.Id,
+                            Type = interactionRequest.Type,
+                            Date = interactionRequest.Date,
+                            Subject = interactionRequest.Subject,
+                            Description = interactionRequest.Description,
+                            Location = interactionRequest.Location,
+                            ContactIds = interactionRequest.ContactIds,
+                            PartnerIds = interactionRequest.PartnerIds,
+                            UserIds = interactionRequest.UserIds,
+                            EmailAddresses = interactionRequest.EmailAddresses,
+                            PhoneNumbers = interactionRequest.PhoneNumbers,
+                            OrganizationHierarchyIds = interactionRequest.OrganizationHierarchyIds
+                        };
+
+                        var updatedResult = await _managerWrapper.InteractionManager.UpdateInteractionAsync(0, updateRequest);
+                        if (updatedResult != null)
+                        {
+                            successList.Add(new { Id = updatedResult.Id, Action = "Updated", Subject = updatedResult.Subject });
+                        }
+                        else
+                        {
+                            errorMessages.Add($"Failed to update interaction with ID {interactionRequest.Id}");
+                            isSuccess = false;
+                        }
+                    }
+                    else
+                    {
+                        // Create new interaction
+                        interactionRequest.Id = 0; // Ensure ID is 0 for new records
+                        var createdResult = await _managerWrapper.InteractionManager.CreateInteractionAsync(interactionRequest);
+                        if (createdResult != null)
+                        {
+                            successList.Add(new { Id = createdResult.Id, Action = "Created", Subject = createdResult.Subject });
+                        }
+                        else
+                        {
+                            errorMessages.Add("Failed to create interaction");
+                            isSuccess = false;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessages.Add($"Error processing interaction record: {ex.Message}");
+                    isSuccess = false;
+                }
+            }
+
+            var result = new
+            {
+                IsSuccess = isSuccess,
+                SuccessCount = successList.Count,
+                ErrorCount = errorMessages.Count,   
+                Errors = errorMessages,
+                SuccessRecords = successList,
+                Message = isSuccess ? 
+                    $"Successfully processed {successList.Count} interactions" :
+                    $"Processed {successList.Count} interactions with {errorMessages.Count} errors"
+            };
+
+            return JsonConvert.SerializeObject(result, new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during bulk interaction operation");
+            
+            var errorResult = new
+            {
+                IsSuccess = false,
+                SuccessCount = 0,
+                ErrorCount = 1,
+                Errors = new[] { $"Bulk interaction operation failed: {ex.Message}" },
+                SuccessRecords = new object[0],
+                Message = $"Bulk interaction operation failed: {ex.Message}"
+            };
+
+            return JsonConvert.SerializeObject(errorResult);
+        }
+    }
+
+    private async Task<string> BulkInsertPartnersAsync(BulkUploadRequest request)
+    {
+        var successList = new List<object>();
+        var errorMessages = new List<string>();
+        var isSuccess = true;
+
+        try
+        {
+            foreach (var record in request.Records)
+            {
+                try
+                {
+                    // Convert JsonElement to JObject for property access
+                    JObject recordObj;
+                    if (record is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+                    {
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonElement.GetRawText());
+                        recordObj = JObject.FromObject(dictionary);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unsupported record format. Expected JSON object.");
+                    }
+
+                    // Convert JObject to PartnerRequest
+                    var partnerRequest = recordObj.ToObject<UpdatePartnerRequest>();
+                    
+                    if (partnerRequest == null)
+                    {
+                        errorMessages.Add("Failed to convert record to PartnerRequest");
+                        isSuccess = false;
+                        continue;
+                    }
+
+                    // Check if this is an update (has ID) or create (no ID or ID = 0)
+                    if (partnerRequest.Id > 0)
+                    {
+                        // Update existing partner
+                        var updateRequest = new UpdatePartnerRequest
+                        {
+                            Id = partnerRequest.Id,
+                            Name = partnerRequest.Name,
+                            PartnerShortDescription = partnerRequest.PartnerShortDescription,
+                            PartnerLongDescription = partnerRequest.PartnerLongDescription,
+                            Status = partnerRequest.Status,
+                            PartnerGroupCode = partnerRequest.PartnerGroupCode,
+                            UNAndStateEntity = partnerRequest.UNAndStateEntity,
+                            CanCreateNewOpportunities = partnerRequest.CanCreateNewOpportunities,
+                            PooledFund = partnerRequest.PooledFund,
+                            OrganizationHierarchyIds = partnerRequest.OrganizationHierarchyIds
+                        };
+
+                        var updatedPartnerResult = await _managerWrapper.PartnerManager.UpdatePartnerAsync(0, updateRequest);
+                        if (updatedPartnerResult != null)
+                        {
+                            successList.Add(new { Id = updatedPartnerResult.Id, Action = "Updated", Name = updatedPartnerResult.Name });
+                        }
+                        else
+                        {
+                            errorMessages.Add($"Failed to update partner with ID {partnerRequest.Id}");
+                            isSuccess = false;
+                        }
+                    }
+                    else
+                    {
+                        // Create new partner
+                        partnerRequest.Id = 0; // Ensure ID is 0 for new records
+                        var createdResult = await _managerWrapper.PartnerManager.CreatePartnerAsync(partnerRequest);
+                        if (createdResult != null)
+                        {
+                            successList.Add(new { Id = createdResult.Id, Action = "Created", Name = createdResult.Name });
+                        }
+                        else
+                        {
+                            errorMessages.Add("Failed to create partner");
+                            isSuccess = false;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessages.Add($"Error processing partner record: {ex.Message}");
+                    isSuccess = false;
+                }
+            }
+
+            var result = new
+            {
+                IsSuccess = isSuccess,
+                SuccessCount = successList.Count,
+                ErrorCount = errorMessages.Count,
+                Errors = errorMessages,
+                SuccessRecords = successList,
+                Message = isSuccess ? 
+                    $"Successfully processed {successList.Count} partners" :
+                    $"Processed {successList.Count} partners with {errorMessages.Count} errors"
+            };
+
+            return JsonConvert.SerializeObject(result, new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during bulk partner operation");
+            
+            var errorResult = new
+            {
+                IsSuccess = false,
+                SuccessCount = 0,
+                ErrorCount = 1,
+                Errors = new[] { $"Bulk partner operation failed: {ex.Message}" },
+                SuccessRecords = new object[0],
+                Message = $"Bulk partner operation failed: {ex.Message}"
+            };
+
+            return JsonConvert.SerializeObject(errorResult);
+        }
+    }
+
+    private async Task<string> BulkInsertContactsAsync(BulkUploadRequest request)
+    {
+        var successList = new List<object>();
+        var errorMessages = new List<string>();
+        var isSuccess = true;
+
+        try
+        {
+            foreach (var record in request.Records)
+            {
+                try
+                {
+                    // Convert JsonElement to JObject for property access
+                    JObject recordObj;
+                    if (record is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+                    {
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonElement.GetRawText());
+                        recordObj = JObject.FromObject(dictionary);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unsupported record format. Expected JSON object.");
+                    }
+
+                    // Convert JObject to ContactRequest
+                    var contactRequest = recordObj.ToObject<UpdateContactRequest>();
+                    
+                    if (contactRequest == null)
+                    {
+                        errorMessages.Add("Failed to convert record to ContactRequest");
+                        isSuccess = false;
+                        continue;
+                    }
+
+                    // Check if this is an update (has ID) or create (no ID or ID = 0)
+                    if (contactRequest.Id > 0)
+                    {
+                        // Update existing contact
+                        var updateRequest = new UpdateContactRequest
+                        {
+                            Id = contactRequest.Id,
+                            Salutation = contactRequest.Salutation,
+                            FirstName = contactRequest.FirstName,
+                            MiddleName = contactRequest.MiddleName,
+                            LastName = contactRequest.LastName,
+                            Suffix = contactRequest.Suffix,
+                            Title = contactRequest.Title,
+                            Department = contactRequest.Department,
+                            Description = contactRequest.Description,
+                            Email = contactRequest.Email,
+                            Phone = contactRequest.Phone,
+                            Mobile = contactRequest.Mobile,
+                            Assistant = contactRequest.Assistant,
+                            AssistantPhone = contactRequest.AssistantPhone,
+                            AssistantEmail = contactRequest.AssistantEmail,
+                            MailingStreet = contactRequest.MailingStreet,
+                            MailingStreet2 = contactRequest.MailingStreet2,
+                            MailingCity = contactRequest.MailingCity,
+                            MailingStateProvince = contactRequest.MailingStateProvince,
+                            MailingPostalCode = contactRequest.MailingPostalCode,
+                            MailingCountry = contactRequest.MailingCountry,
+                            PartnerId = contactRequest.PartnerId
+                        };
+
+                        var updatedResult = await _managerWrapper.ContactManager.UpdateContactAsync(0, updateRequest);
+                        if (updatedResult != null)
+                        {
+                            successList.Add(new { Id = updatedResult.Id, Action = "Updated", Name = $"{updatedResult.FirstName} {updatedResult.LastName}", Email = updatedResult.Email });
+                        }
+                        else
+                        {
+                            errorMessages.Add($"Failed to update contact with ID {contactRequest.Id}");
+                            isSuccess = false;
+                        }
+                    }
+                    else
+                    {
+                        // Create new contact
+                        contactRequest.Id = 0; // Ensure ID is 0 for new records
+                        var createdResult = await _managerWrapper.ContactManager.CreateContactAsync(contactRequest);
+                        if (createdResult != null)
+                        {
+                            successList.Add(new { Id = createdResult.Id, Action = "Created", Name = $"{createdResult.FirstName} {createdResult.LastName}", Email = createdResult.Email });
+                        }
+                        else
+                        {
+                            errorMessages.Add("Failed to create contact");
+                            isSuccess = false;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessages.Add($"Error processing contact record: {ex.Message}");
+                    isSuccess = false;
+                }
+            }
+
+            var result = new
+            {
+                IsSuccess = isSuccess,
+                SuccessCount = successList.Count,
+                ErrorCount = errorMessages.Count,
+                Errors = errorMessages,
+                SuccessRecords = successList,
+                Message = isSuccess ? 
+                    $"Successfully processed {successList.Count} contacts" :
+                    $"Processed {successList.Count} contacts with {errorMessages.Count} errors"
+            };
+
+            return JsonConvert.SerializeObject(result, new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during bulk contact operation");
+            
+            var errorResult = new
+            {
+                IsSuccess = false,
+                SuccessCount = 0,
+                ErrorCount = 1,
+                Errors = new[] { $"Bulk contact operation failed: {ex.Message}" },
+                SuccessRecords = new object[0],
+                Message = $"Bulk contact operation failed: {ex.Message}"
+            };
+
+            return JsonConvert.SerializeObject(errorResult);
+        }
     }
 
     public async Task<string> ChatWithGemini(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null)

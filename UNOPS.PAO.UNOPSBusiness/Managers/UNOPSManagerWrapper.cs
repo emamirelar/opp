@@ -74,6 +74,9 @@ public class UNOPSManagerWrapper : ManagerWrapper
         
         // Create UserManagementManager with GeminiManager dependency
         userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService, geminiManager, userManagementManagerLogger);
+        
+        // Set the manager wrapper reference in GeminiManager after all managers are created
+        geminiManager.SetManagerWrapper(this);
         aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, userManager, this, permissionService);
         entityConfigurationManager = new UNOPSEntityConfigurationManager(mapper, opsContext, configuration, permissionService);
         
