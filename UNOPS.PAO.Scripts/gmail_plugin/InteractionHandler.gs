@@ -118,12 +118,12 @@ function createOrUpdateInteraction(e) {
       
       // Rebuild the card with updated messageData
       const updatedCard = buildOpportunityPlusCard(relatedRecords, messageData);
-
-      return CardService.newActionResponseBuilder()
+      return updatedCard;
+       /*return CardService.newActionResponseBuilder()
         .setNotification(CardService.newNotification()
         .setText('Interaction created successfully!'))
         .setNavigation(CardService.newNavigation().updateCard(updatedCard))
-        .build();
+        .build();*/
     }
     
   } catch (error) {
