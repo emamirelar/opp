@@ -170,6 +170,57 @@ def load_partner_logo_and_flag_mapping():
     
     return partner_to_logo_mapping
 
+def load_account_owner_userid_mapping():
+    """Load mapping from AccountNumber to UserID via SF_PRM_AccountOwner__c from both CSV files"""
+    account_to_userid_mapping = {}
+    
+    # First, load the account owner name mapping: AccountNumber -> SF_PRM_AccountOwner__c
+    account_to_owner_mapping = {}
+    try:
+        with open('sf_prod_account_owner_account_number_export.csv', 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                account_number = row['AccountNumber'].strip() if 'AccountNumber' in row and row['AccountNumber'] else ""
+                account_owner = row['SF_PRM_AccountOwner__c'].strip() if 'SF_PRM_AccountOwner__c' in row and row['SF_PRM_AccountOwner__c'] else ""
+                
+                if account_number and account_owner:
+                    account_to_owner_mapping[account_number] = account_owner
+        
+        print(f"Loaded {len(account_to_owner_mapping)} AccountNumber -> AccountOwner mappings")
+    except FileNotFoundError:
+        print("Account owner account number CSV not found - will use null values for PartnerFocalPointUserId")
+        return account_to_userid_mapping
+    
+    # Second, load the owner to UserID mapping: SF_PRM_AccountOwner__c -> UserId
+    owner_to_userid_mapping = {}
+    try:
+        with open('sf_prod_account_owner_userid_export.csv', 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                account_owner = row['SF_PRM_AccountOwner__c'].strip() if 'SF_PRM_AccountOwner__c' in row and row['SF_PRM_AccountOwner__c'] else ""
+                user_id = row['UserId'].strip() if 'UserId' in row and row['UserId'] else ""
+                
+                if account_owner and user_id:
+                    try:
+                        # Ensure UserID is a valid integer
+                        user_id_int = int(user_id)
+                        owner_to_userid_mapping[account_owner] = user_id_int
+                    except ValueError:
+                        print(f"Invalid UserID format: {user_id} for owner: {account_owner}")
+        
+        print(f"Loaded {len(owner_to_userid_mapping)} AccountOwner -> UserId mappings")
+    except FileNotFoundError:
+        print("Account owner userid CSV not found - will use null values for PartnerFocalPointUserId")
+        return account_to_userid_mapping
+    
+    # Combine the mappings: AccountNumber -> SF_PRM_AccountOwner__c -> UserId
+    for account_number, account_owner in account_to_owner_mapping.items():
+        if account_owner in owner_to_userid_mapping:
+            account_to_userid_mapping[account_number] = owner_to_userid_mapping[account_owner]
+    
+    print(f"Created {len(account_to_userid_mapping)} AccountNumber -> UserId mappings")
+    return account_to_userid_mapping
+
 def is_circular_reference(level_code, partner_id):
     """Check if a level code creates a circular reference with the partner ID"""
     if not level_code or not partner_id:
@@ -193,6 +244,7 @@ def parse_combined_hierarchy_csv():
     valid_liaison_office_codes = load_liaison_office_codes()
     account_to_partner_data_mapping = load_partner_liaison_mapping()
     partner_to_logo_mapping = load_partner_logo_and_flag_mapping()
+    account_to_userid_mapping = load_account_owner_userid_mapping()
     
     print("Reading Combined Hierarchy CSV...")
     
@@ -292,6 +344,11 @@ def parse_combined_hierarchy_csv():
             if partner_id in partner_to_logo_mapping:
                 logo_url = partner_to_logo_mapping[partner_id]
             
+            # Extract PartnerFocalPointUserId using account number lookup
+            partner_focal_point_user_id = None
+            if partner_id in account_to_userid_mapping:
+                partner_focal_point_user_id = account_to_userid_mapping[partner_id]
+            
             # Extract and map SF fields to partner fields
             sf_status = sf_data.get('sf_status', 'Active')  # Default to Active
             sf_new_engagement = sf_data.get('sf_new_engagement', 'Allowed')  # Default to Allowed
@@ -330,7 +387,8 @@ def parse_combined_hierarchy_csv():
                     'partner_approval_status': '1',  # Approved
                     'partner_approval_date': 'DateTime.UtcNow',
                     'partner_approval_reference': sf_eac_reference if sf_eac_reference else None,
-                    'partner_approved_by': 'Salesforce Migration'
+                    'partner_approved_by': 'Salesforce Migration',
+                    'partner_focal_point_user_id': partner_focal_point_user_id
                 }
                 partners.append(partner_data)
     
@@ -455,6 +513,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         # Handle logo URL - use null if empty
         logo_url_value = f'"{partner["logo_url"]}"' if partner['logo_url'] else 'null'
         
+        # Handle PartnerFocalPointUserId - use null if None
+        partner_focal_point_user_id_value = partner['partner_focal_point_user_id'] if partner['partner_focal_point_user_id'] is not None else 'null'
+        
         seeder_code += f'''                new UNOPSPartner
                 {{
                     PartnerCode = "{partner['partner_code']}",
@@ -478,6 +539,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     PartnerApprovalDate = {partner['partner_approval_date']},
                     PartnerApprovalReference = {f'"{partner["partner_approval_reference"]}"' if partner['partner_approval_reference'] else 'null'},
                     PartnerApprovedBy = "{partner['partner_approved_by']}",
+                    PartnerFocalPointUserId = {partner_focal_point_user_id_value},
                     ErpDimValue = {f'int.Parse("{partner["partner_code"]}")' if partner['partner_code'] and partner['partner_code'].isdigit() else 'null'},
                     CreatedBy = 0,
                     CreatedDate = DateTime.UtcNow,
