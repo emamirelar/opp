@@ -70,7 +70,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
                     PropertyFilter = "{\"CanRead\": [\"CreatedBy\", \"LastModifiedBy\", \"CreatedDate\", \"LastModifiedDate\", \"IsDeleted\", \"Status\", \"PartnerGroupCode\", \"PartnerShortDescription\", \"PartnerLongDescription\", \"PartnerCategoryId\", \"ErpDimValue\", \"LiaisonOfficeId\", \"Id\", \"Name\"], \"CanCreate\": [], \"CanUpdate\": [], \"CanDelete\": []}",
                     CanRead = true,
-                    CanCreate = false,
+                    CanCreate = true,
                     CanUpdate = false,
                     CanDelete = false
                 },
