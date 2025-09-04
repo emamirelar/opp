@@ -161,7 +161,12 @@
               </th>
             }
             @for (col of columns; track col) {
-              <th class="min-w-32">
+              <th 
+                [ngClass]="{
+                  'min-w-32': !isLongTextField(col.field) && !isShortTextField(col.field),
+                  'w-80': isLongTextField(col.field),
+                  'w-48': isShortTextField(col.field)
+                }">
                 {{ getTranslatedHeader(col.header) }}
               </th>
             }
@@ -194,7 +199,12 @@
               </td>
             }
             @for (col of columns; track col) {
-              <td [ngClass]="{'bg-red-50': !rowData[col.field] && col.required}" class="">
+              <td 
+                [ngClass]="{
+                  'bg-red-50': !rowData[col.field] && col.required,
+                  'w-80': isLongTextField(col.field),
+                  'w-48': isShortTextField(col.field)
+                }">
                 @if (col.field === 'duplicateInfo') {
                   <!-- Skip duplicateInfo column as it's now combined with edit button -->
                 } @else if (col.field === 'roleDisplay' && isUserRoleImport() && rowData.roleNames) {
@@ -208,7 +218,14 @@
                     }
                   </div>
                 } @else if (rowData[col.field]) {
-                  {{ rowData[col.field] }}
+                  <div 
+                    [ngClass]="{
+                      'truncate-text': isLongTextField(col.field),
+                      'truncate-short': isShortTextField(col.field)
+                    }"
+                    [title]="rowData[col.field]">
+                    {{ rowData[col.field] }}
+                  </div>
                 } @else {
                   <i class="text-red-100 pi pi-warning"></i>
                 }

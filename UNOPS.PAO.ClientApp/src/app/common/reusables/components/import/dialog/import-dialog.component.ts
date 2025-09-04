@@ -61,7 +61,45 @@ interface ImportColumn extends ListViewColumn {
     DuplicateSummaryComponent
   ],
   templateUrl: './import-dialog.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [`
+    .truncate-text {
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+      cursor: help;
+    }
+    
+    .truncate-short {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+      cursor: help;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .truncate-text {
+        max-width: 200px;
+      }
+      .truncate-short {
+        max-width: 120px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .truncate-text {
+        max-width: 150px;
+      }
+      .truncate-short {
+        max-width: 100px;
+      }
+    }
+  `]
 })
 export class ImportDialogComponent implements OnInit {
   feedbackDialogService = inject(FeedbackDialogService);
@@ -154,7 +192,6 @@ export class ImportDialogComponent implements OnInit {
     { field: 'date', header: 'interaction.date', required: true, label: 'Date', type: 'text', sortable: false },
     { field: 'subject', header: 'interaction.subject', required: true, label: 'Subject', type: 'text', sortable: false },
     { field: 'description', header: 'interaction.description', required: false, label: 'Description', type: 'text', sortable: false },
-    { field: 'contactId', header: 'interaction.contact', required: false, label: 'Contact', type: 'text', sortable: false },
     { field: 'location', header: 'interaction.location', required: false, label: 'Location', type: 'text', sortable: false },
     { field: 'contactIds', header: 'interaction.contactIds', required: false, label: 'Contact IDs', type: 'text', sortable: false },
     { field: 'partnerIds', header: 'interaction.partnerIds', required: false, label: 'Partner IDs', type: 'text', sortable: false },
@@ -1058,6 +1095,37 @@ export class ImportDialogComponent implements OnInit {
       default:
         return 'secondary';
     }
+  }
+
+  /**
+   * Check if field should have long text truncation (for very long fields like descriptions)
+   */
+  isLongTextField(fieldName: string): boolean {
+    const longTextFields = [
+      'description', 
+      'partnerLongDescription', 
+      'details', 
+      'notes', 
+      'comments',
+      'subject',
+      'content'
+    ];
+    return longTextFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
+  }
+
+  /**
+   * Check if field should have short text truncation (for medium length fields)
+   */
+  isShortTextField(fieldName: string): boolean {
+    const shortTextFields = [
+      'name', 
+      'title', 
+      'partnerShortDescription',
+      'location',
+      'contact',
+      'email'
+    ];
+    return shortTextFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
   }
 
 
