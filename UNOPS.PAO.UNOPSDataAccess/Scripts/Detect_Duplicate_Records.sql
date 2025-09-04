@@ -13,6 +13,9 @@
 -- Contact Duplicates: Email (exact), Name similarity, Phone/Mobile, Same Partner
 -- Partner Duplicates: Name similarity, Short Description, ERP Dimension Value
 -- Interaction Duplicates: Subject similarity, Same date range, Contact/Partner overlap
+--
+-- STATUS ENUM VALUES:
+-- 0 = Draft, 1 = Active (used in Contact status filtering)
 -- ============================================================================
 
 -- Enable required extensions
@@ -162,7 +165,7 @@ BEGIN
                         ELSE ''No Match''
                     END as match_reason
                 FROM public."Contacts"
-                WHERE "Status" = ''Active''
+                WHERE "Status" = 1  -- Active status
                 AND "IsDeleted" = false
             )
             SELECT json_agg(
@@ -423,7 +426,7 @@ $$;
 -- Create recommended indexes for performance
 CREATE INDEX IF NOT EXISTS idx_contacts_duplicate_detection 
 ON public."Contacts"("Email", "Name", "Phone", "Mobile", "PartnerId") 
-WHERE "IsDeleted" = false AND "Status" = 'Active';
+WHERE "IsDeleted" = false AND "Status" = 1;
 
 CREATE INDEX IF NOT EXISTS idx_partners_duplicate_detection
 ON public."Partners"("Name", "PartnerShortDescription", "ErpDimValue")
