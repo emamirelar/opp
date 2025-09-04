@@ -206,7 +206,7 @@
       "when_to_use": "Use this for searches involving partner relationships, contact details, dates, interaction types, or multiple field combinations."
     },
     {
-      "name": "Get",
+      "name": "GetSpecificInteraction",
       "url": "/api/interactions/{id}",
       "method": "GET",
       "description": "Retrieves a specific interaction by ID with complete details including participants, documents, and permissions.",

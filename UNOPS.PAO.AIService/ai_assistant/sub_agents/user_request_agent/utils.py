@@ -456,4 +456,61 @@ def handle_audio_artifacts_before_model(callback_context: CallbackContext, llm_r
             callback_context.state['has_audio_files'] = False
             
     except Exception as e:
-        logging.error(f"Error in audio file processing callback: {e}")    
+        logging.error(f"Error in audio file processing callback: {e}")
+
+
+def handle_delegation_after_model(callback_context: CallbackContext, llm_response):
+    """
+    After model callback to handle delegation to worker_agent when action_plan is generated.
+    """
+    import json
+    from google.genai import types
+    
+    try:
+        if not llm_response or not llm_response.candidates:
+            return None
+            
+        # Extract the response text
+        response_text = ""
+        for candidate in llm_response.candidates:
+            if candidate.content and candidate.content.parts:
+                for part in candidate.content.parts:
+                    if hasattr(part, 'text') and part.text:
+                        response_text += part.text
+        
+        if not response_text:
+            return None
+        
+        # Try to parse as JSON
+        try:
+            response_json = json.loads(response_text)
+            
+            # Check if this is an action_plan response (delegation case)
+            if isinstance(response_json, dict) and "action_plan" in response_json:
+                action_plan = response_json["action_plan"]
+                
+                print(f"🔄 [DELEGATION] User request agent generated action_plan with {len(action_plan)} steps")
+                
+                # Store the action plan in state for worker_agent to use
+                # The task_executor_agent expects {{action_plan}} to be a JSON string
+                action_plan_json = json.dumps(action_plan, indent=2)
+                
+                callback_context.state["action_plan"] = action_plan_json  # JSON string for template substitution
+                callback_context.state["action_plan_raw"] = action_plan  # Raw object for programmatic use
+                callback_context.state["entity_intent_detection"] = action_plan
+                
+                print(f"✅ [DELEGATION] Action plan stored for worker_agent")
+                print(f"📋 [DELEGATION] Plan: {json.dumps(action_plan, indent=2)}")
+                
+                # Return the action_plan directly to trigger delegation via output_key
+                return {"action_plan": action_plan}
+                
+        except json.JSONDecodeError:
+            # Not JSON, probably a direct response
+            print(f"✅ [DIRECT] User request agent provided direct response")
+            pass
+            
+    except Exception as e:
+        logging.error(f"Error in delegation callback: {e}")
+    
+    return None
