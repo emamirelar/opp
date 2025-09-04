@@ -616,12 +616,14 @@ export class PartnerEditDialogComponent implements OnInit {
           this.showDuplicateConfirmationDialog(response, payload);
         } else if (response.action === 'created' || response.success) {
           // Partner created successfully
+          this.cachedDataService.refreshPartners();
           this.feedbackDialogService.showSuccessToast({ 
             detail: response.message || 'Partner created successfully!' 
           });
           setTimeout(() => this.dialogRef.close(response.data || response));
         } else {
           // Fallback for successful creation (old format)
+          this.cachedDataService.refreshPartners();
           this.feedbackDialogService.showSuccessToast({ 
             detail: 'Partner created successfully!' 
           });
@@ -669,12 +671,14 @@ export class PartnerEditDialogComponent implements OnInit {
         this.partnerService.createPartner(confirmedPayload).subscribe({
           next: (response: any) => {
             if (response.action === 'created') {
+              this.cachedDataService.refreshPartners();
               this.feedbackDialogService.showSuccessToast({ 
                 detail: 'Partner created successfully (duplicate confirmation acknowledged)!' 
               });
               setTimeout(() => this.dialogRef.close(response.data));
             } else {
               // Fallback for successful creation
+              this.cachedDataService.refreshPartners();
               this.feedbackDialogService.showSuccessToast({ 
                 detail: 'Partner created successfully!' 
               });

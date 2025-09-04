@@ -18,6 +18,7 @@ import { SearchField } from '../../../../common/services/search-parser.service';
 import { PermissionUtilityService } from '../../../../essentials/services/permission-utility.service';
 import { EntityPermissions } from '../../../../essentials/services/permission.service';
 import { EntityConfigurationService } from '../../services/entity-configuration.service';
+import { CachedDataService } from '../../../../common/services/cached-data.service';
 
 
 /**
@@ -60,6 +61,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
   importDialogService = inject(ImportDialogService);
   permissionUtilityService = inject(PermissionUtilityService);
   entityConfigurationService = inject(EntityConfigurationService);
+  cachedDataService = inject(CachedDataService);
 
   newPartnerData = signal<Partner|null>(null);
 
@@ -195,6 +197,9 @@ export class PartnerComponent implements OnDestroy, OnInit {
     // Load dynamic columns from API
     this.loadPartnerColumns();
     
+    // Listen for refresh events (e.g., from imports) to refresh partner cache
+    window.addEventListener('refresh-listview', this.refreshPartnerCacheHandler);
+    
     this.activatedRoute.queryParams
       .subscribe(params => {
         if (params['openNewDialog'] === 'true') {
@@ -246,12 +251,24 @@ export class PartnerComponent implements OnDestroy, OnInit {
     });
   }
 
+  // Handler for refresh-listview events to refresh partner cache
+  private refreshPartnerCacheHandler = () => {
+    this.cachedDataService.refreshPartners();
+  };
+
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
+    // Clean up event listener
+    window.removeEventListener('refresh-listview', this.refreshPartnerCacheHandler);
   }
 
   _handleOnRecordCreation(newRecordData: any) {
     if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
+      // Refresh partner cache to include the newly created partner
+      this.cachedDataService.refreshPartners();
+      
+      // Trigger refresh of the list view to show the new partner
+      window.dispatchEvent(new CustomEvent('refresh-listview'));
       
       this.router.navigate(['partnerships/partners', newRecordData.id.toString()]);
     } else {
