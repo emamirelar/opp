@@ -10,6 +10,8 @@ public interface IUserProfileCacheService
     Task SetCachedUserProfileAsync(string userId, object userProfile);
     void InvalidateUserProfileCache(string userId);
     string GetCacheKey(string userId);
+    Task<Dictionary<int, string>> GetCachedUserNamesBatchAsync(IEnumerable<int> userIds);
+    Task SetCachedUserNamesBatchAsync(Dictionary<int, string> userNames);
 }
 
 public class UserProfileCacheService : IUserProfileCacheService
@@ -83,6 +85,65 @@ public class UserProfileCacheService : IUserProfileCacheService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error invalidating user profile cache for user: {UserId}", userId);
+        }
+    }
+
+    public async Task<Dictionary<int, string>> GetCachedUserNamesBatchAsync(IEnumerable<int> userIds)
+    {
+        var result = new Dictionary<int, string>();
+        var uncachedUserIds = new List<int>();
+
+        try
+        {
+            foreach (var userId in userIds.Where(id => id > 0))
+            {
+                var cacheKey = GetCacheKey(userId.ToString());
+                if (_cache.TryGetValue(cacheKey, out var cachedName) && cachedName is string userName)
+                {
+                    result[userId] = userName;
+                }
+                else
+                {
+                    uncachedUserIds.Add(userId);
+                }
+            }
+
+            _logger.LogDebug("Retrieved {CachedCount} user names from cache, {UncachedCount} need to be loaded", 
+                result.Count, uncachedUserIds.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving user names from cache");
+            // Return empty result and let caller handle all users as uncached
+            return new Dictionary<int, string>();
+        }
+
+        return result;
+    }
+
+    public async Task SetCachedUserNamesBatchAsync(Dictionary<int, string> userNames)
+    {
+        try
+        {
+            var cacheOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = CacheExpiration,
+                SlidingExpiration = TimeSpan.FromMinutes(15),
+                Priority = CacheItemPriority.Normal
+            };
+
+            foreach (var kvp in userNames)
+            {
+                var cacheKey = GetCacheKey(kvp.Key.ToString());
+                _cache.Set(cacheKey, kvp.Value, cacheOptions);
+            }
+
+            _logger.LogDebug("Cached {Count} user names, expires in: {Expiration}", 
+                userNames.Count, CacheExpiration);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error caching user names batch");
         }
     }
 }
