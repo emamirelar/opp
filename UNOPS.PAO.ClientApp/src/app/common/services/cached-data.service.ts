@@ -176,6 +176,7 @@ export class CachedDataService {
     this.allPartnerLevyTreatmentData.set([]);
     this.allPartnerScopesData.set([]);
     this.allPartnersData.set([]);
+    this.allContactsData.set([]);
     this.allOrganizationUnitsData.set([]);
     this.allPartnerCategoriesData.set([]);
     this.partnerCategoryGroupData.set([]); // Clear category and group structure    
@@ -519,6 +520,26 @@ export class CachedDataService {
         }
       });
     }
+  }
+
+  /**
+   * Forces a refresh of the partners cache by clearing current data and reloading
+   */
+  refreshPartners(){
+    // Clear current cache
+    this.allPartnersData.set([]);
+    // Reload from API
+    this.loadPartners();
+  }
+
+  /**
+   * Forces a refresh of the contacts cache by clearing current data and reloading
+   */
+  refreshContacts(){
+    // Clear current cache
+    this.allContactsData.set([]);
+    // Reload from API
+    this.loadContacts();
   }
 
   loadOrganizationUnits() {
