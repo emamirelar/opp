@@ -279,7 +279,7 @@
       "partnerCategory": "Partner Category",
       "partnerTeam": "Partner Team",
       "partnerDescription": "Partner Description",
-      "partnerShortDescription": "Partner Short Description", 
+      "partnerShortDescription": "Partner Short Description",
       "partnerLongDescription": "Partner Long Description",
       "partnerLiaisonOffice": "Partner Liaison Office",
       "partnerFocalPoint": "Partner Focal Point",
@@ -764,7 +764,7 @@
     "formatMarkdownSections": "Format the response in markdown with clear sections.",
     "promptTips": {
       "beSpecific": "Be specific and clear in your instructions",
-      "usePlaceholder": "Use {promptData} placeholder for dynamic content", 
+      "usePlaceholder": "Use {promptData} placeholder for dynamic content",
       "testBefore": "Test your prompts before saving",
       "structureWell": "Structure your prompts with clear roles and tasks",
       "useExamples": "Provide examples of expected output format"
@@ -1264,7 +1264,7 @@
           "description": "This section shows which organizational unit is responsible for or associated with this interaction."
         },
         "auditPanel": {
-          "title": "Audit Information",
+          "title": "History",
           "description": "This section displays audit trail information including who created and last modified the interaction, along with timestamps."
         },
         "tourControl": {
@@ -1541,21 +1541,21 @@
     "duplicates": "duplicates",
     "confidenceLevels": "Confidence Levels",
     "highConfidence": "High Confidence",
-    "mediumConfidence": "Medium Confidence", 
+    "mediumConfidence": "Medium Confidence",
     "lowConfidence": "Low Confidence",
     "matchedFields": "Matched Fields",
     "viewDetails": "View Details",
     "noDuplicatesFound": "No duplicates found",
     "duplicateTooltip": "duplicate(s) found",
     "highConfidenceTooltip": "high confidence",
-    "mediumConfidenceTooltip": "medium confidence", 
+    "mediumConfidenceTooltip": "medium confidence",
     "lowConfidenceTooltip": "low confidence",
     "uniqueRecordTooltip": "Unique record - no duplicates found",
     "entityId": "ID",
     "searchType": "Search Type",
     "duplicate": "Duplicate",
     "contactDuplicateDetected": "Duplicate Contact Detected",
-    "partnerDuplicateDetected": "Duplicate Partner Detected", 
+    "partnerDuplicateDetected": "Duplicate Partner Detected",
     "interactionDuplicateDetected": "Duplicate Interaction Detected",
     "contactDuplicateSummary": "Contact Duplicate Summary",
     "partnerDuplicateSummary": "Partner Duplicate Summary",
@@ -1565,7 +1565,7 @@
     "matchReason": "Match Reason",
     "viewRecord": "View Record",
     "createContactAnyway": "Create Contact Anyway",
-    "createPartnerAnyway": "Create Partner Anyway", 
+    "createPartnerAnyway": "Create Partner Anyway",
     "createInteractionAnyway": "Create Interaction Anyway",
     "warningTitle": "Warning",
     "warningMessage": "Creating this record may result in duplicate data. Please review the match details above before proceeding."
