@@ -216,7 +216,8 @@ export class InteractionDetailComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/partnerships/interactions']);
+    // Use browser history to go back to the previous page
+    window.history.back();
   }
 
   getInteractionIcon(type: InteractionType): string {

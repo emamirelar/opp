@@ -142,22 +142,28 @@ namespace UNOPS.PAO.Presentation.Controllers
         /// <param name="pageSize">Number of items per page (default: 20)</param>
         /// <param name="orderBy">Field to order results by (optional)</param>
         /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
+        /// <param name="partnerId">Optional partner ID to filter interactions by specific partner</param>
+        /// <param name="contactId">Optional contact ID to filter interactions by specific contact</param>
         /// <example_uses>
         /// Show me all interactions
         /// List all interactions in the system
         /// Display the interaction history
         /// Get all interaction records
         /// Browse interactions
+        /// Show interactions for partner 123
+        /// Show interactions for contact 456
         /// </example_uses>
-        /// <when_to_use>Use this when the user wants to see ALL interactions without any search criteria or when asking for a general interaction list.</when_to_use>
-        /// <returns>Paginated list of all interactions</returns>
+        /// <when_to_use>Use this when the user wants to see ALL interactions without any search criteria or when asking for a general interaction list. Can be filtered by partner or contact.</when_to_use>
+        /// <returns>Paginated list of all interactions, optionally filtered by partner or contact</returns>
         [HttpGet(APIDictionary.Interaction)]
         [AccessControlled(EntityTypes.Interaction, "read")]
         public async Task<ActionResult> ListAllInteractions(
             [FromQuery] int pageIndex = 1,
             [FromQuery] int pageSize = 20,
             [FromQuery] string? orderBy = null,
-            [FromQuery] bool ascending = true)
+            [FromQuery] bool ascending = true,
+            [FromQuery] int? partnerId = null,
+            [FromQuery] int? contactId = null)
         {
             // Validate model state first
             var modelValidationResult = ValidateModelState();
@@ -181,7 +187,9 @@ namespace UNOPS.PAO.Presentation.Controllers
                     PageIndex = pageIndex,
                     PageSize = pageSize,
                     OrderBy = orderBy,
-                    Ascending = ascending
+                    Ascending = ascending,
+                    PartnerId = partnerId,
+                    ContactId = contactId
                 };
                 
                 // Return all interactions with secure pagination
