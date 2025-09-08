@@ -198,10 +198,21 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
           this.partnerTreeService.deletePartnerLevel(this.record.id.toString()).subscribe({
             next: (data: any) => {
               this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
-              this.dialogRef.close(data);
+              
+              // Force refresh of cached partner data
+              this.cachedDataService.refreshPartners();
+              
+              // Close with success indicator to trigger list refresh
+              this.dialogRef.close({ success: true, deleted: true, data: data });
+            },
+            error: (error: any) => {
+              this.feedbackDialogService.showErrorToast({ detail: 'Failed to delete record' });
             }
           });
         }
+      },
+      error: (error: any) => {
+        this.feedbackDialogService.showErrorToast({ detail: 'Failed to update record status' });
       }
     });
   }

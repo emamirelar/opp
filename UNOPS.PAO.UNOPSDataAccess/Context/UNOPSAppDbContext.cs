@@ -93,6 +93,12 @@ public class UNOPSAppDbContext : AppDbContext
         modelBuilder
             .Entity<UNOPSLink>();
 
+        // Configure PartnerTree Id to be auto-generated
+        modelBuilder
+            .Entity<PartnerTree>()
+            .Property(p => p.Id)
+            .ValueGeneratedOnAdd();
+
         // Complete discriminator configuration for PartnerTree inheritance hierarchy
         modelBuilder
             .Entity<UNOPSPartnerTree>()
