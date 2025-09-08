@@ -73,6 +73,7 @@ public interface IPartnerSearchFilter : ISearchFilter, IOrgUnitFilter
     string? AddressStateProvince { get; set; }
     string? AddressPostalCode { get; set; }
     string? AddressCountry { get; set; }
+    string? PartnerGroupCode { get; set; }
 }
 
 /// <summary>
