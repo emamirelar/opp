@@ -131,6 +131,32 @@ public class UserProfileController : BaseController
 
     #endregion
 
+    #region Helper Methods
+
+    /// <summary>
+    /// Finds a user by email using case-insensitive lookup
+    /// </summary>
+    /// <param name="email">Email address to search for</param>
+    /// <returns>PAOIdentityUser if found, null otherwise</returns>
+    private async Task<PAOIdentityUser?> FindUserByEmailCaseInsensitiveAsync(string email)
+    {
+        // First try the direct lookup (this will work if emails match exactly)
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user != null)
+        {
+            return user;
+        }
+
+        // If not found, try case-insensitive lookup
+        // Get all users and find by case-insensitive email comparison
+        var normalizedEmail = email.ToLower();
+        user = _userManager.Users.FirstOrDefault(u => u.Email != null && u.Email.ToLower() == normalizedEmail);
+        
+        return user;
+    }
+
+    #endregion
+
     #region UserInfoController Endpoints
 
     /// <summary>
@@ -184,15 +210,16 @@ public class UserProfileController : BaseController
         // Use provided email parameter if available, otherwise fall back to claims
         if (!string.IsNullOrEmpty(email))
         {
-            currentEmail = email;
+            currentEmail = email.ToLower(); // Normalize to lowercase for case-insensitive lookups
         }
         else
         {
             // Try multiple ways to get the current user's email from claims as fallback
-            currentEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? 
-                          User.FindFirst("email")?.Value ?? 
-                          User.Identity?.Name ?? 
-                          _userResolverService.GetUserEmail();
+            var claimEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? 
+                            User.FindFirst("email")?.Value ?? 
+                            User.Identity?.Name ?? 
+                            _userResolverService.GetUserEmail();
+            currentEmail = claimEmail?.ToLower(); // Normalize to lowercase for case-insensitive lookups
         }
         
         if (string.IsNullOrEmpty(currentEmail))
@@ -211,7 +238,7 @@ public class UserProfileController : BaseController
         {
             try
             {
-                var aspNetUser = await _userManager.FindByEmailAsync(currentEmail);
+                var aspNetUser = await FindUserByEmailCaseInsensitiveAsync(currentEmail);
                 if (aspNetUser != null)
                 {
                     userRoles = (await _userManager.GetRolesAsync(aspNetUser)).ToList();
@@ -240,7 +267,7 @@ public class UserProfileController : BaseController
         UserPreference? userPreferences = null;
         try
         {
-            var aspNetUser = await _userManager.FindByEmailAsync(currentEmail);
+            var aspNetUser = await FindUserByEmailCaseInsensitiveAsync(currentEmail);
             if (aspNetUser != null)
             {
                 userPreferences = await _userPreferenceService.GetUserPreferencesAsync(aspNetUser.Id.ToString());
