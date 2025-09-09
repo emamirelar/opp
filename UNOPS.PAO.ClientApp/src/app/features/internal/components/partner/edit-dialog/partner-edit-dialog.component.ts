@@ -12,6 +12,7 @@ import { DuplicateConfirmationDialogComponent } from '../../../components/contac
 
 //Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { UserSearchService } from '../../../../../common/services/user-search.service';
 import { LanguageService } from '../../../../../common/services/language.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 
@@ -180,6 +181,24 @@ export class PartnerEditDialogComponent implements OnInit {
   allPartnerCategoriesData = this.cachedDataService.getPartnerCategoriesForSelect;
   allLiaisonOfficesData = this.cachedDataService.allLiaisonOffices;
   allUsersData = this.cachedDataService.allUsers;
+  userSearchService = inject(UserSearchService);
+  
+  // User management signals for focal point selection
+  userSearchResults = signal<any[]>([]);
+  isSearchingUsers = this.userSearchService.isSearching;
+  
+  // Combined users for dropdown options - backend handles selected user persistence
+  availableUsers = computed(() => {
+    const searchResults = this.userSearchResults() || [];
+    
+    // When search results exist, use them (backend includes selected user automatically)
+    if (searchResults.length > 0) {
+      return searchResults;
+    }
+    
+    // Otherwise use cached users for initial display
+    return this.allUsersData() || [];
+  });
 
   // Computed properties for approval section
   // Show "Reason for Levy" only when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied"
@@ -241,6 +260,36 @@ export class PartnerEditDialogComponent implements OnInit {
     return selectedUnit ? selectedUnit.name : this.translateService.instant('label.partner.selectPartnerOrgUnit');
   });
   allPartnerGroupsForSelect = this.cachedDataService.getPartnerGroupsForSelect;
+
+
+  /**
+   * Handles server-side user search triggered by select filter
+   */
+  onFocalPointUserSearch(event: any): void {
+    // Handle both direct string and event object with filter property
+    const searchTerm = typeof event === 'string' ? event : event?.filter || '';
+    
+    // Get currently selected focal point user ID to ensure it remains visible
+    const selectedFocalPointUserId = this.formGroup.get('partnerFocalPointUserId')?.value;
+    const selectedUserIds = selectedFocalPointUserId ? [selectedFocalPointUserId] : [];
+    
+    // If no search term and no selected user, clear results
+    if ((!searchTerm || searchTerm.length < 2) && selectedUserIds.length === 0) {
+      this.userSearchResults.set([]);
+      return;
+    }
+
+    this.userSearchService.searchUsers(searchTerm, 50, selectedUserIds).subscribe({
+      next: (users) => {
+        this.userSearchResults.set(users);
+      },
+      error: (error) => {
+        console.warn('Focal point user search failed:', error);
+        this.userSearchResults.set([]);
+      }
+    });
+  }
+
   recordId: string = '';
   recordData = signal<any>({});
   showCommentDialog = false;
@@ -336,6 +385,19 @@ export class PartnerEditDialogComponent implements OnInit {
           }
           
           this.formGroup.patchValue(formData);
+          
+          // Ensure focal point user is available in dropdown if selected
+          const focalPointUserId = this.formGroup.get('partnerFocalPointUserId')?.value;
+          if (focalPointUserId) {
+            this.userSearchService.searchUsers('', 50, [focalPointUserId]).subscribe({
+              next: (users) => {
+                this.userSearchResults.set(users);
+              },
+              error: (error) => {
+                console.warn('Failed to load focal point user for editing:', error);
+              }
+            });
+          }
           
           // Initialize the partnerLevyStatus signal after patching form data
           this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
@@ -486,6 +548,19 @@ export class PartnerEditDialogComponent implements OnInit {
         }
         
         this.formGroup.patchValue(formData);
+        
+        // Ensure focal point user is available in dropdown if selected
+        const focalPointUserId = this.formGroup.get('partnerFocalPointUserId')?.value;
+        if (focalPointUserId) {
+          this.userSearchService.searchUsers('', 50, [focalPointUserId]).subscribe({
+            next: (users) => {
+              this.userSearchResults.set(users);
+            },
+            error: (error) => {
+              console.warn('Failed to load focal point user for editing:', error);
+            }
+          });
+        }
         
         // Initialize the partnerLevyStatus signal after patching form data
         this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');

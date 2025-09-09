@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect, computed } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
+import { UserSearchService } from '../../../../../common/services/user-search.service';
+import { UserProfileService } from '../../../../../common/services/user-profile.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
@@ -124,6 +126,8 @@ export class InteractionModalComponent {
   }));
 
   cachedDataService = inject(CachedDataService);
+  userSearchService = inject(UserSearchService);
+  userProfileService = inject(UserProfileService);
 
   //contacts: Contact[] = [];
   //partners: Partner[] = [];
@@ -134,25 +138,41 @@ export class InteractionModalComponent {
   allContacts = this.cachedDataService.allContacts;
   allPartners = this.cachedDataService.allPartners;
   allUsers = this.cachedDataService.allUsers;
+  
+  // User management signals - separate for Users multi-select and Created By single-select
+  userSearchResults = signal<any[]>([]); // For Users multi-select field
+  createdBySearchResults = signal<any[]>([]); // For Created By single-select field
+  isSearchingUsers = this.userSearchService.isSearching;
+  
+  // Combined users for Users multi-select dropdown - backend handles selected user persistence
+  availableUsers = computed(() => {
+    const searchResults = this.userSearchResults() || [];
+    
+    // When search results exist, use them (backend includes selected users automatically)
+    if (searchResults.length > 0) {
+      return searchResults;
+    }
+    
+    // Otherwise use cached users for initial display
+    return this.allUsers() || [];
+  });
+
+  // Combined users for Created By single-select dropdown - backend handles selected user persistence
+  availableCreatedByUsers = computed(() => {
+    const searchResults = this.createdBySearchResults() || [];
+    
+    // When search results exist, use them (backend includes selected users automatically)
+    if (searchResults.length > 0) {
+      return searchResults;
+    }
+    
+    // Otherwise use cached users for initial display
+    return this.allUsers() || [];
+  });
   // Backend already filters for active organization units
   allOrgUnits = this.cachedDataService.allOrganizationUnits;
   currentUser = this.cachedDataService.currentUser;
 
-  // Signal to track form control changes
-  private selectedOrgUnitsSignal = signal<number[]>([]);
-
-  // Custom counter for selected organization units
-  getSelectedActiveOrgUnitsLabel = computed(() => {
-    const selectedIds = this.selectedOrgUnitsSignal();
-    if (!selectedIds.length) return this.translateService.instant('label.interaction.selectOrganizationUnits');
-
-    // The backend already filters for active records, so we just count selected items
-    const count = selectedIds.length;
-
-    return count === 1
-      ? this.translateService.instant('label.interaction.oneOrganizationUnitSelected')
-      : this.translateService.instant('label.interaction.organizationUnitsSelected', { count });
-  });
 
   // Check if this is an import edit
   get isImportEdit(): boolean {
@@ -194,20 +214,26 @@ export class InteractionModalComponent {
       previousEmails: [[]],
       previousPhones: [[]],
       previousUserIds: [[]],
-      organizationHierarchyIds: [[]]
+      // Organization Unit - Array for backend compatibility
+      organizationHierarchyIds: [[]],
+      // UI FormControl for single select (synced with array)
+      selectedOrgUnitId: [null]
     });
 
     this.setupContactIdsChangeListener();
     this.setupEmailChangeListener();
     this.setupPhoneNumberChangeListener();
     this.setupUserIdsChangeListener();
+    this.setupOrganizationUnitSyncListener();
 
+    // Effect to prepopulate form fields from current user profile (org unit and created by)
     effect(() => {
-      const userId = this.currentUser()?.id;
-      const currentFormUserId = this.formGroup.get('createdBy')?.value;
-
-      if (userId && !currentFormUserId) { // Only set if not already set
-        this.formGroup.patchValue({ createdBy: userId });
+      const orgUnits = this.allOrgUnits();
+      const currentOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
+      const currentCreatedBy = this.formGroup.get('createdBy')?.value;
+      
+      if ((orgUnits && orgUnits.length > 0 && !currentOrgUnitId) || !currentCreatedBy) {
+        this.prepopulateFromCurrentUserProfile();
       }
     });
 
@@ -221,13 +247,35 @@ export class InteractionModalComponent {
     this.recordPermissions = this.permissionUtils.recordPermissions;
   }
 
-  // Helper methods for organization hierarchy FormControl
+  // Signal for tracking selected org unit
+  private selectedOrgUnitSignal = signal<number | null>(null);
+
+  // Helper methods for organization hierarchy FormControls
   setOrganizationHierarchyIds(ids: number[]): void {
-    this.formGroup.get('organizationHierarchyIds')?.setValue(ids || []);
+    // Set the full array from backend
+    const idsArray = ids || [];
+    this.formGroup.get('organizationHierarchyIds')?.setValue(idsArray);
+    
+    // Manually sync the UI control to ensure it updates
+    const firstElement = idsArray.length > 0 ? idsArray[0] : null;
+    this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement);
+    this.selectedOrgUnitSignal.set(firstElement);
   }
 
   getSelectedOrganizationHierarchyIds(): number[] {
+    // Return the full array for backend compatibility
     return this.formGroup.get('organizationHierarchyIds')?.value || [];
+  }
+
+  // Legacy helper method for single ID (converts to array)
+  setOrganizationHierarchyId(id: number | null): void {
+    const idsArray = id ? [id] : [];
+    this.setOrganizationHierarchyIds(idsArray);
+  }
+
+  getSelectedOrganizationHierarchyId(): number | null {
+    const ids = this.getSelectedOrganizationHierarchyIds();
+    return ids.length > 0 ? ids[0] : null;
   }
 
   ngOnInit() {
@@ -306,14 +354,6 @@ export class InteractionModalComponent {
       this.dialogConfig.data.recordPermissions = this.recordPermissions;
     }
 
-    // Track form control changes for organization units counter
-    this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
-      this.selectedOrgUnitsSignal.set(value || []);
-    });
-
-    // Initialize the signal with current form value
-    const currentValue = this.formGroup.get('organizationHierarchyIds')?.value || [];
-    this.selectedOrgUnitsSignal.set(currentValue);
   }
 
   private loadInteractionById(id: number) {
@@ -335,12 +375,16 @@ export class InteractionModalComponent {
   }
 
   private populateForm(record: Interaction) {
-    // Handle organization unit relationships - convert to organizationHierarchyIds for form
-    let organizationHierarchyIds: number[] = [];
-    if (record.organizationUnitRelationships) {
-      organizationHierarchyIds = record.organizationUnitRelationships.map(rel => rel.organizationHierarchyId);
+    // Handle organization unit relationships - extract all IDs for array support
+    const organizationHierarchyIds: number[] = [];
+    if (record.organizationUnitRelationships && record.organizationUnitRelationships.length > 0) {
+      record.organizationUnitRelationships.forEach(rel => {
+        organizationHierarchyIds.push(rel.organizationHierarchyId);
+      });
     }
 
+    // User IDs for form population
+    const userIds = record.userIds || [];
     
     this.formGroup.patchValue({
       id: record.id,
@@ -350,7 +394,7 @@ export class InteractionModalComponent {
       contactId: record.contactId,
       contactIds: record.contactIds || [],
       partnerIds: record.partnerIds || [],
-      userIds: record.userIds || [],
+      userIds: userIds,
       emailAddresses: record.emailAddresses || [],
       phoneNumbers: record.phoneNumbers || [],
       location: record.location,
@@ -359,8 +403,34 @@ export class InteractionModalComponent {
       previousContactIds: record.contactIds || [],
       previousEmails: record.emailAddresses || [],
       previousPhones: record.phoneNumbers || [],
-      previousUserIds: record.userIds || []
+      previousUserIds: userIds
     });
+
+    // Load selected users separately for each field to avoid UI confusion
+    
+    // Ensure Users multi-select field has selected users available
+    if (userIds.length > 0) {
+      this.userSearchService.searchUsers('', 50, userIds).subscribe({
+        next: (users) => {
+          this.userSearchResults.set(users);
+        },
+        error: (error) => {
+          console.warn('Failed to load selected users for Users field:', error);
+        }
+      });
+    }
+    
+    // Ensure Created By single-select field has selected user available
+    if (record.createdBy) {
+      this.userSearchService.searchUsers('', 50, [record.createdBy]).subscribe({
+        next: (users) => {
+          this.createdBySearchResults.set(users);
+        },
+        error: (error) => {
+          console.warn('Failed to load created by user for Created By field:', error);
+        }
+      });
+    }
 
     // Set organization hierarchy IDs using helper method
     this.setOrganizationHierarchyIds(organizationHierarchyIds);
@@ -413,8 +483,8 @@ export class InteractionModalComponent {
       this.formGroup.patchValue({ contactId: formValue.contactId });
     }
 
-    // Keep organizationHierarchyIds as is - no conversion needed
-    // The backend now expects organizationHierarchyIds directly
+    // organizationHierarchyIds is already an array from the form control
+    // No conversion needed as the sync logic handles this
 
     if (this.formGroup.valid) {
       // Clear validation error if form is now valid
@@ -572,15 +642,119 @@ export class InteractionModalComponent {
   // Helper: Get emails for user IDs (only valid matches)
   private getEmailsForUserIds(userIds: number[]): string[] {
     return userIds
-      .map(id => this.allUsers().find(c => c.id === id)?.email)
+      .map(id => this.availableUsers().find(c => c.id === id)?.email)
       .filter((email): email is string => email !== undefined);
   }
 
   // Helper: Get user IDs for emails (only valid matches)
   private getUserIdsForEmails(emails: string[]): number[] {
     return emails
-      .map(email => this.allUsers().find(c => c.email === email)?.id)
+      .map(email => this.availableUsers().find(c => c.email === email)?.id)
       .filter((id): id is number => id !== undefined);
+  }
+
+
+  /**
+   * Prepopulates form fields from current user's profile (org unit and created by)
+   */
+  private prepopulateFromCurrentUserProfile(): void {
+    this.userProfileService.getCurrentUserProfile().subscribe({
+      next: (response) => {
+        const userProfile = response.userInfoWithOrgSettings;
+        
+        // Prepopulate Organization Unit from user's org unit code
+        if (userProfile?.orgUnit) {
+          const currentOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
+          if (!currentOrgUnitId) {
+          // Find matching organization unit by code
+          const orgUnits = this.allOrgUnits() || [];
+          const matchingOrgUnit = orgUnits.find((unit: any) => 
+            unit.code && unit.code.toLowerCase() === userProfile.orgUnit!.toLowerCase()
+          ) as any;
+          
+          if (matchingOrgUnit?.id) {
+              this.setOrganizationHierarchyId(matchingOrgUnit.id);
+            }
+          }
+        }
+        
+        // Prepopulate Created By with current user ID
+        if (userProfile?.userId) {
+          const currentCreatedBy = this.formGroup.get('createdBy')?.value;
+          if (!currentCreatedBy) { // Only set if not already set
+            this.formGroup.patchValue({ createdBy: userProfile.userId });
+            
+            // Ensure the created by user is available in the dropdown
+            this.userSearchService.searchUsers('', 50, [userProfile.userId]).subscribe({
+              next: (users) => {
+                this.createdBySearchResults.set(users);
+              },
+              error: (error) => {
+                console.warn('Failed to load current user for Created By field:', error);
+              }
+            });
+          }
+        }
+      },
+      error: (error) => {
+        console.warn('Failed to load current user profile for form prepopulation:', error);
+      }
+    });
+  }
+
+  /**
+   * Handles server-side user search triggered by multiselect filter
+   */
+  onUserSearch(event: any): void {
+    // Handle both direct string and event object with filter property
+    const searchTerm = typeof event === 'string' ? event : event?.filter || '';
+    
+    // Get currently selected user IDs to ensure they remain visible
+    const selectedUserIds = this.formGroup.get('userIds')?.value || [];
+    
+    // If no search term and no selected users, clear results
+    if ((!searchTerm || searchTerm.length < 2) && selectedUserIds.length === 0) {
+      this.userSearchResults.set([]);
+      return;
+    }
+
+    this.userSearchService.searchUsers(searchTerm, 50, selectedUserIds).subscribe({
+      next: (users) => {
+        this.userSearchResults.set(users);
+      },
+      error: (error) => {
+        console.warn('User search failed:', error);
+        this.userSearchResults.set([]);
+      }
+    });
+  }
+
+  /**
+   * Handles server-side user search for Created By single-select field
+   */
+  onCreatedByUserSearch(event: any): void {
+    // Handle both direct string and event object with filter property
+    const searchTerm = typeof event === 'string' ? event : event?.filter || '';
+    
+    // Get currently selected Created By user ID to ensure it remains visible
+    const selectedCreatedByUserId = this.formGroup.get('createdBy')?.value;
+    const selectedUserIds = selectedCreatedByUserId ? [selectedCreatedByUserId] : [];
+    
+    // If no search term and no selected user, clear results
+    if ((!searchTerm || searchTerm.length < 2) && selectedUserIds.length === 0) {
+      this.createdBySearchResults.set([]);
+      return;
+    }
+
+    this.userSearchService.searchUsers(searchTerm, 50, selectedUserIds).subscribe({
+      next: (users) => {
+        this.createdBySearchResults.set(users);
+      },
+      error: (error) => {
+        console.warn('Created By user search failed:', error);
+        this.createdBySearchResults.set([]);
+      }
+    });
   }
 
   // Sync when contactIds change (add/remove ONLY matched emails)
@@ -750,6 +924,31 @@ export class InteractionModalComponent {
       });
   }
 
+  private setupOrganizationUnitSyncListener() {
+    // Sync between selectedOrgUnitId (UI) and organizationHierarchyIds (backend array)
+    
+    // When UI FormControl changes, update the array FormControl
+    this.formGroup.get('selectedOrgUnitId')?.valueChanges.subscribe(value => {
+      const newArray = value ? [value] : [];
+      this.formGroup.get('organizationHierarchyIds')?.setValue(newArray, { emitEvent: false });
+      this.selectedOrgUnitSignal.set(value);
+    });
+    
+    // When array FormControl changes (from backend data), update UI FormControl
+    this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
+      const array = value || [];
+      const firstElement = array.length > 0 ? array[0] : null;
+      this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
+      this.selectedOrgUnitSignal.set(firstElement);
+    });
+    
+    // Initialize both controls
+    const currentArray = this.formGroup.get('organizationHierarchyIds')?.value || [];
+    const firstElement = currentArray.length > 0 ? currentArray[0] : null;
+    this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
+    this.selectedOrgUnitSignal.set(firstElement);
+  }
+
   private updatePartnerIdsBasedOnContacts() {
     const selectedContactIds = this.formGroup.get('contactIds')?.value as number[];
 
@@ -789,9 +988,12 @@ export class InteractionModalComponent {
         contactId: data.contactId || this.formGroup.get('contactId')?.value
       });
 
-      // Handle organization hierarchy IDs from AI transcription
-      if (data.organizationHierarchyIds && Array.isArray(data.organizationHierarchyIds)) {
-        this.setOrganizationHierarchyIds(data.organizationHierarchyIds);
+      // Handle organization hierarchy ID from AI transcription
+      if (data.organizationHierarchyId) {
+        this.setOrganizationHierarchyId(data.organizationHierarchyId);
+      } else if (data.organizationHierarchyIds && Array.isArray(data.organizationHierarchyIds) && data.organizationHierarchyIds.length > 0) {
+        // For backward compatibility, take the first one if array is provided
+        this.setOrganizationHierarchyId(data.organizationHierarchyIds[0]);
       }
     }
   }

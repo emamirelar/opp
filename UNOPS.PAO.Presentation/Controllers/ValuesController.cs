@@ -110,6 +110,18 @@ public class ValuesController : BaseController
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUsers()));
     }
 
+    [HttpPost(APIDictionary.Users + "/paged")]
+    public async Task<ActionResult> GetUsersPaged([FromBody] UsersPagedRequest request)
+    {
+        return await HandleOperationAsync(async () => await _manager.GetUsersPagedAsync(request));
+    }
+
+    [HttpGet(APIDictionary.Users + "/search")]
+    public async Task<ActionResult> SearchUsers([FromQuery] string? searchTerm = null, [FromQuery] int maxResults = 20, [FromQuery] int[]? selectedUserIds = null)
+    {
+        return await HandleOperationAsync(async () => await _manager.SearchUsersAsync(searchTerm, maxResults, selectedUserIds));
+    }
+
     [HttpGet(APIDictionary.GeminiModels)]
     public async Task<ActionResult> GetGeminiModels()
     {

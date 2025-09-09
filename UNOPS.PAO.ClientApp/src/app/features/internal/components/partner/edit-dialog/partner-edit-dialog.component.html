@@ -86,7 +86,7 @@
         <!-- Partner Focal Point -->
         <div class="flex flex-col gap-2">
         <label for="partnerFocalPointUserId">{{ 'label.partner.partnerFocalPoint' | translate }}</label>
-        <p-select formControlName="partnerFocalPointUserId" [options]="allUsersData()"
+        <p-select formControlName="partnerFocalPointUserId" [options]="availableUsers()"
                   optionLabel="name"
                   optionValue="id"
                   [filter]="true"
@@ -94,8 +94,20 @@
                   [showClear]="true"
                   placeholder="{{ 'label.partner.selectPartnerFocalPoint' | translate }}"
                   [appendTo]="'body'"
+                  [loading]="isSearchingUsers()"
+                  (onFilter)="onFocalPointUserSearch($event)"
+                  [resetFilterOnHide]="true"
                   fluid="true" id="partnerFocalPointUserId"
-                  [ariaLabel]="'aria.selectPartnerFocalPoint' | translate" />
+                  [ariaLabel]="'aria.selectPartnerFocalPoint' | translate">
+            <ng-template let-user #item>
+              <div class="flex items-center gap-2">
+                <span class="font-medium">{{ user.name }}</span>
+                @if (user.email !== user.name) {
+                  <span class="text-sm text-gray-500">({{ user.email }})</span>
+                }
+              </div>
+            </ng-template>
+          </p-select>
       </div>
       
         <!-- Partner Liaison Office -->

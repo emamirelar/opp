@@ -575,20 +575,30 @@ export class CachedDataService {
   }
 
   loadUsers() {
-    // Initialize with empty array
+    // OPTIMIZED: Load only initial subset of users instead of all 13,000+
+    // This prevents UI freezing when there are many users
     if (this.allUsersData() === undefined || this.allUsersData().length <= 0) {
       // Default to empty array before API response
       this.allUsersData.set([]);
 
       this.isLoading.set(true);
-      this.http.get('/api/values/users').subscribe({
-        next: (data: any) => {
-          // Ensure data is an array
-          this.allUsersData.set(Array.isArray(data) ? data : []);
+      
+      // Use the new paginated endpoint to load only the first 100 users
+      const initialRequest = {
+        pageIndex: 0,
+        pageSize: 100,
+        activeOnly: true
+      };
+      
+      this.http.post('/api/values/users/paged', initialRequest).subscribe({
+        next: (response: any) => {
+          // Set only the records from the paginated response
+          this.allUsersData.set(response.records || []);
           this.isLoading.set(false);
         },
         error: (err) => {
-          // Keep empty array on error
+          console.warn('Failed to load initial users, falling back to search-only mode:', err);
+          // Keep empty array on error - components should use UserSearchService for dynamic loading
           this.allUsersData.set([]);
           this.isLoading.set(false);
         }
