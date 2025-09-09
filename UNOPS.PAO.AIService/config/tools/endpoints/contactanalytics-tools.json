@@ -1,287 +1,265 @@
 {
   "entity": "ContactAnalytics",
-  "description": "Contact analytics, insights, and activity metrics for analyzing contact engagement, geographic distribution, and interaction patterns",
-  "synonyms": ["contact analytics", "contact insights", "contact metrics", "contact activity", "contact engagement", "contact reports", "contact statistics"],
+  "description": "Manages and provides analytical insights and trends related to contacts, their activities, engagement, and distribution.",
+  "synonyms": [
+    "Contact Insights",
+    "Contact Trends",
+    "Contact Statistics",
+    "Contact Reports",
+    "Contact Data"
+  ],
+  "mandatoryFields": [],
   "endpoints": [
     {
-      "name": "getMostActiveContacts",
-      "description": "Get contacts with highest interaction activity over a specified timeframe",
-      "url": "/api/contact-analytics/getMostActiveContacts",
+      "name": "GetMostActiveContacts",
+      "url": "api/contact-analytics/getMostActiveContacts",
       "method": "GET",
+      "description": "Retrieves contacts with the highest interaction activity within a specified timeframe and based on a given metric.",
       "parameters": {
         "limit": {
           "type": "integer",
-          "description": "Number of contacts to return (default: 10)",
           "required": false,
-          "default": 10
+          "description": ""
         },
         "timeframe": {
           "type": "string",
-          "description": "Time period for analysis: 7d, 30d, 90d, 6m, 1y (default: 30d)",
           "required": false,
-          "default": "30d"
+          "description": ""
         },
         "metric": {
           "type": "string",
-          "description": "Metric to analyze: interactions (default: interactions)",
           "required": false,
-          "default": "interactions"
+          "description": ""
         }
       },
-      "intents": ["search", "analyze", "get", "find"],
-      "examples": [
-        "Get me the most active contacts",
-        "Show contacts with highest engagement",
-        "Find contacts with most interactions",
-        "List top 20 most active contacts in the last 90 days"
-      ]
+      "example_uses": [
+        "Show me the top 5 most active contacts in the last 90 days based on interactions.",
+        "Who are the most active contacts this month?",
+        "List the contacts with the most document views in the last year."
+      ],
+      "when_to_use": "To identify and analyze the most engaged contacts based on their activity."
     },
     {
-      "name": "getContactsByGeographicRegion",
-      "description": "Get contact distribution by geographic regions (country, state, city)",
-      "url": "/api/contact-analytics/getContactsByGeographicRegion",
+      "name": "GetContactsByGeographicRegion",
+      "url": "api/contact-analytics/getContactsByGeographicRegion",
       "method": "GET",
+      "description": "Retrieves the distribution of contacts across different geographic regions, grouped by country or other specified criteria.",
       "parameters": {
         "period": {
           "type": "string",
-          "description": "Time period: 7d, 30d, 90d, 6m, 1y, all (default: all)",
           "required": false,
-          "default": "all"
+          "description": ""
         },
         "minCount": {
           "type": "integer",
-          "description": "Minimum number of contacts required (default: 1)",
           "required": false,
-          "default": 1
+          "description": ""
         },
         "groupBy": {
           "type": "string",
-          "description": "Grouping level: country, state, city (default: country)",
           "required": false,
-          "default": "country"
+          "description": ""
         }
       },
-      "intents": ["search", "analyze", "get", "find"],
-      "examples": [
-        "Show contact distribution by country",
-        "Get contacts grouped by geographic region",
-        "Find contact distribution across regions",
-        "List contacts by country with at least 5 contacts"
-      ]
+      "example_uses": [
+        "Show me the contact distribution by country.",
+        "How many contacts are there in each region, grouped by city?",
+        "List regions with at least 10 contacts."
+      ],
+      "when_to_use": "To understand the geographical spread of contacts and identify regional concentrations."
     },
     {
-      "name": "getContactEngagementTrends",
-      "description": "Get contact engagement trends over time with interaction patterns",
-      "url": "/api/contact-analytics/getContactEngagementTrends",
+      "name": "GetContactEngagementTrends",
+      "url": "api/contact-analytics/getContactEngagementTrends",
       "method": "GET",
+      "description": "Retrieves trends in contact engagement over time, based on specified periods and metrics.",
       "parameters": {
         "period": {
           "type": "string",
-          "description": "Time grouping: daily, monthly (default: monthly)",
           "required": false,
-          "default": "monthly"
+          "description": ""
         },
         "months": {
           "type": "integer",
-          "description": "Number of months to analyze (default: 12)",
           "required": false,
-          "default": 12
+          "description": ""
         },
         "metric": {
           "type": "string",
-          "description": "Metric to analyze: interactions (default: interactions)",
           "required": false,
-          "default": "interactions"
+          "description": ""
         }
       },
-      "intents": ["search", "analyze", "get", "find"],
-      "examples": [
-        "Show contact engagement trends",
-        "Get contact activity over time",
-        "Find engagement patterns for contacts",
-        "Analyze contact interaction trends over the last 6 months"
-      ]
+      "example_uses": [
+        "Show me the monthly contact engagement trends for the last 12 months.",
+        "What are the quarterly engagement trends based on interactions?",
+        "Analyze contact engagement trends over the past two years."
+      ],
+      "when_to_use": "To monitor and analyze how contact engagement changes over time."
     },
     {
-      "name": "getContactsByInteractionType",
-      "description": "Get contacts grouped by interaction types (Email, Call, Meeting, etc.)",
-      "url": "/api/contact-analytics/getContactsByInteractionType",
+      "name": "GetContactsByInteractionType",
+      "url": "api/contact-analytics/getContactsByInteractionType",
       "method": "GET",
+      "description": "Retrieves contacts based on specific interaction types within a given date range.",
       "parameters": {
         "type": {
           "type": "string",
-          "description": "Interaction type filter: Email, Chat, Call, VirtualMeeting, InPersonMeeting, Other",
-          "required": false
+          "required": false,
+          "description": ""
         },
         "startDate": {
-          "type": "datetime",
-          "description": "Start date for filtering interactions",
-          "required": false
+          "type": "string",
+          "required": false,
+          "description": ""
         },
         "endDate": {
-          "type": "datetime",
-          "description": "End date for filtering interactions",
-          "required": false
+          "type": "string",
+          "required": false,
+          "description": ""
         },
         "limit": {
           "type": "integer",
-          "description": "Number of contacts to return (default: 20)",
           "required": false,
-          "default": 20
+          "description": ""
         }
       },
-      "intents": ["search", "analyze", "get", "find"],
-      "examples": [
-        "Show contacts by interaction type",
-        "Get contacts who prefer email communication",
-        "Find contacts with most meeting interactions",
-        "List contacts grouped by communication preferences"
-      ]
+      "example_uses": [
+        "Show me contacts who had 'meeting' interactions last month.",
+        "List contacts involved in 'email' interactions between January and March.",
+        "Find contacts with any interaction type in the last week."
+      ],
+      "when_to_use": "To filter contacts by the nature of their interactions and specific timeframes."
     },
     {
-      "name": "getContactsByPartner",
-      "description": "Get contact distribution across partners with engagement metrics",
-      "url": "/api/contact-analytics/getContactsByPartner",
+      "name": "GetContactsByPartner",
+      "url": "api/contact-analytics/getContactsByPartner",
       "method": "GET",
+      "description": "Retrieves the distribution of contacts associated with different partners.",
       "parameters": {
         "minContacts": {
           "type": "integer",
-          "description": "Minimum number of contacts per partner (default: 1)",
           "required": false,
-          "default": 1
+          "description": ""
         },
         "includeInactive": {
           "type": "boolean",
-          "description": "Include inactive contacts (default: false)",
           "required": false,
-          "default": false
+          "description": ""
         }
       },
-      "intents": ["search", "analyze", "get", "find"],
-      "examples": [
-        "Show contact distribution by partner",
-        "Get contacts grouped by partner organization",
-        "Find which partners have most contacts",
-        "List partner contact ratios"
-      ]
+      "example_uses": [
+        "Show me the number of contacts per partner.",
+        "List partners with at least 5 contacts.",
+        "Include inactive partners when showing contact distribution."
+      ],
+      "when_to_use": "To understand how contacts are distributed among various partners."
     },
     {
-      "name": "getRecentlyActiveContacts",
-      "description": "Get recently active contacts with interaction history",
-      "url": "/api/contact-analytics/getRecentlyActiveContacts",
+      "name": "GetRecentlyActiveContacts",
+      "url": "api/contact-analytics/getRecentlyActiveContacts",
       "method": "GET",
+      "description": "Retrieves contacts who have been recently active within a specified number of days.",
       "parameters": {
         "days": {
           "type": "integer",
-          "description": "Number of days to look back (default: 30)",
           "required": false,
-          "default": 30
+          "description": ""
         },
         "limit": {
           "type": "integer",
-          "description": "Number of contacts to return (default: 20)",
           "required": false,
-          "default": 20
+          "description": ""
         },
         "sortBy": {
           "type": "string",
-          "description": "Sort by: lastInteraction, interactionCount (default: lastInteraction)",
           "required": false,
-          "default": "lastInteraction"
+          "description": ""
         }
       },
-      "intents": ["search", "analyze", "get", "find"],
-      "examples": [
-        "Show recently active contacts",
-        "Get contacts active in the last week",
-        "Find contacts with recent interactions",
-        "List recently engaged contacts"
-      ]
+      "example_uses": [
+        "Show me the 10 most recently active contacts in the last 7 days.",
+        "Who are the contacts active in the last 30 days, sorted by their last interaction?",
+        "List recently active contacts."
+      ],
+      "when_to_use": "To quickly identify contacts who have shown recent activity."
     },
     {
-      "name": "getContactsByJobTitle",
-      "description": "Get contact distribution by job titles with optional interaction data",
-      "url": "/api/contact-analytics/getContactsByJobTitle",
+      "name": "GetContactsByJobTitle",
+      "url": "api/contact-analytics/getContactsByJobTitle",
       "method": "GET",
+      "description": "Retrieves contact activity grouped by job titles.",
       "parameters": {
         "minContacts": {
           "type": "integer",
-          "description": "Minimum number of contacts per title (default: 1)",
           "required": false,
-          "default": 1
+          "description": ""
         },
         "includeInteractions": {
           "type": "boolean",
-          "description": "Include interaction counts (default: false)",
           "required": false,
-          "default": false
+          "description": ""
         }
       },
-      "intents": ["search", "analyze", "get", "find"],
-      "examples": [
-        "Show contacts by job title",
-        "Get contact distribution by roles",
-        "Find most common job titles among contacts",
-        "List contacts grouped by professional roles"
-      ]
+      "example_uses": [
+        "Show me contacts grouped by their job titles.",
+        "List job titles with at least 5 contacts.",
+        "Include interaction counts when grouping contacts by job title."
+      ],
+      "when_to_use": "To analyze contact distribution and activity based on their professional roles."
     },
     {
-      "name": "getContactGrowthTrends",
-      "description": "Get contact growth trends over time with cumulative totals",
-      "url": "/api/contact-analytics/getContactGrowthTrends",
+      "name": "GetContactGrowthTrends",
+      "url": "api/contact-analytics/getContactGrowthTrends",
       "method": "GET",
+      "description": "Retrieves trends in contact growth over time.",
       "parameters": {
         "period": {
           "type": "string",
-          "description": "Time grouping: daily, monthly (default: monthly)",
           "required": false,
-          "default": "monthly"
+          "description": ""
         },
         "months": {
           "type": "integer",
-          "description": "Number of months to analyze (default: 12)",
           "required": false,
-          "default": 12
+          "description": ""
         }
       },
-      "intents": ["search", "analyze", "get", "find"],
-      "examples": [
-        "Show contact growth trends",
-        "Get contact creation patterns over time",
-        "Find contact growth rate",
-        "Analyze new contact acquisition trends"
-      ]
+      "example_uses": [
+        "Show me the monthly contact growth trends for the last year.",
+        "What is the quarterly contact growth trend?",
+        "Analyze contact growth over the past 6 months."
+      ],
+      "when_to_use": "To monitor and analyze the rate of new contact acquisition over time."
     },
     {
-      "name": "getContactsWithMostDocuments",
-      "description": "Get contacts with most associated documents and file details",
-      "url": "/api/contact-analytics/getContactsWithMostDocuments",
+      "name": "GetContactsWithMostDocuments",
+      "url": "api/contact-analytics/getContactsWithMostDocuments",
       "method": "GET",
+      "description": "Retrieves contacts who have the most associated documents within a specified date range.",
       "parameters": {
         "limit": {
           "type": "integer",
-          "description": "Number of contacts to return (default: 10)",
           "required": false,
-          "default": 10
+          "description": ""
         },
         "startDate": {
-          "type": "datetime",
-          "description": "Start date for filtering documents",
-          "required": false
+          "type": "string",
+          "required": false,
+          "description": ""
         },
         "endDate": {
-          "type": "datetime",
-          "description": "End date for filtering documents",
-          "required": false
+          "type": "string",
+          "required": false,
+          "description": ""
         }
       },
-      "intents": ["search", "analyze", "get", "find"],
-      "examples": [
-        "Show contacts with most documents",
-        "Get contacts with highest document activity",
-        "Find contacts with most file associations",
-        "List contacts by document count"
-      ]
+      "example_uses": [
+        "Show me the top 5 contacts with the most documents.",
+        "List contacts with the most documents uploaded last quarter.",
+        "Find contacts with the highest number of documents between specific dates."
+      ],
+      "when_to_use": "To identify contacts who are heavily involved in document exchange or creation."
     }
   ]
 }

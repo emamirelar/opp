@@ -150,8 +150,8 @@ public class PartnerController : BaseController
     /// </summary>
     /// <param name="pageIndex">Page number (1-based, default: 1)</param>
     /// <param name="pageSize">Number of items per page (default: 20)</param>
-    /// <param name="orderBy">Field to order results by (optional)</param>
-    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
+    /// <param name="orderBy">Field to order results by (default: 'createdDate')</param>
+    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: false for newest first)</param>
     /// <example_uses>
     /// Show me all partners
     /// List all partners in the system
@@ -165,9 +165,9 @@ public class PartnerController : BaseController
     [AccessControlled(EntityTypes.Partner, "read")]
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> ListAllPartners(
         [FromQuery] int pageIndex = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = null,
-        [FromQuery] bool ascending = true)
+        [FromQuery] int pageSize = 5,
+        [FromQuery] string? orderBy = "CreatedDate",
+        [FromQuery] bool ascending = false)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
@@ -180,7 +180,7 @@ public class PartnerController : BaseController
             {
                 PageIndex = pageIndex,
                 PageSize = pageSize,
-                OrderBy = orderBy,
+                OrderBy = orderBy ?? "createdDate",
                 Ascending = ascending
             };
             
@@ -228,13 +228,13 @@ public class PartnerController : BaseController
             {
                 PageIndex = request.PageIndex,
                 PageSize = request.PageSize,
-                OrderBy = request.OrderBy,
+                OrderBy = request.OrderBy ?? "createdDate",
                 Ascending = request.Ascending,
                 SearchText = searchText
             };
 
             return await SearchControllerHelper.ProcessSimpleTextSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
-                searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
+                searchText, request.PageIndex, request.PageSize, request.OrderBy ?? "createdDate", request.Ascending,
                 partnerFilterRequest,
                 "Partner",
                 filterRequest => new PartnerCompositeSpecification(filterRequest),
@@ -291,7 +291,7 @@ public class PartnerController : BaseController
             {
                 PageIndex = request.PageIndex,
                 PageSize = request.PageSize,
-                OrderBy = request.OrderBy,
+                OrderBy = request.OrderBy ?? "createdDate",
                 Ascending = request.Ascending,
                 SearchCriteria = searchCriteria,
                 SearchText = searchText,
@@ -299,7 +299,7 @@ public class PartnerController : BaseController
             };
 
             return await SearchControllerHelper.ProcessAdvancedSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
-                searchCriteria, searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending, 
+                searchCriteria, searchText, request.PageIndex, request.PageSize, request.OrderBy ?? "createdDate", request.Ascending, 
                 partnerFilterRequest,
                 "Partner",
                 filterRequest => new PartnerCompositeSpecification(filterRequest),
@@ -377,8 +377,8 @@ public class PartnerController : BaseController
     /// <param name="partnerId">Partner ID to get engagements for</param>
     /// <param name="pageIndex">Page number (1-based, default: 1)</param>
     /// <param name="pageSize">Number of items per page (default: 20)</param>
-    /// <param name="orderBy">Field to order results by (optional)</param>
-    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
+    /// <param name="orderBy">Field to order results by (default: 'createdDate')</param>
+    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: false for newest first)</param>
     /// <example_uses>
     /// Show all engagements for partner 123
     /// List partner's project engagements
@@ -394,12 +394,12 @@ public class PartnerController : BaseController
         int partnerId,
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = null,
-        [FromQuery] bool ascending = true)
+        [FromQuery] string? orderBy = "CreatedDate",
+        [FromQuery] bool ascending = false)
     {
         try
         {
-            var result = await _manager.GetPartnerEngagementsAsync(User, partnerId, pageIndex, pageSize, orderBy, ascending);
+            var result = await _manager.GetPartnerEngagementsAsync(User, partnerId, pageIndex, pageSize, orderBy ?? "createdDate", ascending);
             return Ok(result);
         }
         catch (UnauthorizedAccessException)
@@ -423,8 +423,8 @@ public class PartnerController : BaseController
     /// <param name="partnerId">Partner ID to get projects for</param>
     /// <param name="pageIndex">Page number (1-based, default: 1)</param>
     /// <param name="pageSize">Number of items per page (default: 20)</param>
-    /// <param name="orderBy">Field to order results by (optional)</param>
-    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
+    /// <param name="orderBy">Field to order results by (default: 'createdDate')</param>
+    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: false for newest first)</param>
     /// <example_uses>
     /// Show all projects for partner 123
     /// List partner's project portfolio
@@ -439,12 +439,12 @@ public class PartnerController : BaseController
         int partnerId,
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = null,
-        [FromQuery] bool ascending = true)
+        [FromQuery] string? orderBy = "CreatedDate",
+        [FromQuery] bool ascending = false)
     {
         try
         {
-            var result = await _manager.GetPartnerProjectsAsync(User, partnerId, pageIndex, pageSize, orderBy, ascending);
+            var result = await _manager.GetPartnerProjectsAsync(User, partnerId, pageIndex, pageSize, orderBy ?? "createdDate", ascending);
             return Ok(result);
         }
         catch (UnauthorizedAccessException)
@@ -680,6 +680,12 @@ public class PartnerController : BaseController
     {
         try
         {
+            // Ensure default ordering by createdDate if not specified
+            if (string.IsNullOrEmpty(request.OrderBy))
+            {
+                request.OrderBy = "createdDate";
+            }
+            
             var result = await _manager.GetPartnersByPartnerGroupAsync(User, code, request);
             return Ok(result);
         }
@@ -714,6 +720,12 @@ public class PartnerController : BaseController
     {
         try
         {
+            // Ensure default ordering by createdDate if not specified
+            if (string.IsNullOrEmpty(request.OrderBy))
+            {
+                request.OrderBy = "createdDate";
+            }
+            
             var result = await _manager.GetPartnersByCategoryAsync(User, code, request);
             return Ok(result);
         }

@@ -1,20 +1,20 @@
 {
   "entity": "Dashboard",
-  "description": "Manages personalized and organizational summaries of key entities like Partners, Contacts, and Interactions, providing quick access to relevant data and recent activities.",
+  "description": "Manages personalized views and quick access to user-specific partners, contacts, and interactions, including drafts and recent organizational unit updates.",
   "synonyms": [
-    "Summary",
-    "Overview",
+    "My Dashboard",
+    "User Dashboard",
+    "Personalized View",
     "My Data",
-    "Recent Activity",
-    "User Dashboard"
+    "Quick Access"
   ],
   "mandatoryFields": [],
   "endpoints": [
     {
       "name": "GetMyPartners",
-      "url": "api/dashboard/my-partners",
+      "url": "api/dashboard/api/dashboard/my-partners",
       "method": "GET",
-      "description": "Retrieves partners associated with the current user's dashboard, including those created or modified by the user, excluding drafts.",
+      "description": "Retrieves a list of partners associated with the current user's dashboard, including those created or modified by the user, excluding drafts.",
       "parameters": {
         "pageSize": {
           "type": "integer",
@@ -23,17 +23,17 @@
         }
       },
       "example_uses": [
-        "Show me the partners I'm involved with on my dashboard.",
-        "List all partners I've recently worked on.",
-        "Get my dashboard's list of active partners."
+        "Get the partners I'm working on.",
+        "Show me all partners I've recently updated.",
+        "List my active partners on the dashboard."
       ],
-      "when_to_use": "Use this to quickly view a list of partners relevant to the current user's activity, excluding draft records."
+      "when_to_use": "Use this endpoint to quickly view partners relevant to the current user's activities, such as those they created or recently modified, excluding any draft partners."
     },
     {
       "name": "GetMyContacts",
-      "url": "api/dashboard/my-contacts",
+      "url": "api/dashboard/api/dashboard/my-contacts",
       "method": "GET",
-      "description": "Retrieves contacts associated with the current user's dashboard, including those created or modified by the user, excluding drafts.",
+      "description": "Retrieves a list of contacts associated with the current user's dashboard, including those created or modified by the user, excluding drafts.",
       "parameters": {
         "pageSize": {
           "type": "integer",
@@ -42,17 +42,17 @@
         }
       },
       "example_uses": [
-        "Show me the contacts I'm involved with on my dashboard.",
-        "List all contacts I've recently worked on.",
-        "Get my dashboard's list of active contacts."
+        "Get the contacts I'm managing.",
+        "Show me all contacts I've recently interacted with.",
+        "List my active contacts on the dashboard."
       ],
-      "when_to_use": "Use this to quickly view a list of contacts relevant to the current user's activity, excluding draft records."
+      "when_to_use": "Use this endpoint to quickly view contacts relevant to the current user's activities, such as those they created or recently modified, excluding any draft contacts."
     },
     {
       "name": "GetMyDraftPartners",
-      "url": "api/dashboard/my-draft-partners",
+      "url": "api/dashboard/api/dashboard/my-draft-partners",
       "method": "GET",
-      "description": "Retrieves draft partners associated with the current user's dashboard, specifically those created or modified by the user that are still in draft status.",
+      "description": "Retrieves a list of draft partners associated with the current user's dashboard, including those created or modified by the user, specifically those in draft status.",
       "parameters": {
         "pageSize": {
           "type": "integer",
@@ -61,17 +61,17 @@
         }
       },
       "example_uses": [
-        "Show me the draft partners I'm working on.",
-        "List all partners I've started but not finalized.",
-        "Get my dashboard's list of pending partner records."
+        "Show me my unfinished partner records.",
+        "List all partner drafts I've started.",
+        "What are the draft partners I need to complete?"
       ],
-      "when_to_use": "Use this to view partners that the current user has started creating or modifying but have not yet been published or finalized."
+      "when_to_use": "Use this endpoint to access partners that are still in draft status and are associated with the current user, allowing them to resume work on incomplete records."
     },
     {
       "name": "GetMyDraftContacts",
-      "url": "api/dashboard/my-draft-contacts",
+      "url": "api/dashboard/api/dashboard/my-draft-contacts",
       "method": "GET",
-      "description": "Retrieves draft contacts associated with the current user's dashboard, specifically those created or modified by the user that are still in draft status.",
+      "description": "Retrieves a list of draft contacts associated with the current user's dashboard, including those created or modified by the user, specifically those in draft status.",
       "parameters": {
         "pageSize": {
           "type": "integer",
@@ -80,17 +80,17 @@
         }
       },
       "example_uses": [
-        "Show me the draft contacts I'm working on.",
-        "List all contacts I've started but not finalized.",
-        "Get my dashboard's list of pending contact records."
+        "Show me my unfinished contact records.",
+        "List all contact drafts I've started.",
+        "What are the draft contacts I need to complete?"
       ],
-      "when_to_use": "Use this to view contacts that the current user has started creating or modifying but have not yet been published or finalized."
+      "when_to_use": "Use this endpoint to access contacts that are still in draft status and are associated with the current user, allowing them to resume work on incomplete records."
     },
     {
       "name": "GetMyInteractions",
-      "url": "api/dashboard/my-interactions",
+      "url": "api/dashboard/api/dashboard/my-interactions",
       "method": "GET",
-      "description": "Retrieves interactions associated with the current user's dashboard, including those created or modified by the user, excluding drafts.",
+      "description": "Retrieves a list of interactions associated with the current user's dashboard, including those created or modified by the user, excluding drafts.",
       "parameters": {
         "pageSize": {
           "type": "integer",
@@ -99,17 +99,17 @@
         }
       },
       "example_uses": [
-        "Show me the interactions I'm involved with on my dashboard.",
-        "List all interactions I've recently worked on.",
-        "Get my dashboard's list of active interactions."
+        "Get the interactions I'm involved in.",
+        "Show me all interactions I've recently updated.",
+        "List my active interactions on the dashboard."
       ],
-      "when_to_use": "Use this to quickly view a list of interactions relevant to the current user's activity, excluding draft records."
+      "when_to_use": "Use this endpoint to quickly view interactions relevant to the current user's activities, such as those they created or recently modified, excluding any draft interactions."
     },
     {
       "name": "GetMyDraftInteractions",
-      "url": "api/dashboard/my-draft-interactions",
+      "url": "api/dashboard/api/dashboard/my-draft-interactions",
       "method": "GET",
-      "description": "Retrieves draft interactions associated with the current user's dashboard, specifically those created or modified by the user that are still in draft status.",
+      "description": "Retrieves a list of draft interactions associated with the current user's dashboard, including those created or modified by the user, specifically those in draft status.",
       "parameters": {
         "pageSize": {
           "type": "integer",
@@ -118,15 +118,15 @@
         }
       },
       "example_uses": [
-        "Show me the draft interactions I'm working on.",
-        "List all interactions I've started but not finalized.",
-        "Get my dashboard's list of pending interaction records."
+        "Show me my unfinished interaction records.",
+        "List all interaction drafts I've started.",
+        "What are the draft interactions I need to complete?"
       ],
-      "when_to_use": "Use this to view interactions that the current user has started creating or modifying but have not yet been published or finalized."
+      "when_to_use": "Use this endpoint to access interactions that are still in draft status and are associated with the current user, allowing them to resume work on incomplete records."
     },
     {
       "name": "GetOrgUnitRecentUpdates",
-      "url": "api/dashboard/org-unit-recent-updates",
+      "url": "api/dashboard/api/dashboard/org-unit-recent-updates",
       "method": "GET",
       "description": "Retrieves recent updates across all entity types (Partners, Contacts, Interactions) within the current user's organizational unit.",
       "parameters": {
@@ -137,11 +137,11 @@
         }
       },
       "example_uses": [
-        "Show me the latest activities in my organization.",
-        "What are the most recent changes across all records in my unit?",
-        "Get a summary of recent updates for my organizational dashboard."
+        "Show me the latest activities in my department.",
+        "What's new across partners, contacts, and interactions in my unit?",
+        "Get a summary of recent changes in my organization."
       ],
-      "when_to_use": "Use this to get a consolidated view of the most recent activities and updates across all relevant entities within the user's organizational unit."
+      "when_to_use": "Use this endpoint to get a consolidated view of the most recent activities and updates across all major entity types (Partners, Contacts, Interactions) within the user's organizational unit, providing an overview of team progress."
     }
   ]
 }

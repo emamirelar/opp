@@ -1,24 +1,40 @@
 {
   "entity": "Global",
-  "description": "This entity manages user-specific preferences, global filter settings, and provides a system-wide intelligent search capability.",
+  "description": "Manages user-specific preferences, global filter settings, and provides a comprehensive intelligent global search across all system entities.",
   "synonyms": [
-    "User Preferences",
-    "Settings",
-    "Global Settings",
+    "System Settings",
     "User Configuration",
-    "System Preferences"
+    "Preferences",
+    "Filters",
+    "Search Settings"
   ],
   "mandatoryFields": [
-    "Id",
     "UserId",
-    "Status",
-    "CreatedBy",
-    "CreatedDate",
-    "LastModifiedBy",
-    "IsDeleted",
-    "DeletedBy",
     "RelatedToMe"
   ],
+  "searchMetadata": {
+    "directFields": [
+      "q"
+    ],
+    "nestedFields": {},
+    "operators": [
+      "like",
+      "is",
+      "not",
+      "contains",
+      "startsWith",
+      "between"
+    ],
+    "dateFields": [],
+    "exampleCriteria": [
+      {
+        "field": "q",
+        "operator": "contains",
+        "value": "climate change",
+        "description": "Search for text containing 'climate change' globally."
+      }
+    ]
+  },
   "endpoints": [
     {
       "name": "GetUserPreferences",
@@ -175,7 +191,7 @@
       "name": "IntelligentGlobalSearch",
       "url": "api/global/search",
       "method": "GET",
-      "description": "Performs intelligent global search across all entities using hybrid text and semantic search capabilities. Automatically determines optimal search strategy based on query characteristics and complexity. Use the 'q' parameter for your search query. This endpoint does not support structured advanced search criteria (field/operator/value) but intelligently processes natural language queries.",
+      "description": "Performs intelligent global search across all entities using hybrid text and semantic search capabilities. Automatically determines optimal search strategy based on query characteristics and complexity. For advanced search, use the 'q' parameter for your query text. The system automatically determines the optimal search strategy based on query characteristics and complexity.",
       "parameters": {
         "q": {
           "type": "string",

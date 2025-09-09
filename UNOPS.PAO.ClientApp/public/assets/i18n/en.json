@@ -1197,6 +1197,10 @@
           "title": "Search Interactions",
           "description": "Type here to search for specific interactions by contact name, interaction type, date, or other criteria. The results will filter in real-time as you type."
         },
+        "advancedSearch": {
+          "title": "Advanced Search",
+          "description": "Click here to access more detailed search and filtering options. You can combine multiple criteria to find exactly the interactions you're looking for."
+        },
         "gridView": {
           "title": "Interactions List",
           "description": "This table shows all your interaction records with key information like contact, type, date, and notes. You can sort, filter, and take actions on individual interactions."

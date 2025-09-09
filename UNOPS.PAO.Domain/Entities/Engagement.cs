@@ -22,12 +22,12 @@ public class Engagement : ModifiableDeletableEntity
     
     public DateTime? EngagementImplementationEndDate { get; set; }
     
+    
     public int? PartnerId { get; set; }
     
     [MaxLength(2000)]
     public string? ImplementationCountriesDescriptionConcatenated { get; set; }
     
-    // Navigation property
-    [ForeignKey("ErpDimValue")]
+    // Navigation property - PartnerId references ErpDimValue in Partner table (configured via Fluent API)
     public virtual Partner? Partner { get; set; }
 }

@@ -1,12 +1,12 @@
 {
   "entity": "UserPreference",
-  "description": "Manages user-specific settings and preferences, such as default organizational unit for filtering and access control.",
+  "description": "Manages user-specific preferences and settings, such as default organizational unit assignments.",
   "synonyms": [
     "User Setting",
     "Personal Preference",
     "Account Setting",
-    "My Preferences",
-    "User Config"
+    "User Configuration",
+    "Default Setting"
   ],
   "mandatoryFields": [],
   "endpoints": [
@@ -14,7 +14,7 @@
       "name": "GetDefaultOrgUnit",
       "url": "api/user-preferences/default-org-unit",
       "method": "GET",
-      "description": "Retrieves the current user's default organizational unit preference for filtering and access control. This endpoint provides the ID of the organizational unit that the user has set as their default for various system operations.",
+      "description": "Retrieves the current user's default organizational unit preference for filtering and access control.",
       "parameters": {},
       "example_uses": [
         "Get my default organizational unit setting",
@@ -27,12 +27,12 @@
       "name": "SetDefaultOrgUnit",
       "url": "api/user-preferences/default-org-unit",
       "method": "PUT",
-      "description": "Updates the current user's default organizational unit preference for filtering and access control. This allows users to change their primary organizational context for system interactions.",
+      "description": "Updates the current user's default organizational unit preference for filtering and access control.",
       "parameters": {
-        "OrgUnitId": {
-          "type": "integer",
+        "request": {
+          "type": "object",
           "required": false,
-          "description": "The ID of the organizational unit to set as default. Can be null to clear the setting."
+          "description": "Default org unit request containing the new setting"
         }
       },
       "example_uses": [

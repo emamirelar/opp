@@ -1,12 +1,12 @@
 {
   "entity": "Engagement",
-  "description": "Manages and retrieves information about engagements, which are specific projects or activities associated with partners.",
+  "description": "Manages and provides details about various engagements, projects, or activities associated with partners.",
   "synonyms": [
     "Project",
     "Activity",
     "Initiative",
-    "Undertaking",
-    "Assignment"
+    "Program",
+    "Contract"
   ],
   "mandatoryFields": [],
   "endpoints": [
@@ -14,7 +14,7 @@
       "name": "GetEngagementsByPartner",
       "url": "/api/engagement/partner/{partnerId}",
       "method": "GET",
-      "description": "Retrieves all engagements for a specific partner with complete details.",
+      "description": "Retrieves all engagements for a specific partner with complete details. Results are paginated and can be ordered. Use `pageIndex` and `pageSize` for pagination, and `orderBy` with `ascending` for sorting.",
       "parameters": {
         "partnerId": {
           "type": "integer",
@@ -50,6 +50,48 @@
         "Show engagement records for a partner"
       ],
       "when_to_use": "Use this when the user wants to see all engagements associated with a specific partner."
+    },
+    {
+      "name": "GetEngagementsByPartnerName",
+      "url": "/api/engagement/partner/by-name/{partnerName}",
+      "method": "GET",
+      "description": "Retrieves all engagements for a partner using AI-powered smart search by partner name. This endpoint uses semantic similarity search to find the best matching partner, supporting partial names, abbreviations, and synonyms. Results are paginated and can be ordered. Use `pageIndex` and `pageSize` for pagination, and `orderBy` with `ascending` for sorting.",
+      "parameters": {
+        "partnerName": {
+          "type": "string",
+          "required": false,
+          "description": "Partner name or partial name to search for (supports fuzzy matching, abbreviations, synonyms)"
+        },
+        "pageIndex": {
+          "type": "integer",
+          "required": false,
+          "description": "Page number (1-based, default: 1)"
+        },
+        "pageSize": {
+          "type": "integer",
+          "required": false,
+          "description": "Number of items per page (default: 20)"
+        },
+        "orderBy": {
+          "type": "string",
+          "required": false,
+          "description": "Field to order results by (default: 'CreatedDate')"
+        },
+        "ascending": {
+          "type": "boolean",
+          "required": false,
+          "description": "Sort direction - true for ascending, false for descending (default: false for newest first)"
+        }
+      },
+      "example_uses": [
+        "Show all engagements for partner named \"UNICEF\"",
+        "List engagements for \"World Bank\" organization (works with \"WB\", \"World Bank\", \"bank\")",
+        "Get engagement history for partner \"Red Cross\" (works with \"ICRC\", \"Red Cross\", \"Cross\")",
+        "Display engagements for \"WHO\" partner (works with \"World Health\", \"WHO\", \"Health Organization\")",
+        "Show engagement records using partial names like \"UN\" or \"Development\"",
+        "Find engagements by organization type like \"Government\" or \"NGO\""
+      ],
+      "when_to_use": "Use this when the user wants to see all engagements for a partner using any variation of the partner name, abbreviation, or description. The AI search will find the best match even with incomplete or alternative names."
     }
   ]
 }

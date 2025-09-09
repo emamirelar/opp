@@ -1,95 +1,106 @@
 {
   "entity": "UserManagement",
-  "description": "Manages user accounts, roles, and organizational unit settings within the system.",
+  "description": "Manages user accounts, roles, and organizational unit settings within the system, including bulk operations and access control.",
   "synonyms": [
-    "User",
-    "Account",
-    "Personnel",
-    "Staff",
-    "User Administration"
+    "User Admin",
+    "User Accounts",
+    "Role Management",
+    "User Permissions",
+    "Org Unit Management"
   ],
   "mandatoryFields": [
     "ShowMyOrgUnitOnly",
     "PageIndex",
     "PageSize",
     "Roles",
-    "IsSelfManagementEnabled"
+    "IsSelfManagementEnabled",
+    "CurrentUserId",
+    "IsUpdate"
   ],
   "endpoints": [
     {
       "name": "GetUsers",
       "url": "/api/user-management/users",
       "method": "POST",
-      "description": "Get a paginated list of users with filtering and search capabilities. This endpoint supports advanced search using a request body. You can filter by `SearchTerm`, `RoleFilter`, `OrgUnitFilter`, and control pagination with `PageIndex` and `PageSize`. Sorting can be applied using `SortBy` and `SortDirection`.",
+      "description": "Get paginated list of users with filtering and search capabilities. This endpoint supports advanced search criteria. To use advanced search, provide a 'request' body with parameters like 'SearchTerm', 'RoleFilter', 'OrgUnitFilter', 'ShowMyOrgUnitOnly', 'PageIndex', and 'PageSize'. You can also specify 'SortBy' and 'SortDirection' for ordering results.",
       "parameters": {
-        "SearchTerm": {
-          "type": "string",
+        "request": {
+          "type": "object",
           "required": false,
-          "description": "Property of type string"
-        },
-        "RoleFilter": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "ShowMyOrgUnitOnly": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "OrgUnitFilter": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "SortBy": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "SortDirection": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "OrderBy": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "Ascending": {
-          "type": "boolean",
-          "required": false,
-          "description": "Property of type Nullable<bool>"
-        },
-        "Direction": {
-          "type": "boolean",
-          "required": false,
-          "description": "Property of type Nullable<bool>"
-        },
-        "PageIndex": {
-          "type": "integer",
-          "required": true,
-          "description": "Property of type int"
-        },
-        "PageSize": {
-          "type": "integer",
-          "required": true,
-          "description": "Property of type int"
+          "description": "User management request with pagination and filters",
+          "properties": {
+            "SearchTerm": {
+              "type": "string",
+              "required": false,
+              "description": "Search term for users"
+            },
+            "RoleFilter": {
+              "type": "string",
+              "required": false,
+              "description": "Filter users by role"
+            },
+            "ShowMyOrgUnitOnly": {
+              "type": "boolean",
+              "required": true,
+              "description": "Indicates if only users from the current organization unit should be shown"
+            },
+            "OrgUnitFilter": {
+              "type": "string",
+              "required": false,
+              "description": "Filter users by organization unit"
+            },
+            "SortBy": {
+              "type": "string",
+              "required": false,
+              "description": "Field to sort results by"
+            },
+            "SortDirection": {
+              "type": "string",
+              "required": false,
+              "description": "Direction of sorting (e.g., 'asc', 'desc')"
+            },
+            "OrderBy": {
+              "type": "string",
+              "required": false,
+              "description": "Field to order results by"
+            },
+            "Ascending": {
+              "type": "boolean",
+              "required": false,
+              "description": "Sort order: true for ascending, false for descending"
+            },
+            "Direction": {
+              "type": "boolean",
+              "required": false,
+              "description": "Sort direction: true for ascending, false for descending"
+            },
+            "PageIndex": {
+              "type": "integer",
+              "required": true,
+              "description": "Current page index for pagination"
+            },
+            "PageSize": {
+              "type": "integer",
+              "required": true,
+              "description": "Number of items per page for pagination"
+            }
+          }
         }
       },
       "example_uses": [
-        "Find all users named 'John Doe'.",
-        "List the first 10 users in the 'Admin' role.",
-        "Get users from my organization unit, sorted by name."
+        "Find all users in my organization unit.",
+        "List users with 'Admin' role on page 2.",
+        "Search for users named 'John Doe' and sort by name.",
+        "Show me the first 10 users in my organization unit.",
+        "Get users filtered by 'IT Department' and sorted by 'Last Name' in ascending order."
       ],
-      "when_to_use": "Use this endpoint to retrieve a list of users, applying various filters, search terms, and pagination settings to narrow down the results."
+      "when_to_use": "When you need to retrieve a paginated list of users, with options for filtering, searching, and sorting based on various criteria like roles, organization units, or search terms."
     },
     {
       "name": "GetUser",
       "url": "/api/user-management/users/{userId}",
       "method": "GET",
-      "description": "Retrieve detailed information for a specific user by their unique ID.",
+      "description": "Get user details by ID.",
       "parameters": {
         "userId": {
           "type": "string",
@@ -98,67 +109,75 @@
         }
       },
       "example_uses": [
-        "Get details for user 'U12345'.",
-        "Show me the profile of the user with ID 'abc-def-ghi'.",
-        "Retrieve information about a specific user."
+        "Get details for user ID 'abc-123'.",
+        "Retrieve the profile information for a specific user.",
+        "Show me the details of user 'john.doe@example.com'."
       ],
-      "when_to_use": "Use this endpoint when you need to fetch the complete profile and details of a single user, identified by their user ID."
+      "when_to_use": "When you need to fetch the complete details of a single user by their unique identifier."
     },
     {
       "name": "UpdateUserRoles",
       "url": "/api/user-management/users/{userId}/roles",
       "method": "PUT",
-      "description": "Modify the roles assigned to a specific user. This operation requires a list of new roles to be provided in the request body.",
+      "description": "Update user roles.",
       "parameters": {
         "userId": {
           "type": "string",
           "required": false,
           "description": "User ID"
         },
-        "Roles": {
-          "type": "array",
-          "required": true,
-          "description": "Property of type List<string>"
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Update roles request",
+          "properties": {
+            "Roles": {
+              "type": "array",
+              "required": true,
+              "description": "List of roles (strings) to assign to the user"
+            }
+          }
         }
       },
       "example_uses": [
-        "Change user 'U12345' roles to 'Admin' and 'Editor'.",
-        "Assign the 'Viewer' role to user 'abc-def-ghi'.",
-        "Update the permissions for a user."
+        "Assign 'Admin' and 'Editor' roles to user 'xyz-456'.",
+        "Remove all roles from user 'def-789'.",
+        "Update the roles for user '123' to be 'Viewer' and 'Reporter'.",
+        "Set user 'user1' roles to only 'Contributor'."
       ],
-      "when_to_use": "Use this endpoint to change or update the security roles associated with a particular user account."
+      "when_to_use": "When you need to modify the roles assigned to a specific user, replacing their current roles with a new set."
     },
     {
       "name": "GetAvailableRoles",
       "url": "/api/user-management/roles",
       "method": "GET",
-      "description": "Retrieve a list of all roles that the currently authenticated user is authorized to assign to other users.",
+      "description": "Get available roles that the current user can assign.",
       "parameters": {},
       "example_uses": [
-        "What roles can I assign to new users?",
-        "List all assignable user roles.",
-        "Get the available role options."
+        "List all roles I can assign to users.",
+        "What are the available user roles in the system?",
+        "Show me the roles I have permission to manage."
       ],
-      "when_to_use": "Use this endpoint to discover the roles that can be assigned to users, based on the current user's permissions."
+      "when_to_use": "When you need to retrieve a list of all roles that the current authenticated user has permission to assign to other users."
     },
     {
       "name": "GetCurrentUserOrgUnit",
       "url": "/api/user-management/current-user-org-unit",
       "method": "GET",
-      "description": "Retrieve the organizational unit code associated with the currently authenticated user. This can be used for filtering data specific to the user's organization.",
+      "description": "Get current user's organization unit for filtering.",
       "parameters": {},
       "example_uses": [
         "What is my current organization unit?",
-        "Get the organizational unit for the logged-in user.",
-        "Find out my default organizational filter."
+        "Retrieve the organization unit associated with my user account.",
+        "Tell me which organizational unit I belong to."
       ],
-      "when_to_use": "Use this endpoint to get the organizational unit of the current user, often used for scoping data access or filtering."
+      "when_to_use": "When you need to determine the organization unit of the currently authenticated user, typically for filtering or context within the application."
     },
     {
       "name": "GetOrgUnitSelfManagement",
       "url": "/api/user-management/org-units/{orgUnitCode}/self-management",
       "method": "GET",
-      "description": "Retrieve the self-management setting for a specific organizational unit. This indicates whether users within that unit can manage certain aspects of their own accounts.",
+      "description": "Get organization unit self-management setting.",
       "parameters": {
         "orgUnitCode": {
           "type": "string",
@@ -167,35 +186,177 @@
         }
       },
       "example_uses": [
-        "Is self-management enabled for 'HQ' organization unit?",
-        "Check the self-management status of org unit 'NY'.",
-        "Get the self-management setting for a given organizational unit."
+        "Check if self-management is enabled for org unit 'HQ'.",
+        "Retrieve the self-management setting for organization unit 'EMEA'.",
+        "Is self-management active for the 'Sales' department?"
       ],
-      "when_to_use": "Use this endpoint to check if self-management features are enabled for a particular organizational unit."
+      "when_to_use": "When you need to check whether self-management of user roles is enabled for a specific organization unit."
     },
     {
       "name": "UpdateOrgUnitSelfManagement",
       "url": "/api/user-management/org-units/{orgUnitCode}/self-management",
       "method": "PUT",
-      "description": "Update the self-management setting for a specific organizational unit. This allows enabling or disabling self-service features for users within that unit.",
+      "description": "Update organization unit self-management setting.",
       "parameters": {
         "orgUnitCode": {
           "type": "string",
           "required": false,
           "description": "Organization unit code"
         },
-        "IsSelfManagementEnabled": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Self-management setting request",
+          "properties": {
+            "IsSelfManagementEnabled": {
+              "type": "boolean",
+              "required": true,
+              "description": "Boolean indicating whether self-management should be enabled or disabled"
+            }
+          }
         }
       },
       "example_uses": [
-        "Enable self-management for the 'HQ' organization unit.",
-        "Disable self-management for org unit 'NY'.",
-        "Set the self-management option for an organizational unit."
+        "Enable self-management for org unit 'HQ'.",
+        "Disable self-management for organization unit 'APAC'.",
+        "Set self-management to true for the 'Marketing' department.",
+        "Turn off self-management for 'Operations' org unit."
       ],
-      "when_to_use": "Use this endpoint to change whether users in a specific organizational unit can manage their own settings or roles."
+      "when_to_use": "When you need to change the self-management setting for user roles within a specific organization unit, allowing or disallowing users within that unit to manage their own roles."
+    },
+    {
+      "name": "AnalyzeUserRoleFile",
+      "url": "/api/user-management/analyse-file",
+      "method": "POST",
+      "description": "Analyzes a Google Sheets file for user role import data.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "File analysis request with type and fileId",
+          "properties": {
+            "Type": {
+              "type": "string",
+              "required": false,
+              "description": "Type of file to analyze"
+            },
+            "FileId": {
+              "type": "string",
+              "required": false,
+              "description": "ID of the file to analyze"
+            },
+            "CurrentUserId": {
+              "type": "integer",
+              "required": true,
+              "description": "ID of the current user performing the analysis"
+            },
+            "IsUpdate": {
+              "type": "boolean",
+              "required": true,
+              "description": "Indicates if the analysis is for an update operation"
+            }
+          }
+        }
+      },
+      "example_uses": [
+        "Analyze a Google Sheet with ID '123xyz' for user role updates.",
+        "Process a file to preview user role changes before bulk upload.",
+        "Check the contents of file 'file_A' for user role assignments.",
+        "Perform a dry run analysis on a user role import file."
+      ],
+      "when_to_use": "When you have a file (e.g., Google Sheet) containing user role data and need to analyze its content for potential import or update operations, typically to validate data before a bulk upload."
+    },
+    {
+      "name": "BulkUploadUserRoles",
+      "url": "/api/user-management/bulk-upload",
+      "method": "POST",
+      "description": "Performs bulk import of user role assignments.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Bulk upload request with user role data",
+          "properties": {
+            "Type": {
+              "type": "string",
+              "required": false,
+              "description": "Type of bulk upload"
+            },
+            "Records": {
+              "type": "array",
+              "required": false,
+              "description": "List of user role records to upload"
+            },
+            "IsUpdate": {
+              "type": "boolean",
+              "required": true,
+              "description": "Indicates if the bulk upload is an update operation"
+            }
+          }
+        }
+      },
+      "example_uses": [
+        "Perform a bulk upload of new user role assignments.",
+        "Update multiple user roles from a prepared dataset.",
+        "Import a large list of user role changes.",
+        "Execute the bulk import of user roles from the analyzed file.",
+        "Upload new user roles in bulk, specifying it's an update operation."
+      ],
+      "when_to_use": "When you need to import or update a large number of user role assignments in a single operation, typically from a pre-processed dataset or after analyzing a file."
+    },
+    {
+      "name": "ResolveUsers",
+      "url": "/api/user-management/resolve-users",
+      "method": "POST",
+      "description": "Resolves user IDs to user details.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "",
+          "properties": {
+            "UserIds": {
+              "type": "array",
+              "required": false,
+              "description": "List of user IDs to resolve"
+            }
+          }
+        }
+      },
+      "example_uses": [
+        "Resolve user IDs [1, 2, 3] to their full details.",
+        "Get user information for a list of user identifiers.",
+        "Find details for users with IDs 5, 8, and 12.",
+        "Retrieve the profiles for a given set of user IDs."
+      ],
+      "when_to_use": "When you have a list of user IDs and need to retrieve their corresponding user details, such as names or other profile information."
+    },
+    {
+      "name": "ResolveRoles",
+      "url": "/api/user-management/resolve-roles",
+      "method": "POST",
+      "description": "Resolves role IDs to role details.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "",
+          "properties": {
+            "RoleIds": {
+              "type": "array",
+              "required": false,
+              "description": "List of role IDs to resolve"
+            }
+          }
+        }
+      },
+      "example_uses": [
+        "Resolve role IDs [101, 102] to their full details.",
+        "Get role information for a list of role identifiers.",
+        "Find details for roles with IDs 20, 25, and 30.",
+        "Retrieve the descriptions for a given set of role IDs."
+      ],
+      "when_to_use": "When you have a list of role IDs and need to retrieve their corresponding role details, such as role names or descriptions."
     }
   ]
 }
