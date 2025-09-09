@@ -282,9 +282,9 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
     if (this.activeTabKey === 'contacts') {
       this.router.navigate(['/partnerships/contacts', result.id]);
     } else if (this.activeTabKey === 'partners') {
-      this.router.navigate(['/partner', result.id]);
+      this.router.navigate(['/partnerships/partners', result.id]);
     } else if (this.activeTabKey === 'interactions') {
-      this.router.navigate(['/interactions', result.id]);
+      this.router.navigate(['/partnerships/interactions', result.id]);
     }
   }
 

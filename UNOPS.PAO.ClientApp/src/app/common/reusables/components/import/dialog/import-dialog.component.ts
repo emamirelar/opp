@@ -19,10 +19,12 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DropdownModule } from 'primeng/dropdown';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule, CheckboxChangeEvent } from 'primeng/checkbox';
+import { ChipModule } from 'primeng/chip';
 import { ComponentResolverService } from '../../../../../features/internal/services/component-resolver.service';
 import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
 import { ImportService } from '../import.service';
 import { DuplicateIndicatorComponent } from '../duplicate-indicator/duplicate-indicator.component';
+import { UserManagementService } from '../../../../../features/internal/admin/user-management/user-management.service';
 import { DuplicateSummaryComponent } from '../duplicate-summary/duplicate-summary.component';
 
 // Custom interface for import columns that extends ListViewColumn
@@ -53,12 +55,51 @@ interface ImportColumn extends ListViewColumn {
     DropdownModule,
     TooltipModule,
     CheckboxModule,
+    ChipModule,
     TitleCasePipe,
     DuplicateIndicatorComponent,
     DuplicateSummaryComponent
   ],
   templateUrl: './import-dialog.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [`
+    .truncate-text {
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+      cursor: help;
+    }
+    
+    .truncate-short {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+      cursor: help;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .truncate-text {
+        max-width: 200px;
+      }
+      .truncate-short {
+        max-width: 120px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .truncate-text {
+        max-width: 150px;
+      }
+      .truncate-short {
+        max-width: 100px;
+      }
+    }
+  `]
 })
 export class ImportDialogComponent implements OnInit {
   feedbackDialogService = inject(FeedbackDialogService);
@@ -66,6 +107,7 @@ export class ImportDialogComponent implements OnInit {
   componentResolverService = inject(ComponentResolverService);
   importService = inject(ImportService);
   translateService = inject(TranslateService);
+  userManagementService = inject(UserManagementService);
   // Make Math available to the template
   Math = Math;
 
@@ -137,29 +179,8 @@ export class ImportDialogComponent implements OnInit {
     { field: 'partnerGroupCode', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'text', sortable: false },
     { field: 'liaisonOfficeId', header: 'partner.liaisonOffice', required: false, label: 'Liaison Office', type: 'text', sortable: false },
     { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPoint', required: false, label: 'Partner Focal Point', type: 'text', sortable: false },
-    
-    // ERP Integration (readonly but needed for import)
-    { field: 'erpDimValue', header: 'partner.erpDimValue', required: false, label: 'ERP Dimension Value', type: 'number', sortable: false },
-    
     // Status & Operational
     { field: 'status', header: 'partner.status', required: false, label: 'Status', type: 'text', sortable: false },
-    { field: 'pooledFund', header: 'partner.pooledFund', required: false, label: 'Pooled Fund', type: 'text', sortable: false },
-    { field: 'canCreateNewOpportunities', header: 'partner.canCreateNewOpportunities', required: false, label: 'Can Create New Opportunities', type: 'text', sortable: false },
-    { field: 'reasonForNoNewOpportunity', header: 'partner.reasonForNoNewOpportunity', required: false, label: 'Reason For No New Opportunity', type: 'text', sortable: false },
-    
-    // UN & State Entity Fields
-    { field: 'unAndStateEntity', header: 'partner.unStateEntity', required: false, label: 'UN & State Entity', type: 'text', sortable: false },
-    { field: 'keyGlobalPartner', header: 'partner.keyGlobalPartner', required: false, label: 'Key Global Partner', type: 'text', sortable: false },
-    { field: 'unSecretariatPartner', header: 'partner.unSecretariatPartner', required: false, label: 'UN Secretariat Partner', type: 'text', sortable: false },
-    
-    // Due Diligence & Compliance
-    { field: 'dueDiligenceRequired', header: 'partner.dueDiligenceRequired', required: false, label: 'Due Diligence Required', type: 'text', sortable: false },
-    { field: 'dueDiligenceApproval', header: 'partner.dueDiligenceApproval', required: false, label: 'Due Diligence Approval', type: 'text', sortable: false },
-    
-    // Levy Fields
-    { field: 'partnerLevyStatus', header: 'partner.partnerLevyStatus', required: false, label: 'Partner Levy Status', type: 'text', sortable: false },
-    { field: 'reasonForLevy', header: 'partner.reasonForLevy', required: false, label: 'Reason For Levy', type: 'text', sortable: false },
-    { field: 'levyTreatment', header: 'partner.levyTreatment', required: false, label: 'Levy Treatment', type: 'text', sortable: false },
   ];
 
   // Filtered partner columns based on user permissions
@@ -171,7 +192,6 @@ export class ImportDialogComponent implements OnInit {
     { field: 'date', header: 'interaction.date', required: true, label: 'Date', type: 'text', sortable: false },
     { field: 'subject', header: 'interaction.subject', required: true, label: 'Subject', type: 'text', sortable: false },
     { field: 'description', header: 'interaction.description', required: false, label: 'Description', type: 'text', sortable: false },
-    { field: 'contactId', header: 'interaction.contact', required: false, label: 'Contact', type: 'text', sortable: false },
     { field: 'location', header: 'interaction.location', required: false, label: 'Location', type: 'text', sortable: false },
     { field: 'contactIds', header: 'interaction.contactIds', required: false, label: 'Contact IDs', type: 'text', sortable: false },
     { field: 'partnerIds', header: 'interaction.partnerIds', required: false, label: 'Partner IDs', type: 'text', sortable: false },
@@ -179,6 +199,12 @@ export class ImportDialogComponent implements OnInit {
     { field: 'emailAddresses', header: 'interaction.emailAddresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
     { field: 'phoneNumbers', header: 'interaction.phoneNumbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
     { field: 'organizationHierarchyIds', header: 'interaction.organizationUnitIds', required: false, label: 'Organization Unit IDs', type: 'text', sortable: false }
+  ];
+
+  // User Role-specific columns
+  userRoleColumns: ImportColumn[] = [
+    { field: 'userDisplay', header: 'User', required: true, label: 'User', type: 'text', sortable: false },
+    { field: 'roleDisplay', header: 'Role(s)', required: true, label: 'Role(s)', type: 'text', sortable: false }
   ];
 
   // Create data effect in the constructor to ensure injection context
@@ -231,6 +257,8 @@ export class ImportDialogComponent implements OnInit {
       this.columns = this.partnerColumns;
     } else if (entityType === 'interaction') {
       this.columns = this.interactionColumns;
+    } else if (entityType === 'user_role_import') {
+      this.columns = this.userRoleColumns;
     } else {
       // Default to contact columns
       this.columns = this.contactColumns;
@@ -277,7 +305,7 @@ export class ImportDialogComponent implements OnInit {
   }
   
   // Check and process data - can be called multiple times if needed
-  checkAndProcessData(): void {
+  async checkAndProcessData(): Promise<void> {
     // Use the explicitly set import type from the service
     const entityType = this.importDialogService.getImportType();
     
@@ -290,9 +318,19 @@ export class ImportDialogComponent implements OnInit {
     
     if (initialData && initialData.length > 0) {
       // Add a unique non-conflicting ID to each row for selection purposes
-      const processedData = initialData.map((item, index) => {
+      let processedData = initialData.map((item, index) => {
         return { ...item, _importRowId: `import-${index}` };
       });
+
+      // Enrich user role data if this is a user role import
+      if (this.isUserRoleImport()) {
+        try {
+          processedData = await this.enrichUserRoleData(processedData);
+        } catch (error) {
+          console.error('Error enriching user role data:', error);
+          // Continue with original data if enrichment fails
+        }
+      }
       
       // Update the data in the service with the processed data
       this.importDialogService.data.set(processedData);
@@ -505,6 +543,8 @@ export class ImportDialogComponent implements OnInit {
         return 'partners';
       case 'interaction':
         return 'interactions';
+      case 'user_role_import':
+        return 'user_role';
       default:
         return 'contacts';
     }
@@ -968,4 +1008,125 @@ export class ImportDialogComponent implements OnInit {
     // Update the service with the selected rows
     this.importDialogService.setSelectedRows(validRows);
   }
+
+  // Check if current import is a user role import
+  isUserRoleImport(): boolean {
+    return this.currentImportType().toLowerCase() === 'user_role_import';
+  }
+
+  /**
+   * Enrich user role import data with user names and role names
+   */
+  async enrichUserRoleData(data: any[]): Promise<any[]> {
+    if (!this.isUserRoleImport() || !data.length) {
+      return data;
+    }
+
+    try {
+      // Extract unique user IDs and role IDs
+      const userIds = new Set<number>();
+      const roleIds = new Set<number>();
+
+      data.forEach(record => {
+        if (record.userId && !isNaN(Number(record.userId))) {
+          userIds.add(Number(record.userId));
+        }
+        if (record.roleIds && Array.isArray(record.roleIds)) {
+          record.roleIds.forEach((roleId: any) => {
+            if (!isNaN(Number(roleId))) {
+              roleIds.add(Number(roleId));
+            }
+          });
+        }
+      });
+
+      // Fetch user and role data in parallel
+      const [userLookup, roleLookup] = await Promise.all([
+        userIds.size > 0 ? this.userManagementService.resolveUserIds(Array.from(userIds)) : Promise.resolve({}),
+        roleIds.size > 0 ? this.userManagementService.resolveRoleIds(Array.from(roleIds)) : Promise.resolve({})
+      ]);
+
+      // Enrich the data
+      return data.map(record => {
+        const enrichedRecord = { ...record };
+        
+        // Enrich user information
+        if (record.userId && (userLookup as any)[record.userId]) {
+          const userInfo = (userLookup as any)[record.userId];
+          enrichedRecord.userDisplay = userInfo.name || userInfo.email || `User ${record.userId}`;
+          enrichedRecord.userEmail = userInfo.email;
+          enrichedRecord.userName = userInfo.name;
+        } else {
+          enrichedRecord.userDisplay = `User ${record.userId}`;
+        }
+
+        // Enrich role information
+        if (record.roleIds && Array.isArray(record.roleIds)) {
+          enrichedRecord.roleNames = record.roleIds.map((roleId: any) => {
+            const roleInfo = (roleLookup as any)[roleId];
+            return roleInfo ? roleInfo.name : `Role ${roleId}`;
+          });
+          enrichedRecord.roleDisplay = enrichedRecord.roleNames.join(', ');
+        } else {
+          enrichedRecord.roleNames = [];
+          enrichedRecord.roleDisplay = '';
+        }
+
+        return enrichedRecord;
+      });
+    } catch (error) {
+      console.error('Error enriching user role data:', error);
+      // Return original data if enrichment fails
+      return data;
+    }
+  }
+
+  /**
+   * Get role severity for styling (same as user management component)
+   */
+  getRoleSeverity(role: string): string {
+    switch (role) {
+      case 'PARTNER_GLOB_ADMIN':
+        return 'danger';
+      case 'ORG_UNIT_ADMIN':
+        return 'warning';
+      case 'PARTNER_USER':
+        return 'info';
+      default:
+        return 'secondary';
+    }
+  }
+
+  /**
+   * Check if field should have long text truncation (for very long fields like descriptions)
+   */
+  isLongTextField(fieldName: string): boolean {
+    const longTextFields = [
+      'description', 
+      'partnerLongDescription', 
+      'details', 
+      'notes', 
+      'comments',
+      'subject',
+      'content'
+    ];
+    return longTextFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
+  }
+
+  /**
+   * Check if field should have short text truncation (for medium length fields)
+   */
+  isShortTextField(fieldName: string): boolean {
+    const shortTextFields = [
+      'name', 
+      'title', 
+      'partnerShortDescription',
+      'location',
+      'contact',
+      'email'
+    ];
+    return shortTextFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
+  }
+
+
 }

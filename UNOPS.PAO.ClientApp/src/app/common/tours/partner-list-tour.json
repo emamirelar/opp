@@ -63,7 +63,7 @@
     },
     {
       "element": ".advanced-search",
-      "fallbackType": "advanced-search",
+      "fallbackType": ".mobile-advanced-search",
       "popover": {
         "titleKey": "tour.partners.steps.advancedSearch.title",
         "descriptionKey": "tour.partners.steps.advancedSearch.description",

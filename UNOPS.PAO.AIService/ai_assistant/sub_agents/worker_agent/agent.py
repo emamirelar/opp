@@ -13,10 +13,10 @@ from ..action_log_agent import action_log_agent
 
 worker_agent = SequentialAgent(
     name="worker_agent",
-    description="A streamlined worker agent that processes action plans and formats responses (task planning now handled by user_request_agent)",
+    description="Streamlined workflow agent with combined task planning and execution for improved speed",
     sub_agents=[
-        task_executor_agent,       # Step 1: Process action plans and make API calls or any tool calls  
+        task_executor_agent,       # Combined task planner + executor (using Gemini 2.5 Pro)
         #action_log_agent,
-        response_formatter_agent   # Step 2: Format API results into user-friendly responses
+        response_formatter_agent   # Format API results into user-friendly responses
     ],
 )

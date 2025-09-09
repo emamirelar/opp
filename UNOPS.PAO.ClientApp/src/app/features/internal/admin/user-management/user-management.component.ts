@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -23,6 +23,7 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { UserManagementService } from './user-management.service';
 import { PermissionService, EntityPermissions } from '../../../../essentials/services/permission.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
+import { ImportDialogService } from '../../../../common/reusables/components/import/dialog/import-dialog.service';
 
 interface UserManagementModel {
   userId: number;
@@ -102,7 +103,7 @@ interface PaginationResponse<T> {
   templateUrl: './user-management.component.html',
   styleUrls: ['./user-management.component.scss']
 })
-export class UserManagementComponent implements OnInit {
+export class UserManagementComponent implements OnInit, OnDestroy {
   private userManagementService = inject(UserManagementService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
@@ -110,6 +111,7 @@ export class UserManagementComponent implements OnInit {
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
+  private importDialogService = inject(ImportDialogService);
 
   // Permission signals
   entityPermissions = signal<EntityPermissions>({
@@ -128,6 +130,7 @@ export class UserManagementComponent implements OnInit {
   users = signal<UserManagementModel[]>([]);
   totalRecords = signal<number>(0);
   loading = signal<boolean>(false);
+  importing = signal<boolean>(false);
   availableRoles = signal<RoleModel[]>([]);
   
   // Dialog state
@@ -159,6 +162,9 @@ export class UserManagementComponent implements OnInit {
     return user.roles.filter(role => role !== 'PARTNER_USER');
   });
 
+  // Store reference to the refresh event listener for cleanup
+  private refreshEventListener?: () => void;
+
   // Permission computed values
   canRead = computed(() => this.entityPermissions().permissions.canRead);
   canUpdate = computed(() => this.entityPermissions().permissions.canUpdate);
@@ -177,6 +183,19 @@ export class UserManagementComponent implements OnInit {
 
   ngOnInit() {
     this.loadPermissions();
+    
+    // Listen for refresh events from import operations
+    this.refreshEventListener = () => {
+      this.loadUsers();
+    };
+    window.addEventListener('refresh-listview', this.refreshEventListener);
+  }
+
+  ngOnDestroy() {
+    // Clean up event listener
+    if (this.refreshEventListener) {
+      window.removeEventListener('refresh-listview', this.refreshEventListener);
+    }
   }
 
   private loadPermissions() {
@@ -437,5 +456,24 @@ export class UserManagementComponent implements OnInit {
 
   getStatusText(isActive: boolean): string {
     return isActive ? 'Active' : 'Inactive';
+  }
+
+  /**
+   * Opens the import dialog for user role assignments
+   */
+  openImportDialog(): void {
+    // Check if user has update permissions
+    if (!this.canUpdate()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Permission Denied',
+        detail: 'You do not have permission to import user roles'
+      });
+      return;
+    }
+
+    // Use Google Picker to select and import user role data
+    // This will automatically open the import dialog after file selection and analysis
+    this.importDialogService.openGoogleSheetPicker('user_role_import');
   }
 } 

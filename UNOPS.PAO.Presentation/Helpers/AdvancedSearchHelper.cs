@@ -204,6 +204,7 @@ public static class AdvancedSearchHelper
             "id", "name", "status", 
             "partnerShortDescription", "partnerLongDescription",
             "partnerCategoryId", "liaisonOfficeId", "partnerFocalPointUserId",
+            "partnerGroupCode", "erpDimValue",
             "unAndStateEntity", "keyGlobalPartner", "unSecretariatPartner",
             "dueDiligenceRequired", "dueDiligenceApproval", "dueDiligenceApprovalDate", "dueDiligenceExpiryDate",
             "partnerApprovalStatus", "partnerApprovalDate", "partnerApprovalReference", "partnerApprovedBy",
@@ -211,10 +212,7 @@ public static class AdvancedSearchHelper
             "pooledFund", "canCreateNewOpportunities", "reasonForNoNewOpportunity",
             
             // Audit fields (inherited from ModifiableDeletableEntity)
-            "createdDate", "lastModifiedDate", "createdBy", "lastModifiedBy", "isDeleted",
-            
-            // Legacy field mappings for backward compatibility
-            "shortName", "description", "phone", "website", "email", "modifiedDate"
+            "createdDate", "lastModifiedDate", "createdBy", "lastModifiedBy", "isDeleted"
         };
     }
 
@@ -275,17 +273,10 @@ public static class AdvancedSearchHelper
         // Handle legacy field mappings for all entities
         var legacyMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            // Interaction legacy mappings
+            // Interaction legacy mappings only
             { "contact.partner.name", "partner.name" },
             { "contact.partner.status", "partner.status" },
-            { "contact.partner.shortName", "partner.shortName" },
-            
-            // Partner legacy mappings
-            { "shortName", "partnerShortDescription" },
-            { "description", "partnerLongDescription" },
-            { "globalKeyAccount", "keyGlobalPartner" },
-            { "modifiedDate", "lastModifiedDate" },
-            { "partnerType", "partnerCategoryId" }
+            { "contact.partner.shortName", "partner.shortName" }
         };
 
         return legacyMappings.TryGetValue(fieldName, out var mappedName) ? mappedName : fieldName;

@@ -181,28 +181,32 @@ public class ContactController : BaseController
     }
 
     /// <summary>
-    /// Retrieves all contacts with basic pagination and ordering (no search criteria).
+    /// Retrieves all contacts with basic pagination and ordering, optionally filtered by partner.
     /// </summary>
     /// <param name="pageIndex">Page number (1-based, default: 1)</param>
     /// <param name="pageSize">Number of items per page (default: 20)</param>
     /// <param name="orderBy">Field to order results by (optional)</param>
     /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
+    /// <param name="partnerId">Optional partner ID to filter contacts by specific partner</param>
     /// <example_uses>
     /// Show me all contacts
     /// List all contacts in the system
     /// Display the contact directory
     /// Get all contact records
     /// Browse contacts
+    /// Show contacts for partner ID 123
+    /// List all contacts from UNICEF partner
     /// </example_uses>
-    /// <when_to_use>Use this when the user wants to see ALL contacts without any search criteria or when asking for a general contact list.</when_to_use>
-    /// <returns>Paginated list of all contacts</returns>
+    /// <when_to_use>Use this when the user wants to see ALL contacts without search criteria, or when asking for contacts filtered by a specific partner.</when_to_use>
+    /// <returns>Paginated list of all contacts, optionally filtered by partner</returns>
     [HttpGet(APIDictionary.Contact)]
     [AccessControlled(EntityTypes.Contact, "read")]
     public async Task<ActionResult> ListAllContacts(
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? orderBy = null,
-        [FromQuery] bool ascending = true)
+        [FromQuery] bool ascending = true,
+        [FromQuery] int? partnerId = null)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
@@ -210,14 +214,17 @@ public class ContactController : BaseController
         
         return await HandleSearchOperationAsync(async () =>
         {
-            // Create a basic ContactFilterRequest with just pagination and ordering
+            // Create a basic ContactFilterRequest with pagination, ordering, and optional partner filter
             var request = new ContactFilterRequest
             {
                 PageIndex = pageIndex,
                 PageSize = pageSize,
                 OrderBy = orderBy,
-                Ascending = ascending
+                Ascending = ascending,
+                PartnerId = partnerId
             };
+            
+            _logger.LogInformation($"[CONTROLLER DEBUG] ContactFilterRequest - PartnerId: {request.PartnerId}");
             
             // Create simple specification - global filters will be applied by the manager
             var specification = new ContactCompositeSpecification(request);

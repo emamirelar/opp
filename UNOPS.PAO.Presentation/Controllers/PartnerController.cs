@@ -167,7 +167,8 @@ public class PartnerController : BaseController
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? orderBy = null,
-        [FromQuery] bool ascending = true)
+        [FromQuery] bool ascending = true,
+        [FromQuery] string? partnerGroupCode = null)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
@@ -181,7 +182,8 @@ public class PartnerController : BaseController
                 PageIndex = pageIndex,
                 PageSize = pageSize,
                 OrderBy = orderBy,
-                Ascending = ascending
+                Ascending = ascending,
+                PartnerGroupCode = partnerGroupCode
             };
             
             // Create simple specification - global filters will be applied by the manager
@@ -264,7 +266,7 @@ public class PartnerController : BaseController
     /// <searchCriteria_format>
     /// JSON array format: [{"field": "status", "operator": "is", "value": "Active", "logicalOperator": "AND"}]
     /// Available operators: is, is not, like, not like, greater than, less than, greater than or equal, less than or equal, this week, this month, this year
-    /// Available fields: name, status, partnerType, globalKeyAccount, createdDate, modifiedDate, description
+    /// Available fields: name, status, partnerShortDescription, partnerLongDescription, partnerCategoryId, liaisonOfficeId, partnerGroupCode, keyGlobalPartner, unSecretariatPartner, partnerApprovalStatus, partnerLevyStatus, pooledFund, canCreateNewOpportunities, createdDate, lastModifiedDate
     /// Logical operators: AND, OR
     /// </searchCriteria_format>
     /// <returns>Paginated list of partners matching the advanced search criteria</returns>
@@ -689,39 +691,6 @@ public class PartnerController : BaseController
         }
     }
 
-    /// <summary>
-    /// Retrieves a paginated list of partners filtered by specific partner category code with access control and sorting.
-    /// </summary>
-    /// <param name="code">Partner category code to filter by (e.g., 'NATIONAL', 'INTERNATIONAL', 'BILATERAL')</param>
-    /// <param name="request">Pagination request containing page size and index</param>
-    /// <param name="request.pageIndex">Page number (1-based)</param>
-    /// <param name="request.pageSize">Number of items per page</param>
-    /// <param name="request.orderBy">Field to order results by</param>
-    /// <param name="request.ascending">Sort direction (true for ascending)</param>
-    /// <example_uses>
-    /// Show all national partners in this category
-    /// List international partners with pagination
-    /// Get bilateral partners sorted by name
-    /// Find partners in a specific operational category
-    /// Show multilateral partners with 15 per page
-    /// Filter partners by geographic or operational scope
-    /// </example_uses>
-    /// <when_to_use>Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification.</when_to_use>
-    /// <returns>Paginated list of partners belonging to the specified partner category</returns>
-    [HttpGet(APIDictionary.Partner + "/by-partner-category-code/{code}")]
-    [AccessControlled(EntityTypes.Partner, "read")]
-    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetPartnersByPartnerCategory(string code, [FromQuery] PaginationRequest request)
-    {
-        try
-        {
-            var result = await _manager.GetPartnersByCategoryAsync(User, code, request);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-    }
 
     /// <summary>
     /// Retrieves all partner categories with their partner counts for statistical analysis and diagram generation.

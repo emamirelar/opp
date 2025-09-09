@@ -374,29 +374,11 @@ export class ImportDialogService {
       name: '',
       partnerShortDescription: '',
       partnerLongDescription: '',
-      status: 'Active',
-      canCreateNewOpportunities: false,
-      pooledFund: false,
-      dueDiligenceRequired: null,
-      dueDiligenceApproval: null,
-      partnerLevyStatus: null,
-      keyGlobalPartner: false,
-      unSecretariatPartner: false,
-      unAndStateEntity: false,
-      reasonForNoNewOpportunity: '',
-      levyTreatment: '',
-      partnerGroupCode: '',
-      reasonForLevy: '',
+      status: 'Draft',
       partnerApprovalStatus: 'NotApproved',
-      partnerApprovalReference: '',
-      partnerApprovedBy: '',
-      dueDiligenceApprovalDate: null,
-      dueDiligenceExpiryDate: null,
-      partnerApprovalDate: null,
       partnerCategoryId: null,
       liaisonOfficeId: null,
       partnerFocalPointUserId: null,
-      erpDimValue: null
     };
   }
 
@@ -427,10 +409,6 @@ export class ImportDialogService {
       // Set the import type before doing anything else
       this.setImportType(type);
       
-      // Show loading state while opening the picker
-      this.isLoading.set(true);
-      this.loadingOverlayService.show('Opening Google Drive, please wait...');
-      
       // Test if the service is available
       if (!this.importGoogleSheetService) {
         throw new Error('Google Sheet service is not available');
@@ -447,10 +425,16 @@ export class ImportDialogService {
         
         // When a file is selected, show loading indicator and message
         this.isLoading.set(true);
-        this.loadingOverlayService.show(`Pre-processing ${type} spreadsheet, please wait...`);
+
+        let sheetType = type;
+        if (type === 'user_role_import') {
+          sheetType = 'User Role Import';
+        }
+        this.loadingOverlayService.show(`Pre-processing ${sheetType} spreadsheet, please wait...`);
+
         
         this.feedbackDialogService.showInfoToast({ 
-          detail: `Pre-processing ${type} spreadsheet, please wait...`,
+          detail: `Pre-processing ${sheetType} spreadsheet, please wait...`,
           life: 3000
         });
 
@@ -461,7 +445,7 @@ export class ImportDialogService {
           })
         );
 
-        this.importService.analyzeFile(sheetId,`bulk_${type}_action`).pipe(
+        this.importService.analyzeFile(sheetId, type.includes('user_role') ? type : `bulk_${type}_action`).pipe(
           timeout(timeoutDuration),
           catchError((error) => {
             console.error('🔍 Caught error in analyzeFile pipe:', error);
@@ -495,7 +479,7 @@ export class ImportDialogService {
               this.loadingOverlayService.hide();
               this.data.set([]);
               this.feedbackDialogService.showInfoToast({ 
-                detail: `Pre-processing ${type} spreadsheet${jobInfo}. ${response.message}`,
+                detail: `Pre-processing ${sheetType} spreadsheet${jobInfo}. ${response.message}`,
                 life: 5000
               });
               return;
@@ -503,7 +487,7 @@ export class ImportDialogService {
               // Handle internal duplicates found in the uploaded file
               this.isLoading.set(false);
               this.loadingOverlayService.hide();
-              this.showInternalDuplicateError(response, type);
+              this.showInternalDuplicateError(response, sheetType);
               return;
             } else if (response.intent === 'Success') {
               // Parse the records from the response
@@ -525,7 +509,7 @@ export class ImportDialogService {
               
               // Only open the dialog if we have data
               if (this.data() && this.data().length > 0) {
-                this.openImportDialog(`Import ${type}(s) - ${this.data().length} records`);
+                this.openImportDialog(`Import ${sheetType}(s) - ${this.data().length} records`);
                 // Keep loading state until dialog opens then set to false
                 setTimeout(() => {
                   this.isLoading.set(false);

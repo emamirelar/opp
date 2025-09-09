@@ -152,14 +152,21 @@
                 ></p-checkbox>
               </div>
             </th>
-            <th style="width: 4rem">
-              {{ getTranslatedHeader('DUPLICATE_DETECTION.duplicate') }}
-            </th>
-            <th style="width: 4rem">
-              {{ getTranslatedHeader('common.edit') }}
-            </th>
+            @if (!isUserRoleImport()) {
+              <th style="width: 4rem">
+                {{ getTranslatedHeader('DUPLICATE_DETECTION.duplicate') }}
+              </th>
+              <th style="width: 4rem">
+                {{ getTranslatedHeader('common.edit') }}
+              </th>
+            }
             @for (col of columns; track col) {
-              <th class="min-w-32">
+              <th 
+                [ngClass]="{
+                  'min-w-32': !isLongTextField(col.field) && !isShortTextField(col.field),
+                  'w-80': isLongTextField(col.field),
+                  'w-48': isShortTextField(col.field)
+                }">
                 {{ getTranslatedHeader(col.header) }}
               </th>
             }
@@ -171,30 +178,54 @@
             <td>
               <p-tableCheckbox [value]="rowData"></p-tableCheckbox>
             </td>
-            <td>
-              <!-- Duplicate Indicator Column -->
-              <div class="flex items-center justify-center">
-                <app-duplicate-indicator 
-                  [duplicateInfo]="rowData.duplicateInfo"
-                  [entityType]="getEntityTypeFromImportType()">
-                </app-duplicate-indicator>
-              </div>
-            </td>
-            <td>
-              <!-- Edit Button Column -->
-              <div class="flex items-center justify-center">
-                <p-button icon="pi pi-pencil" 
-                          styleClass="p-button-rounded p-button-text p-button-sm" 
-                          (click)="editRow(rowData, $event)">
-                </p-button>
-              </div>
-            </td>
+            @if (!isUserRoleImport()) {
+              <td>
+                <!-- Duplicate Indicator Column -->
+                <div class="flex items-center justify-center">
+                  <app-duplicate-indicator 
+                    [duplicateInfo]="rowData.duplicateInfo"
+                    [entityType]="getEntityTypeFromImportType()">
+                  </app-duplicate-indicator>
+                </div>
+              </td>
+              <td>
+                <!-- Edit Button Column -->
+                <div class="flex items-center justify-center">
+                  <p-button icon="pi pi-pencil" 
+                            styleClass="p-button-rounded p-button-text p-button-sm" 
+                            (click)="editRow(rowData, $event)">
+                  </p-button>
+                </div>
+              </td>
+            }
             @for (col of columns; track col) {
-              <td [ngClass]="{'bg-red-50': !rowData[col.field] && col.required}" class="">
+              <td 
+                [ngClass]="{
+                  'bg-red-50': !rowData[col.field] && col.required,
+                  'w-80': isLongTextField(col.field),
+                  'w-48': isShortTextField(col.field)
+                }">
                 @if (col.field === 'duplicateInfo') {
                   <!-- Skip duplicateInfo column as it's now combined with edit button -->
+                } @else if (col.field === 'roleDisplay' && isUserRoleImport() && rowData.roleNames) {
+                  <!-- Special handling for role display with chips -->
+                  <div class="flex flex-wrap gap-1">
+                    @for (role of rowData.roleNames; track role) {
+                      <p-chip
+                        [label]="role"
+                        [styleClass]="'text-xs chip-' + getRoleSeverity(role)">
+                      </p-chip>
+                    }
+                  </div>
                 } @else if (rowData[col.field]) {
-                  {{ rowData[col.field] }}
+                  <div 
+                    [ngClass]="{
+                      'truncate-text': isLongTextField(col.field),
+                      'truncate-short': isShortTextField(col.field)
+                    }"
+                    [title]="rowData[col.field]">
+                    {{ rowData[col.field] }}
+                  </div>
                 } @else {
                   <i class="text-red-100 pi pi-warning"></i>
                 }

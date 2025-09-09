@@ -132,7 +132,7 @@
       }
     },
     {
-      "element": "p-panel[header='Audit Information']",
+      "element": "p-panel[header='History']",
       "fallbackType": "audit-panel",
       "popover": {
         "titleKey": "tour.interactiondetail.steps.auditPanel.title",

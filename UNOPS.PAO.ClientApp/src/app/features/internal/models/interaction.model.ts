@@ -49,6 +49,10 @@ export interface Interaction {
   lastModifiedDate?: string;
   lastModifiedBy?: number;
   
+  // Resolved user names for audit fields
+  createdByName?: string;
+  lastModifiedByName?: string;
+  
   // Import-specific properties
   isImportEdit?: boolean;
   _updated?: boolean;

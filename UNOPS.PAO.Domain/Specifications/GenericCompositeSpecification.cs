@@ -437,12 +437,20 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         }
 
         // Process regular properties (these should be combined with AND)
-        var propertyExpressions = typeof(TFilter)
-            .GetProperties()
+        var allProperties = typeof(TFilter).GetProperties();
+        
+        var validProperties = allProperties
             .Where(p => !ShouldIgnoreProperty(p) && p.Name != "SearchText" && 
-                   p.Name != "AdvancedSearch" && p.Name != "SearchCriteria")
+                   p.Name != "AdvancedSearch" && p.Name != "SearchCriteria");
+        
+        var propertiesWithValues = validProperties
             .Select(p => new { Property = p, Value = p.GetValue(filter) })
-            .Where(x => x.Value != null && !string.IsNullOrEmpty(x.Value.ToString()))
+            .ToList();
+        
+        var nonEmptyProperties = propertiesWithValues
+            .Where(x => x.Value != null && !string.IsNullOrEmpty(x.Value.ToString()));
+            
+        var propertyExpressions = nonEmptyProperties
             .Select(x => 
             {
                 return CreatePropertyExpression(parameter, x.Property, x.Value);
@@ -702,15 +710,10 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             searchableProperties.AddRange(new[]
             {
                 "Name",
-                "ShortName",
+                "PartnerShortDescription", // Updated from ShortName
+                "PartnerLongDescription",  // Added for long description
                 "Status",
-                "Phone",
-                "Website",
-                "Address1City",
-                "Address1StateProvince",
-                "Address1PostalCode",
-                "Address1Country",
-                "PartnerCode"
+                "PartnerGroupCode"         // Updated from PartnerCode
             });
 
             return searchableProperties;
@@ -745,6 +748,12 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             if (property.Name == "PartnerId" && typeof(TEntity).Name == "Interaction")
             {
                 return CreatePartnerIdExpression(parameter, value);
+            }
+
+            // Special handling for ContactId in Interaction entities
+            if (property.Name == "ContactId" && typeof(TEntity).Name == "Interaction")
+            {
+                return CreateContactIdExpression(parameter, value);
             }
 
             // Get property path (for nested properties)
@@ -975,6 +984,66 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         catch (Exception ex)
         {
             Debug.WriteLine($"Error creating PartnerId expression: {ex.Message}");
+            return null;
+        }
+    }
+
+    private static Expression<Func<TEntity, bool>> CreateContactIdExpression(
+        ParameterExpression parameter,
+        object value)
+    {
+        try
+        {
+            if (!int.TryParse(value.ToString(), out int contactId))
+            {
+                Debug.WriteLine($"Failed to parse ContactId value: {value}");
+                return null;
+            }
+
+            Debug.WriteLine($"Creating ContactId expression for value: {contactId}");
+
+            // Build expression: x => x.InteractionContacts.Any(ic => ic.ContactId == contactId)
+            var interactionContactsProperty = typeof(TEntity).GetProperty("InteractionContacts");
+            if (interactionContactsProperty == null)
+            {
+                Debug.WriteLine("InteractionContacts property not found on entity");
+                return null;
+            }
+
+            var interactionContactsAccess = Expression.Property(parameter, interactionContactsProperty);
+            
+            // Create parameter for the Any() lambda: ic => ic.ContactId == contactId
+            var junctionParameter = Expression.Parameter(interactionContactsProperty.PropertyType.GetGenericArguments()[0], "ic");
+            var contactIdProperty = junctionParameter.Type.GetProperty("ContactId");
+            
+            if (contactIdProperty == null)
+            {
+                Debug.WriteLine("ContactId property not found on junction table");
+                return null;
+            }
+
+            var contactIdAccess = Expression.Property(junctionParameter, contactIdProperty);
+            var contactIdConstant = Expression.Constant(contactId);
+            var contactIdEquality = Expression.Equal(contactIdAccess, contactIdConstant);
+            
+            var lambdaExpression = Expression.Lambda(contactIdEquality, junctionParameter);
+            
+            // Get the Any method for ICollection<InteractionContact>
+            var enumerableType = typeof(System.Linq.Enumerable);
+            var anyMethod = enumerableType.GetMethods()
+                .Where(m => m.Name == "Any" && m.GetParameters().Length == 2)
+                .First()
+                .MakeGenericMethod(junctionParameter.Type);
+            
+            // Create the Any() call
+            var anyCall = Expression.Call(anyMethod, interactionContactsAccess, lambdaExpression);
+            
+            Debug.WriteLine("Successfully created ContactId expression using Any()");
+            return Expression.Lambda<Func<TEntity, bool>>(anyCall, parameter);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error creating ContactId expression: {ex.Message}");
             return null;
         }
     }

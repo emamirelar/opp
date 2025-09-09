@@ -28,10 +28,25 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     private readonly BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
     private readonly UNOPSAppDbContext context;
     private GoogleCloudStorageService googleCloudStorageService;
+    private readonly IUserProfileCacheService userProfileCacheService;
 
-    private static InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
+    private InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
     {
-        return mapper.Map<UNOPSInteraction, InteractionModel>(entity);
+        var result = mapper.Map<UNOPSInteraction, InteractionModel>(entity);
+        
+        // For sync version, provide default user identifiers to avoid N+1 queries
+        // User names will be resolved by batch methods when possible
+        if (entity.CreatedBy > 0)
+        {
+            result.CreatedByName = $"User #{entity.CreatedBy}";
+        }
+        
+        if (entity.LastModifiedBy > 0)
+        {
+            result.LastModifiedByName = $"User #{entity.LastModifiedBy}";
+        }
+        
+        return result;
     }
 
     private async Task<InteractionModel> MapEntityToModelAsync(UNOPSInteraction entity, IMapper mapper, ClaimsPrincipal user = null)
@@ -63,7 +78,72 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             }
         }
 
-        return await MapEntityToModelWithPermissionsAsync(result, user); ;
+        // Resolve user names for audit fields
+        if (entity.CreatedBy > 0)
+        {
+            result.CreatedByName = await GetUserNameByIdAsync(entity.CreatedBy);
+        }
+        
+        if (entity.LastModifiedBy > 0)
+        {
+            result.LastModifiedByName = await GetUserNameByIdAsync(entity.LastModifiedBy);
+        }
+
+        return await MapEntityToModelWithPermissionsAsync(result, user);
+    }
+
+    /// <summary>
+    /// Maps entity to model with pre-loaded user names to avoid N+1 query problem
+    /// </summary>
+    private async Task<InteractionModel> MapEntityToModelAsync(UNOPSInteraction entity, IMapper mapper, Dictionary<int, string> userNames, ClaimsPrincipal user = null)
+    {
+        // Use AutoMapper with the updated configuration
+        var result = mapper.Map<UNOPSInteraction, InteractionModel>(entity);
+
+        // Convert ProfilePictureUrl to signed URL for nested Contact objects
+        if (result.Contacts != null && googleCloudStorageService != null)
+        {
+            foreach (var contact in result.Contacts)
+            {
+                if (!string.IsNullOrEmpty(contact.ProfilePictureUrl))
+                {
+                    contact.ProfilePictureUrl = await googleCloudStorageService.GenerateSignedUrlFromStorageUrl(contact.ProfilePictureUrl);
+                }
+            }
+        }
+
+        // Convert LogoUrl to signed URL for nested Partner objects
+        if (result.Partners != null && googleCloudStorageService != null)
+        {
+            foreach (var partner in result.Partners)
+            {
+                if (!string.IsNullOrEmpty(partner.LogoUrl))
+                {
+                    partner.LogoUrl = await googleCloudStorageService.GenerateSignedUrlFromStorageUrl(partner.LogoUrl);
+                }
+            }
+        }
+
+        // Resolve user names from pre-loaded dictionary
+        if (entity.CreatedBy > 0 && userNames.TryGetValue(entity.CreatedBy, out var createdByName))
+        {
+            result.CreatedByName = createdByName;
+        }
+        else if (entity.CreatedBy > 0)
+        {
+            result.CreatedByName = $"User #{entity.CreatedBy}";
+        }
+        
+        if (entity.LastModifiedBy > 0 && userNames.TryGetValue(entity.LastModifiedBy, out var lastModifiedByName))
+        {
+            result.LastModifiedByName = lastModifiedByName;
+        }
+        else if (entity.LastModifiedBy > 0)
+        {
+            result.LastModifiedByName = $"User #{entity.LastModifiedBy}";
+        }
+
+        return await MapEntityToModelWithPermissionsAsync(result, user);
     }
 
     private UNOPSInteraction MapModelToEntity(InteractionRequest model, UNOPSInteraction entity)
@@ -149,7 +229,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         await context.SaveChangesAsync();
     }
 
-    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null)
+    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null, IUserProfileCacheService userProfileCacheService = null)
         : base(mapper, context, configuration, null, "Interaction", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
@@ -158,6 +238,118 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
         googleCloudStorageService = new GoogleCloudStorageService(configuration);
+        this.userProfileCacheService = userProfileCacheService;
+    }
+
+    private async Task<string> GetUserNameByIdAsync(int userId)
+    {
+        try
+        {
+            var userProfile = await context.UserProfile.FirstOrDefaultAsync(up => up.UserId == userId);
+            if (userProfile != null && !string.IsNullOrEmpty(userProfile.Name))
+            {
+                return userProfile.Name;
+            }
+            
+            // Fallback to PAOUser email if UserProfile not found or Name is empty
+            var user = await context.PAOUsers.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user != null && !string.IsNullOrEmpty(user.Email))
+            {
+                return user.Email;
+            }
+        }
+        catch (Exception)
+        {
+            // Log error if needed, but don't fail the entire operation
+        }
+        
+        return $"User #{userId}";
+    }
+
+    /// <summary>
+    /// Bulk loads user names for multiple user IDs to avoid N+1 query problem
+    /// Uses cache for performance optimization when available
+    /// </summary>
+    private async Task<Dictionary<int, string>> GetUserNamesBatchAsync(IEnumerable<int> userIds)
+    {
+        var result = new Dictionary<int, string>();
+        if (!userIds.Any()) return result;
+
+        var distinctUserIds = userIds.Where(id => id > 0).Distinct().ToList();
+        if (!distinctUserIds.Any()) return result;
+
+        var uncachedUserIds = distinctUserIds;
+
+        try
+        {
+            // Try to get cached user names first if cache service is available
+            if (userProfileCacheService != null)
+            {
+                var cachedUserNames = await userProfileCacheService.GetCachedUserNamesBatchAsync(distinctUserIds);
+                foreach (var kvp in cachedUserNames)
+                {
+                    result[kvp.Key] = kvp.Value;
+                }
+                uncachedUserIds = distinctUserIds.Where(id => !result.ContainsKey(id)).ToList();
+            }
+
+            // Load uncached user names from database
+            if (uncachedUserIds.Any())
+            {
+                var newUserNames = new Dictionary<int, string>();
+
+                // Bulk load user profiles
+                var userProfiles = await context.UserProfile
+                    .Where(up => uncachedUserIds.Contains(up.UserId))
+                    .ToDictionaryAsync(up => up.UserId, up => up.Name);
+
+                // Bulk load PAO users for fallback
+                var missingUserIds = uncachedUserIds.Where(id => !userProfiles.ContainsKey(id) || string.IsNullOrEmpty(userProfiles[id])).ToList();
+                var paoUsers = new Dictionary<int, string>();
+                
+                if (missingUserIds.Any())
+                {
+                    paoUsers = await context.PAOUsers
+                        .Where(u => missingUserIds.Contains(u.Id))
+                        .ToDictionaryAsync(u => u.Id, u => u.Email ?? string.Empty);
+                }
+
+                // Combine results with fallback logic
+                foreach (var userId in uncachedUserIds)
+                {
+                    if (userProfiles.ContainsKey(userId) && !string.IsNullOrEmpty(userProfiles[userId]))
+                    {
+                        newUserNames[userId] = userProfiles[userId];
+                    }
+                    else if (paoUsers.ContainsKey(userId) && !string.IsNullOrEmpty(paoUsers[userId]))
+                    {
+                        newUserNames[userId] = paoUsers[userId];
+                    }
+                    else
+                    {
+                        newUserNames[userId] = $"User #{userId}";
+                    }
+                    result[userId] = newUserNames[userId];
+                }
+
+                // Cache the newly loaded user names
+                if (userProfileCacheService != null && newUserNames.Any())
+                {
+                    await userProfileCacheService.SetCachedUserNamesBatchAsync(newUserNames);
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Log error if needed, but don't fail the entire operation
+            // Fallback to default names for all users
+            foreach (var userId in distinctUserIds)
+            {
+                result[userId] = $"User #{userId}";
+            }
+        }
+
+        return result;
     }
 
     public async Task<InteractionModel> CreateInteractionAsync(InteractionRequest model)
@@ -359,7 +551,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 nameof(Interaction.InteractionUsers),
                 $"{nameof(Interaction.InteractionContacts)}.{nameof(InteractionContact.Contact)}",
                 $"{nameof(Interaction.InteractionPartners)}.{nameof(InteractionPartner.Partner)}",
-                $"{nameof(Interaction.InteractionUsers)}.{nameof(InteractionUser.User)}"
+                $"{nameof(Interaction.InteractionUsers)}.{nameof(InteractionUser.User)}",
+                $"{nameof(Interaction.InteractionUsers)}.{nameof(InteractionUser.User)}.{nameof(PAOUser.UserProfile)}"
             });
 
         if (item == null)
@@ -397,7 +590,9 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             {
                 nameof(Interaction.InteractionContacts),
                 nameof(Interaction.InteractionPartners),
-                nameof(Interaction.InteractionUsers)
+                nameof(Interaction.InteractionUsers),
+                $"{nameof(Interaction.InteractionUsers)}.{nameof(InteractionUser.User)}",
+                $"{nameof(Interaction.InteractionUsers)}.{nameof(InteractionUser.User)}.{nameof(PAOUser.UserProfile)}"
             });
 
         if (entity == null) return null;
@@ -456,10 +651,20 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             .Take(request.PageSize)
             .ToArray();
 
+        // Collect all user IDs from paginated items to bulk load user names
+        var allUserIds = pagedItems
+            .SelectMany(x => new[] { x.CreatedBy, x.LastModifiedBy })
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        // Bulk load user names to avoid N+1 query problem
+        var userNames = await GetUserNamesBatchAsync(allUserIds);
+
         var results = new List<InteractionModel>();
         foreach (var item in pagedItems)
         {
-            var mapped = await MapEntityToModelAsync(item, mapper, null);
+            var mapped = await MapEntityToModelAsync(item, mapper, userNames, null);
             results.Add(mapped);
         }
 
@@ -503,10 +708,20 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             .Take(pagination.PageSize)
             .ToArray();
 
+        // Collect all user IDs from paginated items to bulk load user names
+        var allUserIds = pagedItems
+            .SelectMany(x => new[] { x.CreatedBy, x.LastModifiedBy })
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        // Bulk load user names to avoid N+1 query problem
+        var userNames = await GetUserNamesBatchAsync(allUserIds);
+
         var results = new List<InteractionModel>();
         foreach (var item in pagedItems)
         {
-            var mapped = await MapEntityToModelAsync(item, mapper, null);
+            var mapped = await MapEntityToModelAsync(item, mapper, userNames, null);
             results.Add(mapped);
         }
 
@@ -552,28 +767,65 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     {
         // RBAC interceptor handles security enforcement
         var query = interactionRepository
-            .GetAll(["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"])
+            .GetAll([
+                "InteractionContacts", 
+                "InteractionContacts.Contact", 
+                "InteractionContacts.Contact.Partner",
+                "InteractionPartners",
+                "InteractionPartners.Partner",
+                "InteractionUsers",
+                "InteractionUsers.User",
+                "InteractionUsers.User.UserProfile"
+            ])
             .AsQueryable();
 
         // Load organization unit relationships
         await query.LoadOrganizationUnitRelationshipsAsync(context);
 
-        var interactions = query.Paginate(
-            x => MapEntityToModel(x, mapper),
-            request
-        );
+        // First get the paginated entities without mapping to avoid N+1 queries
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
 
-        // Add permissions for frontend UI
-        foreach (var interaction in interactions.Records)
+        if (request.OrderBy != null)
         {
-            var entity = await interactionRepository.GetByIdAsync(interaction.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"]);
-            if (entity != null)
-            {
-                //interaction.Permissions = await GetEntityPermissionsAsync(entity, user);
-            }
+            query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
         }
 
-        return interactions;
+        // Get total count first
+        var totalCount = await query.CountAsync();
+        
+        // Get paginated entities
+        var pagedEntities = await query
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToListAsync();
+
+        // Collect all user IDs from the paginated results to bulk load user names
+        var allUserIds = pagedEntities
+            .SelectMany(x => new[] { x.CreatedBy, x.LastModifiedBy })
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        // Bulk load user names to avoid N+1 query problem
+        var userNames = await GetUserNamesBatchAsync(allUserIds);
+
+        // Map entities to models using pre-loaded user names
+        var results = new List<InteractionModel>();
+        foreach (var entity in pagedEntities)
+        {
+            var mapped = await MapEntityToModelAsync(entity, mapper, userNames, user);
+            results.Add(mapped);
+        }
+
+        return new PaginationResponse<InteractionModel>
+        {
+            Records = results,
+            TotalCount = totalCount,
+            PageIndex = pageIndex,
+            PageSize = request.PageSize,
+            TotalPages = request.PageSize > 0 ? (int)Math.Ceiling((double)totalCount / request.PageSize) : 0
+        };
     }
 
     /// <summary>
@@ -589,7 +841,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             "InteractionPartners",
             "InteractionPartners.Partner", 
             "InteractionUsers",
-            "InteractionUsers.User"
+            "InteractionUsers.User",
+            "InteractionUsers.User.UserProfile"
         ]);
         if (item == null) return null;
 
@@ -605,7 +858,16 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public async Task<InteractionModel?> UpdateInteractionAsync(ClaimsPrincipal user, UpdateInteractionRequest model)
     {
         // RBAC interceptor handles security enforcement
-        var entity = await interactionRepository.GetByIdAsync(model.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"]);
+        var entity = await interactionRepository.GetByIdAsync(model.Id, [
+            "InteractionContacts", 
+            "InteractionContacts.Contact", 
+            "InteractionContacts.Contact.Partner",
+            "InteractionPartners",
+            "InteractionPartners.Partner",
+            "InteractionUsers",
+            "InteractionUsers.User",
+            "InteractionUsers.User.UserProfile"
+        ]);
         if (entity == null)
         {
             throw new BusinessException($"Interaction {model.Id} does not exist.");
@@ -640,7 +902,16 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public async Task DeleteInteractionAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
-        var entity = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"]);
+        var entity = await interactionRepository.GetByIdAsync(id, [
+            "InteractionContacts", 
+            "InteractionContacts.Contact", 
+            "InteractionContacts.Contact.Partner",
+            "InteractionPartners",
+            "InteractionPartners.Partner",
+            "InteractionUsers",
+            "InteractionUsers.User",
+            "InteractionUsers.User.UserProfile"
+        ]);
         if (entity == null) return;
 
         // Load organization unit relationships for single interaction
@@ -665,6 +936,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 "InteractionContacts.Contact.Partner",
                 "InteractionPartners.Partner",
                 "InteractionUsers.User",
+                "InteractionUsers.User.UserProfile",
                 "Documents"
             });
 
@@ -709,6 +981,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 "InteractionContacts.Contact.Partner",
                 "InteractionPartners.Partner",
                 "InteractionUsers.User",
+                "InteractionUsers.User.UserProfile",
                 "Documents"
             });
 
@@ -1050,7 +1323,16 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             return new List<object>();
 
         var interactions = interactionRepository
-            .GetAll(["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"])
+            .GetAll([
+                "InteractionContacts", 
+                "InteractionContacts.Contact", 
+                "InteractionContacts.Contact.Partner",
+                "InteractionPartners",
+                "InteractionPartners.Partner",
+                "InteractionUsers",
+                "InteractionUsers.User",
+                "InteractionUsers.User.UserProfile"
+            ])
             .Where(i => ids.Contains(i.Id))
             .ToList();
 
@@ -1067,11 +1349,21 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             }
         }
 
+        // Collect all user IDs to bulk load user names
+        var allUserIds = interactions
+            .SelectMany(x => new[] { x.CreatedBy, x.LastModifiedBy })
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        // Bulk load user names to avoid N+1 query problem
+        var userNames = await GetUserNamesBatchAsync(allUserIds);
+
         // Process interactions sequentially to avoid DbContext threading issues
         var results = new List<InteractionModel>();
         foreach (var interaction in interactions)
         {
-            var mappedInteraction = await MapEntityToModelAsync(interaction, mapper, user);
+            var mappedInteraction = await MapEntityToModelAsync(interaction, mapper, userNames, user);
             results.Add(mappedInteraction);
         }
         

@@ -18,6 +18,7 @@ import { SearchField } from '../../../../common/services/search-parser.service';
 import { PermissionUtilityService } from '../../../../essentials/services/permission-utility.service';
 import { EntityPermissions } from '../../../../essentials/services/permission.service';
 import { EntityConfigurationService } from '../../services/entity-configuration.service';
+import { CachedDataService } from '../../../../common/services/cached-data.service';
 
 
 /**
@@ -60,6 +61,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
   importDialogService = inject(ImportDialogService);
   permissionUtilityService = inject(PermissionUtilityService);
   entityConfigurationService = inject(EntityConfigurationService);
+  cachedDataService = inject(CachedDataService);
 
   newPartnerData = signal<Partner|null>(null);
 
@@ -83,6 +85,10 @@ export class PartnerComponent implements OnDestroy, OnInit {
     scrollable: true,
     scrollHeight: 'flex',
     entityName: 'Partner',
+    sortableFields: [
+      { field: 'createdBy', label: 'Created By' },
+      { field: 'lastModifiedBy', label: 'Last Updated By' }
+    ],
     searchConfig: {
       useAdvancedSearch: true,
       placeholder: 'Search partners...',
@@ -94,8 +100,14 @@ export class PartnerComponent implements OnDestroy, OnInit {
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
-          field: 'shortName', 
-          label: 'Short Name', 
+          field: 'partnerShortDescription', 
+          label: 'Short Description', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'partnerLongDescription', 
+          label: 'Long Description', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
@@ -106,28 +118,64 @@ export class PartnerComponent implements OnDestroy, OnInit {
           operators: ['is', 'is not']
         },
         { 
-          field: 'website', 
-          label: 'Website', 
+          field: 'partnerGroupCode', 
+          label: 'Partner Group', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
-          field: 'street', 
-          label: 'Street', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
+          field: 'partnerCategoryId', 
+          label: 'Partner Category ID', 
+          type: 'number',
+          operators: ['is', 'is not', '>', '<', '>=', '<=']
         },
         { 
-          field: 'city', 
-          label: 'City', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
+          field: 'liaisonOfficeId', 
+          label: 'Liaison Office ID', 
+          type: 'number',
+          operators: ['is', 'is not', '>', '<', '>=', '<=']
         },
         { 
-          field: 'country', 
-          label: 'Country', 
+          field: 'keyGlobalPartner', 
+          label: 'Key Global Partner', 
           type: 'string',
           operators: ['is', 'is not']
+        },
+        { 
+          field: 'unSecretariatPartner', 
+          label: 'UN Secretariat Partner', 
+          type: 'string',
+          operators: ['is', 'is not']
+        },
+        { 
+          field: 'partnerApprovalStatus', 
+          label: 'Approval Status', 
+          type: 'string',
+          operators: ['is', 'is not']
+        },
+        { 
+          field: 'pooledFund', 
+          label: 'Pooled Fund', 
+          type: 'string',
+          operators: ['is', 'is not']
+        },
+        { 
+          field: 'canCreateNewOpportunities', 
+          label: 'Can Create New Opportunities', 
+          type: 'string',
+          operators: ['is', 'is not']
+        },
+        { 
+          field: 'createdDate', 
+          label: 'Created Date', 
+          type: 'date',
+          operators: ['after', 'before', 'between']
+        },
+        { 
+          field: 'lastModifiedDate', 
+          label: 'Last Modified Date', 
+          type: 'date',
+          operators: ['after', 'before', 'between']
         }
       ] as SearchField[]
     }
@@ -148,6 +196,9 @@ export class PartnerComponent implements OnDestroy, OnInit {
     
     // Load dynamic columns from API
     this.loadPartnerColumns();
+    
+    // Listen for refresh events (e.g., from imports) to refresh partner cache
+    window.addEventListener('refresh-listview', this.refreshPartnerCacheHandler);
     
     this.activatedRoute.queryParams
       .subscribe(params => {
@@ -200,12 +251,24 @@ export class PartnerComponent implements OnDestroy, OnInit {
     });
   }
 
+  // Handler for refresh-listview events to refresh partner cache
+  private refreshPartnerCacheHandler = () => {
+    this.cachedDataService.refreshPartners();
+  };
+
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
+    // Clean up event listener
+    window.removeEventListener('refresh-listview', this.refreshPartnerCacheHandler);
   }
 
   _handleOnRecordCreation(newRecordData: any) {
     if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
+      // Refresh partner cache to include the newly created partner
+      this.cachedDataService.refreshPartners();
+      
+      // Trigger refresh of the list view to show the new partner
+      window.dispatchEvent(new CustomEvent('refresh-listview'));
       
       this.router.navigate(['partnerships/partners', newRecordData.id.toString()]);
     } else {

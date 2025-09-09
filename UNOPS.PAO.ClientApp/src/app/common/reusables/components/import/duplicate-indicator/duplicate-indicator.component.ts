@@ -49,7 +49,6 @@ export interface DuplicateDetectionInfo {
             [class.medium-confidence]="confidenceLevel() === 'medium'"
             [class.low-confidence]="confidenceLevel() === 'low'"
             (click)="op.toggle($event)"
-            [pTooltip]="getTooltipText()"
             tooltipPosition="top"
           >
             <i class="pi pi-exclamation-triangle"></i>
@@ -225,16 +224,6 @@ export class DuplicateIndicatorComponent {
     if (low > 0) return 'low';
     return 'none';
   });
-
-  getTooltipText(): string {
-    if (!this.duplicateInfo?.hasDuplicates) {
-      return 'DUPLICATE_DETECTION.uniqueRecordTooltip';
-    }
-    
-    const total = this.duplicateInfo.totalDuplicates || 0;
-    const confidence = this.confidenceLevel();
-    return `${total} DUPLICATE_DETECTION.duplicateTooltip - ${confidence} DUPLICATE_DETECTION.${confidence}ConfidenceTooltip`;
-  }
 
 
 

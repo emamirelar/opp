@@ -68,6 +68,10 @@ public class InteractionModel
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? LastModifiedBy { get; set; }
+    
+    // User name fields resolved from UserProfile
+    public string? CreatedByName { get; set; }
+    public string? LastModifiedByName { get; set; }
 }
 
 public class InteractionContactModel

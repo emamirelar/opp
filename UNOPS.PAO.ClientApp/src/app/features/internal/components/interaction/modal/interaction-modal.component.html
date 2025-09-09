@@ -36,7 +36,7 @@
         }
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="contacts">{{ 'label.interaction.relatedTo' | translate }}</label>
+          <label for="contacts">{{ 'label.interaction.relatedTo' | translate }} *</label>
           <p-multiselect id="contacts"
                          formControlName="contactIds"
                          [options]="allContacts()"
@@ -58,6 +58,9 @@
               </div>
             </ng-template>
           </p-multiselect>
+          @if( formGroup.get("contactIds")?.invalid && showValidationFailedError() ) {
+          <p-message severity="error" variant="simple">At least one contact must be selected.</p-message>
+          }
         </div>
 
         <div class="col-span-full partners-display flex flex-col gap-2">
@@ -161,7 +164,7 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="type">{{ 'label.interaction.type' | translate }}</label>
+          <label for="type">{{ 'label.interaction.type' | translate }} *</label>
           <p-select id="type"
                     [options]="typeOptions"
                     [appendTo]="'body'"
@@ -178,15 +181,21 @@
               {{ item.translateKey | translate }}
             </ng-template>
           </p-select>
+          @if( formGroup.get("type")?.invalid && showValidationFailedError() ) {
+          <p-message severity="error" variant="simple">Type must be selected.</p-message>
+          }
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="date">{{ 'label.interaction.date' | translate }}</label>
+          <label for="date">{{ 'label.interaction.date' | translate }} *</label>
           <p-calendar id="date"
                       formControlName="date"
                       [disabled]="!recordPermissions()?.permissions?.canUpdate"
                       [showTime]="true"
                       fluid="true"></p-calendar>
+          @if( formGroup.get("date")?.invalid && showValidationFailedError() ) {
+          <p-message severity="error" variant="simple">Date must be selected.</p-message>
+          }
         </div>
 
         <div class="col-span-full flex flex-col gap-2">

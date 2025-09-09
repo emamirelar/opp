@@ -85,7 +85,7 @@ def create_response_agent():
     return LlmAgent(
         name="response_formatter_agent",
         description="Formats API responses into structured JSON responses with appropriate display types for frontend rendering",
-        model=config_manager.get_gemini_model(),
+        model="gemini-2.5-flash-lite",
         instruction=dynamic_response_instruction,  # Use dynamic instruction
         tools=[],  # Explicitly no tools to prevent inheritance
         output_key="formatted_response",

@@ -39,6 +39,56 @@ def convert_boolean_field(value):
     else:
         return "false"  # Default
 
+def convert_sf_status_to_entitystatus(status):
+    """Convert Salesforce SF_PRM_Status__c to EntityStatus enum value"""
+    if not status:
+        return "1"  # Default to Active
+    status_lower = status.lower()
+    if status_lower == "active":
+        return "1"  # EntityStatus.Active
+    elif status_lower == "inactive":
+        return "0"  # EntityStatus.Inactive  
+    else:
+        return "1"  # Default to Active
+
+def convert_sf_dd_required(value):
+    """Convert Salesforce SF_PRM_DDRequired__c to DueDiligenceRequired enum value"""
+    if not value:
+        return "0"  # Default to NotRequired
+    value_lower = str(value).lower()
+    if value_lower == "yes":
+        return "1"  # DueDiligenceRequired.Required
+    elif value_lower == "no":
+        return "0"  # DueDiligenceRequired.NotRequired
+    else:
+        return "0"  # Default to NotRequired
+
+def convert_sf_dd_approval(value):
+    """Convert Salesforce SF_PRM_DDEACDone__c to DueDiligenceApproval enum value"""
+    if not value:
+        return "0"  # Default to NotApproved
+    value_lower = str(value).lower()
+    if value_lower in ["done", "yes", "true", "approved"]:
+        return "1"  # DueDiligenceApproval.Approved
+    elif value_lower in ["not done", "no", "false", "not approved"]:
+        return "0"  # DueDiligenceApproval.NotApproved
+    else:
+        return "0"  # Default to NotApproved
+
+def convert_sf_levy_status(value):
+    """Convert Salesforce SF_PRM_LevyPotentiallyApplies__c to PartnerLevyStatus enum value"""
+    if not value:
+        return "0"  # Default to DoesNotApply
+    value_lower = str(value).lower()
+    if value_lower == "potentially applies":
+        return "1"  # PartnerLevyStatus.PotentiallyApplies
+    elif value_lower == "does not apply":
+        return "0"  # PartnerLevyStatus.DoesNotApply
+    elif value_lower == "potentially does not apply":
+        return "2"  # PartnerLevyStatus.PotentiallyDoesNotApply
+    else:
+        return "0"  # Default to DoesNotApply
+
 def load_liaison_office_codes():
     """Load valid liaison office codes from the liaison office CSV if it exists"""
     valid_liaison_office_codes = set()
@@ -56,23 +106,38 @@ def load_liaison_office_codes():
     return valid_liaison_office_codes
 
 def load_partner_liaison_mapping():
-    """Load mapping from AccountNumber to LiaisonOffice code from partners export CSV"""
-    account_to_liaison_mapping = {}
+    """Load mapping from AccountNumber to various partner fields from partners export CSV"""
+    account_to_partner_data_mapping = {}
     try:
         with open('sf_prod_partners_export - Sheet1.csv', 'r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             for row in reader:
                 account_number = row['AccountNumber'].strip() if 'AccountNumber' in row and row['AccountNumber'] else ""
-                liaison_office_code = row['SF_PRM_LiaisonOffice__c'].strip() if 'SF_PRM_LiaisonOffice__c' in row and row['SF_PRM_LiaisonOffice__c'] else ""
                 
-                if account_number and liaison_office_code:
-                    account_to_liaison_mapping[account_number] = liaison_office_code
+                if account_number:
+                    # Extract all relevant SF fields
+                    partner_data = {
+                        'liaison_office_code': row['SF_PRM_LiaisonOffice__c'].strip() if 'SF_PRM_LiaisonOffice__c' in row and row['SF_PRM_LiaisonOffice__c'] else "",
+                        'sf_status': row['SF_PRM_Status__c'].strip() if 'SF_PRM_Status__c' in row and row['SF_PRM_Status__c'] else "",
+                        'sf_new_engagement': row['SF_PRM_NewEngagement__c'].strip() if 'SF_PRM_NewEngagement__c' in row and row['SF_PRM_NewEngagement__c'] else "",
+                        'sf_reason_no_engagement': clean_string_for_csharp(row['SF_ReasonForNoNewEngagement__c']) if 'SF_ReasonForNoNewEngagement__c' in row and row['SF_ReasonForNoNewEngagement__c'] else "",
+                        'sf_pooled_fund': row['SF_PRM_PooledFund__c'].strip() if 'SF_PRM_PooledFund__c' in row and row['SF_PRM_PooledFund__c'] else "",
+                        'sf_global_key_partner': row['SF_PRM_GlobalKeyAccountPartner__c'].strip() if 'SF_PRM_GlobalKeyAccountPartner__c' in row and row['SF_PRM_GlobalKeyAccountPartner__c'] else "",
+                        'sf_un_secretariat': row['SF_PRM_UNSecretariatEntity__c'].strip() if 'SF_PRM_UNSecretariatEntity__c' in row and row['SF_PRM_UNSecretariatEntity__c'] else "",
+                        'sf_dd_required': row['SF_PRM_DDRequired__c'].strip() if 'SF_PRM_DDRequired__c' in row and row['SF_PRM_DDRequired__c'] else "",
+                        'sf_dd_approval': row['SF_PRM_DDEACDone__c'].strip() if 'SF_PRM_DDEACDone__c' in row and row['SF_PRM_DDEACDone__c'] else "",
+                        'sf_levy_status': row['SF_PRM_LevyPotentiallyApplies__c'].strip() if 'SF_PRM_LevyPotentiallyApplies__c' in row and row['SF_PRM_LevyPotentiallyApplies__c'] else "",
+                        'sf_reason_levy': clean_string_for_csharp(row['SF_PRM_ReasonForLevyNotApplying__c']) if 'SF_PRM_ReasonForLevyNotApplying__c' in row and row['SF_PRM_ReasonForLevyNotApplying__c'] else "",
+                        'sf_levy_treatment': clean_string_for_csharp(row['SF_PRM_LevyTreatment__c']) if 'SF_PRM_LevyTreatment__c' in row and row['SF_PRM_LevyTreatment__c'] else "",
+                        'sf_eac_reference': clean_string_for_csharp(row['SF_PRM_EACReference__c']) if 'SF_PRM_EACReference__c' in row and row['SF_PRM_EACReference__c'] else ""
+                    }
+                    account_to_partner_data_mapping[account_number] = partner_data
         
-        print(f"Loaded {len(account_to_liaison_mapping)} AccountNumber -> LiaisonOffice mappings from partners CSV")
+        print(f"Loaded {len(account_to_partner_data_mapping)} AccountNumber -> Partner SF data mappings from partners CSV")
     except FileNotFoundError:
-        print("Partners export CSV not found - will use default null values for LiaisonOfficeId")
+        print("Partners export CSV not found - will use default values for all SF fields")
     
-    return account_to_liaison_mapping
+    return account_to_partner_data_mapping
 
 def load_partner_logo_and_flag_mapping():
     """Load mapping from partner_id to logo_url (with flag_url fallback) from the partner logos CSV"""
@@ -105,6 +170,57 @@ def load_partner_logo_and_flag_mapping():
     
     return partner_to_logo_mapping
 
+def load_account_owner_userid_mapping():
+    """Load mapping from AccountNumber to UserID via SF_PRM_AccountOwner__c from both CSV files"""
+    account_to_userid_mapping = {}
+    
+    # First, load the account owner name mapping: AccountNumber -> SF_PRM_AccountOwner__c
+    account_to_owner_mapping = {}
+    try:
+        with open('sf_prod_account_owner_account_number_export.csv', 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                account_number = row['AccountNumber'].strip() if 'AccountNumber' in row and row['AccountNumber'] else ""
+                account_owner = row['SF_PRM_AccountOwner__c'].strip() if 'SF_PRM_AccountOwner__c' in row and row['SF_PRM_AccountOwner__c'] else ""
+                
+                if account_number and account_owner:
+                    account_to_owner_mapping[account_number] = account_owner
+        
+        print(f"Loaded {len(account_to_owner_mapping)} AccountNumber -> AccountOwner mappings")
+    except FileNotFoundError:
+        print("Account owner account number CSV not found - will use null values for PartnerFocalPointUserId")
+        return account_to_userid_mapping
+    
+    # Second, load the owner to UserID mapping: SF_PRM_AccountOwner__c -> UserId
+    owner_to_userid_mapping = {}
+    try:
+        with open('sf_prod_account_owner_userid_export.csv', 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                account_owner = row['SF_PRM_AccountOwner__c'].strip() if 'SF_PRM_AccountOwner__c' in row and row['SF_PRM_AccountOwner__c'] else ""
+                user_id = row['UserId'].strip() if 'UserId' in row and row['UserId'] else ""
+                
+                if account_owner and user_id:
+                    try:
+                        # Ensure UserID is a valid integer
+                        user_id_int = int(user_id)
+                        owner_to_userid_mapping[account_owner] = user_id_int
+                    except ValueError:
+                        print(f"Invalid UserID format: {user_id} for owner: {account_owner}")
+        
+        print(f"Loaded {len(owner_to_userid_mapping)} AccountOwner -> UserId mappings")
+    except FileNotFoundError:
+        print("Account owner userid CSV not found - will use null values for PartnerFocalPointUserId")
+        return account_to_userid_mapping
+    
+    # Combine the mappings: AccountNumber -> SF_PRM_AccountOwner__c -> UserId
+    for account_number, account_owner in account_to_owner_mapping.items():
+        if account_owner in owner_to_userid_mapping:
+            account_to_userid_mapping[account_number] = owner_to_userid_mapping[account_owner]
+    
+    print(f"Created {len(account_to_userid_mapping)} AccountNumber -> UserId mappings")
+    return account_to_userid_mapping
+
 def is_circular_reference(level_code, partner_id):
     """Check if a level code creates a circular reference with the partner ID"""
     if not level_code or not partner_id:
@@ -126,8 +242,9 @@ def parse_combined_hierarchy_csv():
     
     # Load valid liaison office codes and partner mapping
     valid_liaison_office_codes = load_liaison_office_codes()
-    account_to_liaison_mapping = load_partner_liaison_mapping()
+    account_to_partner_data_mapping = load_partner_liaison_mapping()
     partner_to_logo_mapping = load_partner_logo_and_flag_mapping()
+    account_to_userid_mapping = load_account_owner_userid_mapping()
     
     print("Reading Combined Hierarchy CSV...")
     
@@ -218,15 +335,33 @@ def parse_combined_hierarchy_csv():
             else:
                 partner_group_code = level1_code
             
-            # Extract liaison office information using AccountNumber lookup
-            liaison_office_code = ""
-            if partner_id in account_to_liaison_mapping:
-                liaison_office_code = account_to_liaison_mapping[partner_id]
+            # Extract SF partner data using AccountNumber lookup
+            sf_data = account_to_partner_data_mapping.get(partner_id, {})
+            liaison_office_code = sf_data.get('liaison_office_code', '')
             
             # Extract logo URL using partner_id lookup
             logo_url = ""
             if partner_id in partner_to_logo_mapping:
                 logo_url = partner_to_logo_mapping[partner_id]
+            
+            # Extract PartnerFocalPointUserId using account number lookup
+            partner_focal_point_user_id = None
+            if partner_id in account_to_userid_mapping:
+                partner_focal_point_user_id = account_to_userid_mapping[partner_id]
+            
+            # Extract and map SF fields to partner fields
+            sf_status = sf_data.get('sf_status', 'Active')  # Default to Active
+            sf_new_engagement = sf_data.get('sf_new_engagement', 'Allowed')  # Default to Allowed
+            sf_reason_no_engagement = sf_data.get('sf_reason_no_engagement', '')
+            sf_pooled_fund = sf_data.get('sf_pooled_fund', 'No')
+            sf_global_key_partner = sf_data.get('sf_global_key_partner', 'FALSE')
+            sf_un_secretariat = sf_data.get('sf_un_secretariat', 'FALSE')
+            sf_dd_required = sf_data.get('sf_dd_required', 'No')  # Default to No
+            sf_dd_approval = sf_data.get('sf_dd_approval', 'Not Done')  # Default to Not Done
+            sf_levy_status = sf_data.get('sf_levy_status', 'Does not apply')  # Default to Does not apply
+            sf_reason_levy = sf_data.get('sf_reason_levy', '')
+            sf_levy_treatment = sf_data.get('sf_levy_treatment', '')
+            sf_eac_reference = sf_data.get('sf_eac_reference', '')
             
             # Create partner entry
             if partner_id and partner_name:
@@ -234,15 +369,26 @@ def parse_combined_hierarchy_csv():
                     'partner_code': partner_id,
                     'name': partner_name,
                     'short_description': partner_short,
-                    'status': "1",  # Default to Active
+                    'status': convert_sf_status_to_entitystatus(sf_status),
                     'partner_group_code': partner_group_code,
                     'liaison_office_code': liaison_office_code,
                     'logo_url': logo_url,
-                    'can_create_new_opportunities': "true",  # Default
-                    'pooled_fund': "false",  # Default
-                    'key_global_partner': "false",  # Default
-                    'un_secretariat_partner': "false",  # Default
-                    'reason_no_opportunity': ""  # Default
+                    'can_create_new_opportunities': convert_boolean_field(sf_new_engagement),
+                    'pooled_fund': convert_boolean_field(sf_pooled_fund),
+                    'key_global_partner': convert_boolean_field(sf_global_key_partner),
+                    'un_secretariat_partner': convert_boolean_field(sf_un_secretariat),
+                    'reason_no_opportunity': sf_reason_no_engagement,
+                    'due_diligence_required': convert_sf_dd_required(sf_dd_required),
+                    'due_diligence_approval': convert_sf_dd_approval(sf_dd_approval),
+                    'partner_levy_status': convert_sf_levy_status(sf_levy_status),
+                    'reason_for_levy': sf_reason_levy,
+                    'levy_treatment': sf_levy_treatment,
+                    # New approval fields - all partners are approved from Salesforce
+                    'partner_approval_status': '1',  # Approved
+                    'partner_approval_date': 'DateTime.UtcNow',
+                    'partner_approval_reference': sf_eac_reference if sf_eac_reference else None,
+                    'partner_approved_by': 'Salesforce Migration',
+                    'partner_focal_point_user_id': partner_focal_point_user_id
                 }
                 partners.append(partner_data)
     
@@ -330,6 +476,7 @@ def generate_partner_seeder(partners):
 using System.Collections.Generic;
 using System.Linq;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
@@ -366,6 +513,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         # Handle logo URL - use null if empty
         logo_url_value = f'"{partner["logo_url"]}"' if partner['logo_url'] else 'null'
         
+        # Handle PartnerFocalPointUserId - use null if None
+        partner_focal_point_user_id_value = partner['partner_focal_point_user_id'] if partner['partner_focal_point_user_id'] is not None else 'null'
+        
         seeder_code += f'''                new UNOPSPartner
                 {{
                     PartnerCode = "{partner['partner_code']}",
@@ -380,6 +530,16 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     KeyGlobalPartner = {partner['key_global_partner']},
                     UNSecretariatPartner = {partner['un_secretariat_partner']},
                     ReasonForNoNewOpportunity = "{partner['reason_no_opportunity']}",
+                    DueDiligenceRequired = (DueDiligenceRequired){partner['due_diligence_required']},
+                    DueDiligenceApproval = (DueDiligenceApproval){partner['due_diligence_approval']},
+                    PartnerLevyStatus = (PartnerLevyStatus){partner['partner_levy_status']},
+                    ReasonForLevy = "{partner['reason_for_levy']}",
+                    LevyTreatment = "{partner['levy_treatment']}",
+                    PartnerApprovalStatus = (PartnerApprovalStatus){partner['partner_approval_status']},
+                    PartnerApprovalDate = {partner['partner_approval_date']},
+                    PartnerApprovalReference = {f'"{partner["partner_approval_reference"]}"' if partner['partner_approval_reference'] else 'null'},
+                    PartnerApprovedBy = "{partner['partner_approved_by']}",
+                    PartnerFocalPointUserId = {partner_focal_point_user_id_value},
                     ErpDimValue = {f'int.Parse("{partner["partner_code"]}")' if partner['partner_code'] and partner['partner_code'].isdigit() else 'null'},
                     CreatedBy = 0,
                     CreatedDate = DateTime.UtcNow,

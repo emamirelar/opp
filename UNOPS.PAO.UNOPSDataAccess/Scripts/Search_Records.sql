@@ -9,17 +9,18 @@
 -- Part 1: Field-Specific Search - Searches actual database columns with smart scoring
 -- Part 2: Semantic Embedding Search - Uses AI embeddings for meaning-based matching
 --
--- DYNAMIC ENTITY DISCOVERY:
--- - Automatically discovers entity types from EntityEmbeddings table
+-- CORE ENTITY SEARCH:
+-- - Searches core entities: Partners, Contacts, Interactions
 -- - Uses information_schema to find searchable columns dynamically
--- - No hardcoded entity names - completely future-proof
+-- - Uses pg_trgm similarity search for flexible matching
 -- - Safely excludes system columns and sensitive fields
 --
--- INTELLIGENT FIELD SCORING SYSTEM:
--- - Names/Titles: 3.0x weight (highest priority for person/entity identification)
--- - Contact Info: 2.5x weight (email, phone - high relevance for communication)
--- - Organization: 2.0x weight (department, company - structural context)
--- - Descriptions: 1.0x weight (notes, details - content context)
+-- INTELLIGENT FIELD SCORING SYSTEM (Normalized to max 100%):
+-- - Names/Titles: Up to 1.0 (100%) - highest priority for person/entity identification
+-- - Contact Info: Up to 0.9 (90%) - email, phone - high relevance for communication  
+-- - Organization: Up to 0.8 (80%) - department, company - structural context
+-- - Descriptions: Up to 0.6 (60%) - notes, details - content context
+-- - Other Fields: Up to 0.5 (50%) - general text fields
 -- - Triple search strategy per field: exact match, word boundary, similarity
 --
 -- TRIPLE SEARCH STRATEGY PER FIELD:
@@ -96,26 +97,13 @@ DECLARE
 BEGIN
     start_time := clock_timestamp();
     
-    -- Get all available entity types from EntityEmbeddings
-    SELECT ARRAY_AGG(DISTINCT "EntityName") 
-    INTO available_entities
-    FROM public."EntityEmbeddings";
+    -- Default to core entity types (no dependency on EntityEmbeddings)
+    available_entities := ARRAY['Partners', 'Contacts', 'Interactions'];
     
     -- Initialize empty results
     text_results := '{}'::json;
     embedding_results := '{}'::json;
     field_search_parts := ARRAY[]::TEXT[];
-    
-    -- If no entities available, return empty result
-    IF available_entities IS NULL OR array_length(available_entities, 1) = 0 THEN
-        RETURN json_build_object(
-            'searchQuery', search_query,
-            'strategy', 'hybrid',
-            'message', 'No entities found in EntityEmbeddings table',
-            'results', json_build_object(),
-            'summary', json_build_object('totalResults', 0)
-        );
-    END IF;
     
     -- PART 1: DIRECT TABLE FIELD SEARCH
     -- Build dynamic field-specific search for each entity
@@ -148,48 +136,48 @@ BEGIN
                         "Id"::TEXT as entity_id,
                         %L::TEXT as matched_field,
                         COALESCE("%s", '''')::TEXT as field_value,
-                        CASE 
-                            -- High priority: Names and Titles (3.0x weight)
+                        LEAST(1.0, CASE 
+                            -- High priority: Names and Titles (3.0x internal weight, capped at 1.0)
                             WHEN lower(%L) ~ ''(name|title|firstname|lastname|fullname)'' THEN
-                                CASE 
-                                    WHEN "%s" ILIKE %L THEN 3.0 * %s
-                                    WHEN "%s" ~* %L THEN 2.8 * %s
-                                    WHEN similarity("%s", %L) > 0.3 THEN similarity("%s", %L) * 2.5 * %s
-                                    ELSE 0
-                                END
-                            -- Medium-high priority: Contact info (2.5x weight)  
-                            WHEN lower(%L) ~ ''(email|phone|contact|mobile)'' THEN
-                                CASE 
-                                    WHEN "%s" ILIKE %L THEN 2.5 * %s
-                                    WHEN "%s" ~* %L THEN 2.2 * %s
-                                    WHEN similarity("%s", %L) > 0.3 THEN similarity("%s", %L) * 2.0 * %s
-                                    ELSE 0
-                                END
-                            -- Medium priority: Organization fields (2.0x weight)
-                            WHEN lower(%L) ~ ''(department|organization|position|role|company|office)'' THEN
-                                CASE 
-                                    WHEN "%s" ILIKE %L THEN 2.0 * %s
-                                    WHEN "%s" ~* %L THEN 1.8 * %s
-                                    WHEN similarity("%s", %L) > 0.3 THEN similarity("%s", %L) * 1.5 * %s
-                                    ELSE 0
-                                END
-                            -- Lower priority: Descriptions and notes (1.0x weight)
-                            WHEN lower(%L) ~ ''(description|note|comment|remark|detail|summary)'' THEN
-                                CASE 
-                                    WHEN "%s" ILIKE %L THEN 1.5 * %s
-                                    WHEN "%s" ~* %L THEN 1.3 * %s
-                                    WHEN similarity("%s", %L) > 0.2 THEN similarity("%s", %L) * 1.0 * %s
-                                    ELSE 0
-                                END
-                            -- Default for other text fields (0.8x weight)
-                            ELSE
                                 CASE 
                                     WHEN "%s" ILIKE %L THEN 1.0 * %s
                                     WHEN "%s" ~* %L THEN 0.9 * %s
-                                    WHEN similarity("%s", %L) > 0.2 THEN similarity("%s", %L) * 0.7 * %s
+                                    WHEN similarity("%s", %L) > 0.3 THEN similarity("%s", %L) * 0.8 * %s
                                     ELSE 0
                                 END
-                        END as score,
+                            -- Medium-high priority: Contact info (2.5x internal weight, capped at 1.0)  
+                            WHEN lower(%L) ~ ''(email|phone|contact|mobile)'' THEN
+                                CASE 
+                                    WHEN "%s" ILIKE %L THEN 0.9 * %s
+                                    WHEN "%s" ~* %L THEN 0.8 * %s
+                                    WHEN similarity("%s", %L) > 0.3 THEN similarity("%s", %L) * 0.7 * %s
+                                    ELSE 0
+                                END
+                            -- Medium priority: Organization fields (2.0x internal weight, capped at 1.0)
+                            WHEN lower(%L) ~ ''(department|organization|position|role|company|office)'' THEN
+                                CASE 
+                                    WHEN "%s" ILIKE %L THEN 0.8 * %s
+                                    WHEN "%s" ~* %L THEN 0.7 * %s
+                                    WHEN similarity("%s", %L) > 0.3 THEN similarity("%s", %L) * 0.6 * %s
+                                    ELSE 0
+                                END
+                            -- Lower priority: Descriptions and notes (1.0x weight, capped at 1.0)
+                            WHEN lower(%L) ~ ''(description|note|comment|remark|detail|summary)'' THEN
+                                CASE 
+                                    WHEN "%s" ILIKE %L THEN 0.6 * %s
+                                    WHEN "%s" ~* %L THEN 0.5 * %s
+                                    WHEN similarity("%s", %L) > 0.2 THEN similarity("%s", %L) * 0.4 * %s
+                                    ELSE 0
+                                END
+                            -- Default for other text fields (0.8x weight, capped at 1.0)
+                            ELSE
+                                CASE 
+                                    WHEN "%s" ILIKE %L THEN 0.5 * %s
+                                    WHEN "%s" ~* %L THEN 0.4 * %s
+                                    WHEN similarity("%s", %L) > 0.2 THEN similarity("%s", %L) * 0.3 * %s
+                                    ELSE 0
+                                END
+                        END) as score,
                         ''field-search''::TEXT as search_type,
                         CASE 
                             WHEN "%s" ILIKE %L THEN ''Exact Match''
@@ -297,8 +285,8 @@ BEGIN
         ) INTO text_results;
     END IF;
     
-    -- PART 2: SEMANTIC EMBEDDING SEARCH
-    IF embedding IS NOT NULL THEN
+    -- PART 2: SEMANTIC EMBEDDING SEARCH (Optional - only if EntityEmbeddings table exists and has data)
+    IF embedding IS NOT NULL AND EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'EntityEmbeddings' AND table_schema = 'public') THEN
         embedding_search_sql := format('
             WITH embedding_results AS (
                 SELECT 
@@ -397,7 +385,7 @@ BEGIN
                 json_build_object(
                     'searchQuery', search_query,
                     'hasEmbedding', (embedding IS NOT NULL),
-                    'strategy', 'hybrid-field-semantic',
+                    'strategy', 'similarity-search',
                     'availableEntities', available_entities,
                     'boostFactors', json_build_object(
                         'textBoost', text_boost,
@@ -419,11 +407,11 @@ BEGIN
                         ),
                         'entitiesSearched', COALESCE(array_length(available_entities, 1), 0),
                         'searchCapabilities', json_build_array(
-                            'dynamic-table-discovery',
+                            'similarity-search',
                             'field-specific-scoring', 
-                            'semantic-similarity',
+                            'core-entity-search',
                             'safe-column-handling',
-                            'future-proof-design'
+                            'pg-trgm-matching'
                         ),
                         'executionTimeMs', round((execution_time * 1000)::numeric, 2)
                     )
@@ -444,19 +432,18 @@ BEGIN
 END
 $$;
 
--- Create performance indexes
-CREATE INDEX IF NOT EXISTS idx_entityembeddings_entityname_id 
-ON public."EntityEmbeddings"("EntityName", "EntityId");
-
-CREATE INDEX IF NOT EXISTS idx_entityembeddings_fullembedding_cosine
-ON public."EntityEmbeddings" 
-USING ivfflat ("FullEmbedding" vector_cosine_ops);
+-- Create performance indexes for similarity search
+-- Note: pg_trgm extension should already be enabled for similarity search
+-- The following indexes will improve performance on text columns:
+-- CREATE INDEX IF NOT EXISTS idx_partners_name_gin ON public."Partners" USING gin ("Name" gin_trgm_ops);
+-- CREATE INDEX IF NOT EXISTS idx_contacts_name_gin ON public."Contacts" USING gin (("FirstName" || ' ' || "LastName") gin_trgm_ops);
+-- CREATE INDEX IF NOT EXISTS idx_interactions_subject_gin ON public."Interactions" USING gin ("Subject" gin_trgm_ops);
 
 -- Example usage:
 -- SELECT public.search_entity_records('John');
 -- SELECT public.search_entity_records('Amy Mark', NULL, 1.0, 1.2, 150, FALSE); -- Clean results
--- SELECT public.search_entity_records('experienced project manager', '[0.1, 0.2, ...]'::vector, 1.0, 1.2, 150, TRUE); -- Debug mode
--- SELECT public.search_entity_records('procurement', NULL, 2.0, 1.0, 200, TRUE); -- Custom boost + debug
+-- SELECT public.search_entity_records('experienced project manager', NULL, 2.0, 1.0, 200, TRUE); -- Custom boost + debug
+-- SELECT public.search_entity_records('procurement', NULL, 1.5, 1.0, 100, FALSE); -- Similarity search only
 
 
 

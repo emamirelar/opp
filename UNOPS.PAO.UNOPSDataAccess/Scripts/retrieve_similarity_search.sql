@@ -44,8 +44,8 @@ BEGIN
             WHERE tc.constraint_type = 'PRIMARY KEY'
         ) pk ON c.table_name = pk.table_name
         WHERE c.data_type IN ('text', 'character varying')
-          AND c.column_name IN ('Name', 'Title', 'Details', 'Description')
-          AND c.table_name NOT LIKE '%Asp%'
+          AND c.column_name IN ('Name', 'Title', 'Details', 'Description', 'UserEmail')
+          AND (c.table_name NOT LIKE '%Asp%' OR c.table_name = 'AspNetRoles')
           AND c.table_name NOT LIKE '%Ai%'
           AND c.table_name = entity_name
     ) search_tables;

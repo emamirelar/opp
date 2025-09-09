@@ -743,7 +743,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
     let route: string;
     switch (entityType) {
       case 'partner':
-        route = `/partnerships/partner/${entityId}`;
+        route = `/partnerships/partners/${entityId}`;
         break;
       case 'contact':
         route = `/partnerships/contacts/${entityId}`;
