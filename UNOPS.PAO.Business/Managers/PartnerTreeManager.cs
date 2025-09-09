@@ -53,7 +53,8 @@ public class PartnerTreeManager : IPartnerTreeManager
             .Select(x => MapEntityToModel(x))
             .ToList();
 
-        var lookup = allTrees.ToLookup(x => x.Data.Parent);
+        // Normalize null and empty string to empty string for consistent hierarchy building
+        var lookup = allTrees.ToLookup(x => string.IsNullOrEmpty(x.Data.Parent) ? string.Empty : x.Data.Parent);
         return BuildHierarchy(lookup, string.Empty, new HashSet<string>());
     }
 
