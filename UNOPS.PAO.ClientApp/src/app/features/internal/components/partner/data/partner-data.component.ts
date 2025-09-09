@@ -23,34 +23,38 @@ export class PartnerDataComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+
     // Get the recordId from the parent route
     this.route.parent?.paramMap.subscribe({
       next: (paramMap: ParamMap) => {
         this.partnerId = paramMap.get("recordId") || '';
-        
-        // Check if data is already available from the resolver
-        this.route.parent?.data.subscribe(data => {
-          if (data['partnerData']) {
-            const partnerData: Partner = data['partnerData'];
-            this.partnerCode = partnerData.partnerCode || '';
-          } else {
-            // Fallback to loading details directly if resolver data isn't available
-            this.loadPartnerDetails();
-          }
-        });
+
+        if (this.partnerId) {
+          // Check if data is already available from the resolver
+          this.route.parent?.data.subscribe(data => {
+            if (data['erpDimValue']) {
+              // Use resolved data (more efficient)
+              const partnerData = data['erpDimValue'];
+              this.partnerCode = partnerData.erpDimValue || '';
+              this.isLoading.set(false);
+            } else {
+              this.loadPartnerDetails();
+            }
+          });
+        }
       }
     });
   }
 
   loadPartnerDetails() {
     this.isLoading.set(true);
+
     this.partnerService.getPartnerById(this.partnerId).subscribe({
       next: (data: Partner) => {
-        this.partnerCode = data.partnerCode || '';
+        this.partnerCode = data.erpDimValue || '';
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Error loading partner details:', err);
         this.isLoading.set(false);
       }
     });
