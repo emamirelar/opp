@@ -228,7 +228,7 @@ export class InteractionDetailComponent implements OnInit {
     const colors: Record<InteractionType, string> = {
       [InteractionType.Email]: 'bg-purple-500',
       [InteractionType.Chat]: 'bg-cyan-500',
-      [InteractionType.Phone]: 'bg-green-500',
+      [InteractionType.Call]: 'bg-green-500',
       [InteractionType.VirtualMeeting]: 'bg-blue-500',
       [InteractionType.InPersonMeeting]: 'bg-indigo-500'
     };
@@ -244,7 +244,7 @@ export class InteractionDetailComponent implements OnInit {
     const typeLabels: Record<InteractionType, string> = {
       [InteractionType.Email]: 'Email',
       [InteractionType.Chat]: 'Chat',
-      [InteractionType.Phone]: 'Phone Call',
+      [InteractionType.Call]: 'Call',
       [InteractionType.VirtualMeeting]: 'Virtual Meeting',
       [InteractionType.InPersonMeeting]: 'In-Person Meeting'
     };

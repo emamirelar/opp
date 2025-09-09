@@ -377,7 +377,8 @@
       "types": {
         "email": "Email",
         "chat": "Chat",
-        "phone": "Phone",
+        "call": "Call",
+        "other": "Other",
         "virtual_meeting": "Virtual Meeting",
         "in_person_meeting": "In-person Meeting"
       },
