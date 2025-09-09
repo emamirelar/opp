@@ -94,6 +94,10 @@ public class MappingProfile : Profile
         CreateMap<DocumentLinkModel, UNOPSDocument>();
         CreateMap<UpdateDocumentRequest, UNOPSDocument>();
         
+        // User mappings for interaction user resolution
+        CreateMap<PAOUser, UserValueModel>();
+        CreateMap<UserProfile, UserProfileValueModel>();
+        
         CreateMap<PartnerRequest, UNOPSPartner>()
             .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         CreateMap<UpdatePartnerRequest, UNOPSPartner>()

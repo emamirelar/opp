@@ -109,7 +109,8 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         }
 
         // Create a lookup by parent code for hierarchy building
-        var lookup = treeModels.ToLookup(x => x.Data.Parent);
+        // Normalize null and empty string to empty string for consistent hierarchy building
+        var lookup = treeModels.ToLookup(x => string.IsNullOrEmpty(x.Data.Parent) ? string.Empty : x.Data.Parent);
         
         // Return the hierarchical structure
         return BuildHierarchy(lookup, string.Empty).ToList();

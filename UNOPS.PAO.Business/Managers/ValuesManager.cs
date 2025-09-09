@@ -41,6 +41,35 @@ public class ValuesManager : IApplicationService
     public IEnumerable<UserValueModel> GetUsers()
          => repository.GetUsers().Select(mapper.Map<UserValueModel>);
 
+    // Optimized paginated user retrieval
+    public async Task<PaginationResponse<UserValueModel>> GetUsersPagedAsync(UsersPagedRequest request)
+    {
+        var (users, totalCount) = await repository.GetUsersPagedAsync(
+            request.PageIndex,
+            request.PageSize,
+            request.SearchTerm,
+            request.ActiveOnly,
+            request.SelectedUserIds
+        );
+
+        var userModels = users.Select(mapper.Map<UserValueModel>).ToList();
+
+        return new PaginationResponse<UserValueModel>
+        {
+            Records = userModels,
+            TotalCount = totalCount,
+            PageIndex = request.PageIndex,
+            PageSize = request.PageSize
+        };
+    }
+
+    // Quick user search for autocomplete
+    public async Task<IEnumerable<UserValueModel>> SearchUsersAsync(string? searchTerm, int maxResults = 20, int[]? selectedUserIds = null)
+    {
+        var users = await repository.SearchUsersAsync(searchTerm, maxResults, selectedUserIds);
+        return users.Select(mapper.Map<UserValueModel>);
+    }
+
     public IEnumerable<LiaisonOfficeModel> GetLiaisonOffices()
          => repository.GetLiaisonOffices().Select(mapper.Map<LiaisonOfficeModel>);
 }

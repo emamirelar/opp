@@ -36,7 +36,7 @@
         }
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="contacts">{{ 'label.interaction.relatedTo' | translate }}</label>
+          <label for="contacts">{{ 'label.interaction.relatedTo' | translate }} *</label>
           <p-multiselect id="contacts"
                          formControlName="contactIds"
                          [options]="allContacts()"
@@ -58,6 +58,9 @@
               </div>
             </ng-template>
           </p-multiselect>
+          @if( formGroup.get("contactIds")?.invalid && showValidationFailedError() ) {
+          <p-message severity="error" variant="simple">At least one contact must be selected.</p-message>
+          }
         </div>
 
         <div class="col-span-full partners-display flex flex-col gap-2">
@@ -80,11 +83,14 @@
           <label for="users">{{ 'label.interaction.users' | translate }}</label>
           <p-multiselect id="users"
                          formControlName="userIds"
-                         [options]="allUsers()"
+                         [options]="availableUsers()"
                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
                          [lazy]="true"
                          [virtualScroll]="true"
                          [virtualScrollItemSize]="32"
+                         [filter]="true"
+                         [filterMatchMode]="'contains'"
+                         [showClear]="true"
                          optionLabel="name"
                          optionValue="id"
                          display="chip"
@@ -92,10 +98,16 @@
                          [appendTo]="'body'"
                          [maxSelectedLabels]="4000"
                          placeholder="{{ 'label.interaction.selectUsers' | translate }}"
-                         ariaLabel="users">
+                         ariaLabel="users"
+                         [loading]="isSearchingUsers()"
+                         (onFilter)="onUserSearch($event)"
+                         [resetFilterOnHide]="true">
             <ng-template let-user #item>
               <div class="flex items-center gap-2">
-                <span>{{ user.name }}</span>
+                <span class="font-medium">{{ user.name }}</span>
+                @if (user.email !== user.name) {
+                  <span class="text-sm text-gray-500">({{ user.email }})</span>
+                }
               </div>
             </ng-template>
           </p-multiselect>
@@ -152,7 +164,7 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="type">{{ 'label.interaction.type' | translate }}</label>
+          <label for="type">{{ 'label.interaction.type' | translate }} *</label>
           <p-select id="type"
                     [options]="typeOptions"
                     [appendTo]="'body'"
@@ -169,15 +181,21 @@
               {{ item.translateKey | translate }}
             </ng-template>
           </p-select>
+          @if( formGroup.get("type")?.invalid && showValidationFailedError() ) {
+          <p-message severity="error" variant="simple">Type must be selected.</p-message>
+          }
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="date">{{ 'label.interaction.date' | translate }}</label>
+          <label for="date">{{ 'label.interaction.date' | translate }} *</label>
           <p-calendar id="date"
                       formControlName="date"
                       [disabled]="!recordPermissions()?.permissions?.canUpdate"
                       [showTime]="true"
                       fluid="true"></p-calendar>
+          @if( formGroup.get("date")?.invalid && showValidationFailedError() ) {
+          <p-message severity="error" variant="simple">Date must be selected.</p-message>
+          }
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
@@ -190,33 +208,28 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="organizationUnits">{{ 'label.interaction.organizationUnits' | translate }}</label>
-          <p-multiselect id="organizationUnits"
-                         formControlName="organizationHierarchyIds"
-                         [options]="allOrgUnits()"
-                         [disabled]="!recordPermissions()?.permissions?.canUpdate"
-                         optionLabel="name"
-                         optionValue="id"
-                         [lazy]="true"
-                         [virtualScroll]="true"
-                         [virtualScrollItemSize]="32"
-                         [maxSelectedLabels]="50"
-                         [filter]="true"
-                         filterBy="name"
-                         [appendTo]="'body'"
-                         [showClear]="true"
-                         display="chip"
-                         placeholder="{{ 'label.interaction.selectOrganizationUnits' | translate }}"
-                         fluid="true"
-                         [selectedItemsLabel]="getSelectedActiveOrgUnitsLabel()">
-          </p-multiselect>
+          <label for="organizationUnit">{{ 'label.interaction.organizationUnit' | translate }}</label>
+          <p-select id="organizationUnit"
+                    formControlName="selectedOrgUnitId"
+                    [options]="allOrgUnits()"
+                    [disabled]="!recordPermissions()?.permissions?.canUpdate"
+                    optionLabel="name"
+                    optionValue="id"
+                    [filter]="true"
+                    filterBy="name"
+                    [showClear]="true"
+                    placeholder="{{ 'label.interaction.selectOrganizationUnit' | translate }}"
+                    [appendTo]="'body'"
+                    fluid="true"
+                    [ariaLabel]="'aria.selectOrganizationUnit' | translate">
+          </p-select>
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
           <label for="createdBy">{{ 'label.interaction.createdBy' | translate }}</label>
           <p-select id="createdBy"
                     formControlName="createdBy"
-                    [options]="allUsers()"
+                    [options]="availableCreatedByUsers()"
                     [disabled]="!recordPermissions()?.permissions?.canUpdate"
                     optionLabel="name"
                     optionValue="id"
@@ -224,11 +237,21 @@
                     [virtualScroll]="true"
                     [virtualScrollItemSize]="32"
                     [filter]="true"
-                    filterBy="name"
                     [appendTo]="'body'"
                     [showClear]="true"
+                    [loading]="isSearchingUsers()"
+                    (onFilter)="onCreatedByUserSearch($event)"
+                    [resetFilterOnHide]="true"
                     placeholder="{{ 'label.interaction.selectCreatedBy' | translate }}"
                     fluid="true">
+            <ng-template let-user #item>
+              <div class="flex items-center gap-2">
+                <span class="font-medium">{{ user.name }}</span>
+                @if (user.email !== user.name) {
+                  <span class="text-sm text-gray-500">({{ user.email }})</span>
+                }
+              </div>
+            </ng-template>
           </p-select>
         </div>
 

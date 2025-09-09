@@ -90,12 +90,14 @@
             <ng-template pTemplate="header">
               <div class="font-semibold">{{ 'title.partners' | translate }}</div>
             </ng-template>
+            <div class="bg-gray-50 p-6 rounded-xl">
             <app-listview
-              [dataUrl]="'api/partner/by-partner-category-code/' + this.partnerTree()?.partnerCategoryCode"
+              [dataUrl]="'api/partner?partnerGroupCode=' + this.partnerTree()?.partnerGroupCode"
               [columns]="partnerColumns()"
               (rowClick)="navigateToPartner($event)"
             >
             </app-listview>
+            </div>
           </p-panel>
         }
 

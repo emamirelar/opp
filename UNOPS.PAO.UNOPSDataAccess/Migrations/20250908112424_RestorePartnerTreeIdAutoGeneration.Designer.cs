@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250908112424_RestorePartnerTreeIdAutoGeneration")]
+    partial class RestorePartnerTreeIdAutoGeneration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -630,6 +633,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int?>("ErpDimValue")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ImplementationCountriesDescriptionConcatenated")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -655,7 +661,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PartnerId");
+                    b.HasIndex("ErpDimValue");
 
                     b.ToTable("Engagements", "public");
                 });
@@ -1233,7 +1239,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int?>("DueDiligenceRequired")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ErpDimValue")
+                    b.Property<int?>("ErpDimValue")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsDeleted")
@@ -2273,9 +2279,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.Partner", "Partner")
                         .WithMany()
-                        .HasForeignKey("PartnerId")
-                        .HasPrincipalKey("ErpDimValue")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("ErpDimValue");
 
                     b.Navigation("Partner");
                 });

@@ -334,10 +334,7 @@ export class PartnerViewInteractionsComponent implements OnInit {
       if (result) {
         console.log('Interaction created:', result);
         // Refresh the listview and timeline
-        const listviewElement = document.querySelector('app-listview');
-        if (listviewElement) {
-          listviewElement.dispatchEvent(new CustomEvent('refresh-listview'));
-        }
+        window.dispatchEvent(new CustomEvent('refresh-listview'));
 
         const timelineElement = document.querySelector('app-timeline') as any;
         if (timelineElement) {
@@ -390,10 +387,7 @@ export class PartnerViewInteractionsComponent implements OnInit {
       if (result) {
         console.log('Interaction updated:', result);
         // Refresh the listview and timeline
-        const listviewElement = document.querySelector('app-listview');
-        if (listviewElement) {
-          listviewElement.dispatchEvent(new CustomEvent('refresh-listview'));
-        }
+        window.dispatchEvent(new CustomEvent('refresh-listview'));
 
         const timelineElement = document.querySelector('app-timeline') as any;
         if (timelineElement) {

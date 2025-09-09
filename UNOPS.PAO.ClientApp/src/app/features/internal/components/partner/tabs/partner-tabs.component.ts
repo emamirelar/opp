@@ -56,7 +56,7 @@ import { ResponsiveTabsComponent, ResponsiveTabItem } from '../../../../../commo
       </div>
 
       <!-- Responsive tabs -->
-      <app-responsive-tabs 
+      <app-responsive-tabs
         [tabs]="tabs"
         [dropdownPlaceholder]="'Select tab'"
         class="partner-tabs-navigation">
@@ -108,11 +108,11 @@ export class PartnerTabsComponent implements OnInit {
         route: `/partnerships/partners/${this.recordId}/interactions`,
         icon: 'chat'
       },
-      {
-        label: 'title.fundingAndAgreements',
-        route: `/partnerships/partners/${this.recordId}/funding-agreements`,
-        icon: 'attach_money'
-      },
+      // {
+      //   label: 'title.fundingAndAgreements',
+      //   route: `/partnerships/partners/${this.recordId}/funding-agreements`,
+      //   icon: 'attach_money'
+      // },
       {
         label: 'title.dashboard',
         route: `/partnerships/partners/${this.recordId}/data`,

@@ -181,7 +181,8 @@ public class PartnerController : BaseController
                 PageIndex = pageIndex,
                 PageSize = pageSize,
                 OrderBy = orderBy ?? "createdDate",
-                Ascending = ascending
+                Ascending = ascending,
+                PartnerGroupCode = partnerGroupCode
             };
             
             // Create simple specification - global filters will be applied by the manager
@@ -725,7 +726,6 @@ public class PartnerController : BaseController
             {
                 request.OrderBy = "createdDate";
             }
-            
             var result = await _manager.GetPartnersByCategoryAsync(User, code, request);
             return Ok(result);
         }
