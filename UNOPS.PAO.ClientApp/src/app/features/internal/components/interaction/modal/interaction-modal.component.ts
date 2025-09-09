@@ -386,6 +386,9 @@ export class InteractionModalComponent {
     // User IDs for form population
     const userIds = record.userIds || [];
     
+    // Convert email addresses to lowercase for case-insensitive handling
+    const lowercaseEmails = (record.emailAddresses || []).map(email => email.toLowerCase());
+    
     this.formGroup.patchValue({
       id: record.id,
       type: record.type,
@@ -395,13 +398,13 @@ export class InteractionModalComponent {
       contactIds: record.contactIds || [],
       partnerIds: record.partnerIds || [],
       userIds: userIds,
-      emailAddresses: record.emailAddresses || [],
+      emailAddresses: lowercaseEmails,
       phoneNumbers: record.phoneNumbers || [],
       location: record.location,
       subject: record.subject,
       createdBy: record.createdBy,
       previousContactIds: record.contactIds || [],
-      previousEmails: record.emailAddresses || [],
+      previousEmails: lowercaseEmails,
       previousPhones: record.phoneNumbers || [],
       previousUserIds: userIds
     });
@@ -625,31 +628,39 @@ export class InteractionModalComponent {
     }
   }
 
-  // Helper: Get emails for contact IDs (only valid matches)
+  // Helper: Get emails for contact IDs (only valid matches) - always lowercase
   private getEmailsForContactIds(contactIds: number[]): string[] {
     return contactIds
       .map(id => this.allContacts().find(c => c.id === id)?.email)
-      .filter((email): email is string => email !== undefined);
+      .filter((email): email is string => email !== undefined)
+      .map(email => email.toLowerCase());
   }
 
-  // Helper: Get contact IDs for emails (only valid matches)
+  // Helper: Get contact IDs for emails (only valid matches) - case insensitive comparison
   private getContactIdsForEmails(emails: string[]): number[] {
     return emails
-      .map(email => this.allContacts().find(c => c.email === email)?.id)
+      .map(email => {
+        const lowerEmail = email.toLowerCase();
+        return this.allContacts().find(c => c.email?.toLowerCase() === lowerEmail)?.id;
+      })
       .filter((id): id is number => id !== undefined);
   }
 
-  // Helper: Get emails for user IDs (only valid matches)
+  // Helper: Get emails for user IDs (only valid matches) - always lowercase
   private getEmailsForUserIds(userIds: number[]): string[] {
     return userIds
       .map(id => this.availableUsers().find(c => c.id === id)?.email)
-      .filter((email): email is string => email !== undefined);
+      .filter((email): email is string => email !== undefined)
+      .map(email => email.toLowerCase());
   }
 
-  // Helper: Get user IDs for emails (only valid matches)
+  // Helper: Get user IDs for emails (only valid matches) - case insensitive comparison
   private getUserIdsForEmails(emails: string[]): number[] {
     return emails
-      .map(email => this.availableUsers().find(c => c.email === email)?.id)
+      .map(email => {
+        const lowerEmail = email.toLowerCase();
+        return this.availableUsers().find(c => c.email?.toLowerCase() === lowerEmail)?.id;
+      })
       .filter((id): id is number => id !== undefined);
   }
 
@@ -769,18 +780,18 @@ export class InteractionModalComponent {
         const currentEmails = this.formGroup.get('emailAddresses')?.value as string[];
         const validEmailsForNewContactIds = this.getEmailsForContactIds(newContactIds);
 
-        // Step 1: Add new emails for newly added contact IDs (if valid)
+        // Step 1: Add new emails for newly added contact IDs (if valid) - case insensitive comparison
         const emailsToAdd = validEmailsForNewContactIds.filter(
-          email => !currentEmails.includes(email)
+          email => !currentEmails.some(existing => existing.toLowerCase() === email.toLowerCase())
         );
 
-        // Step 2: Remove emails for newly removed contact IDs (if valid)
+        // Step 2: Remove emails for newly removed contact IDs (if valid) - case insensitive comparison
         const previousContactIds = this.formGroup.get('previousContactIds')?.value as number[];
         const removedContactIds = previousContactIds.filter(id => !newContactIds.includes(id));
         const emailsToRemove = this.getEmailsForContactIds(removedContactIds);
 
         const updatedEmails = [
-          ...currentEmails.filter(email => !emailsToRemove.includes(email)),
+          ...currentEmails.filter(email => !emailsToRemove.some(remove => remove.toLowerCase() === email.toLowerCase())),
           ...emailsToAdd
         ];
 
@@ -802,18 +813,18 @@ export class InteractionModalComponent {
         const currentEmails = this.formGroup.get('emailAddresses')?.value as string[];
         const validEmailsForNewUserIds = this.getEmailsForUserIds(newUserIds);
 
-        // Step 1: Add new emails for newly added user IDs (if valid)
+        // Step 1: Add new emails for newly added user IDs (if valid) - case insensitive comparison
         const emailsToAdd = validEmailsForNewUserIds.filter(
-          email => !currentEmails.includes(email)
+          email => !currentEmails.some(existing => existing.toLowerCase() === email.toLowerCase())
         );
 
-        // Step 2: Remove emails for newly removed user IDs (if valid)
+        // Step 2: Remove emails for newly removed user IDs (if valid) - case insensitive comparison
         const previousUserIds = this.formGroup.get('previousUserIds')?.value as number[];
         const removedUserIds = previousUserIds.filter(id => !newUserIds.includes(id));
         const emailsToRemove = this.getEmailsForUserIds(removedUserIds);
 
         const updatedEmails = [
-          ...currentEmails.filter(email => !emailsToRemove.includes(email)),
+          ...currentEmails.filter(email => !emailsToRemove.some(remove => remove.toLowerCase() === email.toLowerCase())),
           ...emailsToAdd
         ];
 
@@ -833,8 +844,17 @@ export class InteractionModalComponent {
       )
       .subscribe((newEmails: string[]) => {
 
+        // Convert all emails to lowercase for case-insensitive handling
+        const lowercaseNewEmails = newEmails.map(email => email.toLowerCase());
+        
+        // Update the form control with lowercase emails if different
+        if (JSON.stringify(newEmails) !== JSON.stringify(lowercaseNewEmails)) {
+          this.formGroup.get('emailAddresses')?.setValue(lowercaseNewEmails, { emitEvent: false });
+          // Continue processing with lowercase emails - don't return early
+        }
+
         const previousEmails = this.formGroup.get('previousEmails')?.value as string[] || [];
-        const addedEmails = newEmails.filter(email => !previousEmails.includes(email));
+        const addedEmails = lowercaseNewEmails.filter(email => !previousEmails.includes(email));
 
         // Validate all added emails
         const invalidAddedEmails = addedEmails.filter(email => !this.isValidEmail(email));
@@ -849,11 +869,11 @@ export class InteractionModalComponent {
           return; // Abort the sync operation
         }
 
-        const removedEmails = previousEmails.filter(email => !newEmails.includes(email));
-        this.formGroup.get('previousEmails')?.setValue(newEmails);
+        const removedEmails = previousEmails.filter(email => !lowercaseNewEmails.includes(email));
+        this.formGroup.get('previousEmails')?.setValue(lowercaseNewEmails);
 
         const currentContactIds = this.formGroup.get('contactIds')?.value as number[];
-        const validContactIdsForNewEmails = this.getContactIdsForEmails(newEmails);
+        const validContactIdsForNewEmails = this.getContactIdsForEmails(lowercaseNewEmails);
 
         // Step 1: Add new contact IDs for newly added emails (if valid)
         const contactIdsToAdd = validContactIdsForNewEmails.filter(
@@ -875,7 +895,7 @@ export class InteractionModalComponent {
         }
 
         const currentUserIds = this.formGroup.get('userIds')?.value as number[];
-        const validUserIdsForNewEmails = this.getUserIdsForEmails(newEmails);
+        const validUserIdsForNewEmails = this.getUserIdsForEmails(lowercaseNewEmails);
 
         // Step 1: Add new user IDs for newly added emails (if valid)
         const userIdsToAdd = validUserIdsForNewEmails.filter(
