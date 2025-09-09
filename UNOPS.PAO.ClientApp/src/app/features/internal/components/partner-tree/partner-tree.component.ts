@@ -308,7 +308,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       }
     });
 
-    ref.onClose.subscribe((result: PartnerTree) => {
+    ref.onClose.subscribe((result: PartnerTree | any) => {
       if (result) {
         this.handleOnRecordUpdation(result);
       }
@@ -337,7 +337,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       }
     });
 
-    ref.onClose.subscribe((result: PartnerTree) => {
+    ref.onClose.subscribe((result: PartnerTree | any) => {
       if (result) {
         // Pass the parent row ID to ensure it gets expanded after adding child
         const parentNodeId = rowData.id ? rowData.id.toString() : undefined;
@@ -419,7 +419,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       }
     });
 
-    ref.onClose.subscribe((result: PartnerTree) => {
+    ref.onClose.subscribe((result: PartnerTree | any) => {
       if (result) {
         this.handleOnRecordUpdation(result);
       }

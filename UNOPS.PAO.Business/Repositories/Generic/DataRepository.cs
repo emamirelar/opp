@@ -69,6 +69,17 @@ public class DataRepository<TEntity> where TEntity : class, IBaseBusinessEntity<
 
         IQueryable<TEntity> query = _dbSet;
 
+        // Add IsDeleted filtering if the property exists
+        var isDeletedProperty = typeof(TEntity).GetProperty("IsDeleted");
+        if (isDeletedProperty != null && isDeletedProperty.PropertyType == typeof(bool))
+        {
+            var isDeletedParam = Expression.Parameter(typeof(TEntity), "x");
+            var isDeletedProp = Expression.Property(isDeletedParam, "IsDeleted");
+            var notDeleted = Expression.Not(isDeletedProp);
+            var isDeletedLambda = Expression.Lambda<Func<TEntity, bool>>(notDeleted, isDeletedParam);
+            query = query.Where(isDeletedLambda);
+        }
+
         if (ascending)
         {
             query = query.OrderBy(lambda);
