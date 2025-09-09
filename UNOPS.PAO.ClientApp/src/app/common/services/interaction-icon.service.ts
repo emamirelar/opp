@@ -35,7 +35,7 @@ export class InteractionIconService {
           gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           shadowColor: 'rgba(102, 126, 234, 0.3)'
         };
-      case InteractionType.Phone.toLowerCase():
+      case InteractionType.Call.toLowerCase():
       case 'call': // Fallback for legacy data
         return {
           icon: 'pi pi-phone',
@@ -203,7 +203,7 @@ export class InteractionIconService {
   getAllInteractionTypes(): Array<{type: string, info: InteractionIconInfo}> {
     return [
       { type: InteractionType.Email, info: this.getInteractionIconInfo(InteractionType.Email) },
-      { type: InteractionType.Phone, info: this.getInteractionIconInfo(InteractionType.Phone) },
+      { type: InteractionType.Call, info: this.getInteractionIconInfo(InteractionType.Call) },
       { type: InteractionType.Chat, info: this.getInteractionIconInfo(InteractionType.Chat) },
       { type: InteractionType.VirtualMeeting, info: this.getInteractionIconInfo(InteractionType.VirtualMeeting) },
       { type: InteractionType.InPersonMeeting, info: this.getInteractionIconInfo(InteractionType.InPersonMeeting) }

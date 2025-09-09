@@ -377,7 +377,8 @@
       "types": {
         "email": "Email",
         "chat": "Chat",
-        "phone": "Phone",
+        "call": "Call",
+        "other": "Other",
         "virtual_meeting": "Virtual Meeting",
         "in_person_meeting": "In-person Meeting"
       },
@@ -404,7 +405,9 @@
       "orgUnit": "Organization Unit",
       "selectOrgUnit": "Select Organization Unit",
       "organizationUnits": "Organization Units",
+      "organizationUnit": "Organization Unit",
       "selectOrganizationUnits": "Select Organization Units",
+      "selectOrganizationUnit": "Select Organization Unit",
       "oneOrganizationUnitSelected": "1 Organization Unit Selected",
       "organizationUnitsSelected": "{{count}} Organization Units Selected",
       "createdBy": "Created By",
@@ -595,6 +598,7 @@
     "selectPartner": "Select Partner",
     "selectNewEngagement": "Select New Engagement",
     "selectOrganizationUnits": "Select Organization Units",
+    "selectOrganizationUnit": "Select Organization Unit",
     "selectPartnerOrgUnit": "Select Partner Org Unit",
     "selectLiaisonOffice": "Select Liaison Office",
     "selectPartnerFocalPoint": "Select Partner Focal Point",

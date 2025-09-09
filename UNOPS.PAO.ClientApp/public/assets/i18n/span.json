@@ -156,7 +156,8 @@
           "types": {
             "email": "Correo electrónico",
             "chat": "Chat",
-            "phone": "Teléfono",
+            "call": "Llamada",
+            "other": "Otro",
             "virtual_meeting": "Reunión virtual",
             "in_person_meeting": "Reunión presencial"
           },

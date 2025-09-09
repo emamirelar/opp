@@ -203,7 +203,8 @@
             "types": {
                 "email": "Email",
                 "chat": "Chat",
-                "phone": "Téléphone",
+                "call": "Appel",
+                "other": "Autre",
                 "virtual_meeting": "Rendez-vous virtuelle",
                 "in_person_meeting": "Rendez-vous en personne"
             },

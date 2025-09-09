@@ -152,7 +152,8 @@
           "types": {
             "email": "Email",
             "chat": "Chat",
-            "phone": "Telefone",
+            "call": "Chamada",
+            "other": "Outro",
             "virtual_meeting": "Reunião Virtual",
             "in_person_meeting": "Reunião presencial"
           },
