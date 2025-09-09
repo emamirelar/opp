@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { UserSearchService } from '../../../../../common/services/user-search.service';
 import { UserProfileService } from '../../../../../common/services/user-profile.service';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
 import { Button } from 'primeng/button';
@@ -108,6 +108,15 @@ export class InteractionModalComponent {
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
 
+  // Custom validator for contactIds - requires at least one contact to be selected
+  private static atLeastOneContactValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!value || !Array.isArray(value) || value.length === 0) {
+      return { required: true, atLeastOneContact: true };
+    }
+    return null;
+  }
+
   onChange: any = () => { };
   onTouched: any = () => { };
 
@@ -201,7 +210,7 @@ export class InteractionModalComponent {
       date: [new Date(), Validators.required],
       description: [''],
       contactId: ['', Validators.required],
-      contactIds: [[]],
+      contactIds: [[], InteractionModalComponent.atLeastOneContactValidator],
       partnerIds: [[]],
       userIds: [[]],
       emailAddresses: [[]],
@@ -344,6 +353,10 @@ export class InteractionModalComponent {
       // Remove contactId required validation for import edits since it might be empty
       this.formGroup.get('contactId')?.clearValidators();
       this.formGroup.get('contactId')?.updateValueAndValidity();
+      
+      // Remove contactIds required validation for import edits since it might be empty
+      this.formGroup.get('contactIds')?.clearValidators();
+      this.formGroup.get('contactIds')?.updateValueAndValidity();
     }
 
     // Expose the handleSave function to be called from footer
