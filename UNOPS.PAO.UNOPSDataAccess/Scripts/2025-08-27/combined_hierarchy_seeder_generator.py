@@ -518,7 +518,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         
         seeder_code += f'''                new UNOPSPartner
                 {{
-                    PartnerCode = "{partner['partner_code']}",
                     Name = "{partner['name']}",
                     PartnerShortDescription = "{partner['short_description']}",
                     Status = (EntityStatus){partner['status']},

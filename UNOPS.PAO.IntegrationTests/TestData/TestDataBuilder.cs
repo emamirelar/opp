@@ -11,7 +11,6 @@ public static class TestDataBuilder
     public static Faker<UNOPSPartner> GetPartnerFaker()
     {
         return new Faker<UNOPSPartner>()
-            .RuleFor(p => p.PartnerCode, f => $"P{f.Random.Number(1000, 9999)}")
             // Enhanced Partner structure
             .RuleFor(p => p.Name, f => f.Company.CompanyName())
             .RuleFor(p => p.PartnerShortDescription, f => f.Company.CompanySuffix())

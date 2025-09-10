@@ -25,7 +25,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
             {
                 new UNOPSPartner
                 {
-                    PartnerCode = "1694",
                     Name = "DIIS Danish Institute for International Studies",
                     PartnerShortDescription = "DIIS",
                     Status = (EntityStatus)1,
@@ -57,7 +56,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1019",
                     Name = "CLAEH Latin American Centre for Human Economy",
                     PartnerShortDescription = "CLAEH",
                     Status = (EntityStatus)1,
@@ -89,7 +87,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1692",
                     Name = "University of Oxford",
                     PartnerShortDescription = "University of Oxford",
                     Status = (EntityStatus)1,
@@ -121,7 +118,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1719",
                     Name = "GELI Global Executive Leadership",
                     PartnerShortDescription = "GELI",
                     Status = (EntityStatus)1,
@@ -153,7 +149,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1820",
                     Name = "CoNISMa Consorzio Nazionale Interuniversitario per le Scienze del Mare",
                     PartnerShortDescription = "CoNISMa",
                     Status = (EntityStatus)1,
@@ -185,7 +180,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1804",
                     Name = "ITRC International Tuberculosis Research Center",
                     PartnerShortDescription = "ITRC",
                     Status = (EntityStatus)1,
@@ -217,7 +211,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1597",
                     Name = "IFPRI International Food Policy Research Institute",
                     PartnerShortDescription = "IFPRI",
                     Status = (EntityStatus)1,
@@ -249,7 +242,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1003",
                     Name = "ACFE Association of Certified Fraud Examiners",
                     PartnerShortDescription = "ACFE",
                     Status = (EntityStatus)1,
@@ -281,7 +273,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1048",
                     Name = "ICARDA International Center for Agricultural Research in the Dry Areas",
                     PartnerShortDescription = "ICARDA",
                     Status = (EntityStatus)1,
@@ -313,7 +304,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1676",
                     Name = "SwedBio Swedish International Biodiversity Programme",
                     PartnerShortDescription = "SwedBio",
                     Status = (EntityStatus)1,
@@ -345,7 +335,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1709",
                     Name = "Columbia University",
                     PartnerShortDescription = "Columbia University",
                     Status = (EntityStatus)1,
@@ -377,7 +366,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1821",
                     Name = "University of Genova",
                     PartnerShortDescription = "University of Genova",
                     Status = (EntityStatus)1,
@@ -409,7 +397,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1872",
                     Name = "Universidad Autónoma del Estado de Baja California",
                     PartnerShortDescription = "UABC",
                     Status = (EntityStatus)1,
@@ -441,7 +428,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1830",
                     Name = "LSTM Liverpool School of Tropical Medicine",
                     PartnerShortDescription = "LSTM",
                     Status = (EntityStatus)1,
@@ -473,7 +459,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1640",
                     Name = "UPNFM National Pedagogical University Francisco Morazan",
                     PartnerShortDescription = "UPNFM",
                     Status = (EntityStatus)1,
@@ -505,7 +490,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1695",
                     Name = "University of Notre Dame",
                     PartnerShortDescription = "University of Notre Dame",
                     Status = (EntityStatus)1,
@@ -537,7 +521,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1930",
                     Name = "Loughborough University",
                     PartnerShortDescription = "Loughborough University",
                     Status = (EntityStatus)1,
@@ -569,7 +552,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1934",
                     Name = "The Regents of the University of California, on behalf of its Davis campus (UC Davis)",
                     PartnerShortDescription = "UC Davis",
                     Status = (EntityStatus)1,
@@ -601,7 +583,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1937",
                     Name = "Stellenbosh University",
                     PartnerShortDescription = "SU",
                     Status = (EntityStatus)1,
@@ -633,7 +614,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1941",
                     Name = "The University of Sydney",
                     PartnerShortDescription = "The University of Sidney",
                     Status = (EntityStatus)1,
@@ -665,7 +645,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1579",
                     Name = "MacArthur Foundation",
                     PartnerShortDescription = "Mac Arthur Foundation",
                     Status = (EntityStatus)1,
@@ -697,7 +676,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1456",
                     Name = "Mohammed bin Rashid Al Maktoum Foundation",
                     PartnerShortDescription = "MBRF",
                     Status = (EntityStatus)1,
@@ -729,7 +707,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1829",
                     Name = "Stichting Radio La Benevolencija Humanitarian Tools Foundation",
                     PartnerShortDescription = "La Benevolencija",
                     Status = (EntityStatus)1,
@@ -761,7 +738,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1594",
                     Name = "GAP Foundation",
                     PartnerShortDescription = "GAP Foundation",
                     Status = (EntityStatus)1,
@@ -793,7 +769,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1071",
                     Name = "Open Society Afghanistan",
                     PartnerShortDescription = "Open Society Afghanistan",
                     Status = (EntityStatus)1,
@@ -825,7 +800,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1149",
                     Name = "R20 Regions of Climate Action",
                     PartnerShortDescription = "R20",
                     Status = (EntityStatus)1,
@@ -857,7 +831,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1735",
                     Name = "Nippon Foundation",
                     PartnerShortDescription = "Nippon Foundation",
                     Status = (EntityStatus)1,
@@ -889,7 +862,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1690",
                     Name = "Jordan River Foundation",
                     PartnerShortDescription = "Jordan River Foundation",
                     Status = (EntityStatus)1,
@@ -921,7 +893,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1034",
                     Name = "Eli Lilly and Company Foundation",
                     PartnerShortDescription = "Eli Lilly Foundation",
                     Status = (EntityStatus)1,
@@ -953,7 +924,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1801",
                     Name = "Sequoia Climate Fund",
                     PartnerShortDescription = "Sequoia Climate Fund",
                     Status = (EntityStatus)1,
@@ -985,7 +955,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1795",
                     Name = "Temasek Foundation",
                     PartnerShortDescription = "Temasek Foundation",
                     Status = (EntityStatus)1,
@@ -1017,7 +986,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1147",
                     Name = "Petunia Foundation",
                     PartnerShortDescription = "Petunia Foundation",
                     Status = (EntityStatus)1,
@@ -1049,7 +1017,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1748",
                     Name = "MAVA Foundation",
                     PartnerShortDescription = "MAVA Foundation",
                     Status = (EntityStatus)1,
@@ -1081,7 +1048,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1684",
                     Name = "EGPAF Elizabeth Glaser Pediatric AIDS Foundation",
                     PartnerShortDescription = "EGPAF",
                     Status = (EntityStatus)1,
@@ -1113,7 +1079,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1770",
                     Name = "Yemen Famine Relief Fund",
                     PartnerShortDescription = "Famine Relief Fund",
                     Status = (EntityStatus)1,
@@ -1145,7 +1110,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1727",
                     Name = "Chinese Red Cross Foundation",
                     PartnerShortDescription = "CRCF",
                     Status = (EntityStatus)1,
@@ -1177,7 +1141,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1598",
                     Name = "Doen Foundation",
                     PartnerShortDescription = "Doen Foundation",
                     Status = (EntityStatus)1,
@@ -1209,7 +1172,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1588",
                     Name = "United Nations Foundation",
                     PartnerShortDescription = "UN Foundation",
                     Status = (EntityStatus)0,
@@ -1241,7 +1203,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1036",
                     Name = "FIND Foundation for Innovative New Diagnostics",
                     PartnerShortDescription = "FIND",
                     Status = (EntityStatus)0,
@@ -1273,7 +1234,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1749",
                     Name = "ECEAP Estonian Center for Eastern Partnership",
                     PartnerShortDescription = "ECEAP",
                     Status = (EntityStatus)1,
@@ -1305,7 +1265,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1862",
                     Name = "Foundation to Promote Open Society",
                     PartnerShortDescription = "OSF",
                     Status = (EntityStatus)1,
@@ -1337,7 +1296,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1931",
                     Name = "SED Fund",
                     PartnerShortDescription = "SED Fund",
                     Status = (EntityStatus)1,
@@ -1369,7 +1327,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1841",
                     Name = "FHF Fred Hollows Foundation",
                     PartnerShortDescription = "FHF",
                     Status = (EntityStatus)1,
@@ -1401,7 +1358,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1772",
                     Name = "Purpose Foundation",
                     PartnerShortDescription = "Purpose Foundation",
                     Status = (EntityStatus)1,
@@ -1433,7 +1389,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1585",
                     Name = "Rockefeller Foundation",
                     PartnerShortDescription = "Rockefeller Foundation",
                     Status = (EntityStatus)1,
@@ -1465,7 +1420,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1146",
                     Name = "PeaceNexus Foundation",
                     PartnerShortDescription = "PeaceNexus Foundation",
                     Status = (EntityStatus)0,
@@ -1497,7 +1451,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1580",
                     Name = "Ford Foundation",
                     PartnerShortDescription = "Ford Foundation",
                     Status = (EntityStatus)1,
@@ -1529,7 +1482,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1751",
                     Name = "WAPCAS Ghana-West Africa Program to Combat AIDS and STI",
                     PartnerShortDescription = "WAPCAS",
                     Status = (EntityStatus)1,
@@ -1561,7 +1513,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1845",
                     Name = "Tropical Disease Foundation Inc",
                     PartnerShortDescription = "TDF",
                     Status = (EntityStatus)1,
@@ -1593,7 +1544,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1755",
                     Name = "Yajilarra Trust",
                     PartnerShortDescription = "Yajilarra Trust",
                     Status = (EntityStatus)1,
@@ -1625,7 +1575,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1455",
                     Name = "Bill and Melinda Gates Foundation",
                     PartnerShortDescription = "Gates Foundation",
                     Status = (EntityStatus)1,
@@ -1657,7 +1606,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1446",
                     Name = "GAIN Global Alliance for Improved Nutrition",
                     PartnerShortDescription = "GAIN",
                     Status = (EntityStatus)1,
@@ -1689,7 +1637,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1696",
                     Name = "IKEA Foundation",
                     PartnerShortDescription = "Ikea Foundation",
                     Status = (EntityStatus)1,
@@ -1721,7 +1668,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1768",
                     Name = "Quadrature Climate Foundation",
                     PartnerShortDescription = "QCF",
                     Status = (EntityStatus)1,
@@ -1753,7 +1699,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1671",
                     Name = "CRDF Global Civilian Research and Development Foundation",
                     PartnerShortDescription = "CRDF",
                     Status = (EntityStatus)1,
@@ -1785,7 +1730,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1016",
                     Name = "CIFF Children's Investment Fund Foundation",
                     PartnerShortDescription = "CIFF",
                     Status = (EntityStatus)1,
@@ -1817,7 +1761,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1875",
                     Name = "Robert Bosch Foundation",
                     PartnerShortDescription = "RBF",
                     Status = (EntityStatus)1,
@@ -1849,7 +1792,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1816",
                     Name = "KAS Konrad-Adenauer-Stiftung",
                     PartnerShortDescription = "KAS",
                     Status = (EntityStatus)1,
@@ -1881,7 +1823,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1020",
                     Name = "Clinton Foundation",
                     PartnerShortDescription = "Clinton Foundation",
                     Status = (EntityStatus)1,
@@ -1913,7 +1854,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1743",
                     Name = "Rockefeller Philanthropy Advisors",
                     PartnerShortDescription = "RPA",
                     Status = (EntityStatus)1,
@@ -1945,7 +1885,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1759",
                     Name = "AKF Aga Khan Foundation",
                     PartnerShortDescription = "AKF",
                     Status = (EntityStatus)1,
@@ -1977,7 +1916,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1750",
                     Name = "IDOR Instituto D'or De Pesquisa E Ensino",
                     PartnerShortDescription = "IDOR",
                     Status = (EntityStatus)1,
@@ -2009,7 +1947,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1057",
                     Name = "Kochon Foundation",
                     PartnerShortDescription = "Kochon Foundation",
                     Status = (EntityStatus)1,
@@ -2041,7 +1978,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1722",
                     Name = "REALL Real Equity for All",
                     PartnerShortDescription = "REALL",
                     Status = (EntityStatus)1,
@@ -2073,7 +2009,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1664",
                     Name = "Omidyar Network",
                     PartnerShortDescription = "Omidyar Network",
                     Status = (EntityStatus)1,
@@ -2105,7 +2040,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1074",
                     Name = "Paul G. Allen Family Foundation",
                     PartnerShortDescription = "Paul G. Allen Foundation",
                     Status = (EntityStatus)1,
@@ -2137,7 +2071,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1645",
                     Name = "Walmart Foundation",
                     PartnerShortDescription = "Walmart Foundation",
                     Status = (EntityStatus)1,
@@ -2169,7 +2102,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1595",
                     Name = "United Nations Foundation",
                     PartnerShortDescription = "UN Foundation",
                     Status = (EntityStatus)1,
@@ -2201,7 +2133,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1767",
                     Name = "Wellspring Foundation",
                     PartnerShortDescription = "Wellspring",
                     Status = (EntityStatus)1,
@@ -2233,7 +2164,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1861",
                     Name = "Danish Lutheran Mission",
                     PartnerShortDescription = "Danish Lutheran Mission",
                     Status = (EntityStatus)1,
@@ -2265,7 +2195,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1879",
                     Name = "Global Alliance for a Sustainable Planet",
                     PartnerShortDescription = "GASP",
                     Status = (EntityStatus)1,
@@ -2297,7 +2226,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1881",
                     Name = "The Climate and Society Institute (ICS)",
                     PartnerShortDescription = "ICS",
                     Status = (EntityStatus)1,
@@ -2329,7 +2257,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1883",
                     Name = "Minderoo Foundation",
                     PartnerShortDescription = "Minderoo",
                     Status = (EntityStatus)1,
@@ -2361,7 +2288,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1887",
                     Name = "Sergey Brin Family Foundation",
                     PartnerShortDescription = "SBFF",
                     Status = (EntityStatus)1,
@@ -2393,7 +2319,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1894",
                     Name = "Baylor College of Medicine Children’s Foundation Eswatini",
                     PartnerShortDescription = "Baylor Foundation Eswatini",
                     Status = (EntityStatus)1,
@@ -2425,7 +2350,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1895",
                     Name = "Rockefeller Brothers Fund",
                     PartnerShortDescription = "RBF",
                     Status = (EntityStatus)1,
@@ -2457,7 +2381,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1268",
                     Name = "Albania",
                     PartnerShortDescription = "Albania",
                     Status = (EntityStatus)1,
@@ -2489,7 +2412,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1269",
                     Name = "Algeria",
                     PartnerShortDescription = "Algeria",
                     Status = (EntityStatus)1,
@@ -2521,7 +2443,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1270",
                     Name = "Andorra",
                     PartnerShortDescription = "Andorra",
                     Status = (EntityStatus)1,
@@ -2553,7 +2474,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1271",
                     Name = "Angola",
                     PartnerShortDescription = "Angola",
                     Status = (EntityStatus)1,
@@ -2585,7 +2505,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1272",
                     Name = "Antigua and Barbuda",
                     PartnerShortDescription = "Antigua and Barbuda",
                     Status = (EntityStatus)1,
@@ -2617,7 +2536,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1274",
                     Name = "Armenia",
                     PartnerShortDescription = "Armenia",
                     Status = (EntityStatus)1,
@@ -2649,7 +2567,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1275",
                     Name = "Azerbaijan",
                     PartnerShortDescription = "Azerbaijan",
                     Status = (EntityStatus)1,
@@ -2681,7 +2598,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1276",
                     Name = "Bahamas",
                     PartnerShortDescription = "Bahamas",
                     Status = (EntityStatus)1,
@@ -2713,7 +2629,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1277",
                     Name = "Bahrain",
                     PartnerShortDescription = "Bahrain",
                     Status = (EntityStatus)1,
@@ -2745,7 +2660,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1280",
                     Name = "Belarus",
                     PartnerShortDescription = "Belarus",
                     Status = (EntityStatus)1,
@@ -2777,7 +2691,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1281",
                     Name = "Belize",
                     PartnerShortDescription = "Belize",
                     Status = (EntityStatus)1,
@@ -2809,7 +2722,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1282",
                     Name = "Benin",
                     PartnerShortDescription = "Benin",
                     Status = (EntityStatus)1,
@@ -2841,7 +2753,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1283",
                     Name = "Bhutan",
                     PartnerShortDescription = "Bhutan",
                     Status = (EntityStatus)1,
@@ -2873,7 +2784,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1284",
                     Name = "Bolivia (Plurinational State of)",
                     PartnerShortDescription = "Bolivia",
                     Status = (EntityStatus)1,
@@ -2905,7 +2815,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1285",
                     Name = "Bosnia and Herzegovina",
                     PartnerShortDescription = "Bosnia and Herzegovina",
                     Status = (EntityStatus)1,
@@ -2937,7 +2846,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1286",
                     Name = "Botswana",
                     PartnerShortDescription = "Botswana",
                     Status = (EntityStatus)1,
@@ -2969,7 +2877,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1287",
                     Name = "Brunei Darussalam",
                     PartnerShortDescription = "Brunei Darussalam",
                     Status = (EntityStatus)1,
@@ -3001,7 +2908,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1288",
                     Name = "Bulgaria",
                     PartnerShortDescription = "Bulgaria",
                     Status = (EntityStatus)1,
@@ -3033,7 +2939,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1289",
                     Name = "Burkina Faso",
                     PartnerShortDescription = "Burkina Faso",
                     Status = (EntityStatus)1,
@@ -3065,7 +2970,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1290",
                     Name = "Burundi",
                     PartnerShortDescription = "Burundi",
                     Status = (EntityStatus)1,
@@ -3097,7 +3001,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1291",
                     Name = "Democratic People's Republic of Korea",
                     PartnerShortDescription = "DPR Korea",
                     Status = (EntityStatus)1,
@@ -3129,7 +3032,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1292",
                     Name = "Cameroon",
                     PartnerShortDescription = "Cameroon",
                     Status = (EntityStatus)1,
@@ -3161,7 +3063,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1293",
                     Name = "Cape Verde",
                     PartnerShortDescription = "Cape Verde",
                     Status = (EntityStatus)1,
@@ -3193,7 +3094,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1294",
                     Name = "Central African Republic",
                     PartnerShortDescription = "Central African Republic",
                     Status = (EntityStatus)1,
@@ -3225,7 +3125,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1295",
                     Name = "Chad",
                     PartnerShortDescription = "Chad",
                     Status = (EntityStatus)1,
@@ -3257,7 +3156,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1296",
                     Name = "Chile",
                     PartnerShortDescription = "Chile",
                     Status = (EntityStatus)1,
@@ -3289,7 +3187,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1297",
                     Name = "Colombia",
                     PartnerShortDescription = "Colombia",
                     Status = (EntityStatus)1,
@@ -3321,7 +3218,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1298",
                     Name = "Comoros",
                     PartnerShortDescription = "Comoros",
                     Status = (EntityStatus)1,
@@ -3353,7 +3249,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1299",
                     Name = "Cook Islands",
                     PartnerShortDescription = "Cook Islands",
                     Status = (EntityStatus)1,
@@ -3385,7 +3280,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1300",
                     Name = "Democratic Republic of the Congo",
                     PartnerShortDescription = "DR Congo",
                     Status = (EntityStatus)1,
@@ -3417,7 +3311,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1302",
                     Name = "Croatia",
                     PartnerShortDescription = "Croatia",
                     Status = (EntityStatus)1,
@@ -3449,7 +3342,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1303",
                     Name = "Cuba",
                     PartnerShortDescription = "Cuba",
                     Status = (EntityStatus)1,
@@ -3481,7 +3373,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1304",
                     Name = "Cyprus",
                     PartnerShortDescription = "Cyprus",
                     Status = (EntityStatus)1,
@@ -3513,7 +3404,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1306",
                     Name = "Ghana",
                     PartnerShortDescription = "Ghana",
                     Status = (EntityStatus)1,
@@ -3545,7 +3435,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1307",
                     Name = "Jordan",
                     PartnerShortDescription = "Jordan",
                     Status = (EntityStatus)1,
@@ -3577,7 +3466,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1308",
                     Name = "Kazakhstan",
                     PartnerShortDescription = "Kazakhstan",
                     Status = (EntityStatus)1,
@@ -3609,7 +3497,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1309",
                     Name = "Grenada",
                     PartnerShortDescription = "Grenada",
                     Status = (EntityStatus)1,
@@ -3641,7 +3528,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1310",
                     Name = "Kenya",
                     PartnerShortDescription = "Kenya",
                     Status = (EntityStatus)1,
@@ -3673,7 +3559,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1311",
                     Name = "Kiribati",
                     PartnerShortDescription = "Kiribati",
                     Status = (EntityStatus)1,
@@ -3705,7 +3590,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1313",
                     Name = "Kyrgyzstan",
                     PartnerShortDescription = "Kyrgyzstan",
                     Status = (EntityStatus)1,
@@ -3737,7 +3621,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1314",
                     Name = "Lao People's Democratic Republic",
                     PartnerShortDescription = "Lao PDR",
                     Status = (EntityStatus)1,
@@ -3769,7 +3652,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1315",
                     Name = "Latvia",
                     PartnerShortDescription = "Latvia",
                     Status = (EntityStatus)1,
@@ -3801,7 +3683,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1316",
                     Name = "Lebanon",
                     PartnerShortDescription = "Lebanon",
                     Status = (EntityStatus)1,
@@ -3833,7 +3714,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1317",
                     Name = "Lesotho",
                     PartnerShortDescription = "Lesotho",
                     Status = (EntityStatus)1,
@@ -3865,7 +3745,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1318",
                     Name = "Liberia",
                     PartnerShortDescription = "Liberia",
                     Status = (EntityStatus)1,
@@ -3897,7 +3776,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1319",
                     Name = "Oman",
                     PartnerShortDescription = "Oman",
                     Status = (EntityStatus)1,
@@ -3929,7 +3807,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1320",
                     Name = "Pakistan",
                     PartnerShortDescription = "Pakistan",
                     Status = (EntityStatus)1,
@@ -3961,7 +3838,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1321",
                     Name = "Palau",
                     PartnerShortDescription = "Palau",
                     Status = (EntityStatus)1,
@@ -3993,7 +3869,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1323",
                     Name = "Papua New Guinea",
                     PartnerShortDescription = "Papua New Guinea",
                     Status = (EntityStatus)1,
@@ -4025,7 +3900,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1326",
                     Name = "Philippines",
                     PartnerShortDescription = "Philippines",
                     Status = (EntityStatus)1,
@@ -4057,7 +3931,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1327",
                     Name = "Afghanistan",
                     PartnerShortDescription = "Afghanistan",
                     Status = (EntityStatus)1,
@@ -4089,7 +3962,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1328",
                     Name = "Cambodia",
                     PartnerShortDescription = "Cambodia",
                     Status = (EntityStatus)1,
@@ -4121,7 +3993,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1329",
                     Name = "Côte d'Ivoire",
                     PartnerShortDescription = "Côte d'Ivoire",
                     Status = (EntityStatus)1,
@@ -4153,7 +4024,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1330",
                     Name = "Congo",
                     PartnerShortDescription = "Congo",
                     Status = (EntityStatus)1,
@@ -4185,7 +4055,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1331",
                     Name = "Djibouti",
                     PartnerShortDescription = "Djibouti",
                     Status = (EntityStatus)1,
@@ -4217,7 +4086,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1332",
                     Name = "Dominica",
                     PartnerShortDescription = "Dominica",
                     Status = (EntityStatus)1,
@@ -4249,7 +4117,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1333",
                     Name = "Dominican Republic",
                     PartnerShortDescription = "Dominican Republic",
                     Status = (EntityStatus)1,
@@ -4281,7 +4148,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1334",
                     Name = "Ecuador",
                     PartnerShortDescription = "Ecuador",
                     Status = (EntityStatus)1,
@@ -4313,7 +4179,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1335",
                     Name = "Egypt",
                     PartnerShortDescription = "Egypt",
                     Status = (EntityStatus)1,
@@ -4345,7 +4210,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1336",
                     Name = "El Salvador",
                     PartnerShortDescription = "El Salvador",
                     Status = (EntityStatus)1,
@@ -4377,7 +4241,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1337",
                     Name = "Equatorial Guinea",
                     PartnerShortDescription = "Equatorial Guinea",
                     Status = (EntityStatus)1,
@@ -4409,7 +4272,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1338",
                     Name = "Eritrea",
                     PartnerShortDescription = "Eritrea",
                     Status = (EntityStatus)1,
@@ -4441,7 +4303,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1340",
                     Name = "Estonia",
                     PartnerShortDescription = "Estonia",
                     Status = (EntityStatus)1,
@@ -4473,7 +4334,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1342",
                     Name = "Fiji",
                     PartnerShortDescription = "Fiji",
                     Status = (EntityStatus)1,
@@ -4505,7 +4365,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1343",
                     Name = "Haiti",
                     PartnerShortDescription = "Haiti",
                     Status = (EntityStatus)1,
@@ -4537,7 +4396,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1345",
                     Name = "Iraq",
                     PartnerShortDescription = "Iraq",
                     Status = (EntityStatus)1,
@@ -4569,7 +4427,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1346",
                     Name = "Gabon",
                     PartnerShortDescription = "Gabon",
                     Status = (EntityStatus)1,
@@ -4601,7 +4458,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1347",
                     Name = "Gambia",
                     PartnerShortDescription = "Gambia",
                     Status = (EntityStatus)1,
@@ -4633,7 +4489,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1348",
                     Name = "Georgia",
                     PartnerShortDescription = "Georgia",
                     Status = (EntityStatus)1,
@@ -4665,7 +4520,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1349",
                     Name = "Guatemala",
                     PartnerShortDescription = "Guatemala",
                     Status = (EntityStatus)1,
@@ -4697,7 +4551,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1350",
                     Name = "Guinea",
                     PartnerShortDescription = "Guinea",
                     Status = (EntityStatus)1,
@@ -4729,7 +4582,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1351",
                     Name = "Guyana",
                     PartnerShortDescription = "Guyana",
                     Status = (EntityStatus)1,
@@ -4761,7 +4613,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1353",
                     Name = "Jamaica",
                     PartnerShortDescription = "Jamaica",
                     Status = (EntityStatus)1,
@@ -4793,7 +4644,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1354",
                     Name = "Lithuania",
                     PartnerShortDescription = "Lithuania",
                     Status = (EntityStatus)1,
@@ -4825,7 +4675,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1355",
                     Name = "Iran (Islamic Republic of)",
                     PartnerShortDescription = "Iran",
                     Status = (EntityStatus)1,
@@ -4857,7 +4706,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1356",
                     Name = "Holy See",
                     PartnerShortDescription = "Holy See",
                     Status = (EntityStatus)1,
@@ -4889,7 +4737,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1359",
                     Name = "Kosovo (under UNSCR 1244/99)",
                     PartnerShortDescription = "Kosovo",
                     Status = (EntityStatus)1,
@@ -4921,7 +4768,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1360",
                     Name = "Madagascar",
                     PartnerShortDescription = "Madagascar",
                     Status = (EntityStatus)1,
@@ -4953,7 +4799,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1361",
                     Name = "Malawi",
                     PartnerShortDescription = "Malawi",
                     Status = (EntityStatus)1,
@@ -4985,7 +4830,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1362",
                     Name = "Malaysia",
                     PartnerShortDescription = "Malaysia",
                     Status = (EntityStatus)1,
@@ -5017,7 +4861,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1363",
                     Name = "Maldives",
                     PartnerShortDescription = "Maldives",
                     Status = (EntityStatus)1,
@@ -5049,7 +4892,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1364",
                     Name = "Mali",
                     PartnerShortDescription = "Mali",
                     Status = (EntityStatus)1,
@@ -5081,7 +4923,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1365",
                     Name = "Malta",
                     PartnerShortDescription = "Malta",
                     Status = (EntityStatus)1,
@@ -5113,7 +4954,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1366",
                     Name = "Marshall Islands",
                     PartnerShortDescription = "Marshall Islands",
                     Status = (EntityStatus)1,
@@ -5145,7 +4985,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1367",
                     Name = "Mauritania",
                     PartnerShortDescription = "Mauritania",
                     Status = (EntityStatus)1,
@@ -5177,7 +5016,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1368",
                     Name = "Mauritius",
                     PartnerShortDescription = "Mauritius",
                     Status = (EntityStatus)1,
@@ -5209,7 +5047,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1370",
                     Name = "Micronesia (Federated States of)",
                     PartnerShortDescription = "Micronesia",
                     Status = (EntityStatus)1,
@@ -5241,7 +5078,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1372",
                     Name = "South Sudan",
                     PartnerShortDescription = "South Sudan",
                     Status = (EntityStatus)1,
@@ -5273,7 +5109,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1373",
                     Name = "Monaco",
                     PartnerShortDescription = "Monaco",
                     Status = (EntityStatus)1,
@@ -5305,7 +5140,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1374",
                     Name = "Montenegro",
                     PartnerShortDescription = "Montenegro",
                     Status = (EntityStatus)1,
@@ -5337,7 +5171,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1376",
                     Name = "Mozambique",
                     PartnerShortDescription = "Mozambique",
                     Status = (EntityStatus)1,
@@ -5369,7 +5202,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1377",
                     Name = "Namibia",
                     PartnerShortDescription = "Namibia",
                     Status = (EntityStatus)1,
@@ -5401,7 +5233,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1378",
                     Name = "Nauru",
                     PartnerShortDescription = "Nauru",
                     Status = (EntityStatus)1,
@@ -5433,7 +5264,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1379",
                     Name = "Niger",
                     PartnerShortDescription = "Niger",
                     Status = (EntityStatus)1,
@@ -5465,7 +5295,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1380",
                     Name = "Nepal",
                     PartnerShortDescription = "Nepal",
                     Status = (EntityStatus)1,
@@ -5497,7 +5326,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1381",
                     Name = "Mongolia",
                     PartnerShortDescription = "Mongolia",
                     Status = (EntityStatus)1,
@@ -5529,7 +5357,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1382",
                     Name = "Myanmar",
                     PartnerShortDescription = "Myanmar",
                     Status = (EntityStatus)1,
@@ -5561,7 +5388,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1383",
                     Name = "Nicaragua",
                     PartnerShortDescription = "Nicaragua",
                     Status = (EntityStatus)1,
@@ -5593,7 +5419,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1384",
                     Name = "Nigeria",
                     PartnerShortDescription = "Nigeria",
                     Status = (EntityStatus)1,
@@ -5625,7 +5450,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1385",
                     Name = "Republic of Moldova",
                     PartnerShortDescription = "Moldova",
                     Status = (EntityStatus)1,
@@ -5657,7 +5481,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1386",
                     Name = "Romania",
                     PartnerShortDescription = "Romania",
                     Status = (EntityStatus)1,
@@ -5689,7 +5512,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1387",
                     Name = "Russian Federation",
                     PartnerShortDescription = "Russia",
                     Status = (EntityStatus)1,
@@ -5721,7 +5543,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1388",
                     Name = "Rwanda",
                     PartnerShortDescription = "Rwanda",
                     Status = (EntityStatus)1,
@@ -5753,7 +5574,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1389",
                     Name = "Saint Kitts and Nevis",
                     PartnerShortDescription = "Saint Kitts and Nevis",
                     Status = (EntityStatus)1,
@@ -5785,7 +5605,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1390",
                     Name = "Saint Lucia",
                     PartnerShortDescription = "Saint Lucia",
                     Status = (EntityStatus)1,
@@ -5817,7 +5636,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1391",
                     Name = "Saint Vincent and the Grenadines",
                     PartnerShortDescription = "St. Vincent and the Grenadines",
                     Status = (EntityStatus)1,
@@ -5849,7 +5667,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1392",
                     Name = "Samoa",
                     PartnerShortDescription = "Samoa",
                     Status = (EntityStatus)1,
@@ -5881,7 +5698,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1393",
                     Name = "San Marino",
                     PartnerShortDescription = "San Marino",
                     Status = (EntityStatus)1,
@@ -5913,7 +5729,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1394",
                     Name = "Sao Tome and Principe",
                     PartnerShortDescription = "Sao Tome and Principe",
                     Status = (EntityStatus)1,
@@ -5945,7 +5760,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1396",
                     Name = "Senegal",
                     PartnerShortDescription = "Senegal",
                     Status = (EntityStatus)1,
@@ -5977,7 +5791,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1397",
                     Name = "Suriname",
                     PartnerShortDescription = "Suriname",
                     Status = (EntityStatus)1,
@@ -6009,7 +5822,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1399",
                     Name = "Serbia",
                     PartnerShortDescription = "Serbia",
                     Status = (EntityStatus)1,
@@ -6041,7 +5853,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1400",
                     Name = "Seychelles",
                     PartnerShortDescription = "Seychelles",
                     Status = (EntityStatus)1,
@@ -6073,7 +5884,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1402",
                     Name = "Singapore",
                     PartnerShortDescription = "Singapore",
                     Status = (EntityStatus)1,
@@ -6105,7 +5915,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1405",
                     Name = "Solomon Islands",
                     PartnerShortDescription = "Solomon Islands",
                     Status = (EntityStatus)1,
@@ -6137,7 +5946,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1406",
                     Name = "Somalia",
                     PartnerShortDescription = "Somalia",
                     Status = (EntityStatus)1,
@@ -6169,7 +5977,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1407",
                     Name = "Sri Lanka",
                     PartnerShortDescription = "Sri Lanka",
                     Status = (EntityStatus)1,
@@ -6201,7 +6008,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1408",
                     Name = "Sudan",
                     PartnerShortDescription = "Sudan",
                     Status = (EntityStatus)1,
@@ -6233,7 +6039,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1409",
                     Name = "State of Palestine",
                     PartnerShortDescription = "State of Palestine",
                     Status = (EntityStatus)1,
@@ -6265,7 +6070,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1410",
                     Name = "Syrian Arab Republic",
                     PartnerShortDescription = "Syria",
                     Status = (EntityStatus)1,
@@ -6297,7 +6101,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1411",
                     Name = "Tajikistan",
                     PartnerShortDescription = "Tajikistan",
                     Status = (EntityStatus)1,
@@ -6329,7 +6132,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1412",
                     Name = "Thailand",
                     PartnerShortDescription = "Thailand",
                     Status = (EntityStatus)1,
@@ -6361,7 +6163,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1413",
                     Name = "North Macedonia",
                     PartnerShortDescription = "North Macedonia",
                     Status = (EntityStatus)1,
@@ -6393,7 +6194,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1414",
                     Name = "Timor-Leste",
                     PartnerShortDescription = "Timor-Leste",
                     Status = (EntityStatus)1,
@@ -6425,7 +6225,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1415",
                     Name = "Togo",
                     PartnerShortDescription = "Togo",
                     Status = (EntityStatus)1,
@@ -6457,7 +6256,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1416",
                     Name = "Tonga",
                     PartnerShortDescription = "Tonga",
                     Status = (EntityStatus)1,
@@ -6489,7 +6287,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1417",
                     Name = "Trinidad and Tobago",
                     PartnerShortDescription = "Trinidad and Tobago",
                     Status = (EntityStatus)1,
@@ -6521,7 +6318,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1418",
                     Name = "Tunisia",
                     PartnerShortDescription = "Tunisia",
                     Status = (EntityStatus)1,
@@ -6553,7 +6349,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1419",
                     Name = "United Republic of Tanzania",
                     PartnerShortDescription = "Tanzania",
                     Status = (EntityStatus)1,
@@ -6585,7 +6380,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1420",
                     Name = "Guinea-Bissau",
                     PartnerShortDescription = "Guinea-Bissau",
                     Status = (EntityStatus)1,
@@ -6617,7 +6411,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1421",
                     Name = "Turkmenistan",
                     PartnerShortDescription = "Turkmenistan",
                     Status = (EntityStatus)1,
@@ -6649,7 +6442,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1422",
                     Name = "Tuvalu",
                     PartnerShortDescription = "Tuvalu",
                     Status = (EntityStatus)1,
@@ -6681,7 +6473,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1423",
                     Name = "Uganda",
                     PartnerShortDescription = "Uganda",
                     Status = (EntityStatus)1,
@@ -6713,7 +6504,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1425",
                     Name = "United Arab Emirates",
                     PartnerShortDescription = "United Arab Emirates",
                     Status = (EntityStatus)1,
@@ -6745,7 +6535,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1426",
                     Name = "Uruguay",
                     PartnerShortDescription = "Uruguay",
                     Status = (EntityStatus)1,
@@ -6777,7 +6566,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1428",
                     Name = "Vanuatu",
                     PartnerShortDescription = "Vanuatu",
                     Status = (EntityStatus)1,
@@ -6809,7 +6597,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1429",
                     Name = "Venezuela (Bolivarian Republic of)",
                     PartnerShortDescription = "Venezuela",
                     Status = (EntityStatus)1,
@@ -6841,7 +6628,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1430",
                     Name = "Viet Nam",
                     PartnerShortDescription = "Viet Nam",
                     Status = (EntityStatus)1,
@@ -6873,7 +6659,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1431",
                     Name = "Yemen",
                     PartnerShortDescription = "Yemen",
                     Status = (EntityStatus)1,
@@ -6905,7 +6690,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1432",
                     Name = "Zambia",
                     PartnerShortDescription = "Zambia",
                     Status = (EntityStatus)1,
@@ -6937,7 +6721,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1433",
                     Name = "Zimbabwe",
                     PartnerShortDescription = "Zimbabwe",
                     Status = (EntityStatus)1,
@@ -6969,7 +6752,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1575",
                     Name = "Yugoslavia",
                     PartnerShortDescription = "Yugoslavia",
                     Status = (EntityStatus)1,
@@ -7001,7 +6783,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1612",
                     Name = "Virgin Islands of the United States",
                     PartnerShortDescription = "Virgin Islands",
                     Status = (EntityStatus)1,
@@ -7033,7 +6814,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1614",
                     Name = "Czechoslovakia",
                     PartnerShortDescription = "Czechoslovakia",
                     Status = (EntityStatus)0,
@@ -7065,7 +6845,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1615",
                     Name = "Antilles",
                     PartnerShortDescription = "Antilles",
                     Status = (EntityStatus)0,
@@ -7097,7 +6876,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1617",
                     Name = "China, Hong Kong Special Administrative Region",
                     PartnerShortDescription = "Hong Kong",
                     Status = (EntityStatus)1,
@@ -7129,7 +6907,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1619",
                     Name = "New Hebrides Condominium",
                     PartnerShortDescription = "New Hebrides Condominium",
                     Status = (EntityStatus)0,
@@ -7161,7 +6938,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1620",
                     Name = "Niue",
                     PartnerShortDescription = "Niue",
                     Status = (EntityStatus)1,
@@ -7193,7 +6969,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1621",
                     Name = "Pacific Multi Islands",
                     PartnerShortDescription = "Pacific Multi Islands",
                     Status = (EntityStatus)0,
@@ -7225,7 +7000,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1624",
                     Name = "New Zealand territory of Tokelau",
                     PartnerShortDescription = "Tokelau",
                     Status = (EntityStatus)1,
@@ -7257,7 +7031,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1625",
                     Name = "Trust Territory of the Pacific Islands",
                     PartnerShortDescription = "Trust Territory Pacific Is.",
                     Status = (EntityStatus)0,
@@ -7289,7 +7062,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1677",
                     Name = "Uganda",
                     PartnerShortDescription = "Uganda",
                     Status = (EntityStatus)0,
@@ -7321,7 +7093,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1715",
                     Name = "Curaçao",
                     PartnerShortDescription = "Curaçao",
                     Status = (EntityStatus)1,
@@ -7353,7 +7124,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1716",
                     Name = "Sint Maarten (Dutch part)",
                     PartnerShortDescription = "Sint Maarten",
                     Status = (EntityStatus)1,
@@ -7385,7 +7155,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1926",
                     Name = "ANSES Agencia Nacional de la Seguridad Social",
                     PartnerShortDescription = "ANSES",
                     Status = (EntityStatus)1,
@@ -7417,7 +7186,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1273",
                     Name = "Argentina",
                     PartnerShortDescription = "Argentina",
                     Status = (EntityStatus)1,
@@ -7449,7 +7217,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1278",
                     Name = "Bangladesh",
                     PartnerShortDescription = "Bangladesh",
                     Status = (EntityStatus)1,
@@ -7481,7 +7248,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1865",
                     Name = "Bangladesh Space Research and Remote Sensing Organisation",
                     PartnerShortDescription = "SPARRSO",
                     Status = (EntityStatus)1,
@@ -7513,7 +7279,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1871",
                     Name = "The Queen Elizabeth Hospital - Barbados",
                     PartnerShortDescription = "QEH",
                     Status = (EntityStatus)1,
@@ -7545,7 +7310,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1279",
                     Name = "Barbados",
                     PartnerShortDescription = "Barbados",
                     Status = (EntityStatus)1,
@@ -7577,7 +7341,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1892",
                     Name = "CPP - Companhia Paulista de Parcerias",
                     PartnerShortDescription = "CPP",
                     Status = (EntityStatus)1,
@@ -7609,7 +7372,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1870",
                     Name = "Sergio Arouca National School for Public Health",
                     PartnerShortDescription = "ENSP",
                     Status = (EntityStatus)1,
@@ -7641,7 +7403,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1850",
                     Name = "FNDE The National Education Development Fund",
                     PartnerShortDescription = "FNDE",
                     Status = (EntityStatus)1,
@@ -7673,7 +7434,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1079",
                     Name = "ABC Agência Brasileira de Cooperação",
                     PartnerShortDescription = "ABC",
                     Status = (EntityStatus)1,
@@ -7705,7 +7465,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1900",
                     Name = "CONAB Companhia Nacional de Abastecimento",
                     PartnerShortDescription = "CONAB",
                     Status = (EntityStatus)1,
@@ -7737,7 +7496,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1119",
                     Name = "Brazil",
                     PartnerShortDescription = "Brazil",
                     Status = (EntityStatus)1,
@@ -7769,7 +7527,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1936",
                     Name = "Caixa Econômica Federal",
                     PartnerShortDescription = "Caixa Economica Federal",
                     Status = (EntityStatus)1,
@@ -7801,7 +7558,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1856",
                     Name = "Centro Brasileiro de Relações Internacionais",
                     PartnerShortDescription = "CEBRI",
                     Status = (EntityStatus)1,
@@ -7833,7 +7589,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1728",
                     Name = "China National Pharmaceutical Group Southwest Medicine Co., Ltd.",
                     PartnerShortDescription = "SINOPHARM",
                     Status = (EntityStatus)1,
@@ -7865,7 +7620,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1122",
                     Name = "China",
                     PartnerShortDescription = "China",
                     Status = (EntityStatus)1,
@@ -7897,7 +7651,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1085",
                     Name = "MOFCOM Ministry of Commerce of the People's Republic of China",
                     PartnerShortDescription = "MOFCOM",
                     Status = (EntityStatus)1,
@@ -7929,7 +7682,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1863",
                     Name = "China International Development Cooperation Agency",
                     PartnerShortDescription = "CIDCA",
                     Status = (EntityStatus)1,
@@ -7961,7 +7713,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1812",
                     Name = "INS National Insurance Institute of Costa Rica",
                     PartnerShortDescription = "INS Costa Rica",
                     Status = (EntityStatus)1,
@@ -7993,7 +7744,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1301",
                     Name = "Costa Rica",
                     PartnerShortDescription = "Costa Rica",
                     Status = (EntityStatus)1,
@@ -8025,7 +7775,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1878",
                     Name = "Comisión nacional de prevención de riesgos y atención de emergencias",
                     PartnerShortDescription = "CNE",
                     Status = (EntityStatus)1,
@@ -8057,7 +7806,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1840",
                     Name = "CONAVI Consejo Nacional de Vialidad Costa Rica",
                     PartnerShortDescription = "CONAVI Costa Rica",
                     Status = (EntityStatus)1,
@@ -8089,7 +7837,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1877",
                     Name = "Instituto Costarricense de Ferrocarriles",
                     PartnerShortDescription = "INCOFER",
                     Status = (EntityStatus)1,
@@ -8121,7 +7868,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1822",
                     Name = "INVU Instituto Nacional de Vivienda y Urbanismo Costa Rica",
                     PartnerShortDescription = "INVU Costa Rica",
                     Status = (EntityStatus)1,
@@ -8153,7 +7899,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1832",
                     Name = "IESS The Instituto Ecuatoriano de Seguridad Social",
                     PartnerShortDescription = "IESS",
                     Status = (EntityStatus)1,
@@ -8185,7 +7930,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1849",
                     Name = "The Metropolitan Public Passenger Transport Company of Quito",
                     PartnerShortDescription = "EPMTPQ",
                     Status = (EntityStatus)1,
@@ -8217,7 +7961,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1890",
                     Name = "Empresa Publica Metropolitana de Movilidad y Obras Publicas",
                     PartnerShortDescription = "EPPMOP",
                     Status = (EntityStatus)1,
@@ -8249,7 +7992,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1398",
                     Name = "Eswatini",
                     PartnerShortDescription = "Eswatini",
                     Status = (EntityStatus)1,
@@ -8281,7 +8023,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1827",
                     Name = "NERCHA - The National Emergency Response Council on HIV and AIDS of Eswatini",
                     PartnerShortDescription = "NERCHA - Eswatini",
                     Status = (EntityStatus)1,
@@ -8313,7 +8054,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1341",
                     Name = "Ethiopia",
                     PartnerShortDescription = "Ethiopia",
                     Status = (EntityStatus)1,
@@ -8345,7 +8085,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1803",
                     Name = "EPHI Ethiopian Public Health Institute",
                     PartnerShortDescription = "EPHI Ethiopia",
                     Status = (EntityStatus)1,
@@ -8377,7 +8116,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1799",
                     Name = "EPSS Ethiopian Pharmaceuticals Supply Service",
                     PartnerShortDescription = "EPSS Ethiopia",
                     Status = (EntityStatus)1,
@@ -8409,7 +8147,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1805",
                     Name = "ECAE Ethiopian Conformity Assessment Enterprise",
                     PartnerShortDescription = "ECAE Ethiopia",
                     Status = (EntityStatus)1,
@@ -8441,7 +8178,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1823",
                     Name = "NAWEC National Water and Electricity Company Ltd - Gambia",
                     PartnerShortDescription = "NAWEC Gambia",
                     Status = (EntityStatus)0,
@@ -8473,7 +8209,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1833",
                     Name = "SAT Superintendency of Tax Administration - Guatemala",
                     PartnerShortDescription = "SAT",
                     Status = (EntityStatus)1,
@@ -8505,7 +8240,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1927",
                     Name = "IGSS Instituto Guatemalteco de la Seguridad Social",
                     PartnerShortDescription = "IGSS",
                     Status = (EntityStatus)1,
@@ -8537,7 +8271,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1787",
                     Name = "Instituto Hondureño de Seguridad Social IHSS",
                     PartnerShortDescription = "IHSS",
                     Status = (EntityStatus)1,
@@ -8569,7 +8302,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1357",
                     Name = "Honduras",
                     PartnerShortDescription = "Honduras",
                     Status = (EntityStatus)1,
@@ -8601,7 +8333,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1786",
                     Name = "IPM Instituto de Previsión Militar",
                     PartnerShortDescription = "IPM",
                     Status = (EntityStatus)1,
@@ -8633,7 +8364,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1860",
                     Name = "National Autonomous Service of Aqueducts and Sewers",
                     PartnerShortDescription = "SANAA",
                     Status = (EntityStatus)1,
@@ -8665,7 +8395,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1785",
                     Name = "ENP Empresa Nacional Portuaria",
                     PartnerShortDescription = "ENP",
                     Status = (EntityStatus)1,
@@ -8697,7 +8426,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1946",
                     Name = "ENEE Empresa Nacional de Energía Eléctrica",
                     PartnerShortDescription = "ENEE",
                     Status = (EntityStatus)1,
@@ -8729,7 +8457,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1344",
                     Name = "India",
                     PartnerShortDescription = "India",
                     Status = (EntityStatus)1,
@@ -8761,7 +8488,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1623",
                     Name = "Indian State of Sikkim",
                     PartnerShortDescription = "Indian State of Sikkim",
                     Status = (EntityStatus)1,
@@ -8793,7 +8519,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1352",
                     Name = "Indonesia",
                     PartnerShortDescription = "Indonesia",
                     Status = (EntityStatus)1,
@@ -8825,7 +8550,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1884",
                     Name = "Indonesian Environment Fund",
                     PartnerShortDescription = "BPDLH",
                     Status = (EntityStatus)1,
@@ -8857,7 +8581,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1130",
                     Name = "Israel",
                     PartnerShortDescription = "Israel",
                     Status = (EntityStatus)1,
@@ -8889,7 +8612,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1093",
                     Name = "MASHAV Center for International Cooperation of the Foreign Ministry of Israel",
                     PartnerShortDescription = "MASHAV",
                     Status = (EntityStatus)1,
@@ -8921,7 +8643,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1339",
                     Name = "Libya",
                     PartnerShortDescription = "Libya",
                     Status = (EntityStatus)1,
@@ -8953,7 +8674,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1707",
                     Name = "Libyan Presidency Council",
                     PartnerShortDescription = "Libyan Presidency Council",
                     Status = (EntityStatus)1,
@@ -8985,7 +8705,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1097",
                     Name = "LED Liechtenstein Development Service",
                     PartnerShortDescription = "LED",
                     Status = (EntityStatus)1,
@@ -9017,7 +8736,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1132",
                     Name = "Liechtenstein",
                     PartnerShortDescription = "Liechtenstein",
                     Status = (EntityStatus)1,
@@ -9049,7 +8767,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1834",
                     Name = "FONADIN Fideicomiso 1936, Fondo Nacional de Infraestructura",
                     PartnerShortDescription = "FONADIN",
                     Status = (EntityStatus)1,
@@ -9081,7 +8798,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1369",
                     Name = "Mexico",
                     PartnerShortDescription = "Mexico",
                     Status = (EntityStatus)1,
@@ -9113,7 +8829,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1831",
                     Name = "INFOTEC Centro de Investigación e Innovación en Tecnologías de la Información y Comunicación",
                     PartnerShortDescription = "INFOTEC",
                     Status = (EntityStatus)1,
@@ -9145,7 +8860,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1375",
                     Name = "Morocco",
                     PartnerShortDescription = "Morocco",
                     Status = (EntityStatus)1,
@@ -9177,7 +8891,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1678",
                     Name = "MRPSC Ministère chargé des relations avec le Parlement et la Société Civile",
                     PartnerShortDescription = "MRPSC",
                     Status = (EntityStatus)1,
@@ -9209,7 +8922,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1916",
                     Name = "Oman Ministry of Foreign Affairs",
                     PartnerShortDescription = "Oman MoFA",
                     Status = (EntityStatus)1,
@@ -9241,7 +8953,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1781",
                     Name = "INADEH Instituto Nacional de Formacion Profesional y Capacitacion para el Desarrollo Humano",
                     PartnerShortDescription = "INADEH",
                     Status = (EntityStatus)1,
@@ -9273,7 +8984,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1322",
                     Name = "Panama",
                     PartnerShortDescription = "Panama",
                     Status = (EntityStatus)1,
@@ -9305,7 +9015,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1798",
                     Name = "DNA Paraguayan Dirección Nacional de Aduanas of Paraguay",
                     PartnerShortDescription = "DNA Paraguay",
                     Status = (EntityStatus)1,
@@ -9337,7 +9046,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1773",
                     Name = "ANDE Administración Nacional de Electricidad",
                     PartnerShortDescription = "ANDE",
                     Status = (EntityStatus)1,
@@ -9369,7 +9077,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1324",
                     Name = "Paraguay",
                     PartnerShortDescription = "Paraguay",
                     Status = (EntityStatus)1,
@@ -9401,7 +9108,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1783",
                     Name = "PNSU Programa Nacional de Saneamiento Urbano",
                     PartnerShortDescription = "PNSU",
                     Status = (EntityStatus)1,
@@ -9433,7 +9139,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1780",
                     Name = "AMSAC Activos Mineros S.A.C.",
                     PartnerShortDescription = "AMSAC",
                     Status = (EntityStatus)1,
@@ -9465,7 +9170,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1724",
                     Name = "Sedapal",
                     PartnerShortDescription = "Sedapal",
                     Status = (EntityStatus)1,
@@ -9497,7 +9201,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1853",
                     Name = "Superintendencia de Banca, Seguros y AFP. República del Perú",
                     PartnerShortDescription = "SBS",
                     Status = (EntityStatus)1,
@@ -9529,7 +9232,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1325",
                     Name = "Peru",
                     PartnerShortDescription = "Peru",
                     Status = (EntityStatus)1,
@@ -9561,7 +9263,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1949",
                     Name = "Water PNG Limited",
                     PartnerShortDescription = "Water PNG",
                     Status = (EntityStatus)1,
@@ -9593,7 +9294,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1395",
                     Name = "Saudi Arabia",
                     PartnerShortDescription = "Saudi Arabia",
                     Status = (EntityStatus)1,
@@ -9625,7 +9325,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1761",
                     Name = "KSRelief King Salman Humanitarian Aid and Relief Centre",
                     PartnerShortDescription = "KSRelief",
                     Status = (EntityStatus)1,
@@ -9657,7 +9356,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1918",
                     Name = "SDRPY Saudi Development and Reconstruction Program for Yemen",
                     PartnerShortDescription = "SDRPY",
                     Status = (EntityStatus)1,
@@ -9689,7 +9387,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1723",
                     Name = "SFD Saudi Fund for Development",
                     PartnerShortDescription = "SFD",
                     Status = (EntityStatus)1,
@@ -9721,7 +9418,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1911",
                     Name = "Saudi Arabia Ministry of Foreign Affairs",
                     PartnerShortDescription = "Saudi Arabia MoFA",
                     Status = (EntityStatus)1,
@@ -9753,7 +9449,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1855",
                     Name = "Guma Valley Water Company",
                     PartnerShortDescription = "GVWC",
                     Status = (EntityStatus)1,
@@ -9785,7 +9480,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1401",
                     Name = "Sierra Leone",
                     PartnerShortDescription = "Sierra Leone",
                     Status = (EntityStatus)1,
@@ -9817,7 +9511,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1023",
                     Name = "DBSA Development Bank of Southern Africa",
                     PartnerShortDescription = "DBSA",
                     Status = (EntityStatus)1,
@@ -9849,7 +9542,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1106",
                     Name = "SADPA South African Development Partnership Agency",
                     PartnerShortDescription = "SADPA",
                     Status = (EntityStatus)1,
@@ -9881,7 +9573,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1140",
                     Name = "South Africa",
                     PartnerShortDescription = "South Africa",
                     Status = (EntityStatus)1,
@@ -9913,7 +9604,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1110",
                     Name = "TIKA Turkish Cooperation and Coordination Agency",
                     PartnerShortDescription = "TIKA",
                     Status = (EntityStatus)1,
@@ -9945,7 +9635,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1143",
                     Name = "Türkiye",
                     PartnerShortDescription = "Turkey",
                     Status = (EntityStatus)1,
@@ -9977,7 +9666,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1424",
                     Name = "Ukraine",
                     PartnerShortDescription = "Ukraine",
                     Status = (EntityStatus)1,
@@ -10009,7 +9697,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1891",
                     Name = "Kharkiv City Council",
                     PartnerShortDescription = "Kharkiv CC",
                     Status = (EntityStatus)1,
@@ -10041,7 +9728,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1828",
                     Name = "Ukrainian Railways (Ukrzaliznytsia -UZ)",
                     PartnerShortDescription = "Ukrainian Railways",
                     Status = (EntityStatus)1,
@@ -10073,7 +9759,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1838",
                     Name = "State Agency for Restoration and Development of Infrastructure of Ukraine",
                     PartnerShortDescription = "AR- Ukraine",
                     Status = (EntityStatus)1,
@@ -10105,7 +9790,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1427",
                     Name = "Uzbekistan",
                     PartnerShortDescription = "Uzbekistan",
                     Status = (EntityStatus)1,
@@ -10137,7 +9821,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1880",
                     Name = "Fund for Reconstruction and Development of the Republic of Uzbekistan",
                     PartnerShortDescription = "FRDRepUzb",
                     Status = (EntityStatus)1,
@@ -10169,7 +9852,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1922",
                     Name = "ZESCO Limited",
                     PartnerShortDescription = "ZESCO",
                     Status = (EntityStatus)1,
@@ -10201,7 +9883,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1266",
                     Name = "Italy",
                     PartnerShortDescription = "Italy",
                     Status = (EntityStatus)1,
@@ -10233,7 +9914,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1305",
                     Name = "Czechia",
                     PartnerShortDescription = "Czech Republic",
                     Status = (EntityStatus)1,
@@ -10265,7 +9945,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1358",
                     Name = "Hungary",
                     PartnerShortDescription = "Hungary",
                     Status = (EntityStatus)1,
@@ -10297,7 +9976,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1403",
                     Name = "Slovakia",
                     PartnerShortDescription = "Slovakia",
                     Status = (EntityStatus)1,
@@ -10329,7 +10007,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1404",
                     Name = "Slovenia",
                     PartnerShortDescription = "Slovenia",
                     Status = (EntityStatus)1,
@@ -10361,7 +10038,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1076",
                     Name = "DFAT Department of Foreign Affairs and Trade",
                     PartnerShortDescription = "DFAT - Australia",
                     Status = (EntityStatus)1,
@@ -10393,7 +10069,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1117",
                     Name = "Australia",
                     PartnerShortDescription = "Australia",
                     Status = (EntityStatus)1,
@@ -10425,7 +10100,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1757",
                     Name = "Australian Department of Defence",
                     PartnerShortDescription = "DoD Australia",
                     Status = (EntityStatus)1,
@@ -10457,7 +10131,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1077",
                     Name = "ADA Austria Development Agency",
                     PartnerShortDescription = "ADA",
                     Status = (EntityStatus)1,
@@ -10489,7 +10162,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1118",
                     Name = "Austria",
                     PartnerShortDescription = "Austria",
                     Status = (EntityStatus)1,
@@ -10521,7 +10193,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1078",
                     Name = "AWS Austria Wirtschaftsservice Gesellschaft",
                     PartnerShortDescription = "AWS",
                     Status = (EntityStatus)1,
@@ -10553,7 +10224,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1080",
                     Name = "ENABEL Belgian Development Agency",
                     PartnerShortDescription = "ENABEL",
                     Status = (EntityStatus)1,
@@ -10585,7 +10255,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1120",
                     Name = "Belgium",
                     PartnerShortDescription = "Belgium",
                     Status = (EntityStatus)1,
@@ -10617,7 +10286,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1081",
                     Name = "FPS Ministry of Foreign Affairs, Foreign Trade and Development Cooperation of Belgium",
                     PartnerShortDescription = "FPS",
                     Status = (EntityStatus)1,
@@ -10649,7 +10317,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1082",
                     Name = "CIDA Canadian International Development Agency",
                     PartnerShortDescription = "CIDA",
                     Status = (EntityStatus)0,
@@ -10681,7 +10348,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1084",
                     Name = "IDRC International Development Research Centre",
                     PartnerShortDescription = "IDRC",
                     Status = (EntityStatus)1,
@@ -10713,7 +10379,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1917",
                     Name = "DND Department of National Defence",
                     PartnerShortDescription = "DND",
                     Status = (EntityStatus)1,
@@ -10745,7 +10410,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1024",
                     Name = "CAD Global Affairs Canada",
                     PartnerShortDescription = "Global Affairs Canada",
                     Status = (EntityStatus)1,
@@ -10777,7 +10441,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1121",
                     Name = "Canada",
                     PartnerShortDescription = "Canada",
                     Status = (EntityStatus)1,
@@ -10809,7 +10472,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1083",
                     Name = "DFAIT Department of Foreign Affairs and International Trade Canada",
                     PartnerShortDescription = "DFAIT - Canada",
                     Status = (EntityStatus)0,
@@ -10841,7 +10503,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1123",
                     Name = "Denmark",
                     PartnerShortDescription = "Denmark",
                     Status = (EntityStatus)1,
@@ -10873,7 +10534,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1086",
                     Name = "Ministry of Foreign Affairs of Denmark",
                     PartnerShortDescription = "Denmark MoFA",
                     Status = (EntityStatus)1,
@@ -10905,7 +10565,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1087",
                     Name = "Ministry for Foreign Affairs of Finland",
                     PartnerShortDescription = "MoFA Finland",
                     Status = (EntityStatus)1,
@@ -10937,7 +10596,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1124",
                     Name = "Finland",
                     PartnerShortDescription = "Finland",
                     Status = (EntityStatus)1,
@@ -10969,7 +10627,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1088",
                     Name = "AFD French Development Agency",
                     PartnerShortDescription = "AFD",
                     Status = (EntityStatus)1,
@@ -11001,7 +10658,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1940",
                     Name = "Ville de Nice",
                     PartnerShortDescription = "Ville de Nice",
                     Status = (EntityStatus)1,
@@ -11033,7 +10689,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1616",
                     Name = "French overseas department of Guadeloupe",
                     PartnerShortDescription = "Guadeloupe",
                     Status = (EntityStatus)1,
@@ -11065,7 +10720,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1622",
                     Name = "French overseas department of Réunion",
                     PartnerShortDescription = "Réunion",
                     Status = (EntityStatus)1,
@@ -11097,7 +10751,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1842",
                     Name = "Expertise France",
                     PartnerShortDescription = "Expertise France",
                     Status = (EntityStatus)1,
@@ -11129,7 +10782,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1125",
                     Name = "France",
                     PartnerShortDescription = "France",
                     Status = (EntityStatus)1,
@@ -11161,7 +10813,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1903",
                     Name = "France Ministry for Europe and Foreign Affairs",
                     PartnerShortDescription = "France MoFA",
                     Status = (EntityStatus)1,
@@ -11193,7 +10844,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1864",
                     Name = "BMWE German Federal Ministry for Economic Affairs and Energy",
                     PartnerShortDescription = "BMWK",
                     Status = (EntityStatus)1,
@@ -11225,7 +10875,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1737",
                     Name = "GFFO German Federal Foreign Office",
                     PartnerShortDescription = "GFFO",
                     Status = (EntityStatus)1,
@@ -11257,7 +10906,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1738",
                     Name = "BMUKN German Federal Ministry for Environment, Climate Action, Nature Conservation and Nuclear Safety",
                     PartnerShortDescription = "BMUV",
                     Status = (EntityStatus)1,
@@ -11289,7 +10937,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1669",
                     Name = "KfW German Development Bank",
                     PartnerShortDescription = "KfW",
                     Status = (EntityStatus)1,
@@ -11321,7 +10968,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1089",
                     Name = "BMZ German Federal Ministry for Economic Cooperation and Development",
                     PartnerShortDescription = "BMZ",
                     Status = (EntityStatus)1,
@@ -11353,7 +10999,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1589",
                     Name = "GIZ German Corporation for International Cooperation",
                     PartnerShortDescription = "GIZ",
                     Status = (EntityStatus)1,
@@ -11385,7 +11030,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1126",
                     Name = "Germany",
                     PartnerShortDescription = "Germany",
                     Status = (EntityStatus)1,
@@ -11417,7 +11061,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1127",
                     Name = "Greece",
                     PartnerShortDescription = "Greece",
                     Status = (EntityStatus)1,
@@ -11449,7 +11092,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1090",
                     Name = "Hellenic Aid",
                     PartnerShortDescription = "Hellenic Aid",
                     Status = (EntityStatus)1,
@@ -11481,7 +11123,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1128",
                     Name = "Iceland",
                     PartnerShortDescription = "Iceland",
                     Status = (EntityStatus)1,
@@ -11513,7 +11154,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1049",
                     Name = "ICEIDA Icelandic International Development Agency",
                     PartnerShortDescription = "ICEIDA",
                     Status = (EntityStatus)1,
@@ -11545,7 +11185,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1091",
                     Name = "Ministry of Foreign Affairs of Iceland",
                     PartnerShortDescription = "MoFA Iceland",
                     Status = (EntityStatus)1,
@@ -11577,7 +11216,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1092",
                     Name = "IrishAid",
                     PartnerShortDescription = "Irish Aid",
                     Status = (EntityStatus)1,
@@ -11609,7 +11247,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1129",
                     Name = "Ireland",
                     PartnerShortDescription = "Ireland",
                     Status = (EntityStatus)1,
@@ -11641,7 +11278,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1904",
                     Name = "MAECI Italian Ministry of Foreign Affairs and International Cooperation",
                     PartnerShortDescription = "MAECI",
                     Status = (EntityStatus)1,
@@ -11673,7 +11309,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1902",
                     Name = "AICS Italian Agency for Development Cooperation",
                     PartnerShortDescription = "AICS",
                     Status = (EntityStatus)1,
@@ -11705,7 +11340,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1905",
                     Name = "Italy Ministry of Environment",
                     PartnerShortDescription = "Italy MASE",
                     Status = (EntityStatus)1,
@@ -11737,7 +11371,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1131",
                     Name = "Japan",
                     PartnerShortDescription = "Japan",
                     Status = (EntityStatus)1,
@@ -11769,7 +11402,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1906",
                     Name = "Japan Ministry of Foreign Affairs",
                     PartnerShortDescription = "Japan MoFA",
                     Status = (EntityStatus)1,
@@ -11801,7 +11433,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1096",
                     Name = "JBIC Japan Bank for International Cooperation",
                     PartnerShortDescription = "JBIC",
                     Status = (EntityStatus)0,
@@ -11833,7 +11464,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1907",
                     Name = "Japan Ministry of Health, Labour and Welfare",
                     PartnerShortDescription = "Japan MHLW",
                     Status = (EntityStatus)1,
@@ -11865,7 +11495,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1095",
                     Name = "JICA Japan International Cooperation Agency",
                     PartnerShortDescription = "JICA",
                     Status = (EntityStatus)1,
@@ -11897,7 +11526,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1139",
                     Name = "Republic of Korea",
                     PartnerShortDescription = "Republic of Korea",
                     Status = (EntityStatus)1,
@@ -11929,7 +11557,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1105",
                     Name = "KOICA Korea International Cooperation Agency",
                     PartnerShortDescription = "KOICA",
                     Status = (EntityStatus)1,
@@ -11961,7 +11588,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1908",
                     Name = "South Korea Ministry of Foreign Affairs",
                     PartnerShortDescription = "South Korea MoFA",
                     Status = (EntityStatus)1,
@@ -11993,7 +11619,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1312",
                     Name = "Kuwait",
                     PartnerShortDescription = "Kuwait",
                     Status = (EntityStatus)1,
@@ -12025,7 +11650,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1914",
                     Name = "Kuwait Ministry of Foreign Affairs",
                     PartnerShortDescription = "Kuwait MoFA",
                     Status = (EntityStatus)1,
@@ -12057,7 +11681,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1915",
                     Name = "KFAED Kuwait Fund for Arab Economic Development",
                     PartnerShortDescription = "KFAED",
                     Status = (EntityStatus)0,
@@ -12089,7 +11712,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1098",
                     Name = "LuxDev Luxembourg Agency for Development Cooperation",
                     PartnerShortDescription = "LuxDev",
                     Status = (EntityStatus)1,
@@ -12121,7 +11743,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1133",
                     Name = "Luxembourg",
                     PartnerShortDescription = "Luxembourg",
                     Status = (EntityStatus)1,
@@ -12153,7 +11774,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1134",
                     Name = "Netherlands",
                     PartnerShortDescription = "Netherlands",
                     Status = (EntityStatus)1,
@@ -12185,7 +11805,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1099",
                     Name = "Ministry of Foreign Affairs of the Netherlands",
                     PartnerShortDescription = "MoFA Netherlands",
                     Status = (EntityStatus)1,
@@ -12217,7 +11836,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1611",
                     Name = "Aruba (Kingdom of the Netherlands)",
                     PartnerShortDescription = "Aruba",
                     Status = (EntityStatus)1,
@@ -12249,7 +11867,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1100",
                     Name = "NZAID New Zealand Agency for International Development",
                     PartnerShortDescription = "NZAID",
                     Status = (EntityStatus)1,
@@ -12281,7 +11898,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1135",
                     Name = "New Zealand",
                     PartnerShortDescription = "New Zealand",
                     Status = (EntityStatus)1,
@@ -12313,7 +11929,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1136",
                     Name = "Norway",
                     PartnerShortDescription = "Norway",
                     Status = (EntityStatus)1,
@@ -12345,7 +11960,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1102",
                     Name = "Ministry of Foreign Affairs of Norway",
                     PartnerShortDescription = "MoFA Norway",
                     Status = (EntityStatus)1,
@@ -12377,7 +11991,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1753",
                     Name = "Ministry of Justice of Norway",
                     PartnerShortDescription = "MoJ Norway",
                     Status = (EntityStatus)1,
@@ -12409,7 +12022,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1101",
                     Name = "NORAD Norwegian Agency for Development Cooperation",
                     PartnerShortDescription = "NORAD",
                     Status = (EntityStatus)1,
@@ -12441,7 +12053,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1103",
                     Name = "Polish Aid",
                     PartnerShortDescription = "Polish Aid",
                     Status = (EntityStatus)1,
@@ -12473,7 +12084,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1137",
                     Name = "Poland",
                     PartnerShortDescription = "Poland",
                     Status = (EntityStatus)1,
@@ -12505,7 +12115,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1104",
                     Name = "IPAD Portuguese Institute for Development Support",
                     PartnerShortDescription = "IPAD",
                     Status = (EntityStatus)1,
@@ -12537,7 +12146,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1138",
                     Name = "Portugal",
                     PartnerShortDescription = "Portugal",
                     Status = (EntityStatus)1,
@@ -12569,7 +12177,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1371",
                     Name = "Qatar",
                     PartnerShortDescription = "Qatar",
                     Status = (EntityStatus)1,
@@ -12601,7 +12208,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1912",
                     Name = "Qatar Ministry of Foreign Affairs",
                     PartnerShortDescription = "Qatar MoFA",
                     Status = (EntityStatus)1,
@@ -12633,7 +12239,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1818",
                     Name = "QFFD Qatar Fund for Development",
                     PartnerShortDescription = "QFFD",
                     Status = (EntityStatus)1,
@@ -12665,7 +12270,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1141",
                     Name = "Spain",
                     PartnerShortDescription = "Spain",
                     Status = (EntityStatus)1,
@@ -12697,7 +12301,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1107",
                     Name = "AECID Spanish Agency for International Development Cooperation",
                     PartnerShortDescription = "AECID",
                     Status = (EntityStatus)1,
@@ -12729,7 +12332,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1267",
                     Name = "Sweden",
                     PartnerShortDescription = "Sweden",
                     Status = (EntityStatus)1,
@@ -12761,7 +12363,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1108",
                     Name = "SIDA Swedish International Development Cooperation Agency",
                     PartnerShortDescription = "SIDA",
                     Status = (EntityStatus)1,
@@ -12793,7 +12394,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1909",
                     Name = "Sweden Ministry of Foreign Affairs",
                     PartnerShortDescription = "Sweden MoFA",
                     Status = (EntityStatus)1,
@@ -12825,7 +12425,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1754",
                     Name = "SEPA Swedish Environmental Protection Agency",
                     PartnerShortDescription = "SEPA",
                     Status = (EntityStatus)1,
@@ -12857,7 +12456,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1109",
                     Name = "SDC Swiss Agency for Development and Cooperation",
                     PartnerShortDescription = "SDC",
                     Status = (EntityStatus)1,
@@ -12889,7 +12487,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1142",
                     Name = "Switzerland",
                     PartnerShortDescription = "Switzerland",
                     Status = (EntityStatus)1,
@@ -12921,7 +12518,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1913",
                     Name = "United Arab Emirates Ministry of Foreign Affairs",
                     PartnerShortDescription = "UAE MoFA",
                     Status = (EntityStatus)1,
@@ -12953,7 +12549,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1711",
                     Name = "Fleming Fund",
                     PartnerShortDescription = "Fleming Fund",
                     Status = (EntityStatus)1,
@@ -12985,7 +12580,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1752",
                     Name = "FCDO Foreign, Commonwealth & Development Office",
                     PartnerShortDescription = "FCDO",
                     Status = (EntityStatus)1,
@@ -13017,7 +12611,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1613",
                     Name = "British overseas territory of Cayman Islands",
                     PartnerShortDescription = "Cayman Islands",
                     Status = (EntityStatus)1,
@@ -13049,7 +12642,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1144",
                     Name = "United Kingdom of Great Britain and Northern Ireland",
                     PartnerShortDescription = "UK",
                     Status = (EntityStatus)1,
@@ -13081,7 +12673,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1610",
                     Name = "British overseas territory of Anguilla",
                     PartnerShortDescription = "Anguilla",
                     Status = (EntityStatus)1,
@@ -13113,7 +12704,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1910",
                     Name = "DESNZ Department for Energy Security and Net Zero",
                     PartnerShortDescription = "DESNZ",
                     Status = (EntityStatus)1,
@@ -13145,7 +12735,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1618",
                     Name = "British overseas territory of Montserrat",
                     PartnerShortDescription = "Montserrat",
                     Status = (EntityStatus)1,
@@ -13177,7 +12766,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1111",
                     Name = "DFID Department For International Development",
                     PartnerShortDescription = "DFID",
                     Status = (EntityStatus)0,
@@ -13209,7 +12797,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1115",
                     Name = "USDA United States Department of Agriculture",
                     PartnerShortDescription = "USDA",
                     Status = (EntityStatus)1,
@@ -13241,7 +12828,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1112",
                     Name = "USAID United States Agency for International Development",
                     PartnerShortDescription = "USAID",
                     Status = (EntityStatus)1,
@@ -13273,7 +12859,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1116",
                     Name = "USAID Bureau of Humanitarian Assistance",
                     PartnerShortDescription = "USAID OFDA",
                     Status = (EntityStatus)1,
@@ -13305,7 +12890,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1113",
                     Name = "USDOS United States Department of State",
                     PartnerShortDescription = "USDOS",
                     Status = (EntityStatus)1,
@@ -13337,7 +12921,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1145",
                     Name = "United States of America",
                     PartnerShortDescription = "USA",
                     Status = (EntityStatus)1,
@@ -13369,7 +12952,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1641",
                     Name = "USAID and Affiliated U.S. Agency for International Development and Affiliated",
                     PartnerShortDescription = "USAID & Affiliated",
                     Status = (EntityStatus)1,
@@ -13401,7 +12983,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1788",
                     Name = "INL U.S. Department of State’s Bureau of International Narcotics and Law Enforcement Affairs",
                     PartnerShortDescription = "INL-USDOS",
                     Status = (EntityStatus)1,
@@ -13433,7 +13014,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1702",
                     Name = "CDC United States Centers for Disease Control and Prevention",
                     PartnerShortDescription = "CDC US",
                     Status = (EntityStatus)1,
@@ -13465,7 +13045,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1114",
                     Name = "MCC Millennium Challenge Corporation",
                     PartnerShortDescription = "MCC",
                     Status = (EntityStatus)1,
@@ -13497,7 +13076,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1642",
                     Name = "USDOC United States Department of Commerce",
                     PartnerShortDescription = "USDOC",
                     Status = (EntityStatus)1,
@@ -13529,7 +13107,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1817",
                     Name = "OFID OPEC Fund for International Development",
                     PartnerShortDescription = "OFID",
                     Status = (EntityStatus)1,
@@ -13561,7 +13138,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1011",
                     Name = "CAF Development Bank of Latin America",
                     PartnerShortDescription = "CAF",
                     Status = (EntityStatus)1,
@@ -13593,7 +13169,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1437",
                     Name = "AfDB African Development Bank",
                     PartnerShortDescription = "AFDB",
                     Status = (EntityStatus)1,
@@ -13625,7 +13200,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1568",
                     Name = "BCIE Central American Bank for Economic Integration",
                     PartnerShortDescription = "BCIE",
                     Status = (EntityStatus)1,
@@ -13657,7 +13231,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1250",
                     Name = "IMF International Monetary Fund",
                     PartnerShortDescription = "IMF",
                     Status = (EntityStatus)1,
@@ -13689,7 +13262,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1571",
                     Name = "IsDB Islamic Development Bank",
                     PartnerShortDescription = "IsDB",
                     Status = (EntityStatus)1,
@@ -13721,7 +13293,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1439",
                     Name = "CDB Caribbean Development Bank",
                     PartnerShortDescription = "CDB",
                     Status = (EntityStatus)1,
@@ -13753,7 +13324,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1438",
                     Name = "ADB Asian Development Bank",
                     PartnerShortDescription = "ADB",
                     Status = (EntityStatus)1,
@@ -13785,7 +13355,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1572",
                     Name = "AFESD Arab Fund for Economic and Social Development",
                     PartnerShortDescription = "AFESD",
                     Status = (EntityStatus)1,
@@ -13817,7 +13386,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1793",
                     Name = "AIIB Asian Infrastructure Investment Bank",
                     PartnerShortDescription = "AIIB",
                     Status = (EntityStatus)1,
@@ -13849,7 +13417,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1925",
                     Name = "West African Development Bank",
                     PartnerShortDescription = "BOAD",
                     Status = (EntityStatus)1,
@@ -13881,7 +13448,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1440",
                     Name = "CFC Common Fund for Commodities",
                     PartnerShortDescription = "CFC",
                     Status = (EntityStatus)1,
@@ -13913,7 +13479,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1441",
                     Name = "EBRD European Bank for Reconstruction and Development",
                     PartnerShortDescription = "EBRD",
                     Status = (EntityStatus)1,
@@ -13945,7 +13510,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1442",
                     Name = "IADB Inter-American Development Bank",
                     PartnerShortDescription = "IADB",
                     Status = (EntityStatus)1,
@@ -13977,7 +13541,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1854",
                     Name = "Council of Europe Development Bank",
                     PartnerShortDescription = "CEB",
                     Status = (EntityStatus)1,
@@ -14009,7 +13572,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1546",
                     Name = "MIGA Multilateral Investment Guarantee Agency",
                     PartnerShortDescription = "MIGA",
                     Status = (EntityStatus)1,
@@ -14041,7 +13603,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1547",
                     Name = "IFC International Finance Corporation",
                     PartnerShortDescription = "IFC",
                     Status = (EntityStatus)1,
@@ -14073,7 +13634,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1628",
                     Name = "ICSID International Centre for Settlement of Investment Disputes",
                     PartnerShortDescription = "ICSID",
                     Status = (EntityStatus)1,
@@ -14105,7 +13665,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1444",
                     Name = "IDA International Development Association",
                     PartnerShortDescription = "IDA",
                     Status = (EntityStatus)1,
@@ -14137,7 +13696,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1443",
                     Name = "IBRD International Bank of Reconstruction and Development",
                     PartnerShortDescription = "IBRD",
                     Status = (EntityStatus)1,
@@ -14169,7 +13727,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1646",
                     Name = "The World Bank",
                     PartnerShortDescription = "WB",
                     Status = (EntityStatus)1,
@@ -14201,7 +13758,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1018",
                     Name = "Cities Alliance",
                     PartnerShortDescription = "Cities Alliance",
                     Status = (EntityStatus)1,
@@ -14233,7 +13789,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1043",
                     Name = "GGGI Global Green Growth Institute",
                     PartnerShortDescription = "GGGI",
                     Status = (EntityStatus)1,
@@ -14265,7 +13820,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1054",
                     Name = "SEforALL Sustainable Energy for All",
                     PartnerShortDescription = "SEforALL",
                     Status = (EntityStatus)1,
@@ -14297,7 +13851,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1060",
                     Name = "Nutrition International",
                     PartnerShortDescription = "Nutrition International",
                     Status = (EntityStatus)1,
@@ -14329,7 +13882,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1068",
                     Name = "Nansen Initiative",
                     PartnerShortDescription = "Nansen Initiative",
                     Status = (EntityStatus)1,
@@ -14361,7 +13913,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1150",
                     Name = "ARISE Private Sector Alliance for Disaster Resilient Societies (formerly R!SE)",
                     PartnerShortDescription = "ARISE",
                     Status = (EntityStatus)1,
@@ -14393,7 +13944,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1156",
                     Name = "Somalia Stability Fund",
                     PartnerShortDescription = "SSF",
                     Status = (EntityStatus)1,
@@ -14425,7 +13975,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1172",
                     Name = "UNITAID International Drug Purchase Facility",
                     PartnerShortDescription = "UNITAID",
                     Status = (EntityStatus)1,
@@ -14457,7 +14006,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1242",
                     Name = "WSSCC Water Supply and Sanitation Collaborative Council",
                     PartnerShortDescription = "WSSCC",
                     Status = (EntityStatus)1,
@@ -14489,7 +14037,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1458",
                     Name = "3DF Three Disease Fund",
                     PartnerShortDescription = "3DF",
                     Status = (EntityStatus)1,
@@ -14521,7 +14068,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1460",
                     Name = "LIFT Livelihoods and Food Security Fund",
                     PartnerShortDescription = "LIFT",
                     Status = (EntityStatus)1,
@@ -14553,7 +14099,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1462",
                     Name = "PONREPP-TF Post-Nargis Response and Preparedness Plan Trust Fund",
                     PartnerShortDescription = "PONREPP-TF",
                     Status = (EntityStatus)1,
@@ -14585,7 +14130,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1592",
                     Name = "DAG Development Assistance Group",
                     PartnerShortDescription = "DAG",
                     Status = (EntityStatus)1,
@@ -14617,7 +14161,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1650",
                     Name = "JPF Joint Peace Fund",
                     PartnerShortDescription = "JPF",
                     Status = (EntityStatus)1,
@@ -14649,7 +14192,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1683",
                     Name = "ICMPD International Centre for Migration Policy Development",
                     PartnerShortDescription = "ICMPD",
                     Status = (EntityStatus)1,
@@ -14681,7 +14223,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1698",
                     Name = "JPP Somalia Joint Police Programme",
                     PartnerShortDescription = "Somalia JPP",
                     Status = (EntityStatus)1,
@@ -14713,7 +14254,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1717",
                     Name = "ICAT Initiative for Climate Action Transparency",
                     PartnerShortDescription = "ICAT",
                     Status = (EntityStatus)1,
@@ -14745,7 +14285,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1729",
                     Name = "Energy Transition Partnership",
                     PartnerShortDescription = "ETP",
                     Status = (EntityStatus)1,
@@ -14777,7 +14316,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1730",
                     Name = "Peace Process Support - The Secretariat",
                     PartnerShortDescription = "PPS",
                     Status = (EntityStatus)1,
@@ -14809,7 +14347,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1756",
                     Name = "The Climate Vulnerable Forum & Vulnerable Twenty Group of Ministers of Finance",
                     PartnerShortDescription = "CVF/V20",
                     Status = (EntityStatus)1,
@@ -14841,7 +14378,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1763",
                     Name = "Joint Support to Somaliland National Electoral Commission",
                     PartnerShortDescription = "JSS NEC",
                     Status = (EntityStatus)1,
@@ -14873,7 +14409,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1774",
                     Name = "SHF Sanitation and Hygiene Fund",
                     PartnerShortDescription = "SHF",
                     Status = (EntityStatus)1,
@@ -14905,7 +14440,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1778",
                     Name = "CMI Center for Mediterranean Integration",
                     PartnerShortDescription = "CMI",
                     Status = (EntityStatus)1,
@@ -14937,7 +14471,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1920",
                     Name = "APRA Accelerated Partnerships for Renewables in Africa",
                     PartnerShortDescription = "APRA",
                     Status = (EntityStatus)1,
@@ -14969,7 +14502,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1001",
                     Name = "3MDG Three Millennium Development Goal Fund",
                     PartnerShortDescription = "3MDG",
                     Status = (EntityStatus)1,
@@ -15001,7 +14533,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1687",
                     Name = "Myanmar Access to Health",
                     PartnerShortDescription = "Myanmar Access to Health",
                     Status = (EntityStatus)1,
@@ -15033,7 +14564,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1938",
                     Name = "EIF-3 Enhanced Integrated Framework Phase 3",
                     PartnerShortDescription = "EIF-3",
                     Status = (EntityStatus)1,
@@ -15065,7 +14595,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1459",
                     Name = "EIF-1 Enhanced Integrated Framework Phase 1",
                     PartnerShortDescription = "EIF Phase 1",
                     Status = (EntityStatus)1,
@@ -15097,7 +14626,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1851",
                     Name = "EIF - Interim Facility",
                     PartnerShortDescription = "EIF Interim Facility",
                     Status = (EntityStatus)1,
@@ -15129,7 +14657,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1654",
                     Name = "EIF-2 Enhanced Integrated Framework Phase 2",
                     PartnerShortDescription = "EIF Phase 2",
                     Status = (EntityStatus)1,
@@ -15161,7 +14688,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1893",
                     Name = "The Forest and Climate Leaders’ Partnership",
                     PartnerShortDescription = "FCLP",
                     Status = (EntityStatus)1,
@@ -15193,7 +14719,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1924",
                     Name = "Fuel Distribution Gaza",
                     PartnerShortDescription = "Fuel Distribution Gaza",
                     Status = (EntityStatus)1,
@@ -15225,7 +14750,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1885",
                     Name = "Global Climate Action Partnership (GCAP) Multi-Donor Fund",
                     PartnerShortDescription = "GCAP",
                     Status = (EntityStatus)1,
@@ -15257,7 +14781,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1857",
                     Name = "The Santiago Network",
                     PartnerShortDescription = "Santiago Network",
                     Status = (EntityStatus)1,
@@ -15289,7 +14812,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1004",
                     Name = "ARC African Risk Capacity",
                     PartnerShortDescription = "African Risk Capacity",
                     Status = (EntityStatus)0,
@@ -15321,7 +14843,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1010",
                     Name = "CAC Central American Agricultural Council",
                     PartnerShortDescription = "CAC",
                     Status = (EntityStatus)0,
@@ -15353,7 +14874,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1017",
                     Name = "CILSS Permanent Inter-State Committee on Drought Control in the Sahel",
                     PartnerShortDescription = "CILSS",
                     Status = (EntityStatus)1,
@@ -15385,7 +14905,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1028",
                     Name = "UN ECCAS Economic Community of Central African States",
                     PartnerShortDescription = "UN ECCAS",
                     Status = (EntityStatus)1,
@@ -15417,7 +14936,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1030",
                     Name = "ECOWAS Economic Community of West African States",
                     PartnerShortDescription = "ECOWAS",
                     Status = (EntityStatus)1,
@@ -15449,7 +14967,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1039",
                     Name = "G77 Group of 77",
                     PartnerShortDescription = "G77",
                     Status = (EntityStatus)1,
@@ -15481,7 +14998,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1042",
                     Name = "GFDRR Global Facility for Disaster Reduction and Recovery",
                     PartnerShortDescription = "GFDRR",
                     Status = (EntityStatus)1,
@@ -15513,7 +15029,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1044",
                     Name = "GLOBE International Global Legislators Organisation",
                     PartnerShortDescription = "GLOBE",
                     Status = (EntityStatus)1,
@@ -15545,7 +15060,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1051",
                     Name = "IGAD Intergovernmental Authority on Development",
                     PartnerShortDescription = "IGAD",
                     Status = (EntityStatus)1,
@@ -15577,7 +15091,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1059",
                     Name = "MERCOSUR Southern Common Market",
                     PartnerShortDescription = "MERCOSUR",
                     Status = (EntityStatus)1,
@@ -15609,7 +15122,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1069",
                     Name = "OECD Organisation for Economic Co-operation and Development",
                     PartnerShortDescription = "OECD",
                     Status = (EntityStatus)1,
@@ -15641,7 +15153,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1070",
                     Name = "OIRSA Organismo Internacional Regional De Sanidad Agropecuaria",
                     PartnerShortDescription = "OIRSA",
                     Status = (EntityStatus)0,
@@ -15673,7 +15184,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1161",
                     Name = "UEMOA West African Economic and Monetary Union",
                     PartnerShortDescription = "UEMOA",
                     Status = (EntityStatus)1,
@@ -15705,7 +15215,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1231",
                     Name = "IRENA International Renewable Energy Agency",
                     PartnerShortDescription = "IRENA",
                     Status = (EntityStatus)1,
@@ -15737,7 +15246,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1253",
                     Name = "CTBTO Preparatory Commission for the Nuclear-Test-Ban Treaty Organization",
                     PartnerShortDescription = "CTBTO",
                     Status = (EntityStatus)1,
@@ -15769,7 +15277,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1435",
                     Name = "NBI Nile Basin Initiative",
                     PartnerShortDescription = "NBI",
                     Status = (EntityStatus)1,
@@ -15801,7 +15308,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1436",
                     Name = "SADC Southern African Development Community",
                     PartnerShortDescription = "SADC",
                     Status = (EntityStatus)1,
@@ -15833,7 +15339,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1449",
                     Name = "OSCE Organization for Security and Co-operation in Europe",
                     PartnerShortDescription = "OSCE",
                     Status = (EntityStatus)1,
@@ -15865,7 +15370,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1577",
                     Name = "OECS Organisation of Eastern Caribbean States",
                     PartnerShortDescription = "OECS",
                     Status = (EntityStatus)1,
@@ -15897,7 +15401,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1578",
                     Name = "OPEC Organization of the Petroleum Exporting Countries",
                     PartnerShortDescription = "OPEC",
                     Status = (EntityStatus)1,
@@ -15929,7 +15432,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1591",
                     Name = "Nordic Development Fund",
                     PartnerShortDescription = "Nordic Development Fund",
                     Status = (EntityStatus)1,
@@ -15961,7 +15463,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1603",
                     Name = "PIFS Pacific Islands Forum Secretariat",
                     PartnerShortDescription = "PIFS",
                     Status = (EntityStatus)1,
@@ -15993,7 +15494,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1604",
                     Name = "OIF Organisation internationale de la Francophonie",
                     PartnerShortDescription = "OIF",
                     Status = (EntityStatus)1,
@@ -16025,7 +15525,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1653",
                     Name = "Office of the Quartet",
                     PartnerShortDescription = "Office of the Quartet",
                     Status = (EntityStatus)1,
@@ -16057,7 +15556,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1660",
                     Name = "ICC International Criminal Court",
                     PartnerShortDescription = "ICC",
                     Status = (EntityStatus)1,
@@ -16089,7 +15587,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1674",
                     Name = "Itaipu Binacional",
                     PartnerShortDescription = "Itaipu Binacional",
                     Status = (EntityStatus)1,
@@ -16121,7 +15618,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1675",
                     Name = "G5 Sahel Group of Five for the Sahel",
                     PartnerShortDescription = "G5 Sahel",
                     Status = (EntityStatus)1,
@@ -16153,7 +15649,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1689",
                     Name = "RSHQ Resolute Support HQ – NATO",
                     PartnerShortDescription = "RSHQ",
                     Status = (EntityStatus)1,
@@ -16185,7 +15680,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1704",
                     Name = "C40 Climate Leadership Group",
                     PartnerShortDescription = "C40",
                     Status = (EntityStatus)1,
@@ -16217,7 +15711,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1792",
                     Name = "ISA International Solar Alliance",
                     PartnerShortDescription = "ISA",
                     Status = (EntityStatus)1,
@@ -16249,7 +15742,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1802",
                     Name = "ECSAHC East, Central, and Southern Africa Health Community",
                     PartnerShortDescription = "ECSAHC",
                     Status = (EntityStatus)1,
@@ -16281,7 +15773,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1806",
                     Name = "SACEP South Asia Cooperative Environment Programme",
                     PartnerShortDescription = "SACEP",
                     Status = (EntityStatus)1,
@@ -16313,7 +15804,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1807",
                     Name = "EBY Entidad Binacional Yacyretá",
                     PartnerShortDescription = "EBY",
                     Status = (EntityStatus)1,
@@ -16345,7 +15835,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1811",
                     Name = "ASEAN Association of Southeast Asian Nations",
                     PartnerShortDescription = "ASEAN",
                     Status = (EntityStatus)1,
@@ -16377,7 +15866,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1826",
                     Name = "AGFUND Arab Gulf Fund for Development",
                     PartnerShortDescription = "AGFUND",
                     Status = (EntityStatus)1,
@@ -16409,7 +15897,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1648",
                     Name = "AU African Union",
                     PartnerShortDescription = "African Union",
                     Status = (EntityStatus)1,
@@ -16441,7 +15928,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1434",
                     Name = "AU African Union",
                     PartnerShortDescription = "African Union",
                     Status = (EntityStatus)1,
@@ -16473,7 +15959,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1165",
                     Name = "UNAMID African Union-United Nations Hybrid Operation in Darfur",
                     PartnerShortDescription = "UNAMID",
                     Status = (EntityStatus)1,
@@ -16505,7 +15990,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1006",
                     Name = "AMISOM African Union Mission in Somalia",
                     PartnerShortDescription = "AMISOM",
                     Status = (EntityStatus)1,
@@ -16537,7 +16021,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1029",
                     Name = "EU DG ECHO Directorate-General for European Civil Protection and Humanitarian Aid Operations",
                     PartnerShortDescription = "EU DG ECHO",
                     Status = (EntityStatus)1,
@@ -16569,7 +16052,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1943",
                     Name = "EU DG MENA, Directorate-General for the Middle East, North Africa and the Gulf",
                     PartnerShortDescription = "EU DG MENA",
                     Status = (EntityStatus)1,
@@ -16601,7 +16083,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1025",
                     Name = "DG INTPA Directorate-General for International Partnerships (formerly DG DEVCO)",
                     PartnerShortDescription = "EU DG INTPA",
                     Status = (EntityStatus)1,
@@ -16633,7 +16114,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1649",
                     Name = "EC European Commission (other)",
                     PartnerShortDescription = "EC - Other",
                     Status = (EntityStatus)0,
@@ -16665,7 +16145,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1026",
                     Name = "EU DG ENEST, Directorate-General for Enlargement and Eastern Neighbourhood",
                     PartnerShortDescription = "EU DG ENEST",
                     Status = (EntityStatus)1,
@@ -16697,7 +16176,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1031",
                     Name = "EEAS European External Action Service",
                     PartnerShortDescription = "EEAS",
                     Status = (EntityStatus)1,
@@ -16729,7 +16207,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1032",
                     Name = "EIB European Investment Bank",
                     PartnerShortDescription = "EIB",
                     Status = (EntityStatus)1,
@@ -16761,7 +16238,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1944",
                     Name = "EU DG CLIMA, Directorate-General for Climate Action",
                     PartnerShortDescription = "EU DG CLIMA",
                     Status = (EntityStatus)1,
@@ -16793,7 +16269,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1739",
                     Name = "EU FPI - IcSP Instrument contributing to Stability and Peace",
                     PartnerShortDescription = "EU FPI - IcSP",
                     Status = (EntityStatus)1,
@@ -16825,7 +16300,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1896",
                     Name = "NATO North Atlantic Treaty Organisation",
                     PartnerShortDescription = "NATO",
                     Status = (EntityStatus)1,
@@ -16857,7 +16331,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1898",
                     Name = "USMBHC The United States-Mexico Border Health Commission",
                     PartnerShortDescription = "USMBHC",
                     Status = (EntityStatus)1,
@@ -16889,7 +16362,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1257",
                     Name = "UNFCCC United Nations Framework Convention on Climate Change",
                     PartnerShortDescription = "UNFCCC",
                     Status = (EntityStatus)1,
@@ -16921,7 +16393,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1243",
                     Name = "CRPD Convention on the Rights of Persons with Disabilities",
                     PartnerShortDescription = "CRPD",
                     Status = (EntityStatus)1,
@@ -16953,7 +16424,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1254",
                     Name = "UNCCD United Nations Convention to Combat Desertification",
                     PartnerShortDescription = "UNCCD",
                     Status = (EntityStatus)1,
@@ -16985,7 +16455,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1216",
                     Name = "UNON United Nations Office at Nairobi",
                     PartnerShortDescription = "UNON",
                     Status = (EntityStatus)1,
@@ -17017,7 +16486,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1205",
                     Name = "UN DGC Department of Global Communications",
                     PartnerShortDescription = "UN DGC",
                     Status = (EntityStatus)1,
@@ -17049,7 +16517,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1215",
                     Name = "UN-OHRLLS Office of the High Representative for the Least Developed Countries, Landlocked Developing Countries and Small Island Developing States",
                     PartnerShortDescription = "UN-OHRLLS",
                     Status = (EntityStatus)1,
@@ -17081,7 +16548,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1200",
                     Name = "UN DESA Department of Economic and Social Affairs",
                     PartnerShortDescription = "UN DESA",
                     Status = (EntityStatus)1,
@@ -17113,7 +16579,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1209",
                     Name = "OIOS Office of Internal Oversight Services",
                     PartnerShortDescription = "OIOS",
                     Status = (EntityStatus)1,
@@ -17145,7 +16610,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1204",
                     Name = "UN DPPA Department of Political Affairs and Peacebuilding",
                     PartnerShortDescription = "UN DPPA",
                     Status = (EntityStatus)1,
@@ -17177,7 +16641,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1866",
                     Name = "UNIRMCT United Nations International Residual Mechanism for Criminal Tribunals",
                     PartnerShortDescription = "UNIRMCT",
                     Status = (EntityStatus)1,
@@ -17209,7 +16672,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1208",
                     Name = "UN OHCHR Office of the United Nations High Commissioner for Human Rights",
                     PartnerShortDescription = "UN OHCHR",
                     Status = (EntityStatus)1,
@@ -17241,7 +16703,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1213",
                     Name = "UNODA Office for Disarmament Affairs",
                     PartnerShortDescription = "UNODA",
                     Status = (EntityStatus)1,
@@ -17273,7 +16734,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1608",
                     Name = "UN United Nations",
                     PartnerShortDescription = "United Nations",
                     Status = (EntityStatus)1,
@@ -17305,7 +16765,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1706",
                     Name = "UNGSC United Nations Global Service Centre",
                     PartnerShortDescription = "UNGSC",
                     Status = (EntityStatus)1,
@@ -17337,7 +16796,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1201",
                     Name = "UN DOS Department of Operational Support",
                     PartnerShortDescription = "UN DOS",
                     Status = (EntityStatus)1,
@@ -17369,7 +16827,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1194",
                     Name = "UNODC United Nations Office on Drugs and Crime",
                     PartnerShortDescription = "UNODC",
                     Status = (EntityStatus)1,
@@ -17401,7 +16858,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1179",
                     Name = "UNOAU United Nations Office to the African Union",
                     PartnerShortDescription = "UNOAU",
                     Status = (EntityStatus)1,
@@ -17433,7 +16889,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1206",
                     Name = "UNDSS Department of Safety and Security",
                     PartnerShortDescription = "UNDSS",
                     Status = (EntityStatus)1,
@@ -17465,7 +16920,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1635",
                     Name = "UNSCOL Office of the United Nations Special Coordinator for Lebanon",
                     PartnerShortDescription = "UNSCOL",
                     Status = (EntityStatus)1,
@@ -17497,7 +16951,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1219",
                     Name = "UNMAS United Nations Mine Action Service",
                     PartnerShortDescription = "UNMAS",
                     Status = (EntityStatus)1,
@@ -17529,7 +16982,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1210",
                     Name = "UN OLA Office of Legal Affairs",
                     PartnerShortDescription = "UN OLA",
                     Status = (EntityStatus)1,
@@ -17561,7 +17013,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1202",
                     Name = "UN DGACM Department for General Assembly and Conference Management",
                     PartnerShortDescription = "UN DGACM",
                     Status = (EntityStatus)1,
@@ -17593,7 +17044,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1223",
                     Name = "UNDRR United Nations Office for Disaster Risk Reduction",
                     PartnerShortDescription = "UNDRR",
                     Status = (EntityStatus)1,
@@ -17625,7 +17075,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1708",
                     Name = "United Nations Global Compact",
                     PartnerShortDescription = "UN Global Compact",
                     Status = (EntityStatus)1,
@@ -17657,7 +17106,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1732",
                     Name = "Pulse Lab Jakarta",
                     PartnerShortDescription = "Pulse Lab Jakarta",
                     Status = (EntityStatus)1,
@@ -17689,7 +17137,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1733",
                     Name = "United Nations Global Pulse",
                     PartnerShortDescription = "UN Global Pulse",
                     Status = (EntityStatus)1,
@@ -17721,7 +17168,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1214",
                     Name = "UNOG United Nations Office at Geneva",
                     PartnerShortDescription = "UNOG",
                     Status = (EntityStatus)1,
@@ -17753,7 +17199,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1212",
                     Name = "SRSG CAAC Office of the Special Representative of the Secretary-General for Children and Armed Conflict",
                     PartnerShortDescription = "SRSG CAAC",
                     Status = (EntityStatus)1,
@@ -17785,7 +17230,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1631",
                     Name = "UNOWA United Nations Office for West Africa",
                     PartnerShortDescription = "UNOWA",
                     Status = (EntityStatus)1,
@@ -17817,7 +17261,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1203",
                     Name = "UN DMSPC Department of Management Strategy, Policy and Compliance",
                     PartnerShortDescription = "UN DMSPC",
                     Status = (EntityStatus)1,
@@ -17849,7 +17292,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1217",
                     Name = "UNOV United Nations Office at Vienna",
                     PartnerShortDescription = "UNOV",
                     Status = (EntityStatus)1,
@@ -17881,7 +17323,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1207",
                     Name = "UN OCHA Office for the Coordination of Humanitarian Affairs",
                     PartnerShortDescription = "UN OCHA",
                     Status = (EntityStatus)1,
@@ -17913,7 +17354,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1218",
                     Name = "UN DPO Department of Peace Operations",
                     PartnerShortDescription = "UN DPO",
                     Status = (EntityStatus)1,
@@ -17945,7 +17385,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1725",
                     Name = "UN DCO United Nations Development Coordination Office",
                     PartnerShortDescription = "UN DCO",
                     Status = (EntityStatus)1,
@@ -17977,7 +17416,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1634",
                     Name = "UNSCO Office of the United Nations Special Coordinator for the Middle East",
                     PartnerShortDescription = "UNSCO",
                     Status = (EntityStatus)1,
@@ -18009,7 +17447,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1211",
                     Name = "OSAA Office of the Special Adviser on Africa",
                     PartnerShortDescription = "OSAA",
                     Status = (EntityStatus)1,
@@ -18041,7 +17478,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1632",
                     Name = "UNRCCA United Nations Regional Centre for Preventive Diplomacy for Central Asia",
                     PartnerShortDescription = "UNRCCA",
                     Status = (EntityStatus)1,
@@ -18073,7 +17509,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1848",
                     Name = "Office of the Secretary-General’s Envoy on Youth",
                     PartnerShortDescription = "OSGEY",
                     Status = (EntityStatus)1,
@@ -18105,7 +17540,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1075",
                     Name = "UN DPPA Department of Political Affairs and Peacebuilding",
                     PartnerShortDescription = "UN DPPA",
                     Status = (EntityStatus)1,
@@ -18137,7 +17571,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1726",
                     Name = "UNAOC United Nations Alliance of Civilizations",
                     PartnerShortDescription = "UNAOC",
                     Status = (EntityStatus)1,
@@ -18169,7 +17602,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1199",
                     Name = "UN EOSG Executive Office of the Secretary-General",
                     PartnerShortDescription = "UN EOSG",
                     Status = (EntityStatus)1,
@@ -18201,7 +17633,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1180",
                     Name = "UNOCA United Nations Regional Office for Central Africa",
                     PartnerShortDescription = "UNOCA",
                     Status = (EntityStatus)1,
@@ -18233,7 +17664,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1548",
                     Name = "UNDP - Office of the Administrator",
                     PartnerShortDescription = "UNDP - OA",
                     Status = (EntityStatus)1,
@@ -18265,7 +17695,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1935",
                     Name = "UNDP Multi-Partner Trust Fund Office",
                     PartnerShortDescription = "UNDP MPTFO",
                     Status = (EntityStatus)1,
@@ -18297,7 +17726,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1191",
                     Name = "UNDP - MSA Trust Funds",
                     PartnerShortDescription = "UNDP - MSA TF",
                     Status = (EntityStatus)1,
@@ -18329,7 +17757,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1775",
                     Name = "UNDP - Task Force on Nature Related Disclosures",
                     PartnerShortDescription = "UNDP - TNFD",
                     Status = (EntityStatus)1,
@@ -18361,7 +17788,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1555",
                     Name = "UNDP - Independent Evaluation Office",
                     PartnerShortDescription = "UNDP IEO",
                     Status = (EntityStatus)1,
@@ -18393,7 +17819,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1189",
                     Name = "UNDP - MSA NGOs",
                     PartnerShortDescription = "UNDP - MSA NGOs",
                     Status = (EntityStatus)1,
@@ -18425,7 +17850,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1185",
                     Name = "UNICEF United Nations Children's Fund",
                     PartnerShortDescription = "UNICEF",
                     Status = (EntityStatus)1,
@@ -18457,7 +17881,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1561",
                     Name = "UNDP - Regional Bureau for Asia and the Pacific",
                     PartnerShortDescription = "UNDP RBAP",
                     Status = (EntityStatus)1,
@@ -18489,7 +17912,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1651",
                     Name = "UNDP cash-based",
                     PartnerShortDescription = "UNDP - Other",
                     Status = (EntityStatus)1,
@@ -18521,7 +17943,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1564",
                     Name = "UNDP - Regional Bureau for Europe and CIS",
                     PartnerShortDescription = "UNDP RBEC",
                     Status = (EntityStatus)1,
@@ -18553,7 +17974,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1566",
                     Name = "UNDP Global Environmental Finance",
                     PartnerShortDescription = "UNDP GEF",
                     Status = (EntityStatus)1,
@@ -18585,7 +18005,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1557",
                     Name = "UNDP - Crisis Bureau",
                     PartnerShortDescription = "UNDP CB",
                     Status = (EntityStatus)1,
@@ -18617,7 +18036,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1556",
                     Name = "UNDP - Development Group Office",
                     PartnerShortDescription = "UNDP - UNDG",
                     Status = (EntityStatus)1,
@@ -18649,7 +18067,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1198",
                     Name = "WFP United Nations World Food Programme",
                     PartnerShortDescription = "WFP",
                     Status = (EntityStatus)1,
@@ -18681,7 +18098,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1195",
                     Name = "UNFPA United Nations Population Fund",
                     PartnerShortDescription = "UNFPA",
                     Status = (EntityStatus)1,
@@ -18713,7 +18129,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1553",
                     Name = "UNDP - Bureau for External Relations and Advocacy",
                     PartnerShortDescription = "UNDP BERA",
                     Status = (EntityStatus)1,
@@ -18745,7 +18160,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1550",
                     Name = "UNDP - Human Development Report Office",
                     PartnerShortDescription = "UNDP HDRO",
                     Status = (EntityStatus)1,
@@ -18777,7 +18191,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1184",
                     Name = "UNCDF United Nations Capital Development Fund",
                     PartnerShortDescription = "UNCDF",
                     Status = (EntityStatus)1,
@@ -18809,7 +18222,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1554",
                     Name = "UNDP - Office of Communications",
                     PartnerShortDescription = "UNDP - OC",
                     Status = (EntityStatus)1,
@@ -18841,7 +18253,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1193",
                     Name = "UN-HABITAT United Nations Human Settlements Programme",
                     PartnerShortDescription = "UN-HABITAT",
                     Status = (EntityStatus)1,
@@ -18873,7 +18284,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1562",
                     Name = "UNDP - Regional Bureau for Arab States",
                     PartnerShortDescription = "UNDP RBAS",
                     Status = (EntityStatus)1,
@@ -18905,7 +18315,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1190",
                     Name = "UNDP - MSA Recipient Governments",
                     PartnerShortDescription = "UNDP - MSA Recip",
                     Status = (EntityStatus)1,
@@ -18937,7 +18346,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1197",
                     Name = "UNV United Nations Volunteers",
                     PartnerShortDescription = "UNV",
                     Status = (EntityStatus)1,
@@ -18969,7 +18377,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1188",
                     Name = "UNDP - MSA Lending Institutions",
                     PartnerShortDescription = "UNDP - MSA Lend",
                     Status = (EntityStatus)1,
@@ -19001,7 +18408,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1552",
                     Name = "UNDP - Special Unit for South-South Cooperation",
                     PartnerShortDescription = "UNDP UNSSC",
                     Status = (EntityStatus)1,
@@ -19033,7 +18439,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1187",
                     Name = "UNDP - MSA Bilateral Donors",
                     PartnerShortDescription = "UNDP - MSA Bilat. Donors",
                     Status = (EntityStatus)1,
@@ -19065,7 +18470,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1551",
                     Name = "UNDP - Office of Audit and Investigations",
                     PartnerShortDescription = "UNDP OAI",
                     Status = (EntityStatus)1,
@@ -19097,7 +18501,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1549",
                     Name = "UNDP - Operations Support Group",
                     PartnerShortDescription = "UNDP OSG",
                     Status = (EntityStatus)1,
@@ -19129,7 +18532,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1762",
                     Name = "UN Technology Bank for LDC",
                     PartnerShortDescription = "UN TBLDC",
                     Status = (EntityStatus)1,
@@ -19161,7 +18563,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1563",
                     Name = "UNDP - Regional Bureau for Latin America and Carribbean",
                     PartnerShortDescription = "UNDP RBLAC",
                     Status = (EntityStatus)1,
@@ -19193,7 +18594,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1570",
                     Name = "UNDP United Nations Development Programme",
                     PartnerShortDescription = "UNDP",
                     Status = (EntityStatus)1,
@@ -19225,7 +18625,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1192",
                     Name = "UNEP United Nations Environment Programme",
                     PartnerShortDescription = "UNEP",
                     Status = (EntityStatus)1,
@@ -19257,7 +18656,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1560",
                     Name = "UNDP - Regional Bureau for Africa",
                     PartnerShortDescription = "UNDP RBA",
                     Status = (EntityStatus)1,
@@ -19289,7 +18687,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1558",
                     Name = "UNDP - Bureau for Policy and Programme Support",
                     PartnerShortDescription = "UNDP BPPS",
                     Status = (EntityStatus)1,
@@ -19321,7 +18718,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1565",
                     Name = "IAPSO Inter-Agency Procurement Services Organization",
                     PartnerShortDescription = "IAPSO",
                     Status = (EntityStatus)0,
@@ -19353,7 +18749,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1559",
                     Name = "UNDP - Bureau for Management Services",
                     PartnerShortDescription = "UNDP BMS",
                     Status = (EntityStatus)1,
@@ -19385,7 +18780,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1221",
                     Name = "UNAIDS Joint United Nations Programme on HIV/AIDS",
                     PartnerShortDescription = "UNAIDS",
                     Status = (EntityStatus)1,
@@ -19417,7 +18811,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "9999",
                     Name = "UNOPS Special Projects",
                     PartnerShortDescription = "UNOPS Special Projects",
                     Status = (EntityStatus)1,
@@ -19449,7 +18842,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1461",
                     Name = "UNOPS Trust Fund Management",
                     PartnerShortDescription = "UNOPS Trust Fund Management",
                     Status = (EntityStatus)1,
@@ -19481,7 +18873,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "8001",
                     Name = "S3I Social Impact Investment Initiatives",
                     PartnerShortDescription = "S3I",
                     Status = (EntityStatus)1,
@@ -19513,7 +18904,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1652",
                     Name = "Web Buy Pay in Advance",
                     PartnerShortDescription = "Web Buy Pay in Advance",
                     Status = (EntityStatus)1,
@@ -19545,7 +18935,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "9006",
                     Name = "Cost recovery - reserve",
                     PartnerShortDescription = "Cost recovery - reserve",
                     Status = (EntityStatus)1,
@@ -19577,7 +18966,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1182",
                     Name = "ITC International Trade Centre",
                     PartnerShortDescription = "ITC",
                     Status = (EntityStatus)1,
@@ -19609,7 +18997,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "9010",
                     Name = "CLP Defect Liability Project",
                     PartnerShortDescription = "CLP Defect Liability Project",
                     Status = (EntityStatus)1,
@@ -19641,7 +19028,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1220",
                     Name = "ICC International Computing Centre",
                     PartnerShortDescription = "UN ICC",
                     Status = (EntityStatus)1,
@@ -19673,7 +19059,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "9008",
                     Name = "Pooled admin resources",
                     PartnerShortDescription = "Pooled admin resources",
                     Status = (EntityStatus)1,
@@ -19705,7 +19090,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "9009",
                     Name = "Treasury and Investment",
                     PartnerShortDescription = "Treasury and Investment",
                     Status = (EntityStatus)1,
@@ -19737,7 +19121,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1056",
                     Name = "KIP-TF Knowledge, Innovation and Policies for Territorial Development Trust Fund",
                     PartnerShortDescription = "KIP-TF",
                     Status = (EntityStatus)1,
@@ -19769,7 +19152,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1758",
                     Name = "UNGM United Nations Global Marketplace",
                     PartnerShortDescription = "UNGM",
                     Status = (EntityStatus)1,
@@ -19801,7 +19183,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "9011",
                     Name = "UNOPS Crowd Funding pool",
                     PartnerShortDescription = "UNOPS Crowd Funding pool",
                     Status = (EntityStatus)1,
@@ -19833,7 +19214,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "9012",
                     Name = "IPSAS Accounting",
                     PartnerShortDescription = "IPSAS Accounting",
                     Status = (EntityStatus)1,
@@ -19865,7 +19245,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1186",
                     Name = "UNCTAD United Nations Conference on Trade and Development",
                     PartnerShortDescription = "UNCTAD",
                     Status = (EntityStatus)1,
@@ -19897,7 +19276,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1183",
                     Name = "UNHCR Office of the United Nations High Commissioner for Refugees",
                     PartnerShortDescription = "UNHCR",
                     Status = (EntityStatus)1,
@@ -19929,7 +19307,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1233",
                     Name = "UN Web Buy",
                     PartnerShortDescription = "UN Web Buy",
                     Status = (EntityStatus)1,
@@ -19961,7 +19338,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1222",
                     Name = "UN WOMEN United Nations Entity for Gender Equality and the Empowerment of Women",
                     PartnerShortDescription = "UN WOMEN",
                     Status = (EntityStatus)1,
@@ -19993,7 +19369,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1629",
                     Name = "UNIFEM United Nations Development Fund for Women",
                     PartnerShortDescription = "UNIFEM",
                     Status = (EntityStatus)1,
@@ -20025,7 +19400,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "9007",
                     Name = "Cost recovery deferred revenue",
                     PartnerShortDescription = "Cost recovery deferred revenue",
                     Status = (EntityStatus)1,
@@ -20057,7 +19431,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1609",
                     Name = "UNOPS United Nations Office for Project Services",
                     PartnerShortDescription = "UNOPS",
                     Status = (EntityStatus)0,
@@ -20089,7 +19462,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1196",
                     Name = "UNRWA United Nations Relief and Works Agency for Palestine Refugees in the Near East",
                     PartnerShortDescription = "UNRWA",
                     Status = (EntityStatus)1,
@@ -20121,7 +19493,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1229",
                     Name = "UN ECA Economic Commission for Africa",
                     PartnerShortDescription = "UN ECA",
                     Status = (EntityStatus)1,
@@ -20153,7 +19524,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1230",
                     Name = "UN ECLAC Economic Commission for Latin America and the Caribbean",
                     PartnerShortDescription = "UN ECLAC",
                     Status = (EntityStatus)1,
@@ -20185,7 +19555,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1235",
                     Name = "UN ECE Economic Commission for Europe",
                     PartnerShortDescription = "UN ECE",
                     Status = (EntityStatus)1,
@@ -20217,7 +19586,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1227",
                     Name = "UN ESCAP Economic and Social Commission for Asia and the Pacific",
                     PartnerShortDescription = "UN ESCAP",
                     Status = (EntityStatus)1,
@@ -20249,7 +19617,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1228",
                     Name = "UN ESCWA Economic and Social Commission for Western Asia",
                     PartnerShortDescription = "UN ESCWA",
                     Status = (EntityStatus)1,
@@ -20281,7 +19648,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1245",
                     Name = "IAEA International Atomic Energy Agency",
                     PartnerShortDescription = "IAEA",
                     Status = (EntityStatus)1,
@@ -20313,7 +19679,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1265",
                     Name = "WTO World Trade Organization",
                     PartnerShortDescription = "WTO",
                     Status = (EntityStatus)1,
@@ -20345,7 +19710,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1252",
                     Name = "OPCW Organisation for the Prohibition of Chemical Weapons",
                     PartnerShortDescription = "OPCW",
                     Status = (EntityStatus)1,
@@ -20377,7 +19741,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1576",
                     Name = "IOM International Organization for Migration",
                     PartnerShortDescription = "IOM",
                     Status = (EntityStatus)1,
@@ -20409,7 +19772,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1536",
                     Name = "UNICRI United Nations Interregional Crime and Justice Research Institute",
                     PartnerShortDescription = "UNICRI",
                     Status = (EntityStatus)1,
@@ -20441,7 +19803,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1535",
                     Name = "UNITAR United Nations Institute for Training and Research",
                     PartnerShortDescription = "UNITAR",
                     Status = (EntityStatus)1,
@@ -20473,7 +19834,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1224",
                     Name = "UNSSC United Nations System Staff College",
                     PartnerShortDescription = "UNSSC",
                     Status = (EntityStatus)1,
@@ -20505,7 +19865,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1225",
                     Name = "UNU United Nations University",
                     PartnerShortDescription = "UNU",
                     Status = (EntityStatus)1,
@@ -20537,7 +19896,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1537",
                     Name = "UNRISD United Nations Research Institute for Social Development",
                     PartnerShortDescription = "UNRISD",
                     Status = (EntityStatus)1,
@@ -20569,7 +19927,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1534",
                     Name = "UNIDIR United Nations Institute for Disarmament Research",
                     PartnerShortDescription = "UNIDIR",
                     Status = (EntityStatus)1,
@@ -20601,7 +19958,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1244",
                     Name = "FAO Food and Agriculture Organization of the United Nations",
                     PartnerShortDescription = "FAO",
                     Status = (EntityStatus)1,
@@ -20633,7 +19989,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1251",
                     Name = "ITU International Telecommunication Union",
                     PartnerShortDescription = "ITU",
                     Status = (EntityStatus)1,
@@ -20665,7 +20020,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1262",
                     Name = "WIPO World Intellectual Property Organization",
                     PartnerShortDescription = "WIPO",
                     Status = (EntityStatus)1,
@@ -20697,7 +20051,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1256",
                     Name = "UNESCO United Nations Educational, Scientific and Cultural Organization",
                     PartnerShortDescription = "UNESCO",
                     Status = (EntityStatus)1,
@@ -20729,7 +20082,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1264",
                     Name = "UNWTO World Tourism Organization",
                     PartnerShortDescription = "UNWTO",
                     Status = (EntityStatus)1,
@@ -20761,7 +20113,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1249",
                     Name = "IMO International Maritime Organization",
                     PartnerShortDescription = "IMO",
                     Status = (EntityStatus)1,
@@ -20793,7 +20144,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1263",
                     Name = "WMO World Meteorological Organization",
                     PartnerShortDescription = "WMO",
                     Status = (EntityStatus)1,
@@ -20825,7 +20175,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1261",
                     Name = "WHO World Health Organization",
                     PartnerShortDescription = "WHO",
                     Status = (EntityStatus)1,
@@ -20857,7 +20206,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1247",
                     Name = "IFAD International Fund for Agricultural Development",
                     PartnerShortDescription = "IFAD",
                     Status = (EntityStatus)1,
@@ -20889,7 +20237,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1248",
                     Name = "ILO International Labour Organization",
                     PartnerShortDescription = "ILO",
                     Status = (EntityStatus)1,
@@ -20921,7 +20268,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1260",
                     Name = "UPU Universal Postal Union",
                     PartnerShortDescription = "UPU",
                     Status = (EntityStatus)1,
@@ -20953,7 +20299,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1232",
                     Name = "PAHO Pan American Health Organization",
                     PartnerShortDescription = "PAHO",
                     Status = (EntityStatus)1,
@@ -20985,7 +20330,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1259",
                     Name = "UNIDO United Nations Industrial Development Organization",
                     PartnerShortDescription = "UNIDO",
                     Status = (EntityStatus)1,
@@ -21017,7 +20361,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1246",
                     Name = "ICAO International Civil Aviation Organization",
                     PartnerShortDescription = "ICAO",
                     Status = (EntityStatus)1,
@@ -21049,7 +20392,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1177",
                     Name = "UNMIT United Nations Integrated Mission in Timor-Leste",
                     PartnerShortDescription = "UNMIT",
                     Status = (EntityStatus)1,
@@ -21081,7 +20423,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1181",
                     Name = "UNOCI United Nations Operation in Côte d'Ivoire",
                     PartnerShortDescription = "UNOCI",
                     Status = (EntityStatus)1,
@@ -21113,7 +20454,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1630",
                     Name = "UNORCID United Nations Office for REDD+ Coordination in Indonesia",
                     PartnerShortDescription = "UNORCID",
                     Status = (EntityStatus)1,
@@ -21145,7 +20485,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1164",
                     Name = "UNAMI United Nations Assistance Mission for Iraq",
                     PartnerShortDescription = "UNAMI",
                     Status = (EntityStatus)1,
@@ -21177,7 +20516,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1062",
                     Name = "MINUSCA United Nations Multidimensional Integrated Stabilization Mission in the Central African Republic",
                     PartnerShortDescription = "MINUSCA",
                     Status = (EntityStatus)1,
@@ -21209,7 +20547,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1542",
                     Name = "UNOIP United Nations Office of the Iraq Programme",
                     PartnerShortDescription = "UNOIP",
                     Status = (EntityStatus)1,
@@ -21241,7 +20578,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1163",
                     Name = "UNAMA United Nations Assistance Mission in Afghanistan",
                     PartnerShortDescription = "UNAMA",
                     Status = (EntityStatus)1,
@@ -21273,7 +20609,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1170",
                     Name = "UNIPSIL United Nations Integrated Peacebuilding Office in Sierra Leone",
                     PartnerShortDescription = "UNIPSIL",
                     Status = (EntityStatus)1,
@@ -21305,7 +20640,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1593",
                     Name = "UNOCI United Nations Operation in Cote d'Ivoire",
                     PartnerShortDescription = "UNOCI",
                     Status = (EntityStatus)1,
@@ -21337,7 +20671,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1633",
                     Name = "UNSCEAR United Nations Scientific Committee on the Effects of Atomic Radiation",
                     PartnerShortDescription = "UNSCEAR",
                     Status = (EntityStatus)1,
@@ -21369,7 +20702,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1167",
                     Name = "UNFICYP United Nations Peacekeeping Force in Cyprus",
                     PartnerShortDescription = "UNFICYP",
                     Status = (EntityStatus)1,
@@ -21401,7 +20733,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1236",
                     Name = "UNIOGBIS United Nations Integrated Peacebuilding Office in Guinea-Bissau",
                     PartnerShortDescription = "UNIOGBIS",
                     Status = (EntityStatus)1,
@@ -21433,7 +20764,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1009",
                     Name = "BINUCA United Nations Integrated Peacebuilding Office in the Central African Republic",
                     PartnerShortDescription = "BINUCA",
                     Status = (EntityStatus)0,
@@ -21465,7 +20795,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1064",
                     Name = "MINUSTAH United Nations Stabilization Mission in Haiti",
                     PartnerShortDescription = "MINUSTAH",
                     Status = (EntityStatus)0,
@@ -21497,7 +20826,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1543",
                     Name = "UNROD United Nations Register of Damage",
                     PartnerShortDescription = "UNROD",
                     Status = (EntityStatus)1,
@@ -21529,7 +20857,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1567",
                     Name = "UNMIS United Nations Mission in Sudan",
                     PartnerShortDescription = "UNMIS",
                     Status = (EntityStatus)1,
@@ -21561,7 +20888,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1638",
                     Name = "UNSOM United Nations Assistance Mission in Somalia",
                     PartnerShortDescription = "UNSOM",
                     Status = (EntityStatus)1,
@@ -21593,7 +20919,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1061",
                     Name = "MINURSO United Nations Mission for the Referendum in Western Sahara",
                     PartnerShortDescription = "MINURSO",
                     Status = (EntityStatus)1,
@@ -21625,7 +20950,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1238",
                     Name = "UNSCN United Nations System Standing Committee on Nutrition",
                     PartnerShortDescription = "UNSCN",
                     Status = (EntityStatus)1,
@@ -21657,7 +20981,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1685",
                     Name = "MINUJUSTH United Nations Mission for Justice Support in Haiti",
                     PartnerShortDescription = "MINUJUSTH",
                     Status = (EntityStatus)1,
@@ -21689,7 +21012,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1637",
                     Name = "UNSOS United Nations Support Office in Somalia",
                     PartnerShortDescription = "UNSOS",
                     Status = (EntityStatus)1,
@@ -21721,7 +21043,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1063",
                     Name = "MINUSMA United Nations Multidimensional Integrated Stabilization Mission in Mali",
                     PartnerShortDescription = "MINUSMA",
                     Status = (EntityStatus)1,
@@ -21753,7 +21074,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1636",
                     Name = "UNSMIL United Nations Support Mission in Libya",
                     PartnerShortDescription = "UNSMIL",
                     Status = (EntityStatus)1,
@@ -21785,7 +21105,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1058",
                     Name = "MENUB United Nations Electoral Observation Mission in Burundi",
                     PartnerShortDescription = "MENUB",
                     Status = (EntityStatus)0,
@@ -21817,7 +21136,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1066",
                     Name = "MONUSCO United Nations Organization Stabilization Mission in the Democratic Republic of the Congo",
                     PartnerShortDescription = "MONUSCO",
                     Status = (EntityStatus)1,
@@ -21849,7 +21167,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1171",
                     Name = "UNISFA United Nations Interim Security Force in Abyei",
                     PartnerShortDescription = "UNISFA",
                     Status = (EntityStatus)1,
@@ -21881,7 +21198,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1769",
                     Name = "UNOCT United Nations Office of Counter-Terrorism",
                     PartnerShortDescription = "UNOCT",
                     Status = (EntityStatus)1,
@@ -21913,7 +21229,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1162",
                     Name = "UNAKRT United Nations Assistance to the Khmer Rouge Trials",
                     PartnerShortDescription = "UNAKRT",
                     Status = (EntityStatus)1,
@@ -21945,7 +21260,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1590",
                     Name = "UNMIK United Nations Interim Administration Mission in Kosovo",
                     PartnerShortDescription = "UNMIK",
                     Status = (EntityStatus)1,
@@ -21977,7 +21291,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1176",
                     Name = "UNMISS United Nations Mission in the Republic of South Sudan",
                     PartnerShortDescription = "UNMISS",
                     Status = (EntityStatus)1,
@@ -22009,7 +21322,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1639",
                     Name = "UNTSO United Nations Truce Supervision",
                     PartnerShortDescription = "UNTSO",
                     Status = (EntityStatus)1,
@@ -22041,7 +21353,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1175",
                     Name = "UNMIL United Nations Mission in Liberia",
                     PartnerShortDescription = "UNMIL",
                     Status = (EntityStatus)1,
@@ -22073,7 +21384,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1178",
                     Name = "UNMOGIP United Nations Military Observer Group in India and Pakistan",
                     PartnerShortDescription = "UNMOGIP",
                     Status = (EntityStatus)1,
@@ -22105,7 +21415,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1169",
                     Name = "UNIFIL United Nations Interim Force in Lebanon",
                     PartnerShortDescription = "UNIFIL",
                     Status = (EntityStatus)1,
@@ -22137,7 +21446,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1014",
                     Name = "CEB United Nations System Chief Executives Board for Coordination",
                     PartnerShortDescription = "CEB",
                     Status = (EntityStatus)0,
@@ -22169,7 +21477,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1234",
                     Name = "UNSDG United Nations Sustainable Development Group (formerly UNDG)",
                     PartnerShortDescription = "UNDG",
                     Status = (EntityStatus)1,
@@ -22201,7 +21508,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1764",
                     Name = "United Nations Resident Coordinator Office - Sri Lanka",
                     PartnerShortDescription = "UNRCo - Sri Lanka",
                     Status = (EntityStatus)1,
@@ -22233,7 +21539,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1015",
                     Name = "SSHF South Sudan Common Humanitarian Fund",
                     PartnerShortDescription = "SSHF",
                     Status = (EntityStatus)1,
@@ -22265,7 +21570,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1027",
                     Name = "Ebola Response MPTF",
                     PartnerShortDescription = "Ebola Response MPTF",
                     Status = (EntityStatus)1,
@@ -22297,7 +21601,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1151",
                     Name = "Syria Emergency Response Fund",
                     PartnerShortDescription = "Syria Emergency Response Fund",
                     Status = (EntityStatus)1,
@@ -22329,7 +21632,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1154",
                     Name = "UN Multi-Partner Trust Fund for Somalia (Somalia UN MPTF)",
                     PartnerShortDescription = "Somalia UN MPTF",
                     Status = (EntityStatus)1,
@@ -22361,7 +21663,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1166",
                     Name = "UNDF United Nations Fund for Recovery Reconstruction and Development in Darfur",
                     PartnerShortDescription = "UNDF",
                     Status = (EntityStatus)1,
@@ -22393,7 +21694,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1168",
                     Name = "UN General Trust Fund",
                     PartnerShortDescription = "UN General Trust Fund",
                     Status = (EntityStatus)1,
@@ -22425,7 +21725,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1226",
                     Name = "CERF Central Emergency Response Fund",
                     PartnerShortDescription = "CERF",
                     Status = (EntityStatus)1,
@@ -22457,7 +21756,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1237",
                     Name = "UNPBF United Nations Peacebuilding Fund",
                     PartnerShortDescription = "UNPBF",
                     Status = (EntityStatus)1,
@@ -22489,7 +21787,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1239",
                     Name = "UNVFTC United Nations Voluntary Fund for Technical Co-operation in the Field of Human Rights",
                     PartnerShortDescription = "UNVFTC",
                     Status = (EntityStatus)1,
@@ -22521,7 +21818,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1240",
                     Name = "UNVFVT United Nations Voluntary Fund for Victims of Torture",
                     PartnerShortDescription = "UNVFVT",
                     Status = (EntityStatus)1,
@@ -22553,7 +21849,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1241",
                     Name = "UNVFD United Nations Voluntary Fund on Disability",
                     PartnerShortDescription = "UNVFD",
                     Status = (EntityStatus)1,
@@ -22585,7 +21880,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1255",
                     Name = "UNDEF United Nations Democracy Fund",
                     PartnerShortDescription = "UNDEF",
                     Status = (EntityStatus)1,
@@ -22617,7 +21911,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1258",
                     Name = "UNFIP United Nations Fund for International Partnerships",
                     PartnerShortDescription = "UNFIP",
                     Status = (EntityStatus)1,
@@ -22649,7 +21942,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1463",
                     Name = "UN-Water Inter-agency Trust Fund",
                     PartnerShortDescription = "UN-Water",
                     Status = (EntityStatus)1,
@@ -22681,7 +21973,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1464",
                     Name = "Albania One UN Coherence Fund",
                     PartnerShortDescription = "Albania One UNCF",
                     Status = (EntityStatus)0,
@@ -22713,7 +22004,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1465",
                     Name = "Bhutan UN Country Fund",
                     PartnerShortDescription = "Bhutan UNCF",
                     Status = (EntityStatus)1,
@@ -22745,7 +22035,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1466",
                     Name = "Botswana UN Country Fund",
                     PartnerShortDescription = "Botswana UNCF",
                     Status = (EntityStatus)0,
@@ -22777,7 +22066,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1467",
                     Name = "Cape Verde Transition Fund",
                     PartnerShortDescription = "Cape Verde Transition Fund",
                     Status = (EntityStatus)1,
@@ -22809,7 +22097,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1468",
                     Name = "Central African Republic Common Humanitarian Fund",
                     PartnerShortDescription = "CAR HF",
                     Status = (EntityStatus)1,
@@ -22841,7 +22128,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1469",
                     Name = "CFIA United Nations Central Fund for Influenza Action",
                     PartnerShortDescription = "CFIA",
                     Status = (EntityStatus)1,
@@ -22873,7 +22159,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1470",
                     Name = "Community-based Based Adaptation to Climate Change",
                     PartnerShortDescription = "CBA CC",
                     Status = (EntityStatus)0,
@@ -22905,7 +22190,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1471",
                     Name = "Comoros One UN Fund",
                     PartnerShortDescription = "Comoros One UN Fund",
                     Status = (EntityStatus)1,
@@ -22937,7 +22221,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1472",
                     Name = "DCPSF Darfur Community Peace and Stability Fund",
                     PartnerShortDescription = "DCPSF",
                     Status = (EntityStatus)1,
@@ -22969,7 +22252,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1473",
                     Name = "DRC Pooled Fund",
                     PartnerShortDescription = "DRC Pooled Fund",
                     Status = (EntityStatus)1,
@@ -23001,7 +22283,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1474",
                     Name = "DRC Stabilization and Recovery",
                     PartnerShortDescription = "DRC Stabilization and Recovery",
                     Status = (EntityStatus)0,
@@ -23033,7 +22314,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1475",
                     Name = "Ethiopia One UN Fund",
                     PartnerShortDescription = "Ethiopia One UN Fund",
                     Status = (EntityStatus)1,
@@ -23065,7 +22345,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1476",
                     Name = "Human Rights Mainstreaming Trust Fund",
                     PartnerShortDescription = "HRM Fund",
                     Status = (EntityStatus)1,
@@ -23097,7 +22376,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1477",
                     Name = "Indonesia Disaster Recovery Trust Fund",
                     PartnerShortDescription = "Indonesia DR TF",
                     Status = (EntityStatus)1,
@@ -23129,7 +22407,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1478",
                     Name = "Iraq UNDAF Trust Fund",
                     PartnerShortDescription = "Iraq UNDAF Trust Fund",
                     Status = (EntityStatus)1,
@@ -23161,7 +22438,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1479",
                     Name = "JP Armed Violence Prevention",
                     PartnerShortDescription = "JP Armed Violence Prevention",
                     Status = (EntityStatus)0,
@@ -23193,7 +22469,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1480",
                     Name = "JP LGSP-LIC Bangladesh Local Governance Support Project – Learning and Innovation Component",
                     PartnerShortDescription = "JP Bangladesh LGSP–LIC",
                     Status = (EntityStatus)0,
@@ -23225,7 +22500,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1481",
                     Name = "JP Chad DIS Security",
                     PartnerShortDescription = "JP Chad DIS Security",
                     Status = (EntityStatus)0,
@@ -23257,7 +22531,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1482",
                     Name = "JP DRC Microfinance II",
                     PartnerShortDescription = "JP DRC Microfinance II",
                     Status = (EntityStatus)0,
@@ -23289,7 +22562,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1483",
                     Name = "JP DRC Security Sect Reform",
                     PartnerShortDescription = "JP DRC Security Sect Reform",
                     Status = (EntityStatus)0,
@@ -23321,7 +22593,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1484",
                     Name = "JP Guatemala Maya Programme",
                     PartnerShortDescription = "JP Guatemala Maya Programme",
                     Status = (EntityStatus)1,
@@ -23353,7 +22624,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1485",
                     Name = "JP Guatemala Rural Dev",
                     PartnerShortDescription = "JP Guatemala Rural Dev",
                     Status = (EntityStatus)0,
@@ -23385,7 +22655,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1486",
                     Name = "JP Kazakhstan Innov Aprch RPSS",
                     PartnerShortDescription = "JP Kazakhstan Innov Aprch RPSS",
                     Status = (EntityStatus)0,
@@ -23417,7 +22686,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1487",
                     Name = "JP Kenya HIV and AIDS",
                     PartnerShortDescription = "JP Kenya HIV and AIDS",
                     Status = (EntityStatus)0,
@@ -23449,7 +22717,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1488",
                     Name = "JP Kosovo Domestic Violence",
                     PartnerShortDescription = "JP Kosovo Domestic Violence",
                     Status = (EntityStatus)0,
@@ -23481,7 +22748,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1489",
                     Name = "JP Lao Governance and Public Administration Reform",
                     PartnerShortDescription = "JP Lao Govern/Public Admin",
                     Status = (EntityStatus)0,
@@ -23513,7 +22779,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1490",
                     Name = "JP Liberia Food Security",
                     PartnerShortDescription = "JP Liberia Food Security",
                     Status = (EntityStatus)0,
@@ -23545,7 +22810,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1491",
                     Name = "JP Liberia Gender Equality",
                     PartnerShortDescription = "JP Liberia Gender Equality",
                     Status = (EntityStatus)0,
@@ -23577,7 +22841,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1492",
                     Name = "JP Mali Agro Pastoral Products",
                     PartnerShortDescription = "JP Mali Agro Pastoral Products",
                     Status = (EntityStatus)0,
@@ -23609,7 +22872,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1493",
                     Name = "JP Moldova Integrated Local Development Programme",
                     PartnerShortDescription = "JP Moldova JILDP",
                     Status = (EntityStatus)0,
@@ -23641,7 +22903,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1494",
                     Name = "JP Nepal LGCDP Local Governance and Community Development Programme",
                     PartnerShortDescription = "JP Nepal LGCDP",
                     Status = (EntityStatus)0,
@@ -23673,7 +22934,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1495",
                     Name = "JP Serbia SCILD Strengthening Capacity for Inclusive Local Development",
                     PartnerShortDescription = "JP Serbia SCILD",
                     Status = (EntityStatus)0,
@@ -23705,7 +22965,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1496",
                     Name = "JP Solomon Islands PGSP Provincial Governance Strengthening Programme",
                     PartnerShortDescription = "JP Solomon Islands",
                     Status = (EntityStatus)0,
@@ -23737,7 +22996,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1497",
                     Name = "JP Somalia Local Governance and Decentralized Service Delivery",
                     PartnerShortDescription = "JP Somalia",
                     Status = (EntityStatus)0,
@@ -23769,7 +23027,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1498",
                     Name = "JP TFYR SNC PDV Macedonia Strengthening National Capacities to Prevent Domestic Violence",
                     PartnerShortDescription = "JP Macedonia",
                     Status = (EntityStatus)0,
@@ -23801,7 +23058,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1499",
                     Name = "JP Timor-Leste INFUSE Inclusive Finance for Under-Served Economy",
                     PartnerShortDescription = "JP Timor-Leste INFUSE",
                     Status = (EntityStatus)0,
@@ -23833,7 +23089,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1500",
                     Name = "JP Timor-Leste LGSP Local Governance Support Programme",
                     PartnerShortDescription = "JP Timor-Leste LGSP",
                     Status = (EntityStatus)0,
@@ -23865,7 +23120,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1501",
                     Name = "JP Uganda Gender Equality",
                     PartnerShortDescription = "JP Uganda Gender Equality",
                     Status = (EntityStatus)0,
@@ -23897,7 +23151,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1502",
                     Name = "JP Uganda Support for AIDS",
                     PartnerShortDescription = "JP Uganda Support for AIDS",
                     Status = (EntityStatus)1,
@@ -23929,7 +23182,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1503",
                     Name = "Kiribati One UN Fund",
                     PartnerShortDescription = "Kiribati One UN Fund",
                     Status = (EntityStatus)0,
@@ -23961,7 +23213,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1504",
                     Name = "Kyrgyzstan One Fund",
                     PartnerShortDescription = "Kyrgyzstan One Fund",
                     Status = (EntityStatus)0,
@@ -23993,7 +23244,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1505",
                     Name = "Lebanon Recovery Fund",
                     PartnerShortDescription = "Lebanon Recovery Fund",
                     Status = (EntityStatus)0,
@@ -24025,7 +23275,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1506",
                     Name = "Lesotho One UN Fund",
                     PartnerShortDescription = "Lesotho One UN Fund",
                     Status = (EntityStatus)1,
@@ -24057,7 +23306,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1507",
                     Name = "Malawi One UN Fund",
                     PartnerShortDescription = "Malawi One UN Fund",
                     Status = (EntityStatus)0,
@@ -24089,7 +23337,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1508",
                     Name = "Maldives One UN Fund",
                     PartnerShortDescription = "Maldives One UN Fund",
                     Status = (EntityStatus)0,
@@ -24121,7 +23368,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1509",
                     Name = "MDG Achievement Fund",
                     PartnerShortDescription = "MDG Achievement Fund",
                     Status = (EntityStatus)0,
@@ -24153,7 +23399,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1510",
                     Name = "Montenegro UN Country Fund",
                     PartnerShortDescription = "Montenegro UN Country Fund",
                     Status = (EntityStatus)0,
@@ -24185,7 +23430,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1511",
                     Name = "Mozambique One UN Fund",
                     PartnerShortDescription = "Mozambique One UN Fund",
                     Status = (EntityStatus)1,
@@ -24217,7 +23461,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1512",
                     Name = "Nepal - UN Peace Fund",
                     PartnerShortDescription = "Nepal - UN Peace Fund",
                     Status = (EntityStatus)0,
@@ -24249,7 +23492,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1513",
                     Name = "Pakistan One Fund",
                     PartnerShortDescription = "Pakistan One Fund",
                     Status = (EntityStatus)0,
@@ -24281,7 +23523,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1514",
                     Name = "PBF Peacebuilding Fund",
                     PartnerShortDescription = "PBF",
                     Status = (EntityStatus)0,
@@ -24313,7 +23554,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1515",
                     Name = "PNG UN Country Fund",
                     PartnerShortDescription = "PNG UN Country Fund",
                     Status = (EntityStatus)1,
@@ -24345,7 +23585,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1516",
                     Name = "REDD+ JP Partnership Support",
                     PartnerShortDescription = "REDD+ JP Partnership Support",
                     Status = (EntityStatus)1,
@@ -24377,7 +23616,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1517",
                     Name = "Rwanda One UN Fund",
                     PartnerShortDescription = "Rwanda One UN Fund",
                     Status = (EntityStatus)1,
@@ -24409,7 +23647,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1518",
                     Name = "Sierra Leone MDTF",
                     PartnerShortDescription = "Sierra Leone MDTF",
                     Status = (EntityStatus)1,
@@ -24441,7 +23678,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1519",
                     Name = "Somalia Common Humanitarian Fund",
                     PartnerShortDescription = "Somalia Common Humanitarian Fd",
                     Status = (EntityStatus)1,
@@ -24473,7 +23709,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1520",
                     Name = "SSRF South Sudan Recovery Fund",
                     PartnerShortDescription = "SSRF",
                     Status = (EntityStatus)1,
@@ -24505,7 +23740,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1521",
                     Name = "Sudan Common Humanitarian Fund",
                     PartnerShortDescription = "Sudan Common Humanitarian Fund",
                     Status = (EntityStatus)1,
@@ -24537,7 +23771,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1522",
                     Name = "Tanzania One UN Fund",
                     PartnerShortDescription = "Tanzania One UN Fund",
                     Status = (EntityStatus)1,
@@ -24569,7 +23802,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1523",
                     Name = "UN Action Against Sexual Violence in Conflict",
                     PartnerShortDescription = "UN Action",
                     Status = (EntityStatus)1,
@@ -24601,7 +23833,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1524",
                     Name = "UN Civil Society Trust Fund",
                     PartnerShortDescription = "UN Civil Society Trust Fund",
                     Status = (EntityStatus)1,
@@ -24633,7 +23864,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1525",
                     Name = "UNIPP United Nations Indigenous Peoples’ Partnership",
                     PartnerShortDescription = "UNIPP",
                     Status = (EntityStatus)1,
@@ -24665,7 +23895,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1526",
                     Name = "UN Trust Fund for Human Security",
                     PartnerShortDescription = "UNTFHS",
                     Status = (EntityStatus)0,
@@ -24697,7 +23926,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1527",
                     Name = "UN Trust Fund to End Volence Against Women",
                     PartnerShortDescription = "UN Trust Fund",
                     Status = (EntityStatus)1,
@@ -24729,7 +23957,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1528",
                     Name = "Haiti Reconstruction Fund",
                     PartnerShortDescription = "UNDG HRF",
                     Status = (EntityStatus)1,
@@ -24761,7 +23988,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1529",
                     Name = "UNDG Iraq Trust Fund",
                     PartnerShortDescription = "UNDG ITF",
                     Status = (EntityStatus)0,
@@ -24793,7 +24019,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1530",
                     Name = "UN-REDD Programme Fund",
                     PartnerShortDescription = "UN-REDD",
                     Status = (EntityStatus)1,
@@ -24825,7 +24050,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1531",
                     Name = "Uruguay One UN Coherence Fund",
                     PartnerShortDescription = "Uruguay One UN Coherence Fund",
                     Status = (EntityStatus)1,
@@ -24857,7 +24081,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1532",
                     Name = "Viet Nam One Plan Fund I",
                     PartnerShortDescription = "Viet Nam One Plan Fund I",
                     Status = (EntityStatus)1,
@@ -24889,7 +24112,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1533",
                     Name = "Viet Nam One Plan Fund II",
                     PartnerShortDescription = "Viet Nam One Plan Fund II",
                     Status = (EntityStatus)1,
@@ -24921,7 +24143,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1538",
                     Name = "Other UNDP MDTF",
                     PartnerShortDescription = "Other UNDP MDTF",
                     Status = (EntityStatus)1,
@@ -24953,7 +24174,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1539",
                     Name = "Other UNDP JP",
                     PartnerShortDescription = "Other UNDP JP",
                     Status = (EntityStatus)1,
@@ -24985,7 +24205,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1545",
                     Name = "UN Fund for Sudano-Sahelian Activities",
                     PartnerShortDescription = "UNSO",
                     Status = (EntityStatus)0,
@@ -25017,7 +24236,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1643",
                     Name = "VTF UN Voluntary Trust Fund for Assistance in Mine Action",
                     PartnerShortDescription = "UN VTF",
                     Status = (EntityStatus)1,
@@ -25049,7 +24267,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1705",
                     Name = "UN Haiti Cholera Response Multi-Partner Trust Fund",
                     PartnerShortDescription = "UN Haiti Cholera MPTF",
                     Status = (EntityStatus)1,
@@ -25081,7 +24298,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1718",
                     Name = "UNTFHS United Nations Trust Fund for Human Security",
                     PartnerShortDescription = "UNTFHS",
                     Status = (EntityStatus)1,
@@ -25113,7 +24329,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1760",
                     Name = "UNITLIFE United Nations Initiative Fighting Chronic Malnutrition Through Innovation",
                     PartnerShortDescription = "UNITLIFE",
                     Status = (EntityStatus)1,
@@ -25145,7 +24360,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1765",
                     Name = "United Nations Multi-Partner Trust Fund Office",
                     PartnerShortDescription = "UN MPTF Office",
                     Status = (EntityStatus)1,
@@ -25177,7 +24391,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1779",
                     Name = "United Nations Sri Lanka SDG Multi-Partner Trust Fund",
                     PartnerShortDescription = "UN Sri Lanka SDG MPTF",
                     Status = (EntityStatus)1,
@@ -25209,7 +24422,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1041",
                     Name = "GCF Green Climate Fund",
                     PartnerShortDescription = "GCF",
                     Status = (EntityStatus)1,
@@ -25241,7 +24453,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1045",
                     Name = "GPE Global Partnership for Education",
                     PartnerShortDescription = "GPE",
                     Status = (EntityStatus)1,
@@ -25273,7 +24484,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1445",
                     Name = "Gavi The Vaccine Alliance",
                     PartnerShortDescription = "GAVI",
                     Status = (EntityStatus)1,
@@ -25305,7 +24515,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1447",
                     Name = "GEF Global Environment Facility",
                     PartnerShortDescription = "GEF",
                     Status = (EntityStatus)1,
@@ -25337,7 +24546,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1606",
                     Name = "AF Adaptation Fund",
                     PartnerShortDescription = "Adaptation Fund",
                     Status = (EntityStatus)1,
@@ -25369,7 +24577,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1607",
                     Name = "Montreal Protocol",
                     PartnerShortDescription = "Montreal Protocol",
                     Status = (EntityStatus)1,
@@ -25401,7 +24608,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1782",
                     Name = "ATscale, the Global Partnership for Assistive Technology",
                     PartnerShortDescription = "ATScale",
                     Status = (EntityStatus)1,
@@ -25433,7 +24639,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1790",
                     Name = "NDC Partnership Fund",
                     PartnerShortDescription = "NDCP",
                     Status = (EntityStatus)1,
@@ -25465,7 +24670,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1448",
                     Name = "GFATM Global Fund to Fight AIDS, Tuberculosis and Malaria",
                     PartnerShortDescription = "GFATM",
                     Status = (EntityStatus)1,
@@ -25497,7 +24701,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1681",
                     Name = "GFATM-MAL Global Fund to fight Malaria",
                     PartnerShortDescription = "GFATM-TUB",
                     Status = (EntityStatus)1,
@@ -25529,7 +24732,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1680",
                     Name = "GFATM-TUB Global Fund to fight Tuberculosis",
                     PartnerShortDescription = "GFATM-MAL",
                     Status = (EntityStatus)1,
@@ -25561,7 +24763,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1679",
                     Name = "GFATM-AID Global Fund to fight AIDS",
                     PartnerShortDescription = "GFATM-AID",
                     Status = (EntityStatus)1,
@@ -25593,7 +24794,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1747",
                     Name = "AFC Asian Football Confederation",
                     PartnerShortDescription = "AFC",
                     Status = (EntityStatus)1,
@@ -25625,7 +24825,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1776",
                     Name = "African Society for Laboratory Medicine",
                     PartnerShortDescription = "ASLM",
                     Status = (EntityStatus)1,
@@ -25657,7 +24856,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1867",
                     Name = "Alliance for Public Health",
                     PartnerShortDescription = "APH",
                     Status = (EntityStatus)1,
@@ -25689,7 +24887,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1791",
                     Name = "Alter Vida",
                     PartnerShortDescription = "Alter Vida",
                     Status = (EntityStatus)1,
@@ -25721,7 +24918,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1450",
                     Name = "American Red Cross",
                     PartnerShortDescription = "American Red Cross",
                     Status = (EntityStatus)1,
@@ -25753,7 +24949,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1005",
                     Name = "AmeriCares Foundation",
                     PartnerShortDescription = "AmeriCares Foundation",
                     Status = (EntityStatus)0,
@@ -25785,7 +24980,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1824",
                     Name = "Amref Health Africa in Kenya",
                     PartnerShortDescription = "Amref Health",
                     Status = (EntityStatus)1,
@@ -25817,7 +25011,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1007",
                     Name = "Assist International",
                     PartnerShortDescription = "ASSIST",
                     Status = (EntityStatus)1,
@@ -25849,7 +25042,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1173",
                     Name = "Association for a UN Live Museum",
                     PartnerShortDescription = "UN Live Museum",
                     Status = (EntityStatus)1,
@@ -25881,7 +25073,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1663",
                     Name = "Association IPE",
                     PartnerShortDescription = "Association IPE",
                     Status = (EntityStatus)1,
@@ -25913,7 +25104,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1800",
                     Name = "CAMEG Centrale d'achat des médicaments essentiels génériques et des consommables médicaux",
                     PartnerShortDescription = "CAMEG",
                     Status = (EntityStatus)1,
@@ -25945,7 +25135,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1012",
                     Name = "Caritas Internationalis",
                     PartnerShortDescription = "Caritas Internationalis",
                     Status = (EntityStatus)0,
@@ -25977,7 +25166,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1013",
                     Name = "CBHF Clinton Bush Haiti Fund",
                     PartnerShortDescription = "CBHF",
                     Status = (EntityStatus)1,
@@ -26009,7 +25197,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1789",
                     Name = "Center for Health Policies and Studies PAS Center",
                     PartnerShortDescription = "PAS Center",
                     Status = (EntityStatus)1,
@@ -26041,7 +25228,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1771",
                     Name = "CHAG Christian Health Association of Ghana",
                     PartnerShortDescription = "CHAG",
                     Status = (EntityStatus)1,
@@ -26073,7 +25259,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1665",
                     Name = "ClimateWorks Foundation",
                     PartnerShortDescription = "ClimateWorks Foundation",
                     Status = (EntityStatus)1,
@@ -26105,7 +25290,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1876",
                     Name = "Clinton Health Access Initiative",
                     PartnerShortDescription = "CHAI",
                     Status = (EntityStatus)1,
@@ -26137,7 +25321,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1659",
                     Name = "Comic Relief",
                     PartnerShortDescription = "Comic Relief",
                     Status = (EntityStatus)1,
@@ -26169,7 +25352,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1873",
                     Name = "Concern Worldwide",
                     PartnerShortDescription = "Concern",
                     Status = (EntityStatus)1,
@@ -26201,7 +25383,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1021",
                     Name = "CORDAID Catholic Organisation for Relief and Development Aid",
                     PartnerShortDescription = "CORDAID",
                     Status = (EntityStatus)1,
@@ -26233,7 +25414,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1682",
                     Name = "CPI Community Partners International",
                     PartnerShortDescription = "CPI",
                     Status = (EntityStatus)1,
@@ -26265,7 +25445,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1843",
                     Name = "Croix-Rouge française",
                     PartnerShortDescription = "CRF",
                     Status = (EntityStatus)1,
@@ -26297,7 +25476,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1666",
                     Name = "CRS Catholic Relief Services",
                     PartnerShortDescription = "Catholic Relief Services",
                     Status = (EntityStatus)1,
@@ -26329,7 +25507,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1874",
                     Name = "Deutsche Welthungerhilfe",
                     PartnerShortDescription = "WHH",
                     Status = (EntityStatus)1,
@@ -26361,7 +25538,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1673",
                     Name = "Devnet International",
                     PartnerShortDescription = "Devnet International",
                     Status = (EntityStatus)1,
@@ -26393,7 +25569,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1700",
                     Name = "Digital Good",
                     PartnerShortDescription = "Digital Good",
                     Status = (EntityStatus)1,
@@ -26425,7 +25600,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1921",
                     Name = "DRC Danish Refugee Council",
                     PartnerShortDescription = "DRC",
                     Status = (EntityStatus)1,
@@ -26457,7 +25631,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1932",
                     Name = "Federación Red NicaSalud",
                     PartnerShortDescription = "Federación Red NicaSalud",
                     Status = (EntityStatus)1,
@@ -26489,7 +25662,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1035",
                     Name = "FHI 360",
                     PartnerShortDescription = "FHI 360",
                     Status = (EntityStatus)0,
@@ -26521,7 +25693,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1037",
                     Name = "FPN Fundacion Patagonia Natural",
                     PartnerShortDescription = "FPN",
                     Status = (EntityStatus)1,
@@ -26553,7 +25724,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1766",
                     Name = "GCA Global Centre on Adaptation",
                     PartnerShortDescription = "GCA",
                     Status = (EntityStatus)1,
@@ -26585,7 +25755,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1661",
                     Name = "GCDP Global Commission on Drug Policy",
                     PartnerShortDescription = "GCDP",
                     Status = (EntityStatus)1,
@@ -26617,7 +25786,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1835",
                     Name = "Good Neighbors Global Partnership Center",
                     PartnerShortDescription = "Good Neighbors",
                     Status = (EntityStatus)1,
@@ -26649,7 +25817,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1569",
                     Name = "Hammer Forum",
                     PartnerShortDescription = "Hammer Forum",
                     Status = (EntityStatus)1,
@@ -26681,7 +25848,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1846",
                     Name = "Health Through Walls",
                     PartnerShortDescription = "Health Through Walls",
                     Status = (EntityStatus)1,
@@ -26713,7 +25879,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1050",
                     Name = "IFA International Fertilizer Industry Association",
                     PartnerShortDescription = "IFA",
                     Status = (EntityStatus)1,
@@ -26745,7 +25910,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1825",
                     Name = "IFRC International Federation of Red Cross and Red Crescent Societies",
                     PartnerShortDescription = "IFRC",
                     Status = (EntityStatus)1,
@@ -26777,7 +25941,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1582",
                     Name = "INS-NGO (International)",
                     PartnerShortDescription = "INS-NGO",
                     Status = (EntityStatus)1,
@@ -26809,7 +25972,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1573",
                     Name = "INT-NGO International Non-Governmental Organization",
                     PartnerShortDescription = "INT-NGO",
                     Status = (EntityStatus)1,
@@ -26841,7 +26003,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1886",
                     Name = "International Medical Corps UK",
                     PartnerShortDescription = "International Medical Corps",
                     Status = (EntityStatus)1,
@@ -26873,7 +26034,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1888",
                     Name = "International Medical Corps US",
                     PartnerShortDescription = "IntMedCorps",
                     Status = (EntityStatus)1,
@@ -26905,7 +26065,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1052",
                     Name = "Interpeace",
                     PartnerShortDescription = "Interpeace",
                     Status = (EntityStatus)1,
@@ -26937,7 +26096,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1627",
                     Name = "IRC International Rescue Committee",
                     PartnerShortDescription = "IRC",
                     Status = (EntityStatus)1,
@@ -26969,7 +26127,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1053",
                     Name = "IRW Islamic Relief Worldwide",
                     PartnerShortDescription = "IRW",
                     Status = (EntityStatus)1,
@@ -27001,7 +26158,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1094",
                     Name = "IsraAID Israel Forum for  International Humanitarian Aid",
                     PartnerShortDescription = "IsraAID",
                     Status = (EntityStatus)1,
@@ -27033,7 +26189,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1796",
                     Name = "JSI Research and Training Institute, Inc.",
                     PartnerShortDescription = "JSI Institute",
                     Status = (EntityStatus)1,
@@ -27065,7 +26220,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1055",
                     Name = "KARCPP King Abdullah Relief Campaign for the Pakistani People",
                     PartnerShortDescription = "KARCPP",
                     Status = (EntityStatus)1,
@@ -27097,7 +26251,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1731",
                     Name = "KNCV Koninklijke Nederlandse Centrale Vereniging tot bestrijding der Tuberculose",
                     PartnerShortDescription = "KNCV",
                     Status = (EntityStatus)1,
@@ -27129,7 +26282,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1797",
                     Name = "LDSC Later Day Saints Charities",
                     PartnerShortDescription = "LDSC",
                     Status = (EntityStatus)1,
@@ -27161,7 +26313,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1713",
                     Name = "Malaria No More",
                     PartnerShortDescription = "Malaria No More",
                     Status = (EntityStatus)1,
@@ -27193,7 +26344,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1658",
                     Name = "MFM Menschen für Menschen",
                     PartnerShortDescription = "MFM",
                     Status = (EntityStatus)1,
@@ -27225,7 +26375,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1655",
                     Name = "MFSL Médecins Sans Frontières Logistics",
                     PartnerShortDescription = "MSFL",
                     Status = (EntityStatus)1,
@@ -27257,7 +26406,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1451",
                     Name = "Millennium Promise",
                     PartnerShortDescription = "Millennium Promise",
                     Status = (EntityStatus)1,
@@ -27289,7 +26437,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1574",
                     Name = "NAT-NGO Non-Governmental Organization",
                     PartnerShortDescription = "NAT-NGO",
                     Status = (EntityStatus)1,
@@ -27321,7 +26468,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1744",
                     Name = "National Geographic Society",
                     PartnerShortDescription = "National Geographic",
                     Status = (EntityStatus)1,
@@ -27353,7 +26499,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1933",
                     Name = "Nehemia Christliches Hilfswerk e. V.",
                     PartnerShortDescription = "Nehemia",
                     Status = (EntityStatus)1,
@@ -27385,7 +26530,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1837",
                     Name = "Norwegian Refugee Council",
                     PartnerShortDescription = "NRC",
                     Status = (EntityStatus)1,
@@ -27417,7 +26561,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1583",
                     Name = "OBR-NGO (International)",
                     PartnerShortDescription = "OBR-NGO (International)",
                     Status = (EntityStatus)1,
@@ -27449,7 +26592,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1584",
                     Name = "OBR-NGO (National)",
                     PartnerShortDescription = "OBR-NGO (National)",
                     Status = (EntityStatus)1,
@@ -27481,7 +26623,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1794",
                     Name = "One Earth",
                     PartnerShortDescription = "One Earth",
                     Status = (EntityStatus)1,
@@ -27513,7 +26654,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1072",
                     Name = "OSISA Open Society Initiative for Southern Africa",
                     PartnerShortDescription = "OSISA",
                     Status = (EntityStatus)1,
@@ -27545,7 +26685,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1626",
                     Name = "OXFAM International",
                     PartnerShortDescription = "Oxfam",
                     Status = (EntityStatus)1,
@@ -27577,7 +26716,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1740",
                     Name = "PATH",
                     PartnerShortDescription = "PATH",
                     Status = (EntityStatus)1,
@@ -27609,7 +26747,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1701",
                     Name = "PBSP Philippine Business for Social Progress",
                     PartnerShortDescription = "PBSP",
                     Status = (EntityStatus)1,
@@ -27641,7 +26778,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1882",
                     Name = "Plan International Liberia",
                     PartnerShortDescription = "Plan International Liberia",
                     Status = (EntityStatus)1,
@@ -27673,7 +26809,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1901",
                     Name = "Plan International Mali",
                     PartnerShortDescription = "PlanIntMali",
                     Status = (EntityStatus)1,
@@ -27705,7 +26840,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1897",
                     Name = "PSI Population Services International Madagascar",
                     PartnerShortDescription = "PSI Madagascar",
                     Status = (EntityStatus)1,
@@ -27737,7 +26871,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1721",
                     Name = "PSI Population Services International",
                     PartnerShortDescription = "PSI",
                     Status = (EntityStatus)1,
@@ -27769,7 +26902,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1919",
                     Name = "Qatar Charity",
                     PartnerShortDescription = "Qatar Charity",
                     Status = (EntityStatus)0,
@@ -27801,7 +26933,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1714",
                     Name = "QRCS Qatar Red Crescent Society",
                     PartnerShortDescription = "QRCS",
                     Status = (EntityStatus)1,
@@ -27833,7 +26964,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1923",
                     Name = "RF Catalytic Capital",
                     PartnerShortDescription = "RFCC",
                     Status = (EntityStatus)1,
@@ -27865,7 +26995,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1697",
                     Name = "Romanian Angel Appeal",
                     PartnerShortDescription = "Romanian Angel Appeal",
                     Status = (EntityStatus)1,
@@ -27897,7 +27026,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1452",
                     Name = "Save the Children",
                     PartnerShortDescription = "Save the Children",
                     Status = (EntityStatus)1,
@@ -27929,7 +27057,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1814",
                     Name = "SES Socios en Salud Sucursal Peru",
                     PartnerShortDescription = "SES Peru",
                     Status = (EntityStatus)1,
@@ -27961,7 +27088,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1033",
                     Name = "Sheikh Eid Bin Mohammed Al Thani Charity Foundation",
                     PartnerShortDescription = "Eid Charity",
                     Status = (EntityStatus)1,
@@ -27993,7 +27119,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1152",
                     Name = "Silatech",
                     PartnerShortDescription = "Silatech",
                     Status = (EntityStatus)1,
@@ -28025,7 +27150,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1668",
                     Name = "Soins de santé primaires en milieu rural (SANRU)",
                     PartnerShortDescription = "SANRU",
                     Status = (EntityStatus)1,
@@ -28057,7 +27181,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1155",
                     Name = "SSACONG Congregation of the Sisters of Saint Anne",
                     PartnerShortDescription = "SSACONG",
                     Status = (EntityStatus)1,
@@ -28089,7 +27212,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1699",
                     Name = "Sustainable Markets Foundation",
                     PartnerShortDescription = "Sustainable Markets Foundation",
                     Status = (EntityStatus)1,
@@ -28121,7 +27243,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1899",
                     Name = "Swaniti Initiative",
                     PartnerShortDescription = "Swaniti",
                     Status = (EntityStatus)1,
@@ -28153,7 +27274,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1159",
                     Name = "TDH Terre des Hommes Italy",
                     PartnerShortDescription = "TDH Italy",
                     Status = (EntityStatus)1,
@@ -28185,7 +27305,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1160",
                     Name = "Tearfund",
                     PartnerShortDescription = "Tearfund",
                     Status = (EntityStatus)1,
@@ -28217,7 +27336,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1928",
                     Name = "The Energy Foundation",
                     PartnerShortDescription = "The Energy Foundation",
                     Status = (EntityStatus)1,
@@ -28249,7 +27367,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1844",
                     Name = "The Sunrise Project Australia Limited",
                     PartnerShortDescription = "Sunrise project",
                     Status = (EntityStatus)1,
@@ -28281,7 +27398,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1808",
                     Name = "THPS Tanzania Health Promotion Support",
                     PartnerShortDescription = "THPS",
                     Status = (EntityStatus)1,
@@ -28313,7 +27429,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1736",
                     Name = "TMEA TradeMark East Africa",
                     PartnerShortDescription = "TMEA",
                     Status = (EntityStatus)1,
@@ -28345,7 +27460,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1453",
                     Name = "UMCOR United Methodist Committee on Relief",
                     PartnerShortDescription = "UMCOR",
                     Status = (EntityStatus)1,
@@ -28377,7 +27491,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1587",
                     Name = "UNA USA United Nations Association of the USA",
                     PartnerShortDescription = "UNA-USA",
                     Status = (EntityStatus)1,
@@ -28409,7 +27522,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1644",
                     Name = "WALIC West Africa Livestock Innovation Centre",
                     PartnerShortDescription = "WALIC",
                     Status = (EntityStatus)1,
@@ -28441,7 +27553,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1809",
                     Name = "Windward Fund",
                     PartnerShortDescription = "Windward Fund",
                     Status = (EntityStatus)1,
@@ -28473,7 +27584,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1647",
                     Name = "Woord en Daad",
                     PartnerShortDescription = "Woord en Daad",
                     Status = (EntityStatus)1,
@@ -28505,7 +27615,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1454",
                     Name = "World Vision",
                     PartnerShortDescription = "World Vision",
                     Status = (EntityStatus)1,
@@ -28537,7 +27646,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1819",
                     Name = "BCBRP Meritorious Fire Department of the Republic of Panama",
                     PartnerShortDescription = "BCBRP",
                     Status = (EntityStatus)1,
@@ -28569,7 +27677,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1813",
                     Name = "CODEMGE Minas Gerais Development Company",
                     PartnerShortDescription = "CODEMGE",
                     Status = (EntityStatus)1,
@@ -28601,7 +27708,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1942",
                     Name = "COG Comite Olimpico Guatemalteco",
                     PartnerShortDescription = "Comité Olimpico Guatemalteco (COG)",
                     Status = (EntityStatus)1,
@@ -28633,7 +27739,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1847",
                     Name = "DGAPP Dirección General de Alianzas Publico Privadas",
                     PartnerShortDescription = "DGAPP",
                     Status = (EntityStatus)1,
@@ -28665,7 +27770,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1858",
                     Name = "Fundação Alexandre de Gusmão",
                     PartnerShortDescription = "FUNAG",
                     Status = (EntityStatus)1,
@@ -28697,7 +27801,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1815",
                     Name = "INCAP Institute of Nutrition of Central America and Panama",
                     PartnerShortDescription = "INCAP",
                     Status = (EntityStatus)1,
@@ -28729,7 +27832,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1859",
                     Name = "Instituto de Pesquisa Econômica Aplicada",
                     PartnerShortDescription = "IPEA",
                     Status = (EntityStatus)1,
@@ -28761,7 +27863,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1784",
                     Name = "Instituto Nacional de Previsión del Magisterio INPREMA",
                     PartnerShortDescription = "INPREMA",
                     Status = (EntityStatus)1,
@@ -28793,7 +27894,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1868",
                     Name = "Keidanren Nature Conservation Fund",
                     PartnerShortDescription = "KNCF",
                     Status = (EntityStatus)1,
@@ -28825,7 +27925,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1586",
                     Name = "NIC-Union Europea",
                     PartnerShortDescription = "NIC-Union Europea",
                     Status = (EntityStatus)1,
@@ -28857,7 +27956,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1540",
                     Name = "Other Donors",
                     PartnerShortDescription = "Other Donors",
                     Status = (EntityStatus)1,
@@ -28889,7 +27987,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1541",
                     Name = "Other Sponsors",
                     PartnerShortDescription = "Other Sponsors",
                     Status = (EntityStatus)1,
@@ -28921,7 +28018,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1852",
                     Name = "Quito Metro Metropolitan Company",
                     PartnerShortDescription = "Metro de Quito",
                     Status = (EntityStatus)1,
@@ -28953,7 +28049,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1662",
                     Name = "GHL Global Humanitarian Lab",
                     PartnerShortDescription = "GHL",
                     Status = (EntityStatus)1,
@@ -28985,7 +28080,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1040",
                     Name = "Global Alliance for Clean Cookstoves",
                     PartnerShortDescription = "Clean cookstoves",
                     Status = (EntityStatus)1,
@@ -29017,7 +28111,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1869",
                     Name = "Global Health Innovative Technology Fund",
                     PartnerShortDescription = "GHIT Fund",
                     Status = (EntityStatus)1,
@@ -29049,7 +28142,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1046",
                     Name = "IATI International Aid Transparency Initiative",
                     PartnerShortDescription = "IATI",
                     Status = (EntityStatus)1,
@@ -29081,7 +28173,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1047",
                     Name = "IATI-TF International Aid Transparency Initiative Trust Fund",
                     PartnerShortDescription = "IATI Trust Fund",
                     Status = (EntityStatus)0,
@@ -29113,7 +28204,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1601",
                     Name = "IUCN International Union for Conservation of Nature",
                     PartnerShortDescription = "IUCN",
                     Status = (EntityStatus)1,
@@ -29145,7 +28235,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1667",
                     Name = "RBM Roll Back Malaria",
                     PartnerShortDescription = "RBM",
                     Status = (EntityStatus)1,
@@ -29177,7 +28266,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1157",
                     Name = "Stop TB Partnership",
                     PartnerShortDescription = "Stop TB Partnership",
                     Status = (EntityStatus)1,
@@ -29209,7 +28297,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1672",
                     Name = "SUN Scaling Up Nutrition Movement",
                     PartnerShortDescription = "SUN",
                     Status = (EntityStatus)1,
@@ -29241,7 +28328,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1686",
                     Name = "The Defeat-NCD Partnership",
                     PartnerShortDescription = "Defeat-NCD Partnership",
                     Status = (EntityStatus)1,
@@ -29273,7 +28359,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1836",
                     Name = "ABCR Brazilian Association of Private Road Operators",
                     PartnerShortDescription = "ABCR",
                     Status = (EntityStatus)1,
@@ -29305,7 +28390,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1712",
                     Name = "ABDIB Associação Brasileira da Infraestrutura e Indústrias de Base",
                     PartnerShortDescription = "ABDIB",
                     Status = (EntityStatus)1,
@@ -29337,7 +28421,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1746",
                     Name = "Abt Associates",
                     PartnerShortDescription = "Abt Associates",
                     Status = (EntityStatus)1,
@@ -29369,7 +28452,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1002",
                     Name = "Accenture",
                     PartnerShortDescription = "Accenture",
                     Status = (EntityStatus)1,
@@ -29401,7 +28483,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1008",
                     Name = "BCG Boston Consulting Group",
                     PartnerShortDescription = "Boston Consulting Group",
                     Status = (EntityStatus)1,
@@ -29433,7 +28514,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1656",
                     Name = "BEGECA Beschaffungsgesellschaft mbH",
                     PartnerShortDescription = "BEGECA",
                     Status = (EntityStatus)1,
@@ -29465,7 +28545,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1599",
                     Name = "Checci and Company Consulting",
                     PartnerShortDescription = "Checci and Company",
                     Status = (EntityStatus)1,
@@ -29497,7 +28576,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1600",
                     Name = "CISCO System",
                     PartnerShortDescription = "CISCO",
                     Status = (EntityStatus)1,
@@ -29529,7 +28607,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1602",
                     Name = "Coca Cola Company",
                     PartnerShortDescription = "Coca Cola Company",
                     Status = (EntityStatus)1,
@@ -29561,7 +28638,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1022",
                     Name = "Crown Agents",
                     PartnerShortDescription = "Crown Agents",
                     Status = (EntityStatus)1,
@@ -29593,7 +28669,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1945",
                     Name = "Cygnum Capital Asset Management Ltd.",
                     PartnerShortDescription = "Cygnum Capital",
                     Status = (EntityStatus)1,
@@ -29625,7 +28700,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1670",
                     Name = "DNA Genotek",
                     PartnerShortDescription = "DNA Genotek",
                     Status = (EntityStatus)1,
@@ -29657,7 +28731,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1745",
                     Name = "Estee Lauder Companies",
                     PartnerShortDescription = "Estee Lauder",
                     Status = (EntityStatus)1,
@@ -29689,7 +28762,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1038",
                     Name = "FTB Foreign Trade Bank of Cambodia",
                     PartnerShortDescription = "Foreign Trade Bank of Cambodia",
                     Status = (EntityStatus)1,
@@ -29721,7 +28793,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1691",
                     Name = "FunziLife OY",
                     PartnerShortDescription = "FunziLife OY",
                     Status = (EntityStatus)1,
@@ -29753,7 +28824,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1889",
                     Name = "Global Institute For Disease Elimination",
                     PartnerShortDescription = "GLIDE",
                     Status = (EntityStatus)1,
@@ -29785,7 +28855,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1939",
                     Name = "Google LLC",
                     PartnerShortDescription = "Google",
                     Status = (EntityStatus)1,
@@ -29817,7 +28886,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1457",
                     Name = "Hemas PLC",
                     PartnerShortDescription = "Hemas PLC",
                     Status = (EntityStatus)1,
@@ -29849,7 +28917,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1810",
                     Name = "Labomersa",
                     PartnerShortDescription = "Labomersa",
                     Status = (EntityStatus)1,
@@ -29881,7 +28948,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1720",
                     Name = "Macfadden",
                     PartnerShortDescription = "Macfadden",
                     Status = (EntityStatus)1,
@@ -29913,7 +28979,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1948",
                     Name = "Maisha Healthcare Inc.",
                     PartnerShortDescription = "Maisha Healthcare",
                     Status = (EntityStatus)1,
@@ -29945,7 +29010,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1605",
                     Name = "Marine Information Service B.V.",
                     PartnerShortDescription = "Marine Information Service",
                     Status = (EntityStatus)1,
@@ -29977,7 +29041,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1596",
                     Name = "Microsoft Corporation",
                     PartnerShortDescription = "Microsoft",
                     Status = (EntityStatus)1,
@@ -30009,7 +29072,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1065",
                     Name = "Mitsubishi",
                     PartnerShortDescription = "Mitsubishi",
                     Status = (EntityStatus)1,
@@ -30041,7 +29103,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1693",
                     Name = "Miyamoto International",
                     PartnerShortDescription = "Miyamoto International",
                     Status = (EntityStatus)1,
@@ -30073,7 +29134,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1067",
                     Name = "Mott MacDonald",
                     PartnerShortDescription = "Mott MacDonald",
                     Status = (EntityStatus)1,
@@ -30105,7 +29165,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1688",
                     Name = "Novo Nordisk AS",
                     PartnerShortDescription = "Novo Nordisk",
                     Status = (EntityStatus)1,
@@ -30137,7 +29196,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1073",
                     Name = "OTB The Office of Tony Blair",
                     PartnerShortDescription = "OTB",
                     Status = (EntityStatus)1,
@@ -30169,7 +29227,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1947",
                     Name = "Parexel International LLC",
                     PartnerShortDescription = "Parexel",
                     Status = (EntityStatus)1,
@@ -30201,7 +29258,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1148",
                     Name = "Philips",
                     PartnerShortDescription = "Philips",
                     Status = (EntityStatus)0,
@@ -30233,7 +29289,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1581",
                     Name = "Private Sector",
                     PartnerShortDescription = "Private Sector",
                     Status = (EntityStatus)1,
@@ -30265,7 +29320,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1741",
                     Name = "RAP Regimen de Aportaciones Privadas",
                     PartnerShortDescription = "RAP",
                     Status = (EntityStatus)1,
@@ -30297,7 +29351,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1710",
                     Name = "Red Sea Trading Corporation Ltd.",
                     PartnerShortDescription = "Red Sea Trading Corporation",
                     Status = (EntityStatus)1,
@@ -30329,7 +29382,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1703",
                     Name = "Roche Diagnostics International AG",
                     PartnerShortDescription = "Roche Diagnostics",
                     Status = (EntityStatus)1,
@@ -30361,7 +29413,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1839",
                     Name = "Rovet Scientifics Nigeria Limited",
                     PartnerShortDescription = "Rovet Scientifics",
                     Status = (EntityStatus)1,
@@ -30393,7 +29444,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1153",
                     Name = "SkyOcean Group Holdings",
                     PartnerShortDescription = "SkyOcean",
                     Status = (EntityStatus)1,
@@ -30425,7 +29475,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1777",
                     Name = "Sony Group Corporation",
                     PartnerShortDescription = "SONY",
                     Status = (EntityStatus)1,
@@ -30457,7 +29506,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1929",
                     Name = "Sow & Reap Agro Private Limited",
                     PartnerShortDescription = "SowReapAgro",
                     Status = (EntityStatus)1,
@@ -30489,7 +29537,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1734",
                     Name = "Stanbic Bank Ghana",
                     PartnerShortDescription = "Stanbic Bank Ghana",
                     Status = (EntityStatus)1,
@@ -30521,7 +29568,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1742",
                     Name = "Takeda Pharmaceutical Company Limited",
                     PartnerShortDescription = "Takeda",
                     Status = (EntityStatus)1,
@@ -30553,7 +29599,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1158",
                     Name = "Tasmim Libya Consulting and Engineering",
                     PartnerShortDescription = "Tasmim Libya Consulting",
                     Status = (EntityStatus)0,
@@ -30585,7 +29630,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 },
                 new UNOPSPartner
                 {
-                    PartnerCode = "1657",
                     Name = "WEM Worldwide Export Management",
                     PartnerShortDescription = "WEM",
                     Status = (EntityStatus)1,
