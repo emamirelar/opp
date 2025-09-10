@@ -181,8 +181,7 @@ public class PartnerController : BaseController
                 PageIndex = pageIndex,
                 PageSize = pageSize,
                 OrderBy = orderBy ?? "createdDate",
-                Ascending = ascending,
-                PartnerGroupCode = partnerGroupCode
+                Ascending = ascending
             };
             
             // Create simple specification - global filters will be applied by the manager
