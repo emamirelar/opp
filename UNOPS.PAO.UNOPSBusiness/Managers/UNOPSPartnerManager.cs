@@ -948,6 +948,19 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             throw new BusinessException("Partner Name is required for creation");
         }
         
+        // Validate ErpDimValue uniqueness if provided
+        if (model.ErpDimValue.HasValue)
+        {
+            var existingPartner = await _context.Partners
+                .Where(p => p.ErpDimValue == model.ErpDimValue.Value && !p.IsDeleted)
+                .FirstOrDefaultAsync();
+            
+            if (existingPartner != null)
+            {
+                throw new BusinessException($"A partner with ERP Dimension Value '{model.ErpDimValue.Value}' already exists. ERP Dimension Values must be unique.");
+            }
+        }
+        
         // Ensure partner is created in Draft status
         model.Status = "Draft";
         
@@ -1086,6 +1099,19 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         if (entity == null)
         {
             return null;
+        }
+
+        // Validate ErpDimValue uniqueness if provided and different from current value
+        if (model.ErpDimValue.HasValue && model.ErpDimValue.Value != entity.ErpDimValue)
+        {
+            var existingPartner = await _context.Partners
+                .Where(p => p.ErpDimValue == model.ErpDimValue.Value && !p.IsDeleted && p.Id != model.Id)
+                .FirstOrDefaultAsync();
+            
+            if (existingPartner != null)
+            {
+                throw new BusinessException($"A partner with ERP Dimension Value '{model.ErpDimValue.Value}' already exists. ERP Dimension Values must be unique.");
+            }
         }
 
         // Handle organization unit hierarchy ID updates using differential approach
@@ -1283,6 +1309,19 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         if (entity == null)
         {
             throw new BusinessException($"Partner {model.Id} does not exist.");
+        }
+
+        // Validate ErpDimValue uniqueness if provided and different from current value
+        if (model.ErpDimValue.HasValue && model.ErpDimValue.Value != entity.ErpDimValue)
+        {
+            var existingPartner = await _context.Partners
+                .Where(p => p.ErpDimValue == model.ErpDimValue.Value && !p.IsDeleted && p.Id != model.Id)
+                .FirstOrDefaultAsync();
+            
+            if (existingPartner != null)
+            {
+                throw new BusinessException($"A partner with ERP Dimension Value '{model.ErpDimValue.Value}' already exists. ERP Dimension Values must be unique.");
+            }
         }
 
         // Handle organization unit hierarchy ID updates using differential approach
