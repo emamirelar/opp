@@ -1,41 +1,27 @@
 {
   "entity": "Configuration",
-  "description": "Manages system-wide configuration settings and application parameters.",
+  "description": "Manages system-wide settings, application parameters, and global configurations.",
   "synonyms": [
-    "settings",
-    "app settings",
-    "system parameters",
-    "preferences",
-    "config"
+    "Settings",
+    "Parameters",
+    "App Config",
+    "System Settings",
+    "Global Settings"
   ],
   "mandatoryFields": [],
-  "searchMetadata": {
-    "directFields": [],
-    "nestedFields": {},
-    "operators": [
-      "like",
-      "is",
-      "not",
-      "contains",
-      "startsWith",
-      "between"
-    ],
-    "dateFields": [],
-    "exampleCriteria": []
-  },
   "endpoints": [
     {
       "name": "Get",
       "url": "/api/configuration",
       "method": "GET",
-      "description": "Retrieves the current system-wide configuration settings. This endpoint provides read-only access to various application parameters and environmental configurations.",
+      "description": "Retrieves the current system configuration or application settings.",
       "parameters": {},
       "example_uses": [
         "How do I get the current application configuration?",
-        "Show me all the system settings.",
-        "Retrieve the configuration details for the application."
+        "Retrieve all system settings.",
+        "Show me the global configuration parameters."
       ],
-      "when_to_use": "Use this endpoint when you need to fetch the global configuration settings of the application, such as API keys, feature flags, or environmental variables. This is typically used for read-only access to system parameters."
+      "when_to_use": "Use this endpoint to fetch the current application or system-wide configuration settings."
     }
   ]
 }

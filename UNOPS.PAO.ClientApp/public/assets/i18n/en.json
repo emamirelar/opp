@@ -250,19 +250,8 @@
       "ddApproval": "DD Approval",
       "levyStatus": "Levy Status",
       "unStateEntity": "UN State Entity",
-      "reasonForNoNewOpportunity": "Reason No New Opportunity",
-      "partnerGroup": "Partner Group",
-      "partnerCategory": "Partner Category",
       "liaisonOffice": "Liaison Office",
-      "keyGlobalPartner": "Key Global Partner",
-      "unSecretariatPartner": "UN Secretariat Partner",
-      "dueDiligenceRequired": "Due Diligence Required",
-      "dueDiligenceApproval": "Due Diligence Approval",
-      "partnerLevyStatus": "Partner Levy Status",
-      "canCreateNewOpportunities": "Can Create New Opportunities",
-      "partnerFocalPoint": "Partner Focal Point",
       "erpDimValue": "ERP Dimension Value",
-      "reasonForLevy": "Reason For Levy",
       "summaryOfInteractions": "AI Summary of Interactions",
       "riskProfile": "AI Risk Profile",
       "partnerNews": "Partner News",
@@ -1200,6 +1189,10 @@
         "searchInput": {
           "title": "Search Interactions",
           "description": "Type here to search for specific interactions by contact name, interaction type, date, or other criteria. The results will filter in real-time as you type."
+        },
+        "advancedSearch": {
+          "title": "Advanced Search",
+          "description": "Click here to access more detailed search and filtering options. You can combine multiple criteria to find exactly the interactions you're looking for."
         },
         "gridView": {
           "title": "Interactions List",

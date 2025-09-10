@@ -1,17 +1,18 @@
 {
   "entity": "Interaction",
-  "description": "Manages communication records, meetings, and other engagements with partners, contacts, and internal users.",
+  "description": "Manages all forms of communication and engagement activities, such as meetings, calls, and emails, with partners, contacts, and internal users.",
   "synonyms": [
-    "Communication",
-    "Meeting",
-    "Call",
-    "Activity",
-    "Engagement"
+    "communication",
+    "engagement",
+    "meeting",
+    "call",
+    "email",
+    "activity"
   ],
   "mandatoryFields": [
     "Type",
     "Date",
-    "ContactId"
+    "ConfirmDuplicateCreation"
   ],
   "searchMetadata": {
     "directFields": [
@@ -105,10 +106,85 @@
       "method": "POST",
       "description": "Creates a new interaction record with complete details including participants, type, and associated entities.",
       "parameters": {
-        "req": {
-          "type": "object",
+        "Type": {
+          "type": "string",
           "required": true,
-          "description": "Interaction creation request with all required details"
+          "description": "Property of type InteractionType"
+        },
+        "Date": {
+          "type": "string",
+          "required": true,
+          "description": "Property of type DateTime"
+        },
+        "Description": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "EmailAddresses": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<string>"
+        },
+        "PhoneNumbers": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<string>"
+        },
+        "ContactIds": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<int>"
+        },
+        "PartnerIds": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<int>"
+        },
+        "UserIds": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<int>"
+        },
+        "Location": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "Subject": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "OrganizationHierarchyIds": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<int>"
+        },
+        "GmailThreadId": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "GmailMessageId": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "Status": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "ConfirmDuplicateCreation": {
+          "type": "boolean",
+          "required": true,
+          "description": "Property of type bool"
+        },
+        "Extensions": {
+          "type": "object",
+          "required": false,
+          "description": "Property of type IDictionary<string, Object>"
         }
       },
       "example_uses": [
@@ -122,7 +198,7 @@
       "name": "ListAllInteractions",
       "url": "/api/interactions",
       "method": "GET",
-      "description": "Retrieves all interactions with basic pagination and ordering (no search criteria). This endpoint provides a general list of interactions. For specific searches, use the `/api/interactions/search` or `/api/interactions/advanced-search` endpoints.",
+      "description": "Retrieves all interactions with basic pagination and ordering (no search criteria).",
       "parameters": {
         "pageIndex": {
           "type": "integer",
@@ -156,12 +232,32 @@
       "name": "SearchInteractions",
       "url": "/api/interactions/search",
       "method": "GET",
-      "description": "Performs simple text search across multiple interaction fields (subject, description, etc.). This endpoint is for basic keyword searches. For more complex, structured, or relationship-based searches, use the `/api/interactions/advanced-search` endpoint. The `searchText` parameter allows for a general keyword search.",
+      "description": "Performs simple text search across multiple interaction fields (subject, description, etc.). Use the 'searchText' parameter for keyword searches.",
       "parameters": {
-        "request": {
-          "type": "object",
+        "OrderBy": {
+          "type": "string",
           "required": false,
-          "description": "Pagination request containing only pagination and sorting parameters"
+          "description": "Property of type string"
+        },
+        "Ascending": {
+          "type": "boolean",
+          "required": false,
+          "description": "Property of type Nullable<bool>"
+        },
+        "Direction": {
+          "type": "boolean",
+          "required": false,
+          "description": "Property of type Nullable<bool>"
+        },
+        "PageIndex": {
+          "type": "integer",
+          "required": true,
+          "description": "Property of type int"
+        },
+        "PageSize": {
+          "type": "integer",
+          "required": true,
+          "description": "Property of type int"
         },
         "searchText": {
           "type": "string",
@@ -180,12 +276,32 @@
       "name": "AdvancedSearchInteractions",
       "url": "/api/interactions/advanced-search",
       "method": "GET",
-      "description": "Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters. Use the `searchCriteria` parameter to specify a JSON array of search objects. Each object should have `field`, `operator`, and `value` properties. For example: `[{\"field\":\"type\",\"operator\":\"is\",\"value\":\"Meeting\"},{\"field\":\"date\",\"operator\":\"between\",\"value\":\"2024-01-01,2024-12-31\"}]`. Available fields for search include: `id`, `contactId`, `type`, `date`, `fromDate`, `toDate`, `description`, `subject`, `contactName`, `contactFirstName`, `contactLastName`, `contactEmail`, `partnerName`, `partnerStatus`. Nested fields like `contact.firstName`, `contact.lastName`, `partner.name` are also available. Operators include: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Date fields are `date`, `fromDate`, `toDate`, `createdDate`, `modifiedDate`. The `searchText` parameter can be used for an additional general keyword search alongside structured criteria.",
+      "description": "Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters. Use the `searchCriteria` parameter to specify complex filters. This parameter expects a JSON array of objects, where each object has `field`, `operator`, and `value` properties. For example: `[{\"field\":\"partner.name\",\"operator\":\"like\",\"value\":\"UNICEF\"},{\"field\":\"date\",\"operator\":\"between\",\"value\":\"2024-01-01,2024-12-31\"}]`. Available fields for search include: `id`, `contactId`, `type`, `date`, `fromDate`, `toDate`, `description`, `subject`, `contactName`, `contactFirstName`, `contactLastName`, `contactEmail`, `partnerName`, `partnerStatus`. Nested fields are also available, such as `contact.firstName`, `contact.lastName`, `partner.name`, `partner.status`. Available operators are: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Date fields are: `date`, `fromDate`, `toDate`, `createdDate`, `modifiedDate`.",
       "parameters": {
-        "request": {
-          "type": "object",
+        "OrderBy": {
+          "type": "string",
           "required": false,
-          "description": "Pagination request containing only pagination and sorting parameters"
+          "description": "Property of type string"
+        },
+        "Ascending": {
+          "type": "boolean",
+          "required": false,
+          "description": "Property of type Nullable<bool>"
+        },
+        "Direction": {
+          "type": "boolean",
+          "required": false,
+          "description": "Property of type Nullable<bool>"
+        },
+        "PageIndex": {
+          "type": "integer",
+          "required": true,
+          "description": "Property of type int"
+        },
+        "PageSize": {
+          "type": "integer",
+          "required": true,
+          "description": "Property of type int"
         },
         "searchCriteria": {
           "type": "string",
@@ -206,7 +322,7 @@
       "when_to_use": "Use this for searches involving partner relationships, contact details, dates, interaction types, or multiple field combinations."
     },
     {
-      "name": "GetSpecificInteraction",
+      "name": "Get",
       "url": "/api/interactions/{id}",
       "method": "GET",
       "description": "Retrieves a specific interaction by ID with complete details including participants, documents, and permissions.",
@@ -230,10 +346,90 @@
       "method": "PUT",
       "description": "Updates an existing interaction's information including details, participants, scheduling, and metadata.",
       "parameters": {
-        "req": {
-          "type": "object",
+        "Id": {
+          "type": "integer",
           "required": true,
-          "description": "Interaction update request containing modified fields"
+          "description": "Property of type int"
+        },
+        "Type": {
+          "type": "string",
+          "required": true,
+          "description": "Property of type InteractionType"
+        },
+        "Date": {
+          "type": "string",
+          "required": true,
+          "description": "Property of type DateTime"
+        },
+        "Description": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "EmailAddresses": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<string>"
+        },
+        "PhoneNumbers": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<string>"
+        },
+        "ContactIds": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<int>"
+        },
+        "PartnerIds": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<int>"
+        },
+        "UserIds": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<int>"
+        },
+        "Location": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "Subject": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "OrganizationHierarchyIds": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<int>"
+        },
+        "GmailThreadId": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "GmailMessageId": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "Status": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "ConfirmDuplicateCreation": {
+          "type": "boolean",
+          "required": true,
+          "description": "Property of type bool"
+        },
+        "Extensions": {
+          "type": "object",
+          "required": false,
+          "description": "Property of type IDictionary<string, Object>"
         }
       },
       "example_uses": [
@@ -287,10 +483,15 @@
       "method": "POST",
       "description": "Scans and processes uploaded files for interaction data extraction using AI-powered analysis.",
       "parameters": {
-        "req": {
+        "File": {
           "type": "object",
           "required": false,
-          "description": "File scan request containing the file to be processed"
+          "description": "Property of type IFormFile"
+        },
+        "Type": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
         }
       },
       "example_uses": [
@@ -306,10 +507,25 @@
       "method": "POST",
       "description": "Analyzes uploaded files and extracts structured interaction data using AI-powered data analysis.",
       "parameters": {
-        "request": {
-          "type": "object",
+        "Type": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "FileId": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "CurrentUserId": {
+          "type": "integer",
           "required": true,
-          "description": "Analysis request containing file and analysis parameters"
+          "description": "Property of type int"
+        },
+        "IsUpdate": {
+          "type": "boolean",
+          "required": true,
+          "description": "Property of type bool"
         }
       },
       "example_uses": [
@@ -325,10 +541,20 @@
       "method": "POST",
       "description": "Bulk uploads multiple interaction records using AI-assisted data processing and validation.",
       "parameters": {
-        "req": {
-          "type": "object",
+        "Type": {
+          "type": "string",
+          "required": false,
+          "description": "Property of type string"
+        },
+        "Records": {
+          "type": "array",
+          "required": false,
+          "description": "Property of type List<Object>"
+        },
+        "IsUpdate": {
+          "type": "boolean",
           "required": true,
-          "description": "Bulk upload request containing interaction data"
+          "description": "Property of type bool"
         }
       },
       "example_uses": [
@@ -349,19 +575,19 @@
     },
     {
       "name": "DeepSearch",
-      "url": "api/interaction/deepSearch",
+      "url": "/api/interactions/deepSearch",
       "method": "GET",
-      "description": "Performs semantic search on interactions using AI embeddings to find relevant matches based on natural language queries. Returns multiple interactions with similarity scores.",
+      "description": "Performs semantic search on interactions using AI embeddings to find similar interactions based on natural language queries.",
       "parameters": {
         "query": {
           "type": "string",
-          "required": true,
-          "description": "Natural language search query (e.g., 'meetings about climate change', 'discussions on project planning')"
+          "required": false,
+          "description": "Natural language search query"
         },
         "threshold": {
           "type": "float",
           "required": false,
-          "description": "Similarity threshold for results (0.0 to 1.0, default: 0.7)"
+          "description": "Similarity threshold (0.0 to 1.0, default: 0.7)"
         },
         "limit": {
           "type": "integer",
@@ -370,13 +596,11 @@
         }
       },
       "example_uses": [
-        "Find meetings about climate change projects",
-        "Search for discussions on project planning",
-        "Find interactions about budget discussions",
-        "Look for meetings with specific partners",
-        "Search for conference calls about development"
+        "Find interactions similar to project planning meetings",
+        "Search for email communications about healthcare",
+        "Find conference calls about technical issues"
       ],
-      "when_to_use": "Use this when the user wants to find interactions using natural language descriptions, semantic concepts, or contextual search rather than exact text matching."
+      "when_to_use": "Use this when the user wants to find interactions using natural language queries or semantic similarity."
     }
   ]
 }

@@ -124,6 +124,9 @@ public class AppDbContext : AuditableDbContext<int, int>
                     .HasForeignKey(c => c.PartnerId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                // Configure ErpDimValue as an alternate key for foreign key relationships
+                p.HasAlternateKey(x => x.ErpDimValue);
+
                 p.Ignore(x => x.OrganizationUnitRelationships);
             });
 
@@ -320,6 +323,17 @@ public class AppDbContext : AuditableDbContext<int, int>
             
             entity.Property(e => e.AdditionalSettingsJson)
                 .HasColumnType("text");
+        });
+
+        // Configure Engagement entity
+        modelBuilder.Entity<Engagement>(entity =>
+        {
+            // Configure relationship where Engagement.PartnerId references Partner.ErpDimValue
+            entity.HasOne(e => e.Partner)
+                .WithMany()
+                .HasForeignKey(e => e.PartnerId)
+                .HasPrincipalKey(p => p.ErpDimValue)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Ignore GlobalFilters class - it's not an entity, just a plain class for JSON serialization

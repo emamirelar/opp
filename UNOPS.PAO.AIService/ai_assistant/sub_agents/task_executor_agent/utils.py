@@ -16,7 +16,7 @@ from google.adk.tools.tool_context import ToolContext
 
 # Import shared utilities from common callbacks
 from ai_assistant.utils.common_callbacks import (
-    invoke_api_tool, 
+    invoke_api_tool as base_invoke_api_tool, 
     exit_loop_on_success,
     inject_entity_specific_tools_before_model,
     construct_api_url
@@ -169,62 +169,11 @@ def list_all_capabilities() -> str:
 # Load capabilities on module import
 CAPABILITIES_CONFIG = load_capabilities_config()
 
-# Define lightweight wrapper classes locally to avoid import issues
-class GoogleSheetToolWrapper:
-    """Lightweight wrapper for Google Sheets functionality"""
-    def __init__(self):
-        self.available = True
-    
-    async def create_spreadsheet_from_list(self, tool_context, title: str, data, folder_id: str = ""):
-        """Create spreadsheet from list data"""
-        try:
-            # Use the local function
-            return create_google_sheet_from_list_data(title, json.dumps(data), folder_id)
-        except Exception as e:
-            return json.dumps({"error": f"Failed to create spreadsheet: {str(e)}"})
-    
-    async def create_spreadsheet_with_headers(self, tool_context, title: str, headers, data, folder_id: str = ""):
-        """Create spreadsheet with headers"""
-        try:
-            # Use the local function
-            return create_google_sheet_with_headers_data(title, json.dumps(headers), json.dumps(data), folder_id)
-        except Exception as e:
-            return json.dumps({"error": f"Failed to create spreadsheet with headers: {str(e)}"})
-
-
-
-
-# Initialize tool wrappers (always available)
-google_sheet_wrapper = GoogleSheetToolWrapper()
-logging.info(f"✅ Google Sheet wrapper initialized in task executor (available: {google_sheet_wrapper.available})")
 
 # External API tools - provide stub implementations
 
-def search_external_drive_service(tool_context: ToolContext, query: str, external_endpoint_url: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
-    """Search using external service for file IDs, then read content from Google Drive"""
-    try:
-        from ai_assistant.tools import search_external_drive_service as real_search
-        return real_search(tool_context, query, external_endpoint_url, auth_headers)
-    except ImportError:
-        return json.dumps({
-            "error": "External drive search service not available in current environment",
-            "query": query,
-            "endpoint": external_endpoint_url
-        })
 
-def search_unops_google_drive(tool_context: ToolContext, query: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
-    """Convenience function for UNOPS external Google Drive search service"""
-    try:
-        from ai_assistant.tools import search_unops_google_drive as real_search
-        return real_search(tool_context, query, auth_headers)
-    except ImportError:
-        return json.dumps({
-            "error": "UNOPS external drive search service not available in current environment",
-            "query": query,
-            "endpoint": "https://api.ai.dev.unops.org/v1/tools/google-drive/search"
-        })
-
-def read_content_from_url(tool_context: ToolContext, url: str, include_json: bool = True, output_format: str = "markdown", title: str = "", description: str = "") -> str:
+def read_content_from_url(tool_context: ToolContext, url: str, isMultiToolRequest: bool = False, include_json: bool = True, output_format: str = "markdown", title: str = "", description: str = "") -> str:
     """Read content from any URL using the external convert/url API"""
     try:
         from ai_assistant.tools import read_content_from_url as real_reader
@@ -236,7 +185,7 @@ def read_content_from_url(tool_context: ToolContext, url: str, include_json: boo
             "endpoint": "https://api.ai.dev.unops.org/v1/convert/url"
         })
 
-def convert_markdown_to_google_doc(tool_context: ToolContext, markdown_content: str, filename: str, metadata: Optional[Dict[str, Any]] = None) -> str:
+def convert_markdown_to_google_doc(tool_context: ToolContext, markdown_content: str, filename: str, isMultiToolRequest: bool = False, metadata: Optional[Dict[str, Any]] = None) -> str:
     """Convert markdown content to Google Doc using external API"""
     try:
         from ai_assistant.tools import convert_markdown_to_google_doc as real_converter
@@ -357,38 +306,6 @@ def search_ui_by_keyword(keyword: str) -> str:
             "message": "UI search not available in current environment"
         })
 
-# Cache management functions - provide stub implementations
-def get_cache_stats() -> str:
-    """Get cache statistics"""
-    try:
-        from ai_assistant.utils.common_callbacks import get_cache_performance_stats
-        return get_cache_performance_stats()
-    except ImportError:
-        return json.dumps({
-            "cache_stats": {},
-            "message": "Cache statistics not available in current environment"
-        })
-
-def clear_cache() -> str:
-    """Clear cache"""
-    try:
-        from ai_assistant.utils.cache import entity_cache
-        entity_cache.clear()
-        return json.dumps({"message": "Cache cleared successfully"})
-    except ImportError:
-        return json.dumps({
-            "message": "Cache clearing not available in current environment"
-        })
-
-def refresh_cache() -> str:
-    """Refresh cache"""
-    try:
-        from ai_assistant.utils.common_callbacks import force_cache_refresh
-        return force_cache_refresh()
-    except ImportError:
-        return json.dumps({
-            "message": "Cache refresh not available in current environment"
-        })
 
 # Import the real search agent
 try:
@@ -396,6 +313,7 @@ try:
     logging.info("✅ Successfully imported real search_agent")
 except ImportError as e:
     logging.warning(f"⚠️ Could not import real search_agent: {e}")
+
     
     # Fallback: provide stub implementation
     class SearchAgentStub:
@@ -425,83 +343,194 @@ except ImportError as e:
     logging.warning("⚠️ Using SearchAgentStub as fallback")
 
 
+# Enhanced invoke_api_tool that automatically finds endpoints
+def invoke_api_tool(entity_name: str, intent: str, params: Optional[dict] = None, isMultiToolRequest: bool = False, tool_context: Optional[ToolContext] = None) -> str:
+    """
+    Enhanced API tool that automatically finds the appropriate endpoint and invokes it.
+    This replaces the two-step process of find_entity_endpoint + invoke_api_tool.
+    
+    Args:
+        entity_name: The entity name (e.g., "Partner", "Contact", "Interaction")
+        intent: The intent (e.g., "search", "create", "update", "delete")
+        params: Parameters for the API call (optional)
+        isMultiToolRequest: True if this is part of a multi-tool workflow (optional)
+        tool_context: Tool context for session state (optional)
+        
+    Returns:
+        JSON string containing the API response or error information
+    """
+    try:
+        print(f"🚀 [ENHANCED-API-TOOL] Starting {intent} for {entity_name}")
+        if params:
+            print(f"   📊 Parameters: {params}")
+            print(f"   📊 Parameter keys: {list(params.keys()) if params else 'None'}")
+            print(f"   📊 Parameter values: {list(params.values()) if params else 'None'}")
+        
+        # Step 1: Find the appropriate endpoint
+        params_json = json.dumps(params) if params else "{}"
+        endpoint_result = find_entity_endpoint(entity_name, intent, params_json)
+        
+        try:
+            endpoint_data = json.loads(endpoint_result)
+        except (json.JSONDecodeError, TypeError):
+            error_result = json.dumps({
+                "error": f"Failed to parse endpoint finder result for {entity_name}/{intent}",
+                "raw_result": endpoint_result
+            })
+            
+            # If this is a single-tool request, automatically exit the loop with error
+            if not isMultiToolRequest:
+                print(f"🏁 [ENHANCED-API-TOOL] Single-tool request (parse error), exiting loop")
+                exit_loop_on_success(tool_context)
+            
+            return error_result
+        
+        if not endpoint_data.get("endpoint_found", False):
+            print(f"❌ [ENHANCED-API-TOOL] No endpoint found for {entity_name}/{intent}")
+            error_result = json.dumps({
+                "error": f"No suitable endpoint found for entity '{entity_name}' with intent '{intent}'",
+                "entity": entity_name,
+                "intent": intent,
+                "endpoint_finder_result": endpoint_data
+            })
+            
+            # If this is a single-tool request, automatically exit the loop with error
+            if not isMultiToolRequest:
+                print(f"🏁 [ENHANCED-API-TOOL] Single-tool request (no endpoint), exiting loop")
+                exit_loop_on_success(tool_context)
+            
+            return error_result
+        
+        # Step 2: Extract endpoint details
+        full_url = endpoint_data.get("full_url")
+        method = endpoint_data.get("method", "GET")
+        endpoint_params = endpoint_data.get("parameters", {})
+        
+        if not full_url:
+            error_result = json.dumps({
+                "error": f"No URL found in endpoint data for {entity_name}/{intent}",
+                "endpoint_data": endpoint_data
+            })
+            
+            # If this is a single-tool request, automatically exit the loop with error
+            if not isMultiToolRequest:
+                print(f"🏁 [ENHANCED-API-TOOL] Single-tool request (no URL), exiting loop")
+                exit_loop_on_success(tool_context)
+            
+            return error_result
+        
+        print(f"🎯 [ENHANCED-API-TOOL] Found endpoint: {method} {full_url}")
+        
+        # Step 3: Prepare the request body
+        request_body = params or {}
+        
+        # Step 4: Make the API call using the base invoke_api_tool
+        try:
+            api_result = base_invoke_api_tool(
+                url=full_url,
+                method=method,
+                body=request_body,
+                headers=None,
+                tool_context=tool_context
+            )
+            
+            print(f"✅ [ENHANCED-API-TOOL] API call completed for {entity_name}/{intent}")
+            
+            # Convert API result to string format
+            if isinstance(api_result, dict):
+                result_str = json.dumps(api_result)
+            else:
+                result_str = str(api_result)
+            
+            # If this is a single-tool request, automatically exit the loop
+            if not isMultiToolRequest:
+                print(f"🏁 [ENHANCED-API-TOOL] Single-tool request complete, exiting loop")
+                exit_loop_on_success(tool_context)
+            
+            return result_str
+                
+        except Exception as api_error:
+            print(f"❌ [ENHANCED-API-TOOL] API call failed: {api_error}")
+            
+            # Try fallback endpoints if available
+            retry_info = endpoint_data.get("retry_info", {})
+            fallback_endpoints = retry_info.get("fallback_endpoints", [])
+            
+            if fallback_endpoints:
+                print(f"🔄 [ENHANCED-API-TOOL] Trying {len(fallback_endpoints)} fallback endpoints...")
+                
+                for i, fallback in enumerate(fallback_endpoints[:2], 1):  # Try up to 2 fallbacks
+                    try:
+                        fallback_url = fallback.get("full_url")
+                        fallback_method = fallback.get("method", "GET")
+                        
+                        print(f"🔄 [ENHANCED-API-TOOL] Fallback {i}: {fallback_method} {fallback_url}")
+                        
+                        fallback_result = base_invoke_api_tool(
+                            url=fallback_url,
+                            method=fallback_method,
+                            body=request_body,
+                            headers=None,
+                            tool_context=tool_context
+                        )
+                        
+                        print(f"✅ [ENHANCED-API-TOOL] Fallback {i} succeeded!")
+                        
+                        # Convert fallback result to string format
+                        if isinstance(fallback_result, dict):
+                            result_str = json.dumps(fallback_result)
+                        else:
+                            result_str = str(fallback_result)
+                        
+                        # If this is a single-tool request, automatically exit the loop
+                        if not isMultiToolRequest:
+                            print(f"🏁 [ENHANCED-API-TOOL] Single-tool request complete (via fallback), exiting loop")
+                            exit_loop_on_success(tool_context)
+                        
+                        return result_str
+                            
+                    except Exception as fallback_error:
+                        print(f"❌ [ENHANCED-API-TOOL] Fallback {i} failed: {fallback_error}")
+                        continue
+            
+            # All attempts failed
+            error_result = json.dumps({
+                "error": f"All API attempts failed for {entity_name}/{intent}",
+                "primary_error": str(api_error),
+                "fallbacks_attempted": len(fallback_endpoints),
+            "entity": entity_name,
+                "intent": intent
+            })
+            
+            # If this is a single-tool request, automatically exit the loop with error
+            if not isMultiToolRequest:
+                print(f"🏁 [ENHANCED-API-TOOL] Single-tool request failed, exiting loop")
+                exit_loop_on_success(tool_context)
+            
+            return error_result
+        
+    except Exception as e:
+        print(f"❌ [ENHANCED-API-TOOL] Unexpected error in {entity_name}/{intent}: {e}")
+        import traceback
+        traceback.print_exc()
+        error_result = json.dumps({
+            "error": f"Unexpected error in enhanced API tool: {str(e)}",
+            "entity": entity_name,
+            "intent": intent
+        })
+        
+        # If this is a single-tool request, automatically exit the loop with error
+        if not isMultiToolRequest:
+            print(f"🏁 [ENHANCED-API-TOOL] Single-tool request (unexpected error), exiting loop")
+            exit_loop_on_success(tool_context)
+        
+        return error_result
+
+
 def combined_before_model_callback(callback_context, llm_request=None):
     """Combined callback for entity-specific tools injection"""
     inject_entity_specific_tools_before_model(callback_context, llm_request)
     return None
-
-
-# Task Executor-specific function definitions
-def create_google_doc_from_text_data(title: str, content: str, folder_id: str = "") -> str:
-    """Create a Google Doc from text data - simplified interface for task executor"""
-    # Tool is currently not functional - return silent response
-    logger.info(f"ℹ️ Google Doc creation requested for '{title}' but tool is currently not functional")
-    return json.dumps({
-        "message": "Google Docs creation tool is currently not functional. The request has been acknowledged but no document was created.",
-        "title": title,
-        "status": "tool_not_functional"
-    })
-
-
-def create_google_sheet_from_list_data(title: str, data: str, folder_id: str = "") -> str:
-    """Create a Google Sheet from JSON list data - simplified interface for task executor"""
-    # Tool is currently not functional - return silent response
-    logger.info(f"ℹ️ Google Sheet creation requested for '{title}' but tool is currently not functional")
-    return json.dumps({
-        "message": "Google Sheets creation tool is currently not functional. The request has been acknowledged but no spreadsheet was created.",
-        "title": title,
-        "status": "tool_not_functional"
-    })
-
-
-def create_google_sheet_with_headers_data(title: str, headers: str, data: str, folder_id: str = "") -> str:
-    """Create a Google Sheet with headers and data - simplified interface for task executor"""
-    # Tool is currently not functional - return silent response
-    logger.info(f"ℹ️ Google Sheet with headers creation requested for '{title}' but tool is currently not functional")
-    return json.dumps({
-        "message": "Google Sheets creation tool is currently not functional. The request has been acknowledged but no spreadsheet was created.",
-        "title": title,
-        "status": "tool_not_functional"
-    })
-
-
-def get_entity_api_tools_config(entity_name: str) -> str:
-    """
-    Get entity-specific tools configuration from config_manager
-    
-    Args:
-        entity_name: The entity name (e.g., "Partner", "Contact", "Global")
-        
-    Returns:
-        JSON string containing the entity-specific tools configuration
-    """
-    try:
-        from ai_assistant.utils.api_config_manager import config_manager
-        
-        # Load entity-specific configuration
-        entity_config = config_manager.load_entity_api_config(entity_name)
-        
-        # Get formatted summary for the task executor
-        tools_summary = config_manager.get_entity_api_tools(entity_name)
-        
-        # Return both the raw config and formatted summary
-        result = {
-            "entity": entity_name,
-            "tools_summary": tools_summary,
-            "raw_config": entity_config,
-            "base_url": config_manager.get_api_base_url(),
-            "available_entities": config_manager.get_available_entities()
-        }
-        
-        return json.dumps(result, indent=2)
-        
-    except Exception as e:
-        logging.error(f"Error loading entity tools config for {entity_name}: {e}")
-        return json.dumps({
-            "error": f"Failed to load entity tools config for {entity_name}: {str(e)}",
-            "entity": entity_name
-        })
-
 
 def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = "{}") -> str:
     """
@@ -560,7 +589,7 @@ def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = 
             candidates.sort(key=lambda x: x['score'], reverse=True)
             return candidates
         
-        def score_endpoint_for_intent_standalone(endpoint: dict, intent: str, entity_name: str, extracted_params: dict = None) -> int:
+        def score_endpoint_for_intent_standalone(endpoint: dict, intent: str, entity_name: str, extracted_params: Optional[dict] = None) -> int:
             """Enhanced scoring function optimized for task planner integration"""
             score = 0
             endpoint_name = endpoint.get('name', '').lower()
@@ -646,14 +675,66 @@ def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = 
         best_endpoint = best_candidate['endpoint']
         
         base_url = config_manager.get_api_base_url()
-        full_url = f"{base_url}{best_endpoint.get('url', '')}" if not best_endpoint.get('url', '').startswith('http') else best_endpoint.get('url', '')
+        endpoint_url = best_endpoint.get('url', '')
+        
+        # Use construct_api_url for proper path parameter substitution
+        from ai_assistant.utils.common_callbacks import construct_api_url
+        
+        if endpoint_url.startswith('http'):
+            full_url = endpoint_url
+        else:
+            # Extract path parameters from params_dict for URL substitution
+            path_params = None
+            print(f"🔧 [PATH-PARAMS] params_dict: {params_dict}")
+            print(f"🔧 [PATH-PARAMS] endpoint_url: {endpoint_url}")
+            
+            if params_dict:
+                # Create path_params dict from params that might be path parameters
+                path_params = {}
+                endpoint_params = best_endpoint.get('parameters', {})
+                print(f"🔧 [PATH-PARAMS] endpoint_params: {endpoint_params}")
+                
+                for param_name, param_info in endpoint_params.items():
+                    if param_name in params_dict:
+                        path_params[param_name] = params_dict[param_name]
+                        print(f"🔧 [PATH-PARAMS] Added from endpoint_params: {param_name} = {params_dict[param_name]}")
+                
+                # Also check for common path parameter names and their variations
+                common_param_mappings = {
+                    'id': 'id',
+                    'partnerId': 'partnerId', 
+                    'partner_id': 'partnerId',
+                    'contactId': 'contactId',
+                    'contact_id': 'contactId', 
+                    'partnerName': 'partnerName',
+                    'partner_name': 'partnerName',  # Map snake_case to camelCase
+                    'entityId': 'entityId',
+                    'entity_id': 'entityId'
+                }
+                
+                for param_key, url_param_name in common_param_mappings.items():
+                    if param_key in params_dict:
+                        path_params[url_param_name] = params_dict[param_key]
+                        print(f"🔧 [PATH-PARAMS] Added from common_params: {param_key} -> {url_param_name} = {params_dict[param_key]}")
+            
+            print(f"🔧 [PATH-PARAMS] Final path_params: {path_params}")
+            full_url = construct_api_url(base_url, endpoint_url, path_params)
+            print(f"🔧 [PATH-PARAMS] Constructed URL: {full_url}")
         
         # Prepare retry information for the agent
         fallback_endpoints = []
         if len(ranked_candidates) > 1:
             for i, candidate in enumerate(ranked_candidates[1:3], 1):  # Next 2 best alternatives
                 ep = candidate['endpoint']
-                fallback_url = f"{base_url}{ep.get('url', '')}" if not ep.get('url', '').startswith('http') else ep.get('url', '')
+                ep_url = ep.get('url', '')
+                
+                # Use construct_api_url for fallback endpoints too
+                if ep_url.startswith('http'):
+                    fallback_url = ep_url
+                else:
+                    # Use the same path_params for fallback URLs
+                    fallback_url = construct_api_url(base_url, ep_url, path_params)
+                
                 fallback_endpoints.append({
                     "rank": i + 1,
                     "name": ep.get('name'),
@@ -711,153 +792,8 @@ def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = 
         })
 
 
-def get_entity_search_metadata(entity_name: str) -> str:
-    """
-    Get search metadata for an entity including available fields, operators, and examples
-    
-    Args:
-        entity_name: The entity name (e.g., "Partner", "Contact", "Interaction")
-        
-    Returns:
-        JSON string containing search metadata for advanced search queries
-    """
-    try:
-        from ai_assistant.utils.api_config_manager import config_manager
-        
-        # Get search metadata (with graceful fallback)
-        search_metadata = config_manager.get_entity_search_metadata(entity_name)
-        
-        if not search_metadata:
-            print(f"ℹ️ No searchMetadata for {entity_name} - this is normal for entities without advanced search")
-            return json.dumps({
-                "entity": entity_name,
-                "searchMetadata": {},
-                "message": f"No advanced search metadata available for entity '{entity_name}'. This entity may only support basic text search.",
-                "guidance": {
-                    "recommended_approach": "Use simple text search (searchText parameter)",
-                    "basic_operators": ["like", "is", "not", "contains", "startsWith", "endsWith"],
-                    "note": "Advanced nested field searches may not be supported"
-                }
-            })
-        
-        # Format the response
-        result = {
-            "entity": entity_name,
-            "searchMetadata": search_metadata,
-            "guidance": {
-                "use_advanced_search_when": [
-                    "Searching related entities (e.g., 'interactions with UNICEF partners')",
-                    "Field-specific searches (e.g., 'partners where status is Active')",
-                    "Multiple criteria with operators"
-                ],
-                "use_simple_text_when": [
-                    "Simple keyword searches (e.g., 'project', 'meeting notes')",
-                    "General text searches across fields",
-                    "Single search terms"
-                ],
-                "mandatory_requirements": [
-                    "searchCriteria is REQUIRED when advancedSearch=true",
-                    "Each criteria object MUST include a 'description' field",
-                    "Use only fields from directFields and nestedFields",
-                    "Use only operators from the operators list"
-                ]
-            }
-        }
-        
-        return json.dumps(result, indent=2)
-        
-    except Exception as e:
-        logging.error(f"Error getting search metadata for {entity_name}: {e}")
-        return json.dumps({
-            "entity": entity_name,
-            "error": f"Failed to get search metadata for {entity_name}: {str(e)}"
-        })
 
 
-def get_entity_search_examples(entity_name: str) -> str:
-    """
-    Get example search criteria for an entity with proper formatting
-    
-    Args:
-        entity_name: The entity name (e.g., "Partner", "Contact", "Interaction")
-        
-    Returns:
-        JSON string containing formatted search examples
-    """
-    try:
-        from ai_assistant.utils.api_config_manager import config_manager
-        
-        # Get search examples (with graceful fallback)
-        examples = config_manager.get_entity_search_examples(entity_name)
-        fields = config_manager.get_entity_search_fields(entity_name)
-        operators = config_manager.get_entity_search_operators(entity_name)
-        
-        # Check if we have any meaningful data
-        has_search_metadata = (examples or 
-                             fields.get("directFields") or 
-                             fields.get("nestedFields") or 
-                             len(operators) > 6)  # More than basic fallback operators
-        
-        if has_search_metadata:
-            result = {
-                "entity": entity_name,
-                "exampleCriteria": examples,
-                "availableFields": fields,
-                "availableOperators": operators,
-                "hasAdvancedSearch": True,
-                "formattingGuide": {
-                    "simple_example": {
-                        "field": "name",
-                        "operator": "like",
-                        "value": "UNICEF",
-                        "description": "Find entities with UNICEF in name"
-                    },
-                    "multiple_criteria_example": [
-                        {
-                            "field": "partner.name",
-                            "operator": "like",
-                            "value": "UNICEF",
-                            "description": "Find entities related to UNICEF partners"
-                        },
-                        {
-                            "field": "status",
-                            "operator": "is",
-                            "value": "Active",
-                            "logicalOperator": "AND",
-                            "description": "Must be active status"
-                        }
-                    ]
-                }
-            }
-        else:
-            # Provide basic guidance when no advanced search metadata is available
-            print(f"ℹ️ No advanced search metadata for {entity_name} - providing basic search guidance")
-            result = {
-                "entity": entity_name,
-                "exampleCriteria": [],
-                "availableFields": {"directFields": [], "nestedFields": {}},
-                "availableOperators": operators,  # Basic fallback operators
-                "hasAdvancedSearch": False,
-                "message": f"No advanced search examples available for entity '{entity_name}'",
-                "recommendation": {
-                    "preferred_approach": "Use simple text search with searchText parameter",
-                    "basic_search_example": {
-                        "searchText": "UNICEF",
-                        "advancedSearch": False,
-                        "description": "Simple text search across entity fields"
-                    },
-                    "note": "This entity may not support complex nested field searches"
-                }
-            }
-        
-        return json.dumps(result, indent=2)
-        
-    except Exception as e:
-        logging.error(f"Error getting search examples for {entity_name}: {e}")
-        return json.dumps({
-            "entity": entity_name,
-            "error": f"Failed to get search examples for {entity_name}: {str(e)}"
-        })
 
 
 def build_task_executor_tools():
@@ -871,30 +807,15 @@ def build_task_executor_tools():
     tools = [
         # Core API tools (always available)
         FunctionTool(func=invoke_api_tool), 
-        FunctionTool(func=exit_loop_on_success),
-        # Entity-specific configuration tools
-        FunctionTool(func=get_entity_api_tools_config),
-        FunctionTool(func=find_entity_endpoint),
-        # Search metadata tools for advanced search
-        FunctionTool(func=get_entity_search_metadata),
-        FunctionTool(func=get_entity_search_examples)
+        FunctionTool(func=exit_loop_on_success)
     ]
 
     # Add External API tools (always available with stubs)
     tools.extend([
-        FunctionTool(func=search_unops_google_drive),
-        FunctionTool(func=search_external_drive_service),
         FunctionTool(func=read_content_from_url),
         FunctionTool(func=convert_markdown_to_google_doc),
     ])
     logging.info("✅ Added External API tools to task executor (with fallback implementations)")
-
-    # Add Google Sheets tools (always available with local wrapper)
-    tools.extend([
-        FunctionTool(func=create_google_sheet_from_list_data),
-        FunctionTool(func=create_google_sheet_with_headers_data)
-    ])
-    logging.info(f"✅ Added Google Sheets tools to task executor (available: {google_sheet_wrapper.available})")
 
     # Note: Google Doc creation uses convert_markdown_to_google_doc (already added above)
     logging.info("✅ Google Doc creation available via convert_markdown_to_google_doc")
@@ -907,13 +828,6 @@ def build_task_executor_tools():
     ])
     logging.info("✅ Added Speech-to-Text tools to task executor (with fallback implementations)")
 
-    # Add cache management tools (always available with stubs)
-    tools.extend([
-        FunctionTool(func=get_cache_stats),
-        FunctionTool(func=clear_cache),
-        FunctionTool(func=refresh_cache),
-    ])
-    logging.info("✅ Added cache management tools to task executor (with fallback implementations)")
 
     # Add UI tools (always available with stubs)
     tools.extend([
@@ -943,6 +857,7 @@ def build_task_executor_tools():
             logging.warning("⚠️ search_agent is not a proper ADK agent, skipping AgentTool addition")
     except Exception as e:
         logging.error(f"❌ Failed to add search_agent to tools: {e}")
+
 
     logging.info(f"🔧 Built task executor tools list with {len(tools)} tools")
     return tools

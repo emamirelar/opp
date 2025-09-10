@@ -1,12 +1,12 @@
 {
   "entity": "SystemAdmin",
-  "description": "Manages system-level administrative tasks, including database migrations and other core system operations.",
+  "description": "Manages system-level administrative tasks, such as database migrations.",
   "synonyms": [
     "System Administration",
-    "Admin",
-    "System Management",
-    "Backend Operations",
-    "System Ops"
+    "Maintenance",
+    "Setup",
+    "Configuration",
+    "Admin"
   ],
   "mandatoryFields": [],
   "endpoints": [
@@ -14,14 +14,16 @@
       "name": "RunMigrations",
       "url": "/api/system-admin/migrations/run",
       "method": "GET",
-      "description": "Initiates the process to run pending database migrations. This operation updates the database schema to the latest version. It is typically used during deployment or maintenance.",
+      "description": "Executes pending database migrations to update the system's schema. This is typically used for initial setup or system upgrades.",
       "parameters": {},
       "example_uses": [
-        "Run the system database migrations.",
-        "Update the application's database schema.",
-        "Execute pending database changes for the system."
+        "Run the necessary database migrations.",
+        "Initialize the database schema for the first time.",
+        "Update the system's database to the latest version.",
+        "Perform a database schema upgrade.",
+        "Execute all pending database changes."
       ],
-      "when_to_use": "Use this endpoint when the system's database schema needs to be updated to the latest version, typically after a new deployment or during a maintenance window. This operation should be performed with caution as it modifies the database structure."
+      "when_to_use": "Use this endpoint to execute pending database migrations, typically during system deployment, initial setup, or upgrade processes. This operation ensures the database schema is up-to-date with the application's requirements. It should be used with caution as it modifies the database structure."
     }
   ]
 }

@@ -14,7 +14,7 @@
       "name": "GetPromptsAsync",
       "url": "/api/ai-prompt-management/list",
       "method": "POST",
-      "description": "Retrieves all AI prompts with advanced filtering, pagination, search capabilities, and access control for prompt management. This endpoint supports advanced search criteria. To use advanced search, provide a JSON array of `searchCriteria` objects in the request body. Each object should have `field`, `operator`, and `value` properties. Supported fields for search include: `Name`, `Description`, `Prompt`, `Type`, `PromptFunction`, `Project`, `Location`, `Model`, `CreatedAt`. Supported operators are: `like`, `is`, `not`, `contains`, `startsWith`, `between`. For date fields like `CreatedAt`, use `between` with a comma-separated date range (e.g., '2023-01-01,2023-12-31').",
+      "description": "Retrieves all AI prompts with advanced filtering, pagination, and search capabilities. This endpoint supports comprehensive search criteria using a JSON array in the `request` body's `searchCriteria` field. Each criterion should specify a `field`, `operator`, and `value`. Refer to the entity's `searchMetadata` for a list of searchable fields, supported operators, and example criteria.",
       "parameters": {
         "request": {
           "type": "object",
@@ -277,6 +277,20 @@
       "when_to_use": "Use this when the user asks to update, modify, edit, or change AI prompt configuration or content."
     },
     {
+      "name": "ExportAiPromptsAsync",
+      "url": "/api/ai-prompt-management/export-developer",
+      "method": "GET",
+      "description": "Exports all AI prompts as a C# seeder file for developers",
+      "parameters": {},
+      "example_uses": [
+        "Export AI prompts for development",
+        "Download seeder file for AI prompts",
+        "Generate developer version of prompts",
+        "Export prompts as C# code"
+      ],
+      "when_to_use": "Use this when developers need to export AI prompts as C# code for seeding or backup purposes."
+    },
+    {
       "name": "DeletePromptAsync",
       "url": "/api/ai-prompt-management/{id}",
       "method": "DELETE",
@@ -368,7 +382,7 @@
       "name": "GetLocationsAsync",
       "url": "/api/ai-prompt-management/locations",
       "method": "GET",
-      "description": "Retrieves all unique locations/regions associated with AI prompts for dropdown menus and filtering operations.",
+      "description": "Retrieves all unique locations/regions associated with AI prompts, useful for populating dropdown menus and filtering operations within the system.",
       "parameters": {},
       "example_uses": [
         "Get locations for dropdown menu",
@@ -381,14 +395,69 @@
     },
     {
       "name": "TestPromptAsync",
-      "url": "api/ai-prompt-management/test",
+      "url": "/api/ai-prompt-management/test",
       "method": "POST",
-      "description": "Tests an AI prompt with provided test data to validate prompt effectiveness and output quality before deployment.",
+      "description": "Tests an AI prompt with provided test data to validate its effectiveness and output quality before deployment. Allows for specifying prompt details, test data, and model parameters.",
       "parameters": {
-        "request": {
-          "type": "object",
+        "Type": {
+          "type": "string",
           "required": false,
-          "description": "Test request containing prompt data and test parameters"
+          "description": "The type of prompt being tested."
+        },
+        "Id": {
+          "type": "integer",
+          "required": false,
+          "description": "The ID of an existing prompt to test."
+        },
+        "TestData": {
+          "type": "string",
+          "required": false,
+          "description": "The input data to test the prompt against."
+        },
+        "Model": {
+          "type": "string",
+          "required": false,
+          "description": "The AI model to use for testing (e.g., 'gemini-pro')."
+        },
+        "Project": {
+          "type": "string",
+          "required": false,
+          "description": "The project associated with the prompt."
+        },
+        "Location": {
+          "type": "string",
+          "required": false,
+          "description": "The geographical location for the AI model."
+        },
+        "Temperature": {
+          "type": "float",
+          "required": false,
+          "description": "Controls the randomness of the output. Lower values mean less random."
+        },
+        "TopP": {
+          "type": "float",
+          "required": false,
+          "description": "Controls diversity via nucleus sampling. Higher values consider more tokens."
+        },
+        "MaxOutputTokens": {
+          "type": "integer",
+          "required": false,
+          "description": "The maximum number of tokens to generate in the output."
+        },
+        "GoogleSearch": {
+          "type": "boolean",
+          "required": false,
+          "description": "Indicates whether to enable Google Search for grounding the prompt."
+        },
+        "SafetySettings": {
+          "type": "string",
+          "required": false,
+          "description": "Safety settings to apply to the prompt generation."
+        },
+        "Prompt": {
+          "type": "string",
+          "required": false,
+          "description": "The actual prompt text to test."
         }
       },
       "example_uses": [
@@ -402,213 +471,277 @@
     },
     {
       "name": "UpgradeGeminiModel",
-      "url": "api/ai-prompt-management/upgrade-model",
+      "url": "/api/ai-prompt-management/upgrade-model",
       "method": "POST",
-      "description": "Upgrades all AI prompts to use the latest available Gemini model.",
+      "description": "Initiates an upgrade process for all AI prompts to utilize the latest available Gemini model, ensuring optimal performance and access to new features.",
       "parameters": {},
       "example_uses": [
-        "Upgrade all AI prompts to the newest Gemini model.",
-        "Initiate a system-wide Gemini model upgrade.",
-        "Update the AI models used by all prompts."
+        "Upgrade all AI prompts to the latest Gemini model",
+        "Update AI models across the system",
+        "Migrate prompts to Gemini Pro",
+        "Ensure all prompts use the newest AI capabilities"
       ],
-      "when_to_use": "Use this when you need to update all existing AI prompts to utilize the latest version of the Gemini model."
+      "when_to_use": "Use this when a system-wide upgrade of AI models for all prompts is required."
     },
     {
       "name": "GetUserSessions",
-      "url": "api/ai-assistant/get-user-sessions",
+      "url": "/api/ai-assistant/get-user-sessions",
       "method": "POST",
-      "description": "Retrieves a list of all active and past AI assistant chat sessions for the current user.",
+      "description": "Retrieves a list of all active or historical chat sessions for the current user with the Gemini AI assistant.",
       "parameters": {},
       "example_uses": [
-        "Get my AI assistant chat history.",
-        "List all my Gemini sessions.",
-        "Show me my past conversations with the AI assistant."
+        "Show my AI chat history",
+        "List all my Gemini sessions",
+        "Get my past conversations with the AI assistant",
+        "Display my AI interactions"
       ],
-      "when_to_use": "Use this when you want to view a list of all chat sessions you've had with the AI assistant."
+      "when_to_use": "Use this when the user wants to view their previous chat sessions with the AI assistant."
     },
     {
       "name": "GetSessionDetails",
-      "url": "api/ai-assistant/get-session",
+      "url": "/api/ai-assistant/get-session",
       "method": "POST",
-      "description": "Retrieves detailed information and chat history for a specific AI assistant session.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Get details for AI session 123.",
-        "Retrieve the chat log for session 'abc-def'.",
-        "Show me the conversation from my last AI assistant session."
-      ],
-      "when_to_use": "Use this when you need to access the full conversation history and details of a particular AI assistant session."
-    },
-    {
-      "name": "ChatWithGemini",
-      "url": "api/ai-assistant/chat",
-      "method": "POST",
-      "description": "Initiates or continues a conversational chat with the Gemini AI assistant, optionally including file attachments or extracted text.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Ask the AI assistant 'What is the capital of France?'",
-        "Upload a document and ask the AI to summarize it.",
-        "Continue my chat session 456 with a new message."
-      ],
-      "when_to_use": "Use this to send messages, files, or extracted text to the Gemini AI assistant and receive a response, either starting a new session or continuing an existing one."
-    },
-    {
-      "name": "ProcessDataRelatedSummaryDetails",
-      "url": "api/process-data",
-      "method": "POST",
-      "description": "Processes specific data to generate summary details, requiring an ID and optionally a type and message.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Process data with ID 123 for summary.",
-        "Generate a summary for data type 'report' with ID 456.",
-        "Process data with ID 789 and include a custom message."
-      ],
-      "when_to_use": "Use this to trigger the processing of specific data identified by an ID, to obtain summary details."
-    },
-    {
-      "name": "UpdateAiAssistantAccessibility",
-      "url": "api/ai-assistant/accessibility",
-      "method": "POST",
-      "description": "Updates accessibility settings for an AI assistant session, such as enabling or disabling text-to-speech.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Enable text-to-speech for my current AI session.",
-        "Disable accessibility features for session 'xyz'.",
-        "Update text-to-speech setting for AI assistant."
-      ],
-      "when_to_use": "Use this to modify accessibility options for an AI assistant session, like turning text-to-speech on or off."
-    },
-    {
-      "name": "UpdateSessionStar",
-      "url": "api/ai-assistant/update-star",
-      "method": "POST",
-      "description": "Marks or unmarks an AI assistant session as starred for easy identification.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Star my current AI assistant session.",
-        "Unstar session 'abc-123'.",
-        "Mark session 789 as important."
-      ],
-      "when_to_use": "Use this to toggle the 'starred' status of an AI assistant session, typically for bookmarking or prioritizing."
-    },
-    {
-      "name": "UpdateSessionArchive",
-      "url": "api/ai-assistant/update-archive",
-      "method": "POST",
-      "description": "Archives or unarchives an AI assistant session, moving it to or from an archived state.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Archive my current AI assistant session.",
-        "Unarchive session 'def-456'.",
-        "Move session 101 to the archives."
-      ],
-      "when_to_use": "Use this to change the archived status of an AI assistant session, useful for managing session visibility."
-    },
-    {
-      "name": "UpdateSessionTitle",
-      "url": "api/ai-assistant/update-title",
-      "method": "POST",
-      "description": "Updates the title of an AI assistant session for better organization and identification.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Change the title of my current AI session to 'Project X Discussion'.",
-        "Rename session 'ghi-789' to 'Meeting Notes'.",
-        "Update the title of AI assistant session."
-      ],
-      "when_to_use": "Use this to assign or modify a descriptive title for an AI assistant session."
-    },
-    {
-      "name": "GenerateAndStoreEmbeddings",
-      "url": "api/generate-embeddings",
-      "method": "GET",
-      "description": "Generates and stores AI embeddings for specified entities or content.",
-      "parameters": {
-        "entityName": {
-          "type": "string",
-          "required": false,
-          "description": "The name of the entity for which to generate embeddings (e.g., 'Partner', 'Contact')."
-        }
-      },
-      "example_uses": [
-        "Generate embeddings for all partner data.",
-        "I need to create AI embeddings for the 'Contact' entity.",
-        "Can you trigger the embedding generation process for the system?"
-      ],
-      "when_to_use": "Use this endpoint to initiate the process of generating and storing AI embeddings for various data entities, which can then be used for AI search or similarity tasks."
-    },
-    {
-      "name": "GenerateTitle",
-      "url": "api/ai-assistant/generate-title",
-      "method": "GET",
-      "description": "Generates a concise title using AI based on a given session context.",
+      "description": "Fetches the complete details and conversation history for a specific Gemini AI assistant session using its unique session ID.",
       "parameters": {
         "sessionId": {
           "type": "string",
           "required": false,
-          "description": "The ID of the AI assistant session to generate a title for."
+          "description": "The unique identifier of the Gemini chat session."
         }
       },
       "example_uses": [
-        "Generate a title for the current AI chat session.",
-        "I need a summary title for session 'abc-123'.",
-        "Can the AI suggest a title for my ongoing conversation?"
+        "Get details for session 'abc-123'",
+        "Show conversation history for my last chat",
+        "Retrieve specific AI session data",
+        "Display the messages from session 'xyz-456'"
       ],
-      "when_to_use": "Use this endpoint to leverage AI to automatically generate a suitable title for an ongoing or completed AI assistant session, useful for organizing conversations."
+      "when_to_use": "Use this when the user needs to retrieve the full conversation and context of a particular AI assistant session."
+    },
+    {
+      "name": "ChatWithGemini",
+      "url": "/api/ai-assistant/chat",
+      "method": "POST",
+      "description": "Sends a message to the Gemini AI assistant to initiate or continue a conversation, optionally including files, extracted text, or screen URLs for context.",
+      "parameters": {
+        "Message": {
+          "type": "string",
+          "required": false,
+          "description": "The user's message or query for the AI assistant."
+        },
+        "sessionId": {
+          "type": "string",
+          "required": false,
+          "description": "The ID of the current chat session to continue the conversation."
+        },
+        "File": {
+          "type": "object",
+          "required": false,
+          "description": "A single file to be sent to the AI assistant for analysis or context."
+        },
+        "Files": {
+          "type": "array",
+          "required": false,
+          "description": "A collection of files to be sent to the AI assistant."
+        },
+        "ExtractedText": {
+          "type": "string",
+          "required": false,
+          "description": "Text extracted from a document or source to provide context to the AI."
+        },
+        "ScreenUrl": {
+          "type": "string",
+          "required": false,
+          "description": "A URL pointing to a screen or web page for the AI to analyze."
+        },
+        "State": {
+          "type": "string",
+          "required": false,
+          "description": "Additional state information for the chat session."
+        }
+      },
+      "example_uses": [
+        "Chat with the AI about my project",
+        "Ask Gemini a question",
+        "Send a message to the AI assistant with this document",
+        "Continue our conversation about the budget report",
+        "Can you summarize this text for me?"
+      ],
+      "when_to_use": "Use this when the user wants to interact with the Gemini AI assistant, send a new message, or continue an existing chat session, potentially providing additional context like files or text."
+    },
+    {
+      "name": "ProcessDataRelatedSummaryDetails",
+      "url": "/api/process-data",
+      "method": "POST",
+      "description": "Processes specific data related to a summary, identified by an ID and type, potentially using a message for additional context or instructions.",
+      "parameters": {
+        "Id": {
+          "type": "integer",
+          "required": true,
+          "description": "The unique identifier of the data item to be processed."
+        },
+        "Type": {
+          "type": "string",
+          "required": false,
+          "description": "The type or category of the data item."
+        },
+        "Message": {
+          "type": "string",
+          "required": false,
+          "description": "An optional message providing context or instructions for processing."
+        }
+      },
+      "example_uses": [
+        "Process summary details for ID 123",
+        "Analyze data of type 'report' with message 'urgent'",
+        "Generate a summary for item 456",
+        "Process the financial data with ID 789"
+      ],
+      "when_to_use": "Use this when there is a need to process specific data points or summaries, requiring an ID and optionally a type and message for context."
+    },
+    {
+      "name": "UpdateAiAssistantAccessibility",
+      "url": "/api/ai-assistant/accessibility",
+      "method": "POST",
+      "description": "Updates accessibility settings for a specific AI assistant session, such as enabling or disabling text-to-speech functionality.",
+      "parameters": {
+        "SessionId": {
+          "type": "string",
+          "required": false,
+          "description": "The unique identifier of the AI assistant session."
+        },
+        "TextToSpeech": {
+          "type": "boolean",
+          "required": false,
+          "description": "Boolean indicating whether text-to-speech should be enabled (true) or disabled (false)."
+        }
+      },
+      "example_uses": [
+        "Enable text-to-speech for my current AI session",
+        "Turn off voice output for the assistant",
+        "Update accessibility settings for session 'abc'",
+        "Set text-to-speech to true for the AI chat"
+      ],
+      "when_to_use": "Use this when the user wants to modify accessibility features, like text-to-speech, for their AI assistant sessions."
+    },
+    {
+      "name": "UpdateSessionStar",
+      "url": "/api/ai-assistant/update-star",
+      "method": "POST",
+      "description": "Marks or unmarks a specific AI assistant chat session as 'starred' for easy retrieval or categorization.",
+      "parameters": {
+        "Starred": {
+          "type": "boolean",
+          "required": true,
+          "description": "Boolean indicating whether the session should be starred (true) or unstarred (false)."
+        },
+        "SessionId": {
+          "type": "string",
+          "required": false,
+          "description": "The unique identifier of the AI assistant session to update."
+        }
+      },
+      "example_uses": [
+        "Star my current AI session",
+        "Unstar the session 'def-456'",
+        "Mark this chat as important",
+        "Remove the star from my AI conversation"
+      ],
+      "when_to_use": "Use this when the user wants to mark an AI assistant session as important or favorite, or to remove such a mark."
+    },
+    {
+      "name": "UpdateSessionArchive",
+      "url": "/api/ai-assistant/update-archive",
+      "method": "POST",
+      "description": "Archives or unarchives a specific AI assistant chat session, moving it to or from an archived state.",
+      "parameters": {
+        "Archived": {
+          "type": "boolean",
+          "required": true,
+          "description": "Boolean indicating whether the session should be archived (true) or unarchived (false)."
+        },
+        "SessionId": {
+          "type": "string",
+          "required": false,
+          "description": "The unique identifier of the AI assistant session to update."
+        }
+      },
+      "example_uses": [
+        "Archive my current AI session",
+        "Unarchive the session 'ghi-789'",
+        "Move this chat to archives",
+        "Restore the archived AI conversation"
+      ],
+      "when_to_use": "Use this when the user wants to archive an AI assistant session to hide it from the main view or to restore an previously archived session."
+    },
+    {
+      "name": "UpdateSessionTitle",
+      "url": "/api/ai-assistant/update-title",
+      "method": "POST",
+      "description": "Allows updating the title of an existing AI assistant session. This is useful for organizing and identifying specific conversations or tasks within the AI assistant.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "Request body containing the new title and session ID."
+        }
+      },
+      "example_uses": [
+        "Update the title of my current AI chat session to 'Project Planning Discussion'.",
+        "Change the name of session 'abc-123' to 'Brainstorming for Q3 Report'.",
+        "I need to rename an AI assistant session after a conversation has concluded."
+      ],
+      "when_to_use": "Use this endpoint when you need to assign or change a descriptive title for an AI assistant session, typically after a conversation has started or concluded, to improve organization and retrieval."
+    },
+    {
+      "name": "GenerateAndStoreEmbeddings",
+      "url": "/api/generate-embeddings",
+      "method": "GET",
+      "description": "Triggers the process of generating and storing vector embeddings for a specified entity. This is crucial for enabling semantic search and similarity comparisons within the AI system.",
+      "parameters": {
+        "entityName": {
+          "type": "string",
+          "required": false,
+          "description": "The name of the entity for which to generate embeddings (e.g., 'documents', 'users')."
+        }
+      },
+      "example_uses": [
+        "Generate embeddings for all new policy documents.",
+        "Trigger the embedding process for the 'knowledge base' entity.",
+        "I need to update the semantic search index by generating new embeddings for a specific data set."
+      ],
+      "when_to_use": "Use this endpoint to initiate the creation of numerical representations (embeddings) for data, which are then used by AI models for tasks like similarity search, recommendation, or context retrieval. This is typically an administrative or background task."
+    },
+    {
+      "name": "GenerateTitle",
+      "url": "/api/ai-assistant/generate-title",
+      "method": "GET",
+      "description": "Requests the AI assistant to automatically generate a concise and relevant title for a given session based on its content. This helps in quickly summarizing and identifying sessions.",
+      "parameters": {
+        "sessionId": {
+          "type": "string",
+          "required": false,
+          "description": "The unique identifier of the AI assistant session for which to generate a title."
+        }
+      },
+      "example_uses": [
+        "Ask the AI to suggest a title for my current chat.",
+        "Generate a summary title for session 'xyz-456'.",
+        "I want the AI to automatically name this conversation."
+      ],
+      "when_to_use": "Use this endpoint when you want the AI to automatically create a descriptive title for an ongoing or completed AI assistant session, saving manual effort and improving session discoverability."
     },
     {
       "name": "GenerateSuggestions",
-      "url": "api/ai-assistant/generate-suggestions",
+      "url": "/api/ai-assistant/generate-suggestions",
       "method": "GET",
-      "description": "Generates AI-powered suggestions, such as follow-up questions or related topics, for the AI assistant.",
+      "description": "Prompts the AI assistant to generate contextually relevant suggestions, which could include follow-up questions, related topics, or next steps.",
       "parameters": {},
       "example_uses": [
-        "Provide me with some AI-generated suggestions for my next steps.",
-        "What are some related topics the AI can suggest?",
-        "Can the AI assistant give me some follow-up questions?"
+        "Ask the AI for some follow-up questions based on our discussion.",
+        "Generate suggestions for next steps in this project.",
+        "I need the AI to provide some ideas for related topics."
       ],
-      "when_to_use": "Use this endpoint to get AI-driven suggestions, like potential next questions or related discussion points, to enhance user interaction with the AI assistant."
+      "when_to_use": "Use this endpoint when you need the AI to provide proactive assistance, such as suggesting relevant actions, questions, or content based on the current context or conversation."
     }
   ]
 }

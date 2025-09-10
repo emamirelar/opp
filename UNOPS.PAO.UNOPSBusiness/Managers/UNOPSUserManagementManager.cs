@@ -221,13 +221,24 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
                 UserName = userProfile.UserEmail,
                 Email = userProfile.UserEmail,
                 EmailConfirmed = true,
-                LockoutEnabled = false
+                LockoutEnabled = false,
+                SecurityStamp = Guid.NewGuid().ToString()
             };
 
             var createResult = await _userManager.CreateAsync(aspNetUser);
             if (!createResult.Succeeded)
             {
                 throw new InvalidOperationException($"Failed to create user account: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+            }
+        }
+
+        // Ensure SecurityStamp is set for existing users (required for role operations)
+        if (string.IsNullOrEmpty(aspNetUser.SecurityStamp))
+        {
+            var updateStampResult = await _userManager.UpdateSecurityStampAsync(aspNetUser);
+            if (!updateStampResult.Succeeded)
+            {
+                throw new InvalidOperationException($"Failed to update user security stamp: {string.Join(", ", updateStampResult.Errors.Select(e => e.Description))}");
             }
         }
 

@@ -62,6 +62,16 @@
       }
     },
     {
+      "element": ".advanced-search",
+      "fallbackType": ".mobile-advanced-search",
+      "popover": {
+        "titleKey": "tour.interactions.steps.advancedSearch.title",
+        "descriptionKey": "tour.interactions.steps.advancedSearch.description",
+        "side": "bottom",
+        "align": "end"
+      }
+    },
+    {
       "element": ".interaction-listview",
       "fallbackType": "grid-view",
       "popover": {
