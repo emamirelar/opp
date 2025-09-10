@@ -10,7 +10,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            /*migrationBuilder.DropForeignKey(
+            migrationBuilder.DropForeignKey(
                 name: "FK_Engagements_Partners_ErpDimValue",
                 schema: "public",
                 table: "Engagements");
@@ -23,18 +23,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
             migrationBuilder.DropColumn(
                 name: "ErpDimValue",
                 schema: "public",
-                table: "Engagements");*/
+                table: "Engagements");
 
-            migrationBuilder.AlterColumn<int>(
-                name: "ErpDimValue",
-                schema: "public",
-                table: "Partners",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0,
-                oldClrType: typeof(int),
-                oldType: "integer",
-                oldNullable: true);
+            // Keep ErpDimValue as nullable - no need to alter the column
+            // The unique constraint with filter handles uniqueness for non-null values only
 
             migrationBuilder.AddUniqueConstraint(
                 name: "AK_Partners_ErpDimValue",
@@ -42,11 +34,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 table: "Partners",
                 column: "ErpDimValue");
 
-            /*migrationBuilder.CreateIndex(
+            migrationBuilder.CreateIndex(
                 name: "IX_Engagements_PartnerId",
                 schema: "public",
                 table: "Engagements",
-                column: "PartnerId");*/
+                column: "PartnerId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Engagements_Partners_PartnerId",
@@ -77,14 +69,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 schema: "public",
                 table: "Engagements");*/
 
-            migrationBuilder.AlterColumn<int>(
-                name: "ErpDimValue",
-                schema: "public",
-                table: "Partners",
-                type: "integer",
-                nullable: true,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            // ErpDimValue remains nullable - no column alteration needed
 
             migrationBuilder.AddColumn<int>(
                 name: "ErpDimValue",
