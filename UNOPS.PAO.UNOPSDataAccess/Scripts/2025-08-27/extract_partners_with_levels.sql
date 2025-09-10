@@ -50,7 +50,7 @@ partner_levels AS (
 
 -- Requête principale : Partners avec leurs niveaux
 SELECT 
-    p."PartnerCode" as account_number,
+    p."ErpDimValue" as account_number,
     p."Name" as partner_name,
     p."PartnerShortDescription" as partner_short_description,
     p."PartnerLongDescription" as partner_long_description,

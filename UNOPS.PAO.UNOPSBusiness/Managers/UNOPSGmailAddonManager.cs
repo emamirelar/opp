@@ -617,7 +617,6 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
         {
             Id = partner.Id,
             Name = partner.Name,
-            PartnerCode = null, // PartnerCode field no longer exists in enhanced PartnerModel
             Phone = null, // Phone field no longer exists in enhanced PartnerModel
             LogoUrl = partner.LogoUrl,
             Location = null, // Address fields no longer exist in enhanced PartnerModel
