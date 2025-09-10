@@ -124,8 +124,10 @@ public class AppDbContext : AuditableDbContext<int, int>
                     .HasForeignKey(c => c.PartnerId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // Configure ErpDimValue as an alternate key for foreign key relationships
-                p.HasAlternateKey(x => x.ErpDimValue);
+                // Configure ErpDimValue as a unique index (allows nulls, unlike alternate keys)
+                p.HasIndex(x => x.ErpDimValue)
+                    .IsUnique()
+                    .HasFilter("\"ErpDimValue\" IS NOT NULL");
 
                 p.Ignore(x => x.OrganizationUnitRelationships);
             });
@@ -328,11 +330,11 @@ public class AppDbContext : AuditableDbContext<int, int>
         // Configure Engagement entity
         modelBuilder.Entity<Engagement>(entity =>
         {
-            // Configure relationship where Engagement.PartnerId references Partner.ErpDimValue
+            // Configure relationship where Engagement.PartnerId references Partner.Id (not ErpDimValue)
+            // Note: If you need to reference ErpDimValue, you'll need to handle nullable values differently
             entity.HasOne(e => e.Partner)
                 .WithMany()
                 .HasForeignKey(e => e.PartnerId)
-                .HasPrincipalKey(p => p.ErpDimValue)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
