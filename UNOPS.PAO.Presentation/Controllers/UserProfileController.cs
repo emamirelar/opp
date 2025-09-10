@@ -219,6 +219,18 @@ public class UserProfileController : BaseController
                             User.FindFirst("email")?.Value ?? 
                             User.Identity?.Name ?? 
                             _userResolverService.GetUserEmail();
+            
+            // Extract email from identity provider format if needed
+            // Format: "securetoken.google.com/unops-partneropportunity:email@domain.com"
+            if (!string.IsNullOrEmpty(claimEmail) && claimEmail.Contains(':'))
+            {
+                var emailParts = claimEmail.Split(':');
+                if (emailParts.Length > 1)
+                {
+                    claimEmail = emailParts[emailParts.Length - 1]; // Take the last part after colon
+                }
+            }
+            
             currentEmail = claimEmail?.ToLower(); // Normalize to lowercase for case-insensitive lookups
         }
         
