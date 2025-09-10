@@ -1233,7 +1233,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int?>("DueDiligenceRequired")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ErpDimValue")
+                    b.Property<int?>("ErpDimValue")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsDeleted")
