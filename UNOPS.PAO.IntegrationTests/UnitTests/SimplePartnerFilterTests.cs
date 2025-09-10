@@ -483,7 +483,6 @@ public class SimplePartnerFilterTests
             DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // Default "false" equivalent
             DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // Default "false" equivalent
             PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply, // Default "false" equivalent
-            PartnerCode = $"P{Random.Shared.Next(1000, 9999)}",
             PartnerGroupCode = "NGO",
             CreatedDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 100)),
             LastModifiedDate = DateTime.UtcNow

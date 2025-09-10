@@ -11,6 +11,12 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             // Use SQL to safely handle constraint and index dropping
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Engagements_Partners_PartnerId",
+                schema: "public",
+                table: "Engagements");
+
             migrationBuilder.Sql(@"
                 -- Drop alternate key constraint if it exists
                 DO $$
