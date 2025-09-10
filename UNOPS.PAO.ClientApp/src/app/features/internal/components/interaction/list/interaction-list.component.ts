@@ -105,43 +105,43 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       searchableFields: [
         {
           field: 'subject',
-          label: 'Subject',
+          label: 'label.interaction.subject',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'description',
-          label: 'Description',
+          label: 'label.interaction.description',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'date',
-          label: 'Date',
+          label: 'label.interaction.date',
           type: 'date',
           operators: ['is', 'is not', 'after', 'before', 'between', '>', '<', '>=', '<=']
         },
         {
           field: 'contactName',
-          label: 'Contact Name',
+          label: 'label.interaction.contactName',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'partner.name',
-          label: 'Partner',
+          label: 'label.partner.name',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'createdDate',
-          label: 'Created Date',
+          label: 'label.audit.createdDate',
           type: 'date',
           operators: ['after', 'before', 'between']
         },
         {
           field: 'lastModifiedDate',
-          label: 'Last Modified Date',
+          label: 'label.audit.lastModifiedDate',
           type: 'date',
           operators: ['after', 'before', 'between']
         }

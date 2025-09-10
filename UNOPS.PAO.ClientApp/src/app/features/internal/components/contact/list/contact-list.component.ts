@@ -101,7 +101,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
           searchConfig: {
         useAdvancedSearch: true,
         placeholder: 'search.contactsPlaceholder',
-                searchableFields: [
+        searchableFields: [
           {
             field: 'firstName',
             label: 'label.contact.firstName',

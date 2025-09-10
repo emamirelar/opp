@@ -147,6 +147,8 @@
         "interaction": {
           "type": "Tipo",
           "date": "Data",
+          "subject": "Assunto",
+          "description": "Descrição",
           "notes": "Notas",
           "contactName": "Nome do Contato",
           "types": {
@@ -213,6 +215,18 @@
         },
         "partner": {
             "partner": "Parceiro",
+            "name": "Nome",
+            "status": "Status",
+            "partnerShortDescription": "Descrição Curta do Parceiro",
+            "partnerLongDescription": "Descrição Longa do Parceiro",
+            "partnerGroup": "Grupo de Parceiro",
+            "partnerCategory": "Categoria de Parceiro",
+            "liaisonOffice": "Escritório de Ligação",
+            "keyGlobalPartner": "Parceiro Global Chave",
+            "unSecretariatPartner": "Parceiro do Secretariado da ONU",
+            "partnerApprovalStatus": "Status de Aprovação do Parceiro",
+            "pooledFund": "Fundo Comum",
+            "canCreateNewOpportunities": "Pode Criar Novas Oportunidades",
             "selectPartner": "Selecionar Parceiro",
             "organizationUnit": "Unidade de Organização",
             "selectOrganizationUnit": "Selecionar Unidade de Organização",
