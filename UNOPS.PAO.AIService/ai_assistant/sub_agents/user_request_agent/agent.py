@@ -9,7 +9,7 @@ import json
 from google.adk.agents import LlmAgent
 from ai_assistant.utils.api_config_manager import config_manager
 from .utils import enforce_json_format_callback, handle_audio_artifacts_before_model
-from ..worker_agent import worker_agent
+from ..task_executor_agent import task_executor_agent  
 
 
 # Instruction with mixed static config values and state placeholders
@@ -75,7 +75,7 @@ Analyze the user's request and decide:
 - Simple conversational responses
 - Basic pleasantries
 
-**REDIRECT TO WORKER_AGENT** (return "REDIRECT_TO_WORKER"):
+**REDIRECT TO task_executor_agent** :
 - Data operations (search, create, update, delete)
 - File operations and Google Drive requests
 - Multi-step workflows
@@ -84,61 +84,35 @@ Analyze the user's request and decide:
 
 ## Response Formats
 
-**For Direct Responses:**
+## Final Response Format
+Return results in this simple JSON structure:
+
 ```json
 {{
-  "result": [
+  "results": [
     {{
-      "type": "markdown",
-      "message": "Your conversational response here"
+      "tool": "tool_name",
+      "type": "json|markdown|text|mermaid",
+      "content": "raw_output_from_tool"
     }}
-  ],
-  "suggestedUserResponses": ["Suggestion 1", "Suggestion 2", "Suggestion 3"]
+  ]
 }}
 ```
 
-**For Worker Delegation:**
-```
-REDIRECT_TO_WORKER
-```
+## Output Type Rules
+**CRITICAL OUTPUT RULES:**
+- **invoke_api_tool results**: Always type "json" with raw API data (arrays/objects)
+- **search_agent results**: Always type "markdown" 
+- **convert_markdown_to_google_doc**: Always type "text" with success message
+- **read_content_from_url**: Type "markdown" or "text" based on content
+- If there is a need to ask a followup question to the user, include it as another markdown object in the results array.
 
-## Examples
-
-**User: "Hi"** → Handle directly:
-```json
-{{
-  "result": [
-    {{
-      "type": "markdown",
-      "message": "Hi [Name from User Profile]! 👋 How can I help you today?"
-    }}
-  ],
-  "suggestedUserResponses": ["Show me my partners", "Search for contacts", "Create a new interaction"]
-}}
-```
-
-**User: "Get list of partners"** → Redirect:
-```
-REDIRECT_TO_WORKER
-```
-
-**User: "Thank you"** → Handle directly:
-```json
-{{
-  "result": [
-    {{
-      "type": "markdown", 
-      "message": "You're welcome! Is there anything else I can help you with?"
-    }}
-  ],
-  "suggestedUserResponses": ["Show me recent interactions", "Search for opportunities", "Help me with something else"]
-}}
-```
+**DO NOT convert API data to markdown - keep as raw JSON.**
 
 ## Critical Instructions
 
 - **BE VERY SELECTIVE** - Only handle simple greetings and confirmations directly
-- **When in doubt, redirect to worker_agent**
+- **When in doubt, redirect to task_executor_agent**
 - **Use exact format**: Either JSON result or "REDIRECT_TO_WORKER"
 - **NO other output formats**
 - **Personalize responses** using user profile data
@@ -189,10 +163,9 @@ You have extensive tools and capabilities available. Always attempt operations a
 user_request_agent = LlmAgent(
     name="user_request_agent",
     model=config_manager.get_gemini_model(),
-    description="Main AI assistant that handles simple requests directly or redirects to worker_agent",
+    description="Main AI assistant that handles simple requests directly or redirects to task_executor_agent",
     instruction=get_user_request_instruction_with_state,
     global_instruction=get_global_instruction,
-    sub_agents=[worker_agent],
-    output_key="REDIRECT_TO_WORKER",  # Delegate to worker_agent when "REDIRECT_TO_WORKER" is returned
+    sub_agents=[task_executor_agent],
     before_model_callback=handle_audio_artifacts_before_model
 )

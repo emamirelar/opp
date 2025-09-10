@@ -15,8 +15,8 @@ worker_agent = SequentialAgent(
     name="worker_agent",
     description="Streamlined workflow agent with combined task planning and execution for improved speed",
     sub_agents=[
-        task_executor_agent,       # Combined task planner + executor (using Gemini 2.5 Pro)
-        #action_log_agent,
-        response_formatter_agent   # Format API results into user-friendly responses
+        #task_executor_agent,       # Combined task planner + executor (using Gemini 2.5 Pro)
+        action_log_agent,
+        #response_formatter_agent   # Format API results into user-friendly responses
     ],
 )

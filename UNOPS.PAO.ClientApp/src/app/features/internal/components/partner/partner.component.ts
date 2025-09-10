@@ -95,85 +95,85 @@ export class PartnerComponent implements OnDestroy, OnInit {
       searchableFields: [
         { 
           field: 'name', 
-          label: 'Name', 
+          label: 'label.partner.name', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
           field: 'partnerShortDescription', 
-          label: 'Short Description', 
+          label: 'label.partner.partnerShortDescription', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
           field: 'partnerLongDescription', 
-          label: 'Long Description', 
+          label: 'label.partner.partnerLongDescription', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
           field: 'status', 
-          label: 'Status', 
+          label: 'label.partner.status', 
           type: 'string',
           operators: ['is', 'is not']
         },
         { 
           field: 'partnerGroupCode', 
-          label: 'Partner Group', 
+          label: 'label.partner.partnerGroup', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
           field: 'partnerCategoryId', 
-          label: 'Partner Category ID', 
+          label: 'label.partner.partnerCategory', 
           type: 'number',
           operators: ['is', 'is not', '>', '<', '>=', '<=']
         },
         { 
           field: 'liaisonOfficeId', 
-          label: 'Liaison Office ID', 
+          label: 'label.partner.liaisonOffice', 
           type: 'number',
           operators: ['is', 'is not', '>', '<', '>=', '<=']
         },
         { 
           field: 'keyGlobalPartner', 
-          label: 'Key Global Partner', 
+          label: 'label.partner.keyGlobalPartner', 
           type: 'string',
           operators: ['is', 'is not']
         },
         { 
           field: 'unSecretariatPartner', 
-          label: 'UN Secretariat Partner', 
+          label: 'label.partner.unSecretariatPartner', 
           type: 'string',
           operators: ['is', 'is not']
         },
         { 
           field: 'partnerApprovalStatus', 
-          label: 'Approval Status', 
+          label: 'label.partner.partnerApprovalStatus', 
           type: 'string',
           operators: ['is', 'is not']
         },
         { 
           field: 'pooledFund', 
-          label: 'Pooled Fund', 
+          label: 'label.partner.pooledFund', 
           type: 'string',
           operators: ['is', 'is not']
         },
         { 
           field: 'canCreateNewOpportunities', 
-          label: 'Can Create New Opportunities', 
+          label: 'label.partner.canCreateNewOpportunities', 
           type: 'string',
           operators: ['is', 'is not']
         },
         { 
           field: 'createdDate', 
-          label: 'Created Date', 
+          label: 'label.audit.createdDate', 
           type: 'date',
           operators: ['after', 'before', 'between']
         },
         { 
           field: 'lastModifiedDate', 
-          label: 'Last Modified Date', 
+          label: 'label.audit.lastModifiedDate', 
           type: 'date',
           operators: ['after', 'before', 'between']
         }

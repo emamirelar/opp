@@ -1,12 +1,12 @@
 {
   "entity": "PartnerTree",
-  "description": "Manages the hierarchical structure of partners, including categories, groups, and their relationships, for organizational and classification purposes.",
+  "description": "Manages the hierarchical structure of partner categories and groups, enabling classification and organization of partners.",
   "synonyms": [
     "Partner Category",
     "Partner Group",
     "Partner Hierarchy",
     "Partner Classification",
-    "Partner Taxonomy"
+    "Organizational Tree"
   ],
   "mandatoryFields": [
     "Id",
@@ -20,88 +20,16 @@
       "method": "POST",
       "description": "Creates a new partner tree node for organizing partner hierarchies and classifications.",
       "parameters": {
-        "req.Id": {
-          "type": "integer",
-          "required": true,
-          "description": "Property of type int"
-        },
-        "req.Name": {
-          "type": "string",
+        "req": {
+          "type": "object",
           "required": false,
-          "description": "Property of type string"
-        },
-        "req.Description": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "req.Code": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "req.Type": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "req.Parent": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "req.Status": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "req.PartnerCategoryEditable": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "req.PartnerGroupEditable": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "req.PartnerCategoryId": {
-          "type": "integer",
-          "required": false,
-          "description": "Property of type Nullable<int>"
-        },
-        "req.PartnerCategoryCode": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "req.PartnerCategoryName": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "req.PartnerGroupId": {
-          "type": "integer",
-          "required": false,
-          "description": "Property of type Nullable<int>"
-        },
-        "req.PartnerGroupCode": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "req.PartnerGroupName": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
+          "description": "Partner tree data model with hierarchy information. Contains properties like Id (integer, required), Name (string), Description (string), Code (string), Type (string), Parent (string), Status (string), PartnerCategoryEditable (boolean, required), PartnerGroupEditable (boolean, required), PartnerCategoryId (integer), PartnerCategoryCode (string), PartnerCategoryName (string), PartnerGroupId (integer), PartnerGroupCode (string), PartnerGroupName (string)."
         }
       },
       "example_uses": [
         "Create a new partner category for Government",
         "Add a partner group under UN Agencies",
-        "Create NGO subcategory classification",
-        "Add new partner hierarchy node",
-        "Set up partner organization structure"
+        "Create NGO subcategory classification"
       ],
       "when_to_use": "Use this when the user asks to create, add, or set up new partner categories, groups, or hierarchy structures."
     },
@@ -109,7 +37,7 @@
       "name": "GetAll",
       "url": "/api/partner-tree",
       "method": "GET",
-      "description": "Retrieves all partner tree nodes (categories and groups) with sorting and access control. This endpoint supports sorting by fields like 'Name'. To sort, specify 'sortBy' and 'ascending' query parameters. For example, to sort by name in ascending order, use `?sortBy=Name&ascending=true`.",
+      "description": "Retrieves all partner tree nodes (categories and groups) with sorting and access control. Results can be sorted using the 'sortBy' and 'ascending' query parameters. For example, to sort by name in ascending order, use `?sortBy=Name&ascending=true`.",
       "parameters": {
         "sortBy": {
           "type": "string",
@@ -125,9 +53,7 @@
       "example_uses": [
         "Show all partner categories and groups",
         "List partner hierarchy structure",
-        "Get partner classification tree",
-        "Show partner organization taxonomy",
-        "List all partner categories sorted by name"
+        "Get partner classification tree"
       ],
       "when_to_use": "Use this when the user asks to see partner categories, groups, hierarchy, or classification structure."
     },
@@ -146,9 +72,7 @@
       "example_uses": [
         "Show me details for partner category ID 123",
         "Get information about partner group 456",
-        "Display hierarchy node 789",
-        "Show complete partner tree node details",
-        "Get partner classification details"
+        "Display hierarchy node 789"
       ],
       "when_to_use": "Use this when the user asks for specific partner tree node details by ID or when you need complete hierarchy information."
     },
@@ -156,20 +80,18 @@
       "name": "Update",
       "url": "/api/partner-tree",
       "method": "PUT",
-      "description": "Updates multiple partner tree nodes (categories and groups) with new hierarchy information and properties. The request body should be an array of PartnerTreeDataModel objects, each containing the updated details for a node.",
+      "description": "Updates multiple partner tree nodes (categories and groups) with new hierarchy information and properties.",
       "parameters": {
         "req": {
           "type": "array",
           "required": false,
-          "description": "Array of partner tree data models to update. Each element in the array should be a PartnerTreeDataModel object with properties like Id, Name, Description, Code, Type, Parent, Status, PartnerCategoryEditable, PartnerGroupEditable, PartnerCategoryId, PartnerCategoryCode, PartnerCategoryName, PartnerGroupId, PartnerGroupCode, PartnerGroupName."
+          "description": "Array of partner tree data models to update. Each object in the array contains properties like Id (integer, required), Name (string), Description (string), Code (string), Type (string), Parent (string), Status (string), PartnerCategoryEditable (boolean, required), PartnerGroupEditable (boolean, required), PartnerCategoryId (integer), PartnerCategoryCode (string), PartnerCategoryName (string), PartnerGroupId (integer), PartnerGroupCode (string), PartnerGroupName (string)."
         }
       },
       "example_uses": [
         "Update partner category names and descriptions",
         "Reorganize partner tree hierarchy",
-        "Modify partner group classifications",
-        "Update multiple tree nodes at once",
-        "Restructure partner organization taxonomy"
+        "Modify partner group classifications"
       ],
       "when_to_use": "Use this when the user asks to update, modify, edit, or reorganize partner tree structure or classifications."
     },
@@ -188,9 +110,7 @@
       "example_uses": [
         "Delete partner category ID 123",
         "Remove partner group 456 from hierarchy",
-        "Delete obsolete partner classification",
-        "Remove unused tree node",
-        "Clean up partner taxonomy structure"
+        "Delete obsolete partner classification"
       ],
       "when_to_use": "Use this when the user asks to delete, remove, or eliminate a partner category, group, or tree node."
     },
@@ -209,9 +129,7 @@
       "example_uses": [
         "Check my permissions for partner category 123",
         "What can I do with partner group 456?",
-        "Get access rights for this tree node",
-        "Verify tree permissions before editing",
-        "Can I modify this partner classification?"
+        "Get access rights for this tree node"
       ],
       "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements for partner tree management."
     },
@@ -224,10 +142,7 @@
       "example_uses": [
         "Show partner hierarchy structure",
         "Get complete partner taxonomy tree",
-        "Display partner organization chart",
-        "Show category and group relationships",
-        "Get partner classification structure",
-        "Load partner tree for navigation"
+        "Display partner organization chart"
       ],
       "when_to_use": "Use this when the user needs to see the complete partner organizational structure, hierarchy, or when building navigation trees."
     },
@@ -235,45 +150,43 @@
       "name": "GetPartnersByPartnerGroup",
       "url": "/api/partner-tree/by-partner-group-code/{code}",
       "method": "GET",
-      "description": "Retrieves a paginated list of partners filtered by specific partner group code with access control and sorting. This endpoint supports pagination and sorting. Use 'PageIndex' and 'PageSize' for pagination, and 'OrderBy', 'Ascending' for sorting. For example, to get the first page of 10 partners sorted by name in ascending order, use `?PageIndex=1&PageSize=10&OrderBy=Name&Ascending=true`.",
+      "description": "Retrieves a paginated list of partners filtered by specific partner group code with access control and sorting. Pagination and sorting can be controlled using 'PageIndex', 'PageSize', 'OrderBy', 'Ascending' query parameters.",
       "parameters": {
         "code": {
           "type": "string",
           "required": false,
           "description": "Partner group code to filter by (e.g., 'GOV', 'NGO', 'UNAGENCY')"
         },
-        "request.OrderBy": {
+        "OrderBy": {
           "type": "string",
           "required": false,
-          "description": "Property of type string"
+          "description": "Field to order results by"
         },
-        "request.Ascending": {
+        "Ascending": {
           "type": "boolean",
           "required": false,
-          "description": "Property of type Nullable<bool>"
+          "description": "Sort direction (true for ascending)"
         },
-        "request.Direction": {
+        "Direction": {
           "type": "boolean",
           "required": false,
-          "description": "Property of type Nullable<bool>"
+          "description": "Sort direction (true for ascending)"
         },
-        "request.PageIndex": {
+        "PageIndex": {
           "type": "integer",
           "required": true,
-          "description": "Property of type int"
+          "description": "Page index for pagination"
         },
-        "request.PageSize": {
+        "PageSize": {
           "type": "integer",
           "required": true,
-          "description": "Property of type int"
+          "description": "Page size for pagination"
         }
       },
       "example_uses": [
         "Show all government partners (GOV group)",
         "List all NGO partners with pagination",
-        "Get UN agency partners sorted by name",
-        "Find partners in a specific partner group classification",
-        "Show commercial partners (COMM group) with 20 per page"
+        "Get UN agency partners sorted by name"
       ],
       "when_to_use": "Use this when the user asks to filter or search partners by partner group, organization type, or institutional classification."
     },
@@ -281,46 +194,43 @@
       "name": "GetPartnersByPartnerCategory",
       "url": "/api/partner-tree/by-partner-category-code/{code}",
       "method": "GET",
-      "description": "Retrieves a paginated list of partners filtered by specific partner category code with access control and sorting. This endpoint supports pagination and sorting. Use 'PageIndex' and 'PageSize' for pagination, and 'OrderBy', 'Ascending' for sorting. For example, to get the first page of 10 partners sorted by name in ascending order, use `?PageIndex=1&PageSize=10&OrderBy=Name&Ascending=true`.",
+      "description": "Retrieves a paginated list of partners filtered by specific partner category code with access control and sorting. Pagination and sorting can be controlled using 'PageIndex', 'PageSize', 'OrderBy', 'Ascending' query parameters.",
       "parameters": {
         "code": {
           "type": "string",
           "required": false,
           "description": "Partner category code to filter by (e.g., 'NATIONAL', 'INTERNATIONAL', 'BILATERAL')"
         },
-        "request.OrderBy": {
+        "OrderBy": {
           "type": "string",
           "required": false,
-          "description": "Property of type string"
+          "description": "Field to order results by"
         },
-        "request.Ascending": {
+        "Ascending": {
           "type": "boolean",
           "required": false,
-          "description": "Property of type Nullable<bool>"
+          "description": "Sort direction (true for ascending)"
         },
-        "request.Direction": {
+        "Direction": {
           "type": "boolean",
           "required": false,
-          "description": "Property of type Nullable<bool>"
+          "description": "Sort direction (true for ascending)"
         },
-        "request.PageIndex": {
+        "PageIndex": {
           "type": "integer",
           "required": true,
-          "description": "Property of type int"
+          "description": "Page index for pagination"
         },
-        "request.PageSize": {
+        "PageSize": {
           "type": "integer",
           "required": true,
-          "description": "Property of type int"
+          "description": "Page size for pagination"
         }
       },
       "example_uses": [
         "Show all national partners in this category",
         "List international partners with pagination",
-        "Get bilateral partners sorted by name",
-        "Find partners in a specific operational category",
-        "Show multilateral partners with 15 per page",
-        "Filter partners by geographic or operational scope"
+        "Get bilateral partners sorted by name"
       ],
       "when_to_use": "Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification."
     },
@@ -333,10 +243,7 @@
       "example_uses": [
         "Get all partner categories with counts",
         "Show partner distribution by category",
-        "Generate partner category statistics",
-        "Create partner category breakdown chart",
-        "Display partner classification overview",
-        "Draw diagram of partner categories with counts"
+        "Generate partner category statistics"
       ],
       "when_to_use": "Use this when the user wants to see partner distribution across categories, generate statistics, or create visual diagrams of partner categorization."
     },
@@ -349,10 +256,7 @@
       "example_uses": [
         "Get all partner groups with counts",
         "Show partner distribution by group",
-        "Generate partner group statistics",
-        "Create partner group breakdown chart",
-        "Display partner group overview",
-        "Draw diagram of partner groups with counts"
+        "Generate partner group statistics"
       ],
       "when_to_use": "Use this when the user wants to see partner distribution across groups, generate statistics, or create visual diagrams of partner grouping."
     },
@@ -365,10 +269,7 @@
       "example_uses": [
         "Get complete partner categorization overview",
         "Show partner distribution across categories and groups",
-        "Generate comprehensive partner statistics",
-        "Create partner organization chart",
-        "Display complete partner taxonomy with counts",
-        "Draw diagram showing partner categories and groups with distribution"
+        "Generate comprehensive partner statistics"
       ],
       "when_to_use": "Use this when the user wants a complete overview of partner organization, comprehensive statistics, or to create detailed diagrams showing both categories and groups."
     },
@@ -376,7 +277,7 @@
       "name": "Describe",
       "url": "/api/partner-tree/describe",
       "method": "GET",
-      "description": "Describes the PartnerTree entity structure including all field configurations.",
+      "description": "Describes the PartnerTree entity structure including all field configurations",
       "parameters": {},
       "example_uses": [],
       "when_to_use": ""

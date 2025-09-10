@@ -1690,8 +1690,25 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         if (pageIndex < 1) pageIndex = 1;
         if (pageSize < 1 || pageSize > 100) pageSize = 20;
 
+        // First get the partner's ErpDimValue since Engagement.PartnerId references Partner.ErpDimValue, not Partner.Id
+        var partner = await _context.Partners
+            .Where(p => p.Id == partnerId && !p.IsDeleted)
+            .FirstOrDefaultAsync();
+
+        if (partner == null || !partner.ErpDimValue.HasValue)
+        {
+            return new PaginationResponse<Engagement>
+            {
+                Records = new List<Engagement>(),
+                TotalCount = 0,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalPages = 0
+            };
+        }
+
         var baseQuery = _context.Engagements
-            .Where(e => e.PartnerId == partnerId && !e.IsDeleted)
+            .Where(e => e.PartnerId == partner.ErpDimValue.Value && !e.IsDeleted)
             .Include(e => e.Partner);
 
         IQueryable<Engagement> query;

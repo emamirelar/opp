@@ -1,12 +1,12 @@
 {
   "entity": "PartnerAnalytics",
-  "description": "Provides analytical insights and aggregated data related to partners, including activity trends, user-specific partner associations, and geographic distribution.",
+  "description": "Provides analytical insights and aggregated data related to partners, such as activity trends, user-specific partner lists, and geographic distribution.",
   "synonyms": [
     "partner insights",
-    "partner metrics",
     "partner reports",
+    "partner metrics",
     "partner statistics",
-    "partner performance"
+    "partner analysis"
   ],
   "mandatoryFields": [
     "userId"
@@ -93,23 +93,23 @@
         "period": {
           "type": "string",
           "required": false,
-          "description": "Time period for trend analysis (e.g., monthly, quarterly)"
+          "description": "Time period for the trend analysis (e.g., monthly, quarterly)"
         },
         "months": {
           "type": "integer",
           "required": false,
-          "description": "Number of months to include in the trend analysis"
+          "description": "Number of months to include in the trend analysis (default: 12)"
         },
         "partnerId": {
           "type": "integer",
           "required": false,
-          "description": "Optional Partner ID to filter engagement trends for a specific partner"
+          "description": "Optional: Filter engagement trends for a specific partner."
         }
       },
       "example_uses": [
-        "Show engagement trends for the last 12 months.",
-        "Get quarterly engagement trends for partner 123.",
-        "Analyze overall partner engagement growth."
+        "Show monthly engagement trends for the last year",
+        "Get quarterly engagement trends for partner 123",
+        "Analyze overall engagement growth over time"
       ],
       "when_to_use": "Use this to understand how partner engagement has evolved over time, either overall or for a specific partner."
     },

@@ -67,8 +67,8 @@
         }
         <p-chip className="w-64">
           <div class="flex items-center gap-2 px-4">
-            <span class="font-semibold">{{ criterion.label }}</span>
-            <span class="text-blue-600 font-medium">{{ getOperatorLabel(criterion.operator) }}</span>
+            <span class="font-semibold">{{ criterion.label | translate}}</span>
+            <span class="text-blue-600 font-medium">{{ getOperatorLabel(criterion.operator) | translate }}</span>
             @if (isDateValue(criterion.value)) {
               <span>{{ criterion.value | date:'dd/MM/yyyy' }}</span>
             } @else {
@@ -129,7 +129,14 @@
         [placeholder]="'search.selectField' | translate"
         (onChange)="onSearchFieldSelect($event.value)"
         styleClass="w-64"
-      ></p-dropdown>
+      >
+        <ng-template pTemplate="item" let-option>
+          {{ option.label | translate }}
+        </ng-template>
+        <ng-template pTemplate="selectedItem" let-option>
+          {{ option.label | translate }}
+        </ng-template>
+      </p-dropdown>
 
       <p-dropdown
         [options]="getComparisonOperators()"
