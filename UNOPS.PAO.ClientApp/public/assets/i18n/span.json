@@ -153,6 +153,7 @@
           "date": "Fecha",
           "subject": "Asunto",
           "description": "Descripción",
+          "status": "Estado del Sistema",
           "notes": "Notas",
           "contactName": "Nombre del Contacto",
           "types": {
@@ -189,7 +190,7 @@
             "assistant": "Asistente",
             "assistantPhone": "Tel. asistente",
             "assistantEmail": "Correo asistente",
-            "status": "Estado",
+            "status": "Estado del Sistema",
             "title": "Título",
             "pronouns": "Pronombres",
             "department": "Departamento",
@@ -220,7 +221,7 @@
         "partner": {
             "partner": "Socio",
             "name": "Nombre",
-            "status": "Estado",
+            "status": "Estado del Sistema",
             "partnerShortDescription": "Descripción Corta del Socio",
             "partnerLongDescription": "Descripción Larga del Socio",
             "partnerGroup": "Grupo de Socio",
