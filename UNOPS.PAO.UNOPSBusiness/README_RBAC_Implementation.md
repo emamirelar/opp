@@ -50,7 +50,7 @@ Whitelist-based column filtering:
 CREATE TABLE "EntityPermissions" (
     "Id" integer PRIMARY KEY,
     "Entity" text NOT NULL,           -- Entity name (e.g., 'Contact', 'Partner')
-    "Role" text NOT NULL,             -- User role (e.g., 'GMAIL_GEN_USER')
+    "Role" text NOT NULL,             -- User role (e.g., 'UNOPS_GEN_USER')
     "CanRead" boolean NOT NULL,       -- Read permission
     "CanCreate" boolean NOT NULL,     -- Create permission
     "CanUpdate" boolean NOT NULL,     -- Update permission
@@ -151,13 +151,13 @@ query = query.Where(processedFilter);
 
 ## Configuration Examples
 
-### 1. GMAIL_GEN_USER Role Configuration
+### 1. UNOPS_GEN_USER Role Configuration
 
 #### Contact Entity
 ```json
 {
   "Entity": "Contact",
-  "Role": "GMAIL_GEN_USER",
+  "Role": "UNOPS_GEN_USER",
   "CanRead": true,
   "CanCreate": true,
   "CanUpdate": false,
@@ -172,7 +172,7 @@ query = query.Where(processedFilter);
 ```json
 {
   "Entity": "Partner",
-  "Role": "GMAIL_GEN_USER",
+  "Role": "UNOPS_GEN_USER",
   "CanRead": true,
   "CanCreate": false,
   "CanUpdate": false,
