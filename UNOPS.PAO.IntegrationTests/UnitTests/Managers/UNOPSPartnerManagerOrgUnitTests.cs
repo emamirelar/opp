@@ -183,7 +183,6 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // Default "false" equivalent
                 DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // Default "false" equivalent
                 PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply, // Default "false" equivalent
-                PartnerCode = $"P{id:D4}",
                 PartnerGroupCode = "NGO",
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow

@@ -85,7 +85,6 @@ public class PartnerControllerTests : IntegrationTestBase
             DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
             DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
             PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply,
-            PartnerCode = $"P{id:D4}",
             PartnerGroupCode = "NGO",
             CreatedDate = DateTime.UtcNow.AddDays(-id),
             LastModifiedDate = DateTime.UtcNow
