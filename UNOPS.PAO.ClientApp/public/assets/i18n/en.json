@@ -540,8 +540,9 @@
     "enterName": "Enter name",
     "searchByNameOrEmail": "Search by name or email",
     "selectRole": "Select a role",
+    "selectRoles": "Select roles",
     "filterByOrgUnit": "Filter by organization unit",
-    "selectRoles": "Select roles"
+    "selectOrgUnits": "Select organization units"
   },
   "table": {
     "noRecords": "No records found"

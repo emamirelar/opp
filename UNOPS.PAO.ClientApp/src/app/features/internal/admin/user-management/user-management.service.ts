@@ -7,6 +7,7 @@ interface UserManagementModel {
   name: string;
   email: string;
   orgUnit: string;
+  orgUnitDescription?: string;
   roles: string[];
   rolesDisplay: string;
   lastModifiedDate?: Date;
@@ -19,13 +20,20 @@ interface RoleModel {
   description: string;
 }
 
+interface OrgUnitModel {
+  id: number;
+  name: string;
+  description?: string;
+  code: string;
+}
+
 interface UserManagementRequest {
   pageIndex: number;
   pageSize: number;
   searchTerm?: string;
-  roleFilter?: string;
+  roleFilter?: string[];
   showMyOrgUnitOnly: boolean;
-  orgUnitFilter?: string;
+  orgUnitFilter?: number[];
   sortBy?: string;
   sortDirection?: string;
 }
@@ -53,7 +61,7 @@ export class UserManagementService {
   private http = inject(HttpClient);
   private readonly baseUrl = '/api/user-management';
 
-  async getUsers(request: UserManagementRequest): Promise<PaginationResponse<UserManagementModel>> {
+  async getUsers(request: any): Promise<PaginationResponse<UserManagementModel>> {
     const response = await firstValueFrom(
       this.http.post<PaginationResponse<UserManagementModel>>(`${this.baseUrl}/users`, request)
     );
@@ -127,6 +135,13 @@ export class UserManagementService {
   async resolveRoleIds(roleIds: number[]): Promise<{[key: number]: {name: string, description: string}}> {
     const response = await firstValueFrom(
       this.http.post<{[key: number]: {name: string, description: string}}>(`${this.baseUrl}/resolve-roles`, { roleIds })
+    );
+    return response;
+  }
+
+  async getAvailableOrgUnits(): Promise<OrgUnitModel[]> {
+    const response = await firstValueFrom(
+      this.http.get<OrgUnitModel[]>(`${this.baseUrl}/org-units`)
     );
     return response;
   }

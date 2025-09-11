@@ -53,15 +53,16 @@
             <label for="roleFilter" class="block text-sm font-medium mb-2">
               {{ 'label.filterByRole' | translate }}
             </label>
-            <p-dropdown
+            <p-multiSelect
               id="roleFilter"
               [(ngModel)]="roleFilter"
               [options]="roleOptions()"
-              [placeholder]="'placeholder.selectRole' | translate"
+              [placeholder]="'placeholder.selectRoles' | translate"
               [showClear]="true"
+              [showToggleAll]="true"
               (onChange)="onFilterChange()"
               class="w-full">
-            </p-dropdown>
+            </p-multiSelect>
           </div>
 
           <!-- Org Unit Filter -->
@@ -70,13 +71,16 @@
               <label for="orgUnitFilter" class="block text-sm font-medium mb-2">
                 {{ 'label.orgUnit' | translate }}
               </label>
-              <input
-                pInputText
+              <p-multiSelect
                 id="orgUnitFilter"
                 [(ngModel)]="orgUnitFilter"
-                (ngModelChange)="onFilterChange()"
-                [placeholder]="'placeholder.filterByOrgUnit' | translate"
+                [options]="orgUnitOptions()"
+                [placeholder]="'placeholder.selectOrgUnits' | translate"
+                [showClear]="true"
+                [showToggleAll]="true"
+                (onChange)="onFilterChange()"
                 class="w-full">
+              </p-multiSelect>
             </div>
           }
 
@@ -110,8 +114,8 @@
           <p-button
             icon="pi pi-filter-slash"
             [label]="'button.clearFilters' | translate"
-            severity="secondary"
-            [outlined]="true"
+            severity="info"
+            [outlined]="false"
             (onClick)="clearFilters()">
           </p-button>
           <p-button
@@ -181,7 +185,7 @@
                 <div class="text-sm text-gray-600">{{ user.email }}</div>
               </td>
               <td>
-                <div class="text-sm">{{ user.orgUnit }}</div>
+                <div class="text-sm">{{ user.orgUnitDescription || user.orgUnit }}</div>
               </td>
               <td>
                 <div class="flex flex-wrap gap-1">

@@ -31,6 +31,7 @@ interface UserManagementModel {
   email: string;
   orgUnit: string;
   orgUnitCode?: string;
+  orgUnitDescription?: string;
   roles: string[];
   rolesDisplay: string;
   lastModifiedDate?: Date;
@@ -47,9 +48,9 @@ interface UserManagementRequest {
   pageIndex: number;
   pageSize: number;
   searchTerm?: string;
-  roleFilter?: string;
+  roleFilter?: string[];
   showMyOrgUnitOnly: boolean;
-  orgUnitFilter?: string;
+  orgUnitFilter?: number[];
   sortBy?: string;
   sortDirection?: string;
 }
@@ -141,9 +142,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   // Filter and pagination state
   searchTerm = signal<string>('');
-  roleFilter = signal<string>('');
+  roleFilter = signal<string[]>([]);
   showMyOrgUnitOnly = signal<boolean>(false);
-  orgUnitFilter = signal<string>('');
+  orgUnitFilter = signal<number[]>([]);
+  
+  // Org unit options for multi-select
+  orgUnitOptions = signal<{label: string, value: number}[]>([]);
   
   first = signal<number>(0);
   rows = signal<number>(50);
@@ -225,8 +229,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
           if (permissions.hasAccess) {
             // Load current user roles first, then load other data
             this.loadCurrentUserRoles().then(() => {
-              // After roles are loaded, load the rest of the data
+              // After roles are loaded, load the rest of the data (but NOT users yet)
               this.loadAvailableRoles();
+              this.loadOrgUnits();
+              // Load users LAST to ensure all role-based settings are properly applied
               this.loadUsers(); // This will now use the correct showMyOrgUnitOnly setting
             });
           }
@@ -255,7 +261,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
           // If user is ORG_UNIT_ADMIN (but not PARTNER_GLOB_ADMIN), automatically enable org unit filtering
           if (this.isOrgUnitAdmin()) {
             this.showMyOrgUnitOnly.set(true);
-            
           }
           
           this.cdr.detectChanges();
@@ -276,9 +281,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         pageIndex: Math.floor(this.first() / this.rows()),
         pageSize: this.rows(),
         searchTerm: this.searchTerm() || undefined,
-        roleFilter: this.roleFilter() || undefined,
+        roleFilter: this.roleFilter().length > 0 ? this.roleFilter() : undefined,
         showMyOrgUnitOnly: this.showMyOrgUnitOnly(),
-        orgUnitFilter: this.orgUnitFilter() || undefined,
+        orgUnitFilter: this.orgUnitFilter().length > 0 ? this.orgUnitFilter() : undefined,
         sortBy: this.sortBy(),
         sortDirection: this.sortDirection()
       };
@@ -312,6 +317,23 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
   }
 
+  async loadOrgUnits() {
+    try {
+      const orgUnits = await this.userManagementService.getAvailableOrgUnits();
+      this.orgUnitOptions.set(orgUnits.map((ou: any) => ({ 
+        label: ou.name, 
+        value: ou.id 
+      })));
+    } catch (error) {
+      console.error('Error loading org units:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load organization units'
+      });
+    }
+  }
+
   onPageChange(event: any) {
     this.first.set(event.first);
     this.rows.set(event.rows);
@@ -336,14 +358,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   clearFilters() {
     this.searchTerm.set('');
-    this.roleFilter.set('');
+    this.roleFilter.set([]);
     
     // Only reset org unit filter if user is not ORG_UNIT_ADMIN
     if (!this.isOrgUnitAdmin()) {
       this.showMyOrgUnitOnly.set(false);
     }
     
-    this.orgUnitFilter.set('');
+    this.orgUnitFilter.set([]);
     this.first.set(0);
     this.loadUsers();
   }
