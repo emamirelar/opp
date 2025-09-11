@@ -13,6 +13,8 @@ public interface IUserManagementManager
     
     Task<IEnumerable<RoleModel>> GetAvailableRolesAsync(ClaimsPrincipal user);
     
+    Task<IEnumerable<OrgUnitModel>> GetAvailableOrgUnitsAsync(ClaimsPrincipal user);
+    
     Task<bool> GetOrgUnitSelfManagementAsync(ClaimsPrincipal user, string orgUnitCode);
     
     Task UpdateOrgUnitSelfManagementAsync(ClaimsPrincipal user, string orgUnitCode, UpdateOrgUnitSelfManagementRequest request);

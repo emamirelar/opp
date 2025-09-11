@@ -132,6 +132,7 @@ public class APIDictionary
     public const string UserManagement = APIPrefix + "user-management";
     public const string UserManagementUsers = UserManagement + "/users";
     public const string UserManagementRoles = UserManagement + "/roles";
+    public const string UserManagementOrgUnits = UserManagement + "/org-units";
     public const string UserManagementCurrentUserOrgUnit = UserManagement + "/current-user-org-unit";
 
     // Global Filters and User Preferences

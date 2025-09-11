@@ -7,6 +7,7 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.Utilities.Helpers;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Entities;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
@@ -43,8 +44,11 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
 
     public async Task<PaginationResponse<UserManagementModel>> GetUsersAsync(ClaimsPrincipal user, UserManagementRequest request)
     {
-        // Start with UserProfile query
-        var userProfileQuery = _context.UserProfile.Where(u => !u.IsDeleted);
+        // Start with UserProfile query joined with OrganizationHierarchy to get org unit descriptions
+        var userProfileQuery = from up in _context.UserProfile.Where(u => !u.IsDeleted)
+                              join oh in _context.OrganizationHierarchies on up.OrgUnit equals oh.Code into orgJoin
+                              from org in orgJoin.DefaultIfEmpty()
+                              select new { UserProfile = up, OrgHierarchy = org };
 
         // Apply "Show My Org Unit Only" filter if requested
         if (request.ShowMyOrgUnitOnly)
@@ -52,14 +56,14 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             if (!string.IsNullOrEmpty(currentUserOrgUnit))
             {
-                userProfileQuery = userProfileQuery.Where(x => x.OrgUnit == currentUserOrgUnit);
+                userProfileQuery = userProfileQuery.Where(x => x.UserProfile.OrgUnit == currentUserOrgUnit);
             }
         }
 
         // Apply org unit filter if specified
-        if (!string.IsNullOrEmpty(request.OrgUnitFilter))
+        if (request.OrgUnitFilter != null && request.OrgUnitFilter.Any())
         {
-            userProfileQuery = userProfileQuery.Where(x => x.OrgUnit != null && x.OrgUnit.Contains(request.OrgUnitFilter));
+            userProfileQuery = userProfileQuery.Where(x => x.OrgHierarchy != null && request.OrgUnitFilter.Contains(x.OrgHierarchy.Id));
         }
 
         // Apply search term filter - use actual database fields instead of computed Name property
@@ -67,26 +71,26 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         {
             var searchLower = request.SearchTerm.ToLower();
             userProfileQuery = userProfileQuery.Where(x => 
-                (x.FirstName != null && x.FirstName.ToLower().Contains(searchLower)) ||
-                (x.LastName != null && x.LastName.ToLower().Contains(searchLower)) ||
-                (x.UserEmail != null && x.UserEmail.ToLower().Contains(searchLower)));
+                (x.UserProfile.FirstName != null && x.UserProfile.FirstName.ToLower().Contains(searchLower)) ||
+                (x.UserProfile.LastName != null && x.UserProfile.LastName.ToLower().Contains(searchLower)) ||
+                (x.UserProfile.UserEmail != null && x.UserProfile.UserEmail.ToLower().Contains(searchLower)));
         }
 
         // Apply sorting - use actual database fields instead of computed Name property
         userProfileQuery = request.SortBy?.ToLower() switch
         {
             "email" => request.SortDirection?.ToLower() == "desc" 
-                ? userProfileQuery.OrderByDescending(x => x.UserEmail)
-                : userProfileQuery.OrderBy(x => x.UserEmail),
+                ? userProfileQuery.OrderByDescending(x => x.UserProfile.UserEmail)
+                : userProfileQuery.OrderBy(x => x.UserProfile.UserEmail),
             "orgunit" => request.SortDirection?.ToLower() == "desc"
-                ? userProfileQuery.OrderByDescending(x => x.OrgUnit)
-                : userProfileQuery.OrderBy(x => x.OrgUnit),
+                ? userProfileQuery.OrderByDescending(x => x.OrgHierarchy.Description ?? x.UserProfile.OrgUnit)
+                : userProfileQuery.OrderBy(x => x.OrgHierarchy.Description ?? x.UserProfile.OrgUnit),
             "lastmodified" => request.SortDirection?.ToLower() == "desc"
-                ? userProfileQuery.OrderByDescending(x => x.LastModifiedDate)
-                : userProfileQuery.OrderBy(x => x.LastModifiedDate),
+                ? userProfileQuery.OrderByDescending(x => x.UserProfile.LastModifiedDate)
+                : userProfileQuery.OrderBy(x => x.UserProfile.LastModifiedDate),
             _ => request.SortDirection?.ToLower() == "desc"
-                ? userProfileQuery.OrderByDescending(x => x.FirstName ?? x.LastName ?? x.UserEmail)
-                : userProfileQuery.OrderBy(x => x.FirstName ?? x.LastName ?? x.UserEmail)
+                ? userProfileQuery.OrderByDescending(x => x.UserProfile.FirstName ?? x.UserProfile.LastName ?? x.UserProfile.UserEmail)
+                : userProfileQuery.OrderBy(x => x.UserProfile.FirstName ?? x.UserProfile.LastName ?? x.UserProfile.UserEmail)
         };
 
         // Get total count before pagination
@@ -100,8 +104,11 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
 
         // Get user roles for each user
         var userModels = new List<UserManagementModel>();
-        foreach (var userProfile in pagedUserProfiles)
+        foreach (var item in pagedUserProfiles)
         {
+            var userProfile = item.UserProfile;
+            var orgHierarchy = item.OrgHierarchy;
+            
             if (string.IsNullOrEmpty(userProfile.UserEmail)) continue;
 
             var aspNetUser = await _userManager.FindByEmailAsync(userProfile.UserEmail);
@@ -117,8 +124,8 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             }
             
             // Apply role filter if specified
-            if (!string.IsNullOrEmpty(request.RoleFilter) && 
-                !roles.Any(r => r.Contains(request.RoleFilter, StringComparison.OrdinalIgnoreCase)))
+            if (request.RoleFilter != null && request.RoleFilter.Any() && 
+                !request.RoleFilter.Any(rf => roles.Contains(rf)))
             {
                 continue;
             }
@@ -128,8 +135,9 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
                 UserId = userProfile.UserId.ToString(),
                 Name = userProfile.Name ?? "N/A",
                 Email = userProfile.UserEmail ?? "N/A",
-                OrgUnit = userProfile.OrgUnit ?? "N/A",
+                OrgUnit = orgHierarchy?.Description ?? userProfile.OrgUnit ?? "N/A",
                 OrgUnitCode = userProfile.OrgUnit,
+                OrgUnitDescription = orgHierarchy?.Name,
                 Roles = roles,
                 LastModifiedDate = userProfile.LastModifiedDate,
                 IsActive = isActive
@@ -137,7 +145,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         }
 
         // If role filter was applied, we need to adjust the total count
-        if (!string.IsNullOrEmpty(request.RoleFilter))
+        if (request.RoleFilter != null && request.RoleFilter.Any())
         {
             totalCount = userModels.Count;
         }
@@ -159,11 +167,16 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             return null; // Invalid userId format
         }
         
-        var userProfile = await _context.UserProfile
-            .Where(u => u.UserId == userIdInt && !u.IsDeleted)
-            .FirstOrDefaultAsync();
+        var userProfileWithOrg = await (from up in _context.UserProfile.Where(u => u.UserId == userIdInt && !u.IsDeleted)
+                                        join oh in _context.OrganizationHierarchies on up.OrgUnit equals oh.Code into orgJoin
+                                        from org in orgJoin.DefaultIfEmpty()
+                                        select new { UserProfile = up, OrgHierarchy = org })
+                                        .FirstOrDefaultAsync();
 
-        if (userProfile == null) return null;
+        if (userProfileWithOrg?.UserProfile == null) return null;
+        
+        var userProfile = userProfileWithOrg.UserProfile;
+        var orgHierarchy = userProfileWithOrg.OrgHierarchy;
 
         var aspNetUser = await _userManager.FindByEmailAsync(userProfile.UserEmail);
         if (aspNetUser == null) return null;
@@ -185,8 +198,9 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             UserId = userProfile.UserId.ToString(),
             Name = userProfile.Name ?? "N/A",
             Email = userProfile.UserEmail ?? "N/A",
-            OrgUnit = userProfile.OrgUnit ?? "N/A",
+            OrgUnit = orgHierarchy?.Description ?? userProfile.OrgUnit ?? "N/A",
             OrgUnitCode = userProfile.OrgUnit,
+            OrgUnitDescription = orgHierarchy?.Name,
             Roles = roles.ToList(),
             LastModifiedDate = DateTime.UtcNow, // Use current time since we don't track this in UserProfile
             IsActive = !aspNetUser.LockoutEnabled || 
@@ -330,6 +344,23 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             Name = r.Name ?? string.Empty,
             Description = r.Description ?? string.Empty
         }).OrderBy(r => r.Name);
+    }
+
+    public async Task<IEnumerable<OrgUnitModel>> GetAvailableOrgUnitsAsync(ClaimsPrincipal user)
+    {
+        // RBAC interceptor handles security enforcement
+        var orgUnits = await _context.OrganizationHierarchies
+            .Where(o => !o.IsDeleted && o.Status == EntityStatus.Active && o.Type == OrganizationUnitType.OrgUnit)
+            .OrderBy(o => o.Name)
+            .ToListAsync();
+
+        return orgUnits.Select(o => new OrgUnitModel
+        {
+            Id = o.Id,
+            Name = o.Name,
+            Code = o.Code,
+            Description = o.Description
+        });
     }
 
     public async Task<bool> GetOrgUnitSelfManagementAsync(ClaimsPrincipal user, string orgUnitCode)

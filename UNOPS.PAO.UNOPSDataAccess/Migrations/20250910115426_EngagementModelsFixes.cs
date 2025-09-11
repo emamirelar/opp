@@ -10,6 +10,12 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // First drop the foreign key that depends on the alternate key constraint
+            migrationBuilder.DropForeignKey(
+                name: "FK_Engagements_Partners_PartnerId",
+                schema: "public",
+                table: "Engagements");
+
             // Use SQL to safely handle constraint and index dropping
 
             migrationBuilder.DropForeignKey(
@@ -54,11 +60,28 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 column: "ErpDimValue",
                 unique: true,
                 filter: "\"ErpDimValue\" IS NOT NULL");
+
+            // Recreate the foreign key constraint
+            migrationBuilder.AddForeignKey(
+                name: "FK_Engagements_Partners_PartnerId",
+                schema: "public",
+                table: "Engagements",
+                column: "PartnerId",
+                principalSchema: "public",
+                principalTable: "Partners",
+                principalColumn: "ErpDimValue",
+                onDelete: ReferentialAction.SetNull);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // First drop the foreign key
+            migrationBuilder.DropForeignKey(
+                name: "FK_Engagements_Partners_PartnerId",
+                schema: "public",
+                table: "Engagements");
+
             // Drop the filtered unique index
             migrationBuilder.DropIndex(
                 name: "IX_Partners_ErpDimValue",
@@ -79,6 +102,17 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 name: "AK_Partners_ErpDimValue",
                 table: "Partners",
                 column: "ErpDimValue");
+
+            // Recreate the foreign key constraint
+            migrationBuilder.AddForeignKey(
+                name: "FK_Engagements_Partners_PartnerId",
+                schema: "public",
+                table: "Engagements",
+                column: "PartnerId",
+                principalSchema: "public",
+                principalTable: "Partners",
+                principalColumn: "ErpDimValue",
+                onDelete: ReferentialAction.SetNull);
         }
     }
 }
