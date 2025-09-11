@@ -81,7 +81,6 @@ public class MappingProfile : Profile
                 Description = src.Description,
                 Type = src.Type,
                 PartnerCategoryCode = src.PartnerCategoryCode,
-                PartnerGroupCode = src.PartnerGroupCode,
             }));
             
         CreateMap<PartnerTreeModel, UNOPSPartnerTree>()

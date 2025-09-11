@@ -165,7 +165,7 @@ BEGIN
                         ELSE ''No Match''
                     END as match_reason
                 FROM public."Contacts"
-                WHERE "Status" = 1  -- Active status
+                WHERE "Status"::INTEGER = 1  -- FIX: Cast Status to INTEGER for comparison
                 AND "IsDeleted" = false
             )
             SELECT json_agg(
@@ -425,8 +425,8 @@ $$;
 
 -- Create recommended indexes for performance
 CREATE INDEX IF NOT EXISTS idx_contacts_duplicate_detection 
-ON public."Contacts"("Email", "Name", "Phone", "Mobile", "PartnerId") 
-WHERE "IsDeleted" = false AND "Status" = 1;
+ON public."Contacts"("Email", "Name", "Phone", "Mobile", "PartnerId", ("Status"::INTEGER)) 
+WHERE "IsDeleted" = false AND "Status"::INTEGER = 1;
 
 CREATE INDEX IF NOT EXISTS idx_partners_duplicate_detection
 ON public."Partners"("Name", "PartnerShortDescription", "ErpDimValue")

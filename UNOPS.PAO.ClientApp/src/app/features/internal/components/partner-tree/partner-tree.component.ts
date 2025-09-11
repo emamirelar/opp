@@ -323,7 +323,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       type: level,
       parent: rowData.code,
       partnerCategoryCode: rowData.partnerCategoryCode || rowData.partnerCategory,
-      partnerGroupCode: rowData.partnerGroupCode || rowData.partnerGroup,
+      partnerGroupId: rowData.partnerGroupId || rowData.partnerGroup,
       id: null,
       status: 'Active'
     };

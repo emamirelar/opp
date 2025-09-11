@@ -8,15 +8,15 @@ using System.Text.Json;
 namespace UNOPS.PAO.IntegrationTests.UnitTests;
 
 /// <summary>
-/// Tests pour valider la gestion améliorée des dates dans les critères de recherche
-/// Tests pour les opérateurs : before, after, between, on, this week, this month, this year
+/// Tests to validate improved date handling in search criteria
+/// Tests for operators: before, after, between, on, this week, this month, this year
 /// </summary>
 public class DateSearchTests
 {
     [Fact]
     public void DateSearch_AfterOperator_ShouldFindCorrectDates()
     {
-        // Arrange - Créer des données de test spécifiques
+        // Arrange - Create specific test data
         var partners = new List<UNOPSPartner>
         {
             CreatePartnerWithDate("Before", new DateTime(2024, 1, 10, 10, 0, 0)),
@@ -24,7 +24,7 @@ public class DateSearchTests
             CreatePartnerWithDate("After2", new DateTime(2024, 1, 20, 10, 0, 0))
         };
 
-        // Act - Rechercher les dates après le 2024-01-15
+        // Act - Search for dates after 2024-01-15
         var searchDate = new DateTime(2024, 1, 15);
         var endOfSearchDay = GetEndOfDay(searchDate);
         
@@ -40,7 +40,7 @@ public class DateSearchTests
     [Fact]
     public void DateSearch_BeforeOperator_ShouldFindCorrectDates()
     {
-        // Arrange - Créer des données de test spécifiques
+        // Arrange - Create specific test data
         var partners = new List<UNOPSPartner>
         {
             CreatePartnerWithDate("Before1", new DateTime(2024, 1, 10, 10, 0, 0)),
@@ -48,7 +48,7 @@ public class DateSearchTests
             CreatePartnerWithDate("After", new DateTime(2024, 1, 20, 10, 0, 0))
         };
 
-        // Act - Rechercher les dates avant le 2024-01-15
+        // Act - Search for dates before 2024-01-15
         var searchDate = new DateTime(2024, 1, 15);
         var startOfSearchDay = GetStartOfDay(searchDate);
         
@@ -64,7 +64,7 @@ public class DateSearchTests
     [Fact]
     public void DateSearch_BetweenOperator_ShouldFindCorrectDates()
     {
-        // Arrange - Créer des données de test spécifiques
+        // Arrange - Create specific test data
         var partners = new List<UNOPSPartner>
         {
             CreatePartnerWithDate("Before", new DateTime(2024, 1, 5, 10, 0, 0)),
@@ -73,7 +73,7 @@ public class DateSearchTests
             CreatePartnerWithDate("After", new DateTime(2024, 1, 25, 10, 0, 0))
         };
 
-        // Act - Rechercher les dates entre le 2024-01-10 et 2024-01-20
+        // Act - Search for dates between 2024-01-10 and 2024-01-20
         var startDate = new DateTime(2024, 1, 10);
         var endDate = new DateTime(2024, 1, 20);
         var startDateTime = GetStartOfDay(startDate);
@@ -91,7 +91,7 @@ public class DateSearchTests
     [Fact]
     public void DateSearch_OnOperator_ShouldFindExactDates()
     {
-        // Arrange - Créer des données de test spécifiques
+        // Arrange - Create specific test data
         var targetDate = new DateTime(2024, 1, 15);
         var partners = new List<UNOPSPartner>
         {
@@ -102,7 +102,7 @@ public class DateSearchTests
             CreatePartnerWithDate("After", new DateTime(2024, 1, 16, 0, 0, 1))
         };
 
-        // Act - Rechercher les dates exactement le 2024-01-15
+        // Act - Search for dates exactly on 2024-01-15
         var startOfDay = GetStartOfDay(targetDate);
         var endOfDay = GetEndOfDay(targetDate);
         
@@ -118,7 +118,7 @@ public class DateSearchTests
     [Fact]
     public void DateSearch_NotOnOperator_ShouldExcludeExactDates()
     {
-        // Arrange - Créer des données de test spécifiques
+        // Arrange - Create specific test data
         var excludeDate = new DateTime(2024, 1, 15);
         var partners = new List<UNOPSPartner>
         {
@@ -128,7 +128,7 @@ public class DateSearchTests
             CreatePartnerWithDate("Keep2", new DateTime(2024, 1, 20, 10, 0, 0))
         };
 
-        // Act - Exclure les dates du 2024-01-15
+        // Act - Exclude dates on 2024-01-15
         var startOfExcludeDay = GetStartOfDay(excludeDate);
         var endOfExcludeDay = GetEndOfDay(excludeDate);
         
@@ -148,7 +148,7 @@ public class DateSearchTests
         var partners = GetTestPartnersWithCurrentWeekDates();
         var (weekStart, weekEnd) = GetThisWeekDates();
 
-        // Act - Simuler "this week"
+        // Act - Simulate "this week"
         var filteredPartners = partners
             .Where(p => p.CreatedDate >= weekStart && p.CreatedDate <= weekEnd)
             .ToList();
@@ -166,7 +166,7 @@ public class DateSearchTests
         var partners = GetTestPartnersWithCurrentMonthDates();
         var (monthStart, monthEnd) = GetThisMonthDates();
 
-        // Act - Simuler "this month"
+        // Act - Simulate "this month"
         var filteredPartners = partners
             .Where(p => p.CreatedDate >= monthStart && p.CreatedDate <= monthEnd)
             .ToList();
@@ -184,7 +184,7 @@ public class DateSearchTests
         var partners = GetTestPartnersWithCurrentYearDates();
         var (yearStart, yearEnd) = GetThisYearDates();
 
-        // Act - Simuler "this year"
+        // Act - Simulate "this year"
         var filteredPartners = partners
             .Where(p => p.CreatedDate >= yearStart && p.CreatedDate <= yearEnd)
             .ToList();
@@ -233,7 +233,7 @@ public class DateSearchTests
         // Arrange
         var partners = GetTestPartnersWithEdgeCaseDates();
 
-        // Test 1: Début et fin d'année
+        // Test 1: Start and end of year
         var startOfYear = new DateTime(DateTime.Now.Year, 1, 1);
         var endOfYear = new DateTime(DateTime.Now.Year, 12, 31, 23, 59, 59);
         
@@ -241,12 +241,12 @@ public class DateSearchTests
             .Where(p => p.CreatedDate >= startOfYear && p.CreatedDate <= endOfYear)
             .ToList();
 
-        // Test 2: Minuit exact
+        // Test 2: Exact midnight
         var midnightPartners = partners
             .Where(p => p.CreatedDate.TimeOfDay == TimeSpan.Zero)
             .ToList();
 
-        // Test 3: Fin de journée
+        // Test 3: End of day
         var endOfDayPartners = partners
             .Where(p => p.CreatedDate.TimeOfDay >= new TimeSpan(23, 59, 0))
             .ToList();
@@ -282,7 +282,7 @@ public class DateSearchTests
     #region Helper Methods
 
     /// <summary>
-    /// Test de parsing de date (simulation de la méthode privée)
+    /// Date parsing test (simulation of private method)
     /// </summary>
     private static DateTime? TestDateParsing(string dateValue)
     {
@@ -291,21 +291,21 @@ public class DateSearchTests
 
         var normalizedValue = dateValue.Trim().ToLower();
 
-        // Dates relatives basiques
+        // Basic relative dates
         switch (normalizedValue)
         {
             case "today":
-            case "aujourd'hui":
+            case "today_fr": // French: aujourd'hui
                 return DateTime.Today;
             case "yesterday":
-            case "hier":
+            case "yesterday_fr": // French: hier
                 return DateTime.Today.AddDays(-1);
             case "tomorrow":
-            case "demain":
+            case "tomorrow_fr": // French: demain
                 return DateTime.Today.AddDays(1);
         }
 
-        // Formats standards
+        // Standard formats
         var formats = new[]
         {
             "yyyy-MM-dd",
@@ -376,14 +376,14 @@ public class DateSearchTests
         var (weekStart, weekEnd) = GetThisWeekDates();
         var partners = new List<UNOPSPartner>();
         
-        // Ajouter des partenaires dans la semaine actuelle
+        // Add partners in the current week
         for (int i = 0; i < 7; i++)
         {
             var date = weekStart.AddDays(i).AddHours(10); // 10h chaque jour
             partners.Add(CreatePartnerWithDate($"Partner Week {i + 1}", date));
         }
         
-        // Ajouter quelques partenaires hors semaine
+        // Add some partners outside the week
         partners.Add(CreatePartnerWithDate("Partner Before", weekStart.AddDays(-1)));
         partners.Add(CreatePartnerWithDate("Partner After", weekEnd.AddDays(1)));
         
@@ -395,7 +395,7 @@ public class DateSearchTests
         var (monthStart, monthEnd) = GetThisMonthDates();
         var partners = new List<UNOPSPartner>();
         
-        // Ajouter des partenaires dans le mois actuel
+        // Add partners in the current month
         var daysInMonth = (monthEnd - monthStart).Days + 1;
         for (int i = 0; i < Math.Min(10, daysInMonth); i++)
         {
@@ -411,7 +411,7 @@ public class DateSearchTests
         var currentYear = DateTime.Now.Year;
         var partners = new List<UNOPSPartner>();
         
-        // Ajouter des partenaires tout au long de l'année
+        // Add partners throughout the year
         for (int month = 1; month <= 12; month++)
         {
             var date = new DateTime(currentYear, month, 15, 12, 0, 0); // 15 de chaque mois
@@ -426,15 +426,15 @@ public class DateSearchTests
         var currentYear = DateTime.Now.Year;
         return new List<UNOPSPartner>
         {
-            // Début et fin d'année
+            // Start and end of year
             CreatePartnerWithDate("New Year", new DateTime(currentYear, 1, 1, 0, 0, 0)),
             CreatePartnerWithDate("End Year", new DateTime(currentYear, 12, 31, 23, 59, 59)),
             
-            // Minuit exact
+            // Exact midnight
             CreatePartnerWithDate("Midnight 1", new DateTime(currentYear, 6, 15, 0, 0, 0)),
             CreatePartnerWithDate("Midnight 2", new DateTime(currentYear, 9, 20, 0, 0, 0)),
             
-            // Fin de journée
+            // End of day
             CreatePartnerWithDate("End Day 1", new DateTime(currentYear, 3, 10, 23, 59, 30)),
             CreatePartnerWithDate("End Day 2", new DateTime(currentYear, 8, 25, 23, 59, 59))
         };
@@ -443,7 +443,7 @@ public class DateSearchTests
     private static List<UNOPSPartner> GenerateManyPartnersWithDates(int count)
     {
         var partners = new List<UNOPSPartner>();
-        var random = new Random(12345); // Seed fixe pour reproductibilité
+        var random = new Random(12345); // Fixed seed for reproducibility
         var baseDate = DateTime.Today.AddYears(-1);
         
         for (int i = 0; i < count; i++)
@@ -476,7 +476,7 @@ public class DateSearchTests
             DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
             DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
             PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply,
-            PartnerGroupCode = "NGO",
+            PartnerGroupId = 1,
             CreatedDate = createdDate,
             LastModifiedDate = createdDate.AddDays(Random.Shared.Next(1, 30))
         };

@@ -416,7 +416,7 @@ public class AdvancedSearchLogicTests
             DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
             DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
             PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply,
-            PartnerGroupCode = "NGO",
+            PartnerGroupId = 1,
             CreatedDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 100)),
             LastModifiedDate = DateTime.UtcNow,
             // Note: For test compatibility, we'll create a helper method to get status as string

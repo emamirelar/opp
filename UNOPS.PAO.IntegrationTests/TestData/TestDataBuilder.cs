@@ -32,7 +32,7 @@ public static class TestDataBuilder
             .RuleFor(p => p.PooledFund, f => f.Random.Bool(0.15f))
             .RuleFor(p => p.CanCreateNewOpportunities, f => f.Random.Bool(0.8f))
             .RuleFor(p => p.ReasonForNoNewOpportunity, (f, p) => !p.CanCreateNewOpportunities ? f.Lorem.Sentence() : null)
-            .RuleFor(p => p.PartnerGroupCode, f => f.PickRandom(new[] { "NGO", "GOV", "PRI", "UN" }))
+            .RuleFor(p => p.PartnerGroupId, f => f.Random.Int(1, 10))
             .RuleFor(p => p.CreatedDate, f => f.Date.Past(2))
             .RuleFor(p => p.LastModifiedDate, f => f.Date.Recent());
     }

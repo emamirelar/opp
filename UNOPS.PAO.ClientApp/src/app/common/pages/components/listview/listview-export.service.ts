@@ -190,7 +190,7 @@ export class ListviewExportService {
         ShortDescription: partner.partnerShortDescription || '',
         LongDescription: partner.partnerLongDescription || '',
         Status: partner.status || '',
-        PartnerGroupCode: partner.partnerGroupCode || '',
+        PartnerGroupId: partner.partnerGroupId || '',
         PartnerGroupName: partner.partnerGroupName || '',
         PartnerCategoryId: partner.partnerCategoryId || '',
         PartnerCategoryName: partner.partnerCategoryName || '',

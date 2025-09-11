@@ -64,7 +64,7 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
             "createddate" => p => p.CreatedDate,
             "lastmodifieddate" => p => p.LastModifiedDate,
             "partnercategoryid" => p => p.PartnerCategoryId,
-            "partnergroupcode" => p => p.PartnerGroupCode ?? "",
+            "partnergroupid" => p => p.PartnerGroupId ?? 0,
             "partnerApprovalstatus" => p => p.PartnerApprovalStatus,
             "keyglobalpartner" => p => p.KeyGlobalPartner,
             "unsecretariatpartner" => p => p.UNSecretariatPartner,

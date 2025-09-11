@@ -468,7 +468,7 @@ public class TextSearchSpaceHandlingTests
             DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
             DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
             PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply,
-            PartnerGroupCode = "NGO",
+            PartnerGroupId = 1,
             CreatedDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 100)),
             LastModifiedDate = DateTime.UtcNow
         };

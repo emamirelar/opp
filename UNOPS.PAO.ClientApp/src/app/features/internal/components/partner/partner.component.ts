@@ -118,10 +118,10 @@ export class PartnerComponent implements OnDestroy, OnInit {
           operators: ['is', 'is not']
         },
         { 
-          field: 'partnerGroupCode', 
+          field: 'partnerGroupId', 
           label: 'label.partner.partnerGroup', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
+          type: 'number',
+          operators: ['is', 'is not']
         },
         { 
           field: 'partnerCategoryId', 

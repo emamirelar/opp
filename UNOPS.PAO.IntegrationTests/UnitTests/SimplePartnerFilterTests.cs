@@ -25,7 +25,7 @@ public class SimplePartnerFilterTests
         partners.Should().OnlyContain(p => !string.IsNullOrEmpty(p.Name));
         partners.Should().OnlyContain(p => p.Status != null);
         partners.Should().OnlyContain(p => new[] { Domain.Entities.EntityStatus.Active, Domain.Entities.EntityStatus.Closed, Domain.Entities.EntityStatus.Draft }.Contains(p.Status));
-        partners.Should().OnlyContain(p => new[] { "NGO", "GOV", "PRI", "UN" }.Contains(p.PartnerGroupCode!));
+        partners.Should().OnlyContain(p => new[] { 1, 2, 3, 4 }.Contains(p.PartnerGroupId ?? 0));
     }
 
     [Fact]
@@ -483,7 +483,7 @@ public class SimplePartnerFilterTests
             DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // Default "false" equivalent
             DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // Default "false" equivalent
             PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply, // Default "false" equivalent
-            PartnerGroupCode = "NGO",
+            PartnerGroupId = 1,
             CreatedDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 100)),
             LastModifiedDate = DateTime.UtcNow
         };

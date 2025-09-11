@@ -18,7 +18,7 @@ public class PartnerFilterRequest : PaginationRequest, IPartnerSearchFilter
     public string? AddressStateProvince { get; set; }
     public string? AddressPostalCode { get; set; }
     public string? AddressCountry { get; set; }
-    public string? PartnerGroupCode { get; set; }
+    public int? PartnerGroupId { get; set; }
     public string? SearchText { get; set; }
     
     // Organization Unit filter - filters results by organizational unit (includes hierarchy)

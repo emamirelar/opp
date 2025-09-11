@@ -33,7 +33,8 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
                 data.PartnerGroupEditable = true;
             }
             
-            var partnerCategory = await partnerTreeService.GetPartnerCategoryByPartnerGroupCodeAsync(data.PartnerGroupCode);
+            var partnerCategory = data.PartnerGroupId.HasValue ? 
+                await partnerTreeService.GetPartnerCategoryByPartnerGroupCodeAsync(data.PartnerGroupCode) : null;
             if (partnerCategory != null)
             {
                 data.PartnerCategoryName = partnerCategory.Name;

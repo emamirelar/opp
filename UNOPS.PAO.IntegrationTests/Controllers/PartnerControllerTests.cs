@@ -85,7 +85,7 @@ public class PartnerControllerTests : IntegrationTestBase
             DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
             DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
             PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply,
-            PartnerGroupCode = "NGO",
+            PartnerGroupId = 1,
             CreatedDate = DateTime.UtcNow.AddDays(-id),
             LastModifiedDate = DateTime.UtcNow
         };
@@ -467,7 +467,7 @@ public class PartnerControllerTests : IntegrationTestBase
             PartnerCategoryId = 1,
             LiaisonOfficeId = 1,
             Status = "Active",
-            PartnerGroupCode = "NGO"
+            PartnerGroupId = 1
         };
         
         // Act
