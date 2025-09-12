@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Infrastructure;
+using System.Collections.Generic;
 
 namespace UNOPS.PAO.DataAccess.Context;
 
@@ -42,7 +43,21 @@ public class AuditableDbContext<TId, TUserId> : DbContext, IDbContextSchema
         {
             if (entry is { Entity: IModifiableEntity<TId, TUserId> created, State: EntityState.Added })
             {
-                created.SetCreateAuditData(_currentUserId);
+                // Check if CreatedBy has been explicitly set (not default value)
+                var defaultUserId = default(TUserId);
+                var currentCreatedBy = created.CreatedBy;
+                
+                // Only set CreatedBy if it hasn't been explicitly set or is default value
+                if (EqualityComparer<TUserId>.Default.Equals(currentCreatedBy, defaultUserId))
+                {
+                    created.SetCreateAuditData(_currentUserId);
+                }
+                else
+                {
+                    // CreatedBy was explicitly set, only set CreatedDate
+                    created.CreatedDate = DateTime.UtcNow.ToUniversalTime();
+                }
+                
                 created.SetUpdateAuditData(_currentUserId);
             }
             

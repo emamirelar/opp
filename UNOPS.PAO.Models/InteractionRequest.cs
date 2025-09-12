@@ -32,4 +32,5 @@ public class InteractionRequest : ExtensibleModel
     /// Flag to bypass duplicate detection when user confirms creation despite duplicates
     /// </summary>
     public bool ConfirmDuplicateCreation { get; set; } = false;
+    public int? CreatedBy { get; set; }
 }
