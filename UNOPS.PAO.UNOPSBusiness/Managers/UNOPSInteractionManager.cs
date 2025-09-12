@@ -575,11 +575,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             retVal.PartnerIds.Add(partner.PartnerId);
         }
 
-        foreach (var user in item.InteractionUsers)
-        {
-            retVal.UserIds.Add(user.UserId);
-        }
-
         return retVal;
     }
 
@@ -960,11 +955,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             result.PartnerIds = item.InteractionPartners.Select(ip => ip.PartnerId).ToList();
         }
 
-        if (item.InteractionUsers != null)
-        {
-            result.UserIds = item.InteractionUsers.Select(iu => iu.UserId).ToList();
-        }
-
         return result;
     }
 
@@ -1007,11 +997,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         {
             result.PartnerIds = item.InteractionPartners.Select(ip => ip.PartnerId).ToList();
         }
-
-        if (item.InteractionUsers != null)
-        {
-            result.UserIds = item.InteractionUsers.Select(iu => iu.UserId).ToList();
-        }
+        
 
         return result;
     }
