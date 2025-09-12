@@ -466,6 +466,20 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     this.importDialogService.openGoogleSheetPicker('interaction');
   }
 
+  /**
+   * @uiButton export_interactions
+   * @description Exports interaction data to Google Sheets respecting current search and filter criteria
+   * @label Export Interactions
+   * @icon pi pi-file-export
+   * @when_to_use When you need to export interaction data with current filters applied for external analysis or reporting
+   * @permissions PARTNER_GLOB_ADMIN
+   */
+  exportData() {
+    if (this.listviewComponent) {
+      this.listviewComponent.exportData();
+    }
+  }
+
   showInteractionPreview(event: MouseEvent, interaction: Interaction) {
     this.previewInteraction.set(interaction);
     this.previewPanel?.show(event, event.target as HTMLElement);

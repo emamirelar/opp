@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed, ViewChild } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -69,6 +69,9 @@ export class PartnerComponent implements OnDestroy, OnInit {
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Partner');
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
+
+  // Reference to listview component for export functionality
+  @ViewChild(ListviewComponent) listviewComponent!: ListviewComponent;
 
   // Dynamic partner columns loaded from API
   columns = signal<ListViewColumn[]>([]);
@@ -319,6 +322,20 @@ export class PartnerComponent implements OnDestroy, OnInit {
   openImportDialog() {
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('partner');
+  }
+
+  /**
+   * @uiButton export_partners
+   * @description Exports partner data to Google Sheets respecting current search and filter criteria
+   * @label Export Partners
+   * @icon pi pi-file-export
+   * @when_to_use When you need to export partner data with current filters applied for external analysis or reporting
+   * @permissions PARTNER_GLOB_ADMIN
+   */
+  exportData() {
+    if (this.listviewComponent) {
+      this.listviewComponent.exportData();
+    }
   }
 
   onSearchChange(searchParams: SearchParams) {

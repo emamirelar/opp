@@ -54,7 +54,6 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   @Output() search = new EventEmitter<SearchCriteria>();
   @Output() removeCriterion = new EventEmitter<number>();
   @Output() clearSearch = new EventEmitter<void>();
-  @Output() exportData = new EventEmitter<void>();
   @Output() applySavedFilter = new EventEmitter<SavedFilter>();
   @Output() switchToSimple = new EventEmitter<void>();
   @Output() myOfficeFilterChanged = new EventEmitter<boolean>();
@@ -373,12 +372,6 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.selectFirstSearchField();
   }
 
-  /**
-   * Export data
-   */
-  onExportData(): void {
-    this.exportData.emit();
-  }
 
   /**
    * Switch back to simple search

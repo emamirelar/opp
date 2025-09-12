@@ -27,16 +27,6 @@
         #savedFilterRef
       ></app-advanced-search-saved-filter>
     }
-    @if (config.enableExport && (config.exportOptions?.showButton ?? true)) {
-      <p-button
-        [label]="config.exportOptions?.buttonLabel ?? 'Export'"
-        icon="pi pi-file-export"
-        outlined
-        (onClick)="onExportData()"
-        [disabled]="isLoading"
-        class="text-gray-700 hover:bg-gray-100"
-      ></p-button>
-    }
     </div>
   </div>
 

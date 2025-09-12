@@ -140,7 +140,9 @@ export class EntityManagerComponent implements OnInit {
     canCreate: false,
     canRead: false,
     canUpdate: false,
-    canDelete: false
+    canDelete: false,
+    canExport: false,
+    canImport: false
   });
 
   // UI state

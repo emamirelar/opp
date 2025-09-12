@@ -173,7 +173,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       canRead: false,
       canCreate: false,
       canUpdate: false,
-      canDelete: false
+      canDelete: false,
+      canExport: false,
+      canImport: false
     }
   });
   permissionsLoading = signal<boolean>(true);

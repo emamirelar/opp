@@ -82,5 +82,35 @@ namespace UNOPS.PAO.IntegrationTests.Infrastructure
             // Default role
             return "UNOPS_GEN_USER";
         }
+
+        public bool CanExport(ClaimsPrincipal user)
+        {
+            if (user?.Identity?.IsAuthenticated == true)
+            {
+                var roles = user.Claims
+                    .Where(c => c.Type == ClaimTypes.Role)
+                    .Select(c => c.Value)
+                    .ToList();
+
+                return roles.Contains("PARTNER_GLOB_ADMIN");
+            }
+            
+            return false; // Default for tests - no export unless explicitly granted
+        }
+
+        public bool CanImport(ClaimsPrincipal user)
+        {
+            if (user?.Identity?.IsAuthenticated == true)
+            {
+                var roles = user.Claims
+                    .Where(c => c.Type == ClaimTypes.Role)
+                    .Select(c => c.Value)
+                    .ToList();
+
+                return roles.Contains("PARTNER_GLOB_ADMIN");
+            }
+            
+            return false; // Default for tests - no import unless explicitly granted
+        }
     }
 }

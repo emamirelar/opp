@@ -394,7 +394,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                     CanRead = false,
                     CanCreate = false,
                     CanUpdate = false,
-                    CanDelete = false
+                    CanDelete = false,
+                    CanExport = false,
+                    CanImport = false
                 };
             }
             
@@ -403,7 +405,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 CanRead = await HasPermissionAsync(user, entityName, "read"),
                 CanCreate = await HasPermissionAsync(user, entityName, "create"),
                 CanUpdate = await HasPermissionAsync(user, entityName, "update"),
-                CanDelete = await HasPermissionAsync(user, entityName, "delete")
+                CanDelete = await HasPermissionAsync(user, entityName, "delete"),
+                CanExport = CanExport(user),
+                CanImport = CanImport(user)
             };
         }
 
@@ -645,6 +649,38 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             }
 
             return GetHighestPriorityRole(userRoles);
+        }
+
+        public bool CanExport(ClaimsPrincipal user)
+        {
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return false;
+            }
+
+            // Only PARTNER_GLOB_ADMIN can export
+            var userRoles = user.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            return userRoles.Contains("PARTNER_GLOB_ADMIN");
+        }
+
+        public bool CanImport(ClaimsPrincipal user)
+        {
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return false;
+            }
+
+            // Only PARTNER_GLOB_ADMIN can import
+            var userRoles = user.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            return userRoles.Contains("PARTNER_GLOB_ADMIN");
         }
     }
 }

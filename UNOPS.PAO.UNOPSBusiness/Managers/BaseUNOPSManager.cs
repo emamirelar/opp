@@ -250,7 +250,9 @@ public abstract class BaseUNOPSManager
                     CanActivate = GetCanActivate(result, entityPermissions),
                     CanClose = GetCanClose(result, entityPermissions),
                     CanArchive = GetCanArchive(result, entityPermissions),
-                    CanApprove = GetCanApprove(result, entityPermissions)
+                    CanApprove = GetCanApprove(result, entityPermissions),
+                    CanExport = _permissionService?.CanExport(user) ?? false,
+                    CanImport = _permissionService?.CanImport(user) ?? false
                 };
 
                 // Check instance-level access if PermissionService is available and entity has data
