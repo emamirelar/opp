@@ -63,7 +63,6 @@ export interface Partner extends TaggedEntity {
   _importRowId?: string;
   partnerTree?: PartnerTree | null;
   partnerGroupId?: number | null;
-  partnerGroupCode?: string | null;
   partnerGroupName?: string | null;
   partnerCategoryCode?: string | null;
   partnerCategoryName?: string | null;

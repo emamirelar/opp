@@ -283,14 +283,14 @@ public class PartnerTreeController : BaseController
     /// </example_uses>
     /// <when_to_use>Use this when the user asks to filter or search partners by partner group, organization type, or institutional classification.</when_to_use>
     /// <returns>Paginated list of partners belonging to the specified partner group</returns>
-    [HttpGet(APIDictionary.PartnerTree + "/by-partner-group-code/{code}")]
+    [HttpGet(APIDictionary.PartnerTree + "/by-partner-group-id/{id}")]
     [AccessControlled(EntityTypes.PartnerTree, "read")]
-    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetPartnersByPartnerGroup(string code, [FromQuery] PaginationRequest request)
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetPartnersByPartnerGroup(int id, [FromQuery] PaginationRequest request)
     {
         try
         {
             // Use the partner manager through the wrapper since PartnerTreeManager focuses on tree structure
-            var result = await _managerWrapper.PartnerManager.GetPartnersByPartnerGroupAsync(User, code, request);
+            var result = await _managerWrapper.PartnerManager.GetPartnersByPartnerGroupAsync(User, id, request);
             return Ok(result);
         }
         catch (Exception ex)
@@ -409,14 +409,14 @@ public class PartnerTreeController : BaseController
             
             // Group by partner group and count
             var groupStats = partnerTrees.Records
-                .Where(p => !string.IsNullOrEmpty(p.PartnerGroupCode))
-                .GroupBy(p => new { p.PartnerGroupCode, p.PartnerGroupName })
+                .Where(p => p.PartnerGroupId.HasValue)
+                .GroupBy(p => new { p.PartnerGroupId, p.PartnerGroupName })
                 .Select(g => new
                 {
-                    code = g.Key.PartnerGroupCode,
-                    name = g.Key.PartnerGroupName ?? g.Key.PartnerGroupCode,
+                    id = g.Key.PartnerGroupId,
+                    name = g.Key.PartnerGroupName ?? $"Group {g.Key.PartnerGroupId}",
                     partnerCount = g.Count(),
-                    description = $"{g.Key.PartnerGroupName ?? g.Key.PartnerGroupCode} partners"
+                    description = $"{g.Key.PartnerGroupName ?? $"Group {g.Key.PartnerGroupId}"} partners"
                 })
                 .OrderBy(x => x.name)
                 .ToList();
@@ -473,12 +473,12 @@ public class PartnerTreeController : BaseController
 
             // Group by groups
             var groupStats = partnerTrees.Records
-                .Where(p => !string.IsNullOrEmpty(p.PartnerGroupCode))
-                .GroupBy(p => new { p.PartnerGroupCode, p.PartnerGroupName })
+                .Where(p => p.PartnerGroupId.HasValue)
+                .GroupBy(p => new { p.PartnerGroupId, p.PartnerGroupName })
                 .Select(g => new
                 {
-                    code = g.Key.PartnerGroupCode,
-                    name = g.Key.PartnerGroupName ?? g.Key.PartnerGroupCode,
+                    id = g.Key.PartnerGroupId,
+                    name = g.Key.PartnerGroupName ?? $"Group {g.Key.PartnerGroupId}",
                     partnerCount = g.Count(),
                     partners = g.Select(p => new { p.Id, p.Name }).ToList()
                 })

@@ -403,6 +403,13 @@ def generate_partner_tree_seeder(tree_entries):
     level_order = {'Level_1': 1, 'Level_2': 2, 'Level_3': 3, 'Level_4': 4, 'Level_5': 5}
     tree_entries.sort(key=lambda x: (level_order.get(x[3], 6), x[0]))  # Sort by level, then by code
     
+    # Create mapping from Code to ID for use in partner seeder
+    partner_tree_mapping = {}
+    for i, entry in enumerate(tree_entries):
+        code = entry[0]
+        id_value = i + 1
+        partner_tree_mapping[code] = id_value
+    
     seeder_code = '''using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -430,7 +437,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         
         seeder_code += f'''                new UNOPSPartnerTree
                 {{
-                    Id = {id_value},
                     Code = "{code}",
                     Name = "{name}",
                     Description = "{description}",
@@ -466,9 +472,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         cs_file.write(seeder_code)
 
     print(f"PartnerTree seeder code generated and saved to {output_file}")
-    return output_file
+    return output_file, partner_tree_mapping
 
-def generate_partner_seeder(partners):
+def generate_partner_seeder(partners, partner_tree_mapping):
     """Generate PartnerSeeder.cs"""
     print(f"Generating Partner seeder with {len(partners)} entries...")
     
@@ -495,6 +501,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
             var liaisonOfficeMapping = await context.LiaisonOffices
                 .ToDictionaryAsync(lo => lo.Code, lo => lo.Id);
 
+            // Create mapping from PartnerTree Code to Id
+            var partnerTreeMapping = await context.PartnerTrees
+                .ToDictionaryAsync(pt => pt.Code, pt => pt.Id);
+
             var partners = new List<UNOPSPartner>
             {
 '''
@@ -503,6 +513,12 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
     for i, partner in enumerate(partners):
         # Handle null values for nullable fields
         partner_group_code = f'"{partner["partner_group_code"]}"' if partner['partner_group_code'] else "null"
+        
+        # Generate PartnerGroupId lookup using PartnerTree mapping
+        if partner['partner_group_code']:
+            partner_group_id_lookup = f'partnerTreeMapping.ContainsKey("{partner["partner_group_code"]}") ? partnerTreeMapping["{partner["partner_group_code"]}"] : (int?)null'
+        else:
+            partner_group_id_lookup = "null"
         
         # Generate liaison office lookup code (using the same pattern as original seeder)
         if partner['liaison_office_code']:
@@ -521,7 +537,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     Name = "{partner['name']}",
                     PartnerShortDescription = "{partner['short_description']}",
                     Status = (EntityStatus){partner['status']},
-                    PartnerGroupCode = {partner_group_code},
+                    PartnerGroupId = {partner_group_id_lookup},
                     LiaisonOfficeId = {liaison_office_lookup},
                     LogoUrl = {logo_url_value},
                     CanCreateNewOpportunities = {partner['can_create_new_opportunities']},
@@ -593,8 +609,8 @@ def main():
             print(f"  - {level}: {level_counts[level]}")
     
     # Generate seeders
-    tree_file = generate_partner_tree_seeder(tree_entries)
-    partner_file = generate_partner_seeder(partners)
+    tree_file, partner_tree_mapping = generate_partner_tree_seeder(tree_entries)
+    partner_file = generate_partner_seeder(partners, partner_tree_mapping)
     
     print(f"\n=== Generation Complete ===")
     print(f"Generated: {tree_file}")

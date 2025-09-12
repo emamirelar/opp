@@ -36,7 +36,7 @@ public interface IPartnerManager
     /// Gets a partner with its contacts and their interactions included
     /// </summary>
     Task<PartnerModel?> GetPartnerWithContactsAndInteractionsAsync(int id);
-    Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, string partnerTreeId, PaginationRequest request);
+    Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, int partnerTreeId, PaginationRequest request);
     Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request);
     Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file);
     
@@ -76,7 +76,7 @@ public interface IPartnerManager
 
     Task<bool> DeletePartnerAsync(ClaimsPrincipal user, int id);
 
-    Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, string partnerGroupCode, PaginationRequest request);
+    Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, int partnerGroupId, PaginationRequest request);
     Task<PaginationResponse<PartnerModel>> GetPartnersByCategoryAsync(ClaimsPrincipal user, string partnerCategoryCode, PaginationRequest request);
 
     Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user);

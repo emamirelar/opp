@@ -60,7 +60,7 @@ interface TabItem {
       <div class="flex items-center justify-between w-full">
         <div class="flex flex-col">
           <div class="text-lg font-medium text-gray-600">
-            @if (recordData.partnerGroupCode) {
+            @if (recordData.partnerGroupId) {
               {{ 'label.partnerTree.partnerGroup' | translate }}
             } @else if (recordData.partnerCategoryCode) {
               {{ 'label.partnerTree.partnerCategory' | translate }}

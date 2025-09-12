@@ -87,7 +87,7 @@ export class PartnerTreeViewNavigationComponent implements OnInit {
       this.activatedRoute.paramMap || of(null)
     ]).subscribe(([data, params]) => {
       const recordId = params?.get('recordId');
-      
+
       if (data && (data as any)['partnerTreeData']) {
         this.partnerTree.set((data as any)['partnerTreeData'].data);
       } else if (recordId && (!this.partnerTree() || recordId !== this.partnerTree()?.id?.toString())) {

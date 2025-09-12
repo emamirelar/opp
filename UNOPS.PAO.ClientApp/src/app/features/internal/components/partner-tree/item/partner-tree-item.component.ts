@@ -45,7 +45,6 @@ interface PartnerTreeFormControls {
   ],
   templateUrl: './partner-tree-item.component.html',
   standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PartnerTreeItemComponent implements OnInit, OnChanges {
   @Input() record?: PartnerTree;
@@ -54,9 +53,10 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   isFormInvalid = signal<boolean>(false);
   parent?: PartnerTree;
 
+
   partnerTreeService = inject(PartnerTreeService);
   feedbackDialogService = inject(FeedbackDialogService);
-  
+
   // RBAC permissions
   permissionUtilityService = inject(PermissionUtilityService);
   recordPermissionsData = this.permissionUtilityService.createInstancePermissions('PartnerTree');
@@ -159,7 +159,9 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
 
     // Initialize options from service (after patchValue so category filtering works correctly)
     this.loadPartnerCategoryAndGroupOptions();
-    
+
+    // Update control states based on backend properties
+
     this.updateFormValidity();
 
     // Subscribe to form status changes
@@ -170,6 +172,17 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
     // Subscribe to partner category changes to update group options
     this.formGroup.get('partnerCategoryCode')?.valueChanges.subscribe((categoryCode) => {
       this.updatePartnerGroupOptions(categoryCode);
+    });
+
+    // Subscribe to form changes that affect editing permissions (type, code, parent)
+    this.formGroup.get('type')?.valueChanges.subscribe(() => {
+      // Trigger change detection for conditional rendering
+    });
+    this.formGroup.get('code')?.valueChanges.subscribe(() => {
+      // Trigger change detection for conditional rendering
+    });
+    this.formGroup.get('parent')?.valueChanges.subscribe(() => {
+      // Trigger change detection for conditional rendering
     });
   }
 
@@ -183,8 +196,8 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   handleDelete() {
     // Check permission before deleting
     if (!this.permissionUtilityService.canDelete(this.recordPermissions())) {
-      this.feedbackDialogService.showErrorToast({ 
-        detail: 'You do not have permission to delete this partner tree' 
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to delete this partner tree'
       });
       return;
     }
@@ -198,10 +211,10 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
           this.partnerTreeService.deletePartnerLevel(this.record.id.toString()).subscribe({
             next: (data: any) => {
               this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
-              
+
               // Force refresh of cached partner data
               this.cachedDataService.refreshPartners();
-              
+
               // Close with success indicator to trigger list refresh
               this.dialogRef.close({ success: true, deleted: true, data: data });
             },
@@ -253,17 +266,17 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
     // Check permission before saving
     const isNewRecord = !this.record?.id;
     const requiredPermission = isNewRecord ? 'canCreate' : 'canUpdate';
-    
+
     if (isNewRecord && !this.permissionUtilityService.canCreate(this.recordPermissions())) {
-      this.feedbackDialogService.showErrorToast({ 
-        detail: 'You do not have permission to create partner trees' 
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to create partner trees'
       });
       return;
     }
-    
+
     if (!isNewRecord && !this.permissionUtilityService.canUpdate(this.recordPermissions())) {
-      this.feedbackDialogService.showErrorToast({ 
-        detail: 'You do not have permission to update this partner tree' 
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to update this partner tree'
       });
       return;
     }
@@ -333,23 +346,65 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   }
 
   canEditPartnerCategory() {
-    return this.formGroup.get('type')?.value === 'Level_1' || (this.formGroup.get('type')?.value === 'Level_2' && !this.parent?.partnerCategoryEditable);
+    // Business Rule: GOVERNMENT or MULTILATERAL cannot change Partner Category or Partner Group
+    if (this.isGovernmentOrMultilateral()) {
+      return false;
+    }
+
+    // Business Rule: Level 1 OR Level 2 with GOVERNMENT/MULTILATERAL parent can change Partner Category
+    if (this.isLevel1OrLevel2WithRestrictedParent()) {
+      return true;
+    }
+
+    // All other Partner Trees cannot change Partner Category
+    return false;
   }
 
   canEditPartnerGroup() {
-    if (!this.parent) return false;
+    // Business Rule: GOVERNMENT or MULTILATERAL cannot change Partner Category or Partner Group
+    if (this.isGovernmentOrMultilateral()) {
+      return false;
+    }
 
-    return this.parent?.partnerGroupEditable || this.parent?.partnerCategoryEditable;
+    // Business Rule: Level 1 OR Level 2 with GOVERNMENT/MULTILATERAL parent cannot change Partner Group
+    if (this.isLevel1OrLevel2WithRestrictedParent()) {
+      return false;
+    }
+
+    // All other Partner Trees can change Partner Group
+    return true;
+  }
+
+  private isGovernmentOrMultilateral(): boolean {
+    const code = this.record?.code || this.formGroup.get('code')?.value;
+    return code === 'GOVERNMENT' || code === 'MULTILATERAL';
+  }
+
+  private isLevel1OrLevel2WithRestrictedParent(): boolean {
+    const type = this.record?.type || this.formGroup.get('type')?.value;
+    const parent = this.record?.parent || this.formGroup.get('parent')?.value;
+
+    // Level 1 can change Partner Category
+    if (type === 'Level_1') {
+      return true;
+    }
+
+    // Level 2 with GOVERNMENT or MULTILATERAL parent can change Partner Category
+    if (type === 'Level_2' && (parent === 'GOVERNMENT' || parent === 'MULTILATERAL')) {
+      return true;
+    }
+
+    return false;
   }
 
   private loadPartnerCategoryAndGroupOptions() {
     // Filter parent options to get only categories (Level_1 items typically)
-    this.partnerCategoryOptions = this.parentOptions.filter(item => 
+    this.partnerCategoryOptions = this.parentOptions.filter(item =>
       item.type === 'Level_1' || item.partnerCategoryEditable === true
     );
 
     // Get all partner group options
-    this.allPartnerGroupOptions = this.parentOptions.filter(item => 
+    this.allPartnerGroupOptions = this.parentOptions.filter(item =>
       item.type === 'Level_2' || item.partnerGroupEditable === true
     );
 
@@ -365,7 +420,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
     }
 
     // Filter groups based on selected category
-    this.filteredPartnerGroupOptions = this.allPartnerGroupOptions.filter(group => 
+    this.filteredPartnerGroupOptions = this.allPartnerGroupOptions.filter(group =>
       group.parent === categoryCode
     );
   }

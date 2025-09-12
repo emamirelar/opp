@@ -108,7 +108,7 @@ export class CachedDataService {
     value: category.partnerCategoryCode,
     items: category.children.map(group => ({
       name: group.partnerGroupName,
-      value: group.partnerGroupCode
+      value: group.partnerGroupId
     }))
   })) || []);
 
