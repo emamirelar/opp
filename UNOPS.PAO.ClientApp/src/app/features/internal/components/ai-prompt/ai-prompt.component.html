@@ -5,11 +5,10 @@
     <div class="flex gap-3">
       @if (!permissionsLoading() && entityPermissions().permissions.canRead) {
         <p-button
-          [label]="'aiPrompt.exportDeveloper' | translate"
-          icon="pi pi-download"
-          severity="secondary"
+          [label]="'aiPrompt.exportSql' | translate"
+          icon="pi pi-database"
           [loading]="exporting()"
-          (onClick)="exportAiPrompts()"
+          (onClick)="exportAiPromptsAsSql()"
           class="px-4 py-2">
         </p-button>
       }

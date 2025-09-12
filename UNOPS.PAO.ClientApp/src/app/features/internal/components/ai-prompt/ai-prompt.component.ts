@@ -947,14 +947,14 @@ Be extra cautious while deleting as there could be several dependencies within t
   }
 
   /**
-   * @uiButton export_ai_prompts
-   * @description Exports all AI prompts as a C# seeder file for developers
-   * @label Export AiPrompt (Developer Version)
-   * @icon pi pi-download
-   * @when_to_use When developers need to export AI prompts as C# code for seeding or backup purposes
+   * @uiButton export_ai_prompts_sql
+   * @description Exports all AI prompts as a SQL script file for seeding
+   * @label Export AiPrompt (SQL Script)
+   * @icon pi pi-database
+   * @when_to_use When you need to export AI prompts as SQL scripts for database seeding with configurable PROJECT_ID
    * @permissions AI_PROMPT_READ
    */
-  exportAiPrompts(): void {
+  exportAiPromptsAsSql(): void {
     // Check read permissions
     const permissions = this.entityPermissions();
     if (!permissions.permissions.canRead) {
@@ -968,7 +968,7 @@ Be extra cautious while deleting as there could be several dependencies within t
 
     this.exporting.set(true);
     
-    const sub = this.aiPromptService.exportAiPrompts().subscribe({
+    const sub = this.aiPromptService.exportAiPromptsAsSql().subscribe({
       next: (blob) => {
         // Create download link
         const url = window.URL.createObjectURL(blob);
@@ -977,7 +977,7 @@ Be extra cautious while deleting as there could be several dependencies within t
         
         // Generate filename with timestamp
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-        link.download = `AiPromptSeeder_${timestamp}.cs`;
+        link.download = `05_AiPrompts_${timestamp}.sql`;
         
         // Trigger download
         document.body.appendChild(link);
@@ -990,15 +990,15 @@ Be extra cautious while deleting as there could be several dependencies within t
         this.messageService.add({
           severity: 'success',
           summary: 'Export Complete',
-          detail: 'AI prompts exported successfully as C# seeder file'
+          detail: 'AI prompts exported successfully as SQL script file'
         });
       },
       error: (error) => {
-        console.error('Error exporting AI prompts:', error);
+        console.error('Error exporting AI prompts as SQL:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Export Failed',
-          detail: 'Failed to export AI prompts'
+          detail: 'Failed to export AI prompts as SQL'
         });
       },
       complete: () => {

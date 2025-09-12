@@ -441,7 +441,9 @@
         "noDataAvailable": "No hay datos disponibles para la vista previa",
         "templateValid": "Template válido pero sin resultado",
         "templateError": "Error en el template",
-        "examplePlaceholder": "ej. {nombre} ({nombreCorto})"
+        "examplePlaceholder": "ej. {nombre} ({nombreCorto})",
+        "exportSql": "Exportar Script SQL",
+        "exportSqlTooltip": "Exportar todas las configuraciones de entidades como un solo archivo de script SQL"
     },
     "search": {
         "results": "Resultados de Búsqueda",

@@ -548,89 +548,73 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     }
 
     /// <summary>
-    /// Exports all AI prompts as a developer-friendly C# code file for seeding
+    /// Exports all AI prompts as a SQL script file for seeding
     /// </summary>
-    public async Task<string> ExportAiPromptsAsync(ClaimsPrincipal user)
+    public async Task<string> ExportAiPromptsAsSqlAsync(ClaimsPrincipal user)
     {
         // RBAC interceptor handles security enforcement
         var allPrompts = await _promptRepository.GetAll().ToListAsync();
         
-        var codeBuilder = new StringBuilder();
-        codeBuilder.AppendLine("using Microsoft.EntityFrameworkCore;");
-        codeBuilder.AppendLine("using UNOPS.PAO.Domain.Entities;");
-        codeBuilder.AppendLine("using UNOPS.PAO.UNOPSDataAccess.Context;");
-        codeBuilder.AppendLine();
-        codeBuilder.AppendLine("namespace UNOPS.PAO.UNOPSDataAccess.Seed");
-        codeBuilder.AppendLine("{");
-        codeBuilder.AppendLine("    public static class AiPromptSeeder");
-        codeBuilder.AppendLine("    {");
-        codeBuilder.AppendLine("        public static async Task SeedAiPromptsAsync(UNOPSAppDbContext context)");
-        codeBuilder.AppendLine("        {");
-        codeBuilder.AppendLine("            if (await context.AiPrompts.AnyAsync())");
-        codeBuilder.AppendLine("            {");
-        codeBuilder.AppendLine("                return;");
-        codeBuilder.AppendLine("            }");
-        codeBuilder.AppendLine();
-        codeBuilder.AppendLine("            var aiPrompts = new List<AiPrompt>");
-        codeBuilder.AppendLine("            {");
+        var sqlBuilder = new StringBuilder();
+        sqlBuilder.AppendLine("-- AI Prompts configuration");
+        sqlBuilder.AppendLine("-- This script manages AI prompt definitions with environment variable substitution");
+        sqlBuilder.AppendLine("-- Parameter: {{PROJECT_ID}} will be replaced by ScriptRunner");
+        sqlBuilder.AppendLine();
+        sqlBuilder.AppendLine("DO $$");
+        sqlBuilder.AppendLine("BEGIN");
+        sqlBuilder.AppendLine("    -- Clear existing data and reset");
+        sqlBuilder.AppendLine("    TRUNCATE TABLE public.\"AiPrompt\" RESTART IDENTITY CASCADE;");
+        sqlBuilder.AppendLine("    RAISE NOTICE 'AI prompts table cleared, inserting fresh data';");
+        sqlBuilder.AppendLine();
 
-        for (int i = 0; i < allPrompts.Count; i++)
+        foreach (var prompt in allPrompts)
         {
-            var prompt = allPrompts[i];
-            codeBuilder.AppendLine("                new AiPrompt");
-            codeBuilder.AppendLine("                {");
-            codeBuilder.AppendLine($"                    Type = \"{EscapeString(prompt.Type)}\",");
-            codeBuilder.AppendLine($"                    Prompt = \"{EscapeString(prompt.Prompt ?? "")}\",");
-            codeBuilder.AppendLine("                    CreatedAt = DateTime.UtcNow,");
-            codeBuilder.AppendLine($"                    Name = \"{EscapeString(prompt.Name)}\",");
-            codeBuilder.AppendLine($"                    Status = (EntityStatus){(int)prompt.Status},");
-            codeBuilder.AppendLine($"                    ContentConfig = \"{EscapeString(prompt.ContentConfig)}\",");
-            codeBuilder.AppendLine($"                    GenerationConfig = \"{EscapeString(prompt.GenerationConfig)}\",");
-            codeBuilder.AppendLine($"                    Location = \"{EscapeString(prompt.Location)}\",");
-            codeBuilder.AppendLine($"                    Model = \"{EscapeString(prompt.Model)}\",");
-            codeBuilder.AppendLine($"                    Project = \"{EscapeString(prompt.Project)}\",");
+            sqlBuilder.AppendLine($"    -- Insert {prompt.Type} prompt");
+            sqlBuilder.AppendLine("    INSERT INTO public.\"AiPrompt\" (");
+            sqlBuilder.AppendLine("        \"Type\", \"Prompt\", \"CreatedAt\", \"Name\", \"Status\", \"ContentConfig\", ");
+            sqlBuilder.AppendLine("        \"GenerationConfig\", \"Location\", \"Model\", \"Project\", \"SafetySettings\", ");
+            sqlBuilder.AppendLine("        \"ToolsConfig\", \"PromptFunction\", \"Description\", \"AdminCanChange\"");
+            sqlBuilder.AppendLine("    ) VALUES (");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Type)}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Prompt ?? "")}',");
+            sqlBuilder.AppendLine("        NOW(),");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Name)}',");
+            sqlBuilder.AppendLine($"        {(int)prompt.Status},");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.ContentConfig)}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.GenerationConfig)}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Location)}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Model)}',");
+            sqlBuilder.AppendLine("        '{{{{PROJECT_ID}}}}',");
             
             if (prompt.SafetySettings != null)
             {
-                codeBuilder.AppendLine($"                    SafetySettings = \"{EscapeString(prompt.SafetySettings)}\",");
+                sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.SafetySettings)}',");
             }
             else
             {
-                codeBuilder.AppendLine("                    SafetySettings = null,");
+                sqlBuilder.AppendLine("        NULL,");
             }
             
             if (prompt.ToolsConfig != null)
             {
-                codeBuilder.AppendLine($"                    ToolsConfig = \"{EscapeString(prompt.ToolsConfig)}\",");
+                sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.ToolsConfig)}',");
             }
             else
             {
-                codeBuilder.AppendLine("                    ToolsConfig = null,");
+                sqlBuilder.AppendLine("        '[]',");
             }
             
-            codeBuilder.AppendLine($"                    PromptFunction = \"{EscapeString(prompt.PromptFunction)}\",");
-            codeBuilder.AppendLine($"                    Description = \"{EscapeString(prompt.Description ?? "")}\",");
-            codeBuilder.AppendLine($"                    AdminCanChange = {prompt.AdminCanChange.ToString().ToLower()}");
-            
-            if (i < allPrompts.Count - 1)
-            {
-                codeBuilder.AppendLine("                },");
-            }
-            else
-            {
-                codeBuilder.AppendLine("                }");
-            }
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.PromptFunction)}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Description ?? "")}',");
+            sqlBuilder.AppendLine($"        {prompt.AdminCanChange.ToString().ToLower()}");
+            sqlBuilder.AppendLine("    );");
+            sqlBuilder.AppendLine();
         }
 
-        codeBuilder.AppendLine("            };");
-        codeBuilder.AppendLine();
-        codeBuilder.AppendLine("            await context.AiPrompts.AddRangeAsync(aiPrompts);");
-        codeBuilder.AppendLine("            await context.SaveChangesAsync();");
-        codeBuilder.AppendLine("        }");
-        codeBuilder.AppendLine("    }");
-        codeBuilder.AppendLine("}");
+        sqlBuilder.AppendLine("    RAISE NOTICE 'AI prompts inserted successfully: " + allPrompts.Count + " records';");
+        sqlBuilder.AppendLine("END $$;");
 
-        return codeBuilder.ToString();
+        return sqlBuilder.ToString();
     }
 
     /// <summary>
@@ -646,5 +630,17 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                    .Replace("\n", "\\n")
                    .Replace("\r", "\\r")
                    .Replace("\t", "\\t");
+    }
+
+    /// <summary>
+    /// Escapes strings for SQL script generation
+    /// </summary>
+    private string EscapeSqlString(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return "";
+            
+        return input.Replace("'", "''")  // Escape single quotes for SQL
+                   .Replace("\\", "\\\\"); // Escape backslashes
     }
 } 

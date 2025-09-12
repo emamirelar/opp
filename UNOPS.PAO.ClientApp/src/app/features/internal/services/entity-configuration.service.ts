@@ -254,4 +254,14 @@ export class EntityConfigurationService {
       })
     );
   }
+
+  /**
+   * Exports all entity configurations as a single SQL script file
+   */
+  exportEntityConfigurationAsSql(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/export-sql`, {
+      headers: this.getHeaders(),
+      responseType: 'blob'
+    });
+  }
 } 

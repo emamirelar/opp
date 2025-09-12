@@ -32,5 +32,5 @@ public interface IAiPromptManager
     
     Task<GeminiModelUpgradeResult> UpgradeToLatestGeminiModelAsync(ClaimsPrincipal user);
     
-    Task<string> ExportAiPromptsAsync(ClaimsPrincipal user);
+    Task<string> ExportAiPromptsAsSqlAsync(ClaimsPrincipal user);
 } 
