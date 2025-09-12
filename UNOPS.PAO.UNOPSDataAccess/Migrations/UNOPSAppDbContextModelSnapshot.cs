@@ -2146,6 +2146,47 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.ToTable("EntityManagers", "public");
                 });
 
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.SeedScript", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ExecutionOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FileHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("LastExecutedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ScriptName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ScriptType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SeedScripts", "public");
+                });
+
             modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSContact", b =>
                 {
                     b.HasBaseType("UNOPS.PAO.Domain.Entities.Contact");
@@ -2274,7 +2315,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasOne("UNOPS.PAO.Domain.Entities.Partner", "Partner")
                         .WithMany()
                         .HasForeignKey("PartnerId")
-                        .HasPrincipalKey("ErpDimValue")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Partner");
