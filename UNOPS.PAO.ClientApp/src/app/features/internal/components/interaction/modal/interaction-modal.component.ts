@@ -95,7 +95,6 @@ interface DuplicateDetectionResponse {
     AiTranscribeComponent,
     PanelModule,
     Divider,
-    DuplicateConfirmationDialogComponent
   ],
   providers: [
     DialogService,
@@ -147,21 +146,21 @@ export class InteractionModalComponent {
   allContacts = this.cachedDataService.allContacts;
   allPartners = this.cachedDataService.allPartners;
   allUsers = this.cachedDataService.allUsers;
-  
+
   // User management signals - separate for Users multi-select and Created By single-select
   userSearchResults = signal<any[]>([]); // For Users multi-select field
   createdBySearchResults = signal<any[]>([]); // For Created By single-select field
   isSearchingUsers = this.userSearchService.isSearching;
-  
+
   // Combined users for Users multi-select dropdown - backend handles selected user persistence
   availableUsers = computed(() => {
     const searchResults = this.userSearchResults() || [];
-    
+
     // When search results exist, use them (backend includes selected users automatically)
     if (searchResults.length > 0) {
       return searchResults;
     }
-    
+
     // Otherwise use cached users for initial display
     return this.allUsers() || [];
   });
@@ -169,12 +168,12 @@ export class InteractionModalComponent {
   // Combined users for Created By single-select dropdown - backend handles selected user persistence
   availableCreatedByUsers = computed(() => {
     const searchResults = this.createdBySearchResults() || [];
-    
+
     // When search results exist, use them (backend includes selected users automatically)
     if (searchResults.length > 0) {
       return searchResults;
     }
-    
+
     // Otherwise use cached users for initial display
     return this.allUsers() || [];
   });
@@ -240,7 +239,7 @@ export class InteractionModalComponent {
       const orgUnits = this.allOrgUnits();
       const currentOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
       const currentCreatedBy = this.formGroup.get('createdBy')?.value;
-      
+
       if ((orgUnits && orgUnits.length > 0 && !currentOrgUnitId) || !currentCreatedBy) {
         this.prepopulateFromCurrentUserProfile();
       }
@@ -264,7 +263,7 @@ export class InteractionModalComponent {
     // Set the full array from backend
     const idsArray = ids || [];
     this.formGroup.get('organizationHierarchyIds')?.setValue(idsArray);
-    
+
     // Manually sync the UI control to ensure it updates
     const firstElement = idsArray.length > 0 ? idsArray[0] : null;
     this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement);
@@ -353,7 +352,7 @@ export class InteractionModalComponent {
       // Remove contactId required validation for import edits since it might be empty
       this.formGroup.get('contactId')?.clearValidators();
       this.formGroup.get('contactId')?.updateValueAndValidity();
-      
+
       // Remove contactIds required validation for import edits since it might be empty
       this.formGroup.get('contactIds')?.clearValidators();
       this.formGroup.get('contactIds')?.updateValueAndValidity();
@@ -398,10 +397,10 @@ export class InteractionModalComponent {
 
     // User IDs for form population
     const userIds = record.userIds || [];
-    
+
     // Convert email addresses to lowercase for case-insensitive handling
     const lowercaseEmails = (record.emailAddresses || []).map(email => email.toLowerCase());
-    
+
     this.formGroup.patchValue({
       id: record.id,
       type: record.type,
@@ -423,7 +422,7 @@ export class InteractionModalComponent {
     });
 
     // Load selected users separately for each field to avoid UI confusion
-    
+
     // Ensure Users multi-select field has selected users available
     if (userIds.length > 0) {
       this.userSearchService.searchUsers('', 50, userIds).subscribe({
@@ -435,7 +434,7 @@ export class InteractionModalComponent {
         }
       });
     }
-    
+
     // Ensure Created By single-select field has selected user available
     if (record.createdBy) {
       this.userSearchService.searchUsers('', 50, [record.createdBy]).subscribe({
@@ -685,29 +684,29 @@ export class InteractionModalComponent {
     this.userProfileService.getCurrentUserProfile().subscribe({
       next: (response) => {
         const userProfile = response.userInfoWithOrgSettings;
-        
+
         // Prepopulate Organization Unit from user's org unit code
         if (userProfile?.orgUnit) {
           const currentOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
           if (!currentOrgUnitId) {
           // Find matching organization unit by code
           const orgUnits = this.allOrgUnits() || [];
-          const matchingOrgUnit = orgUnits.find((unit: any) => 
+          const matchingOrgUnit = orgUnits.find((unit: any) =>
             unit.code && unit.code.toLowerCase() === userProfile.orgUnit!.toLowerCase()
           ) as any;
-          
+
           if (matchingOrgUnit?.id) {
               this.setOrganizationHierarchyId(matchingOrgUnit.id);
             }
           }
         }
-        
+
         // Prepopulate Created By with current user ID
         if (userProfile?.userId) {
           const currentCreatedBy = this.formGroup.get('createdBy')?.value;
           if (!currentCreatedBy) { // Only set if not already set
             this.formGroup.patchValue({ createdBy: userProfile.userId });
-            
+
             // Ensure the created by user is available in the dropdown
             this.userSearchService.searchUsers('', 50, [userProfile.userId]).subscribe({
               next: (users) => {
@@ -732,10 +731,10 @@ export class InteractionModalComponent {
   onUserSearch(event: any): void {
     // Handle both direct string and event object with filter property
     const searchTerm = typeof event === 'string' ? event : event?.filter || '';
-    
+
     // Get currently selected user IDs to ensure they remain visible
     const selectedUserIds = this.formGroup.get('userIds')?.value || [];
-    
+
     // If no search term and no selected users, clear results
     if ((!searchTerm || searchTerm.length < 2) && selectedUserIds.length === 0) {
       this.userSearchResults.set([]);
@@ -759,11 +758,11 @@ export class InteractionModalComponent {
   onCreatedByUserSearch(event: any): void {
     // Handle both direct string and event object with filter property
     const searchTerm = typeof event === 'string' ? event : event?.filter || '';
-    
+
     // Get currently selected Created By user ID to ensure it remains visible
     const selectedCreatedByUserId = this.formGroup.get('createdBy')?.value;
     const selectedUserIds = selectedCreatedByUserId ? [selectedCreatedByUserId] : [];
-    
+
     // If no search term and no selected user, clear results
     if ((!searchTerm || searchTerm.length < 2) && selectedUserIds.length === 0) {
       this.createdBySearchResults.set([]);
@@ -859,7 +858,7 @@ export class InteractionModalComponent {
 
         // Convert all emails to lowercase for case-insensitive handling
         const lowercaseNewEmails = newEmails.map(email => email.toLowerCase());
-        
+
         // Update the form control with lowercase emails if different
         if (JSON.stringify(newEmails) !== JSON.stringify(lowercaseNewEmails)) {
           this.formGroup.get('emailAddresses')?.setValue(lowercaseNewEmails, { emitEvent: false });
@@ -959,14 +958,14 @@ export class InteractionModalComponent {
 
   private setupOrganizationUnitSyncListener() {
     // Sync between selectedOrgUnitId (UI) and organizationHierarchyIds (backend array)
-    
+
     // When UI FormControl changes, update the array FormControl
     this.formGroup.get('selectedOrgUnitId')?.valueChanges.subscribe(value => {
       const newArray = value ? [value] : [];
       this.formGroup.get('organizationHierarchyIds')?.setValue(newArray, { emitEvent: false });
       this.selectedOrgUnitSignal.set(value);
     });
-    
+
     // When array FormControl changes (from backend data), update UI FormControl
     this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
       const array = value || [];
@@ -974,7 +973,7 @@ export class InteractionModalComponent {
       this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
       this.selectedOrgUnitSignal.set(firstElement);
     });
-    
+
     // Initialize both controls
     const currentArray = this.formGroup.get('organizationHierarchyIds')?.value || [];
     const firstElement = currentArray.length > 0 ? currentArray[0] : null;
@@ -1086,7 +1085,7 @@ export class InteractionModalComponent {
           ...originalFormValue,
           confirmDuplicateCreation: true
         };
-        
+
         this.interactionService.create(confirmedFormValue).subscribe({
           next: (response) => {
             this.showSuccessMessage('message.interactionCreated');

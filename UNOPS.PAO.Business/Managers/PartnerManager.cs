@@ -399,13 +399,11 @@ public class PartnerManager : IPartnerManager
         return mapper.Map<PartnerModel>(partner);
     }
 
-    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, string partnerTreeId, PaginationRequest request)
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, int partnerTreeId, PaginationRequest request)
     {
-        var partnerTreeCode = partnerTreeId;
-        
         var query = PartnerRepository
             .GetAll()
-            .Where(x => !x.IsDeleted && x.PartnerGroupCode == partnerTreeCode)
+            .Where(x => !x.IsDeleted && x.PartnerGroupId == partnerTreeId)
             .AsQueryable();
 
         // Load organization unit relationships
@@ -481,6 +479,11 @@ public class PartnerManager : IPartnerManager
             TotalCount = totalCount,
             Records = mappedEntities
         };
+    }
+
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, int partnerGroupId, PaginationRequest request)
+    {
+        return await GetPartnersByPartnerGroup(0, partnerGroupId, request);
     }
 
     public async Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file)

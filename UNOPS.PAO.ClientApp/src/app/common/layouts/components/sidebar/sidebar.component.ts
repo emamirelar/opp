@@ -1,16 +1,26 @@
-import { Component, OnInit, ElementRef, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, signal, inject } from '@angular/core';
-import { MenuItem } from 'primeng/api';
-import { MenuComponent } from '../menu/menu.component';
-import { AuthService } from '../../../../essentials/services/auth.service';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { LanguageService } from '../../../services/language.service';
-import { Subscription } from 'rxjs/internal/Subscription';
-import { CommonModule } from '@angular/common';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { RouterModule, Router } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal
+} from '@angular/core';
+import {MenuItem} from 'primeng/api';
+import {MenuComponent} from '../menu/menu.component';
+import {AuthService} from '../../../../essentials/services/auth.service';
+import {TranslateModule, TranslateService} from '@ngx-translate/core';
+import {LanguageService} from '../../../services/language.service';
+import {Subscription} from 'rxjs/internal/Subscription';
+import {CommonModule} from '@angular/common';
+import { HttpClientModule} from '@angular/common/http';
+import { RouterModule} from '@angular/router';
 
-import { ButtonModule } from 'primeng/button';
-import { GlobalFilterService } from '../../../../services/global-filter.service';
+import {ButtonModule} from 'primeng/button';
+import {GlobalFilterService} from '@services/global-filter.service';
+
 
 @Component({
   selector: 'app-sidebar',
@@ -21,9 +31,8 @@ import { GlobalFilterService } from '../../../../services/global-filter.service'
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarComponent implements OnInit, OnDestroy {
-  private http = inject(HttpClient);
   private globalFilterService = inject(GlobalFilterService);
-  private router = inject(Router);
+
 
   constructor(
     public el: ElementRef,
@@ -38,12 +47,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
   // Define menu items
   menuItems: MenuItem[] = [];
   adminMenuItems: MenuItem[] = [];
-  externalMenuItems: MenuItem[] = [];
-
-  // Initialize signals
-  internalUserSignal = signal<boolean>(false);
-  adminUserSignal = signal<boolean>(false);
-  restrictedRoleSignal = signal<boolean>(false);
   globalFilterEnabled = signal<boolean>(true);
 
   // Initialize menu items in ngOnInit after signals are available
@@ -172,45 +175,26 @@ export class SidebarComponent implements OnInit, OnDestroy {
     ] : [];
   }
 
-  get combinedMenuItems(): MenuItem[] {
-    return [...this.menuItems, ...this.adminMenuItems];
-  }
-
   ngOnInit() {
     // Initialize global filter state from service
     this.globalFilterEnabled.set(this.globalFilterService.isFilterEnabled());
 
     this.authService.isAdmin().subscribe((isAdmin: boolean) => {
       if (isAdmin) {
-        // Get user roles and canManageOffice status for admin users
-        this.authService.user().subscribe({
-          next: (claims) => {
-            const emailClaim = claims.find(c => c.type === 'email' ||
-                                         c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
+        // Use AuthService getUserRoles instead of API call
+        this.authService.getUserRoles().subscribe({
+          next: (userRoles) => {
+            // Convert roles to match expected format (remove 'PARTNER_' prefix if needed)
+            const rolesToCheck = userRoles.map(role => role.replace('PARTNER_', ''));
 
-            const email = emailClaim?.value;
-            if (email) {
-              localStorage.setItem('user_email', email);
-            }
-            const apiUrl = email ? `/api/user-info/current?email=${encodeURIComponent(email)}` : '/api/user-info/current';
+            // For canManageOffice, we can set a default or derive from roles
+            const canManageOffice = userRoles.includes('PARTNER_GLOB_ADMIN') || userRoles.includes('ORG_UNIT_ADMIN');
 
-            this.http.get<any>(apiUrl).subscribe({
-              next: (response) => {
-                const userRoles = response.roles || [];
-                const canManageOffice = response.canManageOffice || false;
-                this.initializeMenuItems(isAdmin, userRoles, canManageOffice);
-                this.cdr.detectChanges();
-              },
-              error: (err) => {
-                console.error('Error loading user info for sidebar:', err);
-                // Fallback to basic admin menu
-                this.initializeMenuItems(isAdmin, [], false);
-                this.cdr.detectChanges();
-              }
-            });
+            this.initializeMenuItems(isAdmin, userRoles, canManageOffice);
+            this.cdr.detectChanges();
           },
-          error: (claimsErr) => {
-            console.error('Error getting user claims for sidebar:', claimsErr);
+          error: (err) => {
+            console.error('DEBUG - Error getting user roles from AuthService:', err);
             // Fallback to basic admin menu
             this.initializeMenuItems(isAdmin, [], false);
             this.cdr.detectChanges();
@@ -232,23 +216,5 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
-  }
-
-  private translateMenu(menu: MenuItem[]) {
-    for (const item of menu) {
-      if (item.label) {
-        item.label = this.translateService.instant(item.label);
-      }
-      if (item.items) {
-        this.translateMenu(item.items);
-      }
-    }
-  }
-
-  toggleGlobalFilter() {
-    const newValue = !this.globalFilterEnabled();
-    this.globalFilterEnabled.set(newValue);
-    this.globalFilterService.setFilterEnabled(newValue);
-    console.log('Global filter toggled:', newValue);
   }
 }

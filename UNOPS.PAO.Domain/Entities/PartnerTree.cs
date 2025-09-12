@@ -12,7 +12,6 @@ public class PartnerTree : ModifiableDeletableEntity
     public static readonly string[] specialCategoryCodes = { "MULTILATERAL", "GOVERNMENT" };
     public string Description { get; set; }
     
-    [Key]
     public string Code { get; set; }
     
     public string Type { get; set; }

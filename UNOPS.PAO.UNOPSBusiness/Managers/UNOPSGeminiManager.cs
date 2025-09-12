@@ -1492,7 +1492,7 @@ public class UNOPSGeminiManager : IGeminiManager
                             PartnerShortDescription = partnerRequest.PartnerShortDescription,
                             PartnerLongDescription = partnerRequest.PartnerLongDescription,
                             Status = partnerRequest.Status,
-                            PartnerGroupCode = partnerRequest.PartnerGroupCode,
+                            PartnerGroupId = partnerRequest.PartnerGroupId,
                             UNAndStateEntity = partnerRequest.UNAndStateEntity,
                             CanCreateNewOpportunities = partnerRequest.CanCreateNewOpportunities,
                             PooledFund = partnerRequest.PooledFund,

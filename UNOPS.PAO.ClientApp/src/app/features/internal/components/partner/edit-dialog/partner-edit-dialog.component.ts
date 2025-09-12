@@ -87,7 +87,6 @@ interface DuplicateDetectionResponse {
     ReactiveFormsModule,
     AiTranscribeComponent,
     ProgressSpinnerModule,
-    DuplicateConfirmationDialogComponent
   ],
   providers: [DialogService],
   templateUrl: './partner-edit-dialog.component.html',
@@ -104,8 +103,8 @@ export class PartnerEditDialogComponent implements OnInit {
       organizationHierarchyIds: new FormControl<number[]>([]),
       // UI FormControl for single select (synced with array)
       selectedOrgUnitId: new FormControl<number | null>(null),
-      partnerGroupCode: new FormControl(null),
-      
+      partnerGroupId: new FormControl(null),
+
       // ========== GENERAL FIELDS ==========
       name: new FormControl('', {
         validators: [Validators.required]
@@ -115,10 +114,10 @@ export class PartnerEditDialogComponent implements OnInit {
       partnerCategoryId: new FormControl(null),
       liaisonOfficeId: new FormControl(null),
       partnerFocalPointUserId: new FormControl(null),
-      status: new FormControl('Draft'), 
-      
+      status: new FormControl('Draft'),
+
       pooledFund: new FormControl(false),
-      
+
       // ========== APPROVAL FIELDS ==========
       keyGlobalPartner: new FormControl(false),
       unAndStateEntity: new FormControl(false),
@@ -134,7 +133,7 @@ export class PartnerEditDialogComponent implements OnInit {
       levyTreatment: new FormControl(null),
       canCreateNewOpportunities: new FormControl(false),
       reasonForNoNewOpportunity: new FormControl(null),
-      
+
       // System fields
       discriminator: new FormControl(null),
       id: new FormControl(null),
@@ -182,20 +181,20 @@ export class PartnerEditDialogComponent implements OnInit {
   allLiaisonOfficesData = this.cachedDataService.allLiaisonOffices;
   allUsersData = this.cachedDataService.allUsers;
   userSearchService = inject(UserSearchService);
-  
+
   // User management signals for focal point selection
   userSearchResults = signal<any[]>([]);
   isSearchingUsers = this.userSearchService.isSearching;
-  
+
   // Combined users for dropdown options - backend handles selected user persistence
   availableUsers = computed(() => {
     const searchResults = this.userSearchResults() || [];
-    
+
     // When search results exist, use them (backend includes selected user automatically)
     if (searchResults.length > 0) {
       return searchResults;
     }
-    
+
     // Otherwise use cached users for initial display
     return this.allUsersData() || [];
   });
@@ -252,11 +251,11 @@ export class PartnerEditDialogComponent implements OnInit {
   getSelectedOrgUnitLabel = computed(() => {
     const selectedId = this.selectedOrgUnitSignal();
     if (!selectedId) return this.translateService.instant('label.partner.selectPartnerOrgUnit');
-    
+
     // Find the selected organization unit name
     const orgUnits = this.allOrganizationUnitsData() as any[];
     const selectedUnit = orgUnits.find((unit: any) => unit.id === selectedId);
-    
+
     return selectedUnit ? selectedUnit.name : this.translateService.instant('label.partner.selectPartnerOrgUnit');
   });
   allPartnerGroupsForSelect = this.cachedDataService.getPartnerGroupsForSelect;
@@ -268,11 +267,11 @@ export class PartnerEditDialogComponent implements OnInit {
   onFocalPointUserSearch(event: any): void {
     // Handle both direct string and event object with filter property
     const searchTerm = typeof event === 'string' ? event : event?.filter || '';
-    
+
     // Get currently selected focal point user ID to ensure it remains visible
     const selectedFocalPointUserId = this.formGroup.get('partnerFocalPointUserId')?.value;
     const selectedUserIds = selectedFocalPointUserId ? [selectedFocalPointUserId] : [];
-    
+
     // If no search term and no selected user, clear results
     if ((!searchTerm || searchTerm.length < 2) && selectedUserIds.length === 0) {
       this.userSearchResults.set([]);
@@ -308,7 +307,7 @@ export class PartnerEditDialogComponent implements OnInit {
     effect(() => {
       const shouldRequireReason = this.showApprovalFields() && this.approvalFieldsEnabled();
       const reasonControl = this.formGroup?.get('reasonForNoNewOpportunity');
-      
+
       if (reasonControl) {
         if (shouldRequireReason) {
           reasonControl.setValidators([Validators.required]);
@@ -325,7 +324,7 @@ export class PartnerEditDialogComponent implements OnInit {
     // Set the full array from backend
     const idsArray = ids || [];
     this.formGroup.get('organizationHierarchyIds')?.setValue(idsArray);
-    
+
     // Manually sync the UI control to ensure it updates (for AI transcription)
     const firstElement = idsArray.length > 0 ? idsArray[0] : null;
     this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement);
@@ -362,17 +361,17 @@ export class PartnerEditDialogComponent implements OnInit {
           this.isLoading.set(true);
           this.record = this.dialogConfig.data?.record;
           this.recordData.set(this.dialogConfig.data.record);
-          
+
           // Status is already a string, no conversion needed
           const formData = { ...this.dialogConfig.data.record };
-          
+
           // Handle organization unit relationships
           if (formData.organizationUnitRelationships) {
             const orgIds = formData.organizationUnitRelationships.map((rel: any) => rel.organizationHierarchyId);
             this.setOrganizationHierarchyIds(orgIds);
             delete formData.organizationUnitRelationships; // Remove from formData to avoid patch conflict
           }
-          
+
           // Convert ISO date strings to Date objects for DatePicker components (dialog path)
           if (formData.dueDiligenceApprovalDate && typeof formData.dueDiligenceApprovalDate === 'string') {
             formData.dueDiligenceApprovalDate = new Date(formData.dueDiligenceApprovalDate);
@@ -383,9 +382,9 @@ export class PartnerEditDialogComponent implements OnInit {
           if (formData.partnerApprovalDate && typeof formData.partnerApprovalDate === 'string') {
             formData.partnerApprovalDate = new Date(formData.partnerApprovalDate);
           }
-          
+
           this.formGroup.patchValue(formData);
-          
+
           // Ensure focal point user is available in dropdown if selected
           const focalPointUserId = this.formGroup.get('partnerFocalPointUserId')?.value;
           if (focalPointUserId) {
@@ -398,10 +397,10 @@ export class PartnerEditDialogComponent implements OnInit {
               }
             });
           }
-          
+
           // Initialize the partnerLevyStatus signal after patching form data
           this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
-          
+
           // Set loading to false after a short delay to ensure form is properly initialized
           setTimeout(() => {
             this.isLoading.set(false);
@@ -409,16 +408,16 @@ export class PartnerEditDialogComponent implements OnInit {
         }
       }
     });
-    
+
     // Sync between selectedOrgUnitId (UI) and organizationHierarchyIds (backend array)
-    
+
     // When UI FormControl changes, update the array FormControl
     this.formGroup.get('selectedOrgUnitId')?.valueChanges.subscribe(value => {
       const newArray = value ? [value] : [];
       this.formGroup.get('organizationHierarchyIds')?.setValue(newArray, { emitEvent: false });
       this.selectedOrgUnitSignal.set(value);
     });
-    
+
     // When array FormControl changes (from backend data), update UI FormControl
     this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
       const array = value || [];
@@ -426,23 +425,23 @@ export class PartnerEditDialogComponent implements OnInit {
       this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
       this.selectedOrgUnitSignal.set(firstElement);
     });
-    
+
     // Initialize both controls
     const currentArray = this.formGroup.get('organizationHierarchyIds')?.value || [];
     const firstElement = currentArray.length > 0 ? currentArray[0] : null;
     this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
     this.selectedOrgUnitSignal.set(firstElement);
-    
+
     // Subscribe to partnerLevyStatus changes to update the signal for reactive computed properties
     this.formGroup.get('partnerLevyStatus')?.valueChanges.subscribe(value => {
       this.partnerLevyStatusValue.set(value || '');
-      
+
       // Clear reasonForLevy when it should be hidden
       if (value !== 'DoesNotApply' && value !== 'PotentiallyNotApplied') {
         this.formGroup.get('reasonForLevy')?.setValue(null);
       }
     });
-    
+
     // Initialize the signal with the current form value
     this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
 
@@ -498,7 +497,7 @@ export class PartnerEditDialogComponent implements OnInit {
     } else {
       this.dialogConfig.data.requestingSaveSignal.set(false);
       this.showValidationFailedError.set(true);
-      
+
       // Debug: Log which fields are invalid
       console.log('Form validation failed. Invalid fields:');
       Object.keys(this.formGroup.controls).forEach(key => {
@@ -524,18 +523,18 @@ export class PartnerEditDialogComponent implements OnInit {
     this.partnerService.getPartnerById(this.recordId).subscribe({
       next: (data: any) => {
         this.recordData.set(data);
-        
+
         const formData = { ...data };
-        
+
         // Status is already a string, no conversion needed
-        
+
         // Handle organization unit relationships
         if (formData.organizationUnitRelationships) {
           const orgIds = formData.organizationUnitRelationships.map((rel: any) => rel.organizationHierarchyId);
           this.setOrganizationHierarchyIds(orgIds);
           delete formData.organizationUnitRelationships; // Remove from formData to avoid patch conflict
         }
-        
+
         // Convert ISO date strings to Date objects for DatePicker components
         if (formData.dueDiligenceApprovalDate && typeof formData.dueDiligenceApprovalDate === 'string') {
           formData.dueDiligenceApprovalDate = new Date(formData.dueDiligenceApprovalDate);
@@ -546,9 +545,9 @@ export class PartnerEditDialogComponent implements OnInit {
         if (formData.partnerApprovalDate && typeof formData.partnerApprovalDate === 'string') {
           formData.partnerApprovalDate = new Date(formData.partnerApprovalDate);
         }
-        
+
         this.formGroup.patchValue(formData);
-        
+
         // Ensure focal point user is available in dropdown if selected
         const focalPointUserId = this.formGroup.get('partnerFocalPointUserId')?.value;
         if (focalPointUserId) {
@@ -561,10 +560,10 @@ export class PartnerEditDialogComponent implements OnInit {
             }
           });
         }
-        
+
         // Initialize the partnerLevyStatus signal after patching form data
         this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
-                
+
         this.isLoading.set(false);
       },
       error: (error) => {
@@ -603,14 +602,14 @@ export class PartnerEditDialogComponent implements OnInit {
             // Already an array, pass directly to backend
             requestJsonObj['organizationHierarchyIds'] = indexValue || [];
             break;
-          
+
           case 'partnerCategoryId':
           case 'liaisonOfficeId':
           case 'partnerFocalPointUserId':
             // Ensure ID fields are sent as integers (not strings)
             requestJsonObj[key] = indexValue ? parseInt(indexValue, 10) : null;
             break;
-          
+
           default:
             requestJsonObj[key] = indexValue;
             break;
@@ -631,35 +630,35 @@ export class PartnerEditDialogComponent implements OnInit {
         name: data.name || this.formGroup.get('name')?.value,
         partnerShortDescription: data.partnerShortDescription || this.formGroup.get('partnerShortDescription')?.value,
         partnerLongDescription: data.partnerLongDescription || this.formGroup.get('partnerLongDescription')?.value,
-        partnerGroupCode: data.partnerGroupCode || this.formGroup.get('partnerGroupCode')?.value,
-        
+        partnerGroupId: data.partnerGroupId || this.formGroup.get('partnerGroupId')?.value,
+
         // Category and liaison office
         partnerCategoryId: data.partnerCategoryId || this.formGroup.get('partnerCategoryId')?.value,
         liaisonOfficeId: data.liaisonOfficeId || this.formGroup.get('liaisonOfficeId')?.value,
-        
+
         // Focal point
         partnerFocalPointUserId: data.partnerFocalPointUserId || this.formGroup.get('partnerFocalPointUserId')?.value,
-        
+
         // Status fields
         status: data.status || this.formGroup.get('status')?.value,
         partnerApprovalDate: data.partnerApprovalDate || this.formGroup.get('partnerApprovalDate')?.value,
-        
+
         // Due diligence fields
         dueDiligenceRequired: data.dueDiligenceRequired || this.formGroup.get('dueDiligenceRequired')?.value,
         dueDiligenceApproval: data.dueDiligenceApproval || this.formGroup.get('dueDiligenceApproval')?.value,
         dueDiligenceApprovalDate: data.dueDiligenceApprovalDate || this.formGroup.get('dueDiligenceApprovalDate')?.value,
         dueDiligenceExpiryDate: data.dueDiligenceExpiryDate || this.formGroup.get('dueDiligenceExpiryDate')?.value,
-        
+
         // Partner types
         keyGlobalPartner: data.keyGlobalPartner ?? this.formGroup.get('keyGlobalPartner')?.value,
         unAndStateEntity: data.unAndStateEntity ?? this.formGroup.get('unAndStateEntity')?.value,
         unSecretariatPartner: data.unSecretariatPartner ?? this.formGroup.get('unSecretariatPartner')?.value,
-        
+
         // Levy fields
         partnerLevyStatus: data.partnerLevyStatus || this.formGroup.get('partnerLevyStatus')?.value,
         reasonForLevy: data.reasonForLevy || this.formGroup.get('reasonForLevy')?.value,
         levyTreatment: data.levyTreatment || this.formGroup.get('levyTreatment')?.value,
-        
+
         // Additional fields
         pooledFund: data.pooledFund ?? this.formGroup.get('pooledFund')?.value,
         canCreateNewOpportunities: data.canCreateNewOpportunities ?? this.formGroup.get('canCreateNewOpportunities')?.value,
@@ -692,22 +691,22 @@ export class PartnerEditDialogComponent implements OnInit {
         } else if (response.action === 'created' || response.success) {
           // Partner created successfully
           this.cachedDataService.refreshPartners();
-          this.feedbackDialogService.showSuccessToast({ 
-            detail: response.message || 'Partner created successfully!' 
+          this.feedbackDialogService.showSuccessToast({
+            detail: response.message || 'Partner created successfully!'
           });
           setTimeout(() => this.dialogRef.close(response.data || response));
         } else {
           // Fallback for successful creation (old format)
           this.cachedDataService.refreshPartners();
-          this.feedbackDialogService.showSuccessToast({ 
-            detail: 'Partner created successfully!' 
+          this.feedbackDialogService.showSuccessToast({
+            detail: 'Partner created successfully!'
           });
           setTimeout(() => this.dialogRef.close(response));
         }
       },
       error: (error: any) => {
-        this.feedbackDialogService.showErrorToast({ 
-          detail: 'Failed to create partner. Please try again.' 
+        this.feedbackDialogService.showErrorToast({
+          detail: 'Failed to create partner. Please try again.'
         });
         console.error('Partner creation error:', error);
       }
@@ -742,35 +741,35 @@ export class PartnerEditDialogComponent implements OnInit {
           ...originalPayload,
           confirmDuplicateCreation: true
         };
-        
+
         this.partnerService.createPartner(confirmedPayload).subscribe({
           next: (response: any) => {
             if (response.action === 'created') {
               this.cachedDataService.refreshPartners();
-              this.feedbackDialogService.showSuccessToast({ 
-                detail: 'Partner created successfully (duplicate confirmation acknowledged)!' 
+              this.feedbackDialogService.showSuccessToast({
+                detail: 'Partner created successfully (duplicate confirmation acknowledged)!'
               });
               setTimeout(() => this.dialogRef.close(response.data));
             } else {
               // Fallback for successful creation
               this.cachedDataService.refreshPartners();
-              this.feedbackDialogService.showSuccessToast({ 
-                detail: 'Partner created successfully!' 
+              this.feedbackDialogService.showSuccessToast({
+                detail: 'Partner created successfully!'
               });
               setTimeout(() => this.dialogRef.close(response));
             }
           },
           error: (error: any) => {
-            this.feedbackDialogService.showErrorToast({ 
-              detail: 'Failed to create partner. Please try again.' 
+            this.feedbackDialogService.showErrorToast({
+              detail: 'Failed to create partner. Please try again.'
             });
             console.error('Confirmed partner creation error:', error);
           }
         });
       } else {
         // User cancelled - do nothing, stay on the form
-        this.feedbackDialogService.showInfoToast({ 
-          detail: 'Partner creation cancelled.' 
+        this.feedbackDialogService.showInfoToast({
+          detail: 'Partner creation cancelled.'
         });
       }
     });

@@ -63,17 +63,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     CanUpdate = false,
                     CanDelete = false
                 },
-                new EntityPermission 
-                { 
-                    Entity = "Partner", 
-                    Role = "GMAIL_GEN_USER",
-                    RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
-                    PropertyFilter = "{\"CanRead\": [\"CreatedBy\", \"LastModifiedBy\", \"CreatedDate\", \"LastModifiedDate\", \"IsDeleted\", \"Status\", \"PartnerGroupCode\", \"PartnerShortDescription\", \"PartnerLongDescription\", \"PartnerCategoryId\", \"ErpDimValue\", \"LiaisonOfficeId\", \"Id\", \"Name\"], \"CanCreate\": [], \"CanUpdate\": [], \"CanDelete\": []}",
-                    CanRead = true,
-                    CanCreate = true,
-                    CanUpdate = false,
-                    CanDelete = false
-                },
 
                 // Contact entity permissions,
                 new EntityPermission 
@@ -120,17 +109,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     CanUpdate = true,
                     CanDelete = true
                 },
-                new EntityPermission 
-                { 
-                    Entity = "Contact", 
-                    Role = "GMAIL_GEN_USER",
-                    RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
-                    PropertyFilter = "{\"CanRead\": [\"CreatedBy\", \"LastModifiedBy\", \"CreatedDate\", \"LastModifiedDate\", \"IsDeleted\", \"Status\", \"Partner\", \"PartnerId\", \"FirstName\", \"LastName\", \"Salutation\", \"Title\", \"Description\", \"Phone\", \"Mobile\", \"Email\", \"MailingStreet\", \"MailingCity\", \"MailingStateProvince\", \"MailingPostalCode\", \"MailingCountry\", \"Department\"], \"CanCreate\": [], \"CanUpdate\": [], \"CanDelete\": []}",
-                    CanRead = true,
-                    CanCreate = true,
-                    CanUpdate = false,
-                    CanDelete = false
-                },
 
                 // PartnerTree entity permissions,
                 new EntityPermission 
@@ -170,17 +148,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 { 
                     Entity = "PartnerTree", 
                     Role = "ORG_UNIT_ADMIN",
-                    RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
-                    PropertyFilter = null,
-                    CanRead = false,
-                    CanCreate = false,
-                    CanUpdate = false,
-                    CanDelete = false
-                },
-                new EntityPermission 
-                { 
-                    Entity = "PartnerTree", 
-                    Role = "GMAIL_GEN_USER",
                     RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
                     PropertyFilter = null,
                     CanRead = false,
@@ -234,17 +201,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     CanUpdate = true,
                     CanDelete = true
                 },
-                new EntityPermission 
-                { 
-                    Entity = "Interaction", 
-                    Role = "GMAIL_GEN_USER",
-                    RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
-                    PropertyFilter = null,
-                    CanRead = true,
-                    CanCreate = true,
-                    CanUpdate = true,
-                    CanDelete = false
-                },
 
                 // UserManagement entity permissions,
                 new EntityPermission 
@@ -268,17 +224,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     CanCreate = true,
                     CanUpdate = true,
                     CanDelete = true
-                },
-                new EntityPermission 
-                { 
-                    Entity = "UserManagement", 
-                    Role = "GMAIL_GEN_USER",
-                    RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
-                    PropertyFilter = null,
-                    CanRead = false,
-                    CanCreate = false,
-                    CanUpdate = false,
-                    CanDelete = false
                 },
 
                 // AiPromptManagement entity permissions,
@@ -319,17 +264,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 { 
                     Entity = "AiPromptManagement", 
                     Role = "ORG_UNIT_ADMIN",
-                    RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
-                    PropertyFilter = null,
-                    CanRead = false,
-                    CanCreate = false,
-                    CanUpdate = false,
-                    CanDelete = false
-                },
-                new EntityPermission 
-                { 
-                    Entity = "AiPromptManagement", 
-                    Role = "GMAIL_GEN_USER",
                     RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
                     PropertyFilter = null,
                     CanRead = false,
@@ -383,17 +317,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     CanUpdate = false,
                     CanDelete = false
                 },
-                new EntityPermission 
-                { 
-                    Entity = "EntityManager", 
-                    Role = "GMAIL_GEN_USER",
-                    RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
-                    PropertyFilter = null,
-                    CanRead = false,
-                    CanCreate = false,
-                    CanUpdate = false,
-                    CanDelete = false
-                },
 
                 // EntityFieldManager entity permissions,
                 new EntityPermission 
@@ -433,17 +356,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 { 
                     Entity = "EntityFieldManager", 
                     Role = "ORG_UNIT_ADMIN",
-                    RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
-                    PropertyFilter = null,
-                    CanRead = false,
-                    CanCreate = false,
-                    CanUpdate = false,
-                    CanDelete = false
-                },
-                new EntityPermission 
-                { 
-                    Entity = "EntityFieldManager", 
-                    Role = "GMAIL_GEN_USER",
                     RowFilter = "{\"CanRead\": \"\", \"CanCreate\": \"\", \"CanUpdate\": \"\", \"CanDelete\": \"\"}",
                     PropertyFilter = null,
                     CanRead = false,

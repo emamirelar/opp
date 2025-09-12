@@ -85,13 +85,13 @@ export class PartnerTreeDataComponent implements OnInit {
   partnerCode = computed(() => this.partnerTree()?.code || '');
   minHeight: string = 'calc(100vh - 350px)'; // Customizable min-height for the dashboard
 
-  partnersUrl = computed(() => {
-    if (!this.partnerTree()?.partnerGroupCode) {
-      return 'api/partner/by-partner-category-code/' + this.partnerTree()?.partnerCategoryCode;
-    } else {
-      return 'api/partner/by-partner-group-code/' + this.partnerTree()?.partnerGroupCode;
-    }
-  });
+  // partnersUrl = computed(() => {
+  //   if (!this.partnerTree()?.partnerGroupCode) {
+  //     return 'api/partner/by-partner-category-code/' + this.partnerTree()?.partnerCategoryCode;
+  //   } else {
+  //     return 'api/partner/by-partner-group-code/' + this.partnerTree()?.partnerGroupCode;
+  //   }
+  // });
 
   ngOnInit() {
     // Combine both parent route data and parameter changes for reactive updates

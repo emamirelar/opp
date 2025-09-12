@@ -53,19 +53,11 @@ public class UNOPSAppDbContext : AppDbContext
         //making PartnerCode optional for now
         //.HasIndex(x => x.PartnerCode) 
         //.IsUnique();
-
-        // Configure Partner to PartnerTree relationship properly with only one foreign key
-        modelBuilder
-            .Entity<Partner>()
-            .HasOne(x => x.PartnerGroup)
-            .WithMany(x => x.Partners)
-            .HasForeignKey(x => x.PartnerGroupCode)
-            .HasPrincipalKey(x => x.Code);
-
-        // Ignore any convention-based relationship that would create a PartnerTreeCode column
-        modelBuilder
-            .Entity<Partner>()
-            .Ignore("PartnerTree");
+        
+        // // Ignore any convention-based relationship that would create a PartnerTreeCode column
+        // modelBuilder
+        //     .Entity<Partner>()
+        //     .Ignore("PartnerTree");
 
         // Configure Partner to LiaisonOffice relationship
         modelBuilder
@@ -82,6 +74,14 @@ public class UNOPSAppDbContext : AppDbContext
             .IsUnique()
             .HasFilter("\"ErpDimValue\" IS NOT NULL");
 
+        // Configure Partner to PartnerTree (PartnerGroup) relationship
+        modelBuilder
+            .Entity<Partner>()
+            .HasOne(p => p.PartnerGroup)
+            .WithMany(pt => pt.Partners)
+            .HasForeignKey(p => p.PartnerGroupId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Configure LiaisonOffice entity
         modelBuilder
             .Entity<LiaisonOffice>()
@@ -93,11 +93,11 @@ public class UNOPSAppDbContext : AppDbContext
         modelBuilder
             .Entity<UNOPSLink>();
 
-        // Configure PartnerTree Id to be auto-generated
-        modelBuilder
-            .Entity<PartnerTree>()
-            .Property(p => p.Id)
-            .ValueGeneratedOnAdd();
+        // // Configure PartnerTree Id to be auto-generated
+        // modelBuilder
+        //     .Entity<PartnerTree>()
+        //     .Property(p => p.Id)
+        //     .ValueGeneratedOnAdd();
 
         // Complete discriminator configuration for PartnerTree inheritance hierarchy
         modelBuilder
@@ -158,13 +158,14 @@ public class UNOPSAppDbContext : AppDbContext
     public DbSet<Donor> Donors { get; set; }
     public new DbSet<UNOPSContact> Contacts { get; set; }
     public new DbSet<UNOPSInteraction> Interactions { get; set; }
-    public new DbSet<UNOPSPartnerTree> PartnerTrees { get; set; }
+
     public new DbSet<UNOPSPartner> Partners { get; set; }
     public new DbSet<UNOPSLink> Links { get; set; }
 
     public new DbSet<AiChatSession> AiChatSession { get; set; }
     public new DbSet<UNOPSDocument> Documents { get; set; }
     public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; }
+    public new DbSet<UNOPSPartnerTree> PartnerTrees { get; set; }
 
     // Add DbSet for OrganizationUnitRelationship
     public DbSet<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; }

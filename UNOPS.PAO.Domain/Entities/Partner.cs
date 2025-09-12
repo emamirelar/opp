@@ -17,10 +17,10 @@ public class Partner : ModifiableDeletableEntity
     // Navigation property for organization unit relationships
     public virtual ICollection<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; } = new HashSet<OrganizationUnitRelationship>();
     
-    [ForeignKey("PartnerGroupCode")]
-    public PartnerTree? PartnerGroup { get; set; }
+    public int? PartnerGroupId { get; set; }
     
-    public string? PartnerGroupCode { get; set; }
+    // Navigation property to PartnerTree/PartnerGroup
+    public virtual PartnerTree? PartnerGroup { get; set; }
 
     // ========== SYSTEM GENERATED KEYS ==========
     

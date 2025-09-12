@@ -167,6 +167,7 @@ public class PartnerController : BaseController
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 5,
         [FromQuery] string? orderBy = "CreatedDate",
+        [FromQuery] int? partnerGroupId = null,
         [FromQuery] bool ascending = false)
     {
         // Validate pagination parameters
@@ -181,7 +182,8 @@ public class PartnerController : BaseController
                 PageIndex = pageIndex,
                 PageSize = pageSize,
                 OrderBy = orderBy ?? "createdDate",
-                Ascending = ascending
+                Ascending = ascending,
+                PartnerGroupId = partnerGroupId
             };
             
             // Create simple specification - global filters will be applied by the manager
@@ -674,9 +676,9 @@ public class PartnerController : BaseController
     /// </example_uses>
     /// <when_to_use>Use this when the user asks to filter or search partners by partner group, organization type, or institutional classification.</when_to_use>
     /// <returns>Paginated list of partners belonging to the specified partner group</returns>
-    [HttpGet(APIDictionary.Partner + "/by-partner-group-code/{code}")]
+    [HttpGet(APIDictionary.Partner + "/by-partner-group-id/{id}")]
     // [AccessControlled(EntityTypes.Partner, "read", applyColumnFiltering: true, applyRowFiltering: true)]
-    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetPartnersByPartnerGroup(string code, [FromQuery] PaginationRequest request)
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetPartnersByPartnerGroup(int id, [FromQuery] PaginationRequest request)
     {
         try
         {
@@ -686,7 +688,7 @@ public class PartnerController : BaseController
                 request.OrderBy = "createdDate";
             }
             
-            var result = await _manager.GetPartnersByPartnerGroupAsync(User, code, request);
+            var result = await _manager.GetPartnersByPartnerGroupAsync(User, id, request);
             return Ok(result);
         }
         catch (Exception ex)
@@ -807,14 +809,14 @@ public class PartnerController : BaseController
             
             // Group by partner group and count
             var groupStats = partnerTrees.Records
-                .Where(p => !string.IsNullOrEmpty(p.PartnerGroupCode))
-                .GroupBy(p => new { p.PartnerGroupCode, p.PartnerGroupName })
+                .Where(p => p.PartnerGroupId.HasValue)
+                .GroupBy(p => new { p.PartnerGroupId, p.PartnerGroupName })
                 .Select(g => new
                 {
-                    code = g.Key.PartnerGroupCode,
-                    name = g.Key.PartnerGroupName ?? g.Key.PartnerGroupCode,
+                    id = g.Key.PartnerGroupId,
+                    name = g.Key.PartnerGroupName ?? $"Group {g.Key.PartnerGroupId}",
                     partnerCount = g.Count(),
-                    description = $"{g.Key.PartnerGroupName ?? g.Key.PartnerGroupCode} partners"
+                    description = $"{g.Key.PartnerGroupName ?? $"Group {g.Key.PartnerGroupId}"} partners"
                 })
                 .OrderBy(x => x.name)
                 .ToList();
@@ -870,12 +872,12 @@ public class PartnerController : BaseController
 
             // Group by groups
             var groupStats = partnerTrees.Records
-                .Where(p => !string.IsNullOrEmpty(p.PartnerGroupCode))
-                .GroupBy(p => new { p.PartnerGroupCode, p.PartnerGroupName })
+                .Where(p => p.PartnerGroupId.HasValue)
+                .GroupBy(p => new { p.PartnerGroupId, p.PartnerGroupName })
                 .Select(g => new
                 {
-                    code = g.Key.PartnerGroupCode,
-                    name = g.Key.PartnerGroupName ?? g.Key.PartnerGroupCode,
+                    id = g.Key.PartnerGroupId,
+                    name = g.Key.PartnerGroupName ?? $"Group {g.Key.PartnerGroupId}",
                     partnerCount = g.Count(),
                     partners = g.Select(p => new { p.Id, p.Name }).ToList()
                 })

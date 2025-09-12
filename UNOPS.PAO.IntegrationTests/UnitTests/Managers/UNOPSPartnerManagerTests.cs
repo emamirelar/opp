@@ -112,7 +112,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                     Id = source.Id,
                     Name = source.Name,
                     Status = source.Status.ToString(),
-                    PartnerGroupCode = source.PartnerGroupCode
+                    PartnerGroupId = source.PartnerGroupId
                 });
 
             // Create manager instance using reflection to access private constructor

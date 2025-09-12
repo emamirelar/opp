@@ -61,7 +61,7 @@ public class PartnerRequest : ExtensibleModel
     public string? Status { get; set; } // "Draft" / "Active" / "Closed" / "Archived"
     
     // Partner Group
-    public string? PartnerGroupCode { get; set; }
+    public int? PartnerGroupId { get; set; }
     
     /// <summary>
     /// Organization unit hierarchy IDs - managed automatically by the partner manager

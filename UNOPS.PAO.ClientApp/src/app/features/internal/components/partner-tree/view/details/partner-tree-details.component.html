@@ -41,7 +41,7 @@
           </div>
         </p-panel>
 
-        @if (!partnerTree()?.partnerGroupCode) {
+        @if (!partnerTree()?.partnerGroupId) {
           <p-panel
             [toggleable]="true"
           >
@@ -50,7 +50,7 @@
             </ng-template>
 
             <div class="flex flex-col gap-2 max-h-[150px] overflow-y-auto">
-              @for (partnerGroup of childrenPartnerGroups() || []; track partnerGroup.partnerGroupCode) {
+              @for (partnerGroup of childrenPartnerGroups() || []; track partnerGroup.partnerGroupId) {
                 <a class="text-primary hover:underline cursor-pointer"
                    [routerLink]="['/admin/partner-tree', partnerGroup.partnerGroupId!]">
                   <div class="text-base font-medium">{{partnerGroup.partnerGroupName}}</div>
@@ -85,14 +85,14 @@
                          [disabled]="!recordPermissions().permissions.canUpdate" />
         </p-panel>
 
-        @if (partnerTree()?.partnerGroupCode) {
+        @if (partnerTree()?.partnerGroupId) {
           <p-panel>
             <ng-template pTemplate="header">
               <div class="font-semibold">{{ 'title.partners' | translate }}</div>
             </ng-template>
             <div class="bg-gray-50 p-6 rounded-xl">
             <app-listview
-              [dataUrl]="'api/partner?partnerGroupCode=' + this.partnerTree()?.partnerGroupCode"
+              [dataUrl]="'api/partner?partnerGroupId=' + this.partnerTree()?.partnerGroupId"
               [columns]="partnerColumns()"
               (rowClick)="navigateToPartner($event)"
             >
@@ -125,7 +125,7 @@
 
 
 
-          @if (!partnerTree()?.partnerGroupCode) {
+          @if (!partnerTree()?.partnerGroupId) {
           <!-- AI summary of partner category -->
             <app-ai-panel
               [title]="'label.partner.categorySummary'"

@@ -176,7 +176,7 @@ export class ImportDialogComponent implements OnInit {
     
     // Classification & Organization
     { field: 'partnerCategoryId', header: 'partner.partnerCategory', required: false, label: 'Partner Category', type: 'text', sortable: false },
-    { field: 'partnerGroupCode', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'text', sortable: false },
+    { field: 'partnerGroupId', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'number', sortable: false },
     { field: 'liaisonOfficeId', header: 'partner.liaisonOffice', required: false, label: 'Liaison Office', type: 'text', sortable: false },
     { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPoint', required: false, label: 'Partner Focal Point', type: 'text', sortable: false },
     // Status & Operational
