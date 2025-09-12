@@ -135,7 +135,7 @@
       <!-- Status Field - Only visible if user has close/archive permissions -->
         @if (showStatusField()) {
         <div class="flex flex-col gap-2">
-        <label for="status">{{ 'label.status' | translate }}</label>
+        <label for="status">{{ 'label.partner.status' | translate }}</label>
         <p-select formControlName="status" [options]="statusOptions()"
                   optionLabel="label"
                   optionValue="value"
