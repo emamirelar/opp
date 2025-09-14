@@ -1,0 +1,138 @@
+{
+  "entity": "Document",
+  "description": "Manages documents and associated metadata.",
+  "synonyms": [
+    "File",
+    "Attachment",
+    "Record",
+    "Paperwork",
+    "Documentary Evidence"
+  ],
+  "mandatoryFields": [
+    "Id",
+    "DocumentTypeId"
+  ],
+  "baseUrl": "/api/document",
+  "endpoints": [
+    {
+      "name": "GetAll",
+      "url": "/api/document/{entityName}/{entityId}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves all documents associated with a specific entity.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/document/partner/123",
+      "requiredFields": [],
+      "example_uses": [
+        "Show all documents for partner 123",
+        "Get documents attached to contact 456"
+      ],
+      "when_to_use": "When the user asks to see documents for a specific entity (partner, contact, or interaction).",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "Get",
+      "url": "/api/document/{id}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Retrieves a specific document by ID.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/document/123",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me details for document ID 123",
+        "Get document 456 information"
+      ],
+      "when_to_use": "When the user asks for specific document details by ID.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "Update",
+      "url": "/api/document",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing document's metadata.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "Document update request containing modified fields",
+          "default": ""
+        }
+      },
+      "exampleBody": {
+        "Id": 123,
+        "DocumentTypeId": 456
+      },
+      "exampleUrl": "/api/document",
+      "requiredFields": [
+        "Id"
+      ],
+      "example_uses": [
+        "Update document 123's title to \"New Contract\"",
+        "Change document 456's description"
+      ],
+      "when_to_use": "When the user asks to update document information or metadata.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 95,
+        "complexity": "medium"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
+}

@@ -1,0 +1,258 @@
+{
+  "entity": "Dashboard",
+  "description": "Manages dashboard views and data for the current user.",
+  "synonyms": [
+    "My Dashboard",
+    "User Dashboard",
+    "Personal View",
+    "Dashboard Data",
+    "Activity Summary"
+  ],
+  "mandatoryFields": [],
+  "baseUrl": "/api/dashboard",
+  "endpoints": [
+    {
+      "name": "GetMyPartners",
+      "url": "/api/dashboard/my-partners?pageSize={pageSize}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves partners created or modified by the current user, excluding drafts.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-partners?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my partners",
+        "Get my partners",
+        "List my partners"
+      ],
+      "when_to_use": "To retrieve a list of partners associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetMyContacts",
+      "url": "/api/dashboard/my-contacts?pageSize={pageSize}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves contacts created or modified by the current user, excluding drafts.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-contacts?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my contacts",
+        "Get my contacts",
+        "List my contacts"
+      ],
+      "when_to_use": "To retrieve a list of contacts associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetMyDraftPartners",
+      "url": "/api/dashboard/my-draft-partners?pageSize={pageSize}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves draft partners created or modified by the current user.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-draft-partners?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my draft partners",
+        "Get my draft partners",
+        "List my draft partners"
+      ],
+      "when_to_use": "To retrieve a list of draft partners associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetMyDraftContacts",
+      "url": "/api/dashboard/my-draft-contacts?pageSize={pageSize}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves draft contacts created or modified by the current user.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-draft-contacts?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my draft contacts",
+        "Get my draft contacts",
+        "List my draft contacts"
+      ],
+      "when_to_use": "To retrieve a list of draft contacts associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetMyInteractions",
+      "url": "/api/dashboard/my-interactions?pageSize={pageSize}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves interactions created or modified by the current user, excluding drafts.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-interactions?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my interactions",
+        "Get my interactions",
+        "List my interactions"
+      ],
+      "when_to_use": "To retrieve a list of interactions associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetMyDraftInteractions",
+      "url": "/api/dashboard/my-draft-interactions?pageSize={pageSize}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves draft interactions created or modified by the current user.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-draft-interactions?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my draft interactions",
+        "Get my draft interactions",
+        "List my draft interactions"
+      ],
+      "when_to_use": "To retrieve a list of draft interactions associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetOrgUnitRecentUpdates",
+      "url": "/api/dashboard/org-unit-recent-updates?pageSize={pageSize}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves recent updates from all entity types (Partners, Contacts, Interactions) in the org unit.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/org-unit-recent-updates?pageSize=10",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me recent updates",
+        "Get recent updates",
+        "List recent updates"
+      ],
+      "when_to_use": "To retrieve a list of recent updates across all entity types in the org unit.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
+}

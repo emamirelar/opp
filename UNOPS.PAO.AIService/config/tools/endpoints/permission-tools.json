@@ -1,0 +1,216 @@
+{
+  "entity": "Permission",
+  "description": "Manages user permissions and role-based access control within the system.",
+  "synonyms": [
+    "Authorization",
+    "Access Control",
+    "Roles",
+    "Privileges",
+    "Security"
+  ],
+  "mandatoryFields": [],
+  "baseUrl": "/api/permissions",
+  "endpoints": [
+    {
+      "name": "GetSystemPermissionConfiguration",
+      "url": "/api/permissions",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "configuration"
+      ],
+      "description": "Retrieves the complete system permission configuration, including all roles and their associated capabilities.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/permissions",
+      "requiredFields": [],
+      "example_uses": [
+        "Get the system's permission configuration.",
+        "Retrieve all roles and capabilities."
+      ],
+      "when_to_use": "When needing to initialize the frontend with the system's permission settings.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "CheckUserRoutePermission",
+      "url": "/api/permissions/check/{route}",
+      "method": "GET",
+      "intent": [
+        "check",
+        "verify",
+        "validate",
+        "access"
+      ],
+      "description": "Checks if the current user has permission to access a specific route or page.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/permissions/check//partnerships/contacts/123",
+      "requiredFields": [],
+      "example_uses": [
+        "Check if the user can access a specific route.",
+        "Verify user permissions for a given URL."
+      ],
+      "when_to_use": "When needing to determine if the current user has access to a particular route.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 95,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetEntityPermissionDetails",
+      "url": "/api/permissions/entity-permissions/{entityName}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "details"
+      ],
+      "description": "Retrieves detailed permission information for a specific entity, including all possible operations and role requirements.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/permissions/entity-permissions/Contact",
+      "requiredFields": [],
+      "example_uses": [
+        "Get permission details for a specific entity.",
+        "Retrieve entity-specific permission configuration."
+      ],
+      "when_to_use": "When needing to understand the permission structure for a particular entity.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetCurrentUserRoles",
+      "url": "/api/permissions/user-roles",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "roles"
+      ],
+      "description": "Retrieves the roles and permissions of the currently authenticated user.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/permissions/user-roles",
+      "requiredFields": [],
+      "example_uses": [
+        "Get the current user's roles.",
+        "Retrieve the user's permission assignments."
+      ],
+      "when_to_use": "When needing to know the roles and permissions of the current user.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 95,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetUserRolesByUserId",
+      "url": "/api/permissions/user/{userId}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "roles",
+        "user"
+      ],
+      "description": "Retrieves the roles and basic information for a specific user, identified by their user ID.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/permissions/user/123",
+      "requiredFields": [],
+      "example_uses": [
+        "Get roles for a specific user.",
+        "Retrieve user roles by user ID."
+      ],
+      "when_to_use": "When needing to know the roles of a specific user, typically for administrative purposes.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetAvailableSystemRoles",
+      "url": "/api/permissions/available-roles",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "list",
+        "roles"
+      ],
+      "description": "Retrieves a list of all available system roles and their descriptions.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/permissions/available-roles",
+      "requiredFields": [],
+      "example_uses": [
+        "Get a list of available system roles.",
+        "Retrieve all possible roles in the system."
+      ],
+      "when_to_use": "When needing to know the available roles within the system.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
+}

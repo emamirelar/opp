@@ -1,0 +1,578 @@
+{
+  "entity": "EntityConfiguration",
+  "description": "Manages entity configurations and their fields.",
+  "synonyms": [
+    "Entity Setup",
+    "Configuration Management",
+    "Data Model Definition",
+    "Schema Configuration",
+    "Metadata Management"
+  ],
+  "mandatoryFields": [
+    "EntityName",
+    "TableName"
+  ],
+  "baseUrl": "/api/entity-configuration",
+  "endpoints": [
+    {
+      "name": "GetEntities",
+      "url": "/api/entities",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves a list of available entities.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entities",
+      "requiredFields": [],
+      "example_uses": [
+        "Get available entities for dropdown selection."
+      ],
+      "when_to_use": "When a list of available entities is needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetEntityConfiguration",
+      "url": "/api/entity-configuration/{entityName}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Retrieves the configuration details for a specific entity.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/Partner",
+      "requiredFields": [],
+      "example_uses": [
+        "Get entity configuration details by entity name."
+      ],
+      "when_to_use": "When the configuration details for a specific entity are needed.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "SaveEntityConfiguration",
+      "url": "/api/entity-configuration/{entityName}/save",
+      "method": "POST",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Saves the configuration for a specific entity.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": true,
+          "description": "The request object containing the entity configuration to save.",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "EntityName": "Partner",
+        "Description": "A partner entity.",
+        "Fields": [
+          {
+            "FieldName": "Name",
+            "DataType": "string",
+            "IsRequired": true,
+            "IsActive": true,
+            "EnableChangeLog": true,
+            "DisplayOrder": 1,
+            "ShowInListView": true
+          },
+          {
+            "FieldName": "Address",
+            "DataType": "string",
+            "IsRequired": false,
+            "IsActive": true,
+            "EnableChangeLog": false,
+            "DisplayOrder": 2,
+            "ShowInListView": false
+          }
+        ]
+      },
+      "exampleUrl": "/api/entity-configuration/Partner/save",
+      "requiredFields": [
+        "EntityName"
+      ],
+      "example_uses": [
+        "Save entity configuration details."
+      ],
+      "when_to_use": "When saving or updating the configuration of an entity.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "GetAllEntityConfigurations",
+      "url": "/api/entity-configuration",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves all entity configurations.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration",
+      "requiredFields": [],
+      "example_uses": [
+        "Get all entity configurations for admin purposes."
+      ],
+      "when_to_use": "When a list of all entity configurations is needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "CreateEntityConfiguration",
+      "url": "/api/entity-configuration/create",
+      "method": "POST",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates a new entity configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": true,
+          "description": "The request object containing the entity configuration to create.",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "EntityName": "Contact",
+        "TableName": "Contacts",
+        "Description": "A contact entity.",
+        "IsActive": true,
+        "EnableChangeLog": true
+      },
+      "exampleUrl": "/api/entity-configuration/create",
+      "requiredFields": [
+        "EntityName",
+        "TableName",
+        "IsActive",
+        "EnableChangeLog"
+      ],
+      "example_uses": [
+        "Create a new entity configuration."
+      ],
+      "when_to_use": "When creating a new entity configuration.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "UpdateEntityConfiguration",
+      "url": "/api/entity-configuration/{id}",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing entity configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": true,
+          "description": "The request object containing the entity configuration to update.",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Id": 1,
+        "EntityName": "Contact",
+        "TableName": "Contacts",
+        "Description": "A contact entity.",
+        "IsActive": true,
+        "EnableChangeLog": true
+      },
+      "exampleUrl": "/api/entity-configuration/1",
+      "requiredFields": [
+        "Id",
+        "EntityName",
+        "TableName",
+        "IsActive",
+        "EnableChangeLog"
+      ],
+      "example_uses": [
+        "Update an entity configuration."
+      ],
+      "when_to_use": "When updating an existing entity configuration.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "DeleteEntityConfiguration",
+      "url": "/api/entity-configuration/{id}",
+      "method": "DELETE",
+      "intent": [
+        "delete",
+        "remove",
+        "destroy"
+      ],
+      "description": "Deletes an entity configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/1",
+      "requiredFields": [],
+      "example_uses": [
+        "Delete an entity configuration."
+      ],
+      "when_to_use": "When deleting an entity configuration.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetEntityFields",
+      "url": "/api/entity-configuration/{entityManagerId}/fields",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves the fields for a specific entity configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/1/fields",
+      "requiredFields": [],
+      "example_uses": [
+        "Get fields for a specific entity configuration."
+      ],
+      "when_to_use": "When the fields for a specific entity configuration are needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "CreateEntityField",
+      "url": "/api/entity-field/create",
+      "method": "POST",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates a new entity field.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": true,
+          "description": "The request object containing the entity field to create.",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "EntityManagerId": 1,
+        "FieldName": "Email",
+        "DataType": "string",
+        "IsRequired": true,
+        "IsActive": true,
+        "EnableChangeLog": true,
+        "DisplayOrder": 3,
+        "ShowInListView": true
+      },
+      "exampleUrl": "/api/entity-field/create",
+      "requiredFields": [
+        "EntityManagerId",
+        "FieldName",
+        "DataType",
+        "IsRequired",
+        "IsActive",
+        "EnableChangeLog",
+        "DisplayOrder",
+        "ShowInListView"
+      ],
+      "example_uses": [
+        "Create a new entity field."
+      ],
+      "when_to_use": "When creating a new entity field.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "UpdateEntityField",
+      "url": "/api/entity-field/{id}",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing entity field.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": true,
+          "description": "The request object containing the entity field to update.",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Id": 1,
+        "EntityManagerId": 1,
+        "FieldName": "Email",
+        "DataType": "string",
+        "IsRequired": true,
+        "IsActive": true,
+        "EnableChangeLog": true,
+        "DisplayOrder": 3,
+        "ShowInListView": true
+      },
+      "exampleUrl": "/api/entity-field/1",
+      "requiredFields": [
+        "Id",
+        "EntityManagerId",
+        "FieldName",
+        "DataType",
+        "IsRequired",
+        "IsActive",
+        "EnableChangeLog",
+        "DisplayOrder",
+        "ShowInListView"
+      ],
+      "example_uses": [
+        "Update an entity field."
+      ],
+      "when_to_use": "When updating an existing entity field.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "DeleteEntityField",
+      "url": "/api/entity-field/{id}",
+      "method": "DELETE",
+      "intent": [
+        "delete",
+        "remove",
+        "destroy"
+      ],
+      "description": "Deletes an entity field.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-field/1",
+      "requiredFields": [],
+      "example_uses": [
+        "Delete an entity field."
+      ],
+      "when_to_use": "When deleting an entity field.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetRelatedEntityFields",
+      "url": "/api/entity-configuration/related-fields/{entityType}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves available fields for a related entity type.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/related-fields/Contact",
+      "requiredFields": [],
+      "example_uses": [
+        "Get available fields for a related entity type."
+      ],
+      "when_to_use": "When the available fields for a related entity type are needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetFieldOptionsForDataType",
+      "url": "/api/entity-configuration/field-options/{dataType}/{contextEntityName}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves field options for a specific data type in the context of an entity.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/field-options/string/Contact",
+      "requiredFields": [],
+      "example_uses": [
+        "Get field options for a specific data type in the context of an entity."
+      ],
+      "when_to_use": "When the field options for a specific data type in the context of an entity are needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetEntityListViewConfiguration",
+      "url": "/api/entity-configuration/{entityName}/list-view",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves list view configuration for an entity.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/Contact/list-view",
+      "requiredFields": [],
+      "example_uses": [
+        "Get list view configuration for an entity."
+      ],
+      "when_to_use": "When the list view configuration for an entity is needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
+}

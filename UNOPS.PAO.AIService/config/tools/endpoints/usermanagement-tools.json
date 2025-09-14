@@ -1,0 +1,521 @@
+{
+  "entity": "UserManagement",
+  "description": "Manages users, roles, and organization unit settings.",
+  "synonyms": [
+    "User Administration",
+    "User Accounts",
+    "Role Management",
+    "Org Unit Management",
+    "User Permissions"
+  ],
+  "mandatoryFields": [
+    "PageIndex",
+    "PageSize"
+  ],
+  "baseUrl": "/api/user-management",
+  "endpoints": [
+    {
+      "name": "GetUsers",
+      "url": "/api/user-management/users?searchTerm={searchTerm}&roleFilter={roleFilter}&showMyOrgUnitOnly={showMyOrgUnitOnly}&orgUnitFilter={orgUnitFilter}&orderBy={orderBy}&ascending={ascending}&pageIndex={pageIndex}&pageSize={pageSize}",
+      "method": "POST",
+      "intent": [
+        "search",
+        "list",
+        "find",
+        "browse"
+      ],
+      "description": "Retrieves a paginated list of users based on specified filters and search criteria.",
+      "searchCapability": {
+        "type": "advanced",
+        "searchFields": [
+          "SearchTerm",
+          "RoleFilter",
+          "OrgUnitFilter"
+        ],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "User management request with pagination and filters",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "SearchTerm": "John",
+        "RoleFilter": [
+          "Admin"
+        ],
+        "ShowMyOrgUnitOnly": true,
+        "OrgUnitFilter": [
+          123
+        ],
+        "SortBy": "Name",
+        "SortDirection": "Asc",
+        "PageIndex": 1,
+        "PageSize": 20
+      },
+      "exampleUrl": "/api/user-management/users?searchTerm=John&roleFilter=Admin&showMyOrgUnitOnly=true&orgUnitFilter=123&orderBy=Name&ascending=true&pageIndex=1&pageSize=20",
+      "requiredFields": [
+        "PageIndex",
+        "PageSize"
+      ],
+      "example_uses": [
+        "Find users with 'John' in their name.",
+        "List all users in the 'Admin' role.",
+        "Show users only from my organization unit."
+      ],
+      "when_to_use": "When you need to search, filter, and retrieve a list of users with pagination.",
+      "scoring": {
+        "searchBonus": 80,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "GetUser",
+      "url": "/api/user-management/users/{userId}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Retrieves user details by user ID.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/user-management/users/123",
+      "requiredFields": [],
+      "example_uses": [
+        "Show details for user with ID 123.",
+        "Retrieve user information for user ID 456."
+      ],
+      "when_to_use": "When you need to retrieve detailed information about a specific user by their ID.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "UpdateUserRoles",
+      "url": "/api/user-management/users/{userId}/roles",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates the roles assigned to a specific user.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Update roles request",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Roles": [
+          "Admin",
+          "Editor"
+        ]
+      },
+      "exampleUrl": "/api/user-management/users/123/roles",
+      "requiredFields": [
+        "Roles"
+      ],
+      "example_uses": [
+        "Change user 123's roles to Admin and Editor.",
+        "Update user 456's roles to include 'Viewer'."
+      ],
+      "when_to_use": "When you need to modify the roles associated with a user.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 95,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetAvailableRoles",
+      "url": "/api/user-management/roles",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves a list of roles that can be assigned to users.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/user-management/roles",
+      "requiredFields": [],
+      "example_uses": [
+        "List available roles.",
+        "Show the roles that can be assigned to users."
+      ],
+      "when_to_use": "When you need to display a list of available roles for assignment.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetAvailableOrgUnits",
+      "url": "/api/user-management/org-units",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves a list of available organization units for filtering.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/user-management/org-units",
+      "requiredFields": [],
+      "example_uses": [
+        "List available organization units.",
+        "Show the organization units that can be used for filtering."
+      ],
+      "when_to_use": "When you need to display a list of available organization units.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetCurrentUserOrgUnit",
+      "url": "/api/user-management/current-user-org-unit",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Retrieves the current user's organization unit.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/user-management/current-user-org-unit",
+      "requiredFields": [],
+      "example_uses": [
+        "Show my organization unit.",
+        "Retrieve the current user's organization unit."
+      ],
+      "when_to_use": "When you need to determine the current user's organization unit.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetOrgUnitSelfManagement",
+      "url": "/api/user-management/org-units/{orgUnitCode}/self-management",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Retrieves the self-management setting for a specific organization unit.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/user-management/org-units/ABC/self-management",
+      "requiredFields": [],
+      "example_uses": [
+        "Show self-management setting for org unit ABC.",
+        "Retrieve self-management setting for org unit XYZ."
+      ],
+      "when_to_use": "When you need to check the self-management setting for an organization unit.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "UpdateOrgUnitSelfManagement",
+      "url": "/api/user-management/org-units/{orgUnitCode}/self-management",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates the self-management setting for a specific organization unit.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Self-management setting request",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "IsSelfManagementEnabled": true
+      },
+      "exampleUrl": "/api/user-management/org-units/ABC/self-management",
+      "requiredFields": [
+        "IsSelfManagementEnabled"
+      ],
+      "example_uses": [
+        "Enable self-management for org unit ABC.",
+        "Disable self-management for org unit XYZ."
+      ],
+      "when_to_use": "When you need to modify the self-management setting for an organization unit.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 95,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "AnalyzeUserRoleFile",
+      "url": "/api/user-management/analyse-file",
+      "method": "POST",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Analyzes a file for user role import data.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "File analysis request with type and fileId",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Type": "GoogleSheets",
+        "FileId": "12345",
+        "CurrentUserId": 1,
+        "IsUpdate": true
+      },
+      "exampleUrl": "/api/user-management/analyse-file",
+      "requiredFields": [
+        "CurrentUserId",
+        "IsUpdate"
+      ],
+      "example_uses": [
+        "Analyze a Google Sheets file for user roles.",
+        "Process a file to import user role assignments."
+      ],
+      "when_to_use": "When you need to analyze a file containing user role data before importing.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "BulkUploadUserRoles",
+      "url": "/api/user-management/bulk-upload",
+      "method": "POST",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Performs bulk import of user role assignments.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Bulk upload request with user role data",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Type": "CSV",
+        "Records": [],
+        "IsUpdate": true
+      },
+      "exampleUrl": "/api/user-management/bulk-upload",
+      "requiredFields": [
+        "IsUpdate"
+      ],
+      "example_uses": [
+        "Import user roles from a CSV file.",
+        "Bulk upload user role assignments."
+      ],
+      "when_to_use": "When you need to import a large number of user role assignments at once.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "ResolveUsers",
+      "url": "/api/user-management/resolve-users",
+      "method": "POST",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Resolves user IDs to user details.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "UserIds": [
+          1,
+          2,
+          3
+        ]
+      },
+      "exampleUrl": "/api/user-management/resolve-users",
+      "requiredFields": [],
+      "example_uses": [
+        "Resolve user IDs to get user details.",
+        "Get user details from a list of user IDs."
+      ],
+      "when_to_use": "When you need to retrieve user details based on a list of user IDs.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "ResolveRoles",
+      "url": "/api/user-management/resolve-roles",
+      "method": "POST",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Resolves role IDs to role details.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "RoleIds": [
+          1,
+          2,
+          3
+        ]
+      },
+      "exampleUrl": "/api/user-management/resolve-roles",
+      "requiredFields": [],
+      "example_uses": [
+        "Resolve role IDs to get role details.",
+        "Get role details from a list of role IDs."
+      ],
+      "when_to_use": "When you need to retrieve role details based on a list of role IDs.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use GetUsers with searchTerm",
+      "advanced": "use GetUsers with advanced search parameters in the request body"
+    }
+  }
+}

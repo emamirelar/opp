@@ -1,0 +1,330 @@
+{
+  "entity": "Global",
+  "description": "Manages user preferences, global filters, language settings, and global search functionality.",
+  "synonyms": [
+    "User Settings",
+    "Preferences",
+    "Global Configuration",
+    "Filter Defaults",
+    "Language Preferences"
+  ],
+  "mandatoryFields": [],
+  "baseUrl": "/api/global",
+  "endpoints": [
+    {
+      "name": "GetUserPreferences",
+      "url": "/api/global/user-preferences?id={id}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details",
+        "preferences"
+      ],
+      "description": "Retrieves user-specific preferences and settings for interface customization and default behaviors.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/global/user-preferences?id=123",
+      "requiredFields": [],
+      "example_uses": [
+        "Get my user preferences and settings",
+        "Show user interface customizations"
+      ],
+      "when_to_use": "Use this when the user asks for their preferences, settings, customizations, or when loading user interface defaults.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "UpdateUserPreferences",
+      "url": "/api/global/user-preferences?id={id}",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change",
+        "preferences"
+      ],
+      "description": "Updates user-specific preferences and settings for interface customization and default behaviors.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "userPreferences": {
+          "type": "object",
+          "required": false,
+          "description": "Updated user preference object containing new settings",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Id": 123,
+        "UserId": 456,
+        "UserProfile": {
+          "FirstName": "John",
+          "LastName": "Doe"
+        },
+        "GlobalFilterJson": "{}",
+        "GlobalFilters": {
+          "PreferredLanguage": "en",
+          "Theme": "light"
+        },
+        "AdditionalSettingsJson": "{}"
+      },
+      "exampleUrl": "/api/global/user-preferences?id=123",
+      "requiredFields": [],
+      "example_uses": [
+        "Update my language preference to French",
+        "Change my timezone to EST"
+      ],
+      "when_to_use": "Use this when the user wants to update their preferences, settings, or interface customizations.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 95,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "GetGlobalFilters",
+      "url": "/api/global/filters?id={id}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details",
+        "filters"
+      ],
+      "description": "Retrieves user's global filter settings and preferences for consistent filtering across all views.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/global/filters?id=123",
+      "requiredFields": [],
+      "example_uses": [
+        "Get my global filter settings",
+        "Show saved filter preferences"
+      ],
+      "when_to_use": "Use this when loading user's saved filter settings or when applying consistent filters across multiple views.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "UpdateGlobalFilters",
+      "url": "/api/global/filters?id={id}",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change",
+        "filters"
+      ],
+      "description": "Updates user's global filter settings and preferences for consistent filtering across all views.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "globalFilters": {
+          "type": "object",
+          "required": false,
+          "description": "Updated global filter configuration",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "OrgUnitId": 789,
+        "RelatedToMe": true,
+        "PreferredLanguage": "fr",
+        "Theme": "dark"
+      },
+      "exampleUrl": "/api/global/filters?id=123",
+      "requiredFields": [],
+      "example_uses": [
+        "Save my default organizational unit filter",
+        "Update global date range preferences"
+      ],
+      "when_to_use": "Use this when the user wants to save filter preferences that apply across all views and pages.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 95,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "ResetGlobalFilters",
+      "url": "/api/global/filters/reset?id={id}",
+      "method": "POST",
+      "intent": [
+        "reset",
+        "clear",
+        "default",
+        "filters"
+      ],
+      "description": "Resets user's global filter settings to system defaults, clearing all custom filter preferences.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/global/filters/reset?id=123",
+      "requiredFields": [],
+      "example_uses": [
+        "Reset my filter settings to defaults",
+        "Clear all saved filter preferences"
+      ],
+      "when_to_use": "Use this when the user wants to clear their saved filter preferences and return to system defaults.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetPreferredLanguage",
+      "url": "/api/global/preferred-language",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details",
+        "language"
+      ],
+      "description": "Retrieves the current user's preferred language setting for interface localization.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/global/preferred-language",
+      "requiredFields": [],
+      "example_uses": [
+        "Get my preferred language setting",
+        "Show current language preference"
+      ],
+      "when_to_use": "Use this when loading interface language settings or when determining localization preferences.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "UpdatePreferredLanguage",
+      "url": "/api/global/preferred-language",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change",
+        "language"
+      ],
+      "description": "Updates the current user's preferred language setting for interface localization.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "language": {
+          "type": "string",
+          "required": false,
+          "description": "Language code to set as preferred (e.g., 'en', 'fr', 'es')",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "language": "fr"
+      },
+      "exampleUrl": "/api/global/preferred-language",
+      "requiredFields": [],
+      "example_uses": [
+        "Change my language to French",
+        "Set interface language to Spanish"
+      ],
+      "when_to_use": "Use this when the user wants to change their interface language or localization preferences.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 95,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "IntelligentGlobalSearch",
+      "url": "/api/global/search?q={q}&debug={debug}&fullResults={fullResults}",
+      "method": "GET",
+      "intent": [
+        "search",
+        "find",
+        "lookup",
+        "query"
+      ],
+      "description": "Performs intelligent global search across all entities using hybrid text and semantic search capabilities.\r\n            Automatically determines optimal search strategy based on query characteristics and complexity.",
+      "searchCapability": {
+        "type": "simple",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/global/search?q=UNICEF%20project%20manager&debug=true&fullResults=true",
+      "requiredFields": [],
+      "example_uses": [
+        "Search for \"UNICEF project manager\"",
+        "Find \"meetings about climate change\""
+      ],
+      "when_to_use": "Use this when the user performs any search operation across the system - it automatically chooses between text search for exact matches and semantic search for conceptual queries.",
+      "scoring": {
+        "searchBonus": 100,
+        "intentMatch": 90,
+        "complexity": "complex"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use IntelligentGlobalSearch with q parameter",
+      "advanced": "N/A"
+    }
+  }
+}

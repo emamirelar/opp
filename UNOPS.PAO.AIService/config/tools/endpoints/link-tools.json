@@ -1,0 +1,189 @@
+{
+  "entity": "Link",
+  "description": "Manages links associated with different entities.",
+  "synonyms": [
+    "Hyperlink",
+    "URL",
+    "Web Link",
+    "Reference Link",
+    "Resource Link"
+  ],
+  "mandatoryFields": [
+    "Entity",
+    "EntityId"
+  ],
+  "baseUrl": "/api/links",
+  "endpoints": [
+    {
+      "name": "GetLinks",
+      "url": "/api/links?entity={entity}&entityId={entityId}&pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves a list of links for a specific entity and entity ID with pagination and sorting.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/links?entity=Project&entityId=123&pageIndex=1&pageSize=20&orderBy=Name&ascending=true",
+      "requiredFields": [],
+      "example_uses": [
+        "Get all links for project with ID 123.",
+        "Show me the links related to document 456."
+      ],
+      "when_to_use": "When you need to retrieve a list of links associated with a specific entity and entity ID, with optional pagination and sorting.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "Create",
+      "url": "/api/links",
+      "method": "POST",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates a new link.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "The link request object.",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Entity": "Project",
+        "EntityId": 123,
+        "Url": "https://example.com/project123",
+        "Name": "Project Details"
+      },
+      "exampleUrl": "/api/links",
+      "requiredFields": [
+        "Entity",
+        "EntityId"
+      ],
+      "example_uses": [
+        "Create a new link for project 123.",
+        "Add a link to the document."
+      ],
+      "when_to_use": "When you need to create a new link associated with an entity.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "Update",
+      "url": "/api/links",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing link.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "The update link request object.",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Id": 1,
+        "Entity": "Project",
+        "EntityId": 123,
+        "Url": "https://example.com/updated_project123",
+        "Name": "Updated Project Details"
+      },
+      "exampleUrl": "/api/links",
+      "requiredFields": [
+        "Id",
+        "Entity",
+        "EntityId"
+      ],
+      "example_uses": [
+        "Update the link for project 123.",
+        "Modify the URL of the document link."
+      ],
+      "when_to_use": "When you need to update an existing link.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "Delete",
+      "url": "/api/links?id={id}",
+      "method": "DELETE",
+      "intent": [
+        "delete",
+        "remove",
+        "destroy"
+      ],
+      "description": "Deletes a link by its ID.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/links?id=1",
+      "requiredFields": [],
+      "example_uses": [
+        "Delete link with ID 1.",
+        "Remove the link from the system."
+      ],
+      "when_to_use": "When you need to delete a link by its ID.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use GetLinks with entity and entityId parameters",
+      "advanced": "N/A"
+    }
+  }
+}

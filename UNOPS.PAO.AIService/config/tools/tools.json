@@ -1,0 +1,135 @@
+{
+  "metadata": {
+    "generated_at": "2025-09-12T12:52:57.822106",
+    "total_controllers": 25,
+    "processed_controllers": 25,
+    "failed_controllers": 0
+  },
+  "individual_files": [
+    {
+      "controller": "ConfigurationController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\configuration-tools.json",
+      "entity": "configuration"
+    },
+    {
+      "controller": "ContactAnalyticsController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\contactanalytics-tools.json",
+      "entity": "contactanalytics"
+    },
+    {
+      "controller": "ContactController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\contact-tools.json",
+      "entity": "contact"
+    },
+    {
+      "controller": "DashboardController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\dashboard-tools.json",
+      "entity": "dashboard"
+    },
+    {
+      "controller": "DocumentController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\document-tools.json",
+      "entity": "document"
+    },
+    {
+      "controller": "DocumentTypeController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\documenttype-tools.json",
+      "entity": "documenttype"
+    },
+    {
+      "controller": "EngagementController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\engagement-tools.json",
+      "entity": "engagement"
+    },
+    {
+      "controller": "EntityConfigurationController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\entityconfiguration-tools.json",
+      "entity": "entityconfiguration"
+    },
+    {
+      "controller": "GeminiController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\gemini-tools.json",
+      "entity": "gemini"
+    },
+    {
+      "controller": "GlobalController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\global-tools.json",
+      "entity": "global"
+    },
+    {
+      "controller": "GmailAddonController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\gmailaddon-tools.json",
+      "entity": "gmailaddon"
+    },
+    {
+      "controller": "InteractionController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\interaction-tools.json",
+      "entity": "interaction"
+    },
+    {
+      "controller": "LinkController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\link-tools.json",
+      "entity": "link"
+    },
+    {
+      "controller": "NotificationController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\notification-tools.json",
+      "entity": "notification"
+    },
+    {
+      "controller": "OrganizationHierarchyController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\organizationhierarchy-tools.json",
+      "entity": "organizationhierarchy"
+    },
+    {
+      "controller": "PartnerAnalyticsController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\partneranalytics-tools.json",
+      "entity": "partneranalytics"
+    },
+    {
+      "controller": "PartnerController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\partner-tools.json",
+      "entity": "partner"
+    },
+    {
+      "controller": "PartnerTreeController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\partnertree-tools.json",
+      "entity": "partnertree"
+    },
+    {
+      "controller": "PermissionController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\permission-tools.json",
+      "entity": "permission"
+    },
+    {
+      "controller": "SavedFilterController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\savedfilter-tools.json",
+      "entity": "savedfilter"
+    },
+    {
+      "controller": "SystemAdminController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\systemadmin-tools.json",
+      "entity": "systemadmin"
+    },
+    {
+      "controller": "UserManagementController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\usermanagement-tools.json",
+      "entity": "usermanagement"
+    },
+    {
+      "controller": "UserPreferenceController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\userpreference-tools.json",
+      "entity": "userpreference"
+    },
+    {
+      "controller": "UserProfileController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\userprofile-tools.json",
+      "entity": "userprofile"
+    },
+    {
+      "controller": "ValuesController",
+      "file": "C:\\Users\\anushas_unops\\Documents\\GMS\\business-partners-and-opportunities\\UNOPS.PAO.Presentation\\..\\UNOPS.PAO.AIService\\config\\tools\\endpoints\\values-tools.json",
+      "entity": "values"
+    }
+  ]
+}

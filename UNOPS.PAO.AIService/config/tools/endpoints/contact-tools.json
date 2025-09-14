@@ -1,0 +1,582 @@
+{
+  "entity": "Contact",
+  "description": "Manages contact information, including personal details, professional roles, and partner affiliations.",
+  "synonyms": [
+    "person",
+    "associate",
+    "connection",
+    "representative",
+    "individual"
+  ],
+  "mandatoryFields": [
+    "firstName",
+    "lastName"
+  ],
+  "baseUrl": "/api/contact",
+  "endpoints": [
+    {
+      "name": "Create",
+      "url": "/api/contact",
+      "method": "POST",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates a new contact with comprehensive personal and professional details.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "Contact creation request with required fields"
+        }
+      },
+      "exampleBody": {
+        "Salutation": "Mr.",
+        "FirstName": "John",
+        "LastName": "Doe",
+        "Email": "john.doe@example.com",
+        "PartnerId": 123,
+        "ConfirmDuplicateCreation": false
+      },
+      "exampleUrl": "/api/contact",
+      "requiredFields": [
+        "PartnerId",
+        "ConfirmDuplicateCreation"
+      ],
+      "example_uses": [
+        "Create a contact named John Doe with email john@unicef.org",
+        "Add a new program manager contact for partner 123"
+      ],
+      "when_to_use": "Use this when the user asks to add, create, register, or set up a new contact.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "ListAllContacts",
+      "url": "/api/contact?pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}&partnerId={partnerId}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Lists all contacts with pagination, sorting, and optional partner filtering.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/contact?pageIndex=1&pageSize=20&orderBy=lastName&ascending=true&partnerId=123",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "SearchContacts",
+      "url": "/api/contact/search?searchText={searchText}&pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
+      "method": "GET",
+      "intent": [
+        "search",
+        "find",
+        "lookup",
+        "query"
+      ],
+      "description": "Performs simple text search across multiple contact fields (name, email, title, etc.).",
+      "searchCapability": {
+        "type": "simple",
+        "searchFields": [
+          "firstName",
+          "lastName",
+          "email",
+          "title"
+        ],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/contact/search?searchText=John&pageIndex=1&pageSize=20&orderBy=lastName&ascending=true",
+      "requiredFields": [],
+      "example_uses": [
+        "Search for contacts named John",
+        "Find contacts with @unicef.org email"
+      ],
+      "when_to_use": "Use this for simple name, email, title, or basic field searches. NOT for partner relationship searches.",
+      "scoring": {
+        "searchBonus": 100,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "AdvancedSearchContacts",
+      "url": "/api/contact/advanced-search?pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}&searchCriteria={searchCriteria}&searchText={searchText}",
+      "method": "GET",
+      "intent": [
+        "search",
+        "find",
+        "lookup",
+        "query"
+      ],
+      "description": "Performs advanced search with structured criteria including relationships with partners, departments, and complex filters.",
+      "searchCapability": {
+        "type": "advanced",
+        "searchFields": [
+          "firstName",
+          "lastName",
+          "email",
+          "department",
+          "partner.name",
+          "partner.status"
+        ],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/contact/advanced-search?pageIndex=1&pageSize=20&orderBy=lastName&ascending=true&searchCriteria=[{\"Field\":\"partner.name\",\"Operator\":\"like\",\"Value\":\"UNICEF\"}]&searchText=John",
+      "requiredFields": [],
+      "example_uses": [
+        "Find contacts from UNICEF partner organization",
+        "Show contacts in Finance department created this month"
+      ],
+      "when_to_use": "Use this for searches involving partner relationships, departments, dates, status, or any complex multi-field criteria.",
+      "scoring": {
+        "searchBonus": 80,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "Get",
+      "url": "/api/contact/{id}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Retrieves a specific contact by ID with complete details including partner information and all contact methods.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/contact/123",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me details for contact ID 123",
+        "Get full information about contact 456"
+      ],
+      "when_to_use": "Use this when the user asks for specific contact details by ID or when you need complete contact information.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "Update",
+      "url": "/api/contact",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing contact's information including personal details, contact methods, and professional information.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "Contact update request containing modified fields"
+        }
+      },
+      "exampleBody": {
+        "Id": 123,
+        "FirstName": "John",
+        "LastName": "Doe",
+        "Email": "john.doe@example.com",
+        "PartnerId": 456,
+        "ConfirmDuplicateCreation": false
+      },
+      "exampleUrl": "/api/contact",
+      "requiredFields": [
+        "Id",
+        "PartnerId",
+        "ConfirmDuplicateCreation"
+      ],
+      "example_uses": [
+        "Update contact 123's email to newemail@unicef.org",
+        "Change contact 456's title to Senior Manager"
+      ],
+      "when_to_use": "Use this when the user asks to update, modify, edit, or change contact information.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "Delete",
+      "url": "/api/contact/{id}",
+      "method": "DELETE",
+      "intent": [
+        "delete",
+        "remove",
+        "destroy"
+      ],
+      "description": "Soft deletes a contact from the system (marks as deleted rather than permanent removal).",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/contact/123",
+      "requiredFields": [],
+      "example_uses": [
+        "Delete contact ID 123",
+        "Remove contact 456 from the system"
+      ],
+      "when_to_use": "Use this when the user asks to delete, remove, or eliminate a contact.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "PartnerContacts",
+      "url": "/api/partner/{partnerId}/contacts",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves all contacts associated with a specific partner organization with access control.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/123/contacts",
+      "requiredFields": [],
+      "example_uses": [
+        "Show all contacts for partner organization 123",
+        "Get contact list for UNICEF partner"
+      ],
+      "when_to_use": "Use this when the user asks to see contacts for a specific partner, organization, or wants to view who works at a particular partner.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "PermissionsGet",
+      "url": "/api/contact/{id}/permissions",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Retrieves the current user's permissions for a specific contact (read, update, delete).",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/contact/123/permissions",
+      "requiredFields": [],
+      "example_uses": [
+        "Check my permissions for contact 123",
+        "What can I do with contact 456?"
+      ],
+      "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements for contact management.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "UploadProfilePicture",
+      "url": "/api/contact/{id}/profile-picture",
+      "method": "POST",
+      "intent": [
+        "update",
+        "add"
+      ],
+      "description": "Uploads and associates a profile picture with a contact (max 1MB, JPEG/PNG/WEBP only).",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/contact/123/profile-picture",
+      "requiredFields": [],
+      "example_uses": [
+        "Upload a profile picture for contact 123",
+        "Add photo to contact John Doe"
+      ],
+      "when_to_use": "Use this when the user wants to add or update a contact's profile picture or photo.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "ScanContactData",
+      "url": "/api/contact/scan-data",
+      "method": "POST",
+      "intent": [
+        "extract",
+        "scan",
+        "process"
+      ],
+      "description": "Scans and processes uploaded files for contact data extraction using AI-powered analysis.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/contact/scan-data",
+      "requiredFields": [],
+      "example_uses": [
+        "Scan business cards for contact information",
+        "Upload contact forms for processing"
+      ],
+      "when_to_use": "Use this when the user wants to upload and scan documents for contact data extraction using AI.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "complex"
+      }
+    },
+    {
+      "name": "AnalyseContactData",
+      "url": "/api/contact/analyse-file",
+      "method": "POST",
+      "intent": [
+        "analyse",
+        "extract",
+        "process"
+      ],
+      "description": "Analyzes uploaded files and extracts structured contact data using AI-powered data analysis.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": true,
+          "description": "Analysis request containing file and analysis parameters"
+        }
+      },
+      "exampleBody": {
+        "Type": "CSV",
+        "FileId": "file123",
+        "CurrentUserId": 456,
+        "IsUpdate": false
+      },
+      "exampleUrl": "/api/contact/analyse-file",
+      "requiredFields": [
+        "CurrentUserId",
+        "IsUpdate"
+      ],
+      "example_uses": [
+        "Analyze contact directories for structured data extraction",
+        "Extract contact information from uploaded forms"
+      ],
+      "when_to_use": "Use this when the user wants to analyze files and extract structured contact data for database import.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "complex"
+      }
+    },
+    {
+      "name": "BulkUploadContacts",
+      "url": "/api/contact/bulk-upload",
+      "method": "POST",
+      "intent": [
+        "upload",
+        "import",
+        "bulk upload"
+      ],
+      "description": "Bulk uploads multiple contact records using AI-assisted data processing and validation.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "Bulk upload request containing contact data"
+        }
+      },
+      "exampleBody": {
+        "Type": "CSV",
+        "Records": [
+          {
+            "FirstName": "John",
+            "LastName": "Doe"
+          },
+          {
+            "FirstName": "Jane",
+            "LastName": "Smith"
+          }
+        ],
+        "IsUpdate": false
+      },
+      "exampleUrl": "/api/contact/bulk-upload",
+      "requiredFields": [
+        "IsUpdate"
+      ],
+      "example_uses": [
+        "Bulk upload 500 contacts from Excel",
+        "Import multiple contacts from CSV file"
+      ],
+      "when_to_use": "Use this when the user wants to upload multiple contact records at once with AI-assisted processing.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "complex"
+      }
+    },
+    {
+      "name": "GetMetadataInfo",
+      "url": "/api/contact/metadata-info",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show"
+      ],
+      "description": "Describes the Contact entity structure including all field configurations",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/contact/metadata-info",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 10,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "DeepSearch",
+      "url": "/api/contact/deepSearch?query={query}&threshold={threshold}&limit={limit}",
+      "method": "GET",
+      "intent": [
+        "search",
+        "find",
+        "lookup",
+        "query"
+      ],
+      "description": "Performs semantic search on contacts using AI embeddings to find similar contacts based on natural language queries.",
+      "searchCapability": {
+        "type": "simple",
+        "searchFields": [
+          "description",
+          "title",
+          "firstName",
+          "lastName"
+        ],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/contact/deepSearch?query=program%20manager%20in%20healthcare&threshold=0.8&limit=5",
+      "requiredFields": [],
+      "example_uses": [
+        "Find contacts similar to John Doe",
+        "Search for program managers in healthcare"
+      ],
+      "when_to_use": "Use this when the user wants to find contacts using natural language queries or semantic similarity.",
+      "scoring": {
+        "searchBonus": 100,
+        "intentMatch": 90,
+        "complexity": "complex"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchContacts with searchText parameter",
+      "advanced": "use AdvancedSearchContacts with searchCriteria JSON array"
+    }
+  }
+}

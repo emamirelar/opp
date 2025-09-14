@@ -1,0 +1,181 @@
+{
+  "entity": "UserProfile",
+  "description": "Manages user profile information and preferences.",
+  "synonyms": [
+    "User Account",
+    "Profile Settings",
+    "User Info",
+    "Account Details",
+    "My Profile"
+  ],
+  "mandatoryFields": [
+    "UserId",
+    "Email"
+  ],
+  "baseUrl": "/api",
+  "endpoints": [
+    {
+      "name": "UpdateProfile",
+      "url": "/api/profile",
+      "method": "POST",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates the current user's profile information.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "profile": {
+          "type": "object",
+          "required": true,
+          "description": "Updated profile model containing new information",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Email": "test@example.com",
+        "FirstName": "John",
+        "LastName": "Doe"
+      },
+      "exampleUrl": "/api/profile",
+      "requiredFields": [],
+      "example_uses": [
+        "Update my profile with new contact information.",
+        "Change my email address in my profile."
+      ],
+      "when_to_use": "When a user needs to update their personal profile details.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "UpdateUserInfo",
+      "url": "/api/user-info/update",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates current user's information and profile settings.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "userProfile": {
+          "type": "object",
+          "required": true,
+          "description": "",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "UserId": 123,
+        "FirstName": "UpdatedFirstName",
+        "LastName": "UpdatedLastName",
+        "UserEmail": "updated@example.com",
+        "OrgUnit": "UpdatedOrgUnit",
+        "SupervisorId": 456,
+        "DutyStation": "UpdatedDutyStation",
+        "Position": "UpdatedPosition",
+        "Name": "UpdatedName",
+        "UserPreference": {
+          "Id": 789,
+          "UserId": 123,
+          "GlobalFilterJson": "{}",
+          "GlobalFilters": {
+            "RelatedToMe": true
+          },
+          "AdditionalSettingsJson": "{}"
+        },
+        "Id": 123,
+        "Status": 1,
+        "CreatedBy": 1,
+        "CreatedDate": "2024-01-01T00:00:00",
+        "LastModifiedBy": 1,
+        "LastModifiedDate": "2024-01-02T00:00:00",
+        "IsDeleted": false,
+        "DeletedBy": 0,
+        "DeletedDate": null
+      },
+      "exampleUrl": "/api/user-info/update",
+      "requiredFields": [
+        "UserId",
+        "Id",
+        "Status",
+        "CreatedBy",
+        "CreatedDate",
+        "LastModifiedBy",
+        "IsDeleted",
+        "DeletedBy"
+      ],
+      "example_uses": [
+        "Update my user information.",
+        "Modify my profile settings."
+      ],
+      "when_to_use": "When a user needs to update their user information and profile settings.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "complex"
+      }
+    },
+    {
+      "name": "GetUserProfileDetails",
+      "url": "/api/user-info/current?email={email}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Retrieves comprehensive current user information including profile, roles, permissions, organizational settings, and user preferences. Supports both authenticated user lookup and explicit email parameter for administrative purposes.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/user-info/current?email=test@example.com",
+      "requiredFields": [],
+      "example_uses": [
+        "Show my profile details.",
+        "Get user information for a specific email."
+      ],
+      "when_to_use": "When a user or administrator needs to retrieve detailed user profile information.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
+}

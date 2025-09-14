@@ -1,0 +1,59 @@
+{
+  "entity": "SystemAdmin",
+  "description": "Manages system-level administrative tasks and configurations.",
+  "synonyms": [
+    "AdminTasks",
+    "SystemManagement",
+    "AdminControls",
+    "SystemConfiguration",
+    "Maintenance"
+  ],
+  "mandatoryFields": [],
+  "baseUrl": "/api/system-admin",
+  "endpoints": [
+    {
+      "name": "RunMigrations",
+      "url": "/api/system-admin/migrations/run",
+      "method": "GET",
+      "intent": [
+        "execute",
+        "run",
+        "update",
+        "migrate"
+      ],
+      "description": "Executes database migrations to update the system schema.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/system-admin/migrations/run",
+      "requiredFields": [],
+      "example_uses": [
+        "Run the latest database migrations.",
+        "Execute system updates."
+      ],
+      "when_to_use": "When database schema updates are required.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
+}

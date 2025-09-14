@@ -1,0 +1,861 @@
+{
+  "entity": "Gemini",
+  "description": "Manages AI prompts and AI assistant functionalities.",
+  "synonyms": [
+    "AI Prompts",
+    "Prompt Templates",
+    "AI Assistant",
+    "Gemini Assistant",
+    "AI Chatbot"
+  ],
+  "mandatoryFields": [
+    "Name",
+    "Prompt"
+  ],
+  "baseUrl": "/api/ai-prompt-management",
+  "endpoints": [
+    {
+      "name": "GetPromptsAsync",
+      "url": "/api/ai-prompt-management/list",
+      "method": "POST",
+      "intent": [
+        "search",
+        "list",
+        "filter",
+        "browse",
+        "query"
+      ],
+      "description": "Retrieves all AI prompts with advanced filtering, pagination, and search capabilities.",
+      "searchCapability": {
+        "type": "simple",
+        "searchFields": [
+          "Name",
+          "Description",
+          "Prompt"
+        ],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": true,
+          "description": "AI prompt filter request containing search and pagination parameters",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "SearchText": "email",
+        "PageIndex": 1,
+        "PageSize": 20,
+        "OrderBy": "Name",
+        "Ascending": true
+      },
+      "exampleUrl": "/api/ai-prompt-management/list",
+      "requiredFields": [
+        "PageIndex",
+        "PageSize"
+      ],
+      "example_uses": [
+        "Show me all AI prompts",
+        "List prompts for GPT-4 model",
+        "Find prompts containing 'email' in the name"
+      ],
+      "when_to_use": "Use this when the user asks to search, list, filter, or browse AI prompts and prompt templates.",
+      "scoring": {
+        "searchBonus": 100,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "GetPromptByIdAsync",
+      "url": "/api/ai-prompt-management/{id}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Retrieves a specific AI prompt by ID with complete details.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/123",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me details for AI prompt ID 123",
+        "Get full information about prompt 456"
+      ],
+      "when_to_use": "Use this when the user asks for specific AI prompt details by ID.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "CreatePromptAsync",
+      "url": "/api/ai-prompt-management",
+      "method": "POST",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates a new AI prompt with complete configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "model": {
+          "type": "object",
+          "required": true,
+          "description": "AI prompt creation request with all configuration details",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Name": "Email Generator",
+        "Prompt": "Generate an email to {recipient} about {subject}",
+        "Description": "Generates emails based on a template.",
+        "CreatedAt": "2024-01-01T00:00:00"
+      },
+      "exampleUrl": "/api/ai-prompt-management",
+      "requiredFields": [
+        "CreatedAt"
+      ],
+      "example_uses": [
+        "Create a new email generation prompt",
+        "Add a customer service response template"
+      ],
+      "when_to_use": "Use this when the user asks to create, add, or set up a new AI prompt template.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "UpdatePromptAsync",
+      "url": "/api/ai-prompt-management/{id}",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing AI prompt's configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "model": {
+          "type": "object",
+          "required": true,
+          "description": "Updated AI prompt data",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Name": "Updated Email Generator",
+        "Prompt": "Generate an updated email to {recipient} about {subject}",
+        "Description": "Generates updated emails based on a template.",
+        "CreatedAt": "2024-01-01T00:00:00"
+      },
+      "exampleUrl": "/api/ai-prompt-management/123",
+      "requiredFields": [
+        "CreatedAt"
+      ],
+      "example_uses": [
+        "Update prompt 123's content with new template",
+        "Change prompt 456's model from GPT-3.5 to GPT-4"
+      ],
+      "when_to_use": "Use this when the user asks to update, modify, edit, or change AI prompt configuration or content.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "ExportAiPromptsAsync",
+      "url": "/api/ai-prompt-management/export-developer",
+      "method": "GET",
+      "intent": [
+        "export",
+        "download",
+        "generate"
+      ],
+      "description": "Exports all AI prompts as a C# seeder file for developers.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/export-developer",
+      "requiredFields": [],
+      "example_uses": [
+        "Export AI prompts for development",
+        "Download seeder file for AI prompts"
+      ],
+      "when_to_use": "Use this when developers need to export AI prompts as C# code for seeding or backup purposes.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "DeletePromptAsync",
+      "url": "/api/ai-prompt-management/{id}",
+      "method": "DELETE",
+      "intent": [
+        "delete",
+        "remove",
+        "destroy"
+      ],
+      "description": "Soft deletes an AI prompt from the system.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/123",
+      "requiredFields": [],
+      "example_uses": [
+        "Delete AI prompt ID 123",
+        "Remove prompt 456 from the system"
+      ],
+      "when_to_use": "Use this when the user asks to delete, remove, or eliminate an AI prompt.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetPromptsByTypeAsync",
+      "url": "/api/ai-prompt-management/type/{type}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "filter"
+      ],
+      "description": "Retrieves all AI prompts filtered by specific prompt type.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/type/email",
+      "requiredFields": [],
+      "example_uses": [
+        "Show all email generation prompts",
+        "List prompts for document summarization"
+      ],
+      "when_to_use": "Use this when the user asks to filter prompts by specific type, category, or functional purpose.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetPromptTypesAsync",
+      "url": "/api/ai-prompt-management/types",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves all unique prompt types available in the system.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/types",
+      "requiredFields": [],
+      "example_uses": [
+        "Get prompt types for dropdown menu",
+        "What types of prompts are available?"
+      ],
+      "when_to_use": "Use this when the user needs to see available prompt types for filtering or when building UI dropdown menus.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetModelsAsync",
+      "url": "/api/ai-prompt-management/models",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves all unique AI models available in the system.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/models",
+      "requiredFields": [],
+      "example_uses": [
+        "Get AI models for dropdown menu",
+        "What AI models are available?"
+      ],
+      "when_to_use": "Use this when the user needs to see available AI models for filtering or when configuring prompt model settings.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetProjectsAsync",
+      "url": "/api/ai-prompt-management/projects",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves all unique projects associated with AI prompts.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/projects",
+      "requiredFields": [],
+      "example_uses": [
+        "Get projects for dropdown menu",
+        "What projects have AI prompts?"
+      ],
+      "when_to_use": "Use this when the user needs to see available projects for filtering prompts or when assigning prompts to projects.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetLocationsAsync",
+      "url": "/api/ai-prompt-management/locations",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves all unique locations/regions associated with AI prompts.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/locations",
+      "requiredFields": [],
+      "example_uses": [
+        "Get locations for dropdown menu",
+        "What locations have AI prompts?"
+      ],
+      "when_to_use": "Use this when the user needs to see available locations for filtering prompts or when assigning prompts to regions.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "TestPromptAsync",
+      "url": "/api/ai-prompt-management/test",
+      "method": "POST",
+      "intent": [
+        "test",
+        "validate",
+        "preview"
+      ],
+      "description": "Tests an AI prompt with provided test data.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": true,
+          "description": "Test request containing prompt data and test parameters",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Type": "email",
+        "Id": 123,
+        "TestData": "Sample data for testing",
+        "Model": "GPT-4"
+      },
+      "exampleUrl": "/api/ai-prompt-management/test",
+      "requiredFields": [],
+      "example_uses": [
+        "Test email prompt with sample data",
+        "Validate prompt 123 with test input"
+      ],
+      "when_to_use": "Use this when the user wants to test, validate, or preview AI prompt output before using it in production.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "UpgradeGeminiModel",
+      "url": "/api/ai-prompt-management/upgrade-model",
+      "method": "POST",
+      "intent": [
+        "upgrade",
+        "update"
+      ],
+      "description": "Upgrades all AI prompts to use the latest available Gemini model",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/upgrade-model",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetUserSessions",
+      "url": "/api/ai-assistant/get-user-sessions",
+      "method": "POST",
+      "intent": [
+        "list",
+        "get"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-assistant/get-user-sessions",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetSessionDetails",
+      "url": "/api/ai-assistant/get-session",
+      "method": "POST",
+      "intent": [
+        "get",
+        "details"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "sessionId": "123"
+      },
+      "exampleUrl": "/api/ai-assistant/get-session",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "ChatWithGemini",
+      "url": "/api/ai-assistant/chat",
+      "method": "POST",
+      "intent": [
+        "chat",
+        "interact"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {
+        "Message": "Hello",
+        "sessionId": "123"
+      },
+      "exampleUrl": "/api/ai-assistant/chat",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "ProcessDataRelatedSummaryDetails",
+      "url": "/api/process-data",
+      "method": "POST",
+      "intent": [
+        "process",
+        "summarize"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Id": 1,
+        "Type": "email",
+        "Message": "Sample message"
+      },
+      "exampleUrl": "/api/process-data",
+      "requiredFields": [
+        "Id"
+      ],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "UpdateAiAssistantAccessibility",
+      "url": "/api/ai-assistant/accessibility",
+      "method": "POST",
+      "intent": [
+        "update",
+        "configure"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "SessionId": "123",
+        "TextToSpeech": true
+      },
+      "exampleUrl": "/api/ai-assistant/accessibility",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "UpdateSessionStar",
+      "url": "/api/ai-assistant/update-star",
+      "method": "POST",
+      "intent": [
+        "update",
+        "favorite"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Starred": true,
+        "SessionId": "123"
+      },
+      "exampleUrl": "/api/ai-assistant/update-star",
+      "requiredFields": [
+        "Starred"
+      ],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "UpdateSessionArchive",
+      "url": "/api/ai-assistant/update-archive",
+      "method": "POST",
+      "intent": [
+        "update",
+        "archive"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Archived": true,
+        "SessionId": "123"
+      },
+      "exampleUrl": "/api/ai-assistant/update-archive",
+      "requiredFields": [
+        "Archived"
+      ],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "UpdateSessionTitle",
+      "url": "/api/ai-assistant/update-title",
+      "method": "POST",
+      "intent": [
+        "update",
+        "rename"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": true,
+          "description": "",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Title": "New Title",
+        "SessionId": "123"
+      },
+      "exampleUrl": "/api/ai-assistant/update-title",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GenerateAndStoreEmbeddings",
+      "url": "/api/generate-embeddings",
+      "method": "GET",
+      "intent": [
+        "generate",
+        "store"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/generate-embeddings",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GenerateTitle",
+      "url": "/api/ai-assistant/generate-title?sessionId={sessionId}",
+      "method": "GET",
+      "intent": [
+        "generate",
+        "title"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-assistant/generate-title?sessionId=123",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GenerateSuggestions",
+      "url": "/api/ai-assistant/generate-suggestions",
+      "method": "GET",
+      "intent": [
+        "generate",
+        "suggest"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-assistant/generate-suggestions",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
+}

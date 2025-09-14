@@ -1,0 +1,331 @@
+{
+  "entity": "GmailAddon",
+  "description": "Manages interactions and records from Gmail Addon",
+  "synonyms": [
+    "Gmail Interactions",
+    "Email Records",
+    "Gmail Data",
+    "Interaction Management",
+    "Email Integration"
+  ],
+  "mandatoryFields": [
+    "Type",
+    "Date"
+  ],
+  "baseUrl": "/api/gmail-addon",
+  "endpoints": [
+    {
+      "name": "CreateInteraction",
+      "url": "/api/gmail-addon/interactions",
+      "method": "POST",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates a new interaction record.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "model": {
+          "type": "object",
+          "required": true,
+          "description": "Interaction request model",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Type": "Email",
+        "Date": "2024-01-01T12:00:00Z",
+        "Description": "Example interaction",
+        "EmailAddresses": [
+          "test@example.com"
+        ],
+        "PhoneNumbers": [
+          "123-456-7890"
+        ],
+        "ContactIds": [
+          1,
+          2
+        ],
+        "PartnerIds": [
+          3,
+          4
+        ],
+        "UserIds": [
+          5,
+          6
+        ],
+        "Location": "New York",
+        "Subject": "Meeting",
+        "OrganizationHierarchyIds": [
+          7,
+          8
+        ],
+        "GmailThreadId": "thread123",
+        "GmailMessageId": "message456",
+        "Status": "Open",
+        "ConfirmDuplicateCreation": false,
+        "Extensions": {}
+      },
+      "exampleUrl": "/api/gmail-addon/interactions",
+      "requiredFields": [
+        "Type",
+        "Date",
+        "ConfirmDuplicateCreation"
+      ],
+      "example_uses": [
+        "Create a new email interaction.",
+        "Add a phone call interaction."
+      ],
+      "when_to_use": "When creating a new interaction record from the Gmail Addon.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "UpdateInteraction",
+      "url": "/api/gmail-addon/interactions",
+      "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing interaction record.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "model": {
+          "type": "object",
+          "required": true,
+          "description": "Update interaction request model",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "Id": 123,
+        "Type": "PhoneCall",
+        "Date": "2024-01-02T14:00:00Z",
+        "Description": "Updated interaction",
+        "EmailAddresses": [
+          "updated@example.com"
+        ],
+        "PhoneNumbers": [
+          "987-654-3210"
+        ],
+        "ContactIds": [
+          7,
+          8
+        ],
+        "PartnerIds": [
+          9,
+          10
+        ],
+        "UserIds": [
+          11,
+          12
+        ],
+        "Location": "Los Angeles",
+        "Subject": "Follow-up",
+        "OrganizationHierarchyIds": [
+          13,
+          14
+        ],
+        "GmailThreadId": "thread456",
+        "GmailMessageId": "message789",
+        "Status": "Closed",
+        "ConfirmDuplicateCreation": false,
+        "Extensions": {}
+      },
+      "exampleUrl": "/api/gmail-addon/interactions",
+      "requiredFields": [
+        "Id",
+        "Type",
+        "Date",
+        "ConfirmDuplicateCreation"
+      ],
+      "example_uses": [
+        "Update the description of an interaction.",
+        "Modify the status of a phone call interaction."
+      ],
+      "when_to_use": "When updating an existing interaction record from the Gmail Addon.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "FindGmailInteraction",
+      "url": "/api/gmail-addon/interactions/find",
+      "method": "POST",
+      "intent": [
+        "search",
+        "find",
+        "lookup",
+        "query"
+      ],
+      "description": "Finds an interaction based on Gmail thread and message IDs.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "model": {
+          "type": "object",
+          "required": true,
+          "description": "Gmail interaction request model",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "GmailThreadId": "thread123",
+        "GmailMessageId": "message456"
+      },
+      "exampleUrl": "/api/gmail-addon/interactions/find",
+      "requiredFields": [],
+      "example_uses": [
+        "Find the interaction associated with a specific Gmail thread.",
+        "Lookup the interaction related to a particular email message."
+      ],
+      "when_to_use": "When searching for an interaction using Gmail thread and message IDs.",
+      "scoring": {
+        "searchBonus": 80,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "FindRelatedRecords",
+      "url": "/api/gmail-addon/interactions/find-related-records",
+      "method": "POST",
+      "intent": [
+        "search",
+        "find",
+        "lookup",
+        "query"
+      ],
+      "description": "Finds related records based on email addresses and partner IDs.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "input": {
+          "type": "object",
+          "required": true,
+          "description": "Gmail related records request model",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "EmailAddresses": [
+          "test@example.com",
+          "another@example.com"
+        ],
+        "partnerIds": [
+          1,
+          2,
+          3
+        ]
+      },
+      "exampleUrl": "/api/gmail-addon/interactions/find-related-records",
+      "requiredFields": [],
+      "example_uses": [
+        "Find contacts and partners related to an email.",
+        "Lookup records associated with specific email addresses."
+      ],
+      "when_to_use": "When searching for related records based on email addresses and partner IDs.",
+      "scoring": {
+        "searchBonus": 80,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "CreateRecordsFromEmails",
+      "url": "/api/gmail-addon/create-records",
+      "method": "POST",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates new contact or partner records from selected emails in Gmail.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": true,
+          "description": "Gmail create records request model",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "SelectedContacts": [
+          {
+            "Capacity": 1,
+            "Count": 1,
+            "Item": {
+              "EmailAddress": "test@example.com",
+              "PartnerName": "Test Partner",
+              "PartnerId": 123,
+              "FirstName": "Test",
+              "MiddleName": "",
+              "LastName": "User"
+            }
+          }
+        ],
+        "GmailThreadId": "thread123",
+        "GmailMessageId": "message456"
+      },
+      "exampleUrl": "/api/gmail-addon/create-records",
+      "requiredFields": [],
+      "example_uses": [
+        "Create a new contact from a selected email.",
+        "Register a new partner based on email information."
+      ],
+      "when_to_use": "When creating new contact or partner records from selected emails in the Gmail Addon.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "complex"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use FindGmailInteraction with GmailThreadId and GmailMessageId",
+      "advanced": "use FindRelatedRecords with EmailAddresses and partnerIds"
+    }
+  }
+}
