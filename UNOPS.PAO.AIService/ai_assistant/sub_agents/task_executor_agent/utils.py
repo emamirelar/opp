@@ -10,8 +10,280 @@ import logging
 import asyncio
 import os
 import re
+import requests
+import traceback
 from datetime import datetime
 from typing import Dict, List, Any, Optional
+
+def invoke_api_tool_direct(url: str, method: str, body: dict, headers: Optional[dict] = None, tool_context: Optional['ToolContext'] = None) -> dict:
+    """
+    Invoke an API endpoint with real HTTP requests using configuration from tools.json
+    
+    Args:
+        url: Full URL to call (e.g., https://localhost:44426/api/partners)
+        method: HTTP method (GET, POST, PUT, DELETE)
+        body: Request body/parameters
+        headers: Optional additional headers (e.g., IAP headers for authentication)
+        tool_context: Optional tool context containing session state
+    
+    Returns:
+        dict: API response or error information
+    """
+    try:
+        # If tool_context is not provided, try to extract it from the current execution context
+        if tool_context is None:
+            try:
+                import inspect
+                # Get the current frame and look for tool_context in the calling frames
+                frame = inspect.currentframe()
+                while frame:
+                    # Look for tool_context in the local variables
+                    if 'tool_context' in frame.f_locals:
+                        tool_context = frame.f_locals['tool_context']
+                        print(f"📧 Auto-extracted tool_context from execution context {tool_context}")
+                        break
+                    frame = frame.f_back
+            except Exception as e:
+                print(f"⚠️ Could not auto-extract tool_context: {e}")
+        
+        print(f"🌐 [API] Making {method} request to: {url}")
+        print(f"📦 [API] Original request body: {json.dumps(body, indent=2)}")
+        
+        # Pre-flight connectivity check
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            
+            import socket
+            host = parsed.hostname or 'localhost'
+            port = parsed.port or (443 if parsed.scheme == 'https' else 80)
+            
+            # Quick socket test
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            result = sock.connect_ex((host, port))
+            sock.close()
+            
+            if result == 0:
+                print(f"✅ Pre-flight check passed - {host}:{port} is reachable")
+            else:
+                print(f"⚠️ Pre-flight check failed - {host}:{port} is not reachable (error: {result})")
+                print("💡 This likely means the backend server is not running!")
+                
+        except Exception as e:
+            print(f"⚠️ Pre-flight check error: {e}")
+            print("💡 Proceeding with request anyway...")
+        
+        try:
+            # Prepare request headers - start with default headers
+            request_headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+            
+            is_development = os.getenv('IS_DEVELOPMENT', '').upper() == 'TRUE'
+            dev_email = os.getenv('DEV_EMAIL', '')
+            
+            if is_development and dev_email:
+                print("🧪 Adding development IAP headers...")
+                import time
+                current_timestamp = str(int(time.time()))
+                
+                iap_headers = {
+                    'x-goog-authenticated-user-email': f'accounts.google.com:{dev_email}',
+                    'x-goog-authenticated-user-id': f'accounts.google.com:dev-user-id-{current_timestamp}',
+                    'x-forwarded-user': dev_email,
+                    'x-forwarded-email': dev_email,
+                    'X-Dev-IAP-Simulation': 'true',
+                    'X-Dev-Auth-Timestamp': current_timestamp
+                }
+                print(f"✅ Added development IAP headers for email: {dev_email}")
+                request_headers.update(iap_headers)
+            
+            # Add any additional headers passed as parameter
+            if headers:
+                print(f"🔐 Adding additional headers: {list(headers.keys())}")
+                request_headers.update(headers)
+            
+            print("🔐 Final request headers being sent to backend:")
+            print(f"📋 Total headers: {len(request_headers)}")
+            print(f"📋 Header keys: {list(request_headers.keys())}")
+            
+            # Get API timeout from config (default to 30s if not available)
+            api_timeout = 30  # Default timeout
+            print(f"⏱️ [API] Using timeout: {api_timeout}s")
+            
+            print(f"📊 [API] Final request body: {json.dumps(body, indent=2)}")
+            
+            # Make the appropriate HTTP request based on method
+            if method.upper() == 'GET':
+                # Handle GET parameters properly
+                if body:
+                    # For GET requests, convert body to query parameters
+                    query_params = '&'.join([f"{k}={v}" for k, v in body.items() if v is not None])
+                    if query_params:
+                        separator = '&' if '?' in url else '?'
+                        url += separator + query_params
+                    print(f"🔗 [API] GET URL with query params: {url}")
+                
+                # Make GET request
+                response = requests.get(url, headers=request_headers, timeout=api_timeout, verify=False)
+                
+            elif method.upper() == 'POST':
+                # Make POST request with JSON body
+                response = requests.post(url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
+                
+            elif method.upper() == 'PUT':
+                # Make PUT request with JSON body
+                response = requests.put(url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
+                
+            elif method.upper() == 'DELETE':
+                # Make DELETE request
+                response = requests.delete(url, headers=request_headers, timeout=api_timeout, verify=False)
+                
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Unsupported HTTP method: {method}",
+                    "supported_methods": ["GET", "POST", "PUT", "DELETE"]
+                }
+            
+            print(f"📡 [API] Response status: {response.status_code}")
+            
+            # Process response
+            if response.status_code >= 200 and response.status_code < 300:
+                try:
+                    response_data = response.json()
+                    print(f"✅ [API] Success - Response data keys: {list(response_data.keys()) if isinstance(response_data, dict) else 'Not a dict'}")
+                    
+                    return {
+                        "status": "success",
+                        "status_code": response.status_code,
+                        "response": response_data,
+                        "api_call": f"{method.upper()} {url}",
+                        "headers_sent": list(request_headers.keys())
+                    }
+                    
+                except json.JSONDecodeError as json_error:
+                    print(f"⚠️ [API] Response is not JSON: {json_error}")
+                    return {
+                        "status": "success",
+                        "status_code": response.status_code,
+                        "response": {"text": response.text},
+                        "api_call": f"{method.upper()} {url}",
+                        "headers_sent": list(request_headers.keys()),
+                        "note": "Response was not JSON"
+                    }
+                    
+            else:
+                error_message = f"HTTP {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if isinstance(error_data, dict):
+                        error_message = error_data.get('message', error_data.get('error', error_message))
+                except:
+                    error_message = response.text if response.text else error_message
+                
+                print(f"❌ [API] Error {response.status_code}: {error_message}")
+                
+                return {
+                    "status": "error",
+                    "status_code": response.status_code,
+                    "error": error_message,
+                    "api_call": f"{method.upper()} {url}",
+                    "headers_sent": list(request_headers.keys())
+                }
+                
+        except requests.exceptions.ConnectionError as conn_error:
+            error_msg = f"Connection error: {str(conn_error)}"
+            print(f"❌ [API] {error_msg}")
+            return {
+                "status": "error",
+                "error": error_msg,
+                "api_call": f"{method.upper()} {url}",
+                "connection_error": True
+            }
+            
+        except requests.exceptions.Timeout as timeout_error:
+            error_msg = f"Request timeout: {str(timeout_error)}"
+            print(f"❌ [API] {error_msg}")
+            return {
+                "status": "error",
+                "error": error_msg,
+                "api_call": f"{method.upper()} {url}",
+                "timeout_error": True
+            }
+            
+        except Exception as request_error:
+            error_msg = f"Request failed: {str(request_error)}"
+            print(f"❌ [API] {error_msg}")
+            return {
+                "status": "error",
+                "error": error_msg,
+                "api_call": f"{method.upper()} {url}",
+                "traceback": traceback.format_exc()
+            }
+            
+    except Exception as e:
+        error_msg = f"Function error: {str(e)}"
+        print(f"❌ [API] {error_msg}")
+        return {
+            "status": "error",
+            "error": error_msg,
+            "api_call": f"{method.upper()} {url}",
+            "traceback": traceback.format_exc()
+        }
+
+
+def construct_api_url(base_url: str, endpoint_path: str, path_params: Optional[Dict[str, Any]] = None) -> str:
+    """
+    Construct a complete API URL with path parameter substitution
+    
+    Args:
+        base_url: Base URL (e.g., "https://localhost:44426")
+        endpoint_path: Endpoint path (e.g., "/api/partner/{id}")
+        path_params: Dictionary of path parameters to substitute
+    
+    Returns:
+        str: Complete URL with path parameters substituted
+    """
+    print(f"🔧 [URL] Constructing URL from base: '{base_url}' + path: '{endpoint_path}'")
+    
+    # Remove trailing slash from base_url if present
+    base_url = base_url.rstrip('/')
+    print(f"🔧 [URL] Base URL after rstrip: '{base_url}'")
+    
+    # Ensure endpoint_path starts with /
+    if not endpoint_path.startswith('/'):
+        endpoint_path = '/' + endpoint_path
+    print(f"🔧 [URL] Endpoint path after ensuring slash: '{endpoint_path}'")
+    
+    # Construct base URL
+    full_url = base_url + endpoint_path
+    print(f"🔧 [URL] Combined URL: '{full_url}'")
+    
+    # Fix any double slashes (except after protocol)
+    # Keep protocol slashes (https://) but fix any other double slashes
+    if '://' in full_url:
+        protocol_part, rest_part = full_url.split('://', 1)
+        rest_part = rest_part.replace('//', '/')
+        full_url = protocol_part + '://' + rest_part
+        print(f"🔧 [URL] Fixed double slashes: '{full_url}'")
+    
+    # Substitute path parameters if provided
+    if path_params:
+        print(f"🔧 [URL] Substituting path parameters: {path_params}")
+        for param_name, param_value in path_params.items():
+            # Replace both {param} and [param] patterns
+            old_url = full_url
+            full_url = full_url.replace(f'{{{param_name}}}', str(param_value))
+            full_url = full_url.replace(f'[{param_name}]', str(param_value))
+            if old_url != full_url:
+                print(f"🔧 [URL] Replaced {param_name}: '{old_url}' → '{full_url}'")
+    
+    print(f"🔧 [URL] Final constructed URL: '{full_url}'")
+    return full_url
+
 
 def score_endpoint_for_intent_standalone(endpoint: dict, intent: str, entity_name: str, extracted_params: Optional[dict] = None) -> int:
     """
@@ -187,13 +459,7 @@ def score_endpoint_for_intent_standalone(endpoint: dict, intent: str, entity_nam
 from google.adk.tools import FunctionTool, agent_tool as AgentTool
 from google.adk.tools.tool_context import ToolContext
 
-# Import shared utilities from common callbacks
-from ai_assistant.utils.common_callbacks import (
-    invoke_api_tool as base_invoke_api_tool, 
-    exit_loop_on_success,
-    inject_entity_specific_tools_before_model,
-    construct_api_url
-)
+# Removed problematic imports - functions are defined locally or not needed
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -259,31 +525,75 @@ def extract_path_parameters_from_url(url: str, params_dict: Optional[Dict[str, A
                         param_value = value
                         break
         
-        # 5. Common semantic mappings
+        # 5. Generic intelligent parameter matching
         if param_value is None:
-            semantic_mappings = {
-                'partnerName': ['partner_name', 'partner.name', 'name'],
-                'partnerId': ['partner_id', 'partner.id', 'id'],
-                'contactId': ['contact_id', 'contact.id', 'id'],
-                'entityId': ['entity_id', 'id'],
-                'id': ['id', 'entity_id', 'partner_id', 'contact_id']
-            }
+            # Try intelligent pattern matching for common parameter types
+            param_lower = param_name.lower()
             
-            if param_name in semantic_mappings:
-                for semantic_key in semantic_mappings[param_name]:
-                    if semantic_key in params_dict:
-                        param_value = params_dict[semantic_key]
+            # A. ID-based parameters - look for any 'id' field
+            if param_lower.endswith('id') or param_lower == 'id':
+                # Try to match the specific entity type first, then fallback to generic
+                entity_prefix = param_lower.replace('id', '') if param_lower != 'id' else ''
+                
+                # Priority order: specific entity_id > generic id > entity_id
+                id_candidates = []
+                if entity_prefix:
+                    id_candidates.extend([
+                        f"{entity_prefix}_id",     # snake_case version
+                        f"{entity_prefix}Id",      # camelCase version
+                        entity_prefix              # just the entity name
+                    ])
+                id_candidates.extend(['id', 'entityId', 'entity_id'])
+                
+                for id_field in id_candidates:
+                    if id_field in params_dict:
+                        param_value = params_dict[id_field]
                         break
-                    
-                    # Also check in filter structure
-                    if param_value is None and 'filter' in params_dict:
-                        for filter_item in params_dict.get('filter', []):
-                            if isinstance(filter_item, dict) and filter_item.get('field') == semantic_key:
+            
+            # B. Name-based parameters - look for any 'name' field  
+            elif 'name' in param_lower:
+                # Try common name field names
+                name_candidates = ['name', 'entityName', 'entity_name']
+                for name_field in name_candidates:
+                    if name_field in params_dict:
+                        param_value = params_dict[name_field]
+                        break
+            
+            # C. Generic fallback - try the parameter name variations
+            if param_value is None:
+                # Generate common variations of the parameter name
+                variations = [
+                    param_name,                    # exact match
+                    param_name.lower(),           # lowercase
+                    param_name.upper(),           # uppercase
+                ]
+                
+                # Add snake_case variation if it's camelCase
+                if any(c.isupper() for c in param_name):
+                    snake_case = re.sub(r'([A-Z])', r'_\1', param_name).lower().lstrip('_')
+                    variations.append(snake_case)
+                
+                # Add camelCase variation if it's snake_case
+                if '_' in param_name:
+                    camel_case = ''.join(word.capitalize() if i > 0 else word 
+                                       for i, word in enumerate(param_name.split('_')))
+                    variations.append(camel_case)
+                    variations.append(camel_case.lower())
+                
+                # Try all variations
+                for variation in variations:
+                    if variation in params_dict:
+                        param_value = params_dict[variation]
+                        break
+                
+                # Also check in filter structure with variations
+                if param_value is None and 'filter' in params_dict:
+                    for filter_item in params_dict.get('filter', []):
+                        if isinstance(filter_item, dict):
+                            field = filter_item.get('field', '')
+                            if field in variations:
                                 param_value = filter_item.get('value')
                                 break
-                    
-                    if param_value:
-                        break
         
         # Add to path_params if found
         if param_value is not None:
@@ -651,15 +961,23 @@ def invoke_api_tool(entity_name: str, intent: str, params: Optional[dict] = None
                 # Keep searchCriteria in body even for GET requests (some APIs support this)
                 print(f"🔍 [API-TOOL] Keeping searchCriteria in body for search endpoint")
         
-        # Step 4: Make the API call using the base invoke_api_tool
+        # Step 4: Make the API call using the comprehensive invoke_api_tool
         try:
-            api_result = base_invoke_api_tool(
+            print(f"🚀 [API-TOOL] Calling comprehensive invoke_api_tool")
+            print(f"   URL: {full_url}")
+            print(f"   Method: {method}")
+            print(f"   Body: {request_body}")
+            
+            # Call the comprehensive invoke_api_tool_direct function that handles auth, headers, etc.
+            api_result = invoke_api_tool_direct(
                 url=full_url,
                 method=method,
                 body=request_body,
                 headers=None,
                 tool_context=tool_context
             )
+            
+            print(f"✅ [API-TOOL] invoke_api_tool completed with status: {api_result.get('status', 'unknown')}")
             
             
             # Create result in simple format
@@ -686,13 +1004,19 @@ def invoke_api_tool(entity_name: str, intent: str, params: Optional[dict] = None
                         fallback_method = fallback.get("method", "GET")
                         
                         
-                        fallback_result = base_invoke_api_tool(
+                        # Try fallback API call using comprehensive invoke_api_tool
+                        print(f"🔄 [API-TOOL] Trying fallback #{i}: {fallback_method} {fallback_url}")
+                        
+                        # Use the comprehensive invoke_api_tool_direct for fallback too
+                        fallback_result = invoke_api_tool_direct(
                             url=fallback_url,
                             method=fallback_method,
                             body=request_body,
                             headers=None,
                             tool_context=tool_context
                         )
+                        
+                        print(f"✅ [API-TOOL] Fallback completed with status: {fallback_result.get('status', 'unknown')}")
                         
                         
                         # Create result in simple format for fallback too
@@ -737,8 +1061,122 @@ def invoke_api_tool(entity_name: str, intent: str, params: Optional[dict] = None
         return json.dumps(error_result)
 
 
+def invoke_api_for_data(entity_name: str, intent: str, params: str = "{}", tool_context: Optional[ToolContext] = None) -> str:
+    """
+    NEW OPTIMIZED TOOL: Intelligently finds the best endpoint and invokes it in one efficient call.
+    
+    This tool replaces the two-step process of find_entity_endpoint + invoke_api_tool with a 
+    single optimized call that saves 2-3 seconds of latency per request.
+    
+    Args:
+        entity_name: The entity name (e.g., "Partner", "Contact", "Interaction")
+        intent: The intent (e.g., "search", "find", "get", "create", "update", "delete")  
+        params: JSON string of parameters (e.g., '{"query": "UNICEF"}', '{"id": 123}')
+        tool_context: Tool context for session state (optional)
+        
+    Returns:
+        JSON string containing API response in consistent format:
+        {
+            "tool_name": "invoke_api_for_data",
+            "message": {actual_api_response},
+            "type": "json",
+            "sources": [],
+            "metadata": {
+                "selected_endpoint": "endpoint_name",
+                "entity": "entity_name",
+                "intent": "intent_name",
+                "score": score_value
+            }
+        }
+    """
+    try:
+        print(f"🚀 [API-FOR-DATA] Starting optimized endpoint discovery and API invocation")
+        print(f"🚀 [API-FOR-DATA] Entity: {entity_name}, Intent: {intent}, Params: {params}")
+        
+        # Step 1: Find the best endpoint using our optimized scoring
+        endpoint_result = find_entity_endpoint(entity_name, intent, params, tool_context)
+        endpoint_data = json.loads(endpoint_result)
+        
+        if not endpoint_data.get("endpoint_found"):
+            return json.dumps({
+                "tool_name": "invoke_api_for_data",
+                "message": {
+                    "error": f"No suitable endpoint found for {entity_name} with intent '{intent}'",
+                    "details": endpoint_data.get('error', 'Unknown error'),
+                    "suggestion": f"Try different intent or check if {entity_name} entity has available endpoints"
+                },
+                "type": "json",
+                "sources": [],
+                "metadata": {
+                    "entity": entity_name,
+                    "intent": intent,
+                    "endpoint_found": False
+                }
+            })
+        
+        selected_endpoint = endpoint_data.get('endpoint', {}).get('name', 'Unknown')
+        endpoint_score = endpoint_data.get('score', 0)
+        print(f"🎯 [API-FOR-DATA] Selected endpoint: {selected_endpoint} (score: {endpoint_score})")
+        
+        # Step 2: Parse params and add endpoint details for invoke_api_tool
+        try:
+            params_dict = json.loads(params) if params and params != "{}" else {}
+        except (json.JSONDecodeError, TypeError):
+            params_dict = {}
+        
+        # Add endpoint details to params so invoke_api_tool can use them directly
+        params_dict['endpoint_details'] = endpoint_data
+        
+        # Step 3: Invoke the selected endpoint using the existing invoke_api_tool
+        api_result = invoke_api_tool(entity_name, intent, params_dict, False, tool_context)
+        api_data = json.loads(api_result)
+        
+        # Step 4: Return optimized response with metadata
+        optimized_response = {
+            "tool_name": "invoke_api_for_data",
+            "message": api_data.get("message", ""),
+            "type": api_data.get("type", "json"),
+            "sources": api_data.get("sources", []),
+            "metadata": {
+                "selected_endpoint": selected_endpoint,
+                "endpoint_url": endpoint_data.get("full_url", ""),
+                "method": endpoint_data.get("method", "GET"),
+                "entity": entity_name,
+                "intent": intent,
+                "score": endpoint_score,
+                "fallback_available": endpoint_data.get("retry_info", {}).get("has_fallbacks", False),
+                "candidates_evaluated": endpoint_data.get("retry_info", {}).get("total_candidates", 1)
+            }
+        }
+        
+        print(f"✅ [API-FOR-DATA] Successfully completed optimized operation")
+        return json.dumps(optimized_response)
+        
+    except Exception as e:
+        error_msg = f"Error in optimized API data retrieval: {str(e)}"
+        print(f"❌ [API-FOR-DATA] {error_msg}")
+        import traceback
+        traceback.print_exc()
+        return json.dumps({
+            "tool_name": "invoke_api_for_data",
+            "message": {
+                "error": error_msg,
+                "troubleshooting": "Check entity name, intent, and parameter format"
+            },
+            "type": "json",
+            "sources": [],
+            "metadata": {
+                "entity": entity_name,
+                "intent": intent,
+                "error": True
+            }
+        })
+
+
 def find_and_invoke_api_tool(entity_name: str, intent: str, params: str, tool_context: Optional[ToolContext] = None) -> str:
     """
+    DEPRECATED: Use invoke_api_for_data instead for better performance.
+    
     Combined tool that finds the best endpoint and invokes it in one call.
     This saves multiple tool calls and reduces latency by 2-3 seconds.
     
@@ -751,69 +1189,13 @@ def find_and_invoke_api_tool(entity_name: str, intent: str, params: str, tool_co
     Returns:
         JSON string containing API response in consistent format
     """
-    try:
-        print(f"🚀 [FIND-AND-INVOKE] Starting combined endpoint finding and API invocation")
-        print(f"🚀 [FIND-AND-INVOKE] Entity: {entity_name}, Intent: {intent}, Params: {params}")
-        
-        # Step 1: Find the best endpoint
-        endpoint_result = find_entity_endpoint(entity_name, intent, params, tool_context)
-        endpoint_data = json.loads(endpoint_result)
-        
-        if not endpoint_data.get("endpoint_found"):
-            return json.dumps({
-                "tool_name": "find_and_invoke_api_tool",
-                "message": f"No suitable endpoint found for {entity_name} with intent '{intent}': {endpoint_data.get('error', 'Unknown error')}",
-                "type": "json",
-                "sources": []
-            })
-        
-        print(f"🎯 [FIND-AND-INVOKE] Selected endpoint: {endpoint_data.get('endpoint', {}).get('name', 'Unknown')}")
-        print(f"🎯 [FIND-AND-INVOKE] Score: {endpoint_data.get('score', 'N/A')}")
-        
-        # Step 2: Parse params for invoke_api_tool
-        try:
-            params_dict = json.loads(params) if params and params != "{}" else {}
-        except (json.JSONDecodeError, TypeError):
-            params_dict = {}
-        
-        # Step 3: Invoke the selected endpoint
-        api_result = invoke_api_tool(entity_name, intent, params_dict, False, tool_context)
-        api_data = json.loads(api_result)
-        
-        # Step 4: Enhance the response with endpoint selection details
-        enhanced_response = {
-            "tool_name": "find_and_invoke_api_tool",
-            "message": api_data.get("message", ""),
-            "type": api_data.get("type", "json"),
-            "sources": api_data.get("sources", []),
-            "endpoint_details": {
-                "selected_endpoint": endpoint_data.get("endpoint", {}).get("name", "Unknown"),
-                "endpoint_url": endpoint_data.get("full_url", ""),
-                "method": endpoint_data.get("method", "GET"),
-                "score": endpoint_data.get("score", 0),
-                "fallback_available": endpoint_data.get("retry_info", {}).get("has_fallbacks", False)
-            }
-        }
-        
-        print(f"✅ [FIND-AND-INVOKE] Successfully completed combined operation")
-        return json.dumps(enhanced_response)
-        
-    except Exception as e:
-        error_msg = f"Error in combined find and invoke operation: {str(e)}"
-        print(f"❌ [FIND-AND-INVOKE] {error_msg}")
-        import traceback
-        traceback.print_exc()
-        return json.dumps({
-            "tool_name": "find_and_invoke_api_tool",
-            "message": error_msg,
-            "type": "json",
-            "sources": []
-        })
+    # Redirect to the new optimized tool
+    return invoke_api_for_data(entity_name, intent, params, tool_context)
 
 
 def combined_before_model_callback(callback_context, llm_request=None):
-    """Combined callback for entity-specific tools injection"""
-    inject_entity_specific_tools_before_model(callback_context, llm_request)
+    """Combined callback for entity-specific tools injection - disabled for now"""
+    # inject_entity_specific_tools_before_model(callback_context, llm_request)  # Function not available
     return None
 
 def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = "{}", tool_context: Optional[ToolContext] = None) -> str:
@@ -1013,15 +1395,15 @@ def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = 
         base_url = config_manager.get_api_base_url()
         endpoint_url = best_endpoint.get('url', '')
         
-        # Use construct_api_url for proper path parameter substitution
-        from ai_assistant.utils.common_callbacks import construct_api_url
+        # Build full URL with proper path parameter substitution
         
         if endpoint_url.startswith('http'):
             full_url = endpoint_url
         else:
             # Use generic path parameter extraction
             path_params = extract_path_parameters_from_url(endpoint_url, params_dict)
-            full_url = construct_api_url(base_url, endpoint_url, path_params)
+            # Simple URL construction
+            full_url = base_url.rstrip('/') + '/' + endpoint_url.lstrip('/')
         
         # Prepare retry information for the agent
         fallback_endpoints = []
@@ -1030,12 +1412,12 @@ def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = 
                 ep = candidate['endpoint']
                 ep_url = ep.get('url', '')
                 
-                # Use construct_api_url for fallback endpoints too
+                # Simple URL construction for fallback endpoints too
                 if ep_url.startswith('http'):
                     fallback_url = ep_url
                 else:
-                    # Use the same path_params for fallback URLs
-                    fallback_url = construct_api_url(base_url, ep_url, path_params)
+                    # Simple URL construction for fallback URLs
+                    fallback_url = base_url.rstrip('/') + '/' + ep_url.lstrip('/')
                 
                 fallback_endpoints.append({
                     "rank": i + 1,

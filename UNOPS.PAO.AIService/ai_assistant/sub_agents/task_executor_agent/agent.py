@@ -81,6 +81,14 @@ def dynamic_tool_injection_callback(llm_request, callback_context):
                         except ImportError:
                             pass
                     
+                    elif tool_name == 'invoke_api_for_data':
+                        try:
+                            from ai_assistant.sub_agents.task_executor_agent.utils import invoke_api_for_data
+                            tools_to_add.append(FunctionTool(func=invoke_api_for_data))
+                            added_tool_names.add(tool_name)
+                        except ImportError:
+                            pass
+                    
                     elif tool_name == 'invoke_api_tool':
                         try:
                             from ai_assistant.sub_agents.task_executor_agent.utils import find_entity_endpoint
@@ -177,7 +185,7 @@ def create_dynamic_instruction(callback_context):
 You need to select the most appropriate tools for the user's request from this list:
 
 **Only these tools are available (STRICTLY SELECT ONLY THESE TOOLS):**
-1. **invoke_api_tool** - Call API endpoints for any entity in order to retrieve data
+1. **invoke_api_for_data** - OPTIMIZED: Find and call API endpoints for any entity to retrieve data (replaces invoke_api_tool)
 2. **search_agent** - Search web and knowledge bases for latest news, information, research
 3. **read_content_from_url** - Read and extract content from web URLs
 4. **convert_markdown_to_google_doc** - Create Google Documents from markdown content
@@ -186,12 +194,12 @@ You need to select the most appropriate tools for the user's request from this l
 Analyze the user's request and call ALWAYS: detected_tools(["tool1", "tool2", "tool3"])
 
 **Examples:**
-- For "get partner details" → detected_tools(["invoke_api_tool"])
-- For "find partner named ABC Corp" → detected_tools(["invoke_api_tool"])
+- For "get partner details" → detected_tools(["invoke_api_for_data"])
+- For "find partner named ABC Corp" → detected_tools(["invoke_api_for_data"])
 - For "latest news about AI" → detected_tools(["search_agent"])
-- For "create a document with partner data" → detected_tools(["invoke_api_tool", "convert_markdown_to_google_doc"])
+- For "create a document with partner data" → detected_tools(["invoke_api_for_data", "convert_markdown_to_google_doc"])
 - For "read content from https://example.com" → detected_tools(["read_content_from_url"])
-- For "get partner details and their engagements" → detected_tools(["invoke_api_tool"])
+- For "get partner details and their engagements" → detected_tools(["invoke_api_for_data"])
 
 Choose 1-3 most relevant tools and call detected_tools() with the array."""
             
@@ -239,7 +247,9 @@ Choose 1-3 most relevant tools and call detected_tools() with the array."""
                 tool_names = [tool.get('name', 'Unknown') if isinstance(tool, dict) else str(tool) for tool in discovered_tools]
                 examples = []
                 
-                if 'find_and_invoke_api_tool' in tool_names:
+                if 'invoke_api_for_data' in tool_names:
+                    examples.append('invoke_api_for_data(entity_name="Partner", intent="search", params="{\"query\": \"ABC\"}")')
+                elif 'find_and_invoke_api_tool' in tool_names:
                     examples.append('find_and_invoke_api_tool(entity_name="Partner", intent="search", params="{\"query\": \"ABC\"}")')
                 elif 'invoke_api_tool' in tool_names:
                     examples.append('invoke_api_tool(entity_name="Partner", intent="search", params={{"query": "ABC"}})')
@@ -260,8 +270,8 @@ Available tools:
 {tools_text}
 
 ## Execution Strategy:
-1. **Start with the most specific tool first** (e.g., if looking for a specific partner, use invoke_api_tool to search)
-2. **Use find_entity_endpoint FIRST** to discover the right API endpoint before calling invoke_api_tool
+1. **Start with the most specific tool first** (e.g., if looking for a specific partner, use invoke_api_for_data to search)
+2. **invoke_api_for_data is OPTIMIZED** - it automatically finds the best endpoint and calls it in one step (no need for find_entity_endpoint)
 3. **Analyze results** - if you get empty results or no matches, this may be a valid completion
 4. **For multi-part requests** (e.g., "partner X AND their engagements"):
    - First find the specific entity (partner X)
@@ -281,9 +291,9 @@ Available tools:
 
 ## Example Workflow:
 For "Get partner ABC and their engagements":
-1. find_entity_endpoint(entity_name="Partner", intent="search", extracted_params='{{"query": "ABC"}}')
-2. invoke_api_tool(entity_name="Partner", intent="search", params={{"query": "ABC"}})
-3. If partner found → find_entity_endpoint for engagements
+1. invoke_api_for_data(entity_name="Partner", intent="search", params='{{"query": "ABC"}}')
+2. If partner found → invoke_api_for_data(entity_name="Partner", intent="get", params='{{"id": "found_partner_id"}}')
+3. Then invoke_api_for_data(entity_name="Engagement", intent="search", params='{{"partnerId": "found_partner_id"}}')
 4. If partner NOT found → task complete (inform user no partner found)"""
                 
                 # Validate instruction length (Gemini has token limits)
