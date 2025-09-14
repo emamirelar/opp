@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
-import { NgIf, AsyncPipe } from '@angular/common';
+import { NgIf } from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
 import { TableModule } from 'primeng/table';
@@ -11,7 +11,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 
 import { Router, ActivatedRoute } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {DialogModule} from 'primeng/dialog';
 import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.component';
 import {BusinessCardScannerComponent} from './business-card-scanner/business-card-scanner.component';
@@ -23,7 +23,25 @@ import {Contact} from '../../../models/contact.model';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
 import { SearchField } from '../../../../../common/services/search-parser.service';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { EntityConfigurationService } from '../../../services/entity-configuration.service';
 
+/**
+ * @uiEntity Contact
+ * @route /partnerships/contacts
+ * @description Browse and manage contact persons within partner organizations. Central hub for managing individual contacts, their roles, and communication details.
+ * @capabilities search_contacts, filter_contacts, create_contact, edit_contact, delete_contact, export_contacts, import_contacts, bulk_operations, view_partner_contacts
+ * @synonyms person, individual, contact_person, team_member, staff, representative
+ * @mandatoryFields firstName, lastName, email, title, partnerId
+ * @help_when_stuck Use the search bar to find contacts by name, email, or organization. Click + to add new contacts if you have permissions. Use filters to narrow results by partner, department, or role.
+ * @common_tasks
+ *   - Finding a contact: Search by name, email, or partner organization
+ *   - Creating a contact: Click 'Create Contact' button (requires CONTACT_CREATE permission)
+ *   - Editing a contact: Click on any contact row to open details, then click Edit
+ *   - Filtering by partner: Use the partner filter to see contacts from specific organizations
+ *   - Exporting contacts: Use Export button to download contact lists with details
+ *   - Importing contacts: Use Import button to bulk upload contact data
+ * @tabs Details:/partnerships/contacts/:id, Interactions:/partnerships/contacts/:id/interactions
+ */
 @Component({
   selector: 'app-contact-list',
   templateUrl: './contact-list.component.html',
@@ -39,8 +57,7 @@ import { PermissionUtilityService } from '../../../../../essentials/services/per
     TranslateModule,
     ListviewComponent,
     ConfirmDialog,
-    NgIf,
-    AsyncPipe
+    NgIf
   ],
   providers: [DialogService, ConfirmationService]
 })
@@ -52,6 +69,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
   dialogService = inject(DialogService);
   importDialogService = inject(ImportDialogService);
   permissionUtilityService = inject(PermissionUtilityService);
+  entityConfigurationService = inject(EntityConfigurationService);
+  translateService = inject(TranslateService);
   cdr = inject(ChangeDetectorRef);
 
   // Permission management using utility service
@@ -59,40 +78,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
 
-  // Define contact columns for the listview
-  contactColumns: ListViewColumn[] = [
-    { field: 'profilePictureUrl', label: '', type: 'avatar', sortable: false, width: '5%' },
-    {
-      field: 'partnerName',
-      label: 'label.partner.partner',
-      type: 'text',
-      sortable: false,
-      width: '15%',
-      ellipsis: true
-    },
-    { 
-      field: 'fullName', 
-      label: 'label.contact.fullName', 
-      type: 'template', 
-      sortable: false, 
-      width: '20%',
-      templateFn: (contact: any) => {
-        const firstName = contact.firstName || '';
-        const lastName = contact.lastName || '';
-        const middleName = contact.middleName || '';
-        return `${firstName} ${middleName} ${lastName}`.trim();
-      }
-    },
-    { field: 'title', label: 'label.contact.title', type: 'text', sortable: true, width: '15%' },
-    { 
-      field: 'createdByName',
-      label: 'label.audit.createdBy',
-      type: 'text',
-      sortable: false,
-      width: '15%',
-    },
-    { field: 'createdByOfficeName', label: 'label.contact.createdByOffice', type: 'text', sortable: false, width: '15%' },
-  ];
+  // Dynamic contact columns loaded from API
+  contactColumns = signal<ListViewColumn[]>([]);
+  columnsLoading = signal(true);
 
   // Configure listview behavior with computed permissions
   listviewConfig = computed<ListViewConfig>(() => ({
@@ -106,64 +94,80 @@ export class ContactListComponent implements OnInit, OnDestroy {
     entityName: 'Contact',
     scrollable: true,
     scrollHeight: 'flex',
-    searchConfig: {
-      useAdvancedSearch: true,
-      placeholder: 'Search contacts...',
-      searchableFields: [
-        { 
-          field: 'firstName', 
-          label: 'First Name', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        { 
-          field: 'lastName', 
-          label: 'Last Name', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        { 
-          field: 'email', 
-          label: 'Email', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        { 
-          field: 'mobile', 
-          label: 'Mobile', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        { 
-          field: 'phone', 
-          label: 'Phone', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        { 
-          field: 'title', 
-          label: 'Title', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        { 
-          field: 'mailingCity', 
-          label: 'City', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        { 
-          field: 'mailingCountry', 
-          label: 'Country', 
-          type: 'string',
-          operators: ['is', 'is not']
-        },
-        { 
-          field: 'partner.name', 
-          label: 'Partner', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        }
+    sortableFields: [
+      { field: 'createdBy', label: 'Created By' },
+      { field: 'lastModifiedBy', label: 'Last Updated By' }
+    ],
+          searchConfig: {
+        useAdvancedSearch: true,
+        placeholder: 'search.contactsPlaceholder',
+        searchableFields: [
+          {
+            field: 'firstName',
+            label: 'label.contact.firstName',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'lastName',
+            label: 'label.contact.lastName',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'email',
+            label: 'label.contact.email',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'mobile',
+            label: 'label.contact.mobile',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'phone',
+            label: 'label.contact.phone',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'title',
+            label: 'label.contact.title',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'mailingCity',
+            label: 'label.contact.mailingCity',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'mailingCountry',
+            label: 'label.contact.mailingCountry',
+            type: 'string',
+            operators: ['is', 'is not']
+          },
+          {
+            field: 'partner.name',
+            label: 'label.partner.partner',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'createdDate',
+            label: 'Created Date',
+            type: 'date',
+            operators: ['after', 'before', 'between']
+          },
+          {
+            field: 'lastModifiedDate',
+            label: 'Last Modified Date',
+            type: 'date',
+            operators: ['after', 'before', 'between']
+          }
       ] as SearchField[]
     }
   }));
@@ -172,11 +176,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
   currentSearchText = '';
 
   ngOnInit() {
-    console.log('Contact list config:', this.listviewConfig());
-    
+
+
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
-    
+
+    // Load dynamic columns from API
+    this.loadContactColumns();
+
     this.route.queryParams
       .subscribe(params => {
         if (params['openNewDialog'] === 'true') {
@@ -185,6 +192,118 @@ export class ContactListComponent implements OnInit, OnDestroy {
           this.openContactEditDialog(state?.data || emptyContact);
         }
       });
+  }
+
+  private loadContactColumns() {
+    this.columnsLoading.set(true);
+    this.entityConfigurationService.getEntityListViewConfiguration('Contact')
+      .subscribe({
+        next: (columns) => {
+          // Convert backend columns to frontend format and add template functions
+          const processedColumns = columns.map(col => this.processColumn(col));
+          this.contactColumns.set(processedColumns);
+          this.columnsLoading.set(false);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Failed to load contact columns:', error);
+          // Fallback to default columns if API fails
+          this.setFallbackColumns();
+          this.columnsLoading.set(false);
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  private processColumn(column: any): ListViewColumn {
+    const processedColumn: ListViewColumn = {
+      field: column.field,
+      label: column.label,
+      type: column.type,
+      sortable: column.sortable,
+      width: column.width,
+      ellipsis: column.ellipsis,
+      helperText: column.helperText
+    };
+
+    // Handle nested field paths (fields with dots) by adding a template function
+    if (column.field && column.field.includes('.') && column.type !== 'template') {
+      // Keep the original field for identification but add a template function to access nested data
+      processedColumn.templateFn = (rowData: any) => {
+        const value = this.getNestedProperty(rowData, column.field);
+        return value !== undefined && value !== null ? String(value) : '';
+      };
+      // Change type to template since we're now using a template function
+      processedColumn.type = 'template';
+    }
+
+    // Add template function for template type columns
+    if (column.type === 'template' && column.templatePattern) {
+      processedColumn.templateFn = this.createTemplateFunction(column.templatePattern);
+    }
+
+    return processedColumn;
+  }
+
+  private createTemplateFunction(templatePattern: string): (rowData: any) => string {
+    return (rowData: any) => {
+      let result = templatePattern;
+
+      // Replace field placeholders like {firstName}, {lastName} with actual values
+      const fieldMatches = templatePattern.match(/\{([^}]+)\}/g);
+      if (fieldMatches) {
+        fieldMatches.forEach(match => {
+          const fieldName = match.replace(/[{}]/g, '');
+          const fieldValue = this.getNestedProperty(rowData, fieldName) || '';
+          result = result.replace(match, fieldValue);
+        });
+      }
+
+      return result.trim();
+    };
+  }
+
+  private getNestedProperty(obj: any, path: string): any {
+    return path.split('.').reduce((o, p) => o?.[p], obj);
+  }
+
+  private setFallbackColumns() {
+    // Fallback to original hardcoded columns if API fails
+    const fallbackColumns: ListViewColumn[] = [
+      { field: 'profilePictureUrl', label: '', type: 'avatar', sortable: false, width: '5%' },
+      {
+        field: 'partnerName',
+        label: 'label.partner.partner',
+        type: 'text',
+        sortable: false,
+        width: '15%',
+        ellipsis: true
+      },
+      {
+        field: 'fullName',
+        label: 'label.contact.fullName',
+        type: 'template',
+        sortable: false,
+        width: '20%',
+        templateFn: (contact: any) => {
+          const firstName = contact.firstName || '';
+          const lastName = contact.lastName || '';
+          const middleName = contact.middleName || '';
+          return `${firstName} ${middleName} ${lastName}`.trim();
+        }
+      },
+      { field: 'title', label: 'label.contact.title', type: 'text', sortable: true, width: '15%' },
+      {
+        field: 'createdByName',
+        label: 'label.audit.createdBy',
+        type: 'text',
+        sortable: false,
+        width: '15%',
+      },
+      { field: 'createdByOfficeName', label: 'label.contact.createdByOffice', type: 'text', sortable: false, width: '15%' },
+    ];
+
+    this.contactColumns.set(fallbackColumns);
   }
 
   ngOnDestroy() {
@@ -196,7 +315,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       record = record.data;
     }
     if (record && record.id !== undefined && record.id !== null) {
-      console.log('Navigating to contact:', record.id);
+
       this.router.navigate(['partnerships/contacts', record.id.toString()]);
     } else {
       console.error('Cannot navigate: record or record.id is undefined', record);
@@ -207,22 +326,22 @@ export class ContactListComponent implements OnInit, OnDestroy {
     // Check if user has delete permission
     if (!this.permissionUtilityService.canDelete(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to delete contacts',
-        summary: 'Permission Denied'
+        detail: 'message.noPermissionToDelete',
+        summary: 'message.permissionDenied'
       });
       return;
     }
-    
+
     this.contactService.deleteContactById(record.id).subscribe({
       next: () => {
-        this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
+        this.feedbackDialogService.showSuccessToast({ detail: 'message.recordDeletedSuccessfully' });
         // Trigger a refresh for the listview
         window.dispatchEvent(new CustomEvent('refresh-listview'));
       },
       error: (error: any) => {
         this.feedbackDialogService.showErrorToast({
-          detail: 'Failed to delete record',
-          summary: error.message || 'An error occurred'
+          detail: 'message.failedToDeleteRecord',
+          summary: error.message || 'message.anErrorOccurred'
         });
       }
     });
@@ -233,31 +352,39 @@ export class ContactListComponent implements OnInit, OnDestroy {
       // Refresh the list before navigating to show the new contact
       window.dispatchEvent(new CustomEvent('refresh-listview'));
       // Navigate to the new contact details
-      console.log('Navigating to newly created contact:', newRecordData.id);
+
       this.router.navigate(['partnerships/contacts', newRecordData.id.toString()]);
     } else {
       console.error('Cannot navigate to created contact: id is undefined', newRecordData);
     }
   }
 
+  /**
+   * @uiButton create_contact,edit_contact
+   * @description Opens the contact creation or editing dialog with form fields for managing contact information
+   * @label New Contact | Edit Contact
+   * @icon pi pi-plus | pi pi-pencil
+   * @when_to_use When creating a new contact person or editing existing contact details, especially when adding contacts to partner organizations
+   * @permissions CONTACT_CREATE, CONTACT_UPDATE
+   */
   openContactEditDialog(contactData: Contact = {}) {
     // Check if user has appropriate permission
     if (contactData.id && !this.permissionUtilityService.canUpdate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit contacts',
-        summary: 'Permission Denied'
+        detail: 'message.noPermissionToEdit',
+        summary: 'message.permissionDenied'
       });
       return;
     } else if (!contactData.id && !this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to create contacts',
-        summary: 'Permission Denied'
+        detail: 'message.noPermissionToCreate',
+        summary: 'message.permissionDenied'
       });
       return;
     }
-    
+
     const ref = this.dialogService.open(ContactEditDialogComponent, {
-      header: contactData.id ? 'Edit Contact' : 'New Contact',
+      header: contactData.id ? this.translateService.instant('title.editContact') : this.translateService.instant('title.newContact'),
       width: '40vw',
       breakpoints: { '960px': '95vw' },
       closable: true,
@@ -279,18 +406,26 @@ export class ContactListComponent implements OnInit, OnDestroy {
     this.handleOnOpenRecordDetails(contact);
   }
 
+  /**
+   * @uiButton scan_business_card
+   * @description Opens the business card scanner interface to capture and extract contact information from business cards using AI
+   * @label Scan Business Card
+   * @icon pi pi-camera
+   * @when_to_use When you need to quickly create a contact from a physical business card, saving time on manual data entry
+   * @permissions CONTACT_CREATE
+   */
   openBusinessCardScanner() {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to create contacts',
-        summary: 'Permission Denied'
+        detail: 'message.noPermissionToCreate',
+        summary: 'message.permissionDenied'
       });
       return;
     }
-    
+
     const ref = this.dialogService.open(BusinessCardScannerComponent, {
-      header: 'Scan Business Card',
+      header: this.translateService.instant('title.scanBusinessCard'),
       width: '95vw',
       style: { maxWidth: '800px' },
       closable: true
@@ -303,16 +438,24 @@ export class ContactListComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * @uiButton import_contacts
+   * @description Opens the import dialog to bulk import contacts from Google Sheets or CSV files
+   * @label Import Contacts
+   * @icon pi pi-file-import
+   * @when_to_use When you need to add multiple contacts at once from external sources, ideal for bulk data migration
+   * @permissions CONTACT_CREATE
+   */
   openImportDialog() {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to import contacts',
-        summary: 'Permission Denied'
+        detail: 'message.noPermissionToImport',
+        summary: 'message.permissionDenied'
       });
       return;
     }
-    
+
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('contact');
   }

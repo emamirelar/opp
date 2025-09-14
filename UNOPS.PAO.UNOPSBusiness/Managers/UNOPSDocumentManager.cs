@@ -11,6 +11,7 @@ using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
+using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.UNOPSDomain.Entities.Common;
 using UNOPS.PAO.Utilities.Helpers;
@@ -27,6 +28,7 @@ public class UNOPSDocumentManager : IDocumentManager
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly BaseRepository<UNOPSContact> _contactRepository;
     private readonly BaseRepository<UNOPSPartner> _partnerRepository;
+    private readonly BaseRepository<UNOPSPartnerTree> _partnerTreeRepository;
     //private readonly DataRepository<Project> _projectManager;
 
     public UNOPSDocumentManager(
@@ -34,18 +36,20 @@ public class UNOPSDocumentManager : IDocumentManager
         IConfiguration configuration,
         IMapper mapper,
         UNOPSAppDbContext context,
-        UserManager<PAOIdentityUser> userManager
+        UserManager<PAOIdentityUser> userManager,
+        IServiceProvider serviceProvider = null
         )
     {
         _mapper = mapper;
         _unopsAppDbContext = context;
-        _documentRepository = new BaseRepository<UNOPSDocument>(context, configuration);
+        _documentRepository = new BaseRepository<UNOPSDocument>(context, configuration, serviceProvider);
         _driveManager = driveManager;
         _driveConfig = configuration.GetSection($"GoogleDriveSettings:DefaultGoogleDriveFolderIds");
         _userManager = userManager;
         //_projectManager = new DataRepository<Project>(context); ;
-        _contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
-        _partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
+        _contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
+        _partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
+        _partnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration, serviceProvider);
     }
 
     private DocumentModel MapDocumentModel(UNOPSDocument entity)
@@ -134,6 +138,18 @@ public class UNOPSDocumentManager : IDocumentManager
 
                 return contactFolder;
 
+            case "PartnerTree":
+                var partnerTreeDriveId = _driveConfig.GetSection("Drive").Value;
+                if (string.IsNullOrEmpty(partnerTreeDriveId))
+                {
+                    throw new Exception("Please provide root location in appsettings.");
+                }
+
+                var partnerTreeFolder = await _driveManager.CreateFolderAsync(folderName, partnerTreeDriveId);
+                await EnsureFolderDocument(partnerTreeFolder["id"], partnerTreeFolder["webViewLink"], folderName, entityType, entityId);
+
+                return partnerTreeFolder;
+
             default:
                 throw new Exception("Invalid entity type.");
         }
@@ -192,6 +208,14 @@ public class UNOPSDocumentManager : IDocumentManager
                     throw new Exception("Partner not found.");
                 }
                 return partner.Name;
+
+            case "PartnerTree":
+                var partnerTree = await _partnerTreeRepository.GetByIdAsync(entityId);
+                if (partnerTree == null)
+                {
+                    throw new Exception("PartnerTree not found.");
+                }
+                return partnerTree.Name;
 
             default:
                 throw new Exception("Invalid entity type.");

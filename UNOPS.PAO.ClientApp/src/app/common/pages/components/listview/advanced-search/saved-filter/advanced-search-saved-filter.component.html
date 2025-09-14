@@ -1,0 +1,146 @@
+<!-- SaveFilter Management Bar -->
+<div class="flex flex-wrap items-center gap-2 bg-gray-50 rounded-lg">
+  <div class="flex items-center gap-2">
+    <!-- Save Button -->
+    @if (canSaveAsNewFilter()) {
+        <p-button
+          icon="pi pi-plus"
+          [disabled]="isLoading"
+          (onClick)="openSaveDialog()"
+          severity="secondary"
+        ></p-button>
+      }
+
+    <!-- Saved Filters Dropdown -->
+    <p-dropdown
+      [options]="savedFilters()"
+      [(ngModel)]="selectedSavedFilter"
+      optionLabel="name"
+      [placeholder]="'savedFilters.selectFilter' | translate"
+      [filter]="true"
+      (onChange)="onSavedFilterSelect($event.value)"
+      styleClass="w-72"
+      [disabled]="isLoading"
+    >
+      <ng-template pTemplate="selectedItem" let-selectedFilter>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-bookmark"></i>
+          <span class="truncate mr-auto">{{ selectedFilter?.name }}</span>
+<!--          @if (hasModifications()) {-->
+<!--                <i class="pi pi-save text-xs mr-2 text-surface-600 z-50 cursor-pointer hover:text-surface-800"-->
+<!--                (click)="saveCurrentFilter($event)"-->
+<!--                ></i>-->
+<!--            }-->
+          @if (canManageFilter) {
+                <i class="pi pi-pencil text-xs text-surface-600 z-50 cursor-pointer hover:text-surface-800"
+                (click)="openUpdateDialog($event)"
+                ></i>
+            }
+        </div>
+                <!-- Edit Button -->
+
+
+      </ng-template>
+      <ng-template pTemplate="item" let-filter>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-bookmark"></i>
+          <span>{{ filter.name }}</span>
+        </div>
+      </ng-template>
+    </p-dropdown>
+  </div>
+</div>
+
+<!-- Save Filter Dialog -->
+<p-dialog
+  [header]="'savedFilters.saveFilter' | translate"
+  [visible]="showSaveDialog()"
+  [draggable]="false"
+  [closable]="true"
+  [modal]="true"
+  [style]="{width: '450px'}"
+  (onHide)="cancelSaveDialog()"
+>
+  <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-2">
+      <label for="filterName">{{ 'savedFilters.filterName' | translate }}</label>
+      <input
+        id="filterName"
+        pInputText
+        type="text"
+        [(ngModel)]="saveFilterName"
+        [placeholder]="'savedFilters.enterFilterName' | translate"
+        class="w-full"
+        autofocus
+      />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex gap-2">
+      <p-button
+        [label]="'common.cancel' | translate"
+        severity="secondary"
+        (onClick)="cancelSaveDialog()"
+      ></p-button>
+      <p-button
+        [label]="'common.save' | translate"
+        (onClick)="saveCurrentFilter($event)"
+        [disabled]="!saveFilterName.trim()"
+      ></p-button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Update Filter Dialog -->
+<p-dialog
+  [header]="'savedFilters.updateFilter' | translate"
+  [visible]="showUpdateDialog()"
+  [draggable]="false"
+  [style]="{width: '450px'}"
+  (onHide)="cancelUpdateDialog()"
+>
+  <div class="flex flex-col gap-4">
+
+    <div class="flex flex-col gap-2">
+      <label for="updateFilterName">{{ 'savedFilters.filterName' | translate }}</label>
+      <input
+        id="updateFilterName"
+        pInputText
+        type="text"
+        [(ngModel)]="updateFilterName"
+        [placeholder]="'savedFilters.enterFilterName' | translate"
+        class="w-full"
+        autofocus
+        (keyup.enter)="updateSelectedFilter($event)"
+      />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex gap-2 w-full">
+      <p-button
+        icon="pi pi-trash"
+        [label]="'savedFilters.deleteFilter' | translate"
+        severity="danger"
+        (onClick)="deleteSavedFilter()"
+        [disabled]="isLoading"
+        text
+      ></p-button>
+      <p-button
+        [label]="'common.cancel' | translate"
+        severity="secondary"
+        (onClick)="cancelUpdateDialog()"
+        class="ml-auto"
+      ></p-button>
+      <p-button
+        [label]="'common.save' | translate"
+        (onClick)="updateSelectedFilter($event)"
+        [disabled]="!updateFilterName.trim()"
+      ></p-button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Confirmation Dialog -->
+<p-confirmDialog></p-confirmDialog>

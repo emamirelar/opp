@@ -15,6 +15,6 @@ namespace UNOPS.PAO.Domain.Entities
         [JsonIgnore]
         public virtual Interaction Interaction { get; set; }
         [JsonIgnore]
-        public virtual GrantUser User { get; set; }
+        public virtual PAOUser User { get; set; }
     }
 }

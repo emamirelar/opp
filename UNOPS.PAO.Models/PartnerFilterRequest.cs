@@ -10,15 +10,19 @@ public class PartnerFilterRequest : PaginationRequest, IPartnerSearchFilter
     public string? Phone { get; set; }
     public string? Website { get; set; }
     public string? ShortName { get; set; }
-    public int? PartnerOfficeId { get; set; }
-    public string? PartnerOfficeName { get; set; }
+    public int? OrganizationHierarchyId { get; set; }
+    public string? OrganizationHierarchyName { get; set; }
     public int? PartnerCategoryId { get; set; }
     public string? PartnerCategoryName { get; set; }
     public string? AddressCity { get; set; }
     public string? AddressStateProvince { get; set; }
     public string? AddressPostalCode { get; set; }
     public string? AddressCountry { get; set; }
+    public int? PartnerGroupId { get; set; }
     public string? SearchText { get; set; }
+    
+    // Organization Unit filter - filters results by organizational unit (includes hierarchy)
+    public int? OrgUnitId { get; set; }
     
     // Advanced search properties
     public bool AdvancedSearch { get; set; }

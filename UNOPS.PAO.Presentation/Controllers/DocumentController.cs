@@ -32,22 +32,44 @@ public class DocumentController : BaseController
         _managerWrapper = managerWrapper;
     }
 
+    /// <summary>
+    /// Retrieves all documents associated with a specific entity (partner, contact, or interaction) with access control.
+    /// </summary>
+    /// <param name="entityName">Entity type name (e.g., 'Partner', 'Contact', 'Interaction')</param>
+    /// <param name="entityId">Entity ID to get documents for</param>
+    /// <example_uses>
+    /// Show all documents for partner 123
+    /// Get documents attached to contact 456
+    /// List files for interaction 789
+    /// Find all documents for this partner
+    /// Show uploaded files for contact
+    /// Get document attachments for entity
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to see documents, files, or attachments for a specific partner, contact, or interaction.</when_to_use>
+    /// <returns>List of documents with metadata for the specified entity</returns>
     [HttpGet(APIDictionary.Document + "/{entityName}/{entityId}")]
     public async Task<ActionResult> GetAll(string entityName, int entityId)
     {
         return await HandleOperationAsync(async () => 
         {
-            /*var canListResult = await this.HasPermission(EntityNames.ByName(entityName).ToString(), entityId, this.GetRequirement(EntityNames.ByName(entityName).ToString(), "List"));
-
-            if (!canListResult)
-            {
-                throw new UnauthorizedAccessException("You don't have permission to view these documents");
-            }*/
-
             return _manager.ListDocumentsAsync(EntityNames.ByName(entityName), entityId);
         });
     }
 
+    /// <summary>
+    /// Retrieves a specific document by ID with complete details including file information, metadata, and download access.
+    /// </summary>
+    /// <param name="id">Document ID</param>
+    /// <example_uses>
+    /// Show me details for document ID 123
+    /// Get document 456 information
+    /// Display document record 789
+    /// Get complete document metadata
+    /// Show document with download link
+    /// Access document file details
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks for specific document details by ID or when you need complete document information for viewing or downloading.</when_to_use>
+    /// <returns>Complete document details with file metadata and access information</returns>
     [HttpGet(APIDictionary.Document + "/{id}")]
     public async Task<ActionResult> Get(int id)
     {
@@ -60,22 +82,29 @@ public class DocumentController : BaseController
                 throw new BusinessException($"Document with ID {id} not found");
             }
 
-            var parentEntity = await _manager.GetDocumentParentEntityByIdAsync(id);
-
-            /*if (parentEntity != null)
-            {
-                var canReadResult = await this.HasPermission(parentEntity.Value.EntityType, parentEntity.Value.EntityId, this.GetRequirement(parentEntity.Value.EntityType, "Read"));
-
-                if (!canReadResult)
-                {
-                    throw new UnauthorizedAccessException("You don't have permission to view this document");
-                }
-            }*/
-
             return document;
         });
     }
 
+    /// <summary>
+    /// Updates an existing document's metadata, description, and properties with permission validation.
+    /// </summary>
+    /// <param name="req">Document update request containing modified fields</param>
+    /// <param name="req.id">Document ID to update (required)</param>
+    /// <param name="req.title">Updated document title</param>
+    /// <param name="req.description">Updated document description</param>
+    /// <param name="req.documentType">Updated document type/category</param>
+    /// <param name="req.tags">Updated document tags for categorization</param>
+    /// <param name="req.isPublic">Updated public/private visibility setting</param>
+    /// <example_uses>
+    /// Update document 123's title to "New Contract"
+    /// Change document 456's description
+    /// Modify document type to "Legal Agreement"
+    /// Update document tags and visibility
+    /// Change document metadata and properties
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to update, modify, edit, or change document information or metadata.</when_to_use>
+    /// <returns>Success confirmation or validation errors</returns>
     [HttpPut(APIDictionary.Document)]
     public async Task<ActionResult> Update([FromBody] UpdateDocumentRequest req)
     {

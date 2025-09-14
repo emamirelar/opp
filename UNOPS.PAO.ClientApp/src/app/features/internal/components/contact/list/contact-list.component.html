@@ -2,37 +2,46 @@
 
 <div class="flex flex-col gap-8">
   <div class="flex flex-wrap items-center gap-4">
-    <div class="text-2xl font-semibold">
-      {{ 'title.contacts' | translate }}
+    <div class="flex items-center gap-3 contact-section-header">
+      <span class="material-symbols-outlined text-3xl">contacts</span>
+      <p class="text-3xl font-bold">{{ 'title.contacts' | translate }}</p>
     </div>
     <div class="ml-auto flex gap-2 flex-wrap">
-      <ng-container *ngIf="entityPermissions().permissions.canCreate">
-        <p-button
-          icon="pi pi-file-import"
-          [label]="'button.import' | translate"
-          (click)="openImportDialog()"
-          severity="secondary"
-        />
-        <p-button
-          icon="pi pi-camera"
-          [label]="'title.scanBusinessCard' | translate"
-          (onClick)="openBusinessCardScanner()"
-        />
-        <p-button
-          icon="pi pi-plus"
-          [label]="'button.new' | translate"
-          (onClick)="openContactEditDialog()"
-        />
-      </ng-container>
+      <p-button
+        *ngIf="entityPermissions().permissions.canCreate"
+        icon="pi pi-file-import"
+        [label]="'button.import' | translate"
+        (click)="openImportDialog()"
+        text rounded
+        class="contact-import-button"
+      />
+      <p-button
+        *ngIf="entityPermissions().permissions.canCreate"
+        icon="pi pi-camera"
+        [label]="'title.scanBusinessCard' | translate"
+        (onClick)="openBusinessCardScanner()"
+        rounded
+        class="contact-scanner-button"
+      />
+      <p-button
+        *ngIf="entityPermissions().permissions.canCreate"
+        icon="pi pi-plus"
+        [label]="'button.new' | translate"
+        (onClick)="openContactEditDialog()"
+        rounded
+        class="contact-new-button"
+      />
     </div>
   </div>
 
   <app-listview
     [dataUrl]="contactService.getUrl()"
-    [columns]="contactColumns"
+    [columns]="contactColumns()"
+    [entityType]="'Contact'"
     [config]="listviewConfig()"
     (rowClick)="onRowClick($event)"
     (searchChange)="onSearchChange($event)"
+    class="contact-listview"
   >
   </app-listview>
 </div>

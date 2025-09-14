@@ -7,6 +7,7 @@ public class BaseRole
     public const string PARTNER_USER = "PARTNER_USER";
     public const string ORG_UNIT_ADMIN = "ORG_UNIT_ADMIN";
 
+
     public static List<(string Name, string Description, List<Permission> Permissions)> GetAllRoles()
     {
         return new List<(string Name, string Description, List<Permission> Permissions)>

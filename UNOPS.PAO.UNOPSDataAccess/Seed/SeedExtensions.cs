@@ -85,6 +85,38 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         {
             try
             {
+                _logger.LogInformation("Seeding entities...");
+                await EntitiesSeeder.SeedEntitiesAsync(_context);
+                _logger.LogInformation("Entities seeded successfully.");
+
+                _logger.LogInformation("Seeding entity managers...");
+                await EntityManagerSeeder.SeedEntityManagersAsync(_context);
+                _logger.LogInformation("Entity managers seeded successfully.");
+
+                _logger.LogInformation("Seeding entity field managers...");
+                await EntityManagerSeeder.SeedEntityFieldManagersAsync(_context);
+                _logger.LogInformation("Entity field managers seeded successfully.");
+
+                _logger.LogInformation("Seeding document types...");
+                await DocumentTypeSeeder.SeedDocumentTypesAsync(_context);
+                _logger.LogInformation("Document types seeded successfully.");
+
+                _logger.LogInformation("Seeding AI prompts...");
+                await AiPromptSeeder.SeedAiPromptsAsync(_context);
+                _logger.LogInformation("AI prompts seeded successfully.");
+
+                _logger.LogInformation("Seeding liaison offices...");
+                await LiaisonOfficeSeeder.SeedLiaisonOfficesAsync(_context);
+                _logger.LogInformation("Liaison offices seeded successfully.");
+
+                _logger.LogInformation("Seeding partner trees...");
+                await PartnerTreeSeeder.SeedPartnerTreesAsync(_context);
+                _logger.LogInformation("Partner trees seeded successfully.");
+
+                _logger.LogInformation("Seeding partners...");
+                await PartnerSeeder.SeedPartnersAsync(_context);
+                _logger.LogInformation("Partners seeded successfully.");
+
                 _logger.LogInformation("Seeding entity permissions...");
                 await EntityPermissionSeeder.SeedEntityPermissionsAsync(_context);
                 _logger.LogInformation("Entity permissions seeded successfully.");

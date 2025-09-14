@@ -4,98 +4,114 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Business.Interfaces;
-using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.Utilities.Helpers;
+using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Entities;
+using AutoMapper;
+using Microsoft.Extensions.Configuration;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
-public class UNOPSUserManagementManager : IUserManagementManager
+public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManager
 {
-    private readonly UNOPSAppDbContext _context;
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly RoleManager<PAOIdentityRole> _roleManager;
-    private readonly IBusinessSecurityService _securityService;
+    private readonly IPermissionService _permissionService;
+    private readonly IGeminiManager _geminiManager;
+    private readonly ILogger<UNOPSUserManagementManager> _logger;
 
     public UNOPSUserManagementManager(
+        IMapper mapper,
         UNOPSAppDbContext context,
+        IConfiguration configuration,
         UserManager<PAOIdentityUser> userManager,
         RoleManager<PAOIdentityRole> roleManager,
-        IBusinessSecurityService securityService)
+        IPermissionService permissionService,
+        IGeminiManager geminiManager,
+        ILogger<UNOPSUserManagementManager> logger)
+        : base(mapper, context, configuration, userManager)
     {
-        _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
-        _securityService = securityService;
+        _permissionService = permissionService;
+        _geminiManager = geminiManager;
+        _logger = logger;
     }
 
     public async Task<PaginationResponse<UserManagementModel>> GetUsersAsync(ClaimsPrincipal user, UserManagementRequest request)
     {
-        // Security check - only PARTNER_GLOBAL_ADMIN and ORG_ADMIN can access
-        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
-        {
-            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can manage users.");
-        }
-
-        // Start with UserInfos query
-        var userInfoQuery = _context.UserInfos.Where(u => !u.IsDeleted);
+        // Start with UserProfile query joined with OrganizationHierarchy to get org unit descriptions
+        var userProfileQuery = from up in _context.UserProfile.Where(u => !u.IsDeleted)
+                              join oh in _context.OrganizationHierarchies on up.OrgUnit equals oh.Code into orgJoin
+                              from org in orgJoin.DefaultIfEmpty()
+                              select new { UserProfile = up, OrgHierarchy = org };
 
         // Apply "Show My Org Unit Only" filter if requested
         if (request.ShowMyOrgUnitOnly)
         {
-            var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             if (!string.IsNullOrEmpty(currentUserOrgUnit))
             {
-                userInfoQuery = userInfoQuery.Where(x => x.OrgUnit == currentUserOrgUnit);
+                userProfileQuery = userProfileQuery.Where(x => x.UserProfile.OrgUnit == currentUserOrgUnit);
             }
         }
 
         // Apply org unit filter if specified
-        if (!string.IsNullOrEmpty(request.OrgUnitFilter))
+        if (request.OrgUnitFilter != null && request.OrgUnitFilter.Any())
         {
-            userInfoQuery = userInfoQuery.Where(x => x.OrgUnit != null && x.OrgUnit.Contains(request.OrgUnitFilter));
+            userProfileQuery = userProfileQuery.Where(x => x.OrgHierarchy != null && request.OrgUnitFilter.Contains(x.OrgHierarchy.Id));
         }
 
-        // Apply search term filter
+        // Apply search term filter - use actual database fields instead of computed Name property
         if (!string.IsNullOrEmpty(request.SearchTerm))
         {
             var searchLower = request.SearchTerm.ToLower();
-            userInfoQuery = userInfoQuery.Where(x => 
-                (x.Name != null && x.Name.ToLower().Contains(searchLower)) ||
-                (x.UserEmail != null && x.UserEmail.ToLower().Contains(searchLower)));
+            userProfileQuery = userProfileQuery.Where(x => 
+                (x.UserProfile.FirstName != null && x.UserProfile.FirstName.ToLower().Contains(searchLower)) ||
+                (x.UserProfile.LastName != null && x.UserProfile.LastName.ToLower().Contains(searchLower)) ||
+                (x.UserProfile.UserEmail != null && x.UserProfile.UserEmail.ToLower().Contains(searchLower)));
         }
 
-        // Apply sorting
-        userInfoQuery = request.SortBy?.ToLower() switch
+        // Apply sorting - use actual database fields instead of computed Name property
+        userProfileQuery = request.SortBy?.ToLower() switch
         {
             "email" => request.SortDirection?.ToLower() == "desc" 
-                ? userInfoQuery.OrderByDescending(x => x.UserEmail)
-                : userInfoQuery.OrderBy(x => x.UserEmail),
+                ? userProfileQuery.OrderByDescending(x => x.UserProfile.UserEmail)
+                : userProfileQuery.OrderBy(x => x.UserProfile.UserEmail),
             "orgunit" => request.SortDirection?.ToLower() == "desc"
-                ? userInfoQuery.OrderByDescending(x => x.OrgUnit)
-                : userInfoQuery.OrderBy(x => x.OrgUnit),
+                ? userProfileQuery.OrderByDescending(x => x.OrgHierarchy.Description ?? x.UserProfile.OrgUnit)
+                : userProfileQuery.OrderBy(x => x.OrgHierarchy.Description ?? x.UserProfile.OrgUnit),
             "lastmodified" => request.SortDirection?.ToLower() == "desc"
-                ? userInfoQuery.OrderByDescending(x => x.LastModifiedDate)
-                : userInfoQuery.OrderBy(x => x.LastModifiedDate),
-            _ => userInfoQuery.OrderBy(x => x.Name ?? x.UserEmail)
+                ? userProfileQuery.OrderByDescending(x => x.UserProfile.LastModifiedDate)
+                : userProfileQuery.OrderBy(x => x.UserProfile.LastModifiedDate),
+            _ => request.SortDirection?.ToLower() == "desc"
+                ? userProfileQuery.OrderByDescending(x => x.UserProfile.FirstName ?? x.UserProfile.LastName ?? x.UserProfile.UserEmail)
+                : userProfileQuery.OrderBy(x => x.UserProfile.FirstName ?? x.UserProfile.LastName ?? x.UserProfile.UserEmail)
         };
 
         // Get total count before pagination
-        var totalCount = await userInfoQuery.CountAsync();
+        var totalCount = await userProfileQuery.CountAsync();
 
         // Apply pagination
-        var pagedUserInfos = await userInfoQuery
+        var pagedUserProfiles = await userProfileQuery
             .Skip(request.PageIndex * request.PageSize)
             .Take(request.PageSize)
             .ToListAsync();
 
         // Get user roles for each user
         var userModels = new List<UserManagementModel>();
-        foreach (var userInfo in pagedUserInfos)
+        foreach (var item in pagedUserProfiles)
         {
-            if (string.IsNullOrEmpty(userInfo.UserEmail)) continue;
+            var userProfile = item.UserProfile;
+            var orgHierarchy = item.OrgHierarchy;
+            
+            if (string.IsNullOrEmpty(userProfile.UserEmail)) continue;
 
-            var aspNetUser = await _userManager.FindByEmailAsync(userInfo.UserEmail);
+            var aspNetUser = await _userManager.FindByEmailAsync(userProfile.UserEmail);
             var roles = new List<string>();
             var isActive = true; // Default to active if not found in AspNetUsers
 
@@ -108,26 +124,28 @@ public class UNOPSUserManagementManager : IUserManagementManager
             }
             
             // Apply role filter if specified
-            if (!string.IsNullOrEmpty(request.RoleFilter) && 
-                !roles.Any(r => r.Contains(request.RoleFilter, StringComparison.OrdinalIgnoreCase)))
+            if (request.RoleFilter != null && request.RoleFilter.Any() && 
+                !request.RoleFilter.Any(rf => roles.Contains(rf)))
             {
                 continue;
             }
 
             userModels.Add(new UserManagementModel
             {
-                UserId = userInfo.UserId,
-                Name = userInfo.Name ?? "N/A",
-                Email = userInfo.UserEmail ?? "N/A",
-                OrgUnit = userInfo.OrgUnit ?? "N/A",
+                UserId = userProfile.UserId.ToString(),
+                Name = userProfile.Name ?? "N/A",
+                Email = userProfile.UserEmail ?? "N/A",
+                OrgUnit = orgHierarchy?.Description ?? userProfile.OrgUnit ?? "N/A",
+                OrgUnitCode = userProfile.OrgUnit,
+                OrgUnitDescription = orgHierarchy?.Name,
                 Roles = roles,
-                LastModifiedDate = userInfo.LastModifiedDate,
+                LastModifiedDate = userProfile.LastModifiedDate,
                 IsActive = isActive
             });
         }
 
         // If role filter was applied, we need to adjust the total count
-        if (!string.IsNullOrEmpty(request.RoleFilter))
+        if (request.RoleFilter != null && request.RoleFilter.Any())
         {
             totalCount = userModels.Count;
         }
@@ -137,33 +155,37 @@ public class UNOPSUserManagementManager : IUserManagementManager
             Records = userModels,
             TotalCount = totalCount,
             PageIndex = request.PageIndex,
-            PageSize = request.PageSize,
-            TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
+            PageSize = request.PageSize
         };
     }
 
-    public async Task<UserManagementModel?> GetUserByIdAsync(ClaimsPrincipal user, int userId)
+    public async Task<UserManagementModel?> GetUserByIdAsync(ClaimsPrincipal user, string userId)
     {
-        // Security check
-        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
+        // RBAC interceptor handles security enforcement
+        if (!int.TryParse(userId, out int userIdInt))
         {
-            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can view user details.");
+            return null; // Invalid userId format
         }
+        
+        var userProfileWithOrg = await (from up in _context.UserProfile.Where(u => u.UserId == userIdInt && !u.IsDeleted)
+                                        join oh in _context.OrganizationHierarchies on up.OrgUnit equals oh.Code into orgJoin
+                                        from org in orgJoin.DefaultIfEmpty()
+                                        select new { UserProfile = up, OrgHierarchy = org })
+                                        .FirstOrDefaultAsync();
 
-        var userInfo = await _context.UserInfos
-            .Where(u => u.UserId == userId && !u.IsDeleted)
-            .FirstOrDefaultAsync();
+        if (userProfileWithOrg?.UserProfile == null) return null;
+        
+        var userProfile = userProfileWithOrg.UserProfile;
+        var orgHierarchy = userProfileWithOrg.OrgHierarchy;
 
-        if (userInfo == null) return null;
-
-        var aspNetUser = await _userManager.FindByEmailAsync(userInfo.UserEmail);
+        var aspNetUser = await _userManager.FindByEmailAsync(userProfile.UserEmail);
         if (aspNetUser == null) return null;
 
-        // Check org unit access for ORG_UNIT_ADMIN
+        // Additional org unit check for ORG_UNIT_ADMIN (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
-            var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
-            if (userInfo.OrgUnit != currentUserOrgUnit)
+            var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
+            if (userProfile.OrgUnit != currentUserOrgUnit)
             {
                 throw new UnauthorizedAccessException("Access denied. You can only view users from your organization unit.");
             }
@@ -173,45 +195,48 @@ public class UNOPSUserManagementManager : IUserManagementManager
 
         return new UserManagementModel
         {
-            UserId = userInfo.UserId,
-            Name = userInfo.Name ?? "N/A",
-            Email = userInfo.UserEmail ?? "N/A",
-            OrgUnit = userInfo.OrgUnit ?? "N/A",
+            UserId = userProfile.UserId.ToString(),
+            Name = userProfile.Name ?? "N/A",
+            Email = userProfile.UserEmail ?? "N/A",
+            OrgUnit = orgHierarchy?.Description ?? userProfile.OrgUnit ?? "N/A",
+            OrgUnitCode = userProfile.OrgUnit,
+            OrgUnitDescription = orgHierarchy?.Name,
             Roles = roles.ToList(),
-            LastModifiedDate = userInfo.LastModifiedDate,
+            LastModifiedDate = DateTime.UtcNow, // Use current time since we don't track this in UserProfile
             IsActive = !aspNetUser.LockoutEnabled || 
                       (aspNetUser.LockoutEnd == null || aspNetUser.LockoutEnd <= DateTimeOffset.UtcNow)
         };
     }
 
-    public async Task<UserManagementModel?> UpdateUserRolesAsync(ClaimsPrincipal user, int userId, UpdateUserRolesRequest request)
+    public async Task<UserManagementModel?> UpdateUserRolesAsync(ClaimsPrincipal user, string userId, UpdateUserRolesRequest request)
     {
-        // Security check
-        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
+        // RBAC interceptor handles security enforcement
+        if (!int.TryParse(userId, out int userIdInt))
         {
-            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can update user roles.");
+            throw new ArgumentException("Invalid userId format. UserId must be a valid integer.", nameof(userId));
         }
-
-        var userInfo = await _context.UserInfos
-            .Where(u => u.UserId == userId && !u.IsDeleted)
+        
+        var userProfile = await _context.UserProfile
+            .Where(u => u.UserId == userIdInt && !u.IsDeleted)
             .FirstOrDefaultAsync();
 
-        if (userInfo == null)
+        if (userProfile == null)
         {
             throw new ArgumentException("User not found.");
         }
 
-        var aspNetUser = await _userManager.FindByEmailAsync(userInfo.UserEmail);
+        var aspNetUser = await _userManager.FindByEmailAsync(userProfile.UserEmail);
         
         // If user doesn't exist in AspNetUsers, create them
         if (aspNetUser == null)
         {
             aspNetUser = new PAOIdentityUser
             {
-                UserName = userInfo.UserEmail,
-                Email = userInfo.UserEmail,
+                UserName = userProfile.UserEmail,
+                Email = userProfile.UserEmail,
                 EmailConfirmed = true,
-                LockoutEnabled = false
+                LockoutEnabled = false,
+                SecurityStamp = Guid.NewGuid().ToString()
             };
 
             var createResult = await _userManager.CreateAsync(aspNetUser);
@@ -221,14 +246,24 @@ public class UNOPSUserManagementManager : IUserManagementManager
             }
         }
 
-        // Check org unit access for ORG_UNIT_ADMIN
+        // Ensure SecurityStamp is set for existing users (required for role operations)
+        if (string.IsNullOrEmpty(aspNetUser.SecurityStamp))
+        {
+            var updateStampResult = await _userManager.UpdateSecurityStampAsync(aspNetUser);
+            if (!updateStampResult.Succeeded)
+            {
+                throw new InvalidOperationException($"Failed to update user security stamp: {string.Join(", ", updateStampResult.Errors.Select(e => e.Description))}");
+            }
+        }
+
+        // Additional org unit and role validation for ORG_UNIT_ADMIN (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
-            var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
-            if (userInfo.OrgUnit != currentUserOrgUnit)
-            {
-                throw new UnauthorizedAccessException("Access denied. You can only update users from your organization unit.");
-            }
+            // var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            // if (userProfile.OrgUnit != currentUserOrgUnit)
+            // {
+            //     throw new UnauthorizedAccessException("Access denied. You can only update users from your organization unit.");
+            // }
 
             // ORG_UNIT_ADMIN can only assign certain roles
             var allowedRoles = new[] { "UNOPS_GEN_USER", "PARTNER_USER", "ORG_UNIT_ADMIN" };
@@ -281,9 +316,9 @@ public class UNOPSUserManagementManager : IUserManagementManager
             }
         }
 
-        // Update the UserInfo last modified date
-        userInfo.LastModifiedDate = DateTime.UtcNow;
-        userInfo.LastModifiedBy = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+        // Update the UserProfile last modified date
+        userProfile.LastModifiedDate = DateTime.UtcNow;
+        userProfile.LastModifiedBy = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
         await _context.SaveChangesAsync();
 
         // Return updated user model
@@ -292,15 +327,10 @@ public class UNOPSUserManagementManager : IUserManagementManager
 
     public async Task<IEnumerable<RoleModel>> GetAvailableRolesAsync(ClaimsPrincipal user)
     {
-        // Security check
-        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
-        {
-            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can view available roles.");
-        }
-
+        // RBAC interceptor handles security enforcement
         var roles = await _roleManager.Roles.ToListAsync();
 
-        // Filter roles based on user permissions
+        // Filter roles based on user permissions (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
             // ORG_UNIT_ADMIN can only see and assign certain roles
@@ -314,5 +344,298 @@ public class UNOPSUserManagementManager : IUserManagementManager
             Name = r.Name ?? string.Empty,
             Description = r.Description ?? string.Empty
         }).OrderBy(r => r.Name);
+    }
+
+    public async Task<IEnumerable<OrgUnitModel>> GetAvailableOrgUnitsAsync(ClaimsPrincipal user)
+    {
+        // RBAC interceptor handles security enforcement
+        var orgUnits = await _context.OrganizationHierarchies
+            .Where(o => !o.IsDeleted && o.Status == EntityStatus.Active && o.Type == OrganizationUnitType.OrgUnit)
+            .OrderBy(o => o.Name)
+            .ToListAsync();
+
+        return orgUnits.Select(o => new OrgUnitModel
+        {
+            Id = o.Id,
+            Name = o.Name,
+            Code = o.Code,
+            Description = o.Description
+        });
+    }
+
+    public async Task<bool> GetOrgUnitSelfManagementAsync(ClaimsPrincipal user, string orgUnitCode)
+    {
+        // RBAC interceptor handles security enforcement
+        // Find the organization unit
+        var orgUnit = await _context.OrganizationHierarchies
+            .Where(o => o.Code == orgUnitCode && !o.IsDeleted && o.Type == OrganizationUnitType.OrgUnit)
+            .FirstOrDefaultAsync();
+
+        if (orgUnit == null)
+        {
+            throw new ArgumentException($"Organization unit with code '{orgUnitCode}' not found.");
+        }
+
+        // Additional org unit check for ORG_UNIT_ADMIN (business logic)
+        if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
+        {
+            var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
+            if (orgUnit.Code != currentUserOrgUnit)
+            {
+                throw new UnauthorizedAccessException("Access denied. You can only view settings for your organization unit.");
+            }
+        }
+
+        return orgUnit.IsSelfManagementEnabled;
+    }
+
+    public async Task UpdateOrgUnitSelfManagementAsync(ClaimsPrincipal user, string orgUnitCode, UpdateOrgUnitSelfManagementRequest request)
+    {
+        // RBAC interceptor handles security enforcement
+        // Find the organization unit
+        var orgUnit = await _context.OrganizationHierarchies
+            .Where(o => o.Code == orgUnitCode && !o.IsDeleted && o.Type == OrganizationUnitType.OrgUnit)
+            .FirstOrDefaultAsync();
+
+        if (orgUnit == null)
+        {
+            throw new ArgumentException($"Organization unit with code '{orgUnitCode}' not found.");
+        }
+
+        // Additional org unit check for ORG_UNIT_ADMIN (business logic)
+        if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
+        {
+            var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
+            if (orgUnit.Code != currentUserOrgUnit)
+            {
+                throw new UnauthorizedAccessException("Access denied. You can only update settings for your organization unit.");
+            }
+        }
+
+        // Update the self-management setting
+        orgUnit.IsSelfManagementEnabled = request.IsSelfManagementEnabled;
+        orgUnit.LastModifiedDate = DateTime.UtcNow;
+        orgUnit.LastModifiedBy = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+        await _context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Gets basic entity data for AI prompts and generic operations
+    /// </summary>
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    {
+        // For user management, we need to convert int to string
+        // This is a temporary compatibility layer
+        var userId = entityId.ToString();
+        
+        if (user != null)
+        {
+            return await GetUserByIdAsync(user, userId);
+        }
+        
+        // Fallback for cases without user context
+        if (!int.TryParse(userId, out int userIdInt))
+        {
+            return null; // Invalid userId format
+        }
+        
+        var userProfile = await _context.UserProfile
+            .Where(u => u.UserId == userIdInt && !u.IsDeleted)
+            .FirstOrDefaultAsync();
+
+        if (userProfile == null) return null;
+
+        return new UserManagementModel
+        {
+            UserId = userProfile.UserId.ToString(),
+            Name = userProfile.Name ?? "N/A",
+            Email = userProfile.UserEmail ?? "N/A",
+            OrgUnit = userProfile.OrgUnit ?? "N/A",
+            OrgUnitCode = userProfile.OrgUnit,
+            Roles = new List<string>(),
+            LastModifiedDate = DateTime.UtcNow, // Use current time since we don't track this in UserProfile
+            IsActive = true
+        };
+    }
+
+    public async Task<object> AnalyzeUserRoleFileAsync(ClaimsPrincipal user, AnalyseFileRequest request)
+    {
+        try
+        {
+            // Get current user ID
+            var currentUserId = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            
+            // Use the GeminiManager to analyze the file
+            var analysisResult = await _geminiManager.ExtractDataAfterAnalysis(request, currentUserId);
+            
+            return analysisResult;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to analyze user role file: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<object> BulkUploadUserRolesAsync(ClaimsPrincipal user, BulkUploadRequest request)
+    {
+        try
+        {
+            if (request.Records == null || !request.Records.Any())
+            {
+                throw new ArgumentException("No records provided for import");
+            }
+
+            var successCount = 0;
+            var errorCount = 0;
+            var errors = new List<string>();
+
+            foreach (var record in request.Records)
+            {
+                try
+                {
+                    var recordJson = JsonConvert.SerializeObject(record);
+                    var userRoleData = JsonConvert.DeserializeObject<dynamic>(recordJson);
+                    
+                    // Extract user ID and role IDs from the processed data
+                    var userId = userRoleData.userId?.ToObject<int?>();
+                    var roleIds = userRoleData.roleIds?.ToObject<List<string>>();
+                    
+                    if (userId == null)
+                    {
+                        errors.Add("No valid user ID found in record");
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    if (roleIds == null || !roleIds.Any())
+                    {
+                        errors.Add("No valid role IDs found in record");
+                        errorCount++;
+                        continue;
+                    }
+
+                    // Process the user-role assignment
+                    var updateRequest = new UpdateUserRolesRequest
+                    {
+                        Roles = roleIds.ToArray()
+                    };
+                    
+                    await UpdateUserRolesAsync(user, userId.Value.ToString(), updateRequest);
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    errorCount++;
+                    errors.Add($"Error processing record: {ex.Message}");
+                }
+            }
+
+            var result = new
+            {
+                IsSuccess = errorCount == 0,
+                SuccessCount = successCount,
+                ErrorCount = errorCount,
+                Errors = errors,
+                Message = errorCount == 0 ? 
+                    $"Successfully imported {successCount} user role assignments" :
+                    $"Imported {successCount} user role assignments with {errorCount} errors"
+            };
+
+            return new { message = JsonConvert.SerializeObject(result) };
+        }
+        catch (Exception ex)
+        {
+            var errorResult = new
+            {
+                IsSuccess = false,
+                SuccessCount = 0,
+                ErrorCount = 1,
+                Errors = new[] { ex.Message },
+                Message = $"Bulk upload failed: {ex.Message}"
+            };
+
+            return new { message = JsonConvert.SerializeObject(errorResult) };
+        }
+    }
+
+    public async Task<Dictionary<int, object>> ResolveUsersAsync(ClaimsPrincipal user, ResolveUsersRequest request)
+    {
+        var result = new Dictionary<int, object>();
+        
+        foreach (var userId in request.UserIds)
+        {
+            try
+            {
+                var userProfile = await _context.UserProfile
+                    .Where(u => u.UserId == userId)
+                    .FirstOrDefaultAsync();
+                
+                if (userProfile != null)
+                {
+                    // Use the computed Name property from the entity
+                    var displayName = !string.IsNullOrEmpty(userProfile.Name) ? userProfile.Name : userProfile.UserEmail;
+                    
+                    result[userId] = new { 
+                        name = !string.IsNullOrEmpty(displayName) ? displayName : $"User {userId}", 
+                        email = userProfile.UserEmail ?? ""
+                    };
+                }
+                else
+                {
+                    result[userId] = new { 
+                        name = $"User {userId}", 
+                        email = "Unknown" 
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resolving user ID {UserId}", userId);
+                result[userId] = new { 
+                    name = $"User {userId}", 
+                    email = "Error" 
+                };
+            }
+        }
+        
+        return result;
+    }
+
+    public async Task<Dictionary<int, object>> ResolveRolesAsync(ClaimsPrincipal user, ResolveRolesRequest request)
+    {
+        var result = new Dictionary<int, object>();
+        
+        foreach (var roleId in request.RoleIds)
+        {
+            try
+            {
+                var role = await _roleManager.FindByIdAsync(roleId.ToString());
+                
+                if (role != null)
+                {
+                    result[roleId] = new { 
+                        name = role.Name, 
+                        description = role.Description ?? role.Name 
+                    };
+                }
+                else
+                {
+                    result[roleId] = new { 
+                        name = $"Role {roleId}", 
+                        description = "Unknown" 
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                result[roleId] = new { 
+                    name = $"Role {roleId}", 
+                    description = "Error" 
+                };
+            }
+        }
+        
+        return result;
     }
 } 

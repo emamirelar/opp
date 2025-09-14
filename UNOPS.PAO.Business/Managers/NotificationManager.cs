@@ -22,10 +22,23 @@ public class NotificationManager : IApplicationService
         this.userResolverService = userResolverService;
     }
 
-    public async Task<List<NotificationModel>> GetNotifications(int userId)
+    public async Task<List<NotificationModel>> GetNotifications(int userId, bool? unreadOnly = null)
     {
-        var notifications = await appDbContext.Notifications
-            .Where(n => n.UserId == userId && !n.IsRead)
+        var query = appDbContext.Notifications
+            .Where(n => n.UserId == userId);
+
+        // Apply unreadOnly filter if specified
+        if (unreadOnly.HasValue)
+        {
+            query = query.Where(n => n.IsRead == !unreadOnly.Value);
+        }
+        else
+        {
+            // Default behavior: show only unread notifications
+            query = query.Where(n => !n.IsRead);
+        }
+
+        var notifications = await query
             .OrderByDescending(n => n.CreatedAt)
             .ToListAsync();
 
@@ -35,7 +48,7 @@ public class NotificationManager : IApplicationService
             Message = n.Message,
             Category = n.Category,
             ResponseType = n.ResponseType,
-            Records = JsonSerializer.Deserialize<List<object>>(n.RecordData) ?? new List<object>()
+            Records = ParseRecordData(n.RecordData)
         }).ToList();
     }
 
@@ -79,5 +92,37 @@ public class NotificationManager : IApplicationService
 
         await appDbContext.Notifications.AddAsync(notification);
         await appDbContext.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Parse RecordData JSON string into List<object>, handling both array and object formats
+    /// </summary>
+    private static List<object> ParseRecordData(string recordData)
+    {
+        if (string.IsNullOrEmpty(recordData))
+        {
+            return new List<object>();
+        }
+
+        try
+        {
+            // Try to deserialize as array first (normal bulk import notifications)
+            var asList = JsonSerializer.Deserialize<List<object>>(recordData);
+            return asList ?? new List<object>();
+        }
+        catch (JsonException)
+        {
+            try
+            {
+                // If that fails, try to deserialize as single object (internal duplicates, errors, etc.)
+                var asObject = JsonSerializer.Deserialize<object>(recordData);
+                return asObject != null ? new List<object> { asObject } : new List<object>();
+            }
+            catch (JsonException)
+            {
+                // If all else fails, return the raw string as a single item
+                return new List<object> { recordData };
+            }
+        }
     }
 } 

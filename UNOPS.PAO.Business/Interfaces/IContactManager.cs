@@ -17,7 +17,7 @@ public interface IContactManager
     Task<ContactModel> CreateContactAsync(ContactRequest model);
 
     PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request);
-    
+
     PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination);
 
     Task<ContactModel?> GetContact(int userId, int id);
@@ -34,26 +34,20 @@ public interface IContactManager
     Task<ContactModel?> GetContactAsync(int id);
     
     Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file);
-
-    // New secure methods with ClaimsPrincipal for row-level security
-    
-    /// <summary>
-    /// Gets contacts with row-level filtering and entity permissions applied
-    /// </summary>
     Task<PaginationResponse<ContactModel>> GetContactsAsync(ClaimsPrincipal user, PaginationRequest request);
-    
-    /// <summary>
-    /// Gets a specific contact with entity-level access check and permissions
-    /// </summary>
     Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id);
-    
-    /// <summary>
-    /// Updates a contact with entity-level access check
-    /// </summary>
     Task<ContactModel?> UpdateContactAsync(ClaimsPrincipal user, UpdateContactRequest model);
+    Task DeleteContactAsync(ClaimsPrincipal user, int id);
+
+    Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user);
+    Task<object> GetContactsWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Contact> specification, PaginationRequest pagination);
+    Task<List<UnmatchedEmailModel>> GetUnmatchedEmailsWithPartnerSuggestionsAsync(List<string> emailAddresses, ClaimsPrincipal user = null);
     
     /// <summary>
-    /// Deletes a contact with entity-level access check
+    /// Gets a contact by email address
     /// </summary>
-    Task DeleteContactAsync(ClaimsPrincipal user, int id);
+    /// <param name="user">The current user's claims principal</param>
+    /// <param name="email">The email address to search for</param>
+    /// <returns>The contact model if found, null otherwise</returns>
+    Task<ContactModel?> GetContactByEmailAsync(ClaimsPrincipal user, string email);
 }

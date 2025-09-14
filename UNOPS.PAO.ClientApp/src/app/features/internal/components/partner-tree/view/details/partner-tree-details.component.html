@@ -1,0 +1,153 @@
+<div class="flex flex-col gap-8 relative">
+  @if (isLoading()) {
+    <div class="absolute inset-0 bg-white bg-opacity-75 flex justify-center items-center z-10">
+      <p-progressSpinner styleClass="w-8 h-8"></p-progressSpinner>
+    </div>
+  }
+
+  <!-- Back button -->
+<!--  <app-go-back></app-go-back>-->
+
+    <div class="flex w-full flex-col xl:flex-row gap-8">
+      <div class="xl:w-1/2 flex flex-col gap-8">
+        <p-panel>
+          <ng-template pTemplate="header">
+            <div class="flex justify-between items-center w-full">
+              <span class="font-semibold text-xl">{{ 'title.details' | translate }}</span>
+            </div>
+          </ng-template>
+          <div class="flex flex-col gap-4">
+            <!-- Partner Tree details -->
+            @if (partnerTree()?.description) {
+              <div class="flex flex-col gap-2">
+                <div class="font-semibold">{{ 'label.description' | translate }}</div>
+                <div>{{partnerTree()?.description}}</div>
+              </div>
+            }
+
+            @if (partnerTree()?.code) {
+              <div class="flex flex-col gap-2">
+                <div class="font-semibold">{{ 'label.partnerTree.code' | translate }}</div>
+                <div>{{partnerTree()?.code}}</div>
+              </div>
+            }
+
+            @if (partnerTree()?.status) {
+              <div class="flex flex-col gap-2">
+                <div class="font-semibold">{{ 'label.status' | translate }}</div>
+                <div>{{partnerTree()?.status}}</div>
+              </div>
+            }
+          </div>
+        </p-panel>
+
+        @if (!partnerTree()?.partnerGroupId) {
+          <p-panel
+            [toggleable]="true"
+          >
+            <ng-template pTemplate="header">
+              <div class="font-semibold">{{ 'label.partnerTree.partnerGroup' | translate }}</div>
+            </ng-template>
+
+            <div class="flex flex-col gap-2 max-h-[150px] overflow-y-auto">
+              @for (partnerGroup of childrenPartnerGroups() || []; track partnerGroup.partnerGroupId) {
+                <a class="text-primary hover:underline cursor-pointer"
+                   [routerLink]="['/admin/partner-tree', partnerGroup.partnerGroupId!]">
+                  <div class="text-base font-medium">{{partnerGroup.partnerGroupName}}</div>
+                </a>
+              } @empty {
+                <div class="text-base text-gray-500">{{ 'message.noPartnerGroups' | translate }}</div>
+              }
+            </div>
+          </p-panel>
+          }
+          <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
+            <app-document #appDocument
+                          [entityId]="recordId()"
+                          [entityName]="'partnerTree'"
+                          [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
+                          [disabled]="!recordPermissions().permissions.canUpdate">
+              <div ngProjectAs="document-toolbar">
+                @if(recordPermissions().permissions.canUpdate){
+                  <app-document-gdrive [entityId]="recordId()"
+                                       [entityName]="'partnerTree'"
+                                       [appDocumentRef]="appDocument"
+                                       [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+                }
+              </div>
+            </app-document>
+          </p-panel>
+
+
+        <p-panel header="{{ 'title.links' | translate }}">
+          <app-link-list [entityType]="entityTypePartner"
+                         [entityId]="+recordId()"
+                         [disabled]="!recordPermissions().permissions.canUpdate" />
+        </p-panel>
+
+        @if (partnerTree()?.partnerGroupId) {
+          <p-panel>
+            <ng-template pTemplate="header">
+              <div class="font-semibold">{{ 'title.partners' | translate }}</div>
+            </ng-template>
+            <div class="bg-gray-50 p-6 rounded-xl">
+            <app-listview
+              [dataUrl]="'api/partner?partnerGroupId=' + this.partnerTree()?.partnerGroupId"
+              [columns]="partnerColumns()"
+              (rowClick)="navigateToPartner($event)"
+            >
+            </app-listview>
+            </div>
+          </p-panel>
+        }
+
+      </div>
+
+        <div class="xl:w-1/2 flex flex-col gap-8">
+
+                    <!-- AI Summary of interactions -->
+                    <app-ai-panel
+                    [title]="'label.partner.summaryOfInteractions'"
+                    [entityId]="entityId()"
+                    [promptType]="'summary-interactions'"
+                    [aiService]="mockAiService"
+                    [loadOnInit]="true">
+                  </app-ai-panel>
+
+                  <!-- AI summary of partner News -->
+                  <app-ai-panel
+                  [title]="'label.partner.partnerNews'"
+                  [entityId]="entityId()"
+                  [promptType]="'partner-news'"
+                  [aiService]="mockAiService"
+                  [loadOnInit]="true">
+                </app-ai-panel>
+
+
+
+          @if (!partnerTree()?.partnerGroupId) {
+          <!-- AI summary of partner category -->
+            <app-ai-panel
+              [title]="'label.partner.categorySummary'"
+              [entityId]="entityId()"
+              [promptType]="'category-summary'"
+              [aiService]="mockAiService"
+              [loadOnInit]="true">
+            </app-ai-panel>
+          } @else {
+            <!-- AI summary of partner group -->
+            <app-ai-panel
+              [title]="'label.partner.groupSummary'"
+              [entityId]="entityId()"
+              [promptType]="'group-summary'"
+              [aiService]="mockAiService"
+              [loadOnInit]="true">
+            </app-ai-panel>
+          }
+
+
+
+        </div>
+
+    </div>
+</div>

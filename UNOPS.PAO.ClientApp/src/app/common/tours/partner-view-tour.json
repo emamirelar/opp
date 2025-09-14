@@ -1,0 +1,97 @@
+{
+  "tourId": "partner-view-tour",
+  "titleKey": "tour.partnerview.title",
+  "descriptionKey": "tour.partnerview.description",
+  "entity": "Partner",
+  "route": "/partnerships/partners/:id",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "titleKey": "tour.partnerview.steps.welcome.title",
+        "descriptionKey": "tour.partnerview.steps.welcome.description",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".partner-header",
+      "fallbackType": ".partner-header",
+      "popover": {
+        "titleKey": "tour.partnerview.steps.partnerHeader.title",
+        "descriptionKey": "tour.partnerview.steps.partnerHeader.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".partner-edit-button",
+      "fallbackType": ".partner-edit-button",
+      "popover": {
+        "titleKey": "tour.partnerview.steps.editButton.title",
+        "descriptionKey": "tour.partnerview.steps.editButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".partner-information",
+      "fallbackType": ".partner-information",
+      "popover": {
+        "titleKey": "tour.partnerview.steps.partnerInfo.title",
+        "descriptionKey": "tour.partnerview.steps.partnerInfo.description",
+        "side": "left",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".summary-interactions",
+      "fallbackType": "summary-interactions",
+      "popover": {
+        "titleKey": "tour.partnerview.steps.summaryInteractions.title",
+        "descriptionKey": "tour.partnerview.steps.summaryInteractions.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".summary-news",
+      "fallbackType": "summary-news",
+      "popover": {
+        "titleKey": "tour.partnerview.steps.summaryNews.title",
+        "descriptionKey": "tour.partnerview.steps.summaryNews.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".partner-tabs-navigation",
+      "fallbackType": "tabs-navigation",
+      "popover": {
+        "titleKey": "tour.partnerview.steps.partnerTabs.title",
+        "descriptionKey": "tour.partnerview.steps.partnerTabs.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.partnerview.steps.tourControl.title",
+        "descriptionKey": "tour.partnerview.steps.tourControl.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2024-01-15T12:30:00Z",
+  "version": "1.0"
+}

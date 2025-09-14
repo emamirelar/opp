@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using UNOPS.PAO.UNOPSDataAccess.Seed;
 
@@ -42,28 +43,24 @@ public class Program
                     // cannot be made before the usage of ConfigureWebHostDefaults
 
                     // Add Web API services
-                    services.AddControllers().AddApplicationPart(typeof(UNOPSPresentation.AssemblyReference).Assembly);
-                    services.AddControllers().AddApplicationPart(typeof(Presentation.AssemblyReference).Assembly);
+                    services.AddControllers()
+                        .AddApplicationPart(typeof(UNOPSPresentation.AssemblyReference).Assembly)
+                        .AddApplicationPart(typeof(Presentation.AssemblyReference).Assembly)
+                        .AddJsonOptions(options =>
+                        {
+                            // Configure JSON serialization to use camelCase naming policy
+                            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                            options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+                        });
                     services.AddCors(options =>
                     {
-                        if (environment is null or "Development")
+                        options.AddPolicy("AllowAll", builder =>
                         {
-                            options.AddPolicy("AllowOrigin", options => options
-                                .WithOrigins("https://localhost:44326", "https://localhost:44426")
+                            builder
+                                .AllowAnyOrigin()
                                 .AllowAnyHeader()
-                                .AllowAnyMethod()
-                            );
-                        }
-                        else
-                        {
-                            options.AddPolicy("AllowAll", builder =>
-                            {
-                                builder
-                                    .AllowAnyOrigin()
-                                    .AllowAnyHeader()
-                                    .AllowAnyMethod();
-                            });
-                        }
+                                .AllowAnyMethod();
+                        });
                     });
                     if (environment is null or "Development")
                     {

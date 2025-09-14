@@ -1,4 +1,7 @@
 {
+    "global": {
+        "filter": "Filtro global"
+    },
     "title": {
         "countries": "Países",
         "currency": "Moneda",
@@ -14,11 +17,16 @@
         "when": "Cuándo",
         "who": "Quién",
         "why": "Por qué",
+        "contact": "Contacto",
         "contacts": "Contactos",
+        "partners": "Socios",
+        "partnerTree": "Árbol de Socios",
         "interactions": "Interacciones",
         "newInteraction": "Nueva Interacción",
         "editInteraction": "Editar Interacción",
         "scanBusinessCard": "Escanear Tarjeta de Visita",
+        "newContact": "Nuevo Contacto",
+        "editContact": "Editar Contacto",
         "confirmation": "Confirmación",
         "links": "Enlaces",
         "editLink": "Editar Enlace",
@@ -27,6 +35,26 @@
             "contactInformation": "Información Personal",
             "addresses": "Direcciones",
             "systemInformation": "Información del Sistema"
+        },
+        "interactionTitles": {
+            "primaryInformation": "Información Principal",
+            "participants": "Participantes",
+            "details": "Detalles",
+            "organization": "Organización",
+            "aiAssistant": "Asistente IA",
+            "information": "Información"
+        },
+        "partnerDetails": "Detalles del Socio",
+        "partnerDashboard": "Panel del Socio",
+        "admin": "Administración",
+        "fundingAndAgreements": "Acuerdos de Financiación",
+        "dashboard": "Panel de Control",
+        "partner": {
+            "summaryOfInteractions": "Resumen IA de Interacciones",
+            "categoryNews": "Noticias de Categoría",
+            "partnerNews": "Noticias del Socio",
+            "categorySummary": "Resumen de Categoría",
+            "groupSummary": "Resumen de Grupo"
         }
     },
     "button": {
@@ -45,7 +73,31 @@
         "delete": "Eliminar",
         "uploadImage": "Subir Imagen",
         "addLink": "Agregar Enlace",
-        "seeMore": "Ver más"
+        "seeMore": "Ver más",
+        "seeLess": "Ver menos",
+        "new": "Nuevo"
+    },
+    "aiPrompt": {
+        "preview": "Vista Previa",
+        "rawText": "Texto Sin Formato",
+        "rawResponse": "Respuesta Completa",
+        "help": "Ayuda",
+        "helpTitle": "Guía de Escritura de Prompts de IA",
+        "helpDescription": "Aprende a escribir prompts efectivos, usar formato markdown y configurar respuestas JSON.",
+        "quickTips": "Consejos Rápidos",
+        "tip1": "Sé específico y claro en tus instrucciones",
+        "tip2": "Usa el marcador {promptData} para contenido dinámico",
+        "tip3": "Prueba tus prompts antes de guardar",
+        "promptWritingGuide": "Guía de Escritura de Prompts",
+        "promptGuideContent": "## Cómo Escribir Prompts de IA Efectivos\\n\\n### 1. Sé Claro y Específico\\n- Usa lenguaje claro e inequívoco\\n- Especifica exactamente lo que quieres que haga la IA\\n- Incluye contexto y restricciones\\n\\n### 2. Estructura tu Prompt\\n```\\nRol: Eres un asistente útil...\\nTarea: Analiza los siguientes datos...\\nFormato: Responde en formato JSON...\\n```",
+        "markdownGuide": "Formato Markdown",
+        "markdownGuideContent": "## Guía de Sintaxis Markdown\\n\\n### Encabezados\\n```markdown\\n# Encabezado 1\\n## Encabezado 2\\n### Encabezado 3\\n```\\n\\n### Formato de Texto\\n```markdown\\n**Texto en negrita**\\n*Texto en cursiva*\\n`Código de texto`\\n```",
+        "jsonResponseGuide": "Configuración de Respuesta JSON",
+        "jsonGuideContent": "## Solicitar Respuestas JSON\\n\\n### 1. Especificar Formato JSON\\n```\\nResponde en formato JSON válido con la siguiente estructura:\\n{\\n  \\\"resumen\\\": \\\"Resumen breve aquí\\\",\\n  \\\"detalles\\\": [\\\"Detalle 1\\\", \\\"Detalle 2\\\"]\\n}\\n```",
+        "examples": "Ejemplos de Prompts",
+        "examplesContent": "## Ejemplos de Prompts\\n\\n### Prompt de Resumen de Contacto\\n```\\nAnaliza la información de contacto proporcionada en {promptData} y crea un resumen integral.\\n\\nIncluye:\\n- Detalles básicos de contacto\\n- Afiliación organizacional\\n- Interacciones recientes\\n```",
+        "collapseGuide": "Contraer Guía",
+        "expandGuide": "Expandir Guía"
     },
     "label": {
         "actions": "Acciones",
@@ -99,18 +151,24 @@
         "interaction": {
           "type": "Tipo",
           "date": "Fecha",
+          "subject": "Asunto",
+          "description": "Descripción",
+          "status": "Estado del Sistema",
           "notes": "Notas",
           "contactName": "Nombre del Contacto",
           "types": {
             "email": "Correo electrónico",
             "chat": "Chat",
-            "phone": "Teléfono",
+            "call": "Llamada",
+            "other": "Otro",
             "virtual_meeting": "Reunión virtual",
             "in_person_meeting": "Reunión presencial"
           },
           "selectType": "Seleccione un tipo",
           "selectContact": "Seleccione un contacto",
-          "contact": "Contacto"
+          "contact": "Contacto",
+          "noPartnersSelected": "No hay socios seleccionados",
+          "aiGeneratedSummary": "Resumen Generado por IA"
         },
         "link": {
           "url": "URL",
@@ -132,7 +190,7 @@
             "assistant": "Asistente",
             "assistantPhone": "Tel. asistente",
             "assistantEmail": "Correo asistente",
-            "status": "Estado",
+            "status": "Estado del Sistema",
             "title": "Título",
             "pronouns": "Pronombres",
             "department": "Departamento",
@@ -148,7 +206,36 @@
             "mailingPostalCode": "Código postal de envío",
             "mailingCountry": "País de envío",
             "contactViaAssistant": "Contactar a través del asistente",
-            "createdByOffice": "Creado por Oficina"
+            "createdByOffice": "Creado por Oficina",
+            "summaryOfInteractions": "Resumen IA de Interacciones",
+            "contactNews": "Noticias del Contacto",
+
+            "contactId": "ID de Contacto",
+            "matchScore": "Puntuación de Coincidencia",
+            "matchReason": "Razón de Coincidencia",
+            "matchedData": "Datos Coincidentes",
+            "warningTitle": "Advertencia",
+            "warningMessage": "Crear este contacto puede resultar en registros duplicados. ¿Está seguro de que desea continuar?",
+            "createAnyway": "Crear de Todos Modos"
+        },
+        "partner": {
+            "partner": "Socio",
+            "name": "Nombre",
+            "status": "Estado del Sistema",
+            "partnerShortDescription": "Descripción Corta del Socio",
+            "partnerLongDescription": "Descripción Larga del Socio",
+            "partnerGroup": "Grupo de Socio",
+            "partnerCategory": "Categoría de Socio",
+            "liaisonOffice": "Oficina de Enlace",
+            "keyGlobalPartner": "Socio Global Clave",
+            "unSecretariatPartner": "Socio del Secretariado de la ONU",
+            "partnerApprovalStatus": "Estado de Aprobación del Socio",
+            "pooledFund": "Fondo Común",
+            "canCreateNewOpportunities": "Puede Crear Nuevas Oportunidades",
+            "selectPartner": "Seleccionar Socio",
+            "organizationUnit": "Unidad de Organización",
+            "selectOrganizationUnit": "Seleccionar Unidad de Organización",
+            "selectPartnerGroup": "Seleccionar Grupo de Socios"
         }
     },
     "message": {
@@ -161,10 +248,20 @@
         "interactionDeleted": "Interacción eliminada con éxito",
         "errorDeletingInteraction": "Error al eliminar la interacción",
         "dropUrlToAddLink": "Suelte una URL o archivo para agregar enlace",
-        "comingSoon": "Próximamente"
+        "comingSoon": "Próximamente",
+        "noPermissionToDelete": "No tiene permiso para eliminar contactos",
+        "noPermissionToEdit": "No tiene permiso para editar contactos",
+        "noPermissionToCreate": "No tiene permiso para crear contactos",
+        "noPermissionToImport": "No tiene permiso para importar contactos",
+        "permissionDenied": "Permiso denegado",
+        "recordDeletedSuccessfully": "¡Registro eliminado exitosamente!",
+        "failedToDeleteRecord": "Error al eliminar el registro",
+        "anErrorOccurred": "Ocurrió un error"
     },
     "errors": {
-        "failedToLoad": "Error al cargar"
+        "failedToLoad": "Error al cargar",
+        "errorLoadingData": "Error al cargar datos. Inténtelo de nuevo más tarde.",
+        "noDataAvailable": "No hay datos disponibles"
     },
     "aiAssistant": {
         "openButton": "Abrir Asistente de IA",
@@ -178,11 +275,49 @@
         "typeMessage": "Escribe tu mensaje...",
         "takePhoto": "Tomar una foto",
         "attachFile": "Adjuntar archivo",
-        "recordAudio": "Grabar mensaje de voz"
+        "recordAudio": "Grabar mensaje de voz",
+        "textToSpeech": "Texto a voz",
+        "collapse": "Contraer Asistente de IA",
+        "expand": "Expandir Asistente de IA",
+        "fullscreen": "Modo pantalla completa",
+        "exitFullscreen": "Salir de pantalla completa",
+        "welcomeTitle": "Bienvenido al Asistente de IA",
+        "welcomeMessage": "Estoy aquí para ayudarte con la gestión de socios, redacción de propuestas, análisis de datos y más. ¿Cómo puedo ayudarte hoy?",
+        "examplePromptsTitle": "Prueba preguntándome sobre:",
+        "examplePrompt1": "Analizar datos de socios y generar insights",
+        "examplePrompt2": "Ayudar a redactar una propuesta de asociación",
+        "examplePrompt3": "Resumir interacciones recientes con socios",
+        "learnMore": "Aprende más sobre lo que puedes usar el Asistente de IA para",
+        "copyMessage": "Copiar mensaje",
+        "toggleStar": "Marcar conversación",
+        "toggleArchive": "Archivar conversación",
+        "close": "Cerrar Asistente de IA",
+        "thinking": "Pensando...",
+        "chatHistory": "Historial de conversaciones",
+        "noOldChats": "No hay conversaciones anteriores",
+        "disclaimer": "El Asistente de IA puede cometer errores. Siempre verifica dos veces.",
+        "hello": "Hola",
+        "user": "Usuario",
+        "welcomeDescription": "Bienvenido al Asistente de IA de Opportunity+, su compañero inteligente para todo lo relacionado con UNOPS. Estoy diseñado para ayudarle a navegar por asociaciones, oportunidades e información organizacional con facilidad. Ya sea que busque información sobre socios, analice interacciones o explore nuevas oportunidades, estoy aquí para brindarle asistencia rápida y precisa.",
+        "quickActionDescription": "Comience al instante con estas tareas comunes:"
     },
     "common": {
         "cancel": "Cancelar",
-        "capture": "Capturar"
+        "capture": "Capturar",
+        "save": "Guardar",
+        "update": "Actualizar",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "search": "Buscar",
+        "actions": "Acciones",
+        "yes": "Sí",
+        "no": "No",
+        "apply": "Aplicar",
+        "reset": "Restablecer",
+        "not_available": "N/A",
+        "enabled": "Habilitado",
+        "disabled": "Deshabilitado",
+        "close": "Cerrar"
     },
     "placeholder": {
         "enterUrl": "Ingrese la URL",
@@ -207,11 +342,851 @@
     },
     "search": {
         "placeholder": "Buscar...",
+        "contactsPlaceholder": "Buscar contactos...",
         "recentSearches": "Búsquedas recientes",
-        "results": "Resultados",
+        "results": "Resultados de búsqueda para",
         "showAllResults": "Mostrar todos los resultados",
         "seeAllResults": "Ver todos los resultados",
         "contact": "Contacto",
+        "partner": "Socio",
+        "advanced": "Búsqueda Avanzada",
+        "backToSimple": "Volver a búsqueda simple",
+        "searchEverywhere": "Buscar en todas partes",
+        "searchIn": "Buscar en",
+        "noFilters": "Sin filtros",
+        "clearAllFilters": "Limpiar todos los filtros",
+        "selectField": "Seleccionar campo",
+        "operator": "Operador",
+        "logic": "Lógica",
+        "addFilter": "Agregar filtro",
+        "enterField": "Ingrese {{field}}...",
+        "operators": {
+            "equals": "igual a",
+            "notEquals": "diferente de",
+            "contains": "contiene",
+            "notContains": "no contiene",
+            "greaterThan": "mayor que",
+            "lessThan": "menor que",
+            "greaterThanOrEqual": "mayor o igual a",
+            "lessThanOrEqual": "menor o igual a",
+            "after": "después de",
+            "before": "antes de",
+            "between": "entre"
+        },
+        "logicalOperators": {
+            "and": "Y",
+            "or": "O"
+        },
+        "selectDate": "Seleccionar fecha",
+        "selectEndDate": "Seleccionar fecha final",
+        "and": "y"
+    },
+    "savedFilters": {
+        "selectFilter": "Seleccionar filtro",
+        "save": "Guardar",
+        "saveNew": "Nuevo Filtro",
+        "saveCurrentFilter": "Guardar filtro actual",
+        "updateFilter": "Actualizar filtro",
+        "deleteFilter": "Eliminar filtro",
+        "saveFilter": "Guardar filtro",
+        "filterName": "Nombre del filtro",
+        "enterFilterName": "Ingrese el nombre del filtro"
+    },
+    "validation": {
+        "required": "Este campo es obligatorio",
+        "maxLength": "La longitud máxima es de {{max}} caracteres",
+        "pleaseFullAllRequired": "Por favor, complete todos los detalles requeridos.",
+        "partnerRequired": "El socio debe ser ingresado.",
+        "lastNameRequired": "El apellido debe ser ingresado.",
+        "titleRequired": "El título debe ser ingresado.",
+        "emailRequired": "El email debe ser ingresado."
+    },
+    "loading": {
+        "contactData": "Cargando datos del contacto...",
+        "partnerData": "Cargando datos del socio..."
+    },
+    "interactions": {
+        "title": "Interacciones",
+        "noInteractionsFound": "No se encontraron interacciones",
+        "tryAdjustingFilters": "Intente ajustar su búsqueda o filtros",
+        "andOthers": "y {{count}} otros"
+    },
+    "personalInformation": "Información Personal",
+    "office": "oficina",
+    "aria": {
+        "selectPartner": "Seleccionar Socio",
+        "selectNewEngagement": "Seleccionar Nuevo Compromiso",
+        "selectOrganizationUnits": "Seleccionar Unidades de Organización",
+        "selectPartnerGroup": "Seleccionar Grupo de Socios",
+        "selectPooledFund": "Seleccionar Fondo Común",
+        "selectDDRequired": "Seleccionar DD Requerido",
+        "selectDDEACDone": "Seleccionar DD/EAC Completado",
+        "selectLevyPotentiallyApplies": "Seleccionar Gravamen Potencialmente Aplicable",
+        "selectReasonForLevyNotApplying": "Seleccionar Razón para No Aplicación del Gravamen",
+        "selectLevyTreatment": "Seleccionar Tratamiento del Gravamen"
+    },
+    "fieldLabels": {
+        "email": "Email",
+        "mobile": "Móvil",
+        "phone": "Teléfono",
+        "title": "Título",
+        "city": "Ciudad",
+        "country": "País",
         "partner": "Socio"
+    },
+    "entityManager": {
+        "templatePattern": "Patrón de Template",
+        "templatePatternHelper": "Use llaves para referenciar campos: {nombreDelCampo}",
+        "templatePreview": "Vista previa",
+        "noDataAvailable": "No hay datos disponibles para la vista previa",
+        "templateValid": "Template válido pero sin resultado",
+        "templateError": "Error en el template",
+        "examplePlaceholder": "ej. {nombre} ({nombreCorto})"
+    },
+    "search": {
+        "results": "Resultados de Búsqueda",
+        "totalResults": "resultados totales",
+        "entityTypes": "tipos de entidades",
+        "searching": "Buscando...",
+        "found": "Encontrado",
+        "resultsIn": "resultados en",
+        "totalOf": "total de",
+        "noResultsFound": "No se encontraron resultados",
+        "tryDifferentTerms": "Prueba con términos de búsqueda diferentes",
+        "startSearching": "Comenzar búsqueda",
+        "enterTermsAbove": "Ingrese términos de búsqueda arriba",
+        "matched": "Coincidió",
+        "matchedIn": "Coincidió en",
+        "relevance": "Relevancia",
+        "snippet": "Fragmento",
+        "searchCriteria": "Criterios de Búsqueda",
+        "showMetadata": "Mostrar Metadatos",
+        "placeholder": "Buscar...",
+        "searchButton": "Buscar",
+        "clearSearch": "Limpiar búsqueda",
+        "closeSearch": "Cerrar búsqueda",
+        "recentSearches": "Búsquedas Recientes",
+        "clearAll": "Limpiar Todo",
+        "noResults": "No se encontraron resultados",
+        "viewAllResults": "Ver Todos los Resultados",
+        "filteredBy": "Filtrado por"
+    },
+    "tour": {
+        "control": {
+            "takeATour": "Hacer un Tour"
+        },
+        "welcome": {
+            "title": "🎉 ¡Bienvenido a UNOPS Opportunity+!",
+            "description": "¡Bienvenido a tu plataforma integral de gestión de socios y oportunidades! Estamos emocionados de ayudarte a comenzar. Hagamos un tour rápido de las características principales para ayudarte a navegar y aprovechar al máximo este poderoso sistema.",
+            "startButton": "Iniciar Tour"
+        },
+        "fallback": {
+            "title": "¡Bienvenido!",
+            "description": "Aún no tenemos un tour disponible para esta página, pero constantemente agregamos nuevos tours para ayudarte a navegar la aplicación. Siéntete libre de explorar, y vuelve más tarde para tours guiados en esta sección."
+        },
+        "homepage": {
+            "title": "Tour de Navegación de la Página Principal",
+            "description": "¡Bienvenido al Sistema de Gestión de Socios y Oportunidades de UNOPS! Aprende a navegar la interfaz principal, usar la potente funcionalidad de búsqueda, acceder al asistente de IA y personalizar tu experiencia con filtros globales y configuraciones de idioma.",
+            "steps": {
+                "welcome": {
+                    "title": "Bienvenido a la Gestión de Socios y Oportunidades de UNOPS",
+                    "description": "Esta plataforma integral te ayuda a gestionar asociaciones, rastrear oportunidades y aprovechar insights impulsados por IA para lograr mejores resultados empresariales. Exploremos la navegación principal y características clave para comenzar de manera efectiva."
+                },
+                "menuToggle": {
+                    "title": "Alternar Menú de Navegación",
+                    "description": "Haz clic en este menú hamburguesa para expandir o contraer la barra lateral de navegación principal. La barra lateral contiene enlaces a todas las secciones principales: Socios, Contactos, Interacciones, Informes y herramientas Administrativas."
+                },
+                "logo": {
+                    "title": "Logo de UNOPS Opportunity+",
+                    "description": "Haz clic en el logo en cualquier momento para regresar a la página principal. Esto sirve como tu punto de anclaje de navegación en toda la aplicación, proporcionando acceso rápido de vuelta al panel principal."
+                },
+                "globalSearch": {
+                    "title": "Barra de Búsqueda Global",
+                    "description": "Esta potente barra de búsqueda te permite encontrar socios, contactos, oportunidades y documentos en todo el sistema. Usa palabras clave, nombres, tipos de organización o incluso información parcial para localizar rápidamente lo que necesitas."
+                },
+                "tourControl": {
+                    "title": "Tours Interactivos",
+                    "description": "Haz clic en este botón en cualquier página para acceder a tours guiados específicos para esa sección. Cada área principal de la aplicación tiene tours detallados para ayudarte a entender y dominar las características disponibles."
+                },
+                "globalFilters": {
+                    "title": "Filtros Globales",
+                    "description": "Accede a filtros de todo el sistema para reducir datos en todos los módulos. Establece filtros de unidad organizacional, rangos de fechas u otros criterios que se aplicarán en toda tu sesión, ayudándote a enfocarte en información relevante."
+                },
+                "languageSelector": {
+                    "title": "Selección de Idioma",
+                    "description": "Cambia entre idiomas soportados (Inglés, Francés, Español, Portugués) para usar la aplicación en tu idioma preferido. Esto afecta todo el texto de la interfaz, tours y mensajes del sistema."
+                },
+                "aiAssistant": {
+                    "title": "Acceso al Asistente de IA",
+                    "description": "Abre el asistente de IA inteligente que puede ayudar a analizar tus datos, generar insights, transcribir reuniones, responder preguntas sobre socios y oportunidades, y proporcionar recomendaciones estratégicas basadas en tu información empresarial."
+                },
+                "notifications": {
+                    "title": "Centro de Notificaciones",
+                    "description": "Mantente actualizado con notificaciones del sistema, estado de procesamiento de archivos, resultados de análisis de IA y alertas importantes. La insignia de notificación muestra el conteo de notificaciones no leídas que requieren tu atención."
+                },
+                "profileMenu": {
+                    "title": "Perfil y Configuraciones",
+                    "description": "Accede a tu perfil de usuario, configuraciones de cuenta, información de rol y opciones de cierre de sesión. Gestiona tus preferencias personales y ve tus permisos actuales y acceso organizacional."
+                },
+                "mainNavigation": {
+                    "title": "Menú de Navegación Principal",
+                    "description": "Esta barra lateral contiene enlaces a todas las secciones principales de la aplicación: Gestión de socios, Base de datos de contactos, Seguimiento de interacciones, Herramientas de IA, Informes y funciones Administrativas. Cada sección tiene sus propias características especializadas y tours."
+                },
+                "welcomeDashboard": {
+                    "title": "Panel de Bienvenida",
+                    "description": "Este es tu punto de partida en la aplicación. Desde aquí, puedes navegar a cualquier sección usando el menú de la barra lateral, buscar información específica o acceder al asistente de IA para insights inteligentes y asistencia."
+                        }
+      }
+    },
+    "homepage": {
+      "title": "Tour de Navegación de la Página Principal",
+      "description": "Aprende a navegar por la interfaz principal de la aplicación, usar la búsqueda global, acceder al asistente de IA, y entender las características principales disponibles desde la página principal.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a Opportunity+",
+          "description": "Este es tu tablero central para gestionar asociaciones y oportunidades. Desde aquí, puedes navegar a todas las secciones, buscar información, y acceder a herramientas poderosas impulsadas por IA para mejorar tu flujo de trabajo."
+        },
+        "menuToggle": {
+          "title": "Alternar Menú",
+          "description": "Haz clic en este botón para expandir o contraer la barra lateral de navegación principal. Esto te da más espacio en pantalla cuando sea necesario mientras mantiene la navegación fácilmente accesible."
+        },
+        "logo": {
+          "title": "Logo de la Página Principal",
+          "description": "Haz clic en el logo de Opportunity+ en cualquier momento para volver a este tablero principal. Esto sirve como tu base de inicio a través de la aplicación."
+        },
+        "globalSearch": {
+          "title": "Búsqueda Global",
+          "description": "Usa esta poderosa función de búsqueda para encontrar socios, contactos, interacciones y otros registros en todo el sistema. Escribe palabras clave y obtén resultados instantáneos de todos los módulos."
+        },
+        "tourControl": {
+          "title": "Tomar un Tour",
+          "description": "Haz clic en este botón en cualquier página para comenzar un tour guiado específico para esa sección. Cada área de la aplicación tiene su propio tour detallado para ayudarte a dominar las características disponibles."
+        },
+        "globalFilters": {
+          "title": "Filtros Globales",
+          "description": "Accede a opciones de filtrado avanzadas para refinar los resultados de búsqueda y vistas de datos. Configura filtros guardados para criterios de búsqueda frecuentemente utilizados."
+        },
+        "languageSelector": {
+          "title": "Selector de Idioma",
+          "description": "Cambia entre idiomas soportados (Inglés, Francés, Español, Portugués). La interfaz se adaptará inmediatamente a tu preferencia de idioma seleccionada."
+        },
+        "aiAssistant": {
+          "title": "Alternar Asistente de IA",
+          "description": "Haz clic en este botón para abrir o cerrar el panel del Asistente de IA. Obtén ayuda inteligente, automatiza tareas, y recibe insights impulsados por tecnología de IA avanzada."
+        },
+        "notifications": {
+          "title": "Notificaciones",
+          "description": "Ve notificaciones importantes del sistema, alertas y actualizaciones. Mantente informado sobre actividades que requieren tu atención o acción."
+        },
+        "profileMenu": {
+          "title": "Menú de Perfil",
+          "description": "Accede a la configuración de tu cuenta, preferencias de usuario, opciones de cierre de sesión, y otras características de configuración personal desde este menú desplegable."
+        },
+        "mainNavigation": {
+          "title": "Barra Lateral de Navegación Principal",
+          "description": "Esta barra lateral contiene enlaces a todas las secciones principales: Gestión de Socios, Base de Datos de Contactos, Seguimiento de Interacciones, Herramientas de IA, Informes, y funciones Administrativas. Cada sección tiene sus propias características especializadas y tours."
+        },
+        "dashboardHeader": {
+          "title": "Encabezado del Tablero",
+          "description": "El encabezado personalizado de tu tablero muestra el mensaje de bienvenida y proporciona acceso rápido para actualizar los datos del tablero. El botón de actualización te asegura tener siempre la información más actualizada."
+        },
+        "refreshButton": {
+          "title": "Actualizar Tablero",
+          "description": "Haz clic en este botón de actualización para recargar todos los datos del tablero y obtener la información más reciente sobre tus socios, contactos, interacciones y actualizaciones organizacionales recientes."
+        },
+        "partnersCard": {
+          "title": "Tarjeta del Tablero Mis Socios",
+          "description": "Esta tarjeta muestra un resumen de los socios que has modificado o creado recientemente. Haz clic en la tarjeta para expandir y ver información detallada de los socios, o haz clic en socios individuales para navegar a sus perfiles completos."
+        },
+        "contactsCard": {
+          "title": "Tarjeta del Tablero Mis Contactos",
+          "description": "Visualiza y gestiona tus contactos modificados recientemente desde esta tarjeta interactiva. Expándela para ver detalles de contactos, filtra por varios criterios, o navega directamente a perfiles de contactos específicos."
+        },
+        "interactionsCard": {
+          "title": "Tarjeta del Tablero Mis Interacciones",
+          "description": "Rastrea tus interacciones recientes con socios y contactos. Esta tarjeta te permite filtrar interacciones por tipo, ver detalles, y acceder rápidamente a registros completos de interacciones para acciones de seguimiento."
+        },
+        "opportunitiesCard": {
+          "title": "Tarjeta del Tablero Mis Oportunidades",
+          "description": "Esta sección está diseñada para futuras funciones de gestión de oportunidades. Aunque actualmente muestra 'Próximamente', eventualmente mostrará oportunidades de asociación, posibilidades de financiamiento y perspectivas de desarrollo comercial."
+        },
+        "actionsRequiredCard": {
+          "title": "Tarjeta del Tablero Acciones Requeridas",
+          "description": "Mantente al día con elementos en borrador que necesitan tu atención. Esta tarjeta muestra socios, contactos e interacciones en borrador que requieren finalización o revisión antes de que puedan ser finalizados y publicados."
+        },
+        "orgUpdatesCard": {
+          "title": "Tarjeta de Actualizaciones Recientes de la Organización",
+          "description": "Monitorea las actualizaciones recientes de tus colegas de la unidad organizacional. Esta tarjeta muestra los últimos cambios a socios, contactos e interacciones realizados por miembros del equipo, ayudándote a mantenerte informado sobre actividades colaborativas."
+        }
+      }
+    },
+    "entitymanager": {
+      "title": "Tour del Gestor de Entidades",
+      "description": "El Gestor de Entidades es una herramienta administrativa poderosa diseñada para darte control granular sobre cómo se presentan y acceden los campos de datos a través de varias entidades del sistema.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido al Gestor de Entidades",
+          "description": "Esta página sirve como el centro central para administradores para personalizar la visualización y acceso de campos de datos para varias entidades como Socios, Contactos e Interacciones."
+        },
+        "header": {
+          "title": "Encabezado del Gestor de Entidades",
+          "description": "La sección de encabezado principal muestra el módulo actual y proporciona contexto de navegación. Esto te ayuda a entender en qué sección administrativa estás trabajando actualmente."
+        },
+        "entityTabs": {
+          "title": "Pestañas de Selección de Entidad",
+          "description": "Estas pestañas te permiten alternar entre diferentes tipos de entidades (Socios, Contactos, Interacciones, etc.). Cada entidad tiene su propia configuración de campo que puedes personalizar independientemente."
+        },
+        "settings": {
+          "title": "Configuración de Entidad",
+          "description": "Accede al panel de configuración principal para la entidad actualmente seleccionada. Aquí puedes configurar opciones de visualización, permisos de campo y otras configuraciones específicas de la entidad."
+        },
+        "addField": {
+          "title": "Botón Agregar Campo",
+          "description": "Haz clic en este botón para agregar nuevos campos a la configuración de la entidad. Puedes seleccionar de campos del sistema disponibles o crear definiciones de campo personalizadas."
+        },
+        "availableFields": {
+          "title": "Conjunto de Campos Disponibles",
+          "description": "Esta sección muestra todos los campos disponibles que pueden agregarse a la configuración de visualización de la entidad. Los campos están organizados por categorías y muestran sus tipos de datos y propiedades."
+        },
+        "listViewFields": {
+          "title": "Configuración de Vista de Lista",
+          "description": "Configura qué campos aparecen en las vistas de lista y su orden. Arrastra y suelta campos para reordenarlos, o usa los controles para mostrar/ocultar campos específicos en las visualizaciones de lista."
+        },
+        "cardPreview": {
+          "title": "Vista Previa en Vivo",
+          "description": "Ve una vista previa en tiempo real de cómo se verá tu configuración de campo para los usuarios finales. Esto te ayuda a visualizar el impacto de tus cambios antes de guardarlos."
+        },
+        "tourControl": {
+          "title": "Guía de Tour",
+          "description": "Accede a tours guiados para diferentes secciones del Gestor de Entidades. Cada área tiene tours específicos para ayudarte a entender y dominar las opciones de configuración."
+        }
+      }
+    },
+    "aiprompt": {
+      "title": "Tour de Gestión de Prompts de IA",
+      "description": "Interfaz administrativa para gestionar prompts y configuraciones de IA. Crea, edita y prueba prompts de IA con configuraciones de modelo avanzadas.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a la Gestión de Prompts de IA",
+          "description": "Esta página proporciona una interfaz completa para gestionar prompts de IA. Crea, edita, prueba y configura prompts de IA con configuraciones avanzadas para un rendimiento óptimo."
+        },
+        "header": {
+          "title": "Encabezado de Gestión de Prompts de IA",
+          "description": "El encabezado principal muestra que estás en la sección de Gestión de Prompts de IA. Esta área administrativa es donde configuras y gestionas todas las plantillas de prompts de IA."
+        },
+        "createPrompt": {
+          "title": "Crear Nuevo Prompt",
+          "description": "Haz clic en este botón para crear un nuevo prompt de IA. Puedes definir contenido de prompt, seleccionar modelos de IA, configurar parámetros como temperatura y valores top-p."
+        },
+        "searchSection": {
+          "title": "Búsqueda y Filtros",
+          "description": "Usa la funcionalidad de búsqueda para encontrar rápidamente prompts específicos. Puedes buscar por nombre de prompt, tipo, modelo o contenido para localizar los prompts que necesitas modificar."
+        },
+        "promptsTable": {
+          "title": "Tabla de Gestión de Prompts",
+          "description": "Esta tabla muestra todos tus prompts de IA con información clave como nombre, tipo, modelo de IA y fecha de creación. Puedes ordenar, filtrar y gestionar prompts directamente desde esta vista."
+        },
+        "promptType": {
+          "title": "Columna Tipo de Prompt",
+          "description": "Muestra la categoría o tipo de cada prompt (ej. Asistente, Análisis, Traducción). Esto ayuda a organizar prompts por su propósito previsto y caso de uso."
+        },
+        "aiModel": {
+          "title": "Columna Modelo de IA",
+          "description": "Muestra qué modelo de IA (Gemini Pro, Gemini Flash, etc.) está configurado para cada prompt. Diferentes modelos tienen diferentes capacidades y características de rendimiento."
+        },
+        "editPrompt": {
+          "title": "Acciones de Edición de Prompt",
+          "description": "Usa estos botones de acción para editar, probar, duplicar o eliminar prompts existentes. También puedes ver configuraciones detalladas de prompts y métricas de rendimiento."
+        },
+        "tourControl": {
+          "title": "Tours Guiados",
+          "description": "Accede a tours específicos para diferentes aspectos de la gestión de prompts de IA. Aprende sobre configuraciones avanzadas, estrategias de prueba y mejores prácticas."
+        }
+      }
+    },
+    "aiassistant": {
+      "title": "Tour del Asistente de IA",
+      "description": "El Asistente de IA proporciona soporte inteligente y conversacional para ayudarte a navegar la aplicación, entender características y optimizar flujos de trabajo.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido al Asistente de IA",
+          "description": "Este es tu centro central para interactuar con el Asistente de IA. Obtén ayuda instantánea, explora datos, automatiza tareas y recibe insights inteligentes dentro de la aplicación."
+        },
+        "chatSidebar": {
+          "title": "Barra Lateral de Chat",
+          "description": "La barra lateral proporciona acceso rápido a características de gestión de chat. Ve conversaciones recientes, busca historial de chat y gestiona tus sesiones de asistente de IA."
+        },
+        "newChat": {
+          "title": "Iniciar Nuevo Chat",
+          "description": "Haz clic en este botón para comenzar una conversación fresca con el Asistente de IA. Esto limpia el contexto actual y comienza una nueva sesión para diferentes temas o tareas."
+        },
+        "searchSection": {
+          "title": "Búsqueda de Chat",
+          "description": "Busca en tus sesiones de chat anteriores para encontrar rápidamente conversaciones específicas, temas o información que has discutido con el Asistente de IA."
+        },
+        "chatHistory": {
+          "title": "Historial de Chat",
+          "description": "Navega por tus conversaciones recientes con el Asistente de IA. Puedes reanudar discusiones anteriores o referenciar interacciones pasadas para contexto."
+        },
+        "mainChatArea": {
+          "title": "Interfaz de Chat Principal",
+          "description": "Esta es el área de conversación principal donde interactúas con el Asistente de IA. Escribe tus preguntas, solicitudes o comandos y recibe respuestas inteligentes."
+        },
+        "welcomeScreen": {
+          "title": "Pantalla de Bienvenida de IA",
+          "description": "Al comenzar fresco, el Asistente de IA presenta una pantalla de bienvenida con sugerencias útiles y casos de uso comunes para ayudarte a comenzar rápidamente."
+        },
+        "samplePrompts": {
+          "title": "Prompts de Ejemplo",
+          "description": "Usa estos prompts de ejemplo para entender las capacidades del Asistente de IA. Demuestran diferentes tipos de solicitudes y te ayudan a aprender patrones de interacción efectivos."
+        },
+        "inputArea": {
+          "title": "Área de Entrada de Mensaje",
+          "description": "Escribe tus mensajes, preguntas o solicitudes aquí. También puedes adjuntar archivos, subir documentos o usar entrada de voz para comunicarte con el Asistente de IA."
+        },
+        "sendButton": {
+          "title": "Enviar Mensaje",
+          "description": "Haz clic en este botón para enviar tu mensaje al Asistente de IA. También puedes presionar Enter para enviar tu mensaje rápidamente mientras escribes."
+        },
+        "tourControl": {
+          "title": "Tours del Asistente de IA",
+          "description": "Accede a tours especializados para diferentes características del Asistente de IA. Aprende sobre capacidades avanzadas, manejo de archivos y técnicas de optimización."
+        }
+      }
+    },
+    "partners": {
+      "title": "Tour de Gestión de Socios",
+      "description": "Aprende a navegar, buscar y gestionar organizaciones socias en el sistema.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a la Gestión de Socios",
+          "description": "Este es el centro central para gestionar todas las organizaciones socias. Puedes navegar, buscar, filtrar, crear, editar y gestionar registros de socios desde esta página."
+        },
+        "header": {
+          "title": "Encabezado de Sección Socios",
+          "description": "Esto muestra que estás en la sección Socios. El icono y título te ayudan a identificar qué parte de la aplicación estás usando actualmente."
+        },
+        "newButton": {
+          "title": "Crear Nuevo Socio",
+          "description": "Haz clic en este botón para crear una nueva organización socia. Serás llevado a un formulario donde puedes ingresar todos los detalles del socio."
+        },
+        "importButton": {
+          "title": "Importar Socios",
+          "description": "Usa este botón para importar múltiples registros de socios desde un archivo CSV o Excel. Esto es útil para entrada de datos en masa."
+        },
+        "searchInput": {
+          "title": "Buscar Socios",
+          "description": "Escribe aquí para buscar socios específicos por nombre, tipo de organización, ubicación u otros criterios. Los resultados se filtrarán en tiempo real mientras escribes."
+        },
+        "advancedSearch": {
+          "title": "Búsqueda Avanzada",
+          "description": "Haz clic aquí para acceder a opciones de búsqueda y filtrado más detalladas. Puedes combinar múltiples criterios para encontrar exactamente los socios que buscas."
+        },
+        "gridView": {
+          "title": "Lista de Socios",
+          "description": "Esta tabla muestra todas tus organizaciones socias con información clave como nombre, tipo, ubicación y estado. Puedes ordenar, filtrar y tomar acciones en socios individuales."
+        },
+        "tourControl": {
+          "title": "Tours de Socios",
+          "description": "Accede a tours guiados específicos para gestión de socios. Aprende sobre crear socios, gestionar relaciones y características avanzadas."
+        }
+      }
+    },
+    "contacts": {
+      "title": "Tour de Gestión de Contactos",
+      "description": "Aprende a navegar, buscar y gestionar registros de contacto en el sistema.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a la Gestión de Contactos",
+          "description": "Este es el centro central para gestionar todos los registros de contacto. Puedes navegar, buscar, filtrar, crear, editar y gestionar información de contacto desde esta página."
+        },
+        "header": {
+          "title": "Encabezado de Sección Contactos",
+          "description": "Esto muestra que estás en la sección Contactos. El icono y título te ayudan a identificar qué parte de la aplicación estás usando actualmente."
+        },
+        "newButton": {
+          "title": "Crear Nuevo Contacto",
+          "description": "Haz clic en este botón para crear un nuevo registro de contacto. Serás llevado a un formulario donde puedes ingresar todos los detalles del contacto."
+        },
+        "importButton": {
+          "title": "Importar Contactos",
+          "description": "Usa este botón para importar múltiples registros de contacto desde un archivo CSV o Excel. Esto es útil para entrada de datos en masa."
+        },
+        "scanButton": {
+          "title": "Escanear Tarjeta de Negocio",
+          "description": "Usa esta característica para escanear tarjetas de negocio y extraer automáticamente información de contacto usando tecnología de IA."
+        },
+        "searchInput": {
+          "title": "Buscar Contactos",
+          "description": "Escribe aquí para buscar contactos específicos por nombre, email, teléfono, empresa u otros criterios. Los resultados se filtrarán en tiempo real mientras escribes."
+        },
+        "advancedSearch": {
+          "title": "Búsqueda Avanzada",
+          "description": "Haz clic aquí para acceder a opciones de búsqueda y filtrado más detalladas. Puedes combinar múltiples criterios para encontrar exactamente los contactos que buscas."
+        },
+        "gridView": {
+          "title": "Lista de Contactos",
+          "description": "Esta tabla muestra todos tus contactos con información clave como nombre, email, teléfono, empresa y afiliación de socio. Puedes ordenar, filtrar y tomar acciones en contactos individuales."
+        },
+        "tourControl": {
+          "title": "Tours de Contactos",
+          "description": "Accede a tours guiados específicos para gestión de contactos. Aprende sobre crear contactos, gestionar relaciones y características avanzadas."
+        }
+      }
+    },
+    "contactview": {
+      "title": "Tour de Detalles de Contacto",
+      "description": "Aprende a ver y gestionar detalles individuales de contacto, información y registros relacionados.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a Detalles de Contacto",
+          "description": "Esta página muestra información completa sobre un contacto específico. Puedes ver, editar y gestionar todos los aspectos del registro de contacto desde aquí."
+        },
+        "contactHeader": {
+          "title": "Encabezado de Contacto",
+          "description": "El encabezado de contacto muestra el nombre, título e información clave del contacto. Esto te da una vista rápida de quién estás viendo."
+        },
+        "editButton": {
+          "title": "Editar Contacto",
+          "description": "Haz clic en este botón para editar la información del contacto. Puedes actualizar detalles personales, información de contacto y otros atributos."
+        },
+        "contactTabs": {
+          "title": "Pestañas de Información de Contacto",
+          "description": "Estas pestañas organizan la información del contacto en diferentes secciones como detalles personales, direcciones, interacciones e información del sistema."
+        },
+        "tourControl": {
+          "title": "Tours de Detalle de Contacto",
+          "description": "Accede a tours específicos para diferentes aspectos de gestión de contactos y vistas detalladas."
+        }
+      }
+    },
+    "interactions": {
+      "title": "Tour de Gestión de Interacciones",
+      "description": "Aprende a navegar, buscar y gestionar registros de interacción en el sistema.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a la Gestión de Interacciones",
+          "description": "Este es el centro central para gestionar todos los registros de interacción. Puedes navegar, buscar, filtrar, crear, editar y rastrear interacciones con contactos y socios."
+        },
+        "header": {
+          "title": "Encabezado de Sección Interacciones",
+          "description": "Esto muestra que estás en la sección Interacciones. El icono y título te ayudan a identificar qué parte de la aplicación estás usando actualmente."
+        },
+        "newButton": {
+          "title": "Crear Nueva Interacción",
+          "description": "Haz clic en este botón para registrar una nueva interacción. Puedes registrar reuniones, llamadas, emails y otras comunicaciones con contactos."
+        },
+        "importButton": {
+          "title": "Importar Interacciones",
+          "description": "Usa este botón para importar múltiples registros de interacción desde un archivo CSV o Excel. Esto es útil para entrada de datos en masa."
+        },
+        "searchInput": {
+          "title": "Buscar Interacciones",
+          "description": "Escribe aquí para buscar interacciones específicas por nombre de contacto, tipo de interacción, fecha u otros criterios. Los resultados se filtrarán en tiempo real mientras escribes."
+        },
+        "gridView": {
+          "title": "Lista de Interacciones",
+          "description": "Esta tabla muestra todos tus registros de interacción con información clave como contacto, tipo, fecha y notas. Puedes ordenar, filtrar y tomar acciones en interacciones individuales."
+        },
+        "aiTranscribe": {
+          "title": "Transcripción de IA",
+          "description": "Usa transcripción alimentada por IA para convertir automáticamente grabaciones de reuniones o notas en registros de interacción estructurados."
+        },
+        "tourControl": {
+          "title": "Tours de Interacciones",
+          "description": "Accede a tours guiados específicos para gestión de interacciones. Aprende sobre registrar interacciones, rastrear comunicaciones y características avanzadas."
+        }
+      }
+    },
+    "interactiondetail": {
+      "title": "Tour de Detalles de Interacción",
+      "description": "Aprende a ver y gestionar detalles individuales de interacción, información y registros relacionados.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a Detalles de Interacción",
+          "description": "Esta página muestra información completa sobre una interacción específica. Puedes ver, editar y gestionar todos los aspectos del registro de interacción desde aquí."
+        },
+        "backButton": {
+          "title": "Volver a Interacciones",
+          "description": "Haz clic en este botón para volver a la vista de lista de interacciones. Esto te llevará de vuelta para navegar todas las interacciones."
+        },
+        "editButton": {
+          "title": "Editar Interacción",
+          "description": "Haz clic en este botón para editar la información de esta interacción. Puedes actualizar detalles, participantes, notas y otros atributos."
+        },
+        "deleteButton": {
+          "title": "Eliminar Interacción",
+          "description": "Usa este botón para eliminar permanentemente este registro de interacción. Esta acción no se puede deshacer, así que úsala con precaución."
+        },
+        "aiSummary": {
+          "title": "Resumen Generado por IA",
+          "description": "Este panel alimentado por IA proporciona un resumen inteligente de la interacción basado en la descripción y datos relacionados. Destaca puntos clave e insights."
+        },
+        "descriptionPanel": {
+          "title": "Descripción de Interacción",
+          "description": "Esta sección contiene la descripción detallada de la interacción. Puedes expandir o contraer descripciones largas usando los botones 'Ver Más' y 'Ver Menos'."
+        },
+        "documentsPanel": {
+          "title": "Documentos Relacionados",
+          "description": "Esta sección muestra documentos relacionados con esta interacción. Puedes ver, descargar o gestionar archivos y documentos adjuntos."
+        },
+        "interactionDetailsPanel": {
+          "title": "Detalles de Interacción",
+          "description": "Este panel lateral muestra información clave sobre la interacción incluyendo fecha, hora, ubicación y estado."
+        },
+        "contactsPanel": {
+          "title": "Contactos Relacionados",
+          "description": "Esta sección muestra todos los contactos asociados con esta interacción. Haz clic en cualquier contacto para ver su perfil detallado."
+        },
+        "partnersPanel": {
+          "title": "Socios Relacionados",
+          "description": "Esta sección muestra todas las organizaciones socias involucradas en esta interacción. Haz clic en cualquier socio para ver su perfil detallado."
+        },
+        "personnelPanel": {
+          "title": "Personal de UNOPS",
+          "description": "Esta sección lista todos los miembros del personal de UNOPS que participaron o son responsables de esta interacción."
+        },
+        "orgUnitPanel": {
+          "title": "Unidad Organizacional",
+          "description": "Esta sección muestra qué unidad organizacional es responsable o está asociada con esta interacción."
+        },
+        "auditPanel": {
+          "title": "Información de Auditoría",
+          "description": "Esta sección muestra información de rastro de auditoría incluyendo quién creó y modificó por última vez la interacción, junto con marcas de tiempo."
+        },
+        "tourControl": {
+          "title": "Tours de Detalle de Interacción",
+          "description": "Accede a tours específicos para diferentes aspectos de gestión de interacciones y vistas detalladas."
+        }
+      }
+    },
+    "partnerview": {
+      "title": "Tour de Detalles de Socio",
+      "description": "Aprende a ver y gestionar detalles individuales de socio, información y registros relacionados.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a Detalles de Socio",
+          "description": "Esta página muestra información completa sobre una organización socia específica. Puedes ver, editar y gestionar todos los aspectos del registro de socio desde aquí."
+        },
+        "partnerHeader": {
+          "title": "Encabezado de Socio",
+          "description": "El encabezado de socio muestra el nombre, tipo e información clave de la organización. Esto te da una vista rápida del socio que estás viendo."
+        },
+        "editButton": {
+          "title": "Editar Socio",
+          "description": "Haz clic en este botón para editar la información del socio. Puedes actualizar detalles organizacionales, información de contacto y otros atributos."
+        },
+        "partnerInfo": {
+          "title": "Información del Socio",
+          "description": "Esta sección muestra información detallada sobre la organización socia incluyendo detalles de contacto, direcciones y datos organizacionales."
+        },
+        "partnerTabs": {
+          "title": "Pestañas de Navegación de Socio",
+          "description": "Estas pestañas organizan la información del socio en diferentes secciones como detalles, contactos, interacciones, acuerdos y análisis."
+        },
+        "summaryInteractions": {
+          "title": "Resumen IA de Interacciones",
+          "description": "Este panel alimentado por IA proporciona un resumen inteligente de todas las interacciones y comunicaciones con este socio. Analiza notas de reuniones, emails y otros compromisos para darte insights clave y aspectos destacados."
+        },
+        "summaryNews": {
+          "title": "Resumen IA de Noticias del Socio",
+          "description": "Este panel alimentado por IA busca y resume noticias recientes y desarrollos relacionados con esta organización socia. Mantente actualizado sobre sus últimas actividades, anuncios y desarrollos del sector."
+        },
+        "tourControl": {
+          "title": "Tours de Detalle de Socio",
+          "description": "Accede a tours específicos para diferentes aspectos de gestión de socios y vistas detalladas."
+        }
+      }
+    },
+    "partnertree": {
+      "title": "Tour de Gestión de Árbol de Socios",
+      "description": "Aprende a gestionar la estructura jerárquica de organizaciones socias y categorías.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido al Árbol de Socios",
+          "description": "Esta es la interfaz administrativa para gestionar la estructura jerárquica de organizaciones socias, categorías y grupos."
+        },
+        "treeView": {
+          "title": "Árbol de Jerarquía de Socios",
+          "description": "Esta vista de árbol muestra la estructura jerárquica de categorías y grupos de socios. Puedes expandir/contraer nodos para navegar la jerarquía."
+        },
+        "addNode": {
+          "title": "Agregar Nuevo Nodo",
+          "description": "Usa este botón para agregar nuevas categorías, grupos o unidades organizacionales a la jerarquía de socios."
+        },
+        "editNode": {
+          "title": "Editar Nodo",
+          "description": "Haz clic en este botón para editar las propiedades del nodo seleccionado en la jerarquía, incluyendo nombre, descripción y relaciones padre."
+        },
+        "tourControl": {
+          "title": "Tours de Árbol de Socios",
+          "description": "Accede a tours guiados específicos para gestión de jerarquía de socios y configuración de estructura organizacional."
+        }
+      }
+    },
+    "usermanagement": {
+      "title": "Tour de Gestión de Usuarios",
+      "description": "Aprende a gestionar cuentas de usuario, permisos y control de acceso en el sistema.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a la Gestión de Usuarios",
+          "description": "Esta es la interfaz administrativa para gestionar cuentas de usuario, roles, permisos y control de acceso en todo el sistema."
+        },
+        "header": {
+          "title": "Encabezado de Gestión de Usuarios",
+          "description": "El encabezado principal muestra que estás en la sección de Gestión de Usuarios. Esta área administrativa es donde configuras acceso de usuario y permisos."
+        },
+        "usersList": {
+          "title": "Lista de Usuarios",
+          "description": "Esta tabla muestra todas las cuentas de usuario con información clave como nombre, email, roles y último inicio de sesión. Puedes gestionar acceso de usuario y permisos desde esta vista."
+        },
+        "addUser": {
+          "title": "Agregar Nuevo Usuario",
+          "description": "Haz clic en este botón para crear una nueva cuenta de usuario. Puedes configurar su perfil, asignar roles y configurar sus permisos de acceso."
+        },
+        "editUser": {
+          "title": "Editar Usuario",
+          "description": "Usa estos botones de acción para editar detalles de usuario, modificar permisos, restablecer contraseñas o desactivar cuentas de usuario."
+        },
+        "roleManagement": {
+          "title": "Gestión de Roles",
+          "description": "Accede a configuraciones de control de acceso basado en roles para definir roles de usuario, permisos y niveles de acceso de unidad organizacional."
+        },
+        "impersonation": {
+          "title": "Suplantación de Usuario",
+          "description": "Característica administrativa para suplantar otros usuarios con fines de prueba o para solucionar problemas específicos del usuario."
+        },
+        "filterSection": {
+          "title": "Filtros de Usuarios",
+          "description": "Usa estos filtros para buscar y refinar la lista de usuarios por nombre, email, rol o unidad organizacional. Puedes combinar múltiples filtros para resultados precisos."
+        },
+        "tourControl": {
+          "title": "Tours de Gestión de Usuarios",
+          "description": "Accede a tours especializados para diferentes aspectos de administración de usuarios, gestión de roles y configuración de seguridad."
+        }
+      }
+    },
+    "aipromptDialog": {
+      "title": "Tour del Editor de Prompts IA",
+      "description": "Aprende a crear y editar prompts de IA con nuestra guía completa",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido al Editor de Prompts IA",
+          "description": "Este tour guiado te mostrará cómo crear prompts de IA efectivos, probarlos y obtener ayuda cuando sea necesario."
+        },
+        "header": {
+          "title": "Encabezado del Diálogo",
+          "description": "El encabezado muestra si estás creando un nuevo prompt o editando uno existente. Observa los botones de ayuda y tour a la derecha."
+        },
+        "helpButton": {
+          "title": "Guía de Escritura de Prompts IA",
+          "description": "El panel de ayuda siempre está visible en el lado derecho, proporcionando orientación en tiempo real sobre cómo escribir prompts efectivos, formato markdown y configuración JSON."
+        },
+        "tourControl": {
+          "title": "Control de Tour",
+          "description": "Usa este botón para reiniciar el tour en cualquier momento o acceder a otros tours disponibles en el sistema."
+        },
+        "typeField": {
+          "title": "Tipo de Prompt",
+          "description": "Ingresa un identificador único para tu prompt usando letras minúsculas, números y guiones bajos (ej: 'resumen_contacto')."
+        },
+        "promptField": {
+          "title": "Contenido del Prompt",
+          "description": "Escribe tu prompt de IA aquí. Usa {promptData} como marcador de posición para contenido dinámico. Sé específico y claro en tus instrucciones."
+        },
+        "testSection": {
+          "title": "Prueba tu Prompt",
+          "description": "Prueba tu prompt antes de guardar para asegurar que funciona como se espera. Puedes probar con datos de entidad reales o usar datos de prueba personalizados."
+        },
+        "helpTab": {
+          "title": "Guía de Escritura IA",
+          "description": "Este panel de ayuda siempre visible proporciona orientación completa sobre escribir prompts efectivos, formato markdown y configuración de respuestas JSON."
+        }
+      }
     }
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "unread": "No leídas",
+    "all": "Todas",
+    "seeAll": "Ver todas",
+    "items": "notificaciones",
+    "noUnread": "No hay notificaciones sin leer",
+    "noNotifications": "Aún no hay notificaciones",
+    "allTitle": "Todas las Notificaciones"
+  },
+  "chatHistory": {
+    "title": "Historial de Conversaciones",
+    "newChat": "Nueva Conversación",
+    "searchPlaceholder": "Buscar conversaciones...",
+    "loading": "Cargando conversaciones...",
+    "noChats": "Aún no hay historial de conversaciones",
+    "noResults": "Ninguna conversación coincide con tu búsqueda"
+  },
+  "profile": {
+    "title": "Perfil de Usuario",
+    "personal_information": "Información Personal",
+    "work_information": "Información Laboral",
+    "preferences": "Preferencias",
+    "system_information": "Información del Sistema",
+    "full_name": "Nombre Completo",
+    "first_name": "Primer Nombre",
+    "last_name": "Apellido",
+    "email": "Correo Electrónico",
+    "organization_unit": "Unidad Organizacional",
+    "position": "Posición",
+    "duty_station": "Estación de Trabajo",
+    "supervisor": "Supervisor",
+    "language": "Idioma",
+    "text_to_speech": "Texto a Voz",
+    "created_date": "Fecha de Creación",
+    "last_modified": "Última Modificación"
+  },
+  "languages": {
+    "english": "Inglés",
+    "french": "Francés",
+    "spanish": "Español",
+    "arabic": "Árabe",
+    "chinese": "Chino",
+    "hindi": "Hindi",
+    "russian": "Ruso",
+    "portuguese": "Portugués",
+    "german": "Alemán",
+    "japanese": "Japonés",
+    "not_specified": "No especificado"
+  },
+  "DUPLICATE_DETECTION": {
+    "duplicatesFound": "Duplicados Encontrados",
+    "duplicates": "duplicados",
+    "confidenceLevels": "Niveles de Confianza",
+    "highConfidence": "Alta Confianza",
+    "mediumConfidence": "Confianza Media",
+    "lowConfidence": "Baja Confianza",
+    "matchedFields": "Campos Coincidentes",
+    "viewDetails": "Ver Detalles",
+    "noDuplicatesFound": "No se encontraron duplicados",
+    "duplicateTooltip": "duplicado(s) encontrado(s)",
+    "highConfidenceTooltip": "alta confianza",
+    "mediumConfidenceTooltip": "confianza media",
+    "lowConfidenceTooltip": "baja confianza",
+    "uniqueRecordTooltip": "Registro único - no se encontraron duplicados",
+    "entityId": "ID",
+    "searchType": "Tipo de Búsqueda",
+    "duplicate": "Duplicado",
+    "contactDuplicateDetected": "Contacto Duplicado Detectado",
+    "partnerDuplicateDetected": "Socio Duplicado Detectado",
+    "interactionDuplicateDetected": "Interacción Duplicada Detectada",
+    "contactDuplicateSummary": "Resumen de Duplicados de Contacto",
+    "partnerDuplicateSummary": "Resumen de Duplicados de Socio",
+    "interactionDuplicateSummary": "Resumen de Duplicados de Interacción",
+    "topMatch": "Mejor Coincidencia",
+    "matchScore": "Puntuación de Coincidencia",
+    "matchReason": "Razón de Coincidencia",
+    "viewRecord": "Ver Registro",
+    "createContactAnyway": "Crear Contacto de Todos Modos",
+    "createPartnerAnyway": "Crear Socio de Todos Modos",
+    "createInteractionAnyway": "Crear Interacción de Todos Modos",
+    "warningTitle": "Advertencia",
+    "warningMessage": "Crear este registro puede resultar en datos duplicados. Por favor revise los detalles de coincidencia arriba antes de continuar."
+  }
 }

@@ -1,60 +1,72 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
-import { Router, RouterModule, ActivatedRoute, NavigationEnd } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { Tab, TabList, Tabs } from 'primeng/tabs';
-import { TooltipModule } from 'primeng/tooltip';
-import { filter, Subscription } from 'rxjs';
-import { PartnerTreeViewNavigationComponent } from "../../partner-tree/view/navigation/partner-tree-view-navigation.component";
 import { Partner } from '../../../models/partner.model';
+import { PictureComponent } from '@common/reusables/components/picture/picture.component';
+import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
+import { ResponsiveTabsComponent, ResponsiveTabItem } from '../../../../../common/reusables/components/responsive-tabs';
 
-interface TabItem {
-  label: string;
-  route: string;
-}
+/**
+ * @uiEntity PartnerTabs
+ * @route /partnerships/partners/:recordId
+ * @description Partner detail navigation interface with tabs for different aspects of partner information. Provides organized access to partner details, contacts, interactions, funding agreements, and analytics data.
+ * @capabilities navigate_partner_sections, view_partner_details, manage_partner_contacts, view_partner_interactions, access_partner_data, upload_logo
+ * @synonyms partner_navigation, partner_details, partner_tabs, partner_sections, organization_tabs
+ * @mandatoryFields recordId
+ * @help_when_stuck Use the tabs to navigate between different sections of partner information. The partner logo and basic info are always visible at the top. Each tab shows different aspects like organizational details, contacts, interactions, or analytics.
+ * @common_tasks
+ *   - Viewing partner details: Click on the main Details tab
+ *   - Managing contacts: Switch to Contacts tab to see people associated with this partner
+ *   - Checking interactions: Switch to Interactions tab to see communication history
+ *   - Viewing funding: Go to Funding & Agreements tab for financial information
+ *   - Accessing analytics: Use Dashboard tab for partner performance data
+ *   - Uploading logo: Click on the logo area to upload a new partner logo
+ */
 
 @Component({
   selector: 'app-partner-tabs',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule, Tabs, TabList, Tab, PartnerTreeViewNavigationComponent, TooltipModule],
+  imports: [CommonModule, RouterModule, TranslateModule, PictureComponent, GoBackComponent, ResponsiveTabsComponent],
   template: `
-  <div class="flex flex-col gap-8"> 
-    @if(recordData.partnerCategoryId){
-      <div class="flex items-center gap-2 mt-2">
-        <a [routerLink]="['/partner-tree', recordData.partnerCategoryId]"
-        pTooltip="{{recordData.partnerCategoryName}}"
-        class="text-lg text-gray-7e00 font-semibold hover:text-gray-500 cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis max-w-1/3">
-            {{recordData.partnerCategoryName}}
-        </a>
-
-        @if(recordData.partnerGroupId){
-          
-        <div class="px-2 text-lg">
-          <i class="pi pi-angle-right"></i>
+    <div class="flex flex-col gap-8">
+      <!-- Header section -->
+      <div class="flex flex-col items-center">
+        <div class="w-full flex justify-between items-center">
+          <div class="font-semibold text-gray-400">
+            {{ 'title.partner' | translate }}
+          </div>
+          <app-go-back class="back-button"></app-go-back>
         </div>
 
-        <a [routerLink]="['/partner-tree', recordData.partnerGroupId]"
-        pTooltip="{{recordData.partnerGroupName}}"
-        class="text-lg text-gray-7e00 font-semibold hover:text-gray-500 cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis max-w-1/3">
-            {{recordData.partnerGroupName}}
-        </a>
-        }
+        <div class="flex gap-2 md:gap-4 w-full items-center">
+          <app-picture
+            [imageUrl]="recordData.logoUrl || ''"
+            [uploadUrl]="getUploadLogoUrl()"
+            [altText]="'Partner logo'"
+            [size]="isMobile() ? 'extra-small' : 'small'"
+            (imageChanged)="_loadRecordDetails()"
+          />
+          <div class="flex flex-col">
+            <div class="text-2xl md:text-4xl font-bold">
+              {{ recordData.name }}
+            </div>
+          </div>
+        </div>
       </div>
-      }
-      <p-tabs [value]="activeRoute">
-        <p-tablist>
-          <p-tab *ngFor="let tab of tabs" 
-                [value]="tab.route" 
-                [routerLink]="tab.route" 
-                class="flex items-center !gap-2 text-inherit">
-            <span>{{ tab.label }}</span>
-          </p-tab>
-        </p-tablist>
-      </p-tabs>
+
+      <!-- Responsive tabs -->
+      <app-responsive-tabs
+        [tabs]="tabs"
+        [dropdownPlaceholder]="'Select tab'"
+        class="partner-tabs-navigation">
+      </app-responsive-tabs>
+
+      <!-- Router outlet -->
       <div>
         <router-outlet></router-outlet>
       </div>
-  </div>
+    </div>
   `,
   styles: `
     :host ::ng-deep {
@@ -62,59 +74,62 @@ interface TabItem {
     }
   `
 })
-export class PartnerTabsComponent implements OnInit, OnDestroy {
+export class PartnerTabsComponent implements OnInit {
   recordId: string = '';
-  activeRoute: string = '';
-  
-  tabs: TabItem[] = [];
+  tabs: ResponsiveTabItem[] = [];
   recordData: Partner = {} as Partner;
-  private routerSubscription: Subscription | null = null;
 
   constructor(
-    private router: Router,
     private activatedRoute: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.recordId = this.activatedRoute.snapshot.paramMap.get('recordId') || '';
-    
+
     // Get the resolved data from the route
     this.activatedRoute.data.subscribe(data => {
       this.recordData = data['partnerData'];
     });
-    
+
     // Create tabs based on recordId
     this.tabs = [
       {
-        label: 'Partner Details',
-        route: `/admin/partner/${this.recordId}`
+        label: 'title.details',
+        route: `/partnerships/partners/${this.recordId}`,
+        icon: 'info'
       },
       {
-        label: 'Partner Data',
-        route: `/admin/partner/${this.recordId}/data`
-      }
+        label: 'title.contacts',
+        route: `/partnerships/partners/${this.recordId}/contacts`,
+        icon: 'contacts'
+      },
+      {
+        label: 'title.interactions',
+        route: `/partnerships/partners/${this.recordId}/interactions`,
+        icon: 'chat'
+      },
+      // {
+      //   label: 'title.fundingAndAgreements',
+      //   route: `/partnerships/partners/${this.recordId}/funding-agreements`,
+      //   icon: 'attach_money'
+      // },
+      {
+        label: 'title.dashboard',
+        route: `/partnerships/partners/${this.recordId}/data`,
+        icon: 'bar_chart'
+      },
     ];
-    
-    // Set initial active tab
-    this.updateActiveTab();
-    
-    // Subscribe to router events to update active tab on navigation
-    this.routerSubscription = this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe(() => {
-        this.updateActiveTab();
-      });
   }
-  
-  ngOnDestroy(): void {
-    if (this.routerSubscription) {
-      this.routerSubscription.unsubscribe();
-    }
+
+  getUploadLogoUrl(): string {
+    return `/api/partner/${this.recordId}/logo`;
   }
-  
-  private updateActiveTab(): void {
-    const currentUrl = this.router.url;
-    const activeTabIndex = currentUrl.includes('/data') ? 1 : 0;
-    this.activeRoute = this.tabs[activeTabIndex].route;
+
+  _loadRecordDetails(): void {
+    console.log('Logo updated, reloading partner details...');
+  }
+
+  isMobile(): boolean {
+    return window.innerWidth <= 768;
   }
 }

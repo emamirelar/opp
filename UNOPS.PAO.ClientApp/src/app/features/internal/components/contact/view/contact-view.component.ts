@@ -1,39 +1,72 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+
 import { PanelModule } from 'primeng/panel';
-import { DocumentUploadComponent } from '../../../../../common/reusables/components/document-upload/document-upload.component';
+import { DropdownModule } from "primeng/dropdown";
+import { DatePickerModule } from 'primeng/datepicker';
+import { TooltipModule } from 'primeng/tooltip';
+import { CheckboxModule } from 'primeng/checkbox';
+
+
+import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { DocumentService } from '../../../services/document.service';
-import { DriveDocumentUploadComponent } from '../../../overrides/reusables/components/document/drive/upload/document-drive-upload.component';
 import { ParentEntityType } from '../../../overrides/interfaces/types';
 import { DocumentLinkModel } from '../../../overrides/interfaces/types';
 import { DocumentComponent } from '../../../../../common/reusables/components/document/document.component';
 import { GDriveDocumentComponent } from '../../../overrides/reusables/components/document/gdrive/document-gdrive.component';
+import { PictureComponent } from "../../../../../common/reusables/components/picture/picture.component";
+import { AiPanelComponent } from '../../../../../common/reusables/components/ai-panel/ai-panel.component';
+import { GeminiService } from '../../../services/gemini.service';
+
+//Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../../../../../common/services/language.service';
-import { BehaviorSubject, Observable, Subscription } from 'rxjs';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Subscription } from 'rxjs/internal/Subscription';
+
+//PrimeNG imports
+import { InputTextModule } from 'primeng/inputtext';
 import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
-import { BlockUI } from 'primeng/blockui';
+import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { AutoFocusModule } from 'primeng/autofocus';
+import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { ContactService } from '../../../services/contact.service';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { CardModule } from 'primeng/card';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { LinkListComponent } from "../../../../../common/reusables/components/link/list/link-list.component";
 import { EntityType } from '../../../../../common/models/link.model';
-import { LinkListComponent } from '../../../../../common/reusables/components/link/list/link-list.component';
-import { AsyncPipe, DatePipe, JsonPipe } from '@angular/common';
-import { DialogService } from 'primeng/dynamicdialog';
-import { AvatarModule } from 'primeng/avatar';
-import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
-import { ContactEditDialogComponent } from '../edit-dialog/contact-edit-dialog.component';
 import { ContactEditDialogFooterComponent } from '../edit-dialog/footer/contact-edit-dialog-footer.component';
+import { ContactEditDialogComponent } from '../edit-dialog/contact-edit-dialog.component';
+import { DialogService } from 'primeng/dynamicdialog';
 import { Contact } from '../../../models/contact.model';
-import { ContactViewInteractionsComponent } from './interactions/contact-view-interactions.component';
-import { PictureComponent } from '../../../../../common/reusables/components/picture/picture.component';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+
+
+/**
+ * @uiEntity ContactView
+ * @route /partnerships/contacts/:recordId/details
+ * @description View and edit detailed contact information including personal details, professional information, communication preferences, and associated documents. Central place for managing all aspects of an individual contact person.
+ * @capabilities view_contact_details, edit_contact_info, upload_photo, manage_documents, view_links, update_preferences, edit_address, update_status
+ * @synonyms contact_details, person_profile, individual_view, contact_information
+ * @mandatoryFields firstName, lastName, email, title, partnerId
+ * @help_when_stuck This page shows complete contact information. Click Edit to modify details, use the photo area to upload a new contact photo, or scroll down to see documents and links. All contact fields are organized by category for easy access.
+ * @common_tasks
+ *   - Editing contact info: Click the Edit button and modify the form fields
+ *   - Uploading photo: Click on the photo/avatar area to upload a new contact image
+ *   - Viewing interactions: Go to the Interactions tab to see communication history
+ *   - Managing documents: Scroll down to the Documents section to upload or view files
+ *   - Updating contact details: Edit personal, professional, or address information
+ *   - Managing links: Add or edit related links and references
+ */
 
 @Component({
   selector: 'app-contact-view',
   imports: [
+    CommonModule,
     TranslateModule,
     PanelModule,
     DocumentComponent,
@@ -42,12 +75,9 @@ import { PermissionUtilityService } from '../../../../../essentials/services/per
     DividerModule,
     MessageModule,
     LinkListComponent,
-    DatePipe,
-    AsyncPipe,
-    AvatarModule,
-    RouterLink,
-    ContactViewInteractionsComponent,
-    PictureComponent
+    CheckboxModule,
+    AiPanelComponent,
+    RouterModule
   ],
   templateUrl: './contact-view.component.html',
   standalone: true,
@@ -70,9 +100,29 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   permissionUtilityService = inject(PermissionUtilityService);
   translateService = inject(TranslateService);
   cdr = inject(ChangeDetectorRef);
+  geminiService = inject(GeminiService);
 
   infoLoading = signal<boolean>(false);
   showContactInfo = signal<boolean>(false);
+  showCommentDialog = false;
+
+  // Computed properties for additional info visibility
+  showAdditionalInfo = computed(() => {
+    const data = this.recordData();
+    return data.id || data.title || data.department || data.status || data.pronouns || data.description ||
+           data.assistant || data.assistantPhone || data.assistantEmail ||
+           data.mailingStreet || data.mailingCity || data.mailingCountry;
+  });
+
+  showFullContent = signal<boolean>(false);
+
+  shouldShowSeeMoreButton = computed(() => {
+    return this.showAdditionalInfo() && !this.showFullContent();
+  });
+
+  shouldShowSeeLessButton = computed(() => {
+    return this.showAdditionalInfo() && this.showFullContent();
+  });
 
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
@@ -82,7 +132,20 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   recordPermissions = this.permissionUtils.recordPermissions;
 
   private langChangeSubscription: Subscription = new Subscription();
-  recordId: string = '';
+  
+  // Input property for recordId when used in AI layout
+  @Input() recordId: string = '';
+  
+  // Input property to control AI panel visibility
+  private _showAiPanel: boolean = true;
+  @Input() 
+  get showAiPanel(): boolean {
+    return this._showAiPanel;
+  }
+  set showAiPanel(value: boolean | null | undefined) {
+    this._showAiPanel = value === false ? false : true; // Default to true unless explicitly false
+  }
+  
   recordData = signal<Contact>({});
 
   readonly entityTypeContact = EntityType.Contact;
@@ -92,6 +155,16 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    console.log('ContactView ngOnInit - showAiPanel value:', this.showAiPanel);
+    
+    // If recordId is provided via Input (AI layout), load data directly
+    if (this.recordId && this.recordId !== '') {
+      console.log('Using input recordId:', this.recordId);
+      this._loadRecordDetails();
+      return;
+    }
+
+    // Otherwise, use the route-based logic (normal navigation)
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';
@@ -247,18 +320,59 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   }
 
   onFileSelected(event: any) {
-    console.log('Files selected:', event);
+    
   }
 
   onFileRemoved(event: any) {
-    console.log('File removed:', event);
+    
   }
 
   onFilesCleared() {
-    console.log('All files cleared');
+    
   }
 
   get acceptedMiMIETypesForgDrive() {
     return 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet';
   }
+
+  getUploadProfilePictureUrl() {
+    return this.contactService.getUploadProfilePictureUrl(this.recordId);
+  }
+
+  toggleFullContent() {
+    this.showFullContent.update(value => !value);
+  }
+
+  _handleOnViewContacts() {
+    this.showCommentDialog = true;
+  }
+
+  _handleOnViewContactsDaialogClose() {
+    this.showCommentDialog = false;
+  }
+
+  onSummaryRefresh() {
+    console.log('Summary refreshed');
+  }
+
+  onSummaryLoaded(data: any) {
+    console.log('Summary loaded:', data);
+  }
+
+  onSummaryError(error: any) {
+    console.error('Summary error:', error);
+  }
+
+  onNewsRefresh() {
+    console.log('News refreshed');
+  }
+
+  onNewsLoaded(data: any) {
+    console.log('News loaded:', data);
+  }
+
+  onNewsError(error: any) {
+    console.error('News error:', error);
+  }
+
 }

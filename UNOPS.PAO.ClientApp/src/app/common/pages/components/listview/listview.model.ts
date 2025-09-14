@@ -1,5 +1,10 @@
 import { SearchField } from '../../../services/search-parser.service';
 
+/**
+ * Supported entity types for saved filters and advanced search functionality
+ */
+export type EntityType = 'Partner' | 'Interaction' | 'Contact';
+
 export interface ListViewColumn {
   label: string;
   field: string;
@@ -13,10 +18,17 @@ export interface ListViewColumn {
    * - 'translate': Use the translation pipe to translate the value
    * - 'avatar': Display an image URL as an avatar using p-avatar component
    * - 'email': Display as clickable email with mailto link
+   * - 'url': Display as clickable URL link
+   * - 'html': Render raw HTML content (sanitized)
+   * - 'image': Display as an image with optional click to enlarge
+   * - 'badge': Display as a colored badge/tag
+   * - 'icon': Display as an icon (FontAwesome or PrimeIcons)
    * - 'multiple-avatars': Display multiple avatars from an array of objects
    * - 'template': Use a custom template function to render the column content
+   * - 'link': Display as a clickable internal router link
+   * - 'interactionIcon': Display interaction type with appropriate icon and styling
    */
-  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars' | 'template';
+  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'url' | 'html' | 'image' | 'badge' | 'icon' | 'conditionalIcon' | 'multiple-avatars' | 'template' | 'link' | 'interactionIcon';
   sortable: boolean;
   width?: string;
   /**
@@ -46,6 +58,52 @@ export interface ListViewColumn {
    * @returns HTML string or plain text to display
    */
   templateFn?: (rowData: any) => string;
+  
+  /**
+   * Helper text to show in column header tooltip
+   * Displayed when user hovers over the help icon next to column header
+   */
+  helperText?: string;
+  
+  /**
+   * Custom properties for enhanced column types
+   */
+  
+  /** For 'url' type: Custom link text (if different from URL) */
+  linkText?: string;
+  
+  /** For 'url' type: Whether to open in new tab */
+  openInNewTab?: boolean;
+  
+  /** For 'image' type: Image width */
+  imageWidth?: string;
+  
+  /** For 'image' type: Image height */
+  imageHeight?: string;
+  
+  /** For 'image' type: Whether clicking enlarges the image */
+  enlargeOnClick?: boolean;
+  
+  /** For 'badge' type: Badge color mapping function */
+  badgeColorFn?: (value: any) => "success" | "info" | "warn" | "secondary" | "contrast" | "danger";
+  
+  /** For 'badge' type: Static badge color */
+  badgeColor?: "success" | "info" | "warn" | "secondary" | "contrast" | "danger";
+  
+  /** For 'icon' type: Icon class mapping function */
+  iconClassFn?: (value: any) => string;
+  
+  /** For 'icon' type: Static icon class */
+  iconClass?: string;
+  
+  /** For 'icon' type: Icon color mapping function */
+  iconColorFn?: (value: any) => string;
+  
+  /**
+   * Router link pattern with placeholders for 'link' type columns
+   * Example: '/partners/{id}/details'
+   */
+  routerLink?: string;
 }
 
 export interface ListViewConfig {
@@ -63,7 +121,7 @@ export interface ListViewConfig {
   scrollHeight?: string;
   /**
    * Default view mode between 'table' and 'card'
-   * @default 'table'
+   * @default 'card'
    */
   defaultViewMode?: 'table' | 'card';
   /**
@@ -82,28 +140,42 @@ export interface ListViewConfig {
    */
   autoSwitchMinWidth?: number;
   /**
-   * Configuration for card view display
+   * Force mobile mode regardless of screen size or component width
+   * When true, the component will always behave as if it's in mobile mode
+   * This overrides autoSwitchToCardView and component width detection
+   * @default false
    */
-  cardConfig?: {
+  forceMobileMode?: boolean;
+  
+  /**
+   * Search metadata configuration for displaying search result details
+   * Used in global search and other search-enabled views
+   */
+  searchMetadata?: {
     /**
-     * Field to use as the card title (defaults to first column)
+     * Whether to show search metadata (match details, relevance score, etc.)
+     * @default false
      */
-    titleField?: string;
+    enabled?: boolean;
+    
     /**
-     * Fields to display in card content (defaults to first 4 columns after title)
+     * Whether metadata is visible by default or requires user toggle
+     * @default false
      */
-    contentFields?: string[];
+    defaultVisible?: boolean;
+    
     /**
-     * Number of cards per row on different screen sizes
+     * Function to extract search metadata from a data item
+     * Should return the _searchMetadata object from search results
      */
-    cardsPerRow?: {
-      xs?: number; // Extra small screens
-      sm?: number; // Small screens
-      md?: number; // Medium screens
-      lg?: number; // Large screens
-      xl?: number; // Extra large screens
-    };
+    extractMetadata?: (item: any) => any;
+    
+    /**
+     * Current search query for highlighting in snippets
+     */
+    searchQuery?: string;
   };
+
   searchConfig?: {
     /**
      * Searchable fields to display in the advanced search dropdown
@@ -122,6 +194,15 @@ export interface ListViewConfig {
      */
     placeholder?: string;
   };
+  
+  /**
+   * Custom sortable fields to override the default column-based sorting
+   * If provided, only these fields will be available in the sort dropdown
+   */
+  sortableFields?: Array<{
+    field: string;
+    label: string;
+  }>;
   exportOptions?: {
     /**
      * Whether to show the export button (defaults to true if enableExport is true)
@@ -158,9 +239,13 @@ export interface SearchCriteria {
   label: string;
   operator: string;  // The comparison operator (is, like, >, etc.)
   logicalOperator?: 'AND' | 'OR';  // The logical operator connecting this criterion with the next one
+  // Support for date range filters (like "between")
+  secondValue?: string;  // For "between" operator, this holds the end date
+  fieldType?: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars' | 'template' | 'interactionIcon';  // Field type to determine input type
 }
 
 export interface SearchParams {
   generalSearch?: string;
   fieldSearches?: SearchCriteria[];
+  myOfficeOnly?: boolean;
 }

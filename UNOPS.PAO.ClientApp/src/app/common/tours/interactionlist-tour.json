@@ -1,0 +1,97 @@
+{
+  "tourId": "interactionlist-tour",
+  "titleKey": "tour.interactions.title",
+  "descriptionKey": "tour.interactions.description",
+  "entity": "Interaction",
+  "route": "/partnerships/interactions",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "titleKey": "tour.interactions.steps.welcome.title",
+        "descriptionKey": "tour.interactions.steps.welcome.description",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".interaction-section-header",
+      "fallbackType": "section-header",
+      "popover": {
+        "titleKey": "tour.interactions.steps.header.title",
+        "descriptionKey": "tour.interactions.steps.header.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".interaction-new-button",
+      "fallbackType": ".interaction-new-button",
+      "popover": {
+        "titleKey": "tour.interactions.steps.newButton.title",
+        "descriptionKey": "tour.interactions.steps.newButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".interaction-import-button",
+      "fallbackType": ".interaction-import-button",
+      "popover": {
+        "titleKey": "tour.interactions.steps.importButton.title",
+        "descriptionKey": "tour.interactions.steps.importButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".quick-search",
+      "fallbackType": "search-input",
+      "popover": {
+        "titleKey": "tour.interactions.steps.searchInput.title",
+        "descriptionKey": "tour.interactions.steps.searchInput.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".advanced-search",
+      "fallbackType": ".mobile-advanced-search",
+      "popover": {
+        "titleKey": "tour.interactions.steps.advancedSearch.title",
+        "descriptionKey": "tour.interactions.steps.advancedSearch.description",
+        "side": "bottom",
+        "align": "end"
+      }
+    },
+    {
+      "element": ".interaction-listview",
+      "fallbackType": "grid-view",
+      "popover": {
+        "titleKey": "tour.interactions.steps.gridView.title",
+        "descriptionKey": "tour.interactions.steps.gridView.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.interactions.steps.tourControl.title",
+        "descriptionKey": "tour.interactions.steps.tourControl.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2024-01-15T12:30:00Z",
+  "version": "1.0"
+}

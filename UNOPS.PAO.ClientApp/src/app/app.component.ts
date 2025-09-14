@@ -1,10 +1,10 @@
-import { Component, ViewChild, ViewContainerRef, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, ViewContainerRef, AfterViewInit, inject } from '@angular/core';
 import { RouterModule, RouterOutlet, Router } from '@angular/router';
 import { AuthService } from './essentials/services/auth.service';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FeedbackDialogComponent } from './common/reusables/widgets/feedback-dialog/feedback-dialog.component';
-import { AiAssistantComponent } from './common/reusables/widgets/ai-assistant/ai-assistant.component';
+import { TranslationCheckerService } from './services/translation-checker.service';
 
 @Component({
   selector: 'app-root',
@@ -13,16 +13,12 @@ import { AiAssistantComponent } from './common/reusables/widgets/ai-assistant/ai
     RouterModule, 
     ToastModule, 
     ConfirmDialogModule,
-    FeedbackDialogComponent, 
-    AiAssistantComponent
+    FeedbackDialogComponent
   ],
   template: `
   <p-confirmDialog></p-confirmDialog>
   <app-feedback-dialog></app-feedback-dialog>
-  @if(isLoggedIn) {
-    <app-ai-assistant [viewContainerRef]="viewContainerRef"></app-ai-assistant>
-  }
-    <div #dynamicComponent></div>
+  <div #dynamicComponent></div>
   <router-outlet></router-outlet>`,
   standalone: true,
 })
@@ -32,13 +28,30 @@ export class AppComponent implements AfterViewInit {
   @ViewChild('dynamicComponent', { read: ViewContainerRef, static: false }) dynamicComponent!: ViewContainerRef;
   viewContainerRef!: ViewContainerRef;
   
+  private translationChecker = inject(TranslationCheckerService);
+  
   constructor(
     private authService: AuthService,
     private router: Router
   ) { }
   
   ngOnInit() {
-    console.log('[APP] Initializing app component');
+    // Add translation monitoring for development
+    if (this.isProduction() === false) {
+      // Clear any previously cached false positives
+      this.translationChecker.clearMissingTranslations();
+      
+      // Perform fresh comprehensive check
+      this.translationChecker.performComprehensiveCheck().subscribe(results => {
+        const missing = results.reduce((sum, stat) => sum + stat.missingKeys, 0);
+        if (missing > 0) {
+          console.warn(`🚨 ${missing} missing translations detected`);
+          console.log('Translation check results:', results);
+        } else {
+          console.log('✅ All translations are complete!');
+        }
+      });
+    }
     
     const cookies = document.cookie.split(';').map(c => c.trim());
     const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
@@ -53,23 +66,31 @@ export class AppComponent implements AfterViewInit {
     
     // Fast path for dev cookie - skip all API checks
     if (hasCookie) {
-      console.log('[APP] Dev cookie found, setting isLoggedIn=true without API calls');
+      
       this.isLoggedIn = true;
       // If on login page with dev cookie, redirect to home
       if (window.location.href.includes('/login')) {
-        console.log('[APP] On login page with dev cookie - redirecting to home');
+        
         window.location.href = '/';
       }
       return;
     }
     
     // If no dev cookie, proceed with normal auth check
-    console.log('[APP] No dev cookie, checking login status via API');
+    
     
     this.authService.isLogedIn().subscribe((res) => {
       this.isLoggedIn = res;
-      console.log('[APP] isLoggedIn result:', res);
+      
     });
+  }
+
+  private isProduction(): boolean {
+    const hostname = window.location.hostname;
+    return hostname !== 'localhost' && 
+           hostname !== '127.0.0.1' &&
+           !hostname.includes('dev') &&
+           !hostname.includes('staging');
   }
   
   ngAfterViewInit() {

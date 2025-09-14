@@ -1,0 +1,377 @@
+{
+  "routes": [
+    {
+      "pattern": "/",
+      "tourFile": "homepage-tour",
+      "description": "Homepage with main navigation and topbar features"
+    },
+    {
+      "pattern": "/partnerships/partners/:id",
+      "tourFile": "partner-view-tour",
+      "description": "Partner detail page with tabs"
+    },
+    {
+      "pattern": "/partnerships/partners",
+      "tourFile": "partner-list-tour", 
+      "description": "Partner list/grid page"
+    },
+    {
+      "pattern": "/partnerships/contacts/:recordId",
+      "tourFile": "contactview-tour",
+      "description": "Contact detail page"
+    },
+    {
+      "pattern": "/partnerships/contacts",
+      "tourFile": "contact-tour",
+      "description": "Contact list page"
+    },
+    {
+      "pattern": "/partnerships/interactions/:recordId",
+      "tourFile": "interactiondetail-tour",
+      "description": "Interaction detail page"
+    },
+    {
+      "pattern": "/partnerships/interactions",
+      "tourFile": "interactionlist-tour",
+      "description": "Interaction list page"
+    },
+    {
+      "pattern": "/admin/entity-manager",
+      "tourFile": "entitymanager-tour",
+      "description": "Entity manager admin page"
+    },
+    {
+      "pattern": "/admin/user-management",
+      "tourFile": "usermanagement-tour",
+      "description": "User management admin page"
+    },
+    {
+      "pattern": "/admin/partner-tree/:id",
+      "tourFile": "partnertreedetails-tour",
+      "description": "Partner tree details page"
+    },
+    {
+      "pattern": "/admin/partner-tree",
+      "tourFile": "partnertree-tour",
+      "description": "Partner tree admin page"
+    },
+    {
+      "pattern": "/ai",
+      "tourFile": "aiassistant-tour", 
+      "description": "AI Assistant page"
+    },
+    {
+      "pattern": "/admin/ai-prompt-management",
+      "tourFile": "aiprompt-tour",
+      "description": "AI Prompts management page"
+    },
+    {
+      "pattern": "/admin/ai-prompt-management",
+      "tourFile": "aiprompt-dialog-tour",
+      "description": "AI Prompt editor dialog"
+    },
+    {
+      "pattern": "/partnerships/contacts/:recordId/business-card-scanner",
+      "tourFile": "businesscardscanner-tour",
+      "description": "Business card scanner modal"
+    },
+    {
+      "pattern": "/partnerships/contacts/:recordId/tabs",
+      "tourFile": "contacttabs-tour",
+      "description": "Contact tabs navigation"
+    },
+    {
+      "pattern": "/admin/partner-tree/:id/view",
+      "tourFile": "partnertreeview-tour",
+      "description": "Partner tree view page"
+    }
+  ],
+  "fallbackSelectors": {
+    "new-button": [
+      ".partner-new-button",
+      ".contact-new-button", 
+      ".interaction-new-button",
+      "p-button[label*=\"New\"]",
+      "p-button[icon=\"pi pi-plus\"]", 
+      "button[title*=\"New\"]",
+      ".pi-plus",
+      "p-button"
+    ],
+    "import-button": [
+      ".partner-import-button",
+      ".contact-import-button",
+      ".interaction-import-button",
+      "p-button[label*=\"Import\"]",
+      "p-button[icon=\"pi pi-file-import\"]",
+      "button[title*=\"Import\"]"
+    ],
+    "scanner-button": [
+      ".contact-scanner-button",
+      "p-button[icon=\"pi pi-camera\"]",
+      "button[title*=\"Scan\"]",
+      "button[title*=\"Business Card\"]"
+    ],
+    "search-input": [
+      ".quick-search",
+      "input[placeholder*=\"Search\"]",
+      "input[type=\"search\"]",
+      ".p-inputtext",
+      "input.search"
+    ],
+    "advanced-search": [
+      ".advanced-search",
+      "button[title*=\"Advanced\"]",
+      ".pi-search",
+      "i.pi-search",
+      "button .pi-search"
+    ],
+    "edit-button": [
+      ".edit-button",
+      ".contact-edit-button",
+      ".partner-edit-button",
+      "p-button[icon=\"pi pi-pencil\"]",
+      ".pi-pencil",
+      "button[title*=\"edit\"]"
+    ],
+    "grid-view": [
+      ".partner-listview",
+      ".contact-listview", 
+      ".interaction-listview",
+      "app-listview",
+      ".grid",
+      ".cards-container",
+      ".list-view"
+    ],
+    "section-header": [
+      ".partner-section-header",
+      ".contact-section-header",
+      ".interaction-section-header",
+      ".section-header",
+      ".flex.items-center.gap-3",
+      ".flex.items-center.gap-4", 
+      "h1",
+      ".text-3xl",
+      ".title"
+    ],
+    "tabs-navigation": [
+      ".partner-tabs-navigation",
+      "app-responsive-tabs",
+      "p-tabView",
+      ".p-tabview",
+      ".p-tabview-nav",
+      ".p-tablist-content",
+      ".tab-navigation"
+    ],
+    "ai-panel": [
+      ".ai-summary",
+      "[class*=\"ai\"]",
+      ".ai-panel",
+      ".summary-panel"
+    ],
+    "contact-info": [
+      ".contact-info-content",
+      ".contact-info-details",
+      ".contact-information"
+    ],
+    "partner-link": [
+      ".contact-partner-link",
+      "a[routerLink*=\"partners\"]",
+      ".partner-link"
+    ],
+    "partner-info": [
+      ".partner-info-content",
+      ".partner-information",
+      ".partner-details"
+    ],
+    "ai-transcribe": [
+      ".interaction-ai-transcribe",
+      "app-ai-transcribe",
+      ".ai-transcribe"
+    ],
+    "entity-settings": [
+      ".entity-settings-button",
+      "p-button[label*=\"Settings\"]",
+      "p-button[icon=\"pi pi-cog\"]",
+      "button[title*=\"Settings\"]"
+    ],
+    "add-field": [
+      ".add-field-button",
+      "p-button[label*=\"Add Field\"]",
+      "p-button[label*=\"Field\"]",
+      "p-button[icon=\"pi pi-plus\"]"
+    ],
+    "available-fields": [
+      ".available-fields-section",
+      ".available-fields",
+      ".fields-pool"
+    ],
+    "list-view-fields": [
+      ".list-view-fields-section",
+      ".list-view-fields",
+      ".configured-fields"
+    ],
+    "card-preview": [
+      ".card-preview-section",
+      ".card-preview",
+      ".live-preview",
+      ".preview-section"
+    ],
+    "create-prompt": [
+      ".create-prompt-button",
+      "p-button[label*=\"Create\"]",
+      "p-button[label*=\"New\"]",
+      "p-button[icon=\"pi pi-plus\"]"
+    ],
+    "prompt-type": [
+      "th[pSortableColumn='type']",
+      ".prompt-type-column",
+      "th:contains('Type')"
+    ],
+    "ai-model": [
+      "th[pSortableColumn='model']",
+      ".ai-model-column",
+      "th:contains('Model')"
+    ],
+    "ai-sidebar": [
+      ".ai-chat-sidebar",
+      ".ai-sidebar",
+      ".chat-sidebar"
+    ],
+    "new-chat": [
+      ".ai-new-chat-button",
+      ".new-chat-button",
+      "button[title*=\"new chat\"]",
+      "p-button[icon=\"pi pi-plus\"]"
+    ],
+    "chat-history": [
+      ".ai-chat-history",
+      ".chat-list",
+      ".recent-chats"
+    ],
+    "main-chat": [
+      ".ai-main-chat-area",
+      ".ai-content-area",
+      ".chat-content"
+    ],
+    "welcome-screen": [
+      ".ai-welcome-screen",
+      ".welcome-state",
+      ".ai-greeting"
+    ],
+    "sample-prompts": [
+      ".ai-sample-prompts",
+      ".example-prompts",
+      ".prompt-suggestions"
+    ],
+    "input-area": [
+      ".ai-input-area",
+      ".message-input",
+      ".chat-input"
+    ],
+    "send-button": [
+      ".ai-send-button",
+      "p-button[icon=\"pi pi-send\"]",
+      "button[title*=\"send\"]"
+    ],
+    "menu-toggle": [
+      ".menu-toggle-button",
+      ".layout-menu-button",
+      "button[class*=\"menu-button\"]"
+    ],
+    "homepage-logo": [
+      ".homepage-logo",
+      ".layout-topbar-logo-container a",
+      "a[routerLink=\"/\"]"
+    ],
+    "global-search": [
+      ".global-search-container",
+      "app-global-search-bar",
+      ".search-container"
+    ],
+    "tour-control": [
+      "app-tour-control .tour-button",
+      "app-tour-control p-button",
+      "app-tour-control button",
+      "app-tour-control",
+      ".tour-control",
+      "button[title*=\"tour\"]"
+    ],
+    "global-filters": [
+      ".global-filters-button .p-button",
+      ".global-filters-button button",
+      ".global-filters-button",
+      "p-button[title*=\"Global Filters\"]",
+      "button[aria-label*=\"Global Filters\"]"
+    ],
+    "language-selector": [
+      ".language-selector",
+      "app-language-selector",
+      ".language-switcher"
+    ],
+    "ai-assistant": [
+      ".ai-assistant-toggle",
+      ".ai-assistant-toggle-btn",
+      "button[data-ai-assistant-toggle]"
+    ],
+    "notifications": [
+      ".notifications-button",
+      "p-button[aria-label=\"Notifications\"]",
+      "button[title*=\"notification\"]"
+    ],
+    "profile-menu": [
+      ".profile-menu-button",
+      ".user-menu",
+      "p-button[class*=\"user\"]"
+    ],
+    "main-navigation": [
+      ".main-navigation-sidebar",
+      ".layout-sidebar",
+      ".navigation-menu"
+    ],
+    "welcome-message": [
+      ".homepage-welcome",
+      ".home-header",
+      ".welcome-message"
+    ],
+    "dashboard-header": [
+      ".dashboard-header",
+      ".home-header",
+      ".page-header"
+    ],
+    "refresh-button": [
+      ".refresh-btn",
+      "p-button[icon=\"pi pi-refresh\"]",
+      "button[title*=\"refresh\"]"
+    ],
+    "partners-card": [
+      ".partners-card",
+      ".integrated-card.partners-card",
+      ".card-summary"
+    ],
+    "contacts-card": [
+      ".contacts-card",
+      ".integrated-card.contacts-card",
+      ".card-summary"
+    ],
+    "interactions-card": [
+      ".interactions-card",
+      ".integrated-card.interactions-card",
+      ".card-summary"
+    ],
+    "opportunities-card": [
+      ".opportunities-card",
+      ".integrated-card.opportunities-card",
+      ".card-summary"
+    ],
+    "actions-required-card": [
+      ".actions-required-card",
+      ".integrated-card.actions-required-card",
+      ".card-summary"
+    ],
+    "org-updates-card": [
+      ".org-updates-card",
+      ".integrated-card.org-updates-card",
+      ".card-summary"
+    ]
+  }
+}

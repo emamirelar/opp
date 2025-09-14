@@ -96,6 +96,16 @@ export class ListviewExportService {
         if (!transformFn && entityName.toLowerCase() === 'contact') {
           finalTransformFn = this.contactTransform;
         }
+        
+        // For partners, use a specialized transform
+        if (!transformFn && entityName.toLowerCase() === 'partner') {
+          finalTransformFn = this.partnerTransform;
+        }
+        
+        // For interactions, use a specialized transform
+        if (!transformFn && entityName.toLowerCase() === 'interaction') {
+          finalTransformFn = this.interactionTransform;
+        }
 
         // Transform data with the selected function
         const exportableData = finalTransformFn(response.data);
@@ -169,6 +179,69 @@ export class ListviewExportService {
   }
 
   /**
+   * Special transform function for Partner entities
+   * Formats partner data with current Partner entity fields
+   */
+  private partnerTransform(partners: any[]): Record<string, any>[] {
+    return partners.map(partner => {
+      return {
+        ID: partner.id || '',
+        Name: partner.name || '',
+        ShortDescription: partner.partnerShortDescription || '',
+        LongDescription: partner.partnerLongDescription || '',
+        Status: partner.status || '',
+        PartnerGroupId: partner.partnerGroupId || '',
+        PartnerGroupName: partner.partnerGroupName || '',
+        PartnerCategoryId: partner.partnerCategoryId || '',
+        PartnerCategoryName: partner.partnerCategoryName || '',
+        LiaisonOfficeId: partner.liaisonOfficeId || '',
+        PartnerFocalPointUserId: partner.partnerFocalPointUserId || '',
+        KeyGlobalPartner: partner.keyGlobalPartner || false,
+        UNSecretariatPartner: partner.unSecretariatPartner || false,
+        UNAndStateEntity: partner.unAndStateEntity || false,
+        PartnerApprovalStatus: partner.partnerApprovalStatus || '',
+        PartnerApprovalDate: partner.partnerApprovalDate || '',
+        PartnerApprovalReference: partner.partnerApprovalReference || '',
+        PartnerApprovedBy: partner.partnerApprovedBy || '',
+        PartnerLevyStatus: partner.partnerLevyStatus || '',
+        PooledFund: partner.pooledFund || false,
+        CanCreateNewOpportunities: partner.canCreateNewOpportunities || false,
+        ReasonForNoNewOpportunity: partner.reasonForNoNewOpportunity || '',
+        DueDiligenceRequired: partner.dueDiligenceRequired || false,
+        DueDiligenceApproval: partner.dueDiligenceApproval || '',
+        DueDiligenceApprovalDate: partner.dueDiligenceApprovalDate || '',
+        DueDiligenceExpiryDate: partner.dueDiligenceExpiryDate || '',
+        ErpDimValue: partner.erpDimValue || '',
+        CreatedDate: partner.createdDate || '',
+        LastModifiedDate: partner.lastModifiedDate || '',
+        CreatedBy: partner.createdBy || '',
+        LastModifiedBy: partner.lastModifiedBy || ''
+      };
+    });
+  }
+
+  /**
+   * Special transform function for Interaction entities
+   * Formats interaction data with specific field names and order
+   */
+  private interactionTransform(interactions: any[]): Record<string, any>[] {
+    return interactions.map(interaction => {
+      return {
+        ID: interaction.id || '',
+        Type: interaction.type || '',
+        Date: interaction.date || '',
+        Subject: interaction.subject || '',
+        Description: interaction.description || '',
+        ContactId: interaction.contactId || '',
+        ContactName: interaction.contactName || '',
+        Status: interaction.status || '',
+        Location: interaction.location || '',
+        CreatedBy: interaction.createdBy || ''
+      };
+    });
+  }
+
+  /**
    * Default data transformation that keeps all properties
    * and converts each property to a readable format
    */
@@ -180,6 +253,11 @@ export class ListviewExportService {
       
       // Convert all keys to proper case (e.g., 'firstName' to 'First Name')
       Object.entries(item).forEach(([key, value]) => {
+        // Skip permissions field entirely
+        if (key === 'permissions') {
+          return;
+        }
+        
         if (typeof value !== 'object' || value === null) {
           // Format the key for display - convert camelCase to Title Case with spaces
           const formattedKey = key

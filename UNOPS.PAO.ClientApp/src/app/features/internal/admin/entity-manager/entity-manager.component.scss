@@ -1,0 +1,528 @@
+// PrimeNG Tabs styling - consistent with other components
+:host ::ng-deep {
+  --p-tabs-tablist-background: transparent;
+}
+
+// CDK Drag & Drop styles
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+  transform: rotate(2deg);
+  transition: transform 0.2s ease;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.4;
+  background: #f3f4f6;
+  border: 2px dashed #9ca3af;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drop-list {
+  transition: background-color 0.3s ease;
+}
+
+.cdk-drop-list.cdk-drop-list-receiving {
+  background-color: rgba(99, 102, 241, 0.05);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+// Enhanced hover effects for draggable items
+.cdk-drag:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+// List View Panel specific styles
+.cdk-drop-list-receiving .cdk-drag {
+  transform: rotate(0deg);
+}
+
+// Field cards hover effects
+.field-card {
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+}
+
+// Drag handle styling
+.drag-handle {
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+  }
+}
+
+// Custom scrollbar for field list
+.field-list-container {
+  max-height: 70vh;
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+    
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+}
+
+// Loading spinner overlay
+.loading-overlay {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(2px);
+}
+
+// Badge animations
+.badge-enter {
+  animation: badge-slide-in 0.3s ease-out;
+}
+
+@keyframes badge-slide-in {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// Card header gradients
+.card-header {
+  &.entity-selection {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+  
+  &.entity-config {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  }
+  
+  &.field-config {
+    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 1280px) {
+  .entity-manager-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .list-view-panel {
+    order: -1;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .field-card {
+    margin-bottom: 1rem;
+  }
+  
+  .field-badges {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .field-properties {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .entity-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+    
+    .p-button {
+      width: 100%;
+    }
+  }
+}
+
+// Form field enhancements
+.form-field {
+  &:focus-within {
+    .field-label {
+      color: #3b82f6;
+      font-weight: 600;
+    }
+  }
+}
+
+// Success state animations
+.save-success {
+  animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+// IDE-style template autocomplete styling
+.template-input-container {
+  .template-suggestions {
+    // High z-index to appear above dialogs and other elements
+    z-index: 9999;
+    
+    // Smooth animations
+    animation: fadeInDown 0.15s ease-out;
+    
+    // Custom scrollbar for suggestions
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 2px;
+    }
+    
+    // Individual suggestion items
+    .suggestion-item {
+      transition: all 0.1s ease;
+      
+      &:hover {
+        background-color: #f0f9ff;
+        color: #1e40af;
+      }
+      
+      &.selected {
+        background-color: #dbeafe;
+        color: #1e40af;
+      }
+      
+      // Field type badge
+      .field-type {
+        font-size: 10px;
+        font-weight: 500;
+        padding: 2px 6px;
+        border-radius: 3px;
+        background-color: #f1f5f9;
+        color: #64748b;
+      }
+    }
+  }
+}
+
+// Animation for suggestions appearing
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Tooltip enhancements
+.field-tooltip {
+  max-width: 300px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+// Animation for panel transitions
+.panel-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Smooth scrolling and custom scrollbars
+.scrollable-content {
+  scroll-behavior: smooth;
+}
+
+// Custom scrollbar styles for Webkit browsers
+.fields-container::-webkit-scrollbar,
+.list-view-container::-webkit-scrollbar,
+.flex-1.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.fields-container::-webkit-scrollbar-track,
+.list-view-container::-webkit-scrollbar-track,
+.flex-1.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.fields-container::-webkit-scrollbar-thumb,
+.list-view-container::-webkit-scrollbar-thumb,
+.flex-1.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.fields-container::-webkit-scrollbar-thumb:hover,
+.list-view-container::-webkit-scrollbar-thumb:hover,
+.flex-1.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+// Ensure proper height management
+.h-screen {
+  height: 100vh;
+  max-height: 100vh;
+}
+
+.min-h-0 {
+  min-height: 0;
+}
+
+// Loading states
+.entity-manager-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+// Sticky footer styling
+.sticky-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+// Enhanced card shadows
+.enhanced-card {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease;
+}
+
+.enhanced-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+// Improved gradient headers
+.gradient-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-color-dark));
+  position: relative;
+  overflow: hidden;
+}
+
+.gradient-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+// Field content spacing improvements
+.field-content {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.field-content:hover {
+  background-color: #fafafa;
+}
+
+// Improved button styling
+.action-button {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+}
+
+.action-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+}
+
+.action-button:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+// Enhanced list view drop zones
+.list-view-drop-zone {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, #f9fafb, #f3f4f6);
+}
+
+.list-view-drop-zone.active {
+  border-color: #10b981;
+  background: linear-gradient(145deg, #d1fae5, #a7f3d0);
+  transform: scale(1.02);
+}
+
+.available-fields-drop-zone {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, #eff6ff, #dbeafe);
+}
+
+.available-fields-drop-zone.active {
+  border-color: #3b82f6;
+  background: linear-gradient(145deg, #dbeafe, #bfdbfe);
+  transform: scale(1.02);
+}
+
+// Responsive padding adjustments
+@media (max-width: 768px) {
+  .responsive-padding {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .responsive-padding {
+    padding: 1.5rem;
+  }
+}
+
+// Content area scrolling optimization
+.content-scroll-area {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  padding-right: 0.5rem;
+}
+
+// Ensure proper flex behavior
+.flex-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+}
+
+.flex-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.flex-footer {
+  flex-shrink: 0;
+}
+
+// Styles pour la preview de carte
+.card-preview-container {
+  .listview-card {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb;
+    
+    &:hover {
+      box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.1) !important;
+    }
+  }
+}
+
+// Style pour le conteneur de preview
+.preview-highlight {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+  border: 1px solid #93c5fd;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+    border-radius: 6px 6px 0 0;
+  }
+}
+
+// Animation pour la preview
+@keyframes fadeInPreview {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-preview-section {
+  animation: fadeInPreview 0.3s ease-out;
+}
+
+// Styles pour les états d'erreur
+.preview-error-state {
+  .material-symbols-outlined {
+    font-size: 2rem;
+  }
+} 

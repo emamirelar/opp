@@ -6,5 +6,6 @@ public enum DocumentParentEntityType
     Contact = 1,
     Partner = 2,
     Interaction = 3,
+    PartnerTree = 4,
     Archive = 99
 }

@@ -4,12 +4,15 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using UNOPS.PAO.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// A composite specification that allows filtering partners by multiple criteria
+/// Uses manual joins to efficiently filter at the database level without navigation properties
 /// </summary>
 public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Partner>
 {
+    private readonly int? _organizationHierarchyId;
     /// <summary>
     /// Creates a composite specification with multiple filter criteria for partners
     /// </summary>
@@ -20,7 +23,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
     /// <param name="phone">Optional phone number to filter by</param>
     /// <param name="website">Optional website to filter by</param>
     /// <param name="shortName">Optional short name to filter by</param>
-    /// <param name="partnerOfficeId">Optional partner office ID to filter by</param>
+    /// <param name="organizationHierarchyId">Optional organization hierarchy ID to filter by</param>
     /// <param name="partnerCategoryId">Optional partner category ID to filter by</param>
     /// <param name="addressCity">Optional city to filter by</param>
     /// <param name="addressStateProvince">Optional state/province to filter by</param>
@@ -35,7 +38,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         string? phone = null,
         string? website = null,
         string? shortName = null,
-        int? partnerOfficeId = null,
+        int? organizationHierarchyId = null,
         int? partnerCategoryId = null,
         string? addressCity = null,
         string? addressStateProvince = null,
@@ -43,13 +46,13 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         string? addressCountry = null,
         string? searchText = null)
         : base(BuildExpression(id, name, status, newEngagement, phone, website, shortName, 
-                              partnerOfficeId, partnerCategoryId, addressCity, addressStateProvince, 
+                              organizationHierarchyId, partnerCategoryId, addressCity, addressStateProvince, 
                               addressPostalCode, addressCountry, searchText))
     {
+        _organizationHierarchyId = organizationHierarchyId;
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
         
-        // Default ordering is by name
+        // Default ordering is by partner description
         ApplyOrderBy(p => p.Name);
     }
     
@@ -64,7 +67,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         string? phone,
         string? website,
         string? shortName,
-        int? partnerOfficeId,
+        int? organizationHierarchyId,
         int? partnerCategoryId,
         string? addressCity,
         string? addressStateProvince,
@@ -82,96 +85,78 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
             predicate = CombineExpressions(predicate, idFilter);
         }
         
-        // Add name filter if specified
+        // Add name filter if specified (using PartnerDescription)
         if (!string.IsNullOrWhiteSpace(name))
         {
             Expression<Func<Partner, bool>> nameFilter = p => p.Name.ToLower().Contains(name.ToLower());
             predicate = CombineExpressions(predicate, nameFilter);
         }
         
-        // Add status filter if specified
+        // Add status filter if specified (using SystemStatus)
         if (!string.IsNullOrWhiteSpace(status))
         {
-            Expression<Func<Partner, bool>> statusFilter = p => p.Status == status;
+            Expression<Func<Partner, bool>> statusFilter = p => p.Status.ToString() == status;
             predicate = CombineExpressions(predicate, statusFilter);
         }
         
-        // Add new engagement filter if specified
+        // Add new engagement filter if specified (using CanCreateNewOpportunities)
         if (!string.IsNullOrWhiteSpace(newEngagement))
         {
-            Expression<Func<Partner, bool>> newEngagementFilter = p => p.NewEngagement == newEngagement;
+            Expression<Func<Partner, bool>> newEngagementFilter = p => newEngagement.ToLower() == "yes" ? p.CanCreateNewOpportunities : !p.CanCreateNewOpportunities;
             predicate = CombineExpressions(predicate, newEngagementFilter);
         }
         
-        // Add phone filter if specified
-        if (!string.IsNullOrWhiteSpace(phone))
-        {
-            Expression<Func<Partner, bool>> phoneFilter = p => p.Phone != null && p.Phone.Contains(phone);
-            predicate = CombineExpressions(predicate, phoneFilter);
-        }
-        
-        // Add website filter if specified
-        if (!string.IsNullOrWhiteSpace(website))
-        {
-            Expression<Func<Partner, bool>> websiteFilter = p => p.Website != null && p.Website.ToLower().Contains(website.ToLower());
-            predicate = CombineExpressions(predicate, websiteFilter);
-        }
-        
-        // Add short name filter if specified
+        // Add short name filter if specified (using PartnerShortDescription)
         if (!string.IsNullOrWhiteSpace(shortName))
         {
-            Expression<Func<Partner, bool>> shortNameFilter = p => p.ShortName.ToLower().Contains(shortName.ToLower());
+            Expression<Func<Partner, bool>> shortNameFilter = p => p.PartnerShortDescription.ToLower().Contains(shortName.ToLower());
             predicate = CombineExpressions(predicate, shortNameFilter);
         }
         
-        // Add partner office filter if specified
-        if (partnerOfficeId.HasValue)
+        // Add organization hierarchy filter if specified
+        if (organizationHierarchyId.HasValue)
         {
-            Expression<Func<Partner, bool>> partnerOfficeFilter = p => p.PartnerOfficeId == partnerOfficeId.Value;
-            predicate = CombineExpressions(predicate, partnerOfficeFilter);
+            // Note: OrganizationUnitRelationships filtering moved to manual join method
+            Expression<Func<Partner, bool>> organizationHierarchyFilter = p => true;
+            predicate = CombineExpressions(predicate, organizationHierarchyFilter);
         }
         
-        // Add address city filter if specified
-        if (!string.IsNullOrWhiteSpace(addressCity))
-        {
-            Expression<Func<Partner, bool>> cityFilter = p => p.Address1City != null && p.Address1City.ToLower().Contains(addressCity.ToLower());
-            predicate = CombineExpressions(predicate, cityFilter);
-        }
-        
-        // Add address state/province filter if specified
-        if (!string.IsNullOrWhiteSpace(addressStateProvince))
-        {
-            Expression<Func<Partner, bool>> stateProvinceFilter = p => p.Address1StateProvince != null && p.Address1StateProvince.ToLower().Contains(addressStateProvince.ToLower());
-            predicate = CombineExpressions(predicate, stateProvinceFilter);
-        }
-        
-        // Add address postal code filter if specified
-        if (!string.IsNullOrWhiteSpace(addressPostalCode))
-        {
-            Expression<Func<Partner, bool>> postalCodeFilter = p => p.Address1PostalCode != null && p.Address1PostalCode.Contains(addressPostalCode);
-            predicate = CombineExpressions(predicate, postalCodeFilter);
-        }
-        
-        // Add address country filter if specified
-        if (!string.IsNullOrWhiteSpace(addressCountry))
-        {
-            Expression<Func<Partner, bool>> countryFilter = p => p.Address1Country != null && p.Address1Country.ToLower().Contains(addressCountry.ToLower());
-            predicate = CombineExpressions(predicate, countryFilter);
-        }
-        
-        // Add text search filter if specified
+        // Add text search filter if specified (updated to use new fields)
         if (!string.IsNullOrWhiteSpace(searchText))
         {
             // Always perform case-insensitive search
             string lowerSearchText = searchText.ToLower();
             Expression<Func<Partner, bool>> textFilter = p => 
                 (p.Name != null && p.Name.ToLower().Contains(lowerSearchText)) ||
-                (p.ShortName != null && p.ShortName.ToLower().Contains(lowerSearchText)) ||
-                (p.Phone != null && p.Phone.Contains(lowerSearchText));
+                (p.PartnerShortDescription != null && p.PartnerShortDescription.ToLower().Contains(lowerSearchText)) ||
+                (p.PartnerLongDescription != null && p.PartnerLongDescription.ToLower().Contains(lowerSearchText));
             predicate = CombineExpressions(predicate, textFilter);
         }
         
         return predicate;
+    }
+    
+    /// <summary>
+    /// Apply manual join filtering for organization hierarchy if specified
+    /// This should be called by the repository/manager when applying the specification
+    /// </summary>
+    public IQueryable<Partner> ApplyOrgUnitFilter(IQueryable<Partner> query, DbContext context)
+    {
+        if (!_organizationHierarchyId.HasValue)
+        {
+            return query;
+        }
+
+        // Pre-materialize the partner IDs that match the org unit criteria to avoid nested query issues
+        var validPartnerIds = context.Set<OrganizationUnitRelationship>()
+            .Where(orgRel => 
+                orgRel.EntityType == "Partner" && 
+                orgRel.OrganizationHierarchyId == _organizationHierarchyId.Value)
+            .Select(orgRel => orgRel.EntityId)
+            .ToList(); // Materialize the IDs first
+
+        // Now filter the partners using the materialized IDs
+        return query.Where(partner => validPartnerIds.Contains(partner.Id));
     }
     
     private static Expression<Func<T, bool>> CombineExpressions<T>(

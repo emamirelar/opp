@@ -12,6 +12,10 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc.Filters;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Authorization;
+using System.Text.Json;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.UNOPSBusiness.Managers;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
@@ -30,7 +34,9 @@ namespace UNOPS.PAO.Presentation.Controllers
             ILogger logger,
             IAuthorizationService authorizationService,
             UserResolverService<int> userResolverService,
-            IPermissionService permissionService = null)
+            IPermissionService permissionService = null,
+            UNOPSAppDbContext context = null,
+            AiContextualService aiService = null)
         {
             _logger = logger;
             _authorizationService = authorizationService;
@@ -280,85 +286,6 @@ namespace UNOPS.PAO.Presentation.Controllers
         }
 
         /// <summary>
-        /// Checks if the current user has permission to perform the specified action on the entity
-        /// </summary>
-        /// <param name="entityName">Name of the entity (e.g., "Contact", "Partner")</param>
-        /// <param name="action">Action to perform (e.g., "read", "create", "update", "delete")</param>
-        /// <param name="entity">Optional entity instance for entity-specific checks</param>
-        /// <returns>ActionResult with Forbid if permission denied, null if allowed</returns>
-        protected async Task<ActionResult> CheckEntityPermissionAsync(string entityName, string action, object entity = null)
-        {
-            if (_permissionService == null)
-            {
-                _logger.LogWarning("IPermissionService not available in controller {ControllerName}. Permission check skipped.", GetType().Name);
-                return null; // Allow access if permission service is not available
-            }
-            
-            if (!await _permissionService.CanPerformActionAsync(entityName, action, User, entity))
-            {
-                _logger.LogWarning("User {UserId} attempted to perform {Action} on {EntityName} without permission",
-                    CurrentUserId, action, entityName);
-                return Forbid();
-            }
-            
-            return null;
-        }
-
-        /// <summary>
-        /// Validates if user has the required permission. Throws exception if not authorized.
-        /// </summary>
-        /// <param name="entityName">Name of the entity (e.g., "Contact", "Partner")</param>
-        /// <param name="action">Action to perform (e.g., "read", "create", "update", "delete")</param>
-        /// <param name="entity">Optional entity instance for entity-specific checks</param>
-        /// <returns>True if permission is granted, otherwise throws UnauthorizedAccessException</returns>
-        protected async Task<bool> ValidateEntityPermissionAsync(string entityName, string action, object entity = null)
-        {
-            if (_permissionService == null)
-            {
-                _logger.LogWarning("IPermissionService not available in controller {ControllerName}. Permission check skipped.", GetType().Name);
-                return true; // Allow access if permission service is not available
-            }
-            
-            if (!await _permissionService.CanPerformActionAsync(entityName, action, User, entity))
-            {
-                _logger.LogWarning("User {UserId} attempted to perform {Action} on {EntityName} without permission",
-                    CurrentUserId, action, entityName);
-                throw new UnauthorizedAccessException($"You don't have permission to {action} {entityName}");
-            }
-            
-            return true;
-        }
-
-        /// <summary>
-        /// Gets all permissions the current user has for a given entity
-        /// </summary>
-        /// <param name="entityName">Name of the entity (e.g., "Contact", "Partner")</param>
-        /// <param name="entity">Optional entity instance for entity-specific checks</param>
-        /// <returns>An object containing permission flags</returns>
-        protected async Task<object> GetEntityPermissionsAsync(string entityName, object entity = null)
-        {
-            if (_permissionService == null)
-            {
-                _logger.LogWarning("IPermissionService not available in controller {ControllerName}. Returning default permissions.", GetType().Name);
-                return new
-                {
-                    CanRead = true,
-                    CanCreate = true,
-                    CanUpdate = true,
-                    CanDelete = true
-                };
-            }
-            
-            return new
-            {
-                CanRead = await _permissionService.CanPerformActionAsync(entityName, "read", User, entity),
-                CanCreate = await _permissionService.CanPerformActionAsync(entityName, "create", User, entity),
-                CanUpdate = await _permissionService.CanPerformActionAsync(entityName, "update", User, entity),
-                CanDelete = await _permissionService.CanPerformActionAsync(entityName, "delete", User, entity)
-            };
-        }
-
-        /// <summary>
         /// Handles an operation with proper error handling, logging, and role-based authorization
         /// </summary>
         /// <typeparam name="T">Return type of the operation</typeparam>
@@ -475,5 +402,186 @@ namespace UNOPS.PAO.Presentation.Controllers
             // If both authorization checks pass, proceed with normal operation handling
             return await HandleOperationAsync(operation, successStatusCode);
         }
+
+        /// <summary>
+        /// Validates pagination parameters and returns a BadRequest result if invalid
+        /// </summary>
+        /// <param name="pageIndex">The page index to validate</param>
+        /// <param name="pageSize">The page size to validate</param>
+        /// <param name="maxPageSize">Maximum allowed page size (default: 2000)</param>
+        /// <returns>BadRequest ActionResult if invalid, null if valid</returns>
+        protected ActionResult? ValidatePaginationParameters(int pageIndex, int pageSize, int maxPageSize = 2000)
+        {
+            var errors = new Dictionary<string, string[]>();
+
+            if (pageIndex < 1)
+            {
+                errors["pageIndex"] = new[] { "Page index must be greater than 0" };
+            }
+            
+            if (pageSize < 1)
+            {
+                errors["pageSize"] = new[] { "Page size must be greater than 0" };
+            }
+            else if (pageSize > maxPageSize)
+            {
+                errors["pageSize"] = new[] { $"Page size cannot exceed {maxPageSize}" };
+            }
+            
+            if (errors.Any())
+            {
+                return BadRequest(new ValidationProblemDetails(errors)
+                {
+                    Title = "Invalid pagination parameters"
+                });
+            }
+            
+            return null;
+        }
+
+        /// <summary>
+        /// Validates model state and returns ValidationProblemDetails if invalid
+        /// </summary>
+        /// <returns>BadRequest with validation details if invalid, null if valid</returns>
+        protected ActionResult? ValidateModelState()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ValidationProblemDetails(ModelState)
+                {
+                    Title = "One or more validation errors occurred"
+                });
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Creates a standardized validation error response
+        /// </summary>
+        /// <param name="field">Field name</param>
+        /// <param name="error">Error message</param>
+        /// <returns>BadRequest with validation details</returns>
+        protected ActionResult CreateValidationError(string field, string error)
+        {
+            var errors = new Dictionary<string, string[]>
+            {
+                [field] = new[] { error }
+            };
+            
+            return BadRequest(new ValidationProblemDetails(errors)
+            {
+                Title = "Validation failed"
+            });
+        }
+
+        /// <summary>
+        /// Creates a standardized validation error response with multiple errors
+        /// </summary>
+        /// <param name="errors">Dictionary of field names and error messages</param>
+        /// <returns>BadRequest with validation details</returns>
+        protected ActionResult CreateValidationErrors(Dictionary<string, string[]> errors)
+        {
+            return BadRequest(new ValidationProblemDetails(errors)
+            {
+                Title = "One or more validation errors occurred"
+            });
+        }
+
+        /// <summary>
+        /// Handles search operations with proper error handling and logging
+        /// </summary>
+        /// <typeparam name="T">Return type of the search operation</typeparam>
+        /// <param name="searchOperation">The search operation to execute</param>
+        /// <param name="searchDescription">Description of the search for logging</param>
+        /// <returns>An ActionResult containing the search result or an error response</returns>
+        protected async Task<ActionResult> HandleSearchOperationAsync<T>(
+            Func<Task<T>> searchOperation,
+            string searchDescription = "search operation")
+        {
+            try
+            {
+                _logger.LogInformation("Executing {SearchDescription}", searchDescription);
+                var result = await searchOperation();
+                return Ok(result);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Invalid JSON format in {SearchDescription}", searchDescription);
+                return BadRequest(new { error = "Invalid search criteria format", details = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "Invalid search criteria in {SearchDescription}", searchDescription);
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (BusinessException ex)
+            {
+                _logger.LogWarning(ex, "Business exception in {SearchDescription}: {Message}", searchDescription, ex.Message);
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during {SearchDescription}", searchDescription);
+                return StatusCode(500, new { error = $"An error occurred during {searchDescription}" });
+            }
+        }
+
+        protected async Task<ActionResult> GetEntityPermissionsAsync(string entityType, object entity = null)
+        {
+            var permissions = await _permissionService.GetEntityPermissionsAsync(entityType, entity);
+            return Ok(permissions);
+        }
+
+
+        /// <summary>
+        /// Checks if the current user has permission to perform the specified action on the entity
+        /// </summary>
+        /// <param name="entityName">Name of the entity (e.g., "Contact", "Partner")</param>
+        /// <param name="action">Action to perform (e.g., "read", "create", "update", "delete")</param>
+        /// <param name="entity">Optional entity instance for entity-specific checks</param>
+        /// <returns>ActionResult with Forbid if permission denied, null if allowed</returns>
+        protected async Task<ActionResult> CheckEntityPermissionAsync(string entityName, string action, object entity = null)
+        {
+            if (_permissionService == null)
+            {
+                _logger.LogWarning("IPermissionService not available in controller {ControllerName}. Permission check skipped.", GetType().Name);
+                return null; // Allow access if permission service is not available
+            }
+            
+            if (!await _permissionService.CanPerformActionAsync(entityName, action, User, entity))
+            {
+                _logger.LogWarning("User {UserId} attempted to perform {Action} on {EntityName} without permission",
+                    CurrentUserId, action, entityName);
+                return Forbid();
+            }
+            
+            return null;
+        }
+
+        /// <summary>
+        /// Validates if user has the required permission. Throws exception if not authorized.
+        /// </summary>
+        /// <param name="entityName">Name of the entity (e.g., "Contact", "Partner")</param>
+        /// <param name="action">Action to perform (e.g., "read", "create", "update", "delete")</param>
+        /// <param name="entity">Optional entity instance for entity-specific checks</param>
+        /// <returns>True if permission is granted, otherwise throws UnauthorizedAccessException</returns>
+        protected async Task<bool> ValidateEntityPermissionAsync(string entityName, string action, object entity = null)
+        {
+            if (_permissionService == null)
+            {
+                _logger.LogWarning("IPermissionService not available in controller {ControllerName}. Permission check skipped.", GetType().Name);
+                return true; // Allow access if permission service is not available
+            }
+            
+            if (!await _permissionService.CanPerformActionAsync(entityName, action, User, entity))
+            {
+                _logger.LogWarning("User {UserId} attempted to perform {Action} on {EntityName} without permission",
+                    CurrentUserId, action, entityName);
+                throw new UnauthorizedAccessException($"You don't have permission to {action} {entityName}");
+            }
+            
+            return true;
+        }
+
     }
 } 

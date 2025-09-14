@@ -36,10 +36,44 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 null, 
                 dbContextSchema);
 
-            // Seed data
+            // Seed data in proper order
+            Console.WriteLine("Seeding entities...");
+            await EntitiesSeeder.SeedEntitiesAsync(context);
+            Console.WriteLine("Entities seeded successfully.");
+
+            Console.WriteLine("Seeding entity managers...");
+            await EntityManagerSeeder.SeedEntityManagersAsync(context);
+            Console.WriteLine("Entity managers seeded successfully.");
+
+            Console.WriteLine("Seeding entity field managers...");
+            await EntityManagerSeeder.SeedEntityFieldManagersAsync(context);
+            Console.WriteLine("Entity field managers seeded successfully.");
+
+            Console.WriteLine("Seeding document types...");
+            await DocumentTypeSeeder.SeedDocumentTypesAsync(context);
+            Console.WriteLine("Document types seeded successfully.");
+
+            Console.WriteLine("Seeding AI prompts...");
+            await AiPromptSeeder.SeedAiPromptsAsync(context);
+            Console.WriteLine("AI prompts seeded successfully.");
+
             Console.WriteLine("Seeding entity permissions...");
             await EntityPermissionSeeder.SeedEntityPermissionsAsync(context);
-            Console.WriteLine("Seeding complete!");
+            Console.WriteLine("Entity permissions seeded successfully.");
+
+            Console.WriteLine("Seeding liaison offices...");
+            await LiaisonOfficeSeeder.SeedLiaisonOfficesAsync(context);
+            Console.WriteLine("Liaison offices seeded successfully.");
+
+            Console.WriteLine("Seeding partner tree...");
+            await PartnerTreeSeeder.SeedPartnerTreesAsync(context);
+            Console.WriteLine("Partner tree seeded successfully.");
+
+            Console.WriteLine("Seeding partners...");
+            await PartnerSeeder.SeedPartnersAsync(context);
+            Console.WriteLine("Partners seeded successfully.");
+
+            Console.WriteLine("All configuration data seeding complete!");
         }
     }
 } 

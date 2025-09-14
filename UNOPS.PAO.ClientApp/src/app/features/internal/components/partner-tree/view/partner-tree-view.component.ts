@@ -1,150 +1,229 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, effect, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
-import { CachedDataService } from '../../../../../common/services/cached-data.service';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-
-import { PanelModule } from 'primeng/panel';
-import { DropdownModule } from "primeng/dropdown";
-import { DatePickerModule } from 'primeng/datepicker';
-
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
-import { DocumentService } from '../../../services/document.service';
-import { DocumentComponent } from '../../../../../common/reusables/components/document/document.component';
-import { GDriveDocumentComponent } from '../../../overrides/reusables/components/document/gdrive/document-gdrive.component';
-import { PictureComponent } from "../../../../../common/reusables/components/picture/picture.component";
-
-
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
+import { Router, RouterModule, ActivatedRoute, NavigationEnd } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-
-
-//PrimeNG imports
-import { InputTextModule } from 'primeng/inputtext';
-import { DividerModule } from 'primeng/divider';
-import { ButtonModule } from 'primeng/button';
-import { TextareaModule } from 'primeng/textarea';
-import { SelectModule } from 'primeng/select';
-import { AutoFocusModule } from 'primeng/autofocus';
-import { DialogModule } from 'primeng/dialog';
-import { MessageModule } from 'primeng/message';
-import { CardModule } from 'primeng/card';
-import { CheckboxModule } from 'primeng/checkbox';
-import { ActivatedRoute, Router } from '@angular/router';
-import { MarkdownPipe } from '../../../pipes/markdown.pipe';
-import { LinkListComponent } from "../../../../../common/reusables/components/link/list/link-list.component";
-import { DialogService } from 'primeng/dynamicdialog';
-import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
-import { PartnerTreeViewNavigationComponent } from './navigation/partner-tree-view-navigation.component';
-import {PartnerContactsComponent} from "../../partner/contacts/partner-contacts.component";
+import { Tab, TabList, Tabs } from 'primeng/tabs';
+import { TooltipModule } from 'primeng/tooltip';
+import { filter, Subscription } from 'rxjs';
 import { PartnerTree } from '../../../models/partner-tree.model';
-import { PartnerCategoryGroup, PartnerGroup } from '../../../models/partner-category-group.model';    
-import { JsonPipe } from '@angular/common';
-import { PartnerTreeService } from '../../../services/partner-tree.service';
-import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
-import { ListviewComponent } from '../../../../../common/pages/components/listview/listview.component';
+import { PartnerTreeViewNavigationComponent } from './navigation/partner-tree-view-navigation.component';
+import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from '../item/partner-tree-item.component';
-import { PartnerTreeItemFooterComponent } from '../item/partner-tree-item-footer.component';
+import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { CachedDataService } from '../../../../../common/services/cached-data.service';
+
+
+interface TabItem {
+  label: string;
+  route: string;
+}
+
+/**
+ * @uiEntity PartnerTreeView
+ * @route /admin/partner-tree/:recordId
+ * @description Partner tree node detail navigation interface with tabs for managing specific organizational hierarchy nodes. Provides organized access to partner tree details and analytics data.
+ * @capabilities navigate_tree_sections, view_tree_details, edit_tree_node, access_tree_analytics, manage_tree_relationships
+ * @synonyms partner_tree_navigation, organizational_node_details, hierarchy_node_tabs, tree_node_view
+ * @mandatoryFields recordId
+ * @help_when_stuck Use the tabs to navigate between different aspects of this organizational node. The Edit button allows you to modify the tree structure. Use the Details tab for organizational information and Dashboard tab for analytics.
+ * @common_tasks
+ *   - Viewing tree node details: Click on the Details tab to see organizational information
+ *   - Editing tree structure: Click the Edit button to modify organizational hierarchy
+ *   - Accessing analytics: Switch to Dashboard tab to view performance and data metrics
+ *   - Managing relationships: Use the details view to understand parent-child relationships
+ *   - Navigating hierarchy: Use the navigation breadcrumb to move between tree levels
+ */
 
 @Component({
   selector: 'app-partner-tree-view',
   imports: [
-    TranslateModule,
-    InputTextModule,
-    DropdownModule,
-    DatePickerModule,
-    DocumentComponent,
-    GDriveDocumentComponent,
-    ButtonModule,
-    TextareaModule,
-    PanelModule,
-    SelectModule,
-    AutoFocusModule,
-    DialogModule,
-    MessageModule,
-    DividerModule,
-    CardModule,
-    CheckboxModule,
-    ReactiveFormsModule,
-    MarkdownPipe,
-    LinkListComponent,
-    PictureComponent,
-    PartnerTreeViewNavigationComponent,
-    PartnerContactsComponent,
-    PartnerViewContactsComponent,
-    ListviewComponent,
+    CommonModule,
     RouterModule,
-    JsonPipe
+    TranslateModule,
+    Tabs,
+    TabList,
+    Tab,
+    TooltipModule,
+    PartnerTreeViewNavigationComponent,
+
   ],
-  templateUrl: './partner-tree-view.component.html',
+  providers: [DialogService],
+  template: `
+  <div class="flex flex-col gap-8">
+    <!-- Back button -->
+<!--    <app-go-back></app-go-back>-->
+
+    <!-- Section Titre -->
+    <div class="flex flex-col gap-4">
+      <!-- Title and Name section -->
+      <div class="flex items-center justify-between w-full">
+        <div class="flex flex-col">
+          <div class="text-lg font-medium text-gray-600">
+            @if (recordData.partnerGroupId) {
+              {{ 'label.partnerTree.partnerGroup' | translate }}
+            } @else if (recordData.partnerCategoryCode) {
+              {{ 'label.partnerTree.partnerCategory' | translate }}
+            } @else {
+              {{ 'title.partnerTree' | translate }}
+            }
+          </div>
+          <div class="text-3xl font-bold">
+            {{ recordData.name }}
+          </div>
+        </div>
+
+        <!-- Edit button in top right -->
+        <div class="flex items-start">
+          @if (hasEditPermission) {
+            <button
+              type="button"
+              class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              (click)="handleEditClick()">
+              <i class="pi pi-pencil text-gray-600 hover:text-gray-800"></i>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Navigation breadcrumb -->
+      <app-partner-tree-view-navigation></app-partner-tree-view-navigation>
+    </div>
+
+    <!-- Tabs -->
+    <p-tabs [value]="activeRoute">
+      <p-tablist>
+        <p-tab *ngFor="let tab of tabs"
+              [value]="tab.route"
+              [routerLink]="tab.route"
+              class="flex items-center !gap-2 text-inherit">
+          <span>{{ tab.label }}</span>
+        </p-tab>
+      </p-tablist>
+    </p-tabs>
+
+    <!-- Router outlet for tab content -->
+    <div>
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+  `,
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [DialogService],
+  styles: `
+    :host ::ng-deep {
+      --p-tabs-tablist-background: transparent;
+    }
+  `
 })
-export class PartnerTreeViewComponent implements OnInit {
-  router = inject(Router);
-  activatedRoute = inject(ActivatedRoute);
-  documentService = inject(DocumentService);
-  dialogService = inject(DialogService);
-  cdr = inject(ChangeDetectorRef);
+export class PartnerTreeViewComponent implements OnInit, OnDestroy {
+  recordId: string = '';
+  activeRoute: string = '';
 
-  cachedDataService = inject(CachedDataService);
-  feedbackDialogService = inject(FeedbackDialogService);
+  tabs: TabItem[] = [];
+  recordData: PartnerTree = {} as PartnerTree;
+  private routerSubscription: Subscription | null = null;
+  private paramSubscription: Subscription | null = null;
+
+  // Inject services
+  private dialogService = inject(DialogService);
+  private feedbackDialogService = inject(FeedbackDialogService);
+  private permissionUtilityService = inject(PermissionUtilityService);
+  private cachedDataService = inject(CachedDataService);
 
   // RBAC permissions
-  permissionUtilityService = inject(PermissionUtilityService);
   recordPermissionsData = this.permissionUtilityService.createInstancePermissions('PartnerTree');
   recordPermissions = this.recordPermissionsData.recordPermissions;
 
-  partnerTreeId = signal<number>(0);
-  partnerTree = signal<PartnerTree | null>(null);
-  partnerTreeChildren = signal<PartnerTree[]>([]);
+  constructor(
+    private router: Router,
+    private activatedRoute: ActivatedRoute
+  ) {}
 
-  childrenPartnerGroups = signal<PartnerGroup[]>([]);
-
-  isPartnerCategory = computed(() => this.partnerTree()?.partnerCategoryCode !== null);
-
-  ngOnInit() {
-    this.activatedRoute.data.subscribe((data: {[key: string]: any}) => {
-      if (data['partnerTreeData']) {
-        this.partnerTree.set(data['partnerTreeData'].data);
-        this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));
-        
-        // Extract permissions from response if available
-        if (data['partnerTreeData'].permissions) {
-          this.recordPermissions.set({
-            entity: 'PartnerTree',
-            hasAccess: true,
-            permissions: data['partnerTreeData'].permissions
-          });
-        } else if (this.partnerTree()?.id) {
-          // Load permissions for the partner tree
-          this.recordPermissionsData.loadPermissions(this.partnerTree()!.id!.toString(), this.cdr);
-        }
+  ngOnInit(): void {
+    // Listen to parameter changes instead of using snapshot
+    this.paramSubscription = this.activatedRoute.paramMap.subscribe(params => {
+      const newRecordId = params.get('recordId') || '';
+      if (newRecordId !== this.recordId) {
+        this.recordId = newRecordId;
+        this.updateTabs();
       }
     });
+
+    // Get the resolved data from the route
+    this.activatedRoute.data.subscribe(data => {
+      this.recordData = data['partnerTreeData']?.data || {};
+
+      // Extract permissions from response if available
+      if (data['partnerTreeData']?.permissions) {
+        this.recordPermissions.set({
+          entity: 'PartnerTree',
+          hasAccess: true,
+          permissions: data['partnerTreeData'].permissions
+        });
+      } else if (this.recordData?.id) {
+        // Load permissions for the partner tree
+        this.recordPermissionsData.loadPermissions(this.recordData.id.toString());
+      }
+    });
+
+    // Set initial active tab
+    this.updateActiveTab();
+
+    // Subscribe to router events to update active tab on navigation
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.updateActiveTab();
+      });
   }
 
-  partnerColumns: ListViewColumn[] = [
-    {
-      field: 'logoUrl',
-      label: '',
-      sortable: false,
-      type: 'avatar',
-      width: '50px'
-    },
-    {
-      field: 'name',
-      label: 'label.partner.name',
-      sortable: false,
-      type: 'text'
+  ngOnDestroy(): void {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
     }
-  ];
+    if (this.paramSubscription) {
+      this.paramSubscription.unsubscribe();
+    }
+  }
 
-  handleEditClick() {
+  private updateTabs(): void {
+    // Create tabs based on recordId
+    this.tabs = [
+      {
+        label: 'Details',
+        route: `/admin/partner-tree/${this.recordId}`
+      },
+      {
+        label: 'Dashboard',
+        route: `/admin/partner-tree/${this.recordId}/data`
+      }
+    ];
+  }
+
+  private updateActiveTab(): void {
+    const currentUrl = this.router.url;
+    const activeTabIndex = currentUrl.includes('/data') ? 1 : 0;
+    this.activeRoute = this.tabs[activeTabIndex]?.route || '';
+  }
+
+  get hasEditPermission(): boolean {
+    return this.permissionUtilityService.canUpdate(this.recordPermissions());
+  }
+
+  /**
+   * @uiButton edit_partner_tree_node
+   * @description Opens the partner tree node editing dialog to modify organizational hierarchy structure and details
+   * @label Edit
+   * @icon pi pi-pencil
+   * @when_to_use When you need to modify organizational node details, relationships, or hierarchical positioning
+   * @permissions PARTNER_TREE_UPDATE
+   */
+  handleEditClick(): void {
     // Check permission before opening modal
     if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
-      this.feedbackDialogService.showErrorToast({ 
-        detail: 'You do not have permission to edit this partner tree' 
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to edit this partner tree'
       });
       return;
     }
@@ -154,7 +233,7 @@ export class PartnerTreeViewComponent implements OnInit {
       width: '50rem',
       closable: true,
       data: {
-        record: this.partnerTree()
+        record: this.recordData
       }
     });
 
@@ -163,25 +242,20 @@ export class PartnerTreeViewComponent implements OnInit {
         // Reload the tree data after successful edit
         this.cachedDataService.partnerTreeService.getPartnerTreeDataById(result.id!.toString()).subscribe({
           next: (data: any) => {
-            this.partnerTree.set(data.data);
-            this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));
+            this.recordData = data.data;
             this.feedbackDialogService.showSuccessToast({ detail: 'Partner tree updated successfully!' });
+
+            // Reload the current route to refresh all child components
+            this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+              this.router.navigate([this.router.url]);
+            });
+          },
+          error: (error) => {
+            this.feedbackDialogService.showErrorToast({ detail: 'Failed to update partner tree' });
           }
         });
       }
     });
-  }
-
-  navigateToPartner($event: any) {
-    this.router.navigate(['/partnerships/partners/' + $event.id]);
-  }
-
-  getPartnersUrl() : string {
-    if (this.isPartnerCategory()) {
-      return 'api/partner/by-partner-category-code/' + this.partnerTree()?.partnerCategoryCode;
-    } else {
-      return 'api/partner/by-partner-group-code/' + this.partnerTree()?.partnerGroupCode;
-    }
   }
 
 }

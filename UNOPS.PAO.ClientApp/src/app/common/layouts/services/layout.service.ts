@@ -16,6 +16,7 @@ interface LayoutState {
     staticMenuMobileActive?: boolean;
     menuHoverActive?: boolean;
     aiAssistantActive?: boolean;
+    aiAssistantPanelSize?: number;
 }
 
 interface MenuChangeEvent {
@@ -27,6 +28,9 @@ interface MenuChangeEvent {
     providedIn: 'root'
 })
 export class LayoutService {
+    private readonly AI_ASSISTANT_ACTIVE_KEY = 'aiAssistantActive';
+    private readonly AI_ASSISTANT_PANEL_SIZE_KEY = 'aiAssistantPanelSize';
+
     _config: layoutConfig = {
         preset: 'UnopsPreset',
         surface: null,
@@ -40,7 +44,8 @@ export class LayoutService {
         configSidebarVisible: false,
         staticMenuMobileActive: false,
         menuHoverActive: false,
-        aiAssistantActive: true
+        aiAssistantActive: this.getStoredAiAssistantActive(),
+        aiAssistantPanelSize: this.getStoredAiAssistantPanelSize()
     };
 
     layoutConfig = signal<layoutConfig>(this._config);
@@ -75,6 +80,8 @@ export class LayoutService {
 
     isOverlay = computed(() => this.layoutConfig().menuMode === 'overlay');
 
+
+
     transitionComplete = signal<boolean>(false);
 
     private initialized = false;
@@ -97,7 +104,37 @@ export class LayoutService {
 
             this.handleDarkModeTransition(config);
         });
+
+        // Effect pour sauvegarder automatiquement l'état de l'AI assistant
+        effect(() => {
+            const state = this.layoutState();
+            if (this.initialized && state) {
+                this.saveAiAssistantState(state);
+            }
+        });
     }
+
+    private getStoredAiAssistantActive(): boolean {
+        try {
+            const stored = localStorage.getItem(this.AI_ASSISTANT_ACTIVE_KEY);
+            return stored ? JSON.parse(stored) : true; // true par défaut
+        } catch {
+            return true;
+        }
+    }
+
+    private getStoredAiAssistantPanelSize(): number {
+        const stored = localStorage.getItem(this.AI_ASSISTANT_PANEL_SIZE_KEY);
+        return stored ? JSON.parse(stored) : 30; // 30 par défaut
+    }
+
+
+
+    private saveAiAssistantState(state: LayoutState): void {
+        localStorage.setItem(this.AI_ASSISTANT_ACTIVE_KEY, JSON.stringify(state.aiAssistantActive));
+        localStorage.setItem(this.AI_ASSISTANT_PANEL_SIZE_KEY, JSON.stringify(state.aiAssistantPanelSize));
+    }
+
 
     private handleDarkModeTransition(config: layoutConfig): void {
         if ((document as any).startViewTransition) {
@@ -157,11 +194,20 @@ export class LayoutService {
     }
 
     onAIAssistantToggle() {
-        this.layoutState.update((prev) => ({ ...prev, aiAssistantActive: !this.layoutState().aiAssistantActive }));
+        this.layoutState.update(state => ({
+            ...state,
+            aiAssistantActive: !state.aiAssistantActive
+        }));
+    }
 
-        if (this.layoutState().aiAssistantActive) {
-            this.overlayOpen.next(null);
-        }
+
+
+    updateAiAssistantPanelSize(size: number) {
+        this.layoutState.update((prev) => ({ 
+            ...prev, 
+            aiAssistantPanelSize: size,
+            aiAssistantActive: size > 0
+        }));
     }
 
     isDesktop() {

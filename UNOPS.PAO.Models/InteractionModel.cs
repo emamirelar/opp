@@ -12,19 +12,9 @@ public class InteractionModel
     public InteractionType Type { get; set; }
     public DateTime Date { get; set; }
 
-    [JsonIgnore]
-    public byte[]? Data { get; set; }
-    
-    [JsonPropertyName("data")]
-    public string? TextData 
-    { 
-        get => Data != null ? Encoding.UTF8.GetString(Data) : null;
-        set => Data = value != null ? Encoding.UTF8.GetBytes(value) : null;
-    }
-    
-    public int ContactId { get; set; }
-    public string? ContactName { get; set; }
     public string? Description { get; set; }
+    
+    public string? ContactName { get; set; }
     public string Status { get; set; }
     public virtual List<string>? EmailAddresses { get; set; } = new List<string>();
     public virtual List<string>? PhoneNumbers { get; set; } = new List<string>();
@@ -39,15 +29,49 @@ public class InteractionModel
     public virtual ICollection<InteractionUserModel>? InteractionUsers { get; set; }
     public string? Location { get; set; }
     public string Subject { get; set; }
-    [JsonIgnore]
-    public virtual OrganizationHierarchyModel? OrgUnit { get; set; }
-    public int? OrgUnitId { get; set; }
+    
+    public virtual ICollection<OrganizationUnitRelationshipModel>? OrganizationUnitRelationships { get; set; }
+    
     public List<DocumentModel>? Documents { get; set; }
 
     /// <summary>
-    /// Permissions for this specific partner
+    /// Full contact entities associated with this interaction
+    /// </summary>
+    public List<ContactModel>? Contacts { get; set; }
+
+    /// <summary>
+    /// Full partner entities associated with this interaction
+    /// </summary>
+    public List<PartnerModel>? Partners { get; set; }
+
+    /// <summary>
+    /// Full user entities associated with this interaction
+    /// </summary>
+    public List<UserValueModel>? Users { get; set; }
+
+    /// <summary>
+    /// Permissions for this specific interaction
     /// </summary>
     public EntityPermissionsModel? Permissions { get; set; }
+    public string? GmailThreadId { get; set; }
+    public string? GmailMessageId { get; set; }
+    
+    // Audit fields from ModifiableDeletableEntity (read-only from frontend perspective)
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public DateTime? CreatedDate { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public DateTime? LastModifiedDate { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? CreatedBy { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? LastModifiedBy { get; set; }
+    
+    // User name fields resolved from UserProfile
+    public string? CreatedByName { get; set; }
+    public string? LastModifiedByName { get; set; }
 }
 
 public class InteractionContactModel

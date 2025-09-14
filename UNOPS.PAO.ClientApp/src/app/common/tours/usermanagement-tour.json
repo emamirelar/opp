@@ -1,0 +1,87 @@
+{
+  "tourId": "usermanagement-tour",
+  "titleKey": "tour.usermanagement.title",
+  "descriptionKey": "tour.usermanagement.description",
+  "entity": "UserManagement",
+  "route": "/admin/user-management",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "titleKey": "tour.usermanagement.steps.welcome.title",
+        "descriptionKey": "tour.usermanagement.steps.welcome.description",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".user-management-header",
+      "fallbackType": "section-header",
+      "popover": {
+        "titleKey": "tour.usermanagement.steps.header.title",
+        "descriptionKey": "tour.usermanagement.steps.header.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".filter-section",
+      "fallbackType": "filter-section",
+      "popover": {
+        "titleKey": "tour.usermanagement.steps.filterSection.title",
+        "descriptionKey": "tour.usermanagement.steps.filterSection.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".table-container",
+      "fallbackType": "grid-view",
+      "popover": {
+        "titleKey": "tour.usermanagement.steps.usersList.title",
+        "descriptionKey": "tour.usermanagement.steps.usersList.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[icon=\"pi pi-pencil\"]",
+      "fallbackType": "edit-button",
+      "popover": {
+        "titleKey": "tour.usermanagement.steps.editUser.title",
+        "descriptionKey": "tour.usermanagement.steps.editUser.description",
+        "side": "left",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".role-management-section",
+      "fallbackType": "role-management",
+      "popover": {
+        "titleKey": "tour.usermanagement.steps.roleManagement.title",
+        "descriptionKey": "tour.usermanagement.steps.roleManagement.description",
+        "side": "right",
+        "align": "start"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.usermanagement.steps.tourControl.title",
+        "descriptionKey": "tour.usermanagement.steps.tourControl.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2024-01-15T12:30:00Z",
+  "version": "1.0"
+}

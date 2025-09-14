@@ -1,0 +1,56 @@
+{
+  "entity": "PartnerTreeView",
+  "description": "Partner tree node detail navigation interface with tabs for managing specific organizational hierarchy nodes. Provides organized access to partner tree details and analytics data.",
+  "synonyms": [
+    "partner_tree_navigation",
+    "organizational_node_details",
+    "hierarchy_node_tabs",
+    "tree_node_view"
+  ],
+  "mandatoryFields": [
+    "recordId"
+  ],
+  "pages": [
+    {
+      "route": "/admin/partner-tree/:recordId",
+      "name": "PartnerTreeViewComponent",
+      "description": "This page provides a detailed view of a specific partner tree node within the organizational hierarchy. Users can navigate through different aspects of the node using tabs, view its details, and access related analytics. It's the central point for managing and understanding individual components of the partner tree structure.",
+      "capabilities": [
+        "navigate_tree_sections",
+        "view_tree_details",
+        "edit_tree_node",
+        "access_tree_analytics",
+        "manage_tree_relationships"
+      ],
+      "buttons": [
+        {
+          "id": "edit_partner_tree_node-btn",
+          "label": "Edit",
+          "icon": "pi pi-pencil",
+          "action": "edit_partner_tree_node",
+          "description": "Opens a dialog to modify the details of the current organizational hierarchy node, including its structure, relationships, and other relevant information.",
+          "when_to_use": [
+            "When you need to modify organizational node details, relationships, or hierarchical positioning"
+          ]
+        }
+      ],
+      "forms": [],
+      "tabs": [],
+      "search": {},
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "If you're unsure how to proceed, remember that this page is designed to show details for a specific organizational node. Use the available tabs (if any appear) to switch between different views like 'Details' for basic information or 'Dashboard' for analytics. The 'Edit' button is your primary tool for making changes to this node's properties or its position in the tree. Always check the breadcrumbs for your current location within the hierarchy.",
+        "common_tasks": [
+          "Viewing tree node details: Click on the Details tab (if available) to see organizational information.",
+          "Editing tree structure: Click the 'Edit' button to open the modification dialog for this organizational node.",
+          "Accessing analytics: Switch to the Dashboard tab (if available) to view performance and data metrics related to this node.",
+          "Managing relationships: Use the details view to understand parent-child relationships and dependencies of this node.",
+          "Navigating hierarchy: Use the navigation breadcrumb at the top of the page to move between different levels of the partner tree."
+        ],
+        "troubleshooting": [],
+        "getting_started": "To get started, navigate to a specific partner tree node. This page will then display its core information. Look for the 'Details' tab to understand its basic properties. If you need to make changes, click the 'Edit' button. Explore the 'Dashboard' tab for any associated analytics.",
+        "keyboard_shortcuts": []
+      }
+    }
+  ]
+}

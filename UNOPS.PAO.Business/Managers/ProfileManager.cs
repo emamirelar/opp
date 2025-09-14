@@ -18,7 +18,7 @@ public class ProfileManager : IApplicationService
 
     public ProfileModel Get(string? email)
     {
-        var user = appDbContext.GrantUsers.FirstOrDefault(x => x.Email == email);
+        var user = appDbContext.PAOUsers.FirstOrDefault(x => x.Email == email);
         if (user == null)
         {
             throw new BusinessException("User profile not found");
@@ -34,7 +34,7 @@ public class ProfileManager : IApplicationService
 
     public async Task Update(ProfileModel profile)
     {
-        var user = appDbContext.GrantUsers.FirstOrDefault(x => x.Email == profile.Email);
+        var user = appDbContext.PAOUsers.FirstOrDefault(x => x.Email == profile.Email);
 
         if (user == null)
         {
@@ -44,12 +44,10 @@ public class ProfileManager : IApplicationService
         if (user.UserProfile == null)
         {
             user.UserProfile = new Domain.Entities.UserProfile();
-            user.UserProfile.SetCreateAuditData(user.Id);
         }
 
         user.UserProfile.FirstName = profile.FirstName;
         user.UserProfile.LastName = profile.LastName;
-        user.UserProfile.SetUpdateAuditData(user.Id);
 
         await appDbContext.SaveChangesAsync();
     }

@@ -1,0 +1,158 @@
+{
+  "tourId": "interactiondetail-tour",
+  "titleKey": "tour.interactiondetail.title",
+  "descriptionKey": "tour.interactiondetail.description",
+  "entity": "Interaction",
+  "route": "/partnerships/interactions/:id",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.welcome.title",
+        "descriptionKey": "tour.interactiondetail.steps.welcome.description",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "button[icon='pi pi-arrow-left']",
+      "fallbackType": "back-button",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.backButton.title",
+        "descriptionKey": "tour.interactiondetail.steps.backButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".edit-button",
+      "fallbackType": "edit-button",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.editButton.title",
+        "descriptionKey": "tour.interactiondetail.steps.editButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".delete-button",
+      "fallbackType": "delete-button",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.deleteButton.title",
+        "descriptionKey": "tour.interactiondetail.steps.deleteButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".interaction-ai-summary",
+      "fallbackType": "ai-summary",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.aiSummary.title",
+        "descriptionKey": "tour.interactiondetail.steps.aiSummary.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-panel[header='Description']",
+      "fallbackType": "description-panel",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.descriptionPanel.title",
+        "descriptionKey": "tour.interactiondetail.steps.descriptionPanel.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-panel[header='Related Documents']",
+      "fallbackType": "documents-panel",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.documentsPanel.title",
+        "descriptionKey": "tour.interactiondetail.steps.documentsPanel.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-panel[header='Interaction Details']",
+      "fallbackType": "interaction-details-panel",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.interactionDetailsPanel.title",
+        "descriptionKey": "tour.interactiondetail.steps.interactionDetailsPanel.description",
+        "side": "left",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-panel[header='Related Contacts']",
+      "fallbackType": "contacts-panel",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.contactsPanel.title",
+        "descriptionKey": "tour.interactiondetail.steps.contactsPanel.description",
+        "side": "left",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-panel[header='Related Partners']",
+      "fallbackType": "partners-panel",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.partnersPanel.title",
+        "descriptionKey": "tour.interactiondetail.steps.partnersPanel.description",
+        "side": "left",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-panel[header='UNOPS Personnel']",
+      "fallbackType": "personnel-panel",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.personnelPanel.title",
+        "descriptionKey": "tour.interactiondetail.steps.personnelPanel.description",
+        "side": "left",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-panel[header='Organization Unit']",
+      "fallbackType": "org-unit-panel",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.orgUnitPanel.title",
+        "descriptionKey": "tour.interactiondetail.steps.orgUnitPanel.description",
+        "side": "left",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-panel[header='History']",
+      "fallbackType": "audit-panel",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.auditPanel.title",
+        "descriptionKey": "tour.interactiondetail.steps.auditPanel.description",
+        "side": "left",
+        "align": "center"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.interactiondetail.steps.tourControl.title",
+        "descriptionKey": "tour.interactiondetail.steps.tourControl.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2024-01-15T12:30:00Z",
+  "version": "1.0"
+}
+

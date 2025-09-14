@@ -1,0 +1,107 @@
+{
+  "tourId": "aiprompt-overview",
+  "titleKey": "tour.aiprompt.title",
+  "descriptionKey": "tour.aiprompt.description",
+  "entity": "AiPrompt",
+  "route": "/admin/ai-prompt-management",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "titleKey": "tour.aiprompt.steps.welcome.title",
+        "descriptionKey": "tour.aiprompt.steps.welcome.description",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".ai-prompt-header",
+      "fallbackType": "section-header",
+      "popover": {
+        "titleKey": "tour.aiprompt.steps.header.title",
+        "descriptionKey": "tour.aiprompt.steps.header.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".create-prompt-button",
+      "fallbackType": "create-prompt",
+      "popover": {
+        "titleKey": "tour.aiprompt.steps.createPrompt.title",
+        "descriptionKey": "tour.aiprompt.steps.createPrompt.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".ai-prompt-search-section",
+      "fallbackType": "search-input",
+      "popover": {
+        "titleKey": "tour.aiprompt.steps.searchSection.title",
+        "descriptionKey": "tour.aiprompt.steps.searchSection.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".ai-prompt-table-section",
+      "fallbackType": "grid-view",
+      "popover": {
+        "titleKey": "tour.aiprompt.steps.promptsTable.title",
+        "descriptionKey": "tour.aiprompt.steps.promptsTable.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": "th[pSortableColumn='type']",
+      "fallbackType": "prompt-type",
+      "popover": {
+        "titleKey": "tour.aiprompt.steps.promptType.title",
+        "descriptionKey": "tour.aiprompt.steps.promptType.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": "th[pSortableColumn='model']",
+      "fallbackType": "ai-model",
+      "popover": {
+        "titleKey": "tour.aiprompt.steps.aiModel.title",
+        "descriptionKey": "tour.aiprompt.steps.aiModel.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".edit-prompt-button",
+      "fallbackType": "edit-button",
+      "popover": {
+        "titleKey": "tour.aiprompt.steps.editPrompt.title",
+        "descriptionKey": "tour.aiprompt.steps.editPrompt.description",
+        "side": "left",
+        "align": "center"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.aiprompt.steps.tourControl.title",
+        "descriptionKey": "tour.aiprompt.steps.tourControl.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2024-01-15T12:00:00Z",
+  "version": "1.0"
+}

@@ -8,26 +8,34 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<GrantUser, ApplicantModel>();
+        CreateMap<PAOUser, ApplicantModel>();
         CreateMap<Currency, CurrencyModel>();
         CreateMap<EligibleEntity, EligibleEntityModel>();
         CreateMap<Country, CountryModel>();
         CreateMap<Interaction, InteractionModel>();
-        CreateMap<InteractionRequest, Interaction>();
-        CreateMap<PartnerRequest, Partner>();
-        CreateMap<UpdatePartnerRequest, Partner>();
+        CreateMap<InteractionRequest, Interaction>()
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
+        CreateMap<PartnerRequest, Partner>()
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
+        CreateMap<UpdatePartnerRequest, Partner>()
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         CreateMap<Partner, PartnerModel>()
+            .PreserveReferences()
+            .MaxDepth(2)
             .ForMember(dest => dest.First5ContactsByDate, opt => opt.MapFrom(src => src.First5ContactsByDate));
         CreateMap<PartnerModel, Partner>();
         CreateMap<Contact, ContactValueModel>();
         CreateMap<Contact, ContactModel>()
-            .ForMember(dest => dest.Partner, opt => opt.Ignore())
-            .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null));
+            .PreserveReferences()
+            .MaxDepth(2)
+            .ForMember(dest => dest.Partner, opt => opt.MapFrom(src => src.Partner != null ? new PartnerSummaryModel { Id = src.Partner.Id, Name = src.Partner.Name } : null));
         CreateMap<ContactModel, Contact>()
             .ForMember(dest => dest.Partner, opt => opt.Ignore());
+        
+        // AI Prompt mappings
+        CreateMap<AiPrompt, AiPromptModel>();
         CreateMap<AiPromptModel, AiPrompt>();
-        CreateMap<AiScreenMappingModel, AiScreenMapping>();
-        CreateMap<AiChatHistoryModel, AiChatHistory>();
+
         CreateMap<AiChatSessionModel, AiChatSession>();
         CreateMap<Document, DocumentModel>();
         CreateMap<DocumentModel, Document>();
@@ -52,8 +60,11 @@ public class MappingProfile : Profile
         CreateMap<Partner, PartnerValueModel>();
         CreateMap<PartnerTree, PartnerTreeModel>();
         CreateMap<PartnerTreeModel, PartnerTree>();
-        CreateMap<GrantUser, UserValueModel>();
-        CreateMap<GrantUser, PAOUserModel>();
+        CreateMap<PAOUser, UserValueModel>();
+        CreateMap<PAOUser, PAOUserModel>();
         CreateMap<UserProfile, UserProfileValueModel>();
+        
+        // OrganizationUnitRelationship mappings
+        CreateMap<OrganizationUnitRelationship, OrganizationUnitRelationshipModel>().ReverseMap();
     }
 }

@@ -20,7 +20,7 @@ export class PermissionUtilityService {
       
       // Only clear cache if the route actually changed
       if (this.lastRoute !== newRoute) {
-        console.log('[PERMISSION-UTILITY] Route changed from', this.lastRoute, 'to', newRoute, '- clearing cache');
+        
         this.permissionService.clearPermissionCaches();
         this.lastRoute = newRoute;
       }
@@ -60,10 +60,10 @@ export class PermissionUtilityService {
         .subscribe({
           next: (permissions) => {
             if (!permissions.hasAccess) {
-              console.log(`[PERMISSION-UTILITY] No access to ${entityName} for route ${currentPath}`);
+              
               this.router.navigate(['/access-denied']);
             }
-            console.log(`[PERMISSION-UTILITY] Loaded ${entityName} permissions for route ${currentPath}:`, permissions);
+            
             entityPermissions.set(permissions);
             permissionsLoading.set(false);
             cdr?.detectChanges();
@@ -110,7 +110,7 @@ export class PermissionUtilityService {
       this.permissionService.getEntityInstancePermissions(entityName, entityId)
         .subscribe({
           next: (permissions) => {
-            console.log(`[PERMISSION-UTILITY] Loaded ${entityName} instance permissions for ID ${entityId}:`, permissions);
+            
             recordPermissions.set(permissions);
             cdr?.detectChanges();
           },
@@ -143,7 +143,7 @@ export class PermissionUtilityService {
    * Use this when you need to force a refresh of permissions
    */
   clearCaches() {
-    console.log('[PERMISSION-UTILITY] Manually clearing permission caches');
+    
     this.permissionService.clearPermissionCaches();
   }
 

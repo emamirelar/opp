@@ -132,6 +132,7 @@ public class LinkManager : ILinkManager
         {
             LinkEntityType.Contact => await context.Contacts.AnyAsync(c => c.Id == entityId),
             LinkEntityType.Partner => await context.Partners.AnyAsync(p => p.Id == entityId),
+            LinkEntityType.PartnerTree => await context.PartnerTrees.AnyAsync(pt => pt.Id == entityId),
             _ => throw new ArgumentException($"Unsupported entity type: {entityType}")
         };
 

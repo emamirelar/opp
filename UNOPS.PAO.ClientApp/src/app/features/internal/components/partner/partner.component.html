@@ -1,7 +1,8 @@
 <div class="flex flex-col gap-8">
   <div class="flex flex-wrap items-center gap-4">
-    <div>
-      <p class="text-2xl font-semibold"> {{ 'title.partners' | translate }} </p>
+    <div class="flex items-center gap-3 partner-section-header">
+      <span class="material-symbols-outlined text-3xl">corporate_fare</span>
+      <p class="text-3xl font-bold"> {{ 'title.partners' | translate }} </p>
     </div>
     <div class="ml-auto flex gap-2">
       @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
@@ -9,13 +10,17 @@
           icon="pi pi-file-import"
           [label]="'button.import' | translate"
           (click)="openImportDialog()"
-          severity="secondary"
+          rounded
+          text
+          class="partner-import-button"
         />
-        <p-button 
-          icon="pi pi-plus" 
-          label="New" 
+        <p-button
+          icon="pi pi-plus"
+          label="New"
           title="New Partner"
+          rounded
           (onClick)="openPartnerEditDialog()"
+          class="partner-new-button"
         />
       }
     </div>
@@ -23,10 +28,12 @@
 
   <app-listview
     [dataUrl]="'/api/partner'"
-    [columns]="columns"
+    [entityType]="'Partner'"
+    [columns]="columns()"
     [config]="listviewConfig()"
     (rowClick)="handleOnOpenRecordDetails($event)"
     (searchChange)="onSearchChange($event)"
+    class="partner-listview"
   >
   </app-listview>
 </div>
@@ -38,4 +45,3 @@
     (closeModal)="newPartnerData.set(null)"
   ></app-partner-new>
 }
-

@@ -4,6 +4,7 @@ using UNOPS.PAO.Domain.Entities;
 
 /// <summary>
 /// Specification that filters partners by name
+/// Updated to use new PartnerDescription field
 /// </summary>
 public class PartnerByNameSpecification : BaseSpecification<Partner>
 {
@@ -15,6 +16,5 @@ public class PartnerByNameSpecification : BaseSpecification<Partner>
         : base(p => p.Name != null && p.Name.ToLower().Contains(name.ToLower()))
     {
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
     }
 } 

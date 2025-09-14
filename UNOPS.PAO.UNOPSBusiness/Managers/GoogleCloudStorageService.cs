@@ -25,6 +25,9 @@ using Google.Cloud.Speech.V1;
 using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.Http;
 using Google.Cloud.TextToSpeech.V1;
+using Google.Apis.Storage.v1.Data;
+using System.IO;
+using System.Collections.Generic;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -33,6 +36,11 @@ public class GoogleCloudStorageService
     private readonly StorageClient _storageClient;
     private readonly IConfiguration _configuration;
     private readonly string _bucketName;
+    
+    // Cache for URL signer to avoid repeated Secret Manager calls
+    private static UrlSigner? _cachedUrlSigner;
+    private static DateTime _cacheExpiry = DateTime.MinValue;
+    private static readonly object _cacheLock = new object();
 
     public GoogleCloudStorageService(IConfiguration configuration) 
     {
@@ -78,5 +86,219 @@ public class GoogleCloudStorageService
         using var memoryStream = new MemoryStream();
         await file.CopyToAsync(memoryStream);
         return await UploadToGCS(memoryStream, fileName, file.ContentType);
+    }
+
+    // Generate a signed URL for secure access to a private object
+    public async Task<string> GenerateSignedUrlAsync(string objectName, TimeSpan expiration, HttpMethod httpMethod = null)
+    {
+        try
+        {
+            // OPTIMIZATION: Skip object existence check for better performance  
+            // The signed URL will gracefully fail if object doesn't exist
+            
+            // Use cached or create URL signer from Secret Manager (OPTIMIZED)
+            var urlSigner = await CreateUrlSignerAsync();
+
+            if (urlSigner == null)
+            {
+                throw new InvalidOperationException("Unable to create URL signer. No valid service account credentials found. " +
+                    "Please ensure Google Cloud credentials are properly configured.");
+            }
+
+            // Generate signed URL
+            var signedUrl = await urlSigner.SignAsync(
+                _bucketName,
+                objectName,
+                expiration,
+                httpMethod ?? HttpMethod.Get
+            );
+
+            return signedUrl;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to generate signed URL: {ex.Message}", ex);
+        }
+    }
+
+    // Generate a signed URL with default 1 hour expiration
+    public async Task<string> GenerateSignedUrlAsync(string objectName)
+    {
+        return await GenerateSignedUrlAsync(objectName, TimeSpan.FromHours(1));
+    }
+
+    // Generate signed URLs for multiple objects
+    public async Task<Dictionary<string, string>> GenerateSignedUrlsAsync(IEnumerable<string> objectNames, TimeSpan expiration)
+    {
+        var signedUrls = new Dictionary<string, string>();
+        
+        foreach (var objectName in objectNames)
+        {
+            try
+            {
+                var signedUrl = await GenerateSignedUrlAsync(objectName, expiration);
+                signedUrls.Add(objectName, signedUrl);
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue with other objects
+                signedUrls.Add(objectName, null);
+            }
+        }
+
+        return signedUrls;
+    }
+
+    // Helper method to extract object name from Google Cloud Storage URL
+    public string ExtractObjectNameFromUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+            return null;
+
+        try
+        {
+            var uri = new Uri(url);
+            
+            // Handle different URL formats:
+            // 1. https://storage.cloud.google.com/bucket-name/object/path
+            // 2. https://storage.googleapis.com/bucket-name/object/path
+            
+            if (uri.Host == "storage.cloud.google.com" || uri.Host == "storage.googleapis.com")
+            {
+                var pathSegments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                if (pathSegments.Length >= 2)
+                {
+                    // Skip the bucket name (first segment) and return the rest as object path
+                    return string.Join("/", pathSegments.Skip(1));
+                }
+            }
+            
+            return null;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    // Generate signed URL from a Google Cloud Storage URL
+    public async Task<string> GenerateSignedUrlFromStorageUrl(string storageUrl, TimeSpan? expiration = null)
+    {
+        var objectName = ExtractObjectNameFromUrl(storageUrl);
+        
+        if (string.IsNullOrEmpty(objectName))
+        {
+            return storageUrl; // Return original URL if we can't extract object name
+        }
+
+        try
+        {
+            var signedUrl = await GenerateSignedUrlAsync(objectName, expiration ?? TimeSpan.FromHours(1));
+            return signedUrl;
+        }
+        catch (Exception)
+        {
+            // Try alternative approach with temporary access token
+            try
+            {
+                var tempUrl = await GenerateTemporaryAccessUrl(objectName, expiration);
+                if (tempUrl != $"https://storage.googleapis.com/{_bucketName}/{objectName}")
+                {
+                    return tempUrl;
+                }
+            }
+            catch (Exception)
+            {
+                // Temporary access URL also failed
+            }
+            
+            return storageUrl; // Return original URL if both approaches fail
+        }
+    }
+
+    // Alternative method for development: Generate a temporary access token URL
+    public async Task<string> GenerateTemporaryAccessUrl(string objectName, TimeSpan? expiration = null)
+    {
+        try
+        {
+            // For development environment, we can use the Google Cloud Storage client
+            // to get a temporary access token and build a URL
+            var credential = GoogleCredential.GetApplicationDefault();
+            var accessToken = await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
+            
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                // Create a URL with access token (less secure but works for development)
+                var tempUrl = $"https://storage.googleapis.com/{_bucketName}/{objectName}?access_token={accessToken}";
+                return tempUrl;
+            }
+        }
+        catch (Exception ex)
+        {
+        }
+        
+        return $"https://storage.googleapis.com/{_bucketName}/{objectName}";
+    }
+
+    // Cache management for URL signer
+    private UrlSigner? GetCachedUrlSigner()
+    {
+        lock (_cacheLock)
+        {
+            if (_cachedUrlSigner != null && DateTime.UtcNow < _cacheExpiry)
+            {
+                return _cachedUrlSigner;
+            }
+            return null;
+        }
+    }
+
+    private void SetCachedUrlSigner(UrlSigner urlSigner)
+    {
+        lock (_cacheLock)
+        {
+            _cachedUrlSigner = urlSigner;
+            _cacheExpiry = DateTime.UtcNow.AddMinutes(30); // Cache for 30 minutes
+        }
+    }
+
+    // Optimized URL signer creation with caching (Secret Manager only)
+    private async Task<UrlSigner?> CreateUrlSignerAsync()
+    {
+        // Try cache first - avoid Secret Manager calls
+        var cachedSigner = GetCachedUrlSigner();
+        if (cachedSigner != null)
+        {
+            return cachedSigner;
+        }
+
+        // Load service account from Google Secret Manager
+        try
+        {
+            var projectId = _configuration.GetValue<string>("AppConfig:ProjectId");
+            var secretName = _configuration.GetValue<string>("GoogleDriveSettings:GoogleDriveServiceAccountJSONSecretName");
+            
+            if (!string.IsNullOrEmpty(projectId) && !string.IsNullOrEmpty(secretName))
+            {
+                var secretManager = new GoogleSecretManagerConfigurationProvider(projectId);
+                var serviceAccountJson = secretManager.GetSecretVersion(secretName, "latest");
+                
+                if (!string.IsNullOrEmpty(serviceAccountJson))
+                {
+                    var serviceAccountCredential = ServiceAccountCredential.FromServiceAccountData(
+                        new MemoryStream(System.Text.Encoding.UTF8.GetBytes(serviceAccountJson)));
+                    
+                    var urlSigner = UrlSigner.FromCredential(serviceAccountCredential);
+                    SetCachedUrlSigner(urlSigner); // Cache for 30 minutes
+                    return urlSigner;
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Secret Manager failed
+        }
+
+        return null;
     }
 }

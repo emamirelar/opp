@@ -59,6 +59,12 @@ export class CachedDataService {
   private allYesNoData = signal([]);
   allYesNo = this.allYesNoData.asReadonly();
 
+  private allDueDiligenceRequiredData = signal([]);
+  allDueDiligenceRequired = this.allDueDiligenceRequiredData.asReadonly();
+
+  private allDueDiligenceApprovalData = signal([]);
+  allDueDiligenceApproval = this.allDueDiligenceApprovalData.asReadonly();
+
   private allPartnerLevyAppliesData = signal([]);
   allPartnerLevyApplies = this.allPartnerLevyAppliesData.asReadonly();
 
@@ -77,11 +83,14 @@ export class CachedDataService {
   private allPartnerLevelTypesData = signal([]);
   allPartnerLevelTypes = this.allPartnerLevelTypesData.asReadonly();
 
-  private allPartnerOfficesData = signal([]);
-  allPartnerOffices = this.allPartnerOfficesData.asReadonly();
+  private allOrganizationUnitsData = signal([]);
+  allOrganizationUnits = this.allOrganizationUnitsData.asReadonly();
 
   private allPartnerCategoriesData = signal([]);
   allPartnerCategories = this.allPartnerCategoriesData.asReadonly();
+
+  private allLiaisonOfficesData = signal<any[]>([]);
+  allLiaisonOffices = this.allLiaisonOfficesData.asReadonly();
 
   // Add signal for partner category and group structure
   private partnerCategoryGroupData = signal<PartnerCategoryGroup[]>([]);
@@ -99,8 +108,13 @@ export class CachedDataService {
     value: category.partnerCategoryCode,
     items: category.children.map(group => ({
       name: group.partnerGroupName,
-      value: group.partnerGroupCode
+      value: group.partnerGroupId
     }))
+  })) || []);
+
+  getPartnerCategoriesForSelect = computed(() => this.partnerCategoryGroups()?.map(category => ({
+    name: category.partnerCategoryName,
+    id: category.partnerCategoryId
   })) || []);
 
   private allContactsData = signal<any[]>([]);
@@ -123,11 +137,13 @@ export class CachedDataService {
     this.loadPartnerScopeData();
     this.loadPartnerStatus();
     this.loadYesNo();
+    this.loadDueDiligenceRequiredData();
+    this.loadDueDiligenceApprovalData();
     this.loadPartners();
     this.loadPartnerLevelTypeData();
-    this.loadPartnerOffices();
-    this.loadPartnerCategories();
+    this.loadOrganizationUnits();
     this.loadPartnerCategoryGroups(); // Load category and group structure
+    this.loadLiaisonOffices();
     this.loadContacts();
     this.loadUsers();
     this.loadCurrentUserData();
@@ -153,14 +169,18 @@ export class CachedDataService {
     this.allPartnerStatusData.set([]);
     this.allPartnerNewEngagementData.set([]);
     this.allYesNoData.set([]);
+    this.allDueDiligenceRequiredData.set([]);
+    this.allDueDiligenceApprovalData.set([]);
     this.allPartnerLevyAppliesData.set([]);
     this.allPartnerReasonForLevyNotData.set([]);
     this.allPartnerLevyTreatmentData.set([]);
     this.allPartnerScopesData.set([]);
     this.allPartnersData.set([]);
-    this.allPartnerOfficesData.set([]);
+    this.allContactsData.set([]);
+    this.allOrganizationUnitsData.set([]);
     this.allPartnerCategoriesData.set([]);
-    this.partnerCategoryGroupData.set([]); // Clear category and group structure
+    this.partnerCategoryGroupData.set([]); // Clear category and group structure    
+    this.allLiaisonOfficesData.set([]);
   }
 
   loadProjects(){
@@ -294,16 +314,38 @@ export class CachedDataService {
     this.allYesNoData.set(yesNo);
   }
 
+  loadDueDiligenceRequiredData() {
+    let dueDiligenceRequired: any = [{
+      id: 'Required',
+      name: 'Required'
+    }, {
+      id: 'NotRequired',
+      name: 'Not Required'
+    }];
+    this.allDueDiligenceRequiredData.set(dueDiligenceRequired);
+  }
+
+  loadDueDiligenceApprovalData() {
+    let dueDiligenceApproval: any = [{
+      id: 'Approved',
+      name: 'Approved'
+    }, {
+      id: 'NotApproved',
+      name: 'Not Approved'
+    }];
+    this.allDueDiligenceApprovalData.set(dueDiligenceApproval);
+  }
+
   loadPartnerLevyAppliesData() {
     let partnerLevyApplies: any = [{
-      id: 'Potentially does not apply',
-      name: 'Potentially does not apply'
+      id: 'DoesNotApply',
+      name: 'Does Not Apply'
     }, {
-      id: 'Does not apply',
-      name: 'Does not apply'
+      id: 'PotentiallyApplied',
+      name: 'Potentially Applied'
     }, {
-      id: 'Potentially applies',
-      name: 'Potentially applies'
+      id: 'PotentiallyNotApplied',
+      name: 'Potentially Not Applied'
     }];
     this.allPartnerLevyAppliesData.set(partnerLevyApplies);
   }
@@ -480,27 +522,32 @@ export class CachedDataService {
     }
   }
 
-  loadPartnerOffices() {
-    if ((this.allPartnerOfficesData() == undefined) || (this.allPartnerOfficesData().length <= 0)) {
+  /**
+   * Forces a refresh of the partners cache by clearing current data and reloading
+   */
+  refreshPartners(){
+    // Clear current cache
+    this.allPartnersData.set([]);
+    // Reload from API
+    this.loadPartners();
+  }
+
+  /**
+   * Forces a refresh of the contacts cache by clearing current data and reloading
+   */
+  refreshContacts(){
+    // Clear current cache
+    this.allContactsData.set([]);
+    // Reload from API
+    this.loadContacts();
+  }
+
+  loadOrganizationUnits() {
+    if ((this.allOrganizationUnitsData() == undefined) || (this.allOrganizationUnitsData().length <= 0)) {
       this.isLoading.set(true);
       this.http.get('/api/values/organization-units').subscribe({
         next: (data: any) => {
-          this.allPartnerOfficesData.set(data);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-        }
-      });
-    }
-  }
-
-  loadPartnerCategories() {
-    if ((this.allPartnerCategoriesData() == undefined) || (this.allPartnerCategoriesData().length <= 0)) {
-      this.isLoading.set(true);
-      this.http.get('/api/values/partner-categories').subscribe({
-        next: (data: any) => {
-          this.allPartnerCategoriesData.set(data);
+          this.allOrganizationUnitsData.set(data);
           this.isLoading.set(false);
         },
         error: (err) => {
@@ -549,20 +596,30 @@ export class CachedDataService {
   }
 
   loadUsers() {
-    // Initialize with empty array
+    // OPTIMIZED: Load only initial subset of users instead of all 13,000+
+    // This prevents UI freezing when there are many users
     if (this.allUsersData() === undefined || this.allUsersData().length <= 0) {
       // Default to empty array before API response
       this.allUsersData.set([]);
 
       this.isLoading.set(true);
-      this.http.get('/api/values/users').subscribe({
-        next: (data: any) => {
-          // Ensure data is an array
-          this.allUsersData.set(Array.isArray(data) ? data : []);
+      
+      // Use the new paginated endpoint to load only the first 100 users
+      const initialRequest = {
+        pageIndex: 0,
+        pageSize: 100,
+        activeOnly: true
+      };
+      
+      this.http.post('/api/values/users/paged', initialRequest).subscribe({
+        next: (response: any) => {
+          // Set only the records from the paginated response
+          this.allUsersData.set(response.records || []);
           this.isLoading.set(false);
         },
         error: (err) => {
-          // Keep empty array on error
+          console.warn('Failed to load initial users, falling back to search-only mode:', err);
+          // Keep empty array on error - components should use UserSearchService for dynamic loading
           this.allUsersData.set([]);
           this.isLoading.set(false);
         }
@@ -577,7 +634,9 @@ export class CachedDataService {
       //this.currentUserData.set([]);
 
       this.isLoading.set(true);
-      this.http.get('/api/current-user-data').subscribe({
+      this.currentUserData.set({});
+      this.isLoading.set(false);
+      /*this.http.get('/api/current-user-data').subscribe({
         next: (data: any) => {
           this.currentUserData.set(data);
           this.isLoading.set(false);
@@ -585,6 +644,24 @@ export class CachedDataService {
         error: (err) => {
           // Keep empty array on error
           //this.allUsersData.set(new Object);
+          this.isLoading.set(false);
+        }
+      });*/
+    }
+  }
+
+  loadLiaisonOffices() {
+    if ((this.allLiaisonOfficesData() == undefined) || (this.allLiaisonOfficesData().length <= 0)) {
+      // Default to empty array before API response
+      this.allLiaisonOfficesData.set([]);
+      this.isLoading.set(true);
+      this.http.get('/api/values/liaison-offices').subscribe({
+        next: (data: any) => {
+          this.allLiaisonOfficesData.set(Array.isArray(data) ? data : []);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.allLiaisonOfficesData.set([]);
           this.isLoading.set(false);
         }
       });

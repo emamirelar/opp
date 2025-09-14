@@ -1,8 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {Observable, map, of, catchError} from 'rxjs';
+import {Observable, map, of, catchError, throwError} from 'rxjs';
 import { Contact } from '../../../../features/internal/models/contact.model';
 import { Partner } from '../../../../features/internal/models/partner.model';
+import { Interaction } from '../../../../features/internal/models/interaction.model';
+import { InteractionType } from '../../../../features/internal/models/interaction-type.enum';
 
 export interface AnalyzeFileRequest {
   type: string;
@@ -22,108 +24,54 @@ export interface ImportAnalysisResponse {
     type: string;
     records: any[];
     jobId?: string; // PubSub job ID for async operations
+    intent?: string; // 'Success' | 'Processing' | 'InternalDuplicatesFound' | 'Error'
+    internalDuplicates?: {
+        totalGroups: number;
+        totalDuplicateRecords: number;
+        totalRecords: number;
+        cleanRecords: number;
+        duplicateGroups: Array<{
+            masterRowNumber: number;
+            duplicateRowNumbers: number[];
+            matchReasons: string[];
+            masterRecord: any;
+            duplicateRecords: any[];
+        }>;
+    };
+    message?: string;
 }
-
-export const EXAMPLE_CONTACTS: Contact[] = [
-    {
-      id: '001',
-      salutation: 'Mr',
-      firstName: 'John',
-      lastName: 'Doe',
-      suffix: 'Jr.',
-      title: 'Sales Manager',
-      pronouns: 'He/Him',
-      email: 'john.doe@example.com',
-      phone: '+1234567890',
-      mobile: '+1234567890',
-      department: 'Sales',
-      contactNumber: '+1234567890',
-      mailingStreet: '123 Main St',
-      mailingCity: 'Anytown',
-      mailingStateProvince: 'CA',
-      mailingPostalCode: '12345',
-      mailingCountry: 'USA',
-      status: 'Active'
-    },
-    {
-      id: '002',
-      salutation: 'Ms',
-      firstName: 'Jane',
-      lastName: 'Smith',
-      title: 'Project Director',
-      pronouns: 'She/Her',
-      email: 'jane.smith@example.com',
-      phone: '+1987654321',
-      mobile: '+1987654321',
-      department: 'Operations',
-      mailingStreet: '456 Oak Ave',
-      mailingCity: 'New City',
-      mailingStateProvince: 'NY',
-      mailingPostalCode: '67890',
-      mailingCountry: 'USA',
-      status: 'Active'
-    },
-    {
-      id: '003',
-      salutation: 'Dr',
-      firstName: 'Ahmed',
-      lastName: 'Hassan',
-      title: 'Technical Advisor',
-      email: 'ahmed.hassan@example.com',
-      phone: '+4412345678',
-      department: 'Technical Advisory',
-      mailingStreet: '78 High Street',
-      mailingCity: 'London',
-      mailingCountry: 'United Kingdom',
-      status: 'Active'
-    }
-  ];
-
-export const EXAMPLE_PARTNERS: Partner[] = [
-    {
-      id: '001',
-      name: 'Acme Corporation',
-      shortName: 'Acme',
-      status: 'Active',
-      newEngagement: 'Yes',
-      phone: '+1234567890',
-      website: 'www.acmecorp.com',
-      address1City: 'Business City',
-      address1Country: 'USA'
-    },
-    {
-      id: '002',
-      name: 'Global Solutions Inc.',
-      shortName: 'GSI',
-      status: 'Active',
-      newEngagement: 'No',
-      phone: '+4412345678',
-      website: 'www.globalsolutions.com',
-      address1City: 'Geneva',
-      address1Country: 'Switzerland'
-    },
-    {
-      id: '003',
-      name: 'Tech Innovations Ltd.',
-      shortName: 'TIL',
-      status: 'Active',
-      newEngagement: 'Yes',
-      phone: '+6598765432',
-      website: 'www.techinnovations.com',
-      address1City: 'Singapore',
-      address1Country: 'Singapore'
-    }
-  ];
 
 @Injectable({
   providedIn: 'root',
 })
 export class ImportService {
-  private readonly apiUrl = '/api/import';
+  private readonly apiUrl = '/api';
   private processingFile = false;
   private activeJobId: string | null = null;
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * Get the correct entity-specific API endpoint based on the import type
+   * @param type The import type (e.g., 'bulk_partner_action', 'bulk_contact_action')
+   * @returns The entity-specific API endpoint
+   */
+  private getEntitySpecificEndpoint(type: string): string {
+    // Extract entity type from the import type and map to correct APIDictionary paths
+    if (type.includes('partner')) {
+      return `${this.apiUrl}/partner`;  // Singular: /api/partner
+    } else if (type.includes('contact')) {
+      return `${this.apiUrl}/contact`;   // Singular: /api/contact
+    } else if (type.includes('interaction')) {
+      return `${this.apiUrl}/interactions`; // Plural: /api/interactions
+    } else if (type.includes('user_role')) {
+      return `${this.apiUrl}/user-management`; // User role imports: /api/user-management
+    } else {
+      // Default to the original import endpoint if entity cannot be determined
+      console.warn(`Unknown import type: ${type}. Using default import endpoint.`);
+      return `${this.apiUrl}/import`;
+    }
+  }
 
   /**
    * Get the active job ID if one exists
@@ -145,15 +93,22 @@ export class ImportService {
    * @param type The type of data being imported (e.g., 'bulk_contact_action')
    */
   analyzeFile(fileId: string, type: string): Observable<ImportAnalysisResponse> {
+    console.log('🔍 ImportService.analyzeFile called with:', { fileId, type });
     this.processingFile = true;
     const payload: AnalyzeFileRequest = {
       type,
       fileId
     };
 
-    return this.http.post<ImportAnalysisResponse>(`${this.apiUrl}/analyse-file`, payload)
+    // Determine the entity-specific endpoint based on the type
+    const entityEndpoint = this.getEntitySpecificEndpoint(type);
+    console.log('🔍 Using endpoint:', `${entityEndpoint}/analyse-file`);
+    console.log('🔍 Payload:', payload);
+    
+    return this.http.post<ImportAnalysisResponse>(`${entityEndpoint}/analyse-file`, payload)
       .pipe(
         map(response => {
+          console.log('🔍 ImportService.analyzeFile success response:', response);
           this.processingFile = false;
           
           // Store the job ID if this is an async operation
@@ -164,6 +119,7 @@ export class ImportService {
           return response;
         }),
         catchError(error => {
+          console.error('🔍 ImportService.analyzeFile error caught:', error);
           this.processingFile = false;
           this.activeJobId = null;
           throw error;
@@ -208,28 +164,35 @@ export class ImportService {
    * @param type The type of data being uploaded (e.g., 'bulk_contact_action')
    */
   bulkUpload(records: any[], type: string): Observable<any> {
-    // Process records to ensure createdBy is not null (convert null to a valid number in backend)
+    // Process records to ensure proper handling - delete empty/falsy properties
     const processedRecords = records.map(record => {
-      // Only modify the record if createdBy is null
-      if (!record.createdBy) {
-        delete record.createdBy;
+      const processedRecord = { ...record };
+    
+      // Keep original logic for these specific properties - delete if falsy
+      const specialProperties = ['createdBy', 'lastModifiedBy', 'deletedBy', 'id'];
+      specialProperties.forEach(prop => {
+        if (!processedRecord[prop]) {
+          delete processedRecord[prop];
       }
-      if (!record.lastModifiedBy) {
-        delete record.lastModifiedBy;
-      }
-      if (!record.deletedBy) {
-        delete record.deletedBy;
-      }
-      if (!record.id) {
-        delete record.id;
-      }
-      return record;
+      });
+      
+      // For all other properties, delete if empty string to avoid serialization issues
+      Object.keys(processedRecord).forEach(prop => {
+        if (!specialProperties.includes(prop) && processedRecord[prop] === '') {
+          delete processedRecord[prop];
+        }
+      });
+      
+      return processedRecord;
     });
 
     const payload: BulkUploadRequest = {
       type,
       records: processedRecords
     };
-    return this.http.post(`${this.apiUrl}/bulk-upload`, payload);
+    // Determine the entity-specific endpoint based on the type
+    const entityEndpoint = this.getEntitySpecificEndpoint(type);
+    
+    return this.http.post(`${entityEndpoint}/bulk-upload`, payload);
   }
 }

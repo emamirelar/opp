@@ -1,13 +1,17 @@
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map, throwError, timer } from 'rxjs';
-import { catchError, mergeMap, retry, retryWhen } from 'rxjs/operators';
+import { catchError, mergeMap, retry, retryWhen, tap } from 'rxjs/operators';
 import {
   AiAssistantRequest,
   AiAssistantSessionRequest,
   ChatHistoryItem,
   SessionData,
-  SessionResponse
+  SessionResponse,
+  FileUpload,
+  FileValidationResult,
+  ChatRequestData,
+  AiAssistantRequestWithFiles
 } from '../models/ai-assistant.model';
 import {GeminiResponse} from '../models/gemini.model';
 import { AiResponse } from '../../../common/reusables/widgets/ai-assistant/ai-assistant.model';
@@ -21,8 +25,206 @@ export class AiAssistantService {
   private readonly aiAssistantUrl = `${this.apiUrl}/ai-assistant`;
   private readonly maxRetries = 3;
 
+  // File upload configuration
+  private readonly maxFileSize = 10 * 1024 * 1024; // 10MB
+  private readonly allowedFileTypes = [
+    // Images
+    'image/jpeg',
+    'image/png', 
+    'image/gif',
+    'image/webp',
+    // Audio files
+    'audio/wav',
+    'audio/mp3',
+    'audio/aiff', 
+    'audio/aac',
+    'audio/ogg',
+    'audio/flac',
+    // Documents
+    'application/pdf',
+    'text/plain',
+    'text/csv',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+    'application/msword', // .doc
+    'application/vnd.ms-excel', // .xls
+    'application/vnd.ms-powerpoint' // .ppt
+  ];
+
   constructor(private http: HttpClient) {}
 
+  // Enhanced chat method with file support
+  chatWithFiles(requestData: ChatRequestData): Observable<HttpResponse<AiResponse>> {
+    const formData = this.createChatFormData(requestData);
+    
+    return this.http.post<AiResponse>(
+      `${this.aiAssistantUrl}/chat`,
+      formData,
+      { observe: 'response' }
+    ).pipe(
+      this.addIapRetryStrategy<HttpResponse<AiResponse>>()
+    );
+  }
+
+  // Enhanced chat method with simple parameters (backward compatible)
+  chatWithFilesSimple(
+    message: string, 
+    sessionId?: string, 
+    files?: File[], 
+    state?: any
+  ): Observable<HttpResponse<AiResponse>> {
+    return this.chatWithFiles({
+      message,
+      sessionId,
+      files,
+      state
+    });
+  }
+
+  // Get personalized suggestions for the user
+  getSuggestions(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/ai-assistant/generate-suggestions`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error fetching suggestions:', error);
+        return throwError(() => new Error('Failed to fetch suggestions'));
+      })
+    );
+  }
+
+  // Helper method to create FormData for chat requests
+  private createChatFormData(requestData: ChatRequestData): FormData {
+    const formData = new FormData();
+    
+    // Add message
+    formData.append('Message', requestData.message);
+    
+    // Add session ID if provided
+    if (requestData.sessionId) {
+      formData.append('sessionId', requestData.sessionId);
+    }
+    
+    // Add state if provided
+    if (requestData.state) {
+      const stateString = typeof requestData.state === 'string' 
+        ? requestData.state 
+        : JSON.stringify(requestData.state);
+      formData.append('State', stateString);
+    }
+    
+    // Add files if provided
+    if (requestData.files && requestData.files.length > 0) {
+      // Validate files first
+      const validation = this.validateFiles(requestData.files);
+      
+      if (validation.invalid.length > 0) {
+        // Log warnings for invalid files but continue with valid ones
+        validation.invalid.forEach(item => {
+          console.warn(`[AI-ASSISTANT] Invalid file skipped: ${item.error}`);
+        });
+      }
+      
+      // Add valid files to FormData
+      validation.valid.forEach((file, index) => {
+        formData.append('Files', file, file.name);
+      });
+      
+      console.log(`[AI-ASSISTANT] Added ${validation.valid.length} valid files to request`);
+    }
+    
+    return formData;
+  }
+
+  // File validation methods
+  validateFile(file: File): boolean {
+    return this.validateFileSize(file) && this.validateFileType(file);
+  }
+
+  private validateFileSize(file: File): boolean {
+    if (file.size > this.maxFileSize) {
+      throw new Error(`File "${file.name}" is too large. Maximum size is ${this.formatFileSize(this.maxFileSize)}`);
+    }
+    return true;
+  }
+
+  private validateFileType(file: File): boolean {
+    if (!this.allowedFileTypes.includes(file.type)) {
+      throw new Error(`File type "${file.type}" is not supported. File: "${file.name}"`);
+    }
+    return true;
+  }
+
+  validateFiles(files: File[]): FileValidationResult {
+    const valid: File[] = [];
+    const invalid: { file: File; error: string }[] = [];
+    
+    files.forEach(file => {
+      try {
+        if (this.validateFile(file)) {
+          valid.push(file);
+        }
+      } catch (error) {
+        invalid.push({ 
+          file, 
+          error: (error as Error).message 
+        });
+      }
+    });
+    
+    return { valid, invalid };
+  }
+
+  // Get file preview (for images)
+  getFilePreview(file: File): Promise<string | null> {
+    return new Promise((resolve) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+      } else {
+        resolve(null);
+      }
+    });
+  }
+
+  // Utility methods
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  getFileIcon(mimeType: string): string {
+    if (mimeType.startsWith('image/')) return '🖼️';
+    if (mimeType === 'application/pdf') return '📄';
+    if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return '📊';
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return '📊';
+    if (mimeType.startsWith('text/')) return '📋';
+    return '📁';
+  }
+
+  isImageFile(file: File): boolean {
+    return file.type.startsWith('image/');
+  }
+
+  // Configuration getters
+  get maxFileSizeBytes(): number {
+    return this.maxFileSize;
+  }
+
+  get maxFileSizeMB(): number {
+    return this.maxFileSize / (1024 * 1024);
+  }
+
+  get supportedFileTypes(): string[] {
+    return [...this.allowedFileTypes];
+  }
+
+  // Original methods remain unchanged for backward compatibility
 
   // Get all sessions for the current user
   getUserSessions(): Observable<HttpResponse<SessionData[]>> {
@@ -66,7 +268,7 @@ export class AiAssistantService {
     );
   }
 
-  // Chat with AiAssistant AI
+  // Chat with AiAssistant AI (original method - backward compatible)
   chat(formdata: FormData): Observable<HttpResponse<AiResponse>> {
     return this.http.post<AiResponse>(
       `${this.aiAssistantUrl}/chat`,
@@ -84,6 +286,41 @@ export class AiAssistantService {
     );
   }
 
+  // Update session star status
+  updateSessionStar(sessionId: string, starred: boolean): Observable<HttpResponse<{ success: boolean }>> {
+    return this.http.post<{ success: boolean }>(
+      `${this.aiAssistantUrl}/update-star`,
+      { sessionId, starred },
+      { observe: 'response' }
+    );
+  }
+
+  // Update session archive status
+  updateSessionArchive(sessionId: string, archived: boolean): Observable<HttpResponse<{ success: boolean }>> {
+    return this.http.post<{ success: boolean }>(
+      `${this.aiAssistantUrl}/update-archive`,
+      { sessionId, archived },
+      { observe: 'response' }
+    );
+  }
+
+  // Update session title
+  updateSessionTitle(sessionId: string, title: string): Observable<HttpResponse<{ success: boolean }>> {
+    return this.http.post<{ success: boolean }>(
+      `${this.aiAssistantUrl}/update-title`,
+      { sessionId, title },
+      { observe: 'response' }
+    );
+  }
+
+  // Generate a title for a session (GET, sessionId as query param)
+  generateTitle(sessionId: string): Observable<HttpResponse<{ title: string }>> {
+    return this.http.get<{ title: string }>(
+      `${this.aiAssistantUrl}/generate-title?sessionId=${encodeURIComponent(sessionId)}`,
+      { observe: 'response' }
+    );
+  }
+
   // Helper method for IAP retry strategy
   private addIapRetryStrategy<T>() {
     return retryWhen<T>(errors => 
@@ -91,7 +328,7 @@ export class AiAssistantService {
         mergeMap((error, count) => {
           // Only retry on 401 errors
           if (error instanceof HttpErrorResponse && error.status === 401 && count < this.maxRetries) {
-            console.log(`[AI-ASSISTANT] Retrying API call after 401 error (attempt ${count + 1}/${this.maxRetries})`);
+            
             // Exponential backoff
             return timer(1000 * Math.pow(2, count));
           }

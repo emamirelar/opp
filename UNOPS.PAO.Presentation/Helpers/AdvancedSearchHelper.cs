@@ -1,212 +1,310 @@
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using System.Text.Json.Serialization;
-using System.ComponentModel;
-using System.Reflection;
+using UNOPS.PAO.Models;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.Presentation.Helpers;
 
-public class SearchCriterion
-{
-    [JsonPropertyName("field")]
-    public string Field { get; set; }
-
-    [JsonPropertyName("value")]
-    public string Value { get; set; }
-
-    [JsonPropertyName("label")]
-    public string Label { get; set; }
-    
-    [JsonPropertyName("operator")]
-    public string Operator { get; set; }
-
-    [JsonPropertyName("logicalOperator")]
-    public string LogicalOperator { get; set; }
-}
-
+/// <summary>
+/// Helper class for processing advanced search criteria with backward compatibility support
+/// 
+/// BACKWARD COMPATIBILITY NOTE:
+/// This helper maintains compatibility with legacy field names that may exist in:
+/// - Existing saved searches
+/// - Bookmarked URLs with search parameters
+/// - Historical filter configurations
+/// 
+/// Legacy field mappings are automatically applied during search criteria processing.
+/// </summary>
 public static class AdvancedSearchHelper
 {
-    private static readonly HashSet<string> ValidOperators = new(StringComparer.OrdinalIgnoreCase)
+    /// <summary>
+    /// Maps advanced search criteria JSON to a filter request object
+    /// </summary>
+    /// <typeparam name="T">The type of filter request</typeparam>
+    /// <param name="searchCriteriaJson">JSON string containing search criteria</param>
+    /// <returns>A new instance of T with mapped properties</returns>
+    public static T MapAdvancedSearchCriteria<T>(string searchCriteriaJson) where T : new()
     {
-        "is",
-        "is not",
-        "like",
-        "not like",
-        ">",
-        "<",
-        ">=",
-        "<=",
-        "in"
-    };
-
-    private static readonly HashSet<string> ValidLogicalOperators = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "AND",
-        "OR"
-    };
-
-    public static T MapAdvancedSearchCriteria<T>(string searchCriteria) where T : class, new()
-    {
-        Debug.WriteLine($"Received search criteria: {searchCriteria}");
-
-        if (string.IsNullOrEmpty(searchCriteria))
+        if (string.IsNullOrWhiteSpace(searchCriteriaJson))
         {
-            return new T();
+            throw new ArgumentException("Search criteria JSON cannot be null or empty", nameof(searchCriteriaJson));
         }
 
-        var request = new T();
         try
         {
-            var criteria = JsonSerializer.Deserialize<List<SearchCriterion>>(searchCriteria);
-            Debug.WriteLine($"Deserialized {criteria?.Count ?? 0} search criteria");
+            var searchCriteria = JsonSerializer.Deserialize<List<SearchCriteria>>(searchCriteriaJson);
+            if (searchCriteria == null || !searchCriteria.Any())
+            {
+                throw new ArgumentException("Search criteria JSON is invalid or empty");
+            }
+
+            // Apply legacy field name mapping for backward compatibility
+            searchCriteria = MapLegacyFieldNames(searchCriteria);
+
+            var result = new T();
             
-            // Validate operators
-            if (criteria != null)
+            // Set AdvancedSearch flag if the type supports it
+            var advancedSearchProperty = typeof(T).GetProperty("AdvancedSearch");
+            if (advancedSearchProperty != null && advancedSearchProperty.CanWrite)
             {
-                foreach (var criterion in criteria)
-                {
-                    // Validate comparison operator
-                    if (!string.IsNullOrEmpty(criterion.Operator) && !ValidOperators.Contains(criterion.Operator))
-                    {
-                        throw new ArgumentException($"Invalid operator: {criterion.Operator}");
-                    }
-
-                    // Validate logical operator
-                    if (!string.IsNullOrEmpty(criterion.LogicalOperator) && !ValidLogicalOperators.Contains(criterion.LogicalOperator))
-                    {
-                        throw new ArgumentException($"Invalid logical operator: {criterion.LogicalOperator}");
-                    }
-
-                    Debug.WriteLine($"CRITERION: Field={criterion.Field}, Value={criterion.Value}, " +
-                                  $"Operator={criterion.Operator ?? "null"}, " +
-                                  $"LogicalOperator={criterion.LogicalOperator ?? "null"}, " +
-                                  $"Label={criterion.Label}");
-                }
+                advancedSearchProperty.SetValue(result, true);
+            }
+            
+            // Set SearchCriteria property if the type supports it
+            var searchCriteriaProperty = typeof(T).GetProperty("SearchCriteria");
+            if (searchCriteriaProperty != null && searchCriteriaProperty.CanWrite)
+            {
+                searchCriteriaProperty.SetValue(result, searchCriteriaJson);
+            }
+            
+            // Set ParsedSearchCriteria property if the type supports it
+            var parsedSearchCriteriaProperty = typeof(T).GetProperty("ParsedSearchCriteria");
+            if (parsedSearchCriteriaProperty != null && parsedSearchCriteriaProperty.CanWrite)
+            {
+                parsedSearchCriteriaProperty.SetValue(result, searchCriteria);
             }
 
-            // Get all properties including nested ones
-            var properties = GetAllProperties(typeof(T));
-            Debug.WriteLine($"Available properties in {typeof(T).Name}: {string.Join(", ", properties.Keys)}");
-
-            foreach (var criterion in criteria)
-            {
-                if (string.IsNullOrEmpty(criterion?.Field))
-                {
-                    Debug.WriteLine("Skipping criterion with null or empty field");
-                    continue;
-                }
-
-                Debug.WriteLine($"Processing field: {criterion.Field}, value: {criterion.Value}, operator: {criterion.Operator}");
-
-                // Handle nested properties correctly
-                if (criterion.Field.Contains("."))
-                {
-                    // Keep the SearchCriteria and AdvancedSearch flags
-                    // to let GenericCompositeSpecification handle the nested properties
-                    var searchCriteriaProperty = typeof(T).GetProperty("SearchCriteria");
-                    var advancedSearchProperty = typeof(T).GetProperty("AdvancedSearch");
-                    
-                    if (searchCriteriaProperty != null && advancedSearchProperty != null)
-                    {
-                        // Add to SearchCriteria collection if it exists
-                        List<SearchCriterion> criteriaList;
-                        var existingCriteria = searchCriteriaProperty.GetValue(request) as string;
-                        
-                        if (string.IsNullOrEmpty(existingCriteria))
-                        {
-                            criteriaList = new List<SearchCriterion>();
-                        }
-                        else
-                        {
-                            criteriaList = JsonSerializer.Deserialize<List<SearchCriterion>>(existingCriteria);
-                        }
-                        
-                        // Add criterion with all operators preserved
-                        criteriaList.Add(criterion);
-                        searchCriteriaProperty.SetValue(request, JsonSerializer.Serialize(criteriaList));
-                        advancedSearchProperty.SetValue(request, true);
-                        
-                        Debug.WriteLine($"Added nested property {criterion.Field} to SearchCriteria with operator {criterion.Operator ?? "null"} " +
-                                      $"and logical operator {criterion.LogicalOperator ?? "null"}");
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"Unable to handle nested property: {criterion.Field}, missing required properties");
-                    }
-                    
-                    continue; // Skip to next criterion
-                }
-
-                // Handle non-nested properties using the original logic
-                var lowerField = criterion.Field.ToLower();
-                if (properties.TryGetValue(lowerField, out var property))
-                {
-                    try
-                    {
-                        object convertedValue = null;
-                        if (!string.IsNullOrEmpty(criterion.Value))
-                        {
-                            var propertyType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
-                            
-                            // Use TypeConverter for proper type conversion
-                            var converter = TypeDescriptor.GetConverter(propertyType);
-                            if (converter != null && converter.CanConvertFrom(typeof(string)))
-                            {
-                                convertedValue = converter.ConvertFromString(criterion.Value);
-                            }
-                            else
-                            {
-                                // Fallback to basic conversion
-                                convertedValue = Convert.ChangeType(criterion.Value, propertyType);
-                            }
-                        }
-
-                        Debug.WriteLine($"Setting property {property.Name} to value: {convertedValue ?? "null"}");
-                        property.SetValue(request, convertedValue);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Error setting property {property.Name}: {ex.Message}");
-                        throw new ArgumentException($"Error setting value for field '{criterion.Field}': {ex.Message}");
-                    }
-                }
-                else
-                {
-                    Debug.WriteLine($"Property not found for field: {criterion.Field}");
-                }
-            }
+            return result;
         }
         catch (JsonException ex)
         {
-            Debug.WriteLine($"JSON deserialization error: {ex.Message}");
-            throw new ArgumentException($"Invalid search criteria format: {ex.Message}", nameof(searchCriteria));
+            throw new ArgumentException($"Invalid JSON format in search criteria: {ex.Message}", ex);
         }
-
-        return request;
+        catch (Exception ex)
+        {
+            throw new BusinessException($"Error processing advanced search criteria: {ex.Message}");
+        }
     }
 
-    private static Dictionary<string, PropertyInfo> GetAllProperties(Type type)
+    /// <summary>
+    /// Validates search criteria for security and correctness
+    /// </summary>
+    /// <param name="criteria">The search criteria to validate</param>
+    /// <param name="allowedFields">List of allowed field names for security</param>
+    public static void ValidateSearchCriteria(List<SearchCriteria> criteria, HashSet<string> allowedFields)
     {
-        var properties = new Dictionary<string, PropertyInfo>(StringComparer.OrdinalIgnoreCase);
-        
-        foreach (var prop in type.GetProperties())
+        if (criteria == null || !criteria.Any())
         {
-            properties[prop.Name.ToLower()] = prop;
-            
-            // If this is a complex type (but not a string or primitive), get its properties too
-            if (prop.PropertyType.IsClass && 
-                prop.PropertyType != typeof(string) && 
-                !prop.PropertyType.IsPrimitive)
+            return;
+        }
+
+        var validOperators = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "is", "is not", "like", "not like", ">", "<", ">=", "<=", "after", "before", "between"
+        };
+
+        var validLogicalOperators = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "AND", "OR"
+        };
+
+        foreach (var criterion in criteria)
+        {
+            // Validate field name
+            if (string.IsNullOrWhiteSpace(criterion.Field))
             {
-                foreach (var nestedProp in prop.PropertyType.GetProperties())
-                {
-                    var key = $"{prop.Name}{nestedProp.Name}".ToLower();
-                    properties[key] = nestedProp;
-                }
+                throw new ArgumentException("Field name cannot be empty");
+            }
+
+            if (allowedFields.Any() && !allowedFields.Contains(criterion.Field, StringComparer.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException($"Field '{criterion.Field}' is not allowed for search");
+            }
+
+            // Validate operator
+            if (string.IsNullOrWhiteSpace(criterion.Operator) || !validOperators.Contains(criterion.Operator))
+            {
+                throw new ArgumentException($"Invalid operator '{criterion.Operator}'. Allowed operators: {string.Join(", ", validOperators)}");
+            }
+
+            // Validate value
+            if (string.IsNullOrWhiteSpace(criterion.Value))
+            {
+                throw new ArgumentException($"Value cannot be empty for field '{criterion.Field}'");
+            }
+
+            // Validate logical operator
+            if (!string.IsNullOrWhiteSpace(criterion.LogicalOperator) && 
+                !validLogicalOperators.Contains(criterion.LogicalOperator))
+            {
+                throw new ArgumentException($"Invalid logical operator '{criterion.LogicalOperator}'. Allowed operators: {string.Join(", ", validLogicalOperators)}");
             }
         }
+    }
+
+    /// <summary>
+    /// Decodes URL-encoded search criteria if needed
+    /// </summary>
+    /// <param name="searchCriteria">The search criteria to decode</param>
+    /// <returns>Decoded search criteria</returns>
+    public static string DecodeSearchCriteria(string searchCriteria)
+    {
+        if (string.IsNullOrEmpty(searchCriteria))
+        {
+            return searchCriteria;
+        }
         
-        return properties;
+        var decoded = System.Net.WebUtility.UrlDecode(searchCriteria);
+        return decoded ?? searchCriteria;
+    }
+
+    /// <summary>
+    /// Validates and parses search criteria from JSON string
+    /// </summary>
+    /// <param name="criteriaJson">JSON string containing search criteria</param>
+    /// <param name="allowedFields">Set of allowed field names for validation</param>
+    /// <returns>Parsed and validated search criteria</returns>
+    public static List<SearchCriteria> ValidateAndParseSearchCriteria(string criteriaJson, HashSet<string> allowedFields)
+    {
+        var parsedCriteria = JsonSerializer.Deserialize<List<SearchCriteria>>(criteriaJson);
+        
+        if (parsedCriteria == null || parsedCriteria.Count == 0)
+        {
+            throw new ArgumentException("Search criteria cannot be empty");
+        }
+        
+        // Apply legacy field name mapping for backward compatibility
+        parsedCriteria = MapLegacyFieldNames(parsedCriteria);
+        
+        ValidateSearchCriteria(parsedCriteria, allowedFields);
+        return parsedCriteria;
+    }
+
+    /// <summary>
+    /// Gets the allowed search fields for Contact entity
+    /// </summary>
+    /// <returns>HashSet of allowed field names</returns>
+    public static HashSet<string> GetContactAllowedFields()
+    {
+        return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // Contact direct fields
+            "id", "salutation", "firstName", "middleName", "lastName", "suffix",
+            "title", "department", "description", "email", "phone", "mobile",
+            "assistant", "assistantPhone", "assistantEmail", "status",
+            "mailingStreet", "mailingStreet2", "mailingCity", "mailingStateProvince",
+            "mailingPostalCode", "mailingCountry", "profilePictureUrl",
+            
+            // Partner related fields
+            "partner.name", "partner.status", "partner.shortName", "partner.phone",
+            "partner.website", "partner.address1City", "partner.address1Country",
+            "partnerId", "partnerName", "partnerStatus", "partnerShortName"
+        };
+    }
+
+    /// <summary>
+    /// Gets the allowed search fields for Partner entity
+    /// </summary>
+    /// <returns>HashSet of allowed field names</returns>
+    public static HashSet<string> GetPartnerAllowedFields()
+    {
+        return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // Partner direct fields (based on actual Partner entity)
+            "id", "name", "status", 
+            "partnerShortDescription", "partnerLongDescription",
+            "partnerCategoryId", "liaisonOfficeId", "partnerFocalPointUserId",
+            "partnerGroupCode", "erpDimValue",
+            "unAndStateEntity", "keyGlobalPartner", "unSecretariatPartner",
+            "dueDiligenceRequired", "dueDiligenceApproval", "dueDiligenceApprovalDate", "dueDiligenceExpiryDate",
+            "partnerApprovalStatus", "partnerApprovalDate", "partnerApprovalReference", "partnerApprovedBy",
+            "partnerLevyStatus", "reasonForLevy", "levyTreatment",
+            "pooledFund", "canCreateNewOpportunities", "reasonForNoNewOpportunity",
+            
+            // Audit fields (inherited from ModifiableDeletableEntity)
+            "createdDate", "lastModifiedDate", "createdBy", "lastModifiedBy", "isDeleted"
+        };
+    }
+
+    /// <summary>
+    /// Gets the allowed search fields for Interaction entity
+    /// </summary>
+    /// <returns>HashSet of allowed field names</returns>
+    public static HashSet<string> GetInteractionAllowedFields()
+    {
+        return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // Interaction direct fields
+            "id", "contactId", "type", "date", "fromDate", "toDate", "description", "subject",
+            
+            // Contact related fields
+            "contact.firstName", "contact.lastName", "contact.email", "contact.title",
+            "contact.department", "contact.phone", "contact.mobile",
+            "contactName", "contactFirstName", "contactLastName", "contactEmail",
+            
+            // Partner related fields (NEW FORMAT)
+            "partner.name", "partner.status", "partner.shortName",
+            "partnerName", "partnerStatus",
+            
+            // Partner related fields (OLD FORMAT - BACKWARD COMPATIBILITY)
+            // These maintain compatibility with existing saved searches, filters, and bookmarks
+            "contact.partner.name", "contact.partner.status", "contact.partner.shortName"
+        };
+    }
+
+    /// <summary>
+    /// Gets allowed search fields for a given entity type
+    /// </summary>
+    /// <param name="entityType">The entity type (e.g., "Contact", "Partner", "Interaction")</param>
+    /// <returns>HashSet of allowed field names</returns>
+    public static HashSet<string> GetAllowedFieldsForEntity(string entityType)
+    {
+        return entityType.ToLowerInvariant() switch
+        {
+            "contact" => GetContactAllowedFields(),
+            "partner" => GetPartnerAllowedFields(),
+            "interaction" => GetInteractionAllowedFields(),
+            _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        };
+    }
+
+    /// <summary>
+    /// Maps legacy field names to current field names for backward compatibility
+    /// </summary>
+    /// <param name="fieldName">The field name to map</param>
+    /// <returns>The current field name equivalent</returns>
+    public static string MapLegacyFieldName(string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(fieldName))
+        {
+            return fieldName;
+        }
+
+        // Handle legacy field mappings for all entities
+        var legacyMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // Interaction legacy mappings only
+            { "contact.partner.name", "partner.name" },
+            { "contact.partner.status", "partner.status" },
+            { "contact.partner.shortName", "partner.shortName" }
+        };
+
+        return legacyMappings.TryGetValue(fieldName, out var mappedName) ? mappedName : fieldName;
+    }
+
+    /// <summary>
+    /// Processes search criteria and maps any legacy field names to current equivalents
+    /// </summary>
+    /// <param name="criteria">The search criteria to process</param>
+    /// <returns>Search criteria with updated field names</returns>
+    public static List<SearchCriteria> MapLegacyFieldNames(List<SearchCriteria> criteria)
+    {
+        if (criteria == null || !criteria.Any())
+        {
+            return criteria;
+        }
+
+        foreach (var criterion in criteria)
+        {
+            var mappedFieldName = MapLegacyFieldName(criterion.Field);
+            if (!string.Equals(criterion.Field, mappedFieldName, StringComparison.OrdinalIgnoreCase))
+            {
+                // Log the field name mapping for debugging
+                System.Diagnostics.Debug.WriteLine($"Mapped legacy field '{criterion.Field}' to '{mappedFieldName}'");
+                criterion.Field = mappedFieldName;
+            }
+        }
+
+        return criteria;
     }
 } 

@@ -1,0 +1,97 @@
+{
+  "tourId": "contact-list-tour",
+  "titleKey": "tour.contacts.title",
+  "descriptionKey": "tour.contacts.description",
+  "entity": "Contact",
+  "route": "/partnerships/contacts",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "titleKey": "tour.contacts.steps.welcome.title",
+        "descriptionKey": "tour.contacts.steps.welcome.description",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".quick-search",
+      "fallbackType": "search-input",
+      "popover": {
+        "titleKey": "tour.contacts.steps.searchInput.title",
+        "descriptionKey": "tour.contacts.steps.searchInput.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".advanced-search",
+      "fallbackType": ".mobile-advanced-search",
+      "popover": {
+        "titleKey": "tour.contacts.steps.advancedSearch.title",
+        "descriptionKey": "tour.contacts.steps.advancedSearch.description",
+        "side": "bottom",
+        "align": "end"
+      }
+    },
+    {
+      "element": ".contact-new-button",
+      "fallbackType": ".contact-new-button",
+      "popover": {
+        "titleKey": "tour.contacts.steps.newButton.title",
+        "descriptionKey": "tour.contacts.steps.newButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".contact-import-button",
+      "fallbackType": ".contact-import-button",
+      "popover": {
+        "titleKey": "tour.contacts.steps.importButton.title",
+        "descriptionKey": "tour.contacts.steps.importButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".contact-scanner-button",
+      "fallbackType": ".contact-scanner-button",
+      "popover": {
+        "titleKey": "tour.contacts.steps.scanButton.title",
+        "descriptionKey": "tour.contacts.steps.scanButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".contact-listview",
+      "fallbackType": ".contact-listview",
+      "popover": {
+        "titleKey": "tour.contacts.steps.gridView.title",
+        "descriptionKey": "tour.contacts.steps.gridView.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.contacts.steps.tourControl.title",
+        "descriptionKey": "tour.contacts.steps.tourControl.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2024-01-15T12:30:00Z",
+  "version": "1.0"
+}

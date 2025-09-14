@@ -22,9 +22,16 @@ public class MappingProfile : Profile
         CreateMap<InteractionPartnerModel, InteractionPartner>();
         CreateMap<InteractionUser, InteractionUserModel>();
         CreateMap<InteractionUserModel, InteractionUser>();
-        CreateMap<OrganizationUnit, OrganizationUnitModel>();
-        CreateMap<OrganizationUnitModel, OrganizationUnit>();
+
         CreateMap<Partner, PartnerValueModel>();
+
+        // Value entity mappings
+        CreateMap<Currency, CurrencyModel>();
+        CreateMap<EligibleEntity, EligibleEntityModel>();
+        CreateMap<Country, CountryModel>();
+        CreateMap<Contact, ContactValueModel>();
+        CreateMap<PAOUser, UserValueModel>();
+        CreateMap<LiaisonOffice, LiaisonOfficeModel>();
 
         // OrganizationHierarchy mappings
         CreateMap<OrganizationHierarchy, OrganizationHierarchyModel>().ReverseMap();

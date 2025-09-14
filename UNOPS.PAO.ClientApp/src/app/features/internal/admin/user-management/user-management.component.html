@@ -23,31 +23,23 @@
   <!-- Main Content - Only show if user has access -->
   @else if (hasAccess()) {
     <!-- Header -->
-    <div class="flex justify-content-between align-items-center mb-4">
-      <h2 class="text-2xl font-bold m-0">{{ 'title.userManagement' | translate }}</h2>
-      @if (canRead()) {
-        <p-button 
-          icon="pi pi-refresh" 
-          [label]="'button.refresh' | translate"
-          (onClick)="loadUsers()"
-          [loading]="loading()">
-        </p-button>
-      }
+    <div class="flex justify-content-between align-items-center user-management-header mb-4">
+      <div class="text-3xl font-bold">{{ 'title.userManagement' | translate }}</div>
     </div>
 
     <!-- Filters Section -->
     @if (canRead()) {
-      <div class="filter-section mb-4 p-3 border-1 border-gray-200 border-round">
+      <div class="filter-section mb-4 p-3 border-1 border-gray-200 border-round filter-section">
         <div class="grid">
           <!-- Search -->
           <div class="col-12 md:col-4">
             <label for="search" class="block text-sm font-medium mb-2">
-              {{ 'label.search' | translate }}
+              {{ 'label.search.searchButton' | translate }}
+              <i class="pi pi-search"></i>
             </label>
             <span class="p-input-icon-left w-full">
-              <i class="pi pi-search"></i>
-              <input 
-                pInputText 
+              <input
+                pInputText
                 id="search"
                 [(ngModel)]="searchTerm"
                 (ngModelChange)="onSearch()"
@@ -61,43 +53,49 @@
             <label for="roleFilter" class="block text-sm font-medium mb-2">
               {{ 'label.filterByRole' | translate }}
             </label>
-            <p-dropdown 
+            <p-multiSelect
               id="roleFilter"
               [(ngModel)]="roleFilter"
               [options]="roleOptions()"
-              [placeholder]="'placeholder.selectRole' | translate"
+              [placeholder]="'placeholder.selectRoles' | translate"
               [showClear]="true"
+              [showToggleAll]="true"
               (onChange)="onFilterChange()"
               class="w-full">
-            </p-dropdown>
+            </p-multiSelect>
           </div>
 
           <!-- Org Unit Filter -->
-          <div class="col-12 md:col-3">
-            <label for="orgUnitFilter" class="block text-sm font-medium mb-2">
-              {{ 'label.orgUnit' | translate }}
-            </label>
-            <input 
-              pInputText 
-              id="orgUnitFilter"
-              [(ngModel)]="orgUnitFilter"
-              (ngModelChange)="onFilterChange()"
-              [placeholder]="'placeholder.filterByOrgUnit' | translate"
-              class="w-full">
-          </div>
+          @if (!isOrgUnitAdmin()) {
+            <div class="col-12 md:col-3">
+              <label for="orgUnitFilter" class="block text-sm font-medium mb-2">
+                {{ 'label.orgUnit' | translate }}
+              </label>
+              <p-multiSelect
+                id="orgUnitFilter"
+                [(ngModel)]="orgUnitFilter"
+                [options]="orgUnitOptions()"
+                [placeholder]="'placeholder.selectOrgUnits' | translate"
+                [showClear]="true"
+                [showToggleAll]="true"
+                (onChange)="onFilterChange()"
+                class="w-full">
+              </p-multiSelect>
+            </div>
+          }
 
           <!-- Show My Org Unit Only -->
           <div class="col-12 md:col-2">
             <label class="block text-sm font-medium mb-2">&nbsp;</label>
             <div class="flex align-items-center">
-              <p-checkbox 
+              <p-checkbox
                 [(ngModel)]="showMyOrgUnitOnly"
                 (onChange)="onFilterChange()"
                 [binary]="true"
                 [disabled]="isOrgUnitFilterDisabled()"
                 inputId="showMyOrgUnit">
               </p-checkbox>
-              <label for="showMyOrgUnit" 
+              <label for="showMyOrgUnit"
                      class="ml-2 text-sm"
                      [class.text-gray-400]="isOrgUnitFilterDisabled()"
                      [pTooltip]="isOrgUnitFilterDisabled() ? 'Organization Unit Admins can only view users from their own organization unit' : ''"
@@ -111,14 +109,27 @@
           </div>
         </div>
 
-        <!-- Clear Filters Button -->
-        <div class="flex justify-content-end mt-3">
-          <p-button 
-            icon="pi pi-filter-slash" 
+        <!-- Clear Filters Button and Action Buttons -->
+        <div class="flex justify-content-end mt-3 gap-2">
+          <p-button
+            icon="pi pi-filter-slash"
             [label]="'button.clearFilters' | translate"
-            severity="secondary"
-            [outlined]="true"
+            severity="info"
+            [outlined]="false"
             (onClick)="clearFilters()">
+          </p-button>
+          <p-button
+            icon="pi pi-upload"
+            [label]="'button.import' | translate"
+            severity="secondary"
+            (onClick)="openImportDialog()"
+            [loading]="importing()">
+          </p-button>
+          <p-button
+            icon="pi pi-refresh"
+            [label]="'button.refresh' | translate"
+            (onClick)="loadUsers()"
+            [loading]="loading()">
           </p-button>
         </div>
       </div>
@@ -127,8 +138,8 @@
     <!-- Users Table -->
     @if (canRead()) {
       <div class="table-container">
-        <p-table 
-          [value]="users()" 
+        <p-table
+          [value]="users()"
           [loading]="loading()"
           [paginator]="false"
           [sortMode]="'single'"
@@ -136,7 +147,7 @@
           [scrollable]="true"
           scrollHeight="calc(100vh - 400px)"
           styleClass="p-datatable-sm">
-          
+
           <ng-template pTemplate="header">
             <tr>
               <th pSortableColumn="name">
@@ -174,21 +185,21 @@
                 <div class="text-sm text-gray-600">{{ user.email }}</div>
               </td>
               <td>
-                <div class="text-sm">{{ user.orgUnit }}</div>
+                <div class="text-sm">{{ user.orgUnitDescription || user.orgUnit }}</div>
               </td>
               <td>
                 <div class="flex flex-wrap gap-1">
                   @for (role of user.roles; track role) {
-                    <p-chip 
-                      [label]="role" 
+                    <p-chip
+                      [label]="role"
                       [styleClass]="'text-xs chip-' + getRoleSeverity(role)">
                     </p-chip>
                   }
                 </div>
               </td>
               <td>
-                <p-chip 
-                  [label]="getStatusText(user.isActive)" 
+                <p-chip
+                  [label]="getStatusText(user.isActive)"
                   [styleClass]="'text-xs chip-' + getStatusSeverity(user.isActive)">
                 </p-chip>
               </td>
@@ -199,12 +210,12 @@
               </td>
               @if (canUpdate()) {
                 <td class="text-center">
-                  <p-button 
-                    icon="pi pi-pencil" 
+                  <p-button
+                    icon="pi pi-pencil"
                     severity="info"
                     [outlined]="true"
                     size="small"
-                    [pTooltip]="'button.editRoles' | translate"
+                    [pTooltip]="'button.editPartnershipAccess' | translate"
                     (onClick)="editUser(user)">
                   </p-button>
                 </td>
@@ -228,9 +239,9 @@
 
         <!-- Pagination -->
         <div class="mt-3">
-          <p-paginator 
-            [first]="first()" 
-            [rows]="rows()" 
+          <p-paginator
+            [first]="first()"
+            [rows]="rows()"
             [totalRecords]="totalRecords()"
             [rowsPerPageOptions]="[25, 50, 100]"
             (onPageChange)="onPageChange($event)"
@@ -242,9 +253,9 @@
     }
 
     <!-- Edit User Roles Dialog -->
-    <p-dialog 
+    <p-dialog
       [(visible)]="editDialogVisible"
-      [header]="'title.editUserRoles' | translate"
+      [header]="'title.editPartnershipUserAccess' | translate"
       [modal]="true"
       [closable]="true"
       [style]="{width: '600px', minHeight: '400px'}"
@@ -253,7 +264,7 @@
       [maximizable]="false"
       [baseZIndex]="10000"
       styleClass="user-roles-dialog">
-      
+
       @if (selectedUser()) {
         <div class="dialog-content p-4">
           <!-- User Info -->
@@ -266,27 +277,75 @@
           <!-- Role Selection -->
           <div class="mb-6">
             <label class="block text-sm font-medium mb-3">
-              {{ 'label.assignRoles' | translate }}
+              {{ 'label.partnershipUserRole' | translate }}
             </label>
-            <p-multiSelect 
-              [ngModel]="selectedUserRoles()"
-              (ngModelChange)="selectedUserRoles.set($event)"
-              [options]="roleOptions()"
-              [placeholder]="'placeholder.selectRoles' | translate"
-              [showToggleAll]="false"
-              [filter]="true"
-              [filterBy]="'label'"
-              display="chip"
-              [resetFilterOnHide]="false"
-              [autoZIndex]="true"
-              [baseZIndex]="10001"
-              [appendTo]="'body'"
-              [style]="{width: '100%', minHeight: '45px'}"
-              styleClass="w-full">
-            </p-multiSelect>
+
+            <div class="flex align-items-center gap-3 p-3 border-1 border-gray-200 border-round">
+              <p-checkbox
+                [(ngModel)]="isPartnerUser"
+                [binary]="true"
+                inputId="partnerUserRole">
+              </p-checkbox>
+              <label for="partnerUserRole" class="text-sm font-medium cursor-pointer">
+                {{ 'label.partnerUser' | translate }}
+              </label>
+              <p-chip
+                label="PARTNER_USER"
+                styleClass="text-xs chip-info ml-2">
+              </p-chip>
+            </div>
+
             <small class="text-gray-600 mt-2 block">
-              {{ 'message.selectRolesToAssign' | translate }}
+              {{ 'message.partnerUserRoleDescription' | translate }}
             </small>
+
+            <!-- Self-Management Setting -->
+            @if (!isOrgUnitAdmin()) {
+              <div class="mt-4">
+                <label class="block text-sm font-medium mb-3">
+                  {{ 'label.organizationSelfManagement' | translate }}
+                </label>
+
+                <div class="flex align-items-center gap-3 p-3 border-1 border-gray-200 border-round">
+                  <p-checkbox
+                    [(ngModel)]="isSelfManagementEnabled"
+                    [binary]="true"
+                    inputId="selfManagementEnabled">
+                  </p-checkbox>
+                  <label for="selfManagementEnabled" class="text-sm font-medium cursor-pointer">
+                    {{ 'label.enableSelfManagement' | translate }}
+                  </label>
+                  <p-chip
+                    label="ORG SETTING"
+                    styleClass="text-xs chip-warning ml-2">
+                  </p-chip>
+                </div>
+
+                <small class="text-gray-600 mt-2 block">
+                  {{ 'message.selfManagementDescription' | translate }}
+                </small>
+              </div>
+            }
+
+            <!-- Display other roles (read-only) -->
+            @if (otherUserRoles().length > 0) {
+              <div class="mt-4">
+                <label class="block text-sm font-medium mb-2 text-gray-600">
+                  {{ 'label.otherRoles' | translate }} ({{ 'label.readOnly' | translate }})
+                </label>
+                <div class="flex flex-wrap gap-2">
+                  @for (role of otherUserRoles(); track role) {
+                    <p-chip
+                      [label]="role"
+                      [styleClass]="'text-xs chip-' + getRoleSeverity(role)">
+                    </p-chip>
+                  }
+                </div>
+                <small class="text-gray-600 mt-1 block">
+                  {{ 'message.otherRolesReadOnly' | translate }}
+                </small>
+              </div>
+            }
           </div>
         </div>
       }
@@ -294,13 +353,13 @@
       <!-- Dialog Footer -->
       <ng-template pTemplate="footer">
         <div class="flex justify-content-end gap-3 p-3">
-          <p-button 
+          <p-button
             [label]="'button.cancel' | translate"
             severity="secondary"
             [outlined]="true"
             (onClick)="cancelEdit()">
           </p-button>
-          <p-button 
+          <p-button
             [label]="'button.save' | translate"
             severity="primary"
             (onClick)="saveUserRoles()">
@@ -311,8 +370,8 @@
 
     <!-- Toast Messages -->
     <p-toast></p-toast>
-    
+
     <!-- Confirm Dialog -->
     <p-confirmDialog></p-confirmDialog>
   }
-</div> 
+</div>

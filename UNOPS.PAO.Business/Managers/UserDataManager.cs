@@ -22,7 +22,7 @@ public class UserDataManager : IUserDataManager
 
     public Task<PAOUserModel?> GetUserByIdAsync(int id)
     {
-        var user = context.GrantUsers.FirstOrDefault(u => u.Id == id);
+        var user = context.PAOUsers.FirstOrDefault(u => u.Id == id);
         if (user == null)
             return Task.FromResult<PAOUserModel?>(null);
         return Task.FromResult(mapper.Map<PAOUserModel>(user));
@@ -30,7 +30,7 @@ public class UserDataManager : IUserDataManager
 
     public Task<PAOUserModel?> GetUserByEmailAsync(string email)
     {
-        var user = context.GrantUsers.FirstOrDefault(u => u.Email == email);
+        var user = context.PAOUsers.FirstOrDefault(u => u.Email == email);
         if (user == null)
             return Task.FromResult<PAOUserModel?>(null);
         return Task.FromResult(mapper.Map<PAOUserModel>(user));
@@ -56,6 +56,28 @@ public class UserDataManager : IUserDataManager
             }
             return Task.FromResult<PAOUserModel?>(null);
         }
-        return GetUserByIdAsync(int.Parse(userId));
+        
+        if (!int.TryParse(userId, out int userIdInt))
+        {
+            return Task.FromResult<PAOUserModel?>(null); // Invalid userId format
+        }
+        
+        return GetUserByIdAsync(userIdInt);
+    }
+
+    public Task<List<PAOUserModel>> GetUsersByEmailsAsync(IEnumerable<string> emails)
+    {
+        if (emails == null || !emails.Any())
+        {
+            return Task.FromResult(new List<PAOUserModel>());
+        }
+
+        var emailList = emails.Select(e => e.ToLower()).ToList();
+        var users = context.PAOUsers
+            .Where(u => emailList.Contains(u.Email.ToLower()))
+            .ToList();
+
+        var mappedUsers = users.Select(u => mapper.Map<PAOUserModel>(u)).ToList();
+        return Task.FromResult(mappedUsers);
     }
 }

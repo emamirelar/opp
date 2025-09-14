@@ -1,0 +1,117 @@
+{
+  "tourId": "aiassistant-overview",
+  "titleKey": "tour.aiassistant.title",
+  "descriptionKey": "tour.aiassistant.description",
+  "entity": "AiAssistant",
+  "route": "/ai",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "titleKey": "tour.aiassistant.steps.welcome.title",
+        "descriptionKey": "tour.aiassistant.steps.welcome.description",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".ai-chat-sidebar",
+      "fallbackType": "ai-sidebar",
+      "popover": {
+        "titleKey": "tour.aiassistant.steps.chatSidebar.title",
+        "descriptionKey": "tour.aiassistant.steps.chatSidebar.description",
+        "side": "right",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".ai-new-chat-button",
+      "fallbackType": "new-chat",
+      "popover": {
+        "titleKey": "tour.aiassistant.steps.newChat.title",
+        "descriptionKey": "tour.aiassistant.steps.newChat.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".ai-chat-history",
+      "fallbackType": "chat-history",
+      "popover": {
+        "titleKey": "tour.aiassistant.steps.chatHistory.title",
+        "descriptionKey": "tour.aiassistant.steps.chatHistory.description",
+        "side": "right",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".ai-main-chat-area",
+      "fallbackType": "main-chat",
+      "popover": {
+        "titleKey": "tour.aiassistant.steps.mainChatArea.title",
+        "descriptionKey": "tour.aiassistant.steps.mainChatArea.description",
+        "side": "left",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".ai-welcome-screen",
+      "fallbackType": "welcome-screen",
+      "popover": {
+        "titleKey": "tour.aiassistant.steps.welcomeScreen.title",
+        "descriptionKey": "tour.aiassistant.steps.welcomeScreen.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".ai-sample-prompts",
+      "fallbackType": "sample-prompts",
+      "popover": {
+        "titleKey": "tour.aiassistant.steps.samplePrompts.title",
+        "descriptionKey": "tour.aiassistant.steps.samplePrompts.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".ai-input-area",
+      "fallbackType": "input-area",
+      "popover": {
+        "titleKey": "tour.aiassistant.steps.inputArea.title",
+        "descriptionKey": "tour.aiassistant.steps.inputArea.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".ai-send-button",
+      "fallbackType": "send-button",
+      "popover": {
+        "titleKey": "tour.aiassistant.steps.sendButton.title",
+        "descriptionKey": "tour.aiassistant.steps.sendButton.description",
+        "side": "top",
+        "align": "end"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.aiassistant.steps.tourControl.title",
+        "descriptionKey": "tour.aiassistant.steps.tourControl.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2024-01-15T12:00:00Z",
+  "version": "1.0"
+}

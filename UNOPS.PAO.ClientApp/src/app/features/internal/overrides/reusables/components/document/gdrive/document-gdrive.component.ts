@@ -1,18 +1,22 @@
-import { Component, input } from '@angular/core';
+import { Component, input, OnDestroy, inject } from '@angular/core';
 
 //Prime NG
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { GDriveAddLinkComponent } from './addlink/document-gdrive-addlink.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { DrivePickerService } from '../../../drive-picker.service';
+import { DocumentService } from '../../../../../../../common/services/document.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-document-gdrive',
+  standalone: true,
   imports: [ButtonModule, DialogModule, GDriveAddLinkComponent, TranslateModule],
   templateUrl: './document-gdrive.component.html',
   styleUrl: './document-gdrive.component.scss',
 })
-export class GDriveDocumentComponent {
+export class GDriveDocumentComponent implements OnDestroy {
   entityName = input<string>('');
   entityId = input<string>('');
   appDocumentRef = input<any>(null);
@@ -20,8 +24,38 @@ export class GDriveDocumentComponent {
   disabled = input<boolean>(false);
   showAddLinkDialog: boolean = false;
 
+  private drivePickerService = inject(DrivePickerService);
+  private documentService = inject(DocumentService);
+
+  ngOnDestroy(): void {
+    // Reset MimeTypes when component is destroyed
+    this.drivePickerService.setAcceptedMIMETypes('');
+  }
+
   handleOnSelectDriveBtnClick() {
-    this.showAddLinkDialog = true;
+    // Set accepted MIME types for the picker
+    this.drivePickerService.setAcceptedMIMETypes(this.acceptedMIMETypes());
+    
+    // Subscribe to file selection events
+    const subscription: Subscription = this.drivePickerService.onFilesSelectedEmitter.subscribe({
+      next: (event: any) => {
+        this.handleSelectedFiles(event);
+        subscription.unsubscribe(); // Clean up subscription after handling
+      }
+    });
+
+    // Directly open the Google Drive picker
+    this.drivePickerService.openPicker();
+  }
+
+  private handleSelectedFiles(event: any) {
+    if (event.files && event.files.length > 0) {
+      // Add the selected files directly to the main document component
+      // The main document component should handle displaying these with inline editing
+      if (this.appDocumentRef()) {
+        this.appDocumentRef().addPendingFiles(event.files);
+      }
+    }
   }
 
   handleOnAddLinkBtnClick(addLinkComponent: any) {

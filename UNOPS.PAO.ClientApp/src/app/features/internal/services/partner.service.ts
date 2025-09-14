@@ -18,7 +18,7 @@ export class PartnerService {
   constructor() { }
 
   getClassicSearchUrl(): string {
-    return `${this.apiUrl}/classic-search`;
+    return `${this.apiUrl}`;
   }
 
   getAllPartners() {
@@ -47,10 +47,13 @@ export class PartnerService {
       }));
   }
 
-  createPartner( requestJson: object ){
-
+  /**
+   * Creates a partner with duplicate detection handling
+   * Returns either the created partner or duplicate detection response
+   */
+  createPartner( requestJson: object ): Observable<any> {
     this.isLoading.set( true );
-    return this.http.post(this.apiUrl, requestJson).pipe(tap(
+    return this.http.post<any>(this.apiUrl, requestJson).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -103,6 +106,32 @@ export class PartnerService {
 
   getUploadLogoUrl(recordId: string) {
     return `${this.apiUrl}/${recordId}/logo`;
+  }
+  
+  approvePartner(requestJson: any) {
+    this.isLoading.set(true);
+    return this.http.post(`${this.apiUrl}/${requestJson.id}/approve`, requestJson).pipe(tap(
+      {
+        next: (event) => {
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        }
+      }));
+  }
+
+  activatePartner(id: string) {
+    this.isLoading.set(true);
+    return this.http.post(`${this.apiUrl}/${id}/activate`, {}).pipe(tap(
+      {
+        next: (event) => {
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        }
+      }));
   }
   
 }

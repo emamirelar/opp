@@ -4,5 +4,6 @@ public enum EntityStatus
     Inactive,
     Active,
     Closed,
-    Draft
+    Draft,
+    Archived
 }

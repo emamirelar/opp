@@ -1,0 +1,237 @@
+<div class="layout-wrapper ai-layout-wrapper">
+  <app-topbar></app-topbar>
+  <div class="ai-layout-container" [ngStyle]="{ 'display': 'flex', 'flexDirection': 'row', 'height': '100%' }">
+    
+    <!-- Mobile Backdrop -->
+    <div *ngIf="isMobile() && sidebarOpen()" 
+         class="mobile-backdrop show"
+         (click)="closeMobileSidebar()"></div>
+
+    <!-- Sidebar -->
+    <div class="ai-sidebar ai-chat-sidebar" 
+      [class.sidebar-collapsed]="layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered() && !isMobile()"
+      [class.mobile-sidebar-open]="isMobile() && sidebarOpen()"
+      [class.mobile-sidebar-closed]="isMobile() && !sidebarOpen()"
+      (mouseenter)="!isMobile() && sidebarHovered.set(true)"
+      (mouseleave)="!isMobile() && sidebarHovered.set(false)">
+      
+              <div class="sidebar-content" [style.display]="(layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered() && !isMobile()) ? 'block' : 'block'" [ngClass]="{'sidebar-content-collapsed': layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered() && !isMobile()}" >
+        <!-- New Chat Button (collapsed: icon only, top-aligned) -->
+        <div class="p-3 border-b border-[var(--surface-border)] flex justify-center" *ngIf="layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered() && !isMobile()">
+          <button 
+            (click)="startNewChat()"
+            class="new-chat-button flex items-center justify-center font-bold new-chat-collapsed ai-new-chat-button"
+            [disabled]="isNewChatDisabled()"
+            [title]="isNewChatDisabled() ? 'Already in new chat' : 'Start new chat'">
+            <i class="pi pi-plus text-2xl font-extrabold text-[var(--primary-color)]"></i>
+          </button>
+        </div>
+        
+        <!-- Full sidebar content when expanded -->
+        <ng-container *ngIf="!layoutService.aiAssistantSidebarCollapsed() || sidebarHovered() || isMobile()">
+          <!-- Fixed Header Section (New Chat + Search) -->
+          <div class="sidebar-fixed-header">
+            <!-- New Chat Button -->
+            <div class="chat-button border-b border-[var(--surface-border)]">
+              <button 
+                (click)="startNewChat()"
+                class="new-chat-icon-button"
+                [disabled]="isNewChatDisabled()"
+                [title]="isNewChatDisabled() ? 'Already in new chat' : 'Start new chat'">
+                <i class="pi pi-plus"></i>
+              </button>
+            </div>
+            
+            <!-- Search Section -->
+            <div class="sidebar-search-container ai-search-section">
+              <div class="search-input-wrapper">
+                <input 
+                  type="text" 
+                  [(ngModel)]="searchQuery"
+                  (input)="onSearchInput($event)"
+                  placeholder="Search chats..."
+                  class="search-input"
+                />
+                <i class="pi pi-search search-icon"></i>
+                <button 
+                  *ngIf="searchQuery()"
+                  (click)="clearSearch()"
+                  class="clear-search-btn"
+                  type="button">
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scrollable Chat List Section -->
+          <div class="sidebar-scrollable-content">
+            <div class="sidebar-section">
+              <div class="section-title">
+                <span>Recent Chats</span>
+                <span *ngIf="searchQuery()" class="search-results-count">
+                  ({{ filteredChatSessions().length }} of {{ chatSessions().length }})
+                </span>
+              </div>
+              <div class="chat-list ai-chat-history">
+                <div *ngIf="isLoadingSessions()" class="loading-message">
+                  <div class="loading-spinner"></div>
+                  <span>Loading chats...</span>
+                </div>
+                
+                <div *ngIf="!isLoadingSessions() && chatSessions().length === 0" class="no-chats-message">
+                  <span class="text-sm text-gray-500">No chat history yet</span>
+                </div>
+                
+                <div *ngFor="let chat of filteredChatSessions(); let i = index; trackBy: trackByChatId" 
+                     class="chat-item"
+                     [class.active]="isSelectedChat(chat)"
+                     [attr.data-selected]="selectedChatId()"
+                     [attr.data-chat-id]="chat.id">
+                  <div class="chat-item-content" (click)="openChat(chat)">
+                    <!-- Clickable title to open chat -->
+                    <div class="chat-title" title="Click to open chat">
+                      {{ chat.title }}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+      
+      <!-- Global Filter Section -->
+
+    </div>
+    
+    <!-- AI Assistant Panel (Fullscreen Mode) - CLEAN REBUILD -->
+    <div class="ai-content-area ai-main-chat-area" 
+         [class.mobile-content-hidden]="isMobile() && sidebarOpen()">
+      
+      <!-- Custom header with chat controls -->
+      <div class="ai-chat-header" *ngIf="selectedChatId()">
+        <div class="chat-header-content">
+          <div class="chat-header-title">
+            <!-- Editable title -->
+            <div class="header-chat-title" 
+                 *ngIf="!isEditingTitle(selectedChatId()!)"
+                 (click)="startEditHeaderTitle($event)"
+                 title="Click to rename chat">
+              {{ getSelectedChatTitle() }}
+            </div>
+            <!-- Title input when editing -->
+            <input *ngIf="isEditingTitle(selectedChatId()!)"
+                   class="header-chat-title-input"
+                   [(ngModel)]="editingTitleText"
+                   (keydown.enter)="saveHeaderTitle()"
+                   (keydown.escape)="cancelEditTitle()"
+                   (blur)="saveHeaderTitle()"
+                   #headerTitleInput
+                   placeholder="Enter chat title">
+          </div>
+          <div class="chat-header-actions">
+            <!-- Star button -->
+            <button class="chat-action-btn" 
+                    (click)="toggleSelectedChatStar()"
+                    [class.starred]="getSelectedChat()?.starred"
+                    title="{{getSelectedChat()?.starred ? 'Unstar' : 'Star'}} this chat">
+              <!-- Filled star when starred -->
+              <svg *ngIf="getSelectedChat()?.starred" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              <!-- Outline star when not starred -->
+              <svg *ngIf="!getSelectedChat()?.starred" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </button>
+            <!-- Edit button -->
+            <button class="chat-action-btn" 
+                    (click)="startEditHeaderTitle($event)"
+                    title="Rename chat">
+              <i class="pi pi-pencil"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <app-ai-assistant-panel 
+        [hideHeader]="true"
+        [viewContainerRef]="viewContainerRef"
+        [rightPanelEntityType]="rightPanelEntityType"
+        [rightPanelEntityId]="rightPanelEntityId"
+        mode="fullscreen"
+        (cardClicked)="onCardClicked($event)"
+        (urlClicked)="onUrlClicked($event)">
+      </app-ai-assistant-panel>
+    </div>
+
+    <!-- Right Panel (Third Panel) -->
+    <div class="ai-right-panel" 
+         [class.panel-visible]="rightPanelVisible" 
+         [class.resizing]="resizing"
+         [class.mobile-content-hidden]="isMobile() && sidebarOpen()"
+         [style.flex-basis]="rightPanelVisible ? rightPanelWidth + 'px' : '0px'"
+         [style.min-width]="rightPanelVisible ? '500px' : '0px'"
+         [style.max-width]="rightPanelVisible ? '60vw' : '0px'"
+         [style.display]="rightPanelVisible ? 'flex' : 'none'">
+    <div class="right-panel-content">
+      <div class="right-panel-header" *ngIf="rightPanelVisible">
+        <div class="panel-title">
+          <h4>{{ getEntityDisplayName() }}</h4>
+          <span class="panel-subtitle">{{ rightPanelEntityType | titlecase }} • ID: {{ rightPanelEntityId }}</span>
+        </div>
+        <div class="panel-actions">
+          <button type="button" 
+                  class="panel-action-btn" 
+                  (click)="openRightPanelInNewTab()" 
+                  pTooltip="Open in new tab"
+                  tooltipPosition="left">
+            <i class="pi pi-external-link"></i>
+          </button>
+          <button type="button" 
+                  class="panel-action-btn" 
+                  (click)="closeRightPanel()" 
+                  pTooltip="Close panel"
+                  tooltipPosition="left">
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+      </div>
+      
+      
+      <ng-container *ngIf="rightPanelType === 'component' && rightPanelComponent">
+        <ng-container [ngSwitch]="rightPanelEntityType">
+          <app-partner-view *ngSwitchCase="'Partner'" [recordId]="rightPanelEntityId || ''" [showAiPanel]="false"></app-partner-view>
+          <app-contact-view *ngSwitchCase="'Contact'" [recordId]="rightPanelEntityId || ''" [showAiPanel]="false"></app-contact-view>
+          <app-interaction-modal *ngSwitchCase="'Interaction'" [recordId]="rightPanelEntityId || ''"></app-interaction-modal>
+        </ng-container>
+      </ng-container>
+      <ng-container *ngIf="rightPanelType === 'component' && !rightPanelComponent">
+        <div class="coming-soon-container">
+          <div class="coming-soon-icon">
+            <i class="pi pi-cog pi-spin"></i>
+          </div>
+          <h4>Coming Soon</h4>
+          <p>{{ rightPanelEntityType | titlecase }} details panel is under development.</p>
+          <div class="entity-info">
+            <div class="info-item">
+              <strong>Entity Type:</strong> {{ rightPanelEntityType }}
+            </div>
+            <div class="info-item">
+              <strong>Entity ID:</strong> {{ rightPanelEntityId }}
+            </div>
+          </div>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="rightPanelType === 'url'">
+        <iframe [src]="rightPanelUrl" width="100%" height="100%" frameborder="0"></iframe>
+      </ng-container>
+    </div>
+    <div class="resize-handle" (mousedown)="startResizing($event)"></div>
+  </div>
+  </div>
+</div>
+
+<p-confirmDialog></p-confirmDialog> 

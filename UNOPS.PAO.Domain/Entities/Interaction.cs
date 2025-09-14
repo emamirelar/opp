@@ -15,11 +15,9 @@ namespace UNOPS.PAO.Domain.Entities
         
         public DateTime Date { get; set; }
         
-        public byte[]? Data { get; set; }
+        public string? Description { get; set; }
 
-        public required int ContactId { get; set; }
-        [JsonIgnore]  // Prevents circular reference in serialization
-        public required virtual Contact Contact { get; set; } = null!;
+        // Note: Contact relationships are now handled through InteractionContacts many-to-many table
 
         [JsonIgnore]
         public virtual List<string>? EmailAddresses { get; set; } = new List<string>();
@@ -44,11 +42,14 @@ namespace UNOPS.PAO.Domain.Entities
 
         public string Subject { get; set; }
 
-        [JsonIgnore]  // Prevents circular reference in serialization
-        public virtual OrganizationHierarchy? OrgUnit { get; set; }
-
-        public int? OrgUnitId { get; set; }
+        // Many-to-many relationship with OrganizationHierarchy through OrganizationUnitRelationships
+        // This replaces the direct OrgUnitId/OrgUnit relationship to support multiple org unit associations
+        [JsonIgnore]
+        public virtual ICollection<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; } = new HashSet<OrganizationUnitRelationship>();
 
         public List<Document>? Documents { get; set; }
+        public string? GmailThreadId { get; set; }
+        [MaxLength(80)]
+        public string? GmailMessageId { get; set; }
     }
 }

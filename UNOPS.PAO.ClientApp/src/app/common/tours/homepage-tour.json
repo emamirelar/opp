@@ -1,0 +1,207 @@
+{
+  "tourId": "homepage-tour",
+  "titleKey": "tour.homepage.title",
+  "descriptionKey": "tour.homepage.description",
+  "entity": "Homepage",
+  "route": "/",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "titleKey": "tour.homepage.steps.welcome.title",
+        "descriptionKey": "tour.homepage.steps.welcome.description",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".menu-toggle-button",
+      "fallbackType": "menu-toggle",
+      "popover": {
+        "titleKey": "tour.homepage.steps.menuToggle.title",
+        "descriptionKey": "tour.homepage.steps.menuToggle.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".homepage-logo",
+      "fallbackType": "homepage-logo",
+      "popover": {
+        "titleKey": "tour.homepage.steps.logo.title",
+        "descriptionKey": "tour.homepage.steps.logo.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".global-search-container",
+      "fallbackType": "global-search",
+      "popover": {
+        "titleKey": "tour.homepage.steps.globalSearch.title",
+        "descriptionKey": "tour.homepage.steps.globalSearch.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.homepage.steps.tourControl.title",
+        "descriptionKey": "tour.homepage.steps.tourControl.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".global-filters-button",
+      "fallbackType": "global-filters",
+      "popover": {
+        "titleKey": "tour.homepage.steps.globalFilters.title",
+        "descriptionKey": "tour.homepage.steps.globalFilters.description",
+        "side": "bottom",
+        "align": "end"
+      }
+    },
+    {
+      "element": ".language-selector",
+      "fallbackType": "language-selector",
+      "popover": {
+        "titleKey": "tour.homepage.steps.languageSelector.title",
+        "descriptionKey": "tour.homepage.steps.languageSelector.description",
+        "side": "bottom",
+        "align": "end"
+      }
+    },
+    {
+      "element": ".ai-assistant-toggle",
+      "fallbackType": "ai-assistant",
+      "popover": {
+        "titleKey": "tour.homepage.steps.aiAssistant.title",
+        "descriptionKey": "tour.homepage.steps.aiAssistant.description",
+        "side": "bottom",
+        "align": "end"
+      }
+    },
+    {
+      "element": ".notifications-button",
+      "fallbackType": "notifications",
+      "popover": {
+        "titleKey": "tour.homepage.steps.notifications.title",
+        "descriptionKey": "tour.homepage.steps.notifications.description",
+        "side": "bottom",
+        "align": "end"
+      }
+    },
+    {
+      "element": ".profile-menu-button",
+      "fallbackType": "profile-menu",
+      "popover": {
+        "titleKey": "tour.homepage.steps.profileMenu.title",
+        "descriptionKey": "tour.homepage.steps.profileMenu.description",
+        "side": "bottom",
+        "align": "end"
+      }
+    },
+    {
+      "element": ".main-navigation-sidebar",
+      "fallbackType": "main-navigation",
+      "popover": {
+        "titleKey": "tour.homepage.steps.mainNavigation.title",
+        "descriptionKey": "tour.homepage.steps.mainNavigation.description",
+        "side": "right",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".dashboard-header",
+      "fallbackType": "dashboard-header",
+      "popover": {
+        "titleKey": "tour.homepage.steps.dashboardHeader.title",
+        "descriptionKey": "tour.homepage.steps.dashboardHeader.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".refresh-btn",
+      "fallbackType": "refresh-button",
+      "popover": {
+        "titleKey": "tour.homepage.steps.refreshButton.title",
+        "descriptionKey": "tour.homepage.steps.refreshButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".partners-card",
+      "fallbackType": "partners-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.partnersCard.title",
+        "descriptionKey": "tour.homepage.steps.partnersCard.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".contacts-card",
+      "fallbackType": "contacts-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.contactsCard.title",
+        "descriptionKey": "tour.homepage.steps.contactsCard.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".interactions-card",
+      "fallbackType": "interactions-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.interactionsCard.title",
+        "descriptionKey": "tour.homepage.steps.interactionsCard.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".opportunities-card",
+      "fallbackType": "opportunities-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.opportunitiesCard.title",
+        "descriptionKey": "tour.homepage.steps.opportunitiesCard.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".actions-required-card",
+      "fallbackType": "actions-required-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.actionsRequiredCard.title",
+        "descriptionKey": "tour.homepage.steps.actionsRequiredCard.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".org-updates-card",
+      "fallbackType": "org-updates-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.orgUpdatesCard.title",
+        "descriptionKey": "tour.homepage.steps.orgUpdatesCard.description",
+        "side": "top",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2024-01-15T11:30:00Z",
+  "version": "1.0"
+}

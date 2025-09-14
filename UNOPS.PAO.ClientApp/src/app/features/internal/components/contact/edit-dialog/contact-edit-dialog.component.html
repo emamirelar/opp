@@ -1,23 +1,23 @@
 <p-blockui [blocked]="contactService.isLoading() || isLoading() || cachedDataService.isLoading()">
   <div class="flex flex-col items-center justify-center gap-3">
     <p-progressSpinner strokeWidth="4" [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
-    <span class="text-lg font-medium">Loading contact data...</span>
+    <span class="text-lg font-medium">{{ 'loading.contactData' | translate }}</span>
   </div>
 </p-blockui>
 
 <div class="flex flex-col h-full gap-4">
     @if( showValidationFailedError() === true ){
-      <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">Please fill all the required details.</p-message>
+      <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">{{ 'validation.pleaseFullAllRequired' | translate }}</p-message>
     }
 
     <form [formGroup]="formGroup" class="flex flex-col gap-8">
       <div class="flex flex-col mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
-        <app-ai-transcribe 
-          transcribeType="contact_action" 
+        <app-ai-transcribe
+          transcribeType="contact_action"
           (transcriptionCompleted)="onTranscriptionCompleted($event)">
         </app-ai-transcribe>
       </div>
-      
+
       <div class="grid grid-cols-9 gap-4">
 
 
@@ -27,9 +27,16 @@
           <p-select formControlName="partnerId" [options]="allPartners()" optionLabel="name"
                     [appendTo]="'body'"
                     optionValue="id"
-                    fluid="true" id="partner" ariaLabel="Select Partner" />
-          @if( formGroup.get("partner")?.invalid && showValidationFailedError() ) {
-            <p-message severity="error" variant="simple">Partner must be entered.</p-message>
+                    [filter]="true"
+                    [lazy]="true"
+                    [virtualScroll]="true"
+                    [virtualScrollItemSize]="32"
+                    filterBy="name"
+                    [showClear]="true"
+                    placeholder="{{ 'label.partner.selectPartner' | translate }}"
+                    fluid="true" id="partner" ariaLabel="'aria.selectPartner' | translate" />
+          @if( formGroup.get("partnerId")?.invalid && showValidationFailedError() ) {
+            <p-message severity="error" variant="simple">{{ 'validation.partnerRequired' | translate }}</p-message>
           }
         </div>
 
@@ -61,7 +68,7 @@
           <label>{{ "label.contact.lastName" | translate }} *</label>
           <input pInputText fluid="true" formControlName="lastName" />
           @if( formGroup.get("lastName")?.invalid && showValidationFailedError() ) {
-            <p-message severity="error" variant="simple">Last Name must be entered.</p-message>
+            <p-message severity="error" variant="simple">{{ 'validation.lastNameRequired' | translate }}</p-message>
           }
         </div>
 
@@ -74,7 +81,7 @@
           <label>{{ "label.contact.email" | translate }} *</label>
           <input pInputText fluid="true" formControlName="email" />
           @if( formGroup.get("email")?.invalid && showValidationFailedError() ) {
-            <p-message severity="error" variant="simple">Email must be entered.</p-message>
+            <p-message severity="error" variant="simple">{{ 'validation.emailRequired' | translate }}</p-message>
           }
         </div>
 
@@ -89,8 +96,11 @@
         </div>
 
         <div class="col-span-9 sm:col-span-6 flex flex-col gap-2">
-          <label>{{ "label.contact.title" | translate }}</label>
+          <label>{{ "label.contact.title" | translate }} *</label>
           <input pInputText fluid="true" formControlName="title" />
+          @if( formGroup.get("title")?.invalid && showValidationFailedError() ) {
+            <p-message severity="error" variant="simple">{{ 'validation.titleRequired' | translate }}</p-message>
+          }
         </div>
 
         <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">

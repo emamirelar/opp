@@ -1,30 +1,33 @@
 using Microsoft.Extensions.Caching.Memory;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 
 namespace UNOPS.PAO.UNOPSBusiness.Services
 {
     public class PartnerTreeService
     {
-        private readonly DataRepository<PartnerTree> _partnerTreeRepository;
+        private readonly DataRepository<UNOPSPartnerTree> _partnerTreeRepository;
         private readonly IMemoryCache _memoryCache;
         private const string CACHE_KEY = "PARTNER_TREE_CACHE";
         private const string LEVEL_1 = "Level_1";
         private const string LEVEL_2 = "Level_2";
         
 
-        public PartnerTreeService(DataRepository<PartnerTree> partnerTreeRepository, IMemoryCache memoryCache)
+        public PartnerTreeService(DataRepository<UNOPSPartnerTree> partnerTreeRepository, IMemoryCache memoryCache)
         {
             _partnerTreeRepository = partnerTreeRepository;
             _memoryCache = memoryCache;
         }
 
-        private async Task<IEnumerable<PartnerTree>> LoadPartnerTreesAsync()
+        private async Task<IEnumerable<UNOPSPartnerTree>> LoadPartnerTreesAsync()
         {
-            if (!_memoryCache.TryGetValue(CACHE_KEY, out IEnumerable<PartnerTree>? partnerTrees))
+            if (!_memoryCache.TryGetValue(CACHE_KEY, out IEnumerable<UNOPSPartnerTree>? partnerTrees))
             {
-                partnerTrees = await _partnerTreeRepository.GetAllSortedAsync("Type");
+                var allPartnerTrees = await _partnerTreeRepository.GetAllSortedAsync("Type");
+                partnerTrees = allPartnerTrees.Where(pt => !pt.IsDeleted);
                 
                 foreach (var partnerTree in partnerTrees)
                 {
@@ -48,29 +51,37 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
 
             }
 
-            return partnerTrees ?? new List<PartnerTree>();
+            return partnerTrees ?? new List<UNOPSPartnerTree>();
         }
 
-        public async Task<IEnumerable<PartnerTree>> GetAllPartnerTreesAsync()
+        public async Task<IEnumerable<UNOPSPartnerTree>> GetAllPartnerTreesAsync()
         {
             return await LoadPartnerTreesAsync();
         }
 
-        public async Task<PartnerTree?> GetPartnerTreeByCodeAsync(string code)
+        public async Task<UNOPSPartnerTree?> GetPartnerTreeByCodeAsync(string code)
         {
             var allPartnerTrees = await LoadPartnerTreesAsync();
-            return allPartnerTrees.FirstOrDefault(pt => pt.Code == code);
+            return allPartnerTrees.FirstOrDefault(pt => pt.Code == code && !pt.IsDeleted);
         }
 
-        public async Task<PartnerTree?> GetPartnerCategoryByPartnerGroupCodeAsync(string code)
+        public async Task<UNOPSPartnerTree?> GetPartnerCategoryByPartnerGroupCodeAsync(string code)
         {
             var partnerTrees = await LoadPartnerTreesAsync();
             var partnerTree = await GetPartnerTreeByCodeAsync(code);
+            if (partnerTree == null)
+            {
+                return null;
+            }
             return await GetParentCategory(partnerTree, partnerTrees.ToList());
         }
 
-        private async Task<PartnerTree?> GetParentCategory(PartnerTree partnerTree, List<PartnerTree> partnerTrees)
+        private async Task<UNOPSPartnerTree?> GetParentCategory(UNOPSPartnerTree partnerTree, List<UNOPSPartnerTree> partnerTrees)
         {
+            if (partnerTree == null)
+            {
+                return null;
+            }
             var parent = await GetPartnerTreeByCodeAsync(partnerTree.Parent);
             if (parent == null)
             {
@@ -85,19 +96,19 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             return parent;
         }
 
-        public async Task<PartnerTree?> GetPartnerTreeByIdAsync(int id)
+        public async Task<UNOPSPartnerTree?> GetPartnerTreeByIdAsync(int id)
         {
             var allPartnerTrees = await LoadPartnerTreesAsync();
-            return allPartnerTrees.FirstOrDefault(pt => pt.Id == id);
+            return allPartnerTrees.FirstOrDefault(pt => pt.Id == id && !pt.IsDeleted);
         }
 
-        public async Task<bool> UpdatePartnerTreeAsync(PartnerTree partnerTree)
+        public async Task<bool> UpdatePartnerTreeAsync(UNOPSPartnerTree partnerTree)
         {
             if (partnerTree == null) throw new ArgumentNullException(nameof(partnerTree));
             
-            // Find the existing partner tree
+            // Find the existing partner tree (including deleted ones for update operations)
             var existingPartnerTree = await _partnerTreeRepository.GetByIdAsync(partnerTree.Id);
-            if (existingPartnerTree == null) return false;
+            if (existingPartnerTree == null || existingPartnerTree.IsDeleted) return false;
 
             // Check if we should update PartnerCategoryCode based on rules
             // TODO: should throw if not allowed
@@ -116,7 +127,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             // Update other properties
             existingPartnerTree.Description = partnerTree.Description;
             existingPartnerTree.Type = partnerTree.Type;
-            existingPartnerTree.Parent = partnerTree.Parent;
+            existingPartnerTree.Parent = string.IsNullOrWhiteSpace(partnerTree.Parent) ? "" : partnerTree.Parent;
             
             // Save changes
             await _partnerTreeRepository.UpdateAsync(existingPartnerTree);
@@ -127,35 +138,54 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             return true;
         }
 
-        public async Task<PartnerTree?> CreatePartnerTreeAsync(PartnerTree partnerTree)
+        public async Task<UNOPSPartnerTree?> CreatePartnerTreeAsync(UNOPSPartnerTree partnerTree)
         {
             if (partnerTree == null) throw new ArgumentNullException(nameof(partnerTree));
 
-            var newPartnerTree = new PartnerTree
+            // Check code uniqueness (only among non-deleted partner trees)
+            var existingPartnerTree = await GetPartnerTreeByCodeAsync(partnerTree.Code);
+            if (existingPartnerTree != null)
             {
+                throw new BusinessException($"A PartnerTree with code '{partnerTree.Code}' already exists.");
+            }
+
+            var newPartnerTree = new UNOPSPartnerTree
+            {
+                Name = partnerTree.Name,
                 Code = partnerTree.Code,
+                Status = EntityStatus.Active,
                 Description = partnerTree.Description,
                 Type = partnerTree.Type,
-                Parent = partnerTree.Parent
+                Parent = string.IsNullOrWhiteSpace(partnerTree.Parent) ? "" : partnerTree.Parent
             };
             
-            // Saving the partnerTree before check if it's allowed to save Partner Category or Partner Group
-            // TODO: Should be improved
+            // Appliquer les règles de PartnerCategoryCode directement lors de la création
+            if (CanModifyPartnerCategoryCodeAsync(newPartnerTree))
+            {
+                newPartnerTree.PartnerCategoryCode = partnerTree.PartnerCategoryCode;
+            }
+            
+            // Sauvegarder d'abord pour avoir l'ID
             await _partnerTreeRepository.AddAsync(newPartnerTree);
             
-            // Invalidate cache
+            // Invalidate cache et recharger pour les règles de groupe
             _memoryCache.Remove(CACHE_KEY);
-
             await LoadPartnerTreesAsync();
             
-            await UpdatePartnerTreeAsync(partnerTree);
+            // Maintenant appliquer les règles de groupe avec la liste complète
+            if (CanModifyPartnerGroupCodeAsync(newPartnerTree, (await LoadPartnerTreesAsync()).ToList()))
+            {
+                newPartnerTree.PartnerGroupCode = partnerTree.PartnerGroupCode;
+                await _partnerTreeRepository.UpdateAsync(newPartnerTree);
+            }
             
             return await GetPartnerTreeByCodeAsync(partnerTree.Code);
         }
 
         public async Task<bool> DeletePartnerTreeAsync(string code)
         {
-            var partnerTree = await GetPartnerTreeByCodeAsync(code);
+            // For delete operations, we need to find the partner tree even if it's already deleted
+            var partnerTree = await GetPartnerTreeByCodeIncludingDeletedAsync(code);
             if (partnerTree == null) return false;
             
             // TODO : Check if there is children before delete
@@ -168,7 +198,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             return true;
         }
 
-        private bool CanModifyPartnerCategoryCodeAsync(PartnerTree partnerTree)
+        private async Task<UNOPSPartnerTree?> GetPartnerTreeByCodeIncludingDeletedAsync(string code)
+        {
+            var allPartnerTreesIncludingDeleted = await _partnerTreeRepository.GetAllSortedAsync("Type");
+            return allPartnerTreesIncludingDeleted.FirstOrDefault(pt => pt.Code == code);
+        }
+
+        private bool CanModifyPartnerCategoryCodeAsync(UNOPSPartnerTree partnerTree)
         {
             // Condition 1: Level_1 and not in specialCategoryCodes
             if (partnerTree.Type == LEVEL_1 && !PartnerTree.specialCategoryCodes.Contains(partnerTree.Code))
@@ -185,7 +221,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             return false;
         }
 
-        private bool CanModifyPartnerGroupCodeAsync(PartnerTree partnerTree, List<PartnerTree> partnerTrees)
+        private bool CanModifyPartnerGroupCodeAsync(UNOPSPartnerTree partnerTree, List<UNOPSPartnerTree> partnerTrees)
         {
             // Condition 1: has a parent
             if (string.IsNullOrEmpty(partnerTree.Parent))

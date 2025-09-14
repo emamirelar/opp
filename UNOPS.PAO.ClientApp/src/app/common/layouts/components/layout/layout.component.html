@@ -1,15 +1,38 @@
 <div [ngClass]="containerClass"
-	class="layout-wrapper">
+	class="layout-wrapper"
+	[class.layout-mobile]="isMobile">
 	<app-topbar></app-topbar>
 	<app-sidebar></app-sidebar>
-	<div class="layout-main-container " [ngClass]="layoutService.layoutState().aiAssistantActive ? 'mr-[28rem]': ''">
-		<div class="layout-main gap-4">
-			<app-breadcrumb></app-breadcrumb>
+	<!-- Splitter container for main content and AI Assistant -->
+	<div class="layout-main-container">
+
+			<app-splitter
+				#splitter
+				[style]="{ height: 'calc(100vh - 105px)' }"
+				[minSizes]="minSplitterSizes"
+				[panels]="splitterPanels"
+				[panelSizes]="splitterSizes"
+				layout="horizontal"
+				stateKey="ai-assistant-splitter"
+				[gutterSize]="16"
+				(onResizeEnd)="rememberSplitterState($event)"
+				>
+			</app-splitter>
+	</div>
+
+	<!-- Templates for splitter panels -->
+	<ng-template #mainContentTemplate>
+		<div class="mr-1 w-full h-full overflow-auto">
 			<router-outlet></router-outlet>
 		</div>
-		<app-footer></app-footer>
-	</div>
-  <app-ai-assistant></app-ai-assistant>
+	</ng-template>
+
+	<ng-template #aiAssistantTemplate>
+		<div class="ai-assistant-panel h-full w-full">
+			<app-ai-assistant-panel></app-ai-assistant-panel>
+		</div>
+	</ng-template>
+
 	<div class="layout-mask animate-fadein"></div>
-  <app-loading-overlay></app-loading-overlay>
+	<app-loading-overlay></app-loading-overlay>
 </div>

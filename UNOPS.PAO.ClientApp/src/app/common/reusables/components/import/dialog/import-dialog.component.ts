@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal, computed, Type } from '@angular/core';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
@@ -12,16 +12,20 @@ import { MessageModule } from 'primeng/message';
 import { BlockUIModule } from 'primeng/blockui';
 import { StepperModule } from 'primeng/stepper';
 import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
-import { NgForOf, NgClass, JsonPipe, TitleCasePipe } from '@angular/common';
+import { NgClass, JsonPipe, TitleCasePipe } from '@angular/common';
 import { ImportDialogService } from './import-dialog.service';
 import { PaginatorModule } from 'primeng/paginator';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DropdownModule } from 'primeng/dropdown';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule, CheckboxChangeEvent } from 'primeng/checkbox';
+import { ChipModule } from 'primeng/chip';
 import { ComponentResolverService } from '../../../../../features/internal/services/component-resolver.service';
 import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
 import { ImportService } from '../import.service';
+import { DuplicateIndicatorComponent } from '../duplicate-indicator/duplicate-indicator.component';
+import { UserManagementService } from '../../../../../features/internal/admin/user-management/user-management.service';
+import { DuplicateSummaryComponent } from '../duplicate-summary/duplicate-summary.component';
 
 // Custom interface for import columns that extends ListViewColumn
 interface ImportColumn extends ListViewColumn {
@@ -45,23 +49,65 @@ interface ImportColumn extends ListViewColumn {
     MessageModule,
     BlockUIModule,
     StepperModule,
-    NgForOf,
     NgClass,
     PaginatorModule,
     ProgressSpinnerModule,
     DropdownModule,
     TooltipModule,
     CheckboxModule,
-    TitleCasePipe
+    ChipModule,
+    TitleCasePipe,
+    DuplicateIndicatorComponent,
+    DuplicateSummaryComponent
   ],
   templateUrl: './import-dialog.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [`
+    .truncate-text {
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+      cursor: help;
+    }
+    
+    .truncate-short {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+      cursor: help;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .truncate-text {
+        max-width: 200px;
+      }
+      .truncate-short {
+        max-width: 120px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .truncate-text {
+        max-width: 150px;
+      }
+      .truncate-short {
+        max-width: 100px;
+      }
+    }
+  `]
 })
 export class ImportDialogComponent implements OnInit {
   feedbackDialogService = inject(FeedbackDialogService);
   importDialogService = inject(ImportDialogService);
   componentResolverService = inject(ComponentResolverService);
   importService = inject(ImportService);
+  translateService = inject(TranslateService);
+  userManagementService = inject(UserManagementService);
   // Make Math available to the template
   Math = Math;
 
@@ -73,6 +119,12 @@ export class ImportDialogComponent implements OnInit {
   validationErrors = signal<Map<number, string[]>>(new Map());
   rowsWithMissingRequired = signal<number[]>([]);
   showMissingRequiredBanner = signal<boolean>(false);
+  
+  // Duplicate detection properties
+  duplicateRows = signal<any[]>([]);
+  nonDuplicateRows = signal<any[]>([]);
+  showDuplicateWarning = signal<boolean>(false);
+  duplicateWarningMessage = signal<string>('');
 
   // Pagination properties
   first = signal(0);
@@ -86,58 +138,73 @@ export class ImportDialogComponent implements OnInit {
 
   // Contact-specific columns
   contactColumns: ImportColumn[] = [
-    { field: 'salutation', header: 'Salutation', required: false, label: 'Salutation', type: 'text', sortable: false },
-    { field: 'firstName', header: 'First Name', required: false, label: 'First Name', type: 'text', sortable: false },
-    { field: 'middleName', header: 'Middle Name', required: false, label: 'Middle Name', type: 'text', sortable: false },
-    { field: 'lastName', header: 'Last Name', required: true, label: 'Last Name', type: 'text', sortable: false },
-    { field: 'suffix', header: 'Suffix', required: false, label: 'Suffix', type: 'text', sortable: false },
-    { field: 'title', header: 'Title', required: false, label: 'Title', type: 'text', sortable: false },
-    { field: 'pronouns', header: 'Pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
-    { field: 'birthDate', header: 'Birth Date', required: false, label: 'Birth Date', type: 'text', sortable: false },
-    { field: 'partnerId', header: 'Partner ID', required: true, label: 'Partner ID', type: 'text', sortable: false },
-    { field: 'email', header: 'Email', required: true, label: 'Email', type: 'text', sortable: false },
-    { field: 'phone', header: 'Phone', required: false, label: 'Phone', type: 'text', sortable: false },
-    { field: 'mobile', header: 'Mobile', required: false, label: 'Mobile', type: 'text', sortable: false },
-    { field: 'otherPhone', header: 'Other Phone', required: false, label: 'Other Phone', type: 'text', sortable: false },
-    { field: 'fax', header: 'Fax', required: false, label: 'Fax', type: 'text', sortable: false },
-    { field: 'department', header: 'Department', required: false, label: 'Department', type: 'text', sortable: false },
-    { field: 'description', header: 'Description', required: false, label: 'Description', type: 'text', sortable: false },
-    { field: 'status', header: 'Status', required: false, label: 'Status', type: 'text', sortable: false },
-    { field: 'contactNumber', header: 'Contact Number', required: false, label: 'Contact Number', type: 'text', sortable: false },
-    { field: 'assistant', header: 'Assistant', required: false, label: 'Assistant', type: 'text', sortable: false },
-    { field: 'assistantPhone', header: 'Assistant Phone', required: false, label: 'Assistant Phone', type: 'text', sortable: false },
-    { field: 'assistantEmail', header: 'Assistant Email', required: false, label: 'Assistant Email', type: 'text', sortable: false },
-    { field: 'mailingStreet', header: 'Mailing Street', required: false, label: 'Mailing Street', type: 'text', sortable: false },
-    { field: 'mailingStreet2', header: 'Mailing Street 2', required: false, label: 'Mailing Street 2', type: 'text', sortable: false },
-    { field: 'mailingCity', header: 'Mailing City', required: false, label: 'Mailing City', type: 'text', sortable: false },
-    { field: 'mailingStateProvince', header: 'Mailing State/Province', required: false, label: 'Mailing State/Province', type: 'text', sortable: false },
-    { field: 'mailingPostalCode', header: 'Mailing Postal Code', required: false, label: 'Mailing Postal Code', type: 'text', sortable: false },
-    { field: 'mailingCountry', header: 'Mailing Country', required: false, label: 'Mailing Country', type: 'text', sortable: false },
+    { field: 'salutation', header: 'contact.salutation', required: false, label: 'Salutation', type: 'text', sortable: false },
+    { field: 'firstName', header: 'contact.firstName', required: false, label: 'First Name', type: 'text', sortable: false },
+    { field: 'middleName', header: 'contact.middleName', required: false, label: 'Middle Name', type: 'text', sortable: false },
+    { field: 'lastName', header: 'contact.lastName', required: true, label: 'Last Name', type: 'text', sortable: false },
+    { field: 'suffix', header: 'contact.suffix', required: false, label: 'Suffix', type: 'text', sortable: false },
+    { field: 'title', header: 'contact.title', required: true, label: 'Title', type: 'text', sortable: false },
+    { field: 'pronouns', header: 'contact.pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
+    { field: 'birthDate', header: 'contact.birthDate', required: false, label: 'Birth Date', type: 'text', sortable: false },
+    { field: 'partnerId', header: 'contact.partnerId', required: true, label: 'Partner ID', type: 'text', sortable: false },
+    { field: 'email', header: 'contact.email', required: true, label: 'Email', type: 'text', sortable: false },
+    { field: 'phone', header: 'contact.phone', required: false, label: 'Phone', type: 'text', sortable: false },
+    { field: 'mobile', header: 'contact.mobile', required: false, label: 'Mobile', type: 'text', sortable: false },
+    { field: 'otherPhone', header: 'contact.otherPhone', required: false, label: 'Other Phone', type: 'text', sortable: false },
+    { field: 'fax', header: 'contact.fax', required: false, label: 'Fax', type: 'text', sortable: false },
+    { field: 'department', header: 'contact.department', required: false, label: 'Department', type: 'text', sortable: false },
+    { field: 'description', header: 'contact.description', required: false, label: 'Description', type: 'text', sortable: false },
+    { field: 'status', header: 'contact.status', required: false, label: 'Status', type: 'text', sortable: false },
+    { field: 'contactNumber', header: 'contact.contactNumber', required: false, label: 'Contact Number', type: 'text', sortable: false },
+    { field: 'assistant', header: 'contact.assistant', required: false, label: 'Assistant', type: 'text', sortable: false },
+    { field: 'assistantPhone', header: 'contact.assistantPhone', required: false, label: 'Assistant Phone', type: 'text', sortable: false },
+    { field: 'assistantEmail', header: 'contact.assistantEmail', required: false, label: 'Assistant Email', type: 'text', sortable: false },
+    { field: 'mailingStreet', header: 'contact.mailingStreet', required: false, label: 'Mailing Street', type: 'text', sortable: false },
+    { field: 'mailingStreet2', header: 'contact.mailingStreet2', required: false, label: 'Mailing Street 2', type: 'text', sortable: false },
+    { field: 'mailingCity', header: 'contact.mailingCity', required: false, label: 'Mailing City', type: 'text', sortable: false },
+    { field: 'mailingStateProvince', header: 'contact.mailingStateProvince', required: false, label: 'Mailing State/Province', type: 'text', sortable: false },
+    { field: 'mailingPostalCode', header: 'contact.mailingPostalCode', required: false, label: 'Mailing Postal Code', type: 'text', sortable: false },
+    { field: 'mailingCountry', header: 'contact.mailingCountry', required: false, label: 'Mailing Country', type: 'text', sortable: false },
   ];
 
-  // Partner-specific columns
-  partnerColumns: ImportColumn[] = [
-    { field: 'name', header: 'Name', required: true, label: 'Name', type: 'text', sortable: false },
-    { field: 'shortName', header: 'Short Name', required: true, label: 'Short Name', type: 'text', sortable: false },
-    { field: 'status', header: 'Status', required: false, label: 'Status', type: 'text', sortable: false },
-    { field: 'newEngagement', header: 'New Engagement', required: true, label: 'New Engagement', type: 'text', sortable: false },
-    { field: 'phone', header: 'Phone', required: false, label: 'Phone', type: 'text', sortable: false },
-    { field: 'website', header: 'Website', required: false, label: 'Website', type: 'text', sortable: false },
-    { field: 'pooledFund', header: 'Pooled Fund', required: true, label: 'Pooled Fund', type: 'text', sortable: false },
-    { field: 'ddRequired', header: 'DD Required', required: true, label: 'DD Required', type: 'text', sortable: false },
-    { field: 'ddeacDone', header: 'DDEAC Done', required: true, label: 'DDEAC Done', type: 'text', sortable: false },
-    { field: 'eacReference', header: 'EAC Reference', required: false, label: 'EAC Reference', type: 'text', sortable: false },
-    { field: 'globalKeyAccount', header: 'Global Key Account', required: false, label: 'Global Key Account', type: 'text', sortable: false },
-    { field: 'unSecretariatEntity', header: 'UN Secretariat Entity', required: false, label: 'UN Secretariat Entity', type: 'text', sortable: false },
-    { field: 'levyPotentiallyApplies', header: 'Levy Potentially Applies', required: true, label: 'Levy Potentially Applies', type: 'text', sortable: false },
-    { field: 'reasonForLevyNotApplying', header: 'Reason For Levy Not Applying', required: false, label: 'Reason For Levy Not Applying', type: 'text', sortable: false },
-    { field: 'levyTreatment', header: 'Levy Treatment', required: false, label: 'Levy Treatment', type: 'text', sortable: false },
-    { field: 'address1Street', header: 'Street', required: false, label: 'Street', type: 'text', sortable: false },
-    { field: 'address1Street2', header: 'Street 2', required: false, label: 'Street 2', type: 'text', sortable: false },
-    { field: 'address1City', header: 'City', required: false, label: 'City', type: 'text', sortable: false },
-    { field: 'address1StateProvince', header: 'State/Province', required: false, label: 'State/Province', type: 'text', sortable: false },
-    { field: 'address1PostalCode', header: 'Postal Code', required: false, label: 'Postal Code', type: 'text', sortable: false },
-    { field: 'address1Country', header: 'Country', required: false, label: 'Country', type: 'text', sortable: false },
+  // Partner-specific columns (all fields from Partner.cs, filtered by permissions)
+  allPartnerColumns: ImportColumn[] = [
+    // Essential Fields
+    { field: 'name', header: 'partner.name', required: true, label: 'Name', type: 'text', sortable: false },
+    { field: 'partnerShortDescription', header: 'partner.shortName', required: false, label: 'Short Name', type: 'text', sortable: false },
+    { field: 'partnerLongDescription', header: 'partner.longDescription', required: false, label: 'Long Description', type: 'text', sortable: false },
+    
+    // Classification & Organization
+    { field: 'partnerCategoryId', header: 'partner.partnerCategory', required: false, label: 'Partner Category', type: 'text', sortable: false },
+    { field: 'partnerGroupId', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'number', sortable: false },
+    { field: 'liaisonOfficeId', header: 'partner.liaisonOffice', required: false, label: 'Liaison Office', type: 'text', sortable: false },
+    { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPoint', required: false, label: 'Partner Focal Point', type: 'text', sortable: false },
+    // Status & Operational
+    { field: 'status', header: 'partner.status', required: false, label: 'Status', type: 'text', sortable: false },
+  ];
+
+  // Filtered partner columns based on user permissions
+  partnerColumns: ImportColumn[] = [];
+
+  // Interaction-specific columns
+  interactionColumns: ImportColumn[] = [
+    { field: 'type', header: 'interaction.type', required: true, label: 'Type', type: 'text', sortable: false },
+    { field: 'date', header: 'interaction.date', required: true, label: 'Date', type: 'text', sortable: false },
+    { field: 'subject', header: 'interaction.subject', required: true, label: 'Subject', type: 'text', sortable: false },
+    { field: 'description', header: 'interaction.description', required: false, label: 'Description', type: 'text', sortable: false },
+    { field: 'location', header: 'interaction.location', required: false, label: 'Location', type: 'text', sortable: false },
+    { field: 'contactIds', header: 'interaction.contactIds', required: false, label: 'Contact IDs', type: 'text', sortable: false },
+    { field: 'partnerIds', header: 'interaction.partnerIds', required: false, label: 'Partner IDs', type: 'text', sortable: false },
+    { field: 'userIds', header: 'interaction.userIds', required: false, label: 'User IDs', type: 'text', sortable: false },
+    { field: 'emailAddresses', header: 'interaction.emailAddresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
+    { field: 'phoneNumbers', header: 'interaction.phoneNumbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
+    { field: 'organizationHierarchyIds', header: 'interaction.organizationUnitIds', required: false, label: 'Organization Unit IDs', type: 'text', sortable: false }
+  ];
+
+  // User Role-specific columns
+  userRoleColumns: ImportColumn[] = [
+    { field: 'userDisplay', header: 'User', required: true, label: 'User', type: 'text', sortable: false },
+    { field: 'roleDisplay', header: 'Role(s)', required: true, label: 'Role(s)', type: 'text', sortable: false }
   ];
 
   // Create data effect in the constructor to ensure injection context
@@ -172,31 +239,76 @@ export class ImportDialogComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    // Set the table columns based on the current import type
-    this.updateColumnsForEntityType();
+  async ngOnInit(): Promise<void> {
+    // Set the table columns based on the current import type (with permissions)
+    await this.updateColumnsForEntityType();
     
     // Immediately check data on init
     this.checkAndProcessData();
   }
 
-  // Update the table columns based on the current import type
-  private updateColumnsForEntityType(): void {
+  // Update the table columns based on the current import type and user permissions
+  private async updateColumnsForEntityType(): Promise<void> {
     const entityType = this.importDialogService.getImportType().toLowerCase();
     
     if (entityType === 'partner') {
+      // Filter partner columns based on user permissions
+      this.partnerColumns = await this.filterColumnsByPermissions(this.allPartnerColumns, 'Partner');
       this.columns = this.partnerColumns;
+    } else if (entityType === 'interaction') {
+      this.columns = this.interactionColumns;
+    } else if (entityType === 'user_role_import') {
+      this.columns = this.userRoleColumns;
     } else {
       // Default to contact columns
       this.columns = this.contactColumns;
     }
   }
+
+  // Filter columns based on user permissions for canUpdate
+  private async filterColumnsByPermissions(allColumns: ImportColumn[], entityName: string): Promise<ImportColumn[]> {
+    try {
+      // Get entity permissions from the backend
+      const response = await fetch(`/api/${entityName.toLowerCase()}/permissions`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.warn(`Failed to get permissions for ${entityName}, showing all columns`);
+        return allColumns;
+      }
+
+      const permissions = await response.json();
+      
+      // If user has no update restrictions (canEditFields is null), show all columns
+      if (!permissions.canEditFields || permissions.canEditFields.length === 0) {
+        return allColumns;
+      }
+
+      // Filter columns based on canEditFields permissions
+      const allowedFields = new Set(permissions.canEditFields);
+      
+      // Always include required fields (like 'name')
+      const filteredColumns = allColumns.filter(column => 
+        column.required || allowedFields.has(column.field)
+      );
+
+      return filteredColumns;
+    } catch (error) {
+      console.error(`Error checking permissions for ${entityName}:`, error);
+      // On error, return all columns to avoid breaking functionality
+      return allColumns;
+    }
+  }
   
   // Check and process data - can be called multiple times if needed
-  checkAndProcessData(): void {
+  async checkAndProcessData(): Promise<void> {
     // Use the explicitly set import type from the service
     const entityType = this.importDialogService.getImportType();
-    console.log('Using explicitly set import type:', entityType);
+    
     
     // Update columns for the current entity type
     this.updateColumnsForEntityType();
@@ -206,9 +318,19 @@ export class ImportDialogComponent implements OnInit {
     
     if (initialData && initialData.length > 0) {
       // Add a unique non-conflicting ID to each row for selection purposes
-      const processedData = initialData.map((item, index) => {
+      let processedData = initialData.map((item, index) => {
         return { ...item, _importRowId: `import-${index}` };
       });
+
+      // Enrich user role data if this is a user role import
+      if (this.isUserRoleImport()) {
+        try {
+          processedData = await this.enrichUserRoleData(processedData);
+        } catch (error) {
+          console.error('Error enriching user role data:', error);
+          // Continue with original data if enrichment fails
+        }
+      }
       
       // Update the data in the service with the processed data
       this.importDialogService.data.set(processedData);
@@ -247,25 +369,28 @@ export class ImportDialogComponent implements OnInit {
       return;
     }
 
+    // Process duplicate detection and add duplicateInfo to each record
+    const processedData = this.processDuplicateDetection(allData);
+
     // Update total records if it doesn't match the data length
-    if (this.totalRecords() !== allData.length) {
-      this.totalRecords.set(allData.length);
+    if (this.totalRecords() !== processedData.length) {
+      this.totalRecords.set(processedData.length);
     }
     
     // Ensure firstIndex doesn't exceed the bounds of the data
-    if (firstIndex >= allData.length) {
+    if (firstIndex >= processedData.length) {
       const newFirstIndex = 0;
-      console.warn(`First index ${firstIndex} exceeds data length ${allData.length}, resetting to ${newFirstIndex}`);
+      console.warn(`First index ${firstIndex} exceeds data length ${processedData.length}, resetting to ${newFirstIndex}`);
       this.first.set(newFirstIndex);
       
-      const newPaginatedResult = allData.slice(newFirstIndex, newFirstIndex + rowsPerPage);
+      const newPaginatedResult = processedData.slice(newFirstIndex, newFirstIndex + rowsPerPage);
       this.paginatedData.set(newPaginatedResult);
       return;
     }
     
     // Normal pagination
-    const endIndex = Math.min(firstIndex + rowsPerPage, allData.length);
-    const paginatedResult = allData.slice(firstIndex, endIndex);
+    const endIndex = Math.min(firstIndex + rowsPerPage, processedData.length);
+    const paginatedResult = processedData.slice(firstIndex, endIndex);
     
     this.paginatedData.set(paginatedResult);
   }
@@ -323,7 +448,145 @@ export class ImportDialogComponent implements OnInit {
     return this.rowsWithMissingRequired().length > 0;
   }
 
-  // Select all rows in the current dataset (including rows with missing required fields)
+  /**
+   * Process duplicate detection and add duplicateInfo to each record
+   */
+  private processDuplicateDetection(data: any[]): any[] {
+    const processedData = [...data];
+    const duplicateRows: any[] = [];
+    const nonDuplicateRows: any[] = [];
+
+    processedData.forEach((record, index) => {
+      
+      // Check if record has duplicateDetection from the new AI service
+      const duplicateDetection = record.duplicateDetection;
+      
+      if (duplicateDetection?.hasDuplicates) {
+        // Use the new duplicateDetection structure
+        record.duplicateInfo = {
+          isDuplicate: true,
+          hasDuplicates: duplicateDetection.hasDuplicates,
+          totalDuplicates: duplicateDetection.totalDuplicates,
+          highConfidence: duplicateDetection.highConfidence,
+          mediumConfidence: duplicateDetection.mediumConfidence,
+          lowConfidence: duplicateDetection.lowConfidence,
+          topDuplicate: duplicateDetection.topDuplicate,
+          tooltip: `${duplicateDetection.totalDuplicates} duplicate(s) found`
+        };
+        
+        duplicateRows.push(record);
+      } else if (record.similarityEntityId) {
+        // Fallback to old similarity detection for backward compatibility
+        const entityId = record.similarityEntityId;
+        const similarityScore = record.similarityScore || 0;
+        const similarityPercentage = Math.round(similarityScore * 100);
+        
+        record.duplicateInfo = {
+          isDuplicate: true,
+          hasDuplicates: true,
+          totalDuplicates: 1,
+          highConfidence: similarityScore > 0.8 ? 1 : 0,
+          mediumConfidence: similarityScore > 0.5 && similarityScore <= 0.8 ? 1 : 0,
+          lowConfidence: similarityScore <= 0.5 ? 1 : 0,
+          topDuplicate: {
+            entityId: entityId,
+            score: similarityScore,
+            matchReason: 'Legacy similarity match',
+            entityType: this.getEntityTypeFromImportType()
+          },
+          tooltip: `Duplicate found (${similarityPercentage}% similarity)`
+        };
+        
+        duplicateRows.push(record);
+      } else {
+        // No duplicate found
+        record.duplicateInfo = {
+          isDuplicate: false,
+          hasDuplicates: false,
+          totalDuplicates: 0,
+          highConfidence: 0,
+          mediumConfidence: 0,
+          lowConfidence: 0,
+          topDuplicate: null,
+          tooltip: 'Unique record'
+        };
+        nonDuplicateRows.push(record);
+      }
+    });
+
+    // Update signals
+    this.duplicateRows.set(duplicateRows);
+    this.nonDuplicateRows.set(nonDuplicateRows);
+    
+    // Show warning if duplicates found
+    if (duplicateRows.length > 0) {
+      this.showDuplicateWarning.set(true);
+      this.duplicateWarningMessage.set(
+        `${duplicateRows.length} duplicate(s) found and auto-deselected. Review and manually select if needed.`
+      );
+    } else {
+      this.showDuplicateWarning.set(false);
+    }
+
+    return processedData;
+  }
+
+  /**
+   * Get entity type from current import type
+   */
+  getEntityTypeFromImportType(): string {
+    const importType = this.currentImportType();
+    switch (importType) {
+      case 'contact':
+        return 'contacts';
+      case 'partner':
+        return 'partners';
+      case 'interaction':
+        return 'interactions';
+      case 'user_role_import':
+        return 'user_role';
+      default:
+        return 'contacts';
+    }
+  }
+
+  /**
+   * Get translated header text
+   */
+  public getTranslatedHeader(key: string): string {
+    try {
+      const translated = this.translateService.instant(key);
+      
+      // Debug: log first few translations
+      if (key === 'DUPLICATE_DETECTION.duplicate' || key === 'contact.firstName') {
+        console.log(`Key: '${key}' -> Translation: '${translated}' -> Same? ${translated === key}`);
+      }
+      
+      // If translation returns the key itself, it means translation failed
+      if (translated !== key) {
+        return translated;
+      }
+      
+      // Fallback: try to find a better translation or return a formatted version
+      const keyParts = key.split('.');
+      const fieldName = keyParts[keyParts.length - 1];
+      
+      // Convert camelCase to Title Case
+      return fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    } catch (error) {
+      console.error('Translation error:', error);
+      return key.split('.').pop() || key;
+    }
+  }
+
+  /**
+   * Generate entity URL for opening in new tab
+   */
+  private getEntityUrl(entityType: string, entityId: string): string {
+    return `/#/partnerships/${entityType}/${entityId}`;
+  }
+
+  // Select all rows in the current dataset (including rows with missing required fields and duplicates)
   selectAllRows(): void {
     const allData = this.importDialogService.data();
     
@@ -332,7 +595,7 @@ export class ImportDialogComponent implements OnInit {
       return;
     }
     
-    // Select ALL rows, including those with missing required fields
+    // Select ALL rows, including those with missing required fields and duplicates
     const newSelection = [...allData];
     
     // Update the local selection state
@@ -346,6 +609,15 @@ export class ImportDialogComponent implements OnInit {
     if (missingRequiredRows.length > 0) {
       this.feedbackDialogService.showWarningToast({
         detail: `You've selected ${missingRequiredRows.length} rows with missing required fields`,
+        life: 3000
+      });
+    }
+
+    // Check if any duplicate rows are being selected and show a warning
+    const duplicateRows = this.duplicateRows();
+    if (duplicateRows.length > 0) {
+      this.feedbackDialogService.showWarningToast({
+        detail: `You've selected ${duplicateRows.length} duplicate rows. These will be processed as new records.`,
         life: 3000
       });
     }
@@ -409,12 +681,15 @@ export class ImportDialogComponent implements OnInit {
       !currentPageRowIds.has(row._importRowId)
     );
     
+    // Filter out duplicate rows from the current page selection
+    const nonDuplicateEventRows = event.filter(row => !row.duplicateInfo?.isDuplicate);
+    
     // Create a new selection by combining:
     // 1. Rows selected from other pages (not visible on current page)
-    // 2. Rows selected on the current page from the event
+    // 2. Non-duplicate rows selected on the current page from the event
     const newSelection = [
       ...selectionsFromOtherPages,
-      ...event
+      ...nonDuplicateEventRows
     ];
     
     // Avoid duplicates by creating a unique set based on _importRowId
@@ -462,11 +737,11 @@ export class ImportDialogComponent implements OnInit {
     // Flag to tell the component not to save to the server
     rowCopy.skipServerSave = true;
     
-    console.log('Row data being passed to edit dialog:', rowCopy);
+    
     
     // Get the entity type
     const entityType = this.importDialogService.getImportType().toLowerCase();
-    console.log('Current import type:', entityType);
+    
     
     // Store a reference to the current row in a temporary map for later access
     // We'll use the importRowId to identify this row when it's updated
@@ -477,7 +752,7 @@ export class ImportDialogComponent implements OnInit {
     
     // First letter should be capitalized for the component name lookup
     const componentName = entityType.charAt(0).toUpperCase() + entityType.slice(1);
-    console.log('Using component resolver with name:', componentName);
+    
     
     try {
       // Create a modified special version of the record for dialog compatibility
@@ -486,10 +761,9 @@ export class ImportDialogComponent implements OnInit {
       // Special handling for each entity type to ensure form is populated correctly
       if (entityType === 'partner') {
         // For partner, explicitly set certain fields that the form expects
-        dialogRecord.partnerOfficeId = dialogRecord.partnerOfficeId || null;
+        // organizationHierarchyIds is used directly, no conversion needed
         dialogRecord.partnerCategoryId = dialogRecord.partnerCategoryId || null;
-        dialogRecord.website = dialogRecord.website || '';
-        dialogRecord.eacReference = dialogRecord.eacReference || '';
+        dialogRecord.partnerApprovalReference = dialogRecord.partnerApprovalReference || '';
         
         // Make sure id is present and formatted appropriately
         if (dialogRecord.id !== undefined && dialogRecord.id !== null) {
@@ -499,7 +773,7 @@ export class ImportDialogComponent implements OnInit {
       }
       
       // Log the prepared record
-      console.log('Prepared dialog record:', dialogRecord);
+      
       
       // Use the resolver method with additional parameters to identify this as a custom dialog
       // Define our custom behavior through the dialogRecord object
@@ -530,10 +804,10 @@ export class ImportDialogComponent implements OnInit {
       
       // Handle dialog close event to update the row in the table
       dialogRef.onClose.subscribe(result => {
-        console.log('Dialog closed with result:', result);
+        
         
         if (result && (result._updated || typeof result === 'object')) {
-          console.log('Row was updated in the edit dialog');
+          
           
           // Find the row in the data array
           const allData = this.importDialogService.data();
@@ -571,7 +845,7 @@ export class ImportDialogComponent implements OnInit {
         window.dispatchEvent(new CustomEvent('refresh-listview'));
       });
       
-      console.log('Dialog opened through component resolver');
+      
     } catch (error) {
       console.error('Error opening edit dialog:', error);
       this.feedbackDialogService.showErrorToast({ 
@@ -650,6 +924,31 @@ export class ImportDialogComponent implements OnInit {
     this.showMissingRequiredBanner.set(rowsWithMissing.length > 0);
   }
 
+  // Get mandatory fields information for the current entity type
+  getMandatoryFieldsInfo(): string {
+    const importType = this.currentImportType();
+    const requiredFields = this.columns
+      .filter(col => col.required)
+      .map(col => this.getTranslatedHeader(col.header))
+      .join(', ');
+
+    switch (importType) {
+      case 'Contact':
+        return `Mandatory fields for contacts: ${requiredFields}`;
+      case 'Partner':
+        return `Mandatory fields for partners: ${requiredFields}`;
+      case 'Interaction':
+        return `Mandatory fields for interactions: ${requiredFields}`;
+      default:
+        return `Mandatory fields: ${requiredFields}`;
+    }
+  }
+
+  // Check if we should show the mandatory fields info banner
+  shouldShowMandatoryFieldsInfo(): boolean {
+    return this.columns.some(col => col.required) && this.importDialogService.data().length > 0;
+  }
+
   // Force refresh of the data view
   refreshData(): void {
     const currentData = this.importDialogService.data();
@@ -679,7 +978,7 @@ export class ImportDialogComponent implements OnInit {
     }
   }
 
-  // Select only valid rows (exclude rows with errors or missing required fields)
+  // Select only valid rows (exclude rows with errors, missing required fields, or duplicates)
   selectValidRows(): void {
     const allData = this.importDialogService.data();
     
@@ -694,9 +993,13 @@ export class ImportDialogComponent implements OnInit {
     // Get rows with validation errors
     const validationErrorRows = Array.from(this.validationErrors().keys());
     
-    // Filter out rows with either missing required fields or validation errors
-    const validRows = allData.filter((_, index) => {
-      return !missingRequiredRows.includes(index) && !validationErrorRows.includes(index);
+    // Filter out rows with either missing required fields, validation errors, or duplicates
+    const validRows = allData.filter((row, index) => {
+      const hasMissingRequired = missingRequiredRows.includes(index);
+      const hasValidationError = validationErrorRows.includes(index);
+      const isDuplicate = row.duplicateInfo?.isDuplicate;
+      
+      return !hasMissingRequired && !hasValidationError && !isDuplicate;
     });
     
     // Update the local selection state
@@ -705,4 +1008,125 @@ export class ImportDialogComponent implements OnInit {
     // Update the service with the selected rows
     this.importDialogService.setSelectedRows(validRows);
   }
+
+  // Check if current import is a user role import
+  isUserRoleImport(): boolean {
+    return this.currentImportType().toLowerCase() === 'user_role_import';
+  }
+
+  /**
+   * Enrich user role import data with user names and role names
+   */
+  async enrichUserRoleData(data: any[]): Promise<any[]> {
+    if (!this.isUserRoleImport() || !data.length) {
+      return data;
+    }
+
+    try {
+      // Extract unique user IDs and role IDs
+      const userIds = new Set<number>();
+      const roleIds = new Set<number>();
+
+      data.forEach(record => {
+        if (record.userId && !isNaN(Number(record.userId))) {
+          userIds.add(Number(record.userId));
+        }
+        if (record.roleIds && Array.isArray(record.roleIds)) {
+          record.roleIds.forEach((roleId: any) => {
+            if (!isNaN(Number(roleId))) {
+              roleIds.add(Number(roleId));
+            }
+          });
+        }
+      });
+
+      // Fetch user and role data in parallel
+      const [userLookup, roleLookup] = await Promise.all([
+        userIds.size > 0 ? this.userManagementService.resolveUserIds(Array.from(userIds)) : Promise.resolve({}),
+        roleIds.size > 0 ? this.userManagementService.resolveRoleIds(Array.from(roleIds)) : Promise.resolve({})
+      ]);
+
+      // Enrich the data
+      return data.map(record => {
+        const enrichedRecord = { ...record };
+        
+        // Enrich user information
+        if (record.userId && (userLookup as any)[record.userId]) {
+          const userInfo = (userLookup as any)[record.userId];
+          enrichedRecord.userDisplay = userInfo.name || userInfo.email || `User ${record.userId}`;
+          enrichedRecord.userEmail = userInfo.email;
+          enrichedRecord.userName = userInfo.name;
+        } else {
+          enrichedRecord.userDisplay = `User ${record.userId}`;
+        }
+
+        // Enrich role information
+        if (record.roleIds && Array.isArray(record.roleIds)) {
+          enrichedRecord.roleNames = record.roleIds.map((roleId: any) => {
+            const roleInfo = (roleLookup as any)[roleId];
+            return roleInfo ? roleInfo.name : `Role ${roleId}`;
+          });
+          enrichedRecord.roleDisplay = enrichedRecord.roleNames.join(', ');
+        } else {
+          enrichedRecord.roleNames = [];
+          enrichedRecord.roleDisplay = '';
+        }
+
+        return enrichedRecord;
+      });
+    } catch (error) {
+      console.error('Error enriching user role data:', error);
+      // Return original data if enrichment fails
+      return data;
+    }
+  }
+
+  /**
+   * Get role severity for styling (same as user management component)
+   */
+  getRoleSeverity(role: string): string {
+    switch (role) {
+      case 'PARTNER_GLOB_ADMIN':
+        return 'danger';
+      case 'ORG_UNIT_ADMIN':
+        return 'warning';
+      case 'PARTNER_USER':
+        return 'info';
+      default:
+        return 'secondary';
+    }
+  }
+
+  /**
+   * Check if field should have long text truncation (for very long fields like descriptions)
+   */
+  isLongTextField(fieldName: string): boolean {
+    const longTextFields = [
+      'description', 
+      'partnerLongDescription', 
+      'details', 
+      'notes', 
+      'comments',
+      'subject',
+      'content'
+    ];
+    return longTextFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
+  }
+
+  /**
+   * Check if field should have short text truncation (for medium length fields)
+   */
+  isShortTextField(fieldName: string): boolean {
+    const shortTextFields = [
+      'name', 
+      'title', 
+      'partnerShortDescription',
+      'location',
+      'contact',
+      'email'
+    ];
+    return shortTextFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
+  }
+
+
 }

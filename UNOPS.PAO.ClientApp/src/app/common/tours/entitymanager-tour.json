@@ -1,0 +1,107 @@
+{
+  "tourId": "entitymanager-overview",
+  "titleKey": "tour.entitymanager.title",
+  "descriptionKey": "tour.entitymanager.description",
+  "entity": "EntityManager",
+  "route": "/admin/entity-manager",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "titleKey": "tour.entitymanager.steps.welcome.title",
+        "descriptionKey": "tour.entitymanager.steps.welcome.description",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".entity-manager-header",
+      "fallbackType": "section-header",
+      "popover": {
+        "titleKey": "tour.entitymanager.steps.header.title",
+        "descriptionKey": "tour.entitymanager.steps.header.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".entity-manager-tabs",
+      "fallbackType": "tabs-navigation",
+      "popover": {
+        "titleKey": "tour.entitymanager.steps.entityTabs.title",
+        "descriptionKey": "tour.entitymanager.steps.entityTabs.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".entity-settings-button",
+      "fallbackType": "entity-settings",
+      "popover": {
+        "titleKey": "tour.entitymanager.steps.settings.title",
+        "descriptionKey": "tour.entitymanager.steps.settings.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".add-field-button",
+      "fallbackType": "add-field",
+      "popover": {
+        "titleKey": "tour.entitymanager.steps.addField.title",
+        "descriptionKey": "tour.entitymanager.steps.addField.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".available-fields-section",
+      "fallbackType": "available-fields",
+      "popover": {
+        "titleKey": "tour.entitymanager.steps.availableFields.title",
+        "descriptionKey": "tour.entitymanager.steps.availableFields.description",
+        "side": "right",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".list-view-fields-section",
+      "fallbackType": "list-view-fields",
+      "popover": {
+        "titleKey": "tour.entitymanager.steps.listViewFields.title",
+        "descriptionKey": "tour.entitymanager.steps.listViewFields.description",
+        "side": "left",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".card-preview-section",
+      "fallbackType": "card-preview",
+      "popover": {
+        "titleKey": "tour.entitymanager.steps.cardPreview.title",
+        "descriptionKey": "tour.entitymanager.steps.cardPreview.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.entitymanager.steps.tourControl.title",
+        "descriptionKey": "tour.entitymanager.steps.tourControl.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2024-01-15T12:00:00Z",
+  "version": "1.0"
+}

@@ -1,0 +1,36 @@
+# Core ADK dependencies - Main framework
+google-adk[eval]>=1.3.0,<2.0.0
+
+# Google AI/Gemini - Use consistent versions to avoid conflicts
+google-genai
+
+# Google Cloud services
+google-cloud-secret-manager>=2.16.0,<3.0.0
+google-cloud-storage>=2.10.0,<3.0.0
+google-cloud-speech>=2.21.0,<3.0.0
+
+# Authentication - Compatible versions
+google-auth>=2.23.0,<3.0.0
+google-auth-oauthlib>=1.1.0,<2.0.0
+google-auth-httplib2>=0.2.0,<1.0.0
+
+# Web framework - Stable versions
+fastapi>=0.104.0,<1.0.0
+uvicorn[standard]>=0.24.0,<1.0.0
+python-multipart>=0.0.6,<1.0.0
+
+# Database - PostgreSQL support
+psycopg2-binary>=2.9.7,<3.0.0
+
+# Core utilities with constraints
+requests>=2.31.0,<3.0.0
+python-dotenv>=1.1.0,<2.0.0
+psutil>=5.9.5,<6.0.0
+
+# AI/LLM libraries - Optional alternative
+# litellm>=1.66.3,<2.0.0
+
+# Optional packages (uncomment as needed)
+# PyPDF2>=3.0.1,<4.0.0
+# python-docx>=1.1.0,<2.0.0
+# yfinance>=0.2.56,<1.0.0

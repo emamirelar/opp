@@ -5,148 +5,149 @@ using System.Linq.Expressions;
 using System.Text;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Specifications;
+using UNOPS.PAO.Domain.Specifications.Interfaces;
 
 /// <summary>
-/// A composite specification that allows filtering interactions by multiple criteria
+/// A specification for advanced search on interactions using search criteria
 /// </summary>
-public class InteractionCompositeSpecification : BaseSpecification<Interaction>
+public class InteractionCompositeSpecification : GenericCompositeSpecification<Interaction, IInteractionSearchFilter>
 {
     /// <summary>
-    /// Creates a composite specification with multiple filter criteria for interactions
+    /// Creates a specification for advanced search on interactions
+    /// </summary>
+    /// <param name="filter">The filter containing advanced search criteria</param>
+    public InteractionCompositeSpecification(IInteractionSearchFilter filter)
+        : base(filter)
+    {
+        // Include the related contacts through junction table
+        AddInclude(i => i.InteractionContacts);
+        AddInclude("InteractionContacts.Contact");
+        
+        // Include the related partners through junction table
+        AddInclude(i => i.InteractionPartners);
+        AddInclude("InteractionPartners.Partner");
+        
+        // Apply dynamic ordering based on filter properties
+        ApplyDynamicOrdering(filter);
+    }
+
+    /// <summary>
+    /// Creates a composite specification with multiple filter criteria for interactions (legacy constructor for backward compatibility)
     /// </summary>
     /// <param name="contactId">Optional contact ID to filter by</param>
     /// <param name="type">Optional interaction type to filter by</param>
     /// <param name="fromDate">Optional start date to filter by</param>
     /// <param name="toDate">Optional end date to filter by</param>
-    /// <param name="searchText">Optional text to search for in interaction data</param>
+    /// <param name="searchText">Optional text to search for in interaction description</param>
+    [Obsolete("Use the constructor with IInteractionSearchFilter instead")]
     public InteractionCompositeSpecification(
         int? contactId = null,
         InteractionType? type = null,
         DateTime? fromDate = null,
         DateTime? toDate = null,
         string? searchText = null)
-        : base(BuildExpression(contactId, type, fromDate, toDate, searchText))
+        : base(CreateLegacyFilter(contactId, type, fromDate, toDate, searchText))
     {
-        // Include the related contact
-        AddInclude(i => i.Contact);
+        // Include the related contacts through junction table
+        AddInclude(i => i.InteractionContacts);
+        AddInclude("InteractionContacts.Contact");
+        
+        // Include the related partners through junction table
+        AddInclude(i => i.InteractionPartners);
+        AddInclude("InteractionPartners.Partner");
         
         // Default ordering is by date descending
         ApplyOrderByDescending(i => i.Date);
     }
-    
+
     /// <summary>
-    /// Builds the composite filter expression based on provided parameters
+    /// Creates a legacy filter for backward compatibility
     /// </summary>
-    private static Expression<Func<Interaction, bool>> BuildExpression(
+    private static IInteractionSearchFilter CreateLegacyFilter(
         int? contactId,
         InteractionType? type,
         DateTime? fromDate,
         DateTime? toDate,
         string? searchText)
     {
-        // Start with a predicate that matches everything
-        Expression<Func<Interaction, bool>> predicate = i => true;
-        
-        // Add contact filter if specified
-        if (contactId.HasValue)
+        return new LegacyInteractionSearchFilter
         {
-            Expression<Func<Interaction, bool>> contactFilter = i => i.ContactId == contactId.Value;
-            predicate = CombineExpressions(predicate, contactFilter);
-        }
-        
-        // Add type filter if specified
-        if (type.HasValue)
-        {
-            Expression<Func<Interaction, bool>> typeFilter = i => i.Type == type.Value;
-            predicate = CombineExpressions(predicate, typeFilter);
-        }
-        
-        // Add from date filter if specified
-        if (fromDate.HasValue)
-        {
-            Expression<Func<Interaction, bool>> fromDateFilter = i => i.Date >= fromDate.Value;
-            predicate = CombineExpressions(predicate, fromDateFilter);
-        }
-        
-        // Add to date filter if specified
-        if (toDate.HasValue)
-        {
-            Expression<Func<Interaction, bool>> toDateFilter = i => i.Date <= toDate.Value;
-            predicate = CombineExpressions(predicate, toDateFilter);
-        }
-        
-        // Add text search filter if specified
-        if (!string.IsNullOrWhiteSpace(searchText))
-        {
-            // Always perform case-insensitive search
-            string lowerSearchText = searchText.ToLower();
-            Expression<Func<Interaction, bool>> textFilter = i => 
-                i.Data != null && Encoding.UTF8.GetString(i.Data).ToLower().Contains(lowerSearchText);
-            predicate = CombineExpressions(predicate, textFilter);
-        }
-        
-        return predicate;
+            ContactId = contactId,
+            Type = type?.ToString(),
+            FromDate = fromDate,
+            ToDate = toDate,
+            SearchText = searchText,
+            AdvancedSearch = false,
+            SearchCriteria = null
+        };
     }
-    
+
     /// <summary>
-    /// Combines two expressions with an AND operator
+    /// Legacy filter implementation for backward compatibility
     /// </summary>
-    private static Expression<Func<T, bool>> CombineExpressions<T>(
-        Expression<Func<T, bool>> expr1,
-        Expression<Func<T, bool>> expr2)
+    private class LegacyInteractionSearchFilter : IInteractionSearchFilter
     {
-        // If one of the expressions is a match-all expression (i => true), return the other
-        if (IsMatchAllExpression(expr1))
-            return expr2;
-        if (IsMatchAllExpression(expr2))
-            return expr1;
-            
-        // Create a parameter for the combined expression
-        var parameter = Expression.Parameter(typeof(T), "x");
+        public int? Id { get; set; }
+        public int? ContactId { get; set; }
+        public string? ContactName { get; set; }
+        public int? PartnerId { get; set; }
+        public string? Type { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public DateTime? Date { get; set; }
+        public string? Description { get; set; }
+        public string? Subject { get; set; }
         
-        // Replace the parameters in the expressions with our new parameter
-        var leftVisitor = new ReplaceParameterVisitor(expr1.Parameters[0], parameter);
-        var left = leftVisitor.Visit(expr1.Body);
+        public string? SearchText { get; set; }
+        public bool AdvancedSearch { get; set; }
+        public string? SearchCriteria { get; set; }
+        public int? OrgUnitId { get; set; }
         
-        var rightVisitor = new ReplaceParameterVisitor(expr2.Parameters[0], parameter);
-        var right = rightVisitor.Visit(expr2.Body);
-        
-        // Combine the expressions with an AND operator
-        var body = Expression.AndAlso(left, right);
-        
-        // Create and return the combined expression
-        return Expression.Lambda<Func<T, bool>>(body, parameter);
+        // IPaginationFilter properties
+        public string? OrderBy { get; set; }
+        public bool? Ascending { get; set; }
     }
-    
+
     /// <summary>
-    /// Checks if the expression is a match-all expression (x => true)
+    /// Applies ordering based on the filter's OrderBy and Ascending properties
     /// </summary>
-    private static bool IsMatchAllExpression<T>(Expression<Func<T, bool>> expr)
+    /// <param name="filter">The filter containing ordering information</param>
+    private void ApplyDynamicOrdering(IInteractionSearchFilter filter)
     {
-        if (expr.Body is ConstantExpression constExpr)
+        // Get the OrderBy and Ascending values directly from the interface (type-safe)
+        string? orderByField = filter.OrderBy;
+        bool ascending = filter.Ascending ?? true;
+        
+        // Determine the ordering expression based on the field name
+        Expression<Func<Interaction, object>> orderExpression = GetOrderByExpression(orderByField);
+        
+        // Apply the correct ordering method
+        if (ascending)
         {
-            return constExpr.Type == typeof(bool) && (bool)constExpr.Value;
+            ApplyOrderBy(orderExpression);
         }
-        return false;
+        else
+        {
+            ApplyOrderByDescending(orderExpression);
+        }
     }
-    
+
     /// <summary>
-    /// Expression visitor that replaces parameters in an expression
+    /// Gets the appropriate ordering expression for the specified field
     /// </summary>
-    private class ReplaceParameterVisitor : ExpressionVisitor
+    /// <param name="orderByField">The field name to order by</param>
+    /// <returns>The ordering expression</returns>
+    private static Expression<Func<Interaction, object>> GetOrderByExpression(string? orderByField)
     {
-        private readonly ParameterExpression _oldParameter;
-        private readonly ParameterExpression _newParameter;
-        
-        public ReplaceParameterVisitor(ParameterExpression oldParameter, ParameterExpression newParameter)
+        return orderByField?.ToLowerInvariant() switch
         {
-            _oldParameter = oldParameter;
-            _newParameter = newParameter;
-        }
-        
-        protected override Expression VisitParameter(ParameterExpression node)
-        {
-            return node == _oldParameter ? _newParameter : base.VisitParameter(node);
-        }
+            "date" => i => i.Date,
+            "subject" => i => i.Subject,
+            "description" => i => i.Description,
+            "type" => i => i.Type,
+            "createddate" => i => i.CreatedDate,
+            _ => i => i.Date // Default to Date descending (most recent first) if no field specified or unknown field
+        };
     }
 } 

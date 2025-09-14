@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Due Diligence Expiry Warning</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background-color: #0066cc;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            margin: -30px -30px 20px -30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header h2 {
+            margin: 5px 0 0 0;
+            font-size: 18px;
+            font-weight: normal;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .warning-icon {
+            font-size: 20px;
+            color: #856404;
+        }
+
+        .warning-text {
+            color: #856404;
+            font-weight: 500;
+        }
+
+        .details {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .details-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .details-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .details-value {
+            color: #212529;
+        }
+
+        .action-list {
+            margin: 20px 0;
+        }
+
+        .action-list ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .action-list li {
+            padding: 8px 0;
+            border-left: 3px solid #0066cc;
+            padding-left: 15px;
+            margin-bottom: 8px;
+            background-color: #f8f9fa;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .cta-button {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #0066cc;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0052a3;
+        }
+
+        .footer {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e5e9;
+        }
+
+        .signature {
+            margin: 25px 0;
+            color: #495057;
+        }
+
+        .contact-info {
+            background-color: #e3f2fd;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #1565c0;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .header {
+                margin: -20px -20px 20px -20px;
+                padding: 15px;
+            }
+            
+            .details-row {
+                flex-direction: column;
+                gap: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>UNOPS Opportunity Plus</h1>
+            <h2>Due Diligence Expiry Warning</h2>
+        </div>
+        
+        <p>Dear {{ UserName }},</p>
+        
+        <div class="warning">
+            <span class="warning-icon">⚠️</span>
+            <div class="warning-text">
+                <strong>Important Notice:</strong> The due diligence for partner <strong>{{ PartnerName }}</strong> is set to expire in approximately <strong>{{ MonthsUntilExpiry }} months</strong>.
+            </div>
+        </div>
+        
+        <div class="details">
+            <div class="details-row">
+                <span class="details-label">Partner:</span>
+                <span class="details-value">{{ PartnerName }}</span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Expiry Date:</span>
+                <span class="details-value">{{ ExpiryDate }}</span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Days Remaining:</span>
+                <span class="details-value">{{ DaysRemaining }} days</span>
+            </div>
+        </div>
+        
+        <p>As the Partner Focal Point for this organization, please take the necessary actions to:</p>
+        
+        <div class="action-list">
+            <ul>
+                <li>Review the current due diligence status</li>
+                <li>Initiate renewal process if required</li>
+                <li>Update partner information in the system</li>
+                <li>Contact relevant stakeholders for document updates</li>
+            </ul>
+        </div>
+        
+        <div class="cta-button">
+            <a href="{{ PartnerUrl }}" class="btn">View Partner Details</a>
+        </div>
+        
+        <div class="contact-info">
+            <p style="margin: 0;"><strong>Need Help?</strong></p>
+            <p style="margin: 5px 0 0 0;">If you have any questions or need assistance, please contact the Opportunity Plus system administrators.</p>
+        </div>
+        
+        <div class="signature">
+            <p>Best regards,<br>
+            <strong>UNOPS Opportunity Plus</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated notification from UNOPS Opportunity Plus. Please do not reply to this email.</p>
+            <p>© {{ CurrentYear }} United Nations Office for Project Services (UNOPS)</p>
+        </div>
+    </div>
+</body>
+</html>

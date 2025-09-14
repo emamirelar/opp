@@ -1,0 +1,260 @@
+.content-item {
+  margin: 0.75rem 0;
+  padding-bottom: 1.25rem;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+  position: relative;
+  transition: border-color 0.3s ease;
+}
+
+.content-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0.75rem;
+}
+
+.content-item::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(102, 126, 234, 0.3) 25%, 
+    rgba(118, 75, 162, 0.4) 50%, 
+    rgba(102, 126, 234, 0.3) 75%, 
+    transparent 100%);
+  opacity: 0.8;
+  border-radius: 1px;
+}
+
+.content-item:last-child::after {
+  display: none;
+}
+
+/* Enhanced border colors for different content types */
+.content-item .content-markdown::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(59, 130, 246, 0.4) 25%, 
+    rgba(147, 51, 234, 0.5) 50%, 
+    rgba(59, 130, 246, 0.4) 75%, 
+    transparent 100%);
+}
+
+.content-item .content-card::after,
+.content-item .content-grid::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(251, 113, 133, 0.4) 25%, 
+    rgba(254, 225, 64, 0.5) 50%, 
+    rgba(251, 113, 133, 0.4) 75%, 
+    transparent 100%);
+}
+
+.content-item .content-mermaid::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(79, 172, 254, 0.4) 25%, 
+    rgba(0, 242, 254, 0.5) 50%, 
+    rgba(79, 172, 254, 0.4) 75%, 
+    transparent 100%);
+}
+
+.content-item .content-chartjs::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 107, 107, 0.4) 25%, 
+    rgba(78, 205, 196, 0.5) 50%, 
+    rgba(255, 107, 107, 0.4) 75%, 
+    transparent 100%);
+}
+
+.content-item .content-code::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(67, 233, 123, 0.4) 25%, 
+    rgba(56, 249, 215, 0.5) 50%, 
+    rgba(67, 233, 123, 0.4) 75%, 
+    transparent 100%);
+}
+
+.content-item .content-text::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(156, 163, 175, 0.4) 25%, 
+    rgba(107, 114, 128, 0.5) 50%, 
+    rgba(156, 163, 175, 0.4) 75%, 
+    transparent 100%);
+}
+
+/* Hover effect for better interactivity */
+.content-item:hover::after {
+  opacity: 1;
+  transform: scaleY(1.2);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Content Type Headers */
+.content-type-header {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.content-type-label {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.content-type-label::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.content-type-label:hover::before {
+  left: 100%;
+}
+
+/* Content Type Specific Colors */
+.mermaid-container .content-type-label {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.code-container .content-type-label {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.fade-in-content:has(app-entity-grid) .content-type-label {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.fade-in-content {
+  animation: fadeInSlideUp 0.5s ease-out;
+}
+
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mermaid-container {
+  margin: 1rem 0;
+  text-align: center;
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.mermaid-container .mermaid {
+  background: transparent;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.code-container {
+  margin: 1rem 0;
+}
+
+.code-container pre {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.text-content {
+  margin: 0.5rem 0;
+}
+
+/* Markdown styling */
+::ng-deep .content-item markdown {
+  font-family: inherit;
+}
+
+::ng-deep .content-item markdown h1,
+::ng-deep .content-item markdown h2,
+::ng-deep .content-item markdown h3 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+::ng-deep .content-item markdown p {
+  margin: 0.5rem 0;
+}
+
+::ng-deep .content-item markdown code {
+  background-color: #f5f5f5;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+::ng-deep .content-item markdown pre {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+/* Chart.js container styles */
+.chartjs-container {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--surface-card);
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  overflow: hidden;
+}
+
+.chartjs-container .content-type-label {
+  background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+}
+
+/* Chart responsive behavior */
+@media (max-width: 768px) {
+  .chartjs-container {
+    padding: 0.75rem;
+    margin: 0.75rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .chartjs-container {
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+  }
+} 

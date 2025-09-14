@@ -29,7 +29,10 @@ export class ContactService {
     this.isLoading.set(true);
     return this.http.get<any>(this.apiUrl, { observe: 'response', params })
       .pipe(
-        tap(() => this.isLoading.set(false))
+        tap({
+          next: () => this.isLoading.set(false),
+          error: () => this.isLoading.set(false)
+        })
       );
   }
 
@@ -38,7 +41,7 @@ export class ContactService {
   }
 
   getClassicSearchUrl(): string {
-    return `${this.apiUrl}/classic-search`;
+    return `${this.apiUrl}`;
   }
 
   getUploadProfilePictureUrl(contactId: string): string {
@@ -87,7 +90,10 @@ export class ContactService {
           data: response.records || [],
           total: response.totalCount || 0
         })),
-        tap(() => this.isLoading.set(false))
+        tap({
+          next: () => this.isLoading.set(false),
+          error: () => this.isLoading.set(false)
+        })
       );
   }
 
@@ -95,14 +101,20 @@ export class ContactService {
     this.isLoading.set(true);
     return this.http.get<Contact>(`${this.apiUrl}/${id}`)
       .pipe(
-        tap(() => this.isLoading.set(false))
+        tap({
+          next: () => this.isLoading.set(false),
+          error: () => this.isLoading.set(false)
+        })
       );
   }
 
-  createContact( contact: Contact ): Observable<Contact> {
-
+  /**
+   * Creates a contact with duplicate detection handling
+   * Returns either the created contact or duplicate detection response
+   */
+  createContact( contact: Contact ): Observable<any> {
     this.isLoading.set( true );
-    return this.http.post<Contact>(this.apiUrl, contact).pipe(tap(
+    return this.http.post<any>(this.apiUrl, contact).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );

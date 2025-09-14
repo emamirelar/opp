@@ -22,19 +22,16 @@ using Microsoft.EntityFrameworkCore;
 public class ValuesController : BaseController
 {
     private readonly ValuesManager _manager;
-    private readonly IBusinessSecurityService _businessSecurityService;
     private int currentUserId => _userResolverService.GetCurrentUserId();
 
     public ValuesController(
         ValuesManager manager,
-        IBusinessSecurityService businessSecurityService,
         ILogger<ValuesController> logger,
         IAuthorizationService authorizationService,
         UserResolverService<int> userResolverService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager;
-        _businessSecurityService = businessSecurityService;
     }
 
     [HttpGet(APIDictionary.Currency)]
@@ -79,14 +76,12 @@ public class ValuesController : BaseController
             var allPartners = await _manager.GetPartnersForFiltering().ToListAsync();
             
             // Apply row-level filtering based on user's role and organization unit
-            var filteredPartners = await _businessSecurityService.ApplyRowFiltersAsync(allPartners.AsQueryable(), User, "create");
             
             // Map to PartnerValueModel after filtering
-            return filteredPartners.Select(p => new PartnerValueModel
+            return allPartners.Select(p => new PartnerValueModel
             {
                 Id = p.Id,
-                Name = p.Name,
-                PartnerOfficeId = p.PartnerOfficeId
+                Name = p.Name ?? ""
             }).ToList();
         });
     }
@@ -95,6 +90,12 @@ public class ValuesController : BaseController
     public async Task<ActionResult> GetOrganizationUnits()
     {
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetOrganizationUnits()));
+    }
+
+    [HttpGet(APIDictionary.LiaisonOffices)]
+    public async Task<ActionResult> GetLiaisonOffices()
+    {
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetLiaisonOffices()));
     }
 
     [HttpGet(APIDictionary.Contacts)]
@@ -108,4 +109,76 @@ public class ValuesController : BaseController
     {
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUsers()));
     }
+
+    [HttpPost(APIDictionary.Users + "/paged")]
+    public async Task<ActionResult> GetUsersPaged([FromBody] UsersPagedRequest request)
+    {
+        return await HandleOperationAsync(async () => await _manager.GetUsersPagedAsync(request));
+    }
+
+    [HttpGet(APIDictionary.Users + "/search")]
+    public async Task<ActionResult> SearchUsers([FromQuery] string? searchTerm = null, [FromQuery] int maxResults = 20, [FromQuery] int[]? selectedUserIds = null)
+    {
+        return await HandleOperationAsync(async () => await _manager.SearchUsersAsync(searchTerm, maxResults, selectedUserIds));
+    }
+
+    [HttpGet(APIDictionary.GeminiModels)]
+    public async Task<ActionResult> GetGeminiModels()
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            var models = Enum.GetValues<GeminiModel>()
+                .Select(model => new
+                {
+                    Value = GetGeminiModelValue(model),
+                    Label = GetGeminiModelDisplayName(model),
+                    Location = GetGeminiModelLocation(model),
+                    MaxTokens = GetGeminiModelMaxTokens(model)
+                })
+                .ToList();
+
+            return await Task.FromResult(models);
+        });
+    }
+
+    private static string GetGeminiModelValue(GeminiModel model)
+    {
+        return model switch
+        {
+            GeminiModel.Gemini_2_5_Flash_001 => "gemini-2.5-flash",
+            _ => model.ToString().ToLowerInvariant()
+        };
+    }
+
+    private static string GetGeminiModelDisplayName(GeminiModel model)
+    {
+        return model switch
+        {
+            GeminiModel.Gemini_2_5_Flash_001 => "Gemini 2.5 Flash",
+            _ => model.ToString()
+        };
+    }
+
+    private static string GetGeminiModelLocation(GeminiModel model)
+    {
+        return model switch
+        {
+            GeminiModel.Gemini_2_5_Flash_001 => "europe-west4",
+            _ => "europe-west4"
+        };
+    }
+
+    private static int GetGeminiModelMaxTokens(GeminiModel model)
+    {
+        return model switch
+        {
+            GeminiModel.Gemini_2_5_Flash_001 => 65535,
+            _ => 8192
+        };
+    }
+}
+
+public enum GeminiModel
+{
+    Gemini_2_5_Flash_001
 }

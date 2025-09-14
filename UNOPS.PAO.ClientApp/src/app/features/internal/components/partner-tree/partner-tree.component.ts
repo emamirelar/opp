@@ -20,6 +20,24 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from './item/partner-tree-item.component';
 import { PermissionUtilityService } from '../../../../essentials/services/permission-utility.service';
 import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
+import { EntityConfigurationService } from '../../services/entity-configuration.service';
+import { ListViewColumn } from '../../../../common/pages/components/listview/listview.model';
+
+/**
+ * @uiEntity PartnerTree
+ * @route /admin/partner-tree
+ * @description Administrative interface for managing organizational hierarchy and partner tree structure. Allows viewing, editing, and organizing partner categories and groups in a hierarchical tree format.
+ * @capabilities view_partner_tree, create_partner_level, edit_partner_level, delete_partner_level, manage_hierarchy, drag_drop_reorder, expand_collapse_nodes
+ * @synonyms organizational_hierarchy, partner_categories, partner_structure, administrative_tree, hierarchy_management
+ * @mandatoryFields name, type, status
+ * @help_when_stuck Use the tree view to navigate organizational structure. Click the + button to create new partner levels. Use expand/collapse controls to view different levels of the hierarchy. Click on any row to edit partner level details.
+ * @common_tasks
+ *   - Creating partner levels: Click 'New Partner Level' button to add new organizational nodes
+ *   - Editing partner structure: Click on any tree node to modify organizational details
+ *   - Managing hierarchy: Use the tree structure to organize partner categories and groups
+ *   - Viewing organizational structure: Expand and collapse nodes to explore the hierarchy
+ *   - Administrative management: Configure organizational relationships and reporting structures
+ */
 
 @Component({
   selector: 'app-partner-tree',
@@ -38,8 +56,13 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   parentOptions: any[] = [];
   override service = inject(PartnerTreeService);
   cachedDataService = inject(CachedDataService);
+  entityConfigurationService = inject(EntityConfigurationService);
   originalData: any[] = [];
   override isDataLoading = this.service.isLoading();
+
+  // Dynamic partner tree columns loaded from API  
+  treeColumns = signal<ListViewColumn[]>([]);
+  treeColumnsLoading = signal(true);
 
   // Dialog state
   parentUpdated: boolean = false;
@@ -69,6 +92,10 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     super.ngOnInit();
     // Load entity permissions
     this.entityPermissionsData.loadPermissions(this.router, this.cdr);
+    
+    // Load dynamic columns from API
+    this.loadPartnerTreeColumns();
+    
     this.setNewPartnerFromAIAssistant();
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
@@ -92,9 +119,18 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     return [];
   }
 
-  handleOnRecordUpdation(event: any) {
+  handleOnRecordUpdation(event: any, parentNodeId?: string) {
     this.updatePartnerLevel = false;
     this.createPartnerLevel = false;
+    
+    // Save current expansion state before reloading
+    this.saveExpansionState();
+    
+    // If we have a parent node ID, ensure it will be expanded after reload
+    if (parentNodeId) {
+      this.expandedNodes.set(parentNodeId, true);
+    }
+    
     this.loadPartnerTreeData();
   }
 
@@ -203,16 +239,25 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
 
         // Restore expanded state after loading data
         this.restoreExpansionState();
-        this.cdr.detectChanges(); // Trigger change detection
+        
         this.originalData = this.service.originalData;
         this.parentOptions = this.service.parentOptions;
         // Initialize partnerGroupOptions
         this.partnerGroupOptions = this.service.partnerGroupOptions || [];
         this.parentUpdated = false;
         this.changeRecord = null;
+        
+        // Force change detection to ensure UI updates
+        this.cdr.detectChanges();
+        
+        // Additional async change detection to handle any delayed tree operations
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        }, 0);
       },
       error: (err: any) => {
         console.error('Error loading partner tree data:', err);
+        this.cdr.detectChanges();
       }
     });
   }
@@ -229,6 +274,14 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     return rowData.partnerGroupEditable === true;
   }
 
+  /**
+   * @uiButton create_partner_level
+   * @description Opens the partner level creation dialog to add new organizational nodes to the partner hierarchy tree
+   * @label New Partner Level
+   * @icon pi pi-plus
+   * @when_to_use When you need to add new organizational categories, groups, or levels to the partner tree structure
+   * @permissions PARTNER_TREE_CREATE
+   */
   onCreateNewPartnerLevel() {
     // Check permission before opening modal
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
@@ -255,7 +308,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       }
     });
 
-    ref.onClose.subscribe((result: PartnerTree) => {
+    ref.onClose.subscribe((result: PartnerTree | any) => {
       if (result) {
         this.handleOnRecordUpdation(result);
       }
@@ -264,9 +317,13 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
 
   onAddPartnerLevel(rowData: any) {
     let level = rowData.type.split('_')[0] + '_' + (parseInt(rowData.type.split('_')[1]) + 1);
+    
+    // Pre-populate partner category and group from parent
     this.changeRecord = {
       type: level,
       parent: rowData.code,
+      partnerCategoryCode: rowData.partnerCategoryCode || rowData.partnerCategory,
+      partnerGroupId: rowData.partnerGroupId || rowData.partnerGroup,
       id: null,
       status: 'Active'
     };
@@ -280,9 +337,11 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       }
     });
 
-    ref.onClose.subscribe((result: PartnerTree) => {
+    ref.onClose.subscribe((result: PartnerTree | any) => {
       if (result) {
-        this.handleOnRecordUpdation(result);
+        // Pass the parent row ID to ensure it gets expanded after adding child
+        const parentNodeId = rowData.id ? rowData.id.toString() : undefined;
+        this.handleOnRecordUpdation(result, parentNodeId);
       }
     });
   }
@@ -360,7 +419,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       }
     });
 
-    ref.onClose.subscribe((result: PartnerTree) => {
+    ref.onClose.subscribe((result: PartnerTree | any) => {
       if (result) {
         this.handleOnRecordUpdation(result);
       }
@@ -424,4 +483,118 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       }
     });
   }
+
+  private loadPartnerTreeColumns() {
+    this.treeColumnsLoading.set(true);
+    this.entityConfigurationService.getEntityListViewConfiguration('PartnerTree')
+      .subscribe({
+        next: (columns) => {
+          // Convert backend columns to frontend format and add template functions
+          const processedColumns = columns.map(col => this.processColumn(col));
+          this.treeColumns.set(processedColumns);
+          this.treeColumnsLoading.set(false);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Failed to load partner tree columns:', error);
+          // Fallback to default columns if API fails
+          this.setFallbackTreeColumns();
+          this.treeColumnsLoading.set(false);
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  private processColumn(column: any): ListViewColumn {
+    const processedColumn: ListViewColumn = {
+      field: column.field,
+      label: column.label,
+      type: column.type,
+      sortable: column.sortable,
+      width: column.width,
+      ellipsis: column.ellipsis,
+      helperText: column.helperText
+    };
+
+    // Handle nested field paths (fields with dots) by adding a template function
+    if (column.field && column.field.includes('.') && column.type !== 'template') {
+      // Keep the original field for identification but add a template function to access nested data
+      processedColumn.templateFn = (rowData: any) => {
+        const value = this.getNestedProperty(rowData, column.field);
+        return value !== undefined && value !== null ? String(value) : '';
+      };
+      // Change type to template since we're now using a template function
+      processedColumn.type = 'template';
+    }
+
+    // Add template function for template type columns
+    if (column.type === 'template' && column.templatePattern) {
+      processedColumn.templateFn = this.createTemplateFunction(column.templatePattern);
+    }
+
+    return processedColumn;
+  }
+
+  private createTemplateFunction(templatePattern: string): (rowData: any) => string {
+    return (rowData: any) => {
+      let result = templatePattern;
+      
+      // Replace field placeholders like {name}, {description} with actual values
+      const fieldMatches = templatePattern.match(/\{([^}]+)\}/g);
+      if (fieldMatches) {
+        fieldMatches.forEach(match => {
+          const fieldName = match.replace(/[{}]/g, '');
+          const fieldValue = this.getNestedProperty(rowData, fieldName) || '';
+          result = result.replace(match, fieldValue);
+        });
+      }
+      
+      return result.trim();
+    };
+  }
+
+  private getNestedProperty(obj: any, path: string): any {
+    return path.split('.').reduce((o, p) => o?.[p], obj);
+  }
+
+  private setFallbackTreeColumns() {
+    // Fallback to original hardcoded columns if API fails
+    // Note: Actions are always hardcoded in HTML template, not included here
+    const fallbackColumns: ListViewColumn[] = [
+      {
+        field: 'name',
+        label: 'label.partnerTree.name',
+        sortable: false,
+        type: 'text'
+      },
+      {
+        field: 'description',
+        label: 'label.partnerTree.description',
+        sortable: false,
+        type: 'text'
+      },
+      {
+        field: 'type',
+        label: 'label.partnerTree.type',
+        sortable: false,
+        type: 'text',
+        width: '80px'
+      },
+      {
+        field: 'partnerCategoryName',
+        label: 'label.partnerTree.partnerCategory',
+        sortable: false,
+        type: 'text'
+      },
+      {
+        field: 'partnerGroupName',
+        label: 'label.partnerTree.partnerGroup',
+        sortable: false,
+        type: 'text'
+      }
+    ];
+    
+    this.treeColumns.set(fallbackColumns);
+  }
+
 }

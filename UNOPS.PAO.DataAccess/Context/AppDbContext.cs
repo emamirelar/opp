@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -21,7 +22,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     {
     }
 
-    public DbSet<GrantUser> GrantUsers { get; set; }
+    public DbSet<PAOUser> PAOUsers { get; set; }
     public DbSet<Currency> Currencies { get; set; }
     public DbSet<Country> Countries { get; set; }
 
@@ -36,23 +37,30 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<PartnerTree> PartnerTrees { get; set; }
     public DbSet<Document> Documents { get; set; }
     public DbSet<DocumentRelationship> DocumentRelationships { get; set; }
+    public DbSet<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; }
     public DbSet<DocumentType> DocumentTypes { get; set; }
     public DbSet<UNOPS.PAO.Domain.Entities.Link> Links { get; set; }
     public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; }
+    public DbSet<LiaisonOffice> LiaisonOffices { get; set; }
 
     public DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
     public DbSet<InteractionContact> InteractionContacts { get; set; }
     public DbSet<InteractionUser> InteractionUsers { get; set; }
     public DbSet<InteractionPartner> InteractionPartners { get; set; }
-    public DbSet<UserInfo> UserInfos { get; set; }
+    public DbSet<UserProfile> UserProfile { get; set; }
+    public DbSet<UserPreference> UserPreferences { get; set; }
 
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<SavedFilter> SavedFilters { get; set; }
+    public DbSet<Engagement> Engagements { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ConfigureWarnings(warnings => warnings
             .Ignore(RelationalEventId.PendingModelChangesWarning));
     }
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -65,27 +73,63 @@ public class AppDbContext : AuditableDbContext<int, int>
             .ToTable("AspNetUserRoles", t => t.ExcludeFromMigrations())
             .HasKey(ur => new { ur.UserId, ur.RoleId });
 
+        // Configure PAOUser and UserProfile relationship
         modelBuilder
-            .Entity<GrantUser>()
+            .Entity<PAOUser>()
             .ToTable("AspNetUsers", t => t.ExcludeFromMigrations())
             .HasOne(x => x.UserProfile)
             .WithOne()
             .HasForeignKey<UserProfile>(x => x.UserId)
-            .IsRequired();
+            .IsRequired(false); // Make it optional to avoid constraint issues during creation
 
+        modelBuilder.Entity<UserProfile>(entity =>
+        {
+            entity.ToTable("UserProfile", "public");
+            entity.HasKey(e => e.UserId);
+            
+            entity.Property(up => up.UserId)
+                .IsRequired();
+
+            entity.HasIndex(up => up.UserId)
+                .IsUnique();
+                
+            // Ignore the computed Name property since it's calculated from FirstName and LastName
+            entity.Ignore(e => e.Name);
+                
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.UserEmail)
+                .HasMaxLength(256);
+            
+            entity.Property(e => e.OrgUnit)
+                .HasMaxLength(200);
+                
+            entity.Property(e => e.DutyStation)
+                .HasMaxLength(200);
+                
+            entity.Property(e => e.Position)
+                .HasMaxLength(200);
+        });
 
         modelBuilder
             .Entity<Partner>(p =>
             {
-                p.HasOne(x => x.PartnerOffice)
-                    .WithMany()
-                    .HasForeignKey(x => x.PartnerOfficeId);
-                
                 // Configure one-to-many relationship with Contacts
                 p.HasMany(x => x.Contacts)
                     .WithOne(c => c.Partner)
                     .HasForeignKey(c => c.PartnerId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                // Configure ErpDimValue as a unique index (allows nulls, unlike alternate keys)
+                p.HasIndex(x => x.ErpDimValue)
+                    .IsUnique()
+                    .HasFilter("\"ErpDimValue\" IS NOT NULL");
+
+                p.Ignore(x => x.OrganizationUnitRelationships);
             });
 
         modelBuilder
@@ -97,11 +141,6 @@ public class AppDbContext : AuditableDbContext<int, int>
                 .WithMany()
                 .HasForeignKey(x => new { x.UserId, x.RoleId });
         });
-
-        modelBuilder.Entity<Interaction>()
-            .HasOne(i => i.Contact)
-            .WithMany(c => c.Interactions)
-            .HasForeignKey(i => i.ContactId);
 
         modelBuilder.Entity<Interaction>(entity =>
         {
@@ -136,6 +175,8 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasMany(i => i.InteractionPartners)
                 .WithOne(ip => ip.Interaction)
                 .HasForeignKey(ip => ip.InteractionId);
+
+            entity.Ignore(x => x.OrganizationUnitRelationships);
         });
 
         modelBuilder
@@ -153,17 +194,14 @@ public class AppDbContext : AuditableDbContext<int, int>
         modelBuilder
             .Entity<PartnerTree>();
 
+        // Add discriminator configuration for PartnerTree inheritance hierarchy
+        modelBuilder
+            .Entity<PartnerTree>()
+            .HasDiscriminator<string>("Discriminator")
+            .HasValue<PartnerTree>("PartnerTree");
+
         modelBuilder
             .Entity<AiPrompt>();
-
-        modelBuilder
-            .Entity<AiScreenMapping>();
-
-        modelBuilder
-            .Entity<AiChatHistory>()
-            .HasOne(a => a.Session)
-            .WithMany(a => a.Chats)
-            .HasForeignKey(a => a.SessionId);
 
         modelBuilder
             .Entity<AiChatSession>();
@@ -195,6 +233,29 @@ public class AppDbContext : AuditableDbContext<int, int>
                 .HasMaxLength(100);
 
             entity.HasIndex(e => new { e.EntityId, e.EntityType });
+        });
+
+        modelBuilder.Entity<OrganizationUnitRelationship>(entity =>
+        {
+            
+            entity.HasOne(e => e.OrganizationHierarchy)
+                .WithMany(o => o.EntityRelationships)
+                .HasForeignKey(e => e.OrganizationHierarchyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.EntityId)
+                .IsRequired();
+
+            entity.Property(e => e.EntityType)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.HasIndex(e => new { e.EntityId, e.EntityType });
+            
+            // Add unique constraint for the business logic (one relationship per entity/org unit combo)
+            entity.HasIndex(e => new { e.EntityId, e.EntityType, e.OrganizationHierarchyId })
+                .IsUnique();
+
         });
 
         modelBuilder
@@ -240,19 +301,44 @@ public class AppDbContext : AuditableDbContext<int, int>
                 .HasMaxLength(500);
         });
 
-        modelBuilder.Entity<UserInfo>(entity =>
+        modelBuilder.Entity<UserPreference>(entity =>
         {
-            entity.ToTable("UserInfos", "public");
-            entity.HasKey(e => e.UserId);
+            entity.ToTable("UserPreferences", "public");
+            entity.HasKey(e => e.Id);
             
-            entity.Property(e => e.Name)
-                .HasMaxLength(200);
+            entity.Property(e => e.Id)
+                .ValueGeneratedOnAdd()
+                .UseIdentityByDefaultColumn();
             
-            entity.Property(e => e.UserEmail)
-                .HasMaxLength(256);
+            entity.Property(e => e.UserId)
+                .IsRequired();
             
-            entity.Property(e => e.OrgUnit)
-                .HasMaxLength(200);
+            // Foreign key relationship to UserProfile
+            entity.HasOne(e => e.UserProfile)
+                .WithOne(up => up.UserPreference)
+                .HasForeignKey<UserPreference>(e => e.UserId)
+                .HasPrincipalKey<UserProfile>(up => up.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.Property(e => e.GlobalFilterJson)
+                .HasColumnType("text");
+            
+            entity.Property(e => e.AdditionalSettingsJson)
+                .HasColumnType("text");
         });
+
+        // Configure Engagement entity
+        modelBuilder.Entity<Engagement>(entity =>
+        {
+            // Configure relationship where Engagement.PartnerId references Partner.Id (not ErpDimValue)
+            // Note: If you need to reference ErpDimValue, you'll need to handle nullable values differently
+            entity.HasOne(e => e.Partner)
+                .WithMany()
+                .HasForeignKey(e => e.PartnerId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Ignore GlobalFilters class - it's not an entity, just a plain class for JSON serialization
+        modelBuilder.Ignore<GlobalFilters>();
     }
 }

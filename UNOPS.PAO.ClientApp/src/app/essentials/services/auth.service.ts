@@ -1,7 +1,7 @@
-import { SocialUser } from '@abacritt/angularx-social-login';
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable, map, catchError, of, BehaviorSubject, switchMap, throwError } from 'rxjs';
+import {SocialUser} from '@abacritt/angularx-social-login';
+import {HttpClient} from '@angular/common/http';
+import {Injectable} from '@angular/core';
+import {BehaviorSubject, catchError, map, Observable, of} from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -28,7 +28,7 @@ export class AuthService {
     if (devCookie) {
       // If we have a dev cookie, create a basic user info without making API calls
       const email = devCookie.substring('dev-user-email='.length);
-      
+
       // Generate appropriate roles
       const roles = [];
       if (email.endsWith('@unops.org')) {
@@ -40,20 +40,20 @@ export class AuthService {
         roles.push('Partner');
       }
       roles.push('User');
-      
+
       const userInfo: UserInfo = {
         name: email,
         email: email,
         isInternal: email.endsWith('@unops.org'),
         isIapAuthenticated: true,
-        roles: roles 
+        roles: roles
       };
-      
+
       // Update the current user subject
       this.currentUserSubject.next(userInfo);
       return;
     }
-    
+
     // If no dev cookie, try the regular authentication check
     this.isLogedIn().pipe(
       catchError(() => of(false))
@@ -122,14 +122,14 @@ export class AuthService {
     // Get the dev cookie
     const cookies = document.cookie.split(';').map(c => c.trim());
     const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
-    
+
     if (!devCookie) {
       return [];
     }
-    
+
     // Extract email from cookie
     const email = devCookie.substring('dev-user-email='.length);
-    
+
     // Create basic claims
     const claims: UserClaim[] = [
       { type: 'name', value: email },
@@ -137,12 +137,12 @@ export class AuthService {
       { type: 'IsInternal', value: email.includes('@unops.org') ? 'true' : 'false' },
       { type: 'IAPAuthenticated', value: 'true' }
     ];
-    
+
     // Add default roles based on email domain
     // UNOPS employees get Internal role
     if (email.endsWith('@unops.org')) {
       claims.push({ type: 'role', value: 'Internal' });
-      
+
       // If email contains admin, also give Administrator role
       if (email.toLowerCase().includes('admin')) {
         claims.push({ type: 'role', value: 'Administrator' });
@@ -151,10 +151,10 @@ export class AuthService {
       // Non-UNOPS emails get Partner role by default
       claims.push({ type: 'role', value: 'Partner' });
     }
-    
+
     // Everyone gets basic User role
     claims.push({ type: 'role', value: 'User' });
-    
+
     return claims;
   }
 
@@ -171,7 +171,7 @@ export class AuthService {
       const cookies = document.cookie.split(';').map(c => c.trim());
       const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
       const email = devCookie!.substring('dev-user-email='.length);
-      
+
       // Generate roles based on email
       const roles = [];
       if (email.endsWith('@unops.org')) {
@@ -183,7 +183,7 @@ export class AuthService {
         roles.push('Partner');
       }
       roles.push('User');
-      
+
       // Return synthetic auth info without making API call
       return of({
         email: email,
@@ -194,8 +194,8 @@ export class AuthService {
         isInternal: email.endsWith('@unops.org')
       });
     }
-    
-    return this.http.get('/api/SecureResource/authtest').pipe(
+
+    return this.http.get('/api/dev/check-iap-simulation').pipe(
       catchError(error => {
         return of({
           hasIapEmailHeader: false,
@@ -211,15 +211,20 @@ export class AuthService {
     /*if (this.hasDevCookie()) {
       return of(this.createSyntheticClaimsFromCookie());
     }*/
-    
+
     // Otherwise try the API with fallback to synthetic claims
     return this.http.get<UserClaim[]>('/user/claims').pipe(
+      map(claims => {
+        return claims;
+      }),
       catchError(error => {
+        console.error('DEBUG - Error getting user claims from API:', error);
         // If API fails but we have a dev cookie, use synthetic claims
         if (this.hasDevCookie()) {
-          return of(this.createSyntheticClaimsFromCookie());
+          const syntheticClaims = this.createSyntheticClaimsFromCookie();
+          return of(syntheticClaims);
         }
-        
+
         // If no dev cookie, just return an empty array
         return of([]);
       })
@@ -233,33 +238,33 @@ export class AuthService {
       const cookies = document.cookie.split(';').map(c => c.trim());
       const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
       const email = devCookie!.substring('dev-user-email='.length);
-      
+
       // Determine roles based on email
       let hasRequestedRole = false;
-      
+
       // Administrator role check
       if (role === 'Administrator') {
         hasRequestedRole = email.toLowerCase().includes('admin');
       }
-      
+
       // Internal role check
       else if (role === 'Internal') {
         hasRequestedRole = email.endsWith('@unops.org');
       }
-      
+
       // Partner role check
       else if (role === 'Partner') {
         hasRequestedRole = !email.endsWith('@unops.org');
       }
-      
+
       // User role - everyone has this
       else if (role === 'User') {
         hasRequestedRole = true;
       }
-      
+
       return of(hasRequestedRole);
     }
-    
+
     // Otherwise use the current user from the behavior subject
     return this.currentUser$.pipe(
       map(user => user?.roles.includes(role) || false)
@@ -283,38 +288,38 @@ export class AuthService {
       // No need to log or do extra processing here
       return of(true);
     }
-    
+
     // Prevent excessive API calls: use cached result if available
     if (this.iapAuthenticationChecked) {
       return of(this.iapAuthenticationStatus);
     }
-    
+
     // Simple check to avoid loops
     if (this.isCheckingAuth) {
       return of(false);
     }
-    
+
     // Set checking flag
     this.isCheckingAuth = true;
-    
+
     // Check if we're in a development environment
     const hostname = window.location.hostname;
     const isDevelopment = hostname === 'localhost' || hostname.includes('localhost') || hostname.startsWith('dev-');
-    
+
     if (isDevelopment) {
       // Only make the dev simulation check call in development environments
       return this.http.get<any>('/api/dev/check-iap-simulation').pipe(
         map(result => {
           // Check only for the header
           const isAuthenticated = result && result.hasIapHeader === true;
-          
+
           // Cache result
           this.iapAuthenticationChecked = true;
           this.iapAuthenticationStatus = isAuthenticated;
-          
+
           // Reset checking flag
           this.isCheckingAuth = false;
-          
+
           return isAuthenticated;
         }),
         catchError((error) => {
@@ -328,14 +333,14 @@ export class AuthService {
       return this.http.get<UserClaim[]>('/user/claims').pipe(
         map(claims => {
           const isAuthenticated = claims.length > 0;
-          
+
           // Cache result
           this.iapAuthenticationChecked = true;
           this.iapAuthenticationStatus = isAuthenticated;
-          
+
           // Reset checking flag
           this.isCheckingAuth = false;
-          
+
           return isAuthenticated;
         }),
         catchError(() => {
@@ -351,11 +356,10 @@ export class AuthService {
     if (this.hasDevCookie()) {
       return of(true);
     }
-    
+
     return this.user().pipe(
       map((userClaims) => {
-        const hasClaims = userClaims.length > 0;
-        return hasClaims;
+        return userClaims.length > 0;
       }),
       catchError((error) => {
         return of(false);
@@ -365,8 +369,13 @@ export class AuthService {
 
   public isAdmin(): Observable<boolean> {
     return this.getUserRoles().pipe(
-      map(roles => roles.includes('PARTNER_GLOB_ADMIN') || roles.includes('ORG_UNIT_ADMIN')),
-      catchError(() => of(false))
+      map(roles => {
+        return roles.includes('PARTNER_GLOB_ADMIN') || roles.includes('ORG_UNIT_ADMIN');
+      }),
+      catchError((error) => {
+        console.error('DEBUG - Error in isAdmin():', error);
+        return of(false);
+      })
     );
   }
 
@@ -376,7 +385,10 @@ export class AuthService {
         const roleClaims = claims.filter(claim => claim.type === 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role');
         return roleClaims.map(claim => claim.value.toUpperCase());
       }),
-      catchError(() => of([]))
+      catchError((error) => {
+        console.error('DEBUG - Error in getUserRoles():', error);
+        return of([]);
+      })
     );
   }
 }

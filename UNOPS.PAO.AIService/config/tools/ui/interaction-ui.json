@@ -1,0 +1,87 @@
+{
+  "entity": "Interaction",
+  "description": "Create and edit interaction records including meetings, calls, emails, and other communications with partners and contacts. Supports AI transcription and file attachments.",
+  "synonyms": [
+    "meeting",
+    "communication",
+    "event",
+    "activity",
+    "engagement",
+    "touchpoint"
+  ],
+  "mandatoryFields": [
+    "type",
+    "date",
+    "subject",
+    "contactId"
+  ],
+  "pages": [
+    {
+      "route": "Modal dialog (no direct route)",
+      "name": "InteractionModalComponent",
+      "description": "This modal allows users to create new interaction records or edit existing ones. It supports various communication types like meetings, calls, and emails, enabling detailed logging of engagements with partners and contacts. Key features include AI-powered transcription for automated data entry and the ability to attach relevant documents.",
+      "capabilities": [
+        "create_interaction",
+        "edit_interaction",
+        "add_participants",
+        "upload_documents",
+        "ai_transcription",
+        "schedule_followup",
+        "set_interaction_type"
+      ],
+      "buttons": [
+        {
+          "id": "save_interaction-btn",
+          "label": "Save | Create Interaction",
+          "icon": "pi pi-check",
+          "action": "save_interaction",
+          "description": "Saves the current interaction record to the system. If it's a new interaction, it will be created; if it's an existing one, changes will be updated. This includes all details, participants, and attached documents.",
+          "when_to_use": [
+            "When all required fields are filled and you are ready to commit the interaction details to the system.",
+            "After making any changes to an existing interaction and you want to save those updates."
+          ]
+        },
+        {
+          "id": "delete_interaction-btn",
+          "label": "Delete",
+          "icon": "pi pi-trash",
+          "action": "delete_interaction",
+          "description": "Permanently removes the current interaction record from the system after a confirmation prompt. This action cannot be undone.",
+          "when_to_use": [
+            "When an interaction was recorded incorrectly and needs to be completely removed.",
+            "When an interaction is no longer relevant or was created in error (use with extreme caution as this is irreversible)."
+          ]
+        },
+        {
+          "id": "process_transcription-btn",
+          "label": "Process Transcription",
+          "icon": "pi pi-microphone",
+          "action": "process_transcription",
+          "description": "Initiates the AI transcription process on uploaded audio, image, or text files. The AI will analyze the content and attempt to automatically extract and populate relevant interaction details into the form fields, such as subject, participants, and notes.",
+          "when_to_use": [
+            "After uploading an audio recording of a meeting or call to automatically populate the interaction details.",
+            "When you have an image or text file containing interaction notes and want the AI to extract key information for you."
+          ]
+        }
+      ],
+      "forms": [],
+      "tabs": [],
+      "search": {},
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "If you're unsure how to proceed, ensure you've selected an 'Interaction Type' (e.g., Meeting, Phone Call), entered a 'Date', and provided a 'Subject'. You must also associate the interaction with a 'Contact' or 'Partner'. To add participants, you can either type their email addresses or select them from your contact list. For quick data entry, consider using the 'Process Transcription' button after uploading an audio or image file to let AI fill in details automatically.",
+        "common_tasks": [
+          "Recording a meeting: Select 'Meeting' as the type, specify the date and time, add all participants, and then enter detailed notes or upload a transcription.",
+          "Logging a phone call: Choose 'Phone Call' as the type, select the contact you spoke with, and summarize the conversation in the notes section.",
+          "Adding participants to an interaction: In the participants section, you can either type in email addresses for new participants or select existing contacts from the dropdown list.",
+          "Using AI transcription to populate details: First, upload your audio, image, or text file. Then, click the 'Process Transcription' button (microphone icon) to have the AI analyze the content and fill in relevant form fields.",
+          "Attaching documents to an interaction: Navigate to the document section within the modal and use the upload feature to add relevant files like meeting agendas, presentations, or follow-up materials.",
+          "Setting a follow-up reminder: Use the designated field to schedule future interaction reminders or note down next steps that need to be taken after this interaction."
+        ],
+        "troubleshooting": [],
+        "getting_started": "To create your first interaction, open the 'Create Interaction' modal. Start by selecting the 'Type' of interaction (e.g., Meeting, Phone Call). Then, choose the 'Date' and provide a concise 'Subject'. Next, link the interaction to a 'Contact' or 'Partner'. Finally, add any relevant 'Participants' and detailed 'Notes'. Click 'Save' to record your interaction.",
+        "keyboard_shortcuts": []
+      }
+    }
+  ]
+}

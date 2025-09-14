@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
@@ -9,6 +9,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PartnerCategoryGroup, PartnerGroup } from '../../../../models/partner-category-group.model';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
+import { combineLatest, of } from 'rxjs';
+
 @Component({
   selector: 'app-partner-tree-view-navigation',
   standalone: true,
@@ -30,10 +32,17 @@ export class PartnerTreeViewNavigationComponent implements OnInit {
 
   partnerTree = signal<PartnerTree | null>(null);
   partnerCategorieOptions = signal<PartnerCategoryGroup[]>([]);
-  partnerGroupOptions = signal<PartnerGroup[]>([]);
 
-  selectedPartnerCategory?: PartnerCategoryGroup;
-  selectedPartnerGroup?: PartnerGroup;
+  // Use signals for selected values instead of regular properties
+  selectedPartnerCategory = signal<PartnerCategoryGroup | undefined>(undefined);
+  selectedPartnerGroup = signal<PartnerGroup | undefined>(undefined);
+
+  // Computed partner group options based on selected category
+  partnerGroupOptions = computed(() => {
+    const tree = this.partnerTree();
+    if (!tree?.partnerCategoryCode) return [];
+    return this.cachedDataService.getParterGroupByCategoryCode(tree.partnerCategoryCode);
+  });
 
   constructor() {
     effect(() => {
@@ -49,41 +58,42 @@ export class PartnerTreeViewNavigationComponent implements OnInit {
 
       const isTherePartnerCategory = categories && categories.length > 0;
 
+      if (isTherePartnerCategory && partnerTree?.partnerCategoryCode) {
+        // Always set the partner category since we'll always have a partnerCategoryCode
+        const foundCategory = categories.find(category => category.partnerCategoryCode === partnerTree.partnerCategoryCode);
+        this.selectedPartnerCategory.set(foundCategory);
 
-      if (isTherePartnerCategory) {
-
-        const isThereCategoryCode = partnerTree && partnerTree.partnerCategoryCode;
-
-        if (isThereCategoryCode) {
-          this.selectedPartnerCategory = categories.find(category => category.partnerCategoryCode === partnerTree.partnerCategoryCode);
-          this.selectedPartnerGroup = undefined;
-          this.partnerGroupOptions.set(this.cachedDataService.getParterGroupByCategoryCode(partnerTree.partnerCategoryCode));
-        } else if (this.partnerTree()?.partnerGroupCode) {
-          const partnerGroupCode = this.partnerTree()?.partnerGroupCode;
-
-          // Find which category contains this group
-          const categoryWithGroup = categories.find(category =>
-            category.children.some(group => group.partnerGroupCode === partnerGroupCode)
+        // If we also have a partnerGroupCode, set the selected group
+        if (partnerTree.partnerGroupCode) {
+          const partnerGroups = this.cachedDataService.getParterGroupByCategoryCode(partnerTree.partnerCategoryCode);
+          const foundGroup = partnerGroups.find(
+            group => group.partnerGroupCode === partnerTree.partnerGroupCode
           );
-
-          if (categoryWithGroup) {
-            this.selectedPartnerCategory = categoryWithGroup;
-            this.partnerGroupOptions.set(categoryWithGroup.children);
-            this.selectedPartnerGroup = categoryWithGroup.children.find(
-              group => group.partnerGroupCode === partnerGroupCode
-            );
-          }
+          this.selectedPartnerGroup.set(foundGroup);
+        } else {
+          this.selectedPartnerGroup.set(undefined);
         }
-
-
+      } else {
+        this.selectedPartnerCategory.set(undefined);
+        this.selectedPartnerGroup.set(undefined);
       }
     });
   }
 
   ngOnInit() {
-    this.activatedRoute.data.subscribe((data: {[key: string]: any}) => {
-      if (data['partnerTreeData']) {
-        this.partnerTree.set(data['partnerTreeData'].data);
+    // Combine both route data and parameter changes for reactive updates
+    combineLatest([
+      this.activatedRoute.data || of({}),
+      this.activatedRoute.paramMap || of(null)
+    ]).subscribe(([data, params]) => {
+      const recordId = params?.get('recordId');
+
+      if (data && (data as any)['partnerTreeData']) {
+        this.partnerTree.set((data as any)['partnerTreeData'].data);
+      } else if (recordId && (!this.partnerTree() || recordId !== this.partnerTree()?.id?.toString())) {
+        // Clear selections temporarily when navigating to a different partner tree
+        this.selectedPartnerCategory.set(undefined);
+        this.selectedPartnerGroup.set(undefined);
       }
     });
   }
@@ -94,7 +104,16 @@ export class PartnerTreeViewNavigationComponent implements OnInit {
   }
 
   onPartnerGroupChange(event: any) {
-    const id = event.value.partnerGroupId;
-    this.router.navigate(['/admin/partner-tree', id]);
+    if (event.value) {
+      const id = event.value.partnerGroupId;
+      this.router.navigate(['/admin/partner-tree', id]);
+    } else {
+      // When partner group is deselected, navigate to the selected partner category
+      const selectedCategory = this.selectedPartnerCategory();
+      if (selectedCategory) {
+        const id = selectedCategory.partnerCategoryId;
+        this.router.navigate(['/admin/partner-tree', id]);
+      }
+    }
   }
 }

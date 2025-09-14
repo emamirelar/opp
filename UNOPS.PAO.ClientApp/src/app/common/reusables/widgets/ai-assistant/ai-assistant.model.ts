@@ -1,8 +1,34 @@
 export interface ChatMessage {
-  text: string;
+  text?: string;
   isUser: boolean;
   timestamp: Date;
-  files?: ChatFile[];
+  files: ChatFile[];
+  // New properties for structured content
+  result?: ResultItem[];
+  entity?: string;
+  suggestedUserResponses?: string[];
+  sources?: Source[];
+  isFromHistory?: boolean; // Flag to indicate if message is loaded from history
+  inlineData?: InlineData[]; // Support for inline data like images
+}
+
+export interface InlineData {
+  data: string; // Base64 encoded data
+  mimeType: string; // MIME type (e.g., 'image/png', 'image/jpeg')
+}
+
+export interface Source {
+  title: string;
+  url: string;
+  description?: string;
+}
+
+export interface ResultItem {
+  type: 'markdown' | 'mermaid' | 'code' | 'text' | 'grid' | 'card' | 'chartjs';
+  message: string | any[] | any; // string for text/markdown/code, array for grid/card data, object for chartjs
+  language?: string; // for code blocks
+  entity?: string; // for grid/card data
+  chartType?: string; // for chartjs: pie, bar, line, doughnut, etc.
 }
 
 export interface ChatFile {
@@ -25,6 +51,18 @@ export interface AiResponse {
   rawMessage?: string;
   files?: any[];   
   url?: string;
+}
+
+export interface SuggestionsResponse {
+  suggestions: string[];
+  user_id: number;
+  total_actions_found: number;
+}
+
+export interface SuggestionItem {
+  text: string;
+  icon: string;
+  action: () => void;
 }
 
 export enum ScreenToOpenByAiActionCategory {

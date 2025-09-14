@@ -21,7 +21,7 @@ import { MessageService, ConfirmationService } from 'primeng/api';
   ],
   template: `
     <p-dialog 
-      header="Manage Roles" 
+      header="Impersonate Roles (only for testing)" 
       [(visible)]="visible" 
       [style]="{ width: '600px' }" 
       [modal]="true"

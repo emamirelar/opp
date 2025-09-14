@@ -2,12 +2,12 @@ import { Injectable, inject, signal } from '@angular/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ImportDialogComponent } from './import-dialog.component';
 import { ImportFooterComponent } from './footer/import-dialog-footer.component';
-import { Observable, Subject, forkJoin, of } from 'rxjs';
+import { Observable, Subject, forkJoin, of, timer } from 'rxjs';
 import { WritableSignal } from '@angular/core';
 import { ImportService } from '../import.service';
 import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
 import { ImportGoogleSheetService } from '../import-google-sheet.service';
-import { catchError, finalize, mergeMap } from 'rxjs/operators';
+import { catchError, finalize, mergeMap, map, timeout } from 'rxjs/operators';
 import { ConfirmationService } from 'primeng/api';
 import { NotificationService } from '../../../../services/notification.service';
 import { LoadingOverlayService } from '../../../components/loading-overlay/loading-overlay.component';
@@ -275,11 +275,8 @@ export class ImportDialogService {
   // Get the selected rows for import
   getSelectedRowsForImport(): any[] {
     const selected = this.selectedRows();
-    if (selected && selected.length > 0) {
-      return selected;
-    }
-    // If no explicit selection, use all data
-    return this.data();
+    // Only return selected rows, don't fall back to all data
+    return selected || [];
   }
 
   /**
@@ -326,6 +323,8 @@ export class ImportDialogService {
     switch (type.toLowerCase()) {
       case 'partner':
         return this.getDefaultPartnerValues();
+      case 'interaction':
+        return this.getDefaultInteractionValues();
       case 'contact':
       default:
         return this.getDefaultContactValues();
@@ -373,59 +372,104 @@ export class ImportDialogService {
   private getDefaultPartnerValues(): Partial<any> {
     return {
       name: '',
-      shortName: '',
-      status: 'Active',
-      newEngagement: null,
-      phone: '',
-      website: '',
-      pooledFund: null,
-      ddRequired: null,
-      ddeacDone: null,
-      eacReference: '',
-      globalKeyAccount: false,
-      unSecretariatEntity: false,
-      levyPotentiallyApplies: null,
-      reasonForLevyNotApplying: null,
-      levyTreatment: null,
-      address1Street: '',
-      address1Street2: '',
-      address1City: '',
-      address1StateProvince: '',
-      address1PostalCode: '',
-      address1Country: ''
+      partnerShortDescription: '',
+      partnerLongDescription: '',
+      status: 'Draft',
+      partnerApprovalStatus: 'NotApproved',
+      partnerCategoryId: null,
+      liaisonOfficeId: null,
+      partnerFocalPointUserId: null,
+    };
+  }
+
+  /**
+   * Get default values for all Interaction fields
+   */
+  private getDefaultInteractionValues(): Partial<any> {
+    return {
+      id: '',
+      type: '',
+      date: new Date().toISOString(),
+      subject: '',
+      description: '',
+      contactId: '',
+      contactIds: [],
+      partnerIds: [],
+      userIds: [],
+      organizationHierarchyIds: [],
+      emailAddresses: [],
+      phoneNumbers: [],
+      location: ''
     };
   }
 
   openGoogleSheetPicker(type: string) {
-    // Set the import type before doing anything else
-    this.setImportType(type);
-    
-    // Show loading state while opening the picker
-    this.isLoading.set(true);
-    this.loadingOverlayService.show('Opening Google Drive, please wait...');
-    
-    // Open the picker
-    this.importGoogleSheetService.openPicker().subscribe({
-      next: (sheetId) => {
-        // Check if the picker was canceled
-        if (sheetId === 'CANCELED') {
-          this.isLoading.set(false);
-          this.loadingOverlayService.hide();
-          return;
-        }
+    try {
+      
+      // Set the import type before doing anything else
+      this.setImportType(type);
+      
+      // Test if the service is available
+      if (!this.importGoogleSheetService) {
+        throw new Error('Google Sheet service is not available');
+      }
+      
+      this.importGoogleSheetService.openPicker().subscribe({
+              next: (sheetId) => {
+          // Check if the picker was canceled
+          if (sheetId === 'CANCELED') {
+            this.isLoading.set(false);
+            this.loadingOverlayService.hide();
+            return;
+          }
         
         // When a file is selected, show loading indicator and message
         this.isLoading.set(true);
-        this.loadingOverlayService.show(`Pre-processing ${type} spreadsheet, please wait...`);
+
+        let sheetType = type;
+        if (type === 'user_role_import') {
+          sheetType = 'User Role Import';
+        }
+        this.loadingOverlayService.show(`Pre-processing ${sheetType} spreadsheet, please wait...`);
+
         
         this.feedbackDialogService.showInfoToast({ 
-          detail: `Pre-processing ${type} spreadsheet, please wait...`,
+          detail: `Pre-processing ${sheetType} spreadsheet, please wait...`,
           life: 3000
         });
-        
-        // Process the selected file
-        this.importService.analyzeFile(sheetId,`bulk_${type}_action`).subscribe({
+
+        const timeoutDuration = 300000; // 5 minutes timeout
+        const timeout$ = timer(timeoutDuration).pipe(
+          map(() => {
+            throw new Error('Request timed out. Please try again.');
+          })
+        );
+
+        this.importService.analyzeFile(sheetId, type.includes('user_role') ? type : `bulk_${type}_action`).pipe(
+          timeout(timeoutDuration),
+          catchError((error) => {
+            console.error('🔍 Caught error in analyzeFile pipe:', error);
+            throw error;
+          })
+        ).subscribe({
           next: (response: any) => {
+            
+            // Check for error response
+            if (response.intent === 'Error') {
+              console.error('🔍 File analysis returned error:', response.error);
+              this.isLoading.set(false);
+              this.loadingOverlayService.hide();
+              
+              this.feedbackDialogService.showErrorToast({ 
+                detail: response.message || 'Error processing file. Please try again.',
+                life: 7000
+              });
+              
+              // Close the dialog when an error occurs
+              this.closeDialog();
+              return;
+            }
+            
             if (response.intent === 'Processing') {
               // If this is an asynchronous operation
               const jobId = this.importService.getActiveJobId();
@@ -435,9 +479,15 @@ export class ImportDialogService {
               this.loadingOverlayService.hide();
               this.data.set([]);
               this.feedbackDialogService.showInfoToast({ 
-                detail: `Pre-processing ${type} spreadsheet${jobInfo}. ${response.message}`,
+                detail: `Pre-processing ${sheetType} spreadsheet${jobInfo}. ${response.message}`,
                 life: 5000
               });
+              return;
+            } else if (response.intent === 'InternalDuplicatesFound') {
+              // Handle internal duplicates found in the uploaded file
+              this.isLoading.set(false);
+              this.loadingOverlayService.hide();
+              this.showInternalDuplicateError(response, sheetType);
               return;
             } else if (response.intent === 'Success') {
               // Parse the records from the response
@@ -459,7 +509,7 @@ export class ImportDialogService {
               
               // Only open the dialog if we have data
               if (this.data() && this.data().length > 0) {
-                this.openImportDialog(`Import ${type}(s) - ${this.data().length} records`);
+                this.openImportDialog(`Import ${sheetType}(s) - ${this.data().length} records`);
                 // Keep loading state until dialog opens then set to false
                 setTimeout(() => {
                   this.isLoading.set(false);
@@ -477,10 +527,10 @@ export class ImportDialogService {
           error: (error) => {
             this.isLoading.set(false);
             this.loadingOverlayService.hide();
-            console.error('Error opening Google Drive picker:', error);
+            console.error('Error analyzing file:', error);
             
             // Extract the detailed error message if available
-            let errorMessage = 'Error opening Google Drive: Unknown error';
+            let errorMessage = 'Error analyzing file: Unknown error';
             
             if (error.error) {
               if (error.error.details) {
@@ -498,6 +548,9 @@ export class ImportDialogService {
               detail: errorMessage,
               life: 7000 // Show longer since it's a detailed message
             });
+            
+            // Close the dialog when an error occurs
+            this.closeDialog();
           }
         });
       },
@@ -525,9 +578,25 @@ export class ImportDialogService {
           detail: errorMessage,
           life: 7000 // Show longer since it's a detailed message
         });
+        
+        // Close the dialog when an error occurs
+        this.closeDialog();
       }
     });
+  } catch (error) {
+    console.error('🔍 Synchronous error in openGoogleSheetPicker:', error);
+    this.isLoading.set(false);
+    this.loadingOverlayService.hide();
+    
+    this.feedbackDialogService.showErrorToast({ 
+      detail: 'Unexpected error occurred: ' + (error instanceof Error ? error.message : 'Unknown error'),
+      life: 7000
+    });
+    
+    // Close the dialog when an error occurs
+    this.closeDialog();
   }
+}
 
   setData(data: any[]) {
     if (!data || data.length === 0) {
@@ -635,5 +704,93 @@ export class ImportDialogService {
         });
       }
     });
+  }
+
+  /**
+   * Show internal duplicate error dialog with detailed information
+   */
+  public showInternalDuplicateError(response: any, type: string): void {
+    const duplicateInfo = response.internalDuplicates;
+    if (!duplicateInfo) {
+      this.feedbackDialogService.showErrorToast({ 
+        detail: 'Internal duplicates found in the file. Please fix the duplicates and try again.' 
+      });
+      return;
+    }
+
+    // Create detailed message about the duplicates
+    const fileId = response.fileId;
+    const fileIdDisplay = fileId ? ` (Sheet ID: ${fileId})` : '';
+    let detailsHtml = `
+      <div class="internal-duplicates-dialog">
+        <p><strong>Duplicate records found within your uploaded file${fileIdDisplay}:</strong></p>
+        <div class="duplicate-summary mb-3">
+          <p>• Total records: ${duplicateInfo.totalRecords}</p>
+          <p>• Clean records: ${duplicateInfo.cleanRecords}</p>
+          <p>• Duplicate groups: ${duplicateInfo.totalGroups}</p>
+          <p>• Total duplicate records: ${duplicateInfo.totalDuplicateRecords}</p>
+        </div>
+        <div class="duplicate-details">
+          <p><strong>Duplicate Groups:</strong></p>
+    `;
+
+    duplicateInfo.duplicateGroups.forEach((group: any, index: number) => {
+      detailsHtml += `
+        <div class="duplicate-group mb-2 p-2" style="border-left: 3px solid #ff6b35; background: #fff5f5;">
+          <p><strong>Group ${index + 1}:</strong></p>
+          <p>Master Record (Row ${group.masterRowNumber}): ${this.formatRecordForDisplay(group.masterRecord, type)}</p>
+          <p>Duplicate Rows: ${group.duplicateRowNumbers.join(', ')}</p>
+          <p>Match Reason: ${group.matchReasons.join(', ')}</p>
+        </div>
+      `;
+    });
+
+    detailsHtml += `
+        </div>
+        <div class="mt-3">
+          <p><strong>Please fix these duplicates in your Google Sheet and try importing again.</strong></p>
+        </div>
+      </div>
+    `;
+
+    // Show confirmation dialog with detailed information
+    const headerText = fileId 
+      ? `Internal Duplicates Found in ${type.charAt(0).toUpperCase() + type.slice(1)} File (Sheet ID: ${fileId})`
+      : `Internal Duplicates Found in ${type.charAt(0).toUpperCase() + type.slice(1)} File`;
+      
+    this.confirmationService.confirm({
+      message: detailsHtml,
+      header: headerText,
+      acceptLabel: 'OK',
+      rejectLabel: '',
+      acceptButtonStyleClass: 'p-button-primary',
+      rejectVisible: false,
+      dismissableMask: true,
+      accept: () => {
+        // Just close the dialog
+      }
+    });
+  }
+
+  /**
+   * Format a record for display in the duplicate error dialog
+   */
+  private formatRecordForDisplay(record: any, type: string): string {
+    if (!record) return 'N/A';
+    
+    try {
+      switch (type.toLowerCase()) {
+        case 'contact':
+          return `${record.firstName || ''} ${record.lastName || ''} (${record.email || 'No email'})`.trim();
+        case 'partner':
+          return `${record.name || 'Unnamed'} ${record.partnerShortDescription ? '- ' + record.partnerShortDescription : ''}`.trim();
+        case 'interaction':
+          return `${record.type || 'Unknown type'}: ${record.subject || 'No subject'} (${record.date || 'No date'})`.trim();
+        default:
+          return JSON.stringify(record).substring(0, 100) + '...';
+      }
+    } catch (error) {
+      return 'Error displaying record';
+    }
   }
 }

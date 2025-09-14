@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -23,12 +23,15 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { UserManagementService } from './user-management.service';
 import { PermissionService, EntityPermissions } from '../../../../essentials/services/permission.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
+import { ImportDialogService } from '../../../../common/reusables/components/import/dialog/import-dialog.service';
 
 interface UserManagementModel {
   userId: number;
   name: string;
   email: string;
   orgUnit: string;
+  orgUnitCode?: string;
+  orgUnitDescription?: string;
   roles: string[];
   rolesDisplay: string;
   lastModifiedDate?: Date;
@@ -45,9 +48,9 @@ interface UserManagementRequest {
   pageIndex: number;
   pageSize: number;
   searchTerm?: string;
-  roleFilter?: string;
+  roleFilter?: string[];
   showMyOrgUnitOnly: boolean;
-  orgUnitFilter?: string;
+  orgUnitFilter?: number[];
   sortBy?: string;
   sortDirection?: string;
 }
@@ -59,6 +62,22 @@ interface PaginationResponse<T> {
   pageSize: number;
   totalPages: number;
 }
+
+/**
+ * @uiEntity UserManagement
+ * @route /admin/user-management
+ * @description Administrative interface for managing user permissions, roles, and organizational access. Allows viewing, editing, and managing user role assignments across the organization.
+ * @capabilities view_users, edit_user_roles, assign_permissions, filter_by_org_unit, manage_access_levels, bulk_operations
+ * @synonyms user_administration, permission_management, role_assignment, access_control
+ * @mandatoryFields user_selection, role_assignment
+ * @help_when_stuck Use filters to find specific users (search by name/email, filter by role or org unit). Click "Edit" on any user to modify their role assignments. Use "My Org Unit Only" toggle to focus on your organizational unit. Different roles provide different levels of access to system features.
+ * @common_tasks
+ *   - Finding a user: Use the search box or role/org unit filters
+ *   - Changing user roles: Click "Edit" button, modify role checkboxes, and save
+ *   - Filtering by organization: Toggle "My Org Unit Only" or use org unit dropdown
+ *   - Managing access levels: Assign Admin, Standard User, or custom roles as appropriate
+ *   - Bulk management: Use table filters and pagination for efficient user management
+ */
 
 @Component({
   selector: 'app-user-management',
@@ -85,7 +104,7 @@ interface PaginationResponse<T> {
   templateUrl: './user-management.component.html',
   styleUrls: ['./user-management.component.scss']
 })
-export class UserManagementComponent implements OnInit {
+export class UserManagementComponent implements OnInit, OnDestroy {
   private userManagementService = inject(UserManagementService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
@@ -93,6 +112,7 @@ export class UserManagementComponent implements OnInit {
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
+  private importDialogService = inject(ImportDialogService);
 
   // Permission signals
   entityPermissions = signal<EntityPermissions>({
@@ -111,18 +131,23 @@ export class UserManagementComponent implements OnInit {
   users = signal<UserManagementModel[]>([]);
   totalRecords = signal<number>(0);
   loading = signal<boolean>(false);
+  importing = signal<boolean>(false);
   availableRoles = signal<RoleModel[]>([]);
   
   // Dialog state
   editDialogVisible = signal<boolean>(false);
   selectedUser = signal<UserManagementModel | null>(null);
-  selectedUserRoles = signal<string[]>([]);
+  isPartnerUser = signal<boolean>(false);
+  isSelfManagementEnabled = signal<boolean>(false);
 
   // Filter and pagination state
   searchTerm = signal<string>('');
-  roleFilter = signal<string>('');
+  roleFilter = signal<string[]>([]);
   showMyOrgUnitOnly = signal<boolean>(false);
-  orgUnitFilter = signal<string>('');
+  orgUnitFilter = signal<number[]>([]);
+  
+  // Org unit options for multi-select
+  orgUnitOptions = signal<{label: string, value: number}[]>([]);
   
   first = signal<number>(0);
   rows = signal<number>(50);
@@ -133,6 +158,16 @@ export class UserManagementComponent implements OnInit {
   roleOptions = computed(() => 
     this.availableRoles().map(role => ({ label: role.name, value: role.name }))
   );
+
+  // Computed value for other roles (excluding PARTNER_USER)
+  otherUserRoles = computed(() => {
+    const user = this.selectedUser();
+    if (!user) return [];
+    return user.roles.filter(role => role !== 'PARTNER_USER');
+  });
+
+  // Store reference to the refresh event listener for cleanup
+  private refreshEventListener?: () => void;
 
   // Permission computed values
   canRead = computed(() => this.entityPermissions().permissions.canRead);
@@ -152,6 +187,19 @@ export class UserManagementComponent implements OnInit {
 
   ngOnInit() {
     this.loadPermissions();
+    
+    // Listen for refresh events from import operations
+    this.refreshEventListener = () => {
+      this.loadUsers();
+    };
+    window.addEventListener('refresh-listview', this.refreshEventListener);
+  }
+
+  ngOnDestroy() {
+    // Clean up event listener
+    if (this.refreshEventListener) {
+      window.removeEventListener('refresh-listview', this.refreshEventListener);
+    }
   }
 
   private loadPermissions() {
@@ -168,19 +216,25 @@ export class UserManagementComponent implements OnInit {
       .subscribe({
         next: (permissions) => {
           if (!permissions.hasAccess) {
-            console.log(`[IMPERSONATE-ROLES] No access to role impersonation for route ${currentPath}`);
+            
             this.router.navigate(['/access-denied']);
             return;
           }
-          console.log(`[IMPERSONATE-ROLES] Loaded role impersonation permissions for route ${currentPath}:`, permissions);
+          
+          
           this.entityPermissions.set(permissions);
           this.permissionsLoading.set(false);
           
           // Load data only after permissions are confirmed
           if (permissions.hasAccess) {
-            this.loadCurrentUserRoles();
-            this.loadAvailableRoles();
-            this.loadUsers();
+            // Load current user roles first, then load other data
+            this.loadCurrentUserRoles().then(() => {
+              // After roles are loaded, load the rest of the data (but NOT users yet)
+              this.loadAvailableRoles();
+              this.loadOrgUnits();
+              // Load users LAST to ensure all role-based settings are properly applied
+              this.loadUsers(); // This will now use the correct showMyOrgUnitOnly setting
+            });
           }
           
           this.cdr.detectChanges();
@@ -198,22 +252,25 @@ export class UserManagementComponent implements OnInit {
       });
   }
 
-  private loadCurrentUserRoles() {
-    this.authService.getUserRoles().subscribe({
-      next: (roles) => {
-        this.currentUserRoles.set(roles);
-        
-        // If user is ORG_UNIT_ADMIN (but not PARTNER_GLOB_ADMIN), automatically enable org unit filtering
-        if (this.isOrgUnitAdmin()) {
-          this.showMyOrgUnitOnly.set(true);
-          console.log('[IMPERSONATE-ROLES] ORG_UNIT_ADMIN detected - automatically enabling org unit filtering');
+  private async loadCurrentUserRoles(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.authService.getUserRoles().subscribe({
+        next: (roles) => {
+          this.currentUserRoles.set(roles);
+          
+          // If user is ORG_UNIT_ADMIN (but not PARTNER_GLOB_ADMIN), automatically enable org unit filtering
+          if (this.isOrgUnitAdmin()) {
+            this.showMyOrgUnitOnly.set(true);
+          }
+          
+          this.cdr.detectChanges();
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error loading current user roles:', error);
+          reject(error);
         }
-        
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error loading current user roles:', error);
-      }
+      });
     });
   }
 
@@ -224,9 +281,9 @@ export class UserManagementComponent implements OnInit {
         pageIndex: Math.floor(this.first() / this.rows()),
         pageSize: this.rows(),
         searchTerm: this.searchTerm() || undefined,
-        roleFilter: this.roleFilter() || undefined,
+        roleFilter: this.roleFilter().length > 0 ? this.roleFilter() : undefined,
         showMyOrgUnitOnly: this.showMyOrgUnitOnly(),
-        orgUnitFilter: this.orgUnitFilter() || undefined,
+        orgUnitFilter: this.orgUnitFilter().length > 0 ? this.orgUnitFilter() : undefined,
         sortBy: this.sortBy(),
         sortDirection: this.sortDirection()
       };
@@ -260,6 +317,23 @@ export class UserManagementComponent implements OnInit {
     }
   }
 
+  async loadOrgUnits() {
+    try {
+      const orgUnits = await this.userManagementService.getAvailableOrgUnits();
+      this.orgUnitOptions.set(orgUnits.map((ou: any) => ({ 
+        label: ou.name, 
+        value: ou.id 
+      })));
+    } catch (error) {
+      console.error('Error loading org units:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load organization units'
+      });
+    }
+  }
+
   onPageChange(event: any) {
     this.first.set(event.first);
     this.rows.set(event.rows);
@@ -284,22 +358,39 @@ export class UserManagementComponent implements OnInit {
 
   clearFilters() {
     this.searchTerm.set('');
-    this.roleFilter.set('');
+    this.roleFilter.set([]);
     
     // Only reset org unit filter if user is not ORG_UNIT_ADMIN
     if (!this.isOrgUnitAdmin()) {
       this.showMyOrgUnitOnly.set(false);
     }
     
-    this.orgUnitFilter.set('');
+    this.orgUnitFilter.set([]);
     this.first.set(0);
     this.loadUsers();
   }
 
   editUser(user: UserManagementModel) {
     this.selectedUser.set(user);
-    this.selectedUserRoles.set([...user.roles]);
+    this.isPartnerUser.set(user.roles.includes('PARTNER_USER'));
+    this.loadOrgUnitSelfManagementStatus(user.orgUnitCode || user.orgUnit);
     this.editDialogVisible.set(true);
+  }
+
+  private async loadOrgUnitSelfManagementStatus(orgUnitCode: string) {
+    // ORG_UNIT_ADMIN users cannot modify organization self-management settings
+    if (this.isOrgUnitAdmin()) {
+      this.isSelfManagementEnabled.set(false);
+      return;
+    }
+    
+    try {
+      const status = await this.userManagementService.getOrgUnitSelfManagementStatus(orgUnitCode);
+      this.isSelfManagementEnabled.set(status);
+    } catch (error) {
+      console.error('Error loading org unit self-management status:', error);
+      this.isSelfManagementEnabled.set(false);
+    }
   }
 
   async saveUserRoles() {
@@ -307,11 +398,30 @@ export class UserManagementComponent implements OnInit {
     if (!user) return;
 
     try {
+      // Get current roles excluding PARTNER_USER
+      const otherRoles = user.roles.filter(role => role !== 'PARTNER_USER');
+      
+      // Build new roles array: keep other roles and add PARTNER_USER if checked
+      const newRoles = this.isPartnerUser() 
+        ? [...otherRoles, 'PARTNER_USER']
+        : otherRoles;
+
       const request = {
-        roles: this.selectedUserRoles()
+        roles: newRoles
       };
 
+      // Update user roles
       const updatedUser: UserManagementModel = await this.userManagementService.updateUserRoles(user.userId, request);
+      
+      // Update organization unit self-management setting only for PARTNER_GLOB_ADMIN users
+      if (!this.isOrgUnitAdmin()) {
+        const orgUnitCode = user.orgUnitCode || user.orgUnit;
+        if (orgUnitCode) {
+          await this.userManagementService.updateOrgUnitSelfManagement(orgUnitCode, {
+            isSelfManagementEnabled: this.isSelfManagementEnabled()
+          });
+        }
+      }
       
       // Update the user in the list
       const currentUsers = this.users();
@@ -322,10 +432,15 @@ export class UserManagementComponent implements OnInit {
       }
 
       this.editDialogVisible.set(false);
+      
+      const successMessage = this.isOrgUnitAdmin() 
+        ? 'User partnership access updated successfully'
+        : 'User permissions and organization settings updated successfully';
+        
       this.messageService.add({
         severity: 'success',
         summary: 'Success',
-        detail: 'User roles updated successfully'
+        detail: successMessage
       });
     } catch (error) {
       console.error('Error updating user roles:', error);
@@ -340,7 +455,8 @@ export class UserManagementComponent implements OnInit {
   cancelEdit() {
     this.editDialogVisible.set(false);
     this.selectedUser.set(null);
-    this.selectedUserRoles.set([]);
+    this.isPartnerUser.set(false);
+    this.isSelfManagementEnabled.set(false);
   }
 
   getRoleSeverity(role: string): string {
@@ -356,11 +472,30 @@ export class UserManagementComponent implements OnInit {
     }
   }
 
-  getStatusSeverity(isActive: boolean): string {
+  getStatusSeverity(isActive: boolean): "success" | "info" | "warn" | "secondary" | "contrast" | "danger" | undefined {
     return isActive ? 'success' : 'danger';
   }
 
   getStatusText(isActive: boolean): string {
     return isActive ? 'Active' : 'Inactive';
+  }
+
+  /**
+   * Opens the import dialog for user role assignments
+   */
+  openImportDialog(): void {
+    // Check if user has update permissions
+    if (!this.canUpdate()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Permission Denied',
+        detail: 'You do not have permission to import user roles'
+      });
+      return;
+    }
+
+    // Use Google Picker to select and import user role data
+    // This will automatically open the import dialog after file selection and analysis
+    this.importDialogService.openGoogleSheetPicker('user_role_import');
   }
 } 

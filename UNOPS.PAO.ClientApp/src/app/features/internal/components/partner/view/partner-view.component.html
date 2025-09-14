@@ -8,272 +8,343 @@
 <!--  </div>-->
 <!--</div>-->
 <div class="flex flex-col gap-8">
-
-  
   <div class="flex flex-col xl:flex-row gap-8">
-    <div class="xl:w-1/2 flex flex-col gap-8">
-      <p-panel class="{{infoLoading() ? 'opacity-50' : ''}}">
+    <div class="flex flex-col gap-8" [ngClass]="showAiPanel ? 'xl:w-1/2' : 'w-full'">
+      <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} shadow-sm border border-solid border-gray-50 rounded-xl">
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
-            <span class="font-semibold">Partner Information</span>
-            @if (recordPermissions().permissions.canUpdate) {
-              <p-button icon="pi pi-pencil"
-                        [rounded]="true"
-                        [text]="true"
-                        [size]="'small'"
-                        (onClick)="handleEditClick()"></p-button>
-            }
-          </div>
-        </ng-template>
+            <div class="flex items-center gap-2">
+              <span class="text-xl">Partner Information</span>
+              <app-entity-tags [tags]="recordData().tags"></app-entity-tags>
+            </div>
+            <div class="flex items-center gap-2">
+              @if (recordData().permissions?.canApprove) {
+                <p-button [label]="'button.approve' | translate"
+                          icon="pi pi-check"
+                          [rounded]="true"
+                          severity="primary"
+                          (onClick)="handleApprovalClick()"></p-button>
+              }
+              @if (recordData().permissions?.canActivate) {
+                <p-button [label]="'button.activate' | translate"
+                          icon="pi pi-play"
+                          [rounded]="true"
+                          severity="primary"
+                          (onClick)="handleActivateClick()"></p-button>
+              }
 
-        <div class="flex flex-col gap-6 pb-2">
-          <!-- Name and Title -->
-          <div class="flex gap-4">
-            <app-picture
-              [imageUrl]="recordData().logoUrl || ''"
-              [uploadUrl]="getUploadLogoUrl()"
-              [altText]="'Partner logo'"
-              [size]="'medium'"
-              [disabled]="!recordPermissions().permissions.canUpdate"
-              (imageChanged)="_loadRecordDetails()"
-            />
-            <div class="flex flex-col gap-1">
-              <div class="text-lg">
-                {{recordData().name}}
-              </div>
-
-              <!-- Address -->
-              @if(recordData().address1Street || recordData().address1Street2 || recordData().address1City || recordData().address1Country){
-              <div class="flex flex-col gap-2">
-                <div class="text-base">
-                  @if(recordData().address1Street){
-                  <div>{{recordData().address1Street}}</div>
-                  }
-                  @if(recordData().address1Street2) {
-                  <div>{{recordData().address1Street2}}</div>
-                  }
-                  @if(recordData().address1City || recordData().address1StateProvince || recordData().address1PostalCode){
-                  <div>
-                    {{recordData().address1City}}
-                    @if(recordData().address1StateProvince) {
-                    , {{recordData().address1StateProvince}}
-                    }
-                    @if(recordData().address1PostalCode) {
-                    {{recordData().address1PostalCode}}
-                    }
-                  </div>
-                  }
-                  @if(recordData().address1Country) {
-                  <div>{{recordData().address1Country}}</div>
-                  }
-                </div>
-              </div>
+              @if (recordData().permissions?.canUpdate) {
+                <p-button icon="pi pi-pencil"
+                          [rounded]="true"
+                          [text]="true"
+                          [size]="'small'"
+                          class="edit-button partner-edit-button"
+                          (onClick)="handleEditClick()"></p-button>
               }
             </div>
           </div>
+        </ng-template>
 
-          <!-- Other Partner Information Fields -->
-          @if(recordData().newEngagement){
-          <div class="flex flex-col gap-2">
-            <div class="font-semibold">{{ 'label.partner.newEngagement' | translate }}</div>
-            <div>{{recordData().newEngagement}}</div>
+        <div class="partner-info-content partner-information">
+
+          <div class="flex flex-col gap-4 pb-2">
+
+                @if(recordData().partnerCategoryId){
+                  <div class="flex flex-col gap-2">
+                    <div class="text-sm">{{ 'label.partnerTree.partnerGroup' | translate }}</div>
+                    <div class="flex items-center gap-2">
+                      <a [routerLink]="['/admin/partner-tree', recordData().partnerCategoryId]" class="text-primary hover:underline font-semibold">
+                        {{recordData().partnerCategoryName}}
+                      </a>
+                      @if(recordData().partnerGroupId){
+                        <i class="pi pi-chevron-right" style="font-size: .7rem"></i>
+                            <a [routerLink]="['/admin/partner-tree', recordData().partnerGroupId]"  class="text-primary hover:underline font-semibold">
+                              {{recordData().partnerGroupName}}
+                            </a>
+                      }
+
+                    </div>
+                  </div>
+                }
+
+                <!-- Address -->
+                @if(recordData().address1Street || recordData().address1Street2 || recordData().address1City || recordData().address1Country){
+                <div class="flex flex-col gap-2">
+                  <div class="text-base">
+                    @if(recordData().address1Street){
+                    <div>{{recordData().address1Street}}</div>
+                    }
+                    @if(recordData().address1Street2) {
+                    <div>{{recordData().address1Street2}}</div>
+                    }
+                    @if(recordData().address1City || recordData().address1StateProvince || recordData().address1PostalCode){
+                    <div>
+                      {{recordData().address1City}}
+                      @if(recordData().address1StateProvince) {
+                      , {{recordData().address1StateProvince}}
+                      }
+                      @if(recordData().address1PostalCode) {
+                      {{recordData().address1PostalCode}}
+                      }
+                    </div>
+                    }
+                    @if(recordData().address1Country) {
+                    <div>{{recordData().address1Country}}</div>
+                    }
+                  </div>
+                </div>
+                }
+
+
+            @if(getPrimaryOrganizationUnit(recordData())){
+            <div class="flex flex-col gap-2">
+              <div class="text-sm">{{ 'label.partner.partnerOrgUnit' | translate }}</div>
+              <div>{{getPrimaryOrganizationUnit(recordData())?.name}}</div>
+              @if(recordData().organizationUnitRelationships && recordData().organizationUnitRelationships!.length > 1) {
+                <div class="text-xs text-gray-500">
+                  +{{ recordData().organizationUnitRelationships!.length - 1 }} more
+                </div>
+              }
+            </div>
+            }
+
+            @if(recordData().partnerFocalPointUserName){
+            <div class="flex flex-col gap-2">
+              <div class="text-sm">{{ 'label.partner.partnerFocalPoint' | translate }}</div>
+              <div>{{recordData().partnerFocalPointUserName}}</div>
+            </div>
+            }
+
+            @if(showAdditionalInfo() && showFullContent()) {
+              <!-- ========== GENERAL FIELDS ========== -->
+              @if(recordData().id){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.id' | translate }}</div>
+                <div>{{recordData().id}}</div>
+              </div>
+              }
+              @if(recordData().partnerShortDescription || recordData().shortName){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.partnerShortDescription' | translate }}</div>
+                <div>{{recordData().partnerShortDescription || recordData().shortName}}</div>
+              </div>
+              }
+              @if(recordData().partnerLongDescription){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.partnerLongDescription' | translate }}</div>
+                <div>{{recordData().partnerLongDescription}}</div>
+              </div>
+              }
+              @if(recordData().partnerCategoryName || recordData().partnerTree?.partnerCategoryName){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.partnerCategory' | translate }}</div>
+                <div>{{recordData().partnerCategoryName || recordData().partnerTree?.partnerCategoryName}}</div>
+              </div>
+              }
+              @if(recordData().liaisonOfficeId){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.partnerLiaisonOffice' | translate }}</div>
+                <div>{{recordData().liaisonOfficeId}}</div>
+              </div>
+              }
+              @if(recordData().partnerGroupName){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.partnerGroup' | translate }}</div>
+                <div>{{recordData().partnerGroupName}}</div>
+              </div>
+              }
+              @if(recordData().status){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.status' | translate }}</div>
+                <div>{{recordData().status}}</div>
+              </div>
+              }
+
+              <!-- ========== APPROVAL FIELDS ========== -->
+              @if(recordData().dueDiligenceRequired){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.dueDiligenceRequired' | translate }}</div>
+                <div>{{recordData().dueDiligenceRequired}}</div>
+              </div>
+              }
+              @if(recordData().dueDiligenceApproval){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.dueDiligenceApproval' | translate }}</div>
+                <div>{{recordData().dueDiligenceApproval}}</div>
+              </div>
+              }
+              @if(recordData().dueDiligenceApprovalDate){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.dueDiligenceApprovalDate' | translate }}</div>
+                <div>{{recordData().dueDiligenceApprovalDate | date}}</div>
+              </div>
+              }
+              @if(recordData().dueDiligenceExpiryDate){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.dueDiligenceExpiryDate' | translate }}</div>
+                <div>{{recordData().dueDiligenceExpiryDate | date}}</div>
+              </div>
+              }
+              @if(recordData().partnerApprovalDate){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.partnerApprovalDate' | translate }}</div>
+                <div>{{recordData().partnerApprovalDate | date}}</div>
+              </div>
+              }
+              @if(recordData().partnerApprovalReference){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.partnerApprovalReference' | translate }}</div>
+                <div>{{recordData().partnerApprovalReference}}</div>
+              </div>
+              }
+              @if(recordData().partnerLevyStatus){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.partnerLevyStatus' | translate }}</div>
+                <div>{{recordData().partnerLevyStatus}}</div>
+              </div>
+              }
+              @if(recordData().reasonForLevy){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.reasonForLevy' | translate }}</div>
+                <div>{{recordData().reasonForLevy}}</div>
+              </div>
+              }
+              @if(recordData().levyTreatment){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.levyTreatment' | translate }}</div>
+                <div>{{recordData().levyTreatment}}</div>
+              </div>
+              }
+
+              <!-- ========== CHECKBOX FIELDS ========== -->
+              <div class="flex gap-2">
+                <label for="kgp">{{ "label.partner.keyGlobalPartner" | translate }}</label>
+                <p-checkbox [binary]="true"
+                            [disabled]="true"
+                            [ngModel]="recordData().keyGlobalPartner"
+                            inputId="kgp" />
+              </div>
+              <div class="flex gap-2">
+                <label for="unse">{{ "label.partner.unAndStateEntity" | translate }}</label>
+                <p-checkbox [binary]="true"
+                            [disabled]="true"
+                            [ngModel]="recordData().unAndStateEntity"
+                            inputId="unse" />
+              </div>
+              <div class="flex gap-2">
+                <label for="unsp">{{ "label.partner.unSecretariatPartner" | translate }}</label>
+                <p-checkbox [binary]="true"
+                            [disabled]="true"
+                            [ngModel]="recordData().unSecretariatPartner"
+                            inputId="unsp" />
+              </div>
+              <div class="flex gap-2">
+                <label for="pf">{{ "label.partner.pooledFund" | translate }}</label>
+                <p-checkbox [binary]="true"
+                            [disabled]="true"
+                            [ngModel]="recordData().pooledFund"
+                            inputId="pf" />
+              </div>
+              <div class="flex gap-2">
+                <label for="cno">{{ "label.partner.canCreateNewOpportunities" | translate }}</label>
+                <p-checkbox [binary]="true"
+                            [disabled]="true"
+                            [ngModel]="recordData().canCreateNewOpportunities"
+                            inputId="cno" />
+              </div>
+              <!-- Reason for No New Opportunity -->
+              @if(recordData().reasonForNoNewOpportunity){
+                <div class="flex flex-col gap-2">
+                  <div class="text-sm">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}</div>
+                  <div>{{recordData().reasonForNoNewOpportunity}}</div>
+                </div>
+                }
+
+            }
+
+            <!-- See More / See Less Button -->
+            @if (shouldShowSeeMoreButton()) {
+              <div class="flex justify-center -mb-4">
+                <p-button
+                  label="{{ 'button.seeMore' | translate }}"
+                  icon="pi pi-chevron-down"
+                  [rounded]="true"
+                  [size]="'small'"
+                  [text]="true"
+                  (onClick)="toggleFullContent()"
+                />
+              </div>
+            }
+
+            @if (shouldShowSeeLessButton()) {
+              <div class="flex justify-center -mb-4">
+                <p-button
+                  label="{{ 'button.seeLess' | translate }}"
+                  icon="pi pi-chevron-up"
+                  [rounded]="true"
+                  [size]="'small'"
+                  [text]="true"
+                  (onClick)="toggleFullContent()"
+                />
+              </div>
+            }
+
           </div>
-          }
-          @if(recordData().partnerOffice){
-          <div class="flex flex-col gap-2">
-            <div class="font-semibold">{{ 'label.partner.partnerOffice' | translate }}</div>
-            <div>{{recordData().partnerOffice?.name}}</div>
-          </div>
+
+          <p-divider></p-divider>
+
+          <span class="text-xl">{{ 'title.links' | translate }}</span>
+          @if (recordData().id && +(recordData().id!) > 0) {
+            <app-link-list [entityType]="entityTypePartner"
+                           [entityId]="+(recordData().id!)"
+                           [disabled]="!recordPermissions().permissions.canUpdate" />
           }
 
-          @if(showAdditionalInfo()) {
-          <!-- Additional Info -->
-            <div class="font-semibold">Additional Information</div>
-            @if(recordData().id){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.partner.id' | translate }}</div>
-              <div>{{recordData().id}}</div>
+          <p-divider></p-divider>
+
+          <span class="text-xl">{{ 'title.doc' | translate }}</span>
+          <app-document #appDocument
+                        [entityId]="recordId"
+                        [entityName]="'partner'"
+                        [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
+                        [disabled]="!recordPermissions().permissions.canUpdate">
+            <div ngProjectAs="document-toolbar">
+              @if(recordPermissions().permissions.canUpdate){
+                <app-document-gdrive [entityId]="recordId"
+                                     [entityName]="'partner'"
+                                     [appDocumentRef]="appDocument"
+                                     [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+              }
             </div>
-            }
-            @if(recordData().partnerTree?.partnerCategoryName){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.partner.partnerCategory' | translate }}</div>
-              <div>{{recordData().partnerTree?.partnerCategoryName}}</div>
-            </div>
-            }
-            @if(recordData().shortName){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.partner.shortName' | translate }}</div>
-              <div>{{recordData().shortName}}</div>
-            </div>
-            }
-            @if(recordData().pooledFund){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.partner.pooledFund' | translate }}</div>
-              <div>{{recordData().pooledFund}}</div>
-            </div>
-            }
-            @if(recordData().ddRequired){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.partner.ddRequired' | translate }}</div>
-              <div>{{recordData().ddRequired}}</div>
-            </div>
-            }
-            @if(recordData().ddeacDone){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.partner.ddeacDone' | translate }}</div>
-              <div>{{recordData().ddeacDone}}</div>
-            </div>
-            }
-            @if(recordData().eacReference){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.partner.eacReference' | translate }}</div>
-              <div>{{recordData().eacReference}}</div>
-            </div>
-            }
-            @if(recordData().levyPotentiallyApplies){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.partner.levyPotentiallyApplies' | translate }}</div>
-              <div>{{recordData().levyPotentiallyApplies}}</div>
-            </div>
-            }
-            @if(recordData().reasonForLevyNotApplying){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.partner.reasonForLevyNotApplying' | translate }}</div>
-              <div>{{recordData().reasonForLevyNotApplying}}</div>
-            </div>
-            }
-            @if(recordData().levyTreatment){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.partner.levyTreatment' | translate }}</div>
-              <div>{{recordData().levyTreatment}}</div>
-            </div>
-            }
-            <div class="flex flex-col gap-2">
-              <p-checkbox [binary]="true"
-                          [disabled]="true"
-                          [value]="recordData().globalKeyAccount"
-                          inputId="gka" />
-              <label for="gka">{{ "label.partner.globalKeyAccount" | translate }}</label>
-            </div>
-            <div class="flex flex-col gap-2">
-              <p-checkbox [binary]="true"
-                          [disabled]="true"
-                          [value]="recordData().unSecretariatEntity"
-                          inputId="unse" />
-              <label for="unse">{{ "label.partner.unSecretariatEntity" | translate }}</label>
-            </div>
-          }
+          </app-document>
         </div>
       </p-panel>
 
-      <p-panel header="{{ 'title.links' | translate }}">
-        <app-link-list [entityType]="entityTypePartner"
-                       [entityId]="+recordId"
-                       [disabled]="!recordPermissions().permissions.canUpdate" />
-      </p-panel>
 
-      <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
-        <app-document #appDocument
-                      [entityId]="recordId"
-                      [entityName]="'partner'"
-                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
-                      [disabled]="!recordPermissions().permissions.canUpdate">
-          <div ngProjectAs="document-toolbar">
-            @if(recordPermissions().permissions.canUpdate){
-              <app-document-gdrive [entityId]="recordId"
-                                   [entityName]="'partner'"
-                                   [appDocumentRef]="appDocument"
-                                   [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
-            }
-          </div>
-        </app-document>
-      </p-panel>
-
-      <p-panel header="Internal Hierarchy">
-      </p-panel>
-
-      <app-partner-view-contacts
-        [partnerId]="recordId"
+    </div>
+    <div class="md:w-1/2 flex flex-col gap-8" *ngIf="showAiPanel">
+      <app-ai-panel
+        [title]="'label.partner.summaryOfInteractions'"
+        [entityId]="recordId"
+        [promptType]="'partner_interactions_summary'"
+        [aiService]="geminiService"
+        (onRefresh)="onSummaryRefresh()"
+        (onDataLoaded)="onSummaryLoaded($event)"
+        (onError)="onSummaryError($event)"
+        class="summary-interactions"
       />
 
-      <p-panel header="Partnership Agreements & Templates">
-      </p-panel>
+      <app-ai-panel
+        [title]="'label.partner.partnerNews'"
+        [entityId]="recordId"
+        [promptType]="'partner_news'"
+        [aiService]="geminiService"
+        (onRefresh)="onNewsRefresh()"
+        (onDataLoaded)="onNewsLoaded($event)"
+        (onError)="onNewsError($event)"
+        class="summary-news"
+      />
     </div>
-    <div class="md:w-1/2 flex flex-col gap-8">
-      <p-panel>
-        <ng-template #header>
-          <div class="flex gap-2 items-center w-full justify-between">
-            <div class="font-semibold">{{'label.partner.summaryOfInteractions' | translate}}</div>
-            <div class="flex gap-2 items-center">
-              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('summary')"></p-button-->
-              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshSummaryOfInteractions()" [loading]="summaryOfInteractionsIsLoading()"></p-button>
-              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
-            </div>
-          </div>
-        </ng-template>
-
-        @if (summaryOfInteractionsIsLoading()) {
-        <div class="w-full flex justify-center h-24 items-center">
-          <i class="pi pi-spin pi-spinner"></i>
-        </div>
-        } @else {
-        <div [innerHTML]="summaryOfInteractions() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
-        }
-      </p-panel>
-
-      <p-panel>
-        <ng-template #header>
-          <div class="flex gap-2 items-center w-full justify-between">
-            <div class="font-semibold">{{'label.partner.riskProfile' | translate}}</div>
-            <div class="flex gap-2 items-center">
-              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('risk')"></p-button-->
-              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshRiskProfile()" [loading]="riskIsLoading()"></p-button>
-              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
-            </div>
-          </div>
-        </ng-template>
-
-        @if (riskIsLoading()) {
-        <div class="w-full flex justify-center h-24 items-center">
-          <i class="pi pi-spin pi-spinner"></i>
-        </div>
-        } @else {
-        <div [innerHTML]="riskProfile() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
-        }
-      </p-panel>
-
-      <p-panel>
-        <ng-template #header>
-          <div class="flex gap-2 items-center w-full justify-between">
-            <div class="font-semibold">{{'label.partner.partnerNews' | translate}}</div>
-            <div class="flex gap-2 items-center">
-              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('news')"></p-button-->
-              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshPartnerNews()" [loading]="partnerNewsIsLoading()"></p-button>
-              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
-            </div>
-          </div>
-        </ng-template>
-        @if (partnerNewsIsLoading()) {
-        <div class="w-full flex justify-center h-24 items-center">
-          <i class="pi pi-spin pi-spinner"></i>
-        </div>
-        } @else {
-        <div [innerHTML]="partnerNews() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
-        }
-      </p-panel>
-
-      <p-panel header="Partner Funding Opportunities">
-      </p-panel>
-
-      <p-panel header="Partner Pipeline & Portfolio (EA)">
-      </p-panel>
-    </div>
-  </div>
-  <div class="flex justify-end gap-2 w-full">
-    <p-button label="{{'button.back' | translate}}" icon="pi pi-arrow-left" [styleClass]="'p-button-text'"
-              rounded
-              (onClick)="handleOnCancelClick($event)" />
   </div>
 </div>
 
@@ -290,7 +361,7 @@
 
     <app-partner-contacts
       [partnerId]="recordId"
-      [partnerName]="recordData()?.name || ''" />
+      [partnerName]="recordData().name || ''" />
 
     <ng-template pTemplate="footer">
       <p-button
@@ -302,4 +373,7 @@
     </ng-template>
   </p-dialog>
 }
+
+<!-- Confirmation Dialog for Approval - Always available -->
+<p-confirmDialog></p-confirmDialog>
 <!--</p-blockui>-->

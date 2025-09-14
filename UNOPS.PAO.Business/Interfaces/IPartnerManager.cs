@@ -20,6 +20,7 @@ public interface IPartnerManager
     Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request);
     
     Task<PaginationResponse<PartnerModel>> GetPartnersWithSpecification(int userId, ISpecification<Partner> specification, PaginationRequest pagination);
+    Task<object> GetPartnersWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Partner> specification, PaginationRequest pagination);
 
     Task<PartnerModel?> GetPartner(int userId, int id);
 
@@ -31,7 +32,11 @@ public interface IPartnerManager
 
     Task DeletePartnerAsync(int userId, int id);
     Task<PartnerModel?> GetPartnerAsync(int id);
-    Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, string partnerTreeId, PaginationRequest request);
+    /// <summary>
+    /// Gets a partner with its contacts and their interactions included
+    /// </summary>
+    Task<PartnerModel?> GetPartnerWithContactsAndInteractionsAsync(int id);
+    Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, int partnerTreeId, PaginationRequest request);
     Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request);
     Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file);
     
@@ -61,43 +66,42 @@ public interface IPartnerManager
     /// <param name="operation">Operation to check (e.g., "Read", "Update", "Delete")</param>
     /// <returns>True if the user has permission, false otherwise</returns>
     Task<bool> HasPermissionAsync(ClaimsPrincipal user, Partner partner, string operation);
-    
-    #region Secure Methods for Permission-based Access
-    
-    /// <summary>
-    /// Gets partners with row-level security applied based on user permissions
-    /// </summary>
     Task<PaginationResponse<PartnerModel>> GetPartnersAsync(ClaimsPrincipal user, PaginationRequest request);
     
-    /// <summary>
-    /// Gets a specific partner with row-level security applied
-    /// </summary>
     Task<PartnerModel?> GetPartnerAsync(ClaimsPrincipal user, int id);
     
-    /// <summary>
-    /// Creates a new partner with permission validation
-    /// </summary>
     Task<PartnerModel?> CreatePartnerAsync(ClaimsPrincipal user, PartnerRequest model);
-    
-    /// <summary>
-    /// Updates a partner with permission validation
-    /// </summary>
+
     Task<PartnerModel?> UpdatePartnerAsync(ClaimsPrincipal user, UpdatePartnerRequest model);
-    
-    /// <summary>
-    /// Deletes a partner with permission validation
-    /// </summary>
+
     Task<bool> DeletePartnerAsync(ClaimsPrincipal user, int id);
-    
-    /// <summary>
-    /// Gets partners by partner group with security applied
-    /// </summary>
-    Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, string partnerGroupCode, PaginationRequest request);
-    
-    /// <summary>
-    /// Gets partners by partner category with security applied
-    /// </summary>
+
+    Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, int partnerGroupId, PaginationRequest request);
     Task<PaginationResponse<PartnerModel>> GetPartnersByCategoryAsync(ClaimsPrincipal user, string partnerCategoryCode, PaginationRequest request);
+
+    Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user);
     
-    #endregion
+    /// <summary>
+    /// Gets a partner by name
+    /// </summary>
+    /// <param name="user">The current user's claims principal</param>
+    /// <param name="name">The partner name to search for (case-insensitive)</param>
+    /// <returns>The partner model if found, null otherwise</returns>
+    Task<PartnerModel?> GetPartnerByNameAsync(ClaimsPrincipal user, string name);
+    
+    // Partner Status Management Methods
+    Task<PartnerModel?> ActivatePartnerAsync(ClaimsPrincipal user, int id, ActivatePartnerRequest request);
+    Task<PartnerModel?> ClosePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request);
+    Task<PartnerModel?> ArchivePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request);
+    Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, UpdatePartnerRequest request);
+    
+    /// <summary>
+    /// Gets all engagements for a specific partner with pagination
+    /// </summary>
+    Task<PaginationResponse<Engagement>> GetPartnerEngagementsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending);
+    
+    /// <summary>
+    /// Gets all projects for a specific partner with pagination
+    /// </summary>
+    Task<PaginationResponse<object>> GetPartnerProjectsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending);
 }

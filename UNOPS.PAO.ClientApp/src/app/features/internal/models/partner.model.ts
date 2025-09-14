@@ -1,23 +1,46 @@
 import { PartnerTree } from "./partner-tree.model";
 import { EntityPermissionSet } from './shared-types';
+import { OrganizationUnitRelationshipModel } from './organization-unit-relationship.model';
+import { OrganizationHierarchyModel } from '../../../models/organization-hierarchy.model';
+import { EntityTag, TaggedEntity } from '../../../common/models/entity-tag.model';
 
-export interface Partner {
+export interface Partner extends TaggedEntity {
   id?: string | null;
-  name?: string | null;
-  shortName?: string | null;
+  partnerCode?: string | null;
+
+  // ========== GENERAL FIELDS ==========
+  partnerDescription?: string | null; // Full name (required) - was "name"
+  partnerShortDescription?: string | null; // Short name/acronym (required) - was "shortName"
+  partnerLongDescription?: string | null; // Optional long description
+  partnerCategoryId?: number | null; // FK to Partner Category (required)
+  liaisonOfficeId?: number | null; // FK to LiaisonOffice (required)
+  partnerFocalPointUserId?: number | null; // FK to User (Partner Focal Point)
+  partnerFocalPointUserName?: string | null; // Partner Focal Point User Name
+
+  // Backward compatibility
+  name?: string | null; // Maps to partnerDescription for backward compatibility
+  shortName?: string | null; // Maps to partnerShortDescription for backward compatibility
+
   status?: string | null;
-  newEngagement?: string | null;
-  phone?: string | null;
-  website?: string | null;
-  pooledFund?: string | null;
-  ddRequired?: string | null;
-  ddeacDone?: string | null;
-  eacReference?: string | null;
-  globalKeyAccount?: boolean | null;
-  unSecretariatEntity?: boolean | null;
-  levyPotentiallyApplies?: string | null;
-  reasonForLevyNotApplying?: string | null;
+  pooledFund?: boolean | null;
+
+  // ========== APPROVAL FIELDS ==========
+  keyGlobalPartner?: boolean | null; // was "globalKeyAccount"
+  unAndStateEntity?: boolean | null; // New field
+  unSecretariatPartner?: boolean | null; // was "unSecretariatEntity"
+  dueDiligenceRequired?: string | null; // was "ddRequired"
+  dueDiligenceApproval?: string | null; // was "ddeacDone"
+  dueDiligenceApprovalDate?: Date | null; // New field
+  dueDiligenceExpiryDate?: Date | null; // New field
+  partnerApprovalStatus?: string | null; // "NotApproved" | "Approved"
+  partnerApprovalDate?: Date | null; // New field
+  partnerApprovalReference?: string | null; // was "eacReference"
+  partnerLevyStatus?: string | null; // was "levyPotentiallyApplies"
+  reasonForLevy?: string | null; // was "reasonForLevyNotApplying"
   levyTreatment?: string | null;
+  canCreateNewOpportunities?: boolean | null; // New field
+  reasonForNoNewOpportunity?: string | null; // New field (Reason)
+
   address1Street?: string | null;
   address1Street2?: string | null;
   address1City?: string | null;
@@ -30,8 +53,8 @@ export interface Partner {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
   isDeleted?: boolean | null;
-  partnerOffice?: Office | null;
-  partnerOfficeId?: string | null;
+  // Organization Unit Relationships
+  organizationUnitRelationships?: OrganizationUnitRelationshipModel[] | null;
   partnerCategory?: string | null;
   logoUrl?: string | null;
   deletedBy?: string | null;
@@ -40,14 +63,17 @@ export interface Partner {
   _importRowId?: string;
   partnerTree?: PartnerTree | null;
   partnerGroupId?: number | null;
-  partnerGroupCode?: string | null;
   partnerGroupName?: string | null;
-  partnerCategoryId?: number | null;
   partnerCategoryCode?: string | null;
   partnerCategoryName?: string | null;
-  
+  erpDimValue?: string | null;
   // RBAC permissions
   permissions?: EntityPermissionSet;
+}
+
+// Utility function to get the primary organization unit from a partner
+export function getPrimaryOrganizationUnit(partner: Partner): OrganizationHierarchyModel | null {
+  return partner.organizationUnitRelationships?.[0]?.organizationHierarchy || null;
 }
 
 export interface Office {

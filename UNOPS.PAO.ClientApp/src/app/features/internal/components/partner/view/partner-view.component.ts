@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
@@ -13,7 +14,7 @@ import { ParentEntityType } from '../../../overrides/interfaces/types';
 import { DocumentLinkModel } from '../../../overrides/interfaces/types';
 import { DocumentComponent } from '../../../../../common/reusables/components/document/document.component';
 import { GDriveDocumentComponent } from '../../../overrides/reusables/components/document/gdrive/document-gdrive.component';
-import { PictureComponent } from "../../../../../common/reusables/components/picture/picture.component";
+
 
 //Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -29,26 +30,49 @@ import { SelectModule } from 'primeng/select';
 import { AutoFocusModule } from 'primeng/autofocus';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
-import { PartnerService } from '../../../services/partner.service';
-import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CardModule } from 'primeng/card';
+import { PartnerService } from '../../../services/partner.service';
 import { PartnerContactsComponent } from '../contacts/partner-contacts.component';
-import { GeminiService } from '../../../services/gemini.service';
-import { MarkdownPipe } from '../../../pipes/markdown.pipe';
-import { LinkListComponent } from "../../../../../common/reusables/components/link/list/link-list.component";
+import { LinkListComponent } from '../../../../../common/reusables/components/link/list/link-list.component';
 import { EntityType } from '../../../../../common/models/link.model';
-import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
-import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
-import { PartnerTabsComponent } from '../tabs/partner-tabs.component';
-import { Partner } from '../../../models/partner.model';
+import { Partner, getPrimaryOrganizationUnit } from '../../../models/partner.model';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { AiPanelComponent } from '../../../../../common/reusables/components/ai-panel/ai-panel.component';
+import { GeminiService } from '../../../services/gemini.service';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
+import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
+import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
+import { PartnerApprovalDialogComponent } from '../approval-dialog/partner-approval-dialog.component';
+import { AuthService } from '../../../../../essentials/services/auth.service';
+import { EntityTagsComponent } from '../../../../../common/components/entity-tags/entity-tags.component';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
+/**
+ * @uiEntity Partner
+ * @route /partnerships/partners/:id
+ * @description View and edit detailed partner information including contact details, address, organizational data, and associated documents. Central place for managing all aspects of a partner organization.
+ * @capabilities view_partner_details, edit_partner_info, upload_logo, manage_documents, view_contacts, create_interactions, edit_address, update_status
+ * @synonyms organization_details, partner_profile, entity_view, collaborator_info
+ * @mandatoryFields name, partnerType, status, partnerOfficeId
+ * @help_when_stuck This page shows complete partner information. Click Edit to modify details, use tabs to navigate between sections, or click the logo area to upload a new partner logo. All fields are organized by category for easy access.
+ * @common_tasks
+ *   - Editing partner info: Click the Edit button and modify the form fields
+ *   - Uploading logo: Click on the logo/image area to upload a new partner logo
+ *   - Viewing contacts: Go to the Contacts tab to see people associated with this partner
+ *   - Adding interactions: Go to Interactions tab and click 'Add Interaction'
+ *   - Managing documents: Scroll down to the Documents section to upload or view files
+ *   - Updating address: Edit the address fields in the Contact Information section
+ * @tabs Details:/partnerships/partners/:id, Contacts:/partnerships/partners/:id/contacts, Interactions:/partnerships/partners/:id/interactions, Data:/partnerships/partners/:id/data
+ */
 @Component({
   selector: 'app-partner-view',
   imports: [
+    CommonModule,
     TranslateModule,
     InputTextModule,
     DropdownModule,
@@ -66,18 +90,19 @@ import { PermissionUtilityService } from '../../../../../essentials/services/per
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
+    FormsModule,
     PartnerContactsComponent,
-    MarkdownPipe,
     LinkListComponent,
-    PictureComponent,
-    PartnerViewContactsComponent,
-    PartnerTabsComponent,
     TooltipModule,
+    AiPanelComponent,
+    RouterModule,
+    ConfirmDialogModule,
+    EntityTagsComponent,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [DialogService],
+  providers: [DialogService, ConfirmationService],
   styles: [`
     :host ::ng-deep .custom-avatar-size {
       width: 5rem !important;
@@ -100,7 +125,9 @@ export class PartnerViewComponent implements OnInit {
   languageService = inject(LanguageService);
   cdr = inject( ChangeDetectorRef);
   permissionService = inject(PermissionUtilityService);
-  
+  authService = inject(AuthService);
+  confirmationService = inject(ConfirmationService);
+
   // Permission management using utility service
   private permissionUtils = this.permissionService.createInstancePermissions('Partner');
   recordPermissions = this.permissionUtils.recordPermissions;
@@ -108,27 +135,69 @@ export class PartnerViewComponent implements OnInit {
   private langChangeSubscription: Subscription = new Subscription();
   onRecordCreationSuccess = output();
 
+  // Input property for recordId when used in AI layout
+  @Input() recordId: string = '';
+
+  // Input property to control AI panel visibility
+  private _showAiPanel: boolean = true;
+  @Input()
+  get showAiPanel(): boolean {
+    return this._showAiPanel;
+  }
+  set showAiPanel(value: boolean | null | undefined) {
+    this._showAiPanel = value === false ? false : true; // Default to true unless explicitly false
+  }
+
   showValidationFailedError = signal<boolean>(false);
-  recordId: string = '';
   recordData = signal<Partner>({});
   showCommentDialog = false;
-  riskProfile = signal<string>('');
-  riskIsLoading = signal<boolean>(true);
-  summaryOfInteractionsIsLoading = signal<boolean>(true);
-  summaryOfInteractions = signal<string>('');
-  partnerNewsIsLoading = signal<boolean>(true);
-  partnerNews = signal<string>('');
   entityTypePartner = EntityType.Partner;
   infoLoading = signal<boolean>(false);
 
   //To be handled by permissions later so that only PRM Admin has this value set to true
   showAdditionalInfo = signal<boolean>(true);
 
+  // See More functionality for Partner Information
+  showFullContent = signal<boolean>(false);
+
+  // Computed values for See More functionality
+  shouldShowSeeMoreButton = computed(() => {
+    return this.showAdditionalInfo() && !this.showFullContent();
+  });
+
+  shouldShowSeeLessButton = computed(() => {
+    return this.showAdditionalInfo() && this.showFullContent();
+  });
+
+  // Helper method to get primary organization unit
+  getPrimaryOrganizationUnit = getPrimaryOrganizationUnit;
+
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
   }
 
   ngOnInit() {
+    console.log('PartnerView ngOnInit - showAiPanel value:', this.showAiPanel);
+
+    // Check admin role
+    this.authService.isAdmin().subscribe({
+      next: (isAdmin) => {
+        this.isAdmin.set(isAdmin);
+      },
+      error: (error) => {
+        console.error('Error checking admin role:', error);
+        this.isAdmin.set(false);
+      }
+    });
+
+    // If recordId is provided via Input (AI layout), load data directly
+    if (this.recordId && this.recordId !== '') {
+      console.log('Using input recordId:', this.recordId);
+      this._loadRecordDetails();
+      return;
+    }
+
+    // Otherwise, use the route-based logic (normal navigation)
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';
@@ -139,7 +208,7 @@ export class PartnerViewComponent implements OnInit {
             if (data['partnerData']) {
               const partnerData = data['partnerData'];
               this.recordData.set(partnerData);
-              
+
               // Extract permissions from the resolver data if they exist
               if (partnerData.permissions) {
                 this.recordPermissions.set({
@@ -148,18 +217,16 @@ export class PartnerViewComponent implements OnInit {
                   permissions: partnerData.permissions
                 });
               }
-              
+
               this.infoLoading.set(false);
             } else {
               // Fallback to loading details directly if resolver data isn't available
               this._loadRecordDetails();
             }
           });
-          
+
           // Load permissions for this specific partner
           // Permissions are now extracted from the partner response directly
-          
-          this._loadGeminiData();
         }
       }
     });
@@ -181,7 +248,7 @@ export class PartnerViewComponent implements OnInit {
     this.partnerService.getPartnerById(this.recordId).subscribe({
       next: (data: any) => {
         this.recordData.set(data);
-        
+
         // Extract permissions from the response if they exist
         if (data.permissions) {
           this.recordPermissions.set({
@@ -190,7 +257,7 @@ export class PartnerViewComponent implements OnInit {
             permissions: data.permissions
           });
         }
-        
+
         this.infoLoading.set(false);
       },
       error: (error) => {
@@ -204,138 +271,30 @@ export class PartnerViewComponent implements OnInit {
     this.router.navigate(['partners']);
   }
 
-  _loadGeminiData() {
-    this.summaryOfInteractionsIsLoading.set(true);
-    this.riskIsLoading.set(true);
-    this.partnerNewsIsLoading.set(true);
-    this.geminiService.get(this.recordId, 'partner_interactions_summary').subscribe({
-      next: (summary: string) => {
-        this.summaryOfInteractions.set(summary);
-        this.summaryOfInteractionsIsLoading.set(false);
-      },
-      error: () => {
-        this.summaryOfInteractions.set(this.translateService.instant('errors.failedToLoad'));
-        this.summaryOfInteractionsIsLoading.set(false);
-      }
-    });
+  // AI Panel Event Handlers
+  onSummaryRefresh() {
 
-    this.geminiService.get(this.recordId, 'partner_risk_profile').subscribe({
-      next: (risk: string) => {
-        this.riskProfile.set(risk);
-        this.riskIsLoading.set(false);
-      },
-      error: () => {
-        this.riskProfile.set(this.translateService.instant('errors.failedToLoad'));
-        this.riskIsLoading.set(false);
-      }
-    });
-
-    this.geminiService.get(this.recordId, 'partner_news').subscribe({
-      next: (news: string) => {
-        this.partnerNews.set(news);
-        this.partnerNewsIsLoading.set(false);
-      },
-      error: () => {
-        this.partnerNews.set(this.translateService.instant('errors.failedToLoad'));
-        this.partnerNewsIsLoading.set(false);
-      }
-    });
   }
 
-  refreshSummaryOfInteractions() {
-    this.summaryOfInteractionsIsLoading.set(true);
-    this.geminiService.get(this.recordId, 'partner_interactions_summary').subscribe({
-      next: (summary: string) => {
-        this.summaryOfInteractions.set(summary);
-        this.summaryOfInteractionsIsLoading.set(false);
-      },
-      error: () => {
-        this.summaryOfInteractions.set(this.translateService.instant('errors.failedToLoad'));
-        this.summaryOfInteractionsIsLoading.set(false);
-      }
-    });
+  onSummaryLoaded(data: string) {
+
   }
 
-  refreshRiskProfile() {
-    this.riskIsLoading.set(true);
-    this.geminiService.get(this.recordId, 'partner_risk_profile').subscribe({
-      next: (risk: string) => {
-        this.riskProfile.set(risk);
-        this.riskIsLoading.set(false);
-      },
-      error: () => {
-        this.riskProfile.set(this.translateService.instant('errors.failedToLoad'));
-        this.riskIsLoading.set(false);
-      }
-    });
+  onSummaryError(error: Error) {
+    console.error('Summary error:', error);
   }
 
-  refreshPartnerNews() {
-    this.partnerNewsIsLoading.set(true);
-    this.geminiService.get(this.recordId, 'partner_news').subscribe({
-      next: (news: string) => {
-        this.partnerNews.set(news);
-        this.partnerNewsIsLoading.set(false);
-      },
-      error: () => {
-        this.partnerNews.set(this.translateService.instant('errors.failedToLoad'));
-        this.partnerNewsIsLoading.set(false);
-      }
-    });
+  onNewsRefresh() {
+
   }
 
-    /*handleOnCancelClick(event: MouseEvent) {
-      this.router.navigate(['partners']);
-    }
+  onNewsLoaded(data: string) {
 
-    handleOnSaveClick(event: MouseEvent) {
-      this._validate()
+  }
 
-      this.partnerService.updatePartnerById(this._getRequestPayload()).subscribe({
-        next: (data: any) => {
-          this._loadRecordDetails();
-          this.feedbackDialogService.showSuccessToast({ detail: 'Changes saved successfully!' });
-        }
-      });
-    }*/
-
-    /*_validate(){
-      let result = true;
-
-      if( this.formGroup.invalid )
-      {
-        this.showValidationFailedError.set( false );
-
-        if( this.formGroup.get("firstName")?.invalid )
-        {
-          this.formGroup.get("firstName")?.markAsDirty();
-        }
-        result = false;
-      }
-
-      return result;
-    }
-
-    _getRequestPayload() {
-      let valueObj = this.formGroup.value,
-      requestJsonObj: any = {};
-
-      for (let key in valueObj) {
-        if (valueObj.hasOwnProperty(key)) {
-          let indexValue = (valueObj as any)[key];
-
-          switch (key) {
-            default:
-              requestJsonObj[key] = indexValue;
-              break;
-          }
-        }
-      }
-
-      requestJsonObj['id'] = this.recordId;
-
-      return requestJsonObj;
-    }*/
+  onNewsError(error: Error) {
+    console.error('News error:', error);
+  }
 
   _handleOnViewContacts() {
     this.showCommentDialog = true;
@@ -403,17 +362,25 @@ export class PartnerViewComponent implements OnInit {
   }
 
   onFileSelected(event: any) {
-    console.log('Files selected:', event);
+
   }
 
   onFileRemoved(event: any) {
-    console.log('File removed:', event);
+
   }
 
   onFilesCleared() {
-    console.log('All files cleared');
+
   }
 
+  /**
+   * @uiButton edit_partner
+   * @description Opens the partner editing dialog with form fields for modifying partner organization information
+   * @label Edit Partner
+   * @icon pi pi-pencil
+   * @when_to_use When partner information needs updating, correcting partner details, or adding new organizational information
+   * @permissions PARTNER_UPDATE
+   */
   handleEditClick() {
     // Check if user has update permission
     if (!this.permissionService.canUpdate(this.recordPermissions())) {
@@ -452,18 +419,147 @@ export class PartnerViewComponent implements OnInit {
     return this.partnerService.getUploadLogoUrl(this.recordId);
   }
 
-  /*selectOrganizationalStructure(type: 'summary' | 'risk' | 'news') {
-    console.log('Opening org structure dialog for type:', type);
+  /**
+   * Check if current user is admin (Partnership Global Admin)
+   */
+  isAdmin = signal<boolean>(false);
+
+  /**
+   * Check if current user can edit the partner
+   * Rules: 
+   * - User must have update permissions
+   * - If partner is approved, only admin users can edit
+   * - If partner is not approved, regular users with permissions can edit
+   */
+  canEditPartner = computed(() => {
+    const hasUpdatePermission = this.recordPermissions().permissions.canUpdate;
+    const isApproved = this.recordData().partnerApprovalStatus === 'Approved';
     
+    if (!hasUpdatePermission) {
+      return false;
+    }
+    
+    // If partner is approved, only admin can edit
+    if (isApproved) {
+      return this.isAdmin();
+    }
+    
+    // If partner is not approved, any user with update permission can edit
+    return true;
+  });
+
+  /**
+   * @uiButton approve_partner
+   * @description Opens approval confirmation dialog and then approval dialog for users to approve partners
+   * @label Approve
+   * @icon pi pi-check-circle
+   * @when_to_use When partner needs to be approved and user has approval privileges
+   * @permissions canApprove
+   */
+  handleApprovalClick() {
+    console.log('Approval button clicked for partner:', this.recordData().name);
+    
+    // Show confirmation dialog
+    this.confirmationService.confirm({
+      message: `Are you sure you want to approve the partner "${this.recordData().name}"? This action cannot be undone.`,
+      header: 'Confirm Approval',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        console.log('Approval confirmed, opening approval dialog');
+        this.openApprovalDialog();
+      },
+      reject: () => {
+        console.log('Approval cancelled');
+      }
+    });
+  }
+
+  /**
+   * Opens the approval dialog with approval-related fields
+   */
+  private openApprovalDialog() {
+    const ref = this.dialogService.open(PartnerApprovalDialogComponent, {
+      header: 'Partner Approval',
+      width: '90vw',
+      style: { maxWidth: '800px' },
+      closable: true,
+      data: {
+        partner: this.recordData()
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        // Reload partner details to show updated approval status
+        this._loadRecordDetails();
+      }
+    });
+  }
+
+  /**
+   * @uiButton activate_partner
+   * @description Opens activation confirmation dialog and activates the partner
+   * @label Activate
+   * @icon pi pi-power-off
+   * @when_to_use When partner needs to be activated and user has activation privileges
+   * @permissions canActivate
+   */
+  handleActivateClick() {
+    console.log('Activate button clicked for partner:', this.recordData().name);
+    
+    // Show confirmation dialog
+    this.confirmationService.confirm({
+      message: this.translateService.instant('message.confirmPartnerActivation', { 
+        partnerName: this.recordData().name 
+      }),
+      header: this.translateService.instant('message.confirmActivation'),
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        console.log('Activation confirmed, calling API');
+        this.activatePartner();
+      },
+      reject: () => {
+        console.log('Activation cancelled');
+      }
+    });
+  }
+
+  /**
+   * Calls the activate API endpoint
+   */
+  private activatePartner() {
+    this.partnerService.activatePartner(this.recordId).subscribe({
+      next: (result) => {
+        console.log('Partner activated successfully:', result);
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('message.partnerActivatedSuccessfully', { 
+            partnerName: this.recordData().name 
+          })
+        });
+        // Reload partner details to show updated status and permissions
+        this._loadRecordDetails();
+      },
+      error: (error) => {
+        console.error('Error activating partner:', error);
+        this.feedbackDialogService.showErrorToast({ 
+          detail: this.translateService.instant('message.failedToActivatePartner')
+        });
+      }
+    });
+  }
+
+  /*selectOrganizationalStructure(type: 'summary' | 'risk' | 'news') {
+
+
     const ref = this.dialogService.open(OrgStructureDialogComponent, {
       header: 'Select Organizational Structure',
       width: '95vw',
       height: '95vh',
-      style: { 
-        maxWidth: '1400px', 
+      style: {
+        maxWidth: '1400px',
         maxHeight: '900px',
         backgroundColor: 'white',
-        padding: '0' 
+        padding: '0'
       },
       contentStyle: {
         padding: '0',
@@ -482,7 +578,7 @@ export class PartnerViewComponent implements OnInit {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Selected organization:', result);
+
         // Refresh the corresponding panel based on type
         switch (type) {
           case 'summary':
@@ -498,4 +594,23 @@ export class PartnerViewComponent implements OnInit {
       }
     });
   }*/
+
+  toggleFullContent() {
+    this.showFullContent.set(!this.showFullContent());
+  }
+
+
+
+  // Note: To document buttons/actions, add @uiButton JSDoc comments above existing methods
+  // Example for documenting existing methods:
+  // /**
+  //  * @uiButton edit_partner  
+  //  * @description Switches to edit mode for partner information
+  //  * @label Edit Partner
+  //  * @icon pi pi-pencil
+  //  * @when_to_use When partner information needs updating, correcting details, adding new information
+  //  * @permissions PARTNER_UPDATE
+  //  */
+  // existingEditMethod() { ... }
+
 }

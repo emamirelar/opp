@@ -1,0 +1,53 @@
+# Cloud Build configuration for Google Cloud Run deployment
+# Edit the variables below for your team's service
+
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build', 
+      '-t', 'gcr.io/$PROJECT_ID/your-team-ai-service:$SHORT_SHA',
+      '-t', 'gcr.io/$PROJECT_ID/your-team-ai-service:latest',
+      '.'
+    ]
+
+  # Push the image to Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'push', 
+      'gcr.io/$PROJECT_ID/your-team-ai-service:$SHORT_SHA'
+    ]
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args: [
+      'run', 'deploy', 'your-team-ai-service',
+      '--image', 'gcr.io/$PROJECT_ID/your-team-ai-service:$SHORT_SHA',
+      '--platform', 'managed',
+      '--region', 'europe-west4',
+      '--port', '8080',
+      '--memory', '2Gi',
+      '--cpu', '1',
+      '--concurrency', '80',
+      '--timeout', '300',
+      '--max-instances', '10',
+      '--min-instances', '1',
+      '--set-env-vars', 'CURRENT_ENV=prod',
+      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID',
+      '--set-env-vars', 'GOOGLE_CLOUD_LOCATION=europe-west4',
+      '--set-env-vars', 'GOOGLE_GENAI_USE_VERTEXAI=TRUE'
+    ]
+
+# Images to be pushed to Google Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/your-team-ai-service:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/your-team-ai-service:latest'
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: '100'
+
+# Timeout for the entire build (20 minutes)
+timeout: '1200s'

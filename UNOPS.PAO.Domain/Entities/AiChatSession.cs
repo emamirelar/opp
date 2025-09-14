@@ -3,12 +3,14 @@
 namespace UNOPS.PAO.Domain.Entities;
 public class AiChatSession
 {
-    public Guid Id { get; set; }
-    public DateTime StartTime { get; set; } = DateTime.Now;
-    public DateTime? EndTime { get; set; }
+    public string Id { get; set; }
+    public DateTime LastUpdated { get; set; }
     public int UserId { get; set; }
     public string Status { get; set; } = "Active";
-    public bool TextToSpeech { get; set; } = false;
-    //[JsonIgnore]  // Prevents circular reference in serialization
-    public virtual ICollection<AiChatHistory>? Chats { get; set; }
+    public string Title { get; set; } = "New Chat";
+    public bool AiGenerateTitle { get; set; } = true;
+
+    public bool Archived { get; set; } = false;
+
+    public bool Starred { get; set; } = false;
 }

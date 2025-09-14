@@ -1,11 +1,11 @@
 using Google.Apis.Auth.OAuth2;
 using Microsoft.EntityFrameworkCore;
-
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.GoogleServices;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Business.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -13,10 +13,10 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.DataAccess.Context;
 using AutoMapper;
 using UNOPS.PAO.Business.Repositories.Generic;
-using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Linq;
+using System.Text.Json;
 using Newtonsoft.Json.Linq;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using System.Dynamic;
@@ -41,6 +41,14 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using Z.EntityFramework.Plus;
 using System.Text.Json;
 using UNOPS.PAO.Utilities.Helpers;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Caching.Memory; // Add this for IMemoryCache
+using System.Security.Claims;
+using UNOPS.PAO.DataAccess.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using UNOPS.PAO.Identity.Entities;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -51,27 +59,55 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly GoogleCredential _credentials;
     private readonly DataRepository<AiPrompt> _promptRepository;
     private readonly UNOPSAppDbContext _context;
-    private readonly string _connectionString;
     private readonly GoogleTextToSpeechService _ttsService;
     private readonly TextExtractionService _textExtractionService;
     private readonly GoogleCloudStorageService _gcsService;
-    private readonly GeminiSessionService _sessionService;
-    private readonly AiContextualService _aiService;
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
+    private readonly AiContextualService _aiService;
+    private readonly ILogger<UNOPSGeminiManager> _logger;
+    private readonly CloudRunHelper _cloudRunHelper;
+    private readonly IUserManagementManager _userManagementManager;
+    private readonly IUserInfoService _userInfoService;
+    private readonly UserManager<PAOIdentityUser> _userManager;
+    private readonly RoleManager<PAOIdentityRole> _roleManager;
+    private readonly IUserPreferenceService _userPreferenceService;
+    private readonly IUserProfileCacheService _userProfileCacheService;
+    private readonly IScreenContextCacheService _screenContextCacheService;
+    private readonly IGeoTimeCacheService _geoTimeCacheService;
+    private IManagerWrapper _managerWrapper;
+
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService)
     {
         _mapper = mapper;
         _context = context;
         _promptRepository = new DataRepository<AiPrompt>(context);
         _configuration = configuration;
+        _logger = logger;
+        _userManagementManager = userManagementManager;
+        _userInfoService = userInfoService;
+        _userManager = userManager;
+        _roleManager = roleManager;
+        _userPreferenceService = userPreferenceService;
+        _userProfileCacheService = userProfileCacheService;
+        _screenContextCacheService = screenContextCacheService;
+        _geoTimeCacheService = geoTimeCacheService;
+        
+        // Initialize CloudRunHelper internally
+        var cloudRunHelperLogger = new LoggerFactory().CreateLogger<CloudRunHelper>();
+        _cloudRunHelper = new CloudRunHelper(cloudRunHelperLogger, GetCredentials());
+        
         _credentials = GetCredentials()
                         .CreateScoped("https://www.googleapis.com/auth/spreadsheets.readonly");
-        _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
         _textExtractionService = new TextExtractionService();
         _gcsService = new GoogleCloudStorageService(configuration);
-        _sessionService = new GeminiSessionService(context);
+
         _ttsService = new GoogleTextToSpeechService();
         _aiService = new AiContextualService(configuration, _context, _credentials);
+    }
+
+    public void SetManagerWrapper(IManagerWrapper managerWrapper)
+    {
+        _managerWrapper = managerWrapper;
     }
 
     // Map AiPromptModel to AiPrompt entity
@@ -82,118 +118,25 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Get prompt data by type
-    public async Task<IEnumerable<AiPromptModel>> GetPromptData(string type)
+    public async Task<IEnumerable<AiPrompt>> GetPromptData(string type)
     {
         return await _aiService.GetPromptData(type);
-    }
-
-    // Fetch detailed response from Gemini
-    public async Task<dynamic> FetchDetailedResponseFromGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType
-                                                                , string fileUrl, string fileType) {
-        var geminiResponse = await ChatWithGemini(session, request, promptType, formattedChatHistory, fileUrl, fileType);
-        return geminiResponse;
-    }
-
-    // Entity detection through Gemini
-    public async Task<dynamic> EntityDetectionThroughGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request
-                                                                , string fileUrl, string fileType) {
-        var geminiResponse = await ChatWithGemini(session, request, "entity_intent_detection", formattedChatHistory, fileUrl, fileType);
-        return geminiResponse;
-    }
-    
-    // Get details from Gemini response
-    public JObject GetDetailsFromGeminiResponse(string modelResponse) {
-        return _aiService.GetDetailsFromGeminiResponse(modelResponse);
     }
 
     // Chat with Gemini
     private async Task<dynamic> ChatWithGemini(AiChatSession session, GeminiAssistantRequest req, string promptType, IEnumerable<dynamic> formattedChatHistory, string fileUrl, string fileType)
     {
-        var chatHistoryList = formattedChatHistory?.ToList() ?? new List<dynamic>();
-        Guid sessionId = req.sessionId;
-        string message = req.Message;
-        string extractedText = req.ExtractedText ?? "";
-        string finalPrompt = (string.IsNullOrEmpty(extractedText) ? message : extractedText);
-        var promptData = (await GetPromptData(promptType)).FirstOrDefault();
-
-        if (promptData == null)
-        {
-            promptType = "general_information";
-            promptData = (await GetPromptData(promptType)).FirstOrDefault();
-        }
-
-        if (chatHistoryList.Count == 0)
-        {
-            string promptTemplate = promptData.Prompt;
-            finalPrompt = promptTemplate.Replace("{promptData}", message);
-        }
-
-        chatHistoryList.Add(new
-        {
-            role = "user",
-            parts = new[] { new { text = finalPrompt } }
-        });
-
-        string response = await _aiService.CallGeminiApi(chatHistoryList, promptData);
-        var parsedResponse = GetDetailsFromGeminiResponse(response);
-        var entity = parsedResponse["Entity"]?.ToString() ?? parsedResponse["Category"]?.ToString();
-        var intent = parsedResponse["Intent"]?.ToString() ?? parsedResponse["ResponseType"]?.ToString();
-        var forward = parsedResponse["Forward"]?.ToString() ?? "No";
-
-        if (intent == "Action" && forward == "No" && promptType == "entity_intent_detection")
-        {
-            intent = "Information";
-        }
-
-        string responseInString = JsonConvert.SerializeObject(parsedResponse);
-        _sessionService.UpdateChatHistoryTable(sessionId, "user", message, finalPrompt, entity, intent, promptType, fileUrl, fileType);
-        message = parsedResponse["Message"]?.ToString();
-
-        if (session.TextToSpeech == true)
-        {
-            byte[] audioBytes = await _ttsService.ConvertTextToAudio(message);
-            fileUrl = await _gcsService.UploadAudioToGCS(audioBytes);
-            fileType = "audio";
-        }
-        else
-        {
-            fileUrl = null;
-            fileType = null;
-        }
-
-        if (parsedResponse["Forward"]?.ToString() == "No")
-        {
-            _sessionService.UpdateChatHistoryTable(sessionId, "model", message, responseInString, entity, intent, promptType, fileUrl, fileType);
-        }
-
-        var finalResponse = new
-        {
-            Entity = entity,
-            Intent = intent,
-            Message = parsedResponse["Message"]?.ToString() ?? "",
-            Type = parsedResponse["Type"]?.ToString() ?? "",
-            Summary = parsedResponse["Summary"]?.ToString() ?? "",
-            Forward = parsedResponse["Forward"]?.ToString() ?? "No",
-            RawMessage = responseInString,
-            MediaUrl = fileUrl,
-            MediaType = fileType,
-            ShortSummary = parsedResponse["ShortSummary"]?.ToString() ?? "",
-            Dependents = parsedResponse["dependents"]?.ToString() ?? "",
-            Url = parsedResponse["URL"]?.ToString() ?? "",
-            Files = new[] { new { MediaUrl = fileUrl, MediaType = fileType } }
-        };
-
-        return finalResponse;
+        throw new NotImplementedException();
     }
 
     // Updated FetchResultFromGemini to use CallGeminiApi
-    public async Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData)
     {
-        return await _aiService.FetchResultFromGemini((AiPromptModel)promptData, relatedJsonData);
+        return await _aiService.FetchResultFromGemini((AiPrompt)promptData, relatedJsonData);
     }
 
     // Updated callGemini to use CallGeminiApi
-    public async Task<string> callGemini(string prompt, AiPromptModel promptData)
+    public async Task<string> callGemini(string prompt, AiPrompt promptData)
     {
         var promptList = new
         {
@@ -230,6 +173,207 @@ public class UNOPSGeminiManager : IGeminiManager
         return GoogleCredential.FromJson(secretValue);
     }
 
+    // Get user profile details - first check cache, then fallback to database
+    private async Task<object?> GetUserProfileDetailsAsync(ClaimsPrincipal user)
+    {
+        try
+        {
+            // Try multiple ways to get the current user's email from claims
+            var currentEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? 
+                              user.FindFirst("email")?.Value ?? 
+                              user.Identity?.Name;
+            
+            if (string.IsNullOrEmpty(currentEmail))
+            {
+                return null;
+            }
+
+            // Extract email if it contains colon (for dev mode)
+            currentEmail = currentEmail.Contains(':') ? currentEmail.Split(':').Last() : currentEmail;
+
+            // Get user ID from claims for cache lookup
+            var currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            
+            // Try to get from cache first using user ID, then fallback to email
+            var cacheKey = !string.IsNullOrEmpty(currentUserId) ? currentUserId : currentEmail;
+            var cachedProfile = await _userProfileCacheService.GetCachedUserProfileAsync(cacheKey);
+            
+            if (cachedProfile != null)
+            {
+                _logger.LogDebug("Using cached user profile for user: {UserId}/{Email}", currentUserId, currentEmail);
+                return cachedProfile;
+            }
+
+            _logger.LogDebug("User profile not in cache, fetching from database for user: {UserId}/{Email}", currentUserId, currentEmail);
+
+            // Cache miss - fetch from database (same logic as UserProfileController)
+            // Get user roles from claims
+            var userRoles = user.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            // If no roles in claims, try to get them from database using email
+            if (!userRoles.Any())
+            {
+                try
+                {
+                    var aspNetUser = await _userManager.FindByEmailAsync(currentEmail);
+                    if (aspNetUser != null)
+                    {
+                        userRoles = (await _userManager.GetRolesAsync(aspNetUser)).ToList();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to get user roles from database for email: {Email}", currentEmail);
+                    userRoles = new List<string>();
+                }
+            }
+
+            // Check if user is PARTNER_GLOB_ADMIN
+            var isPartnerGlobalAdmin = userRoles.Contains("PARTNER_GLOB_ADMIN");
+
+            // Get user info with organization settings
+            var userInfoWithOrgSettings = await _userInfoService.GetUserInfoWithOrgSettingsAsync(currentEmail);
+            
+            if (userInfoWithOrgSettings == null)
+            {
+                return null;
+            }
+
+            // Get user preferences
+            UserPreference? userPreferences = null;
+            try
+            {
+                var aspNetUser = await _userManager.FindByEmailAsync(currentEmail);
+                if (aspNetUser != null)
+                {
+                    userPreferences = await _userPreferenceService.GetUserPreferencesAsync(aspNetUser.Id.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to get user preferences for email: {Email}", currentEmail);
+                userPreferences = null;
+            }
+
+            // Create response object with additional properties including user preferences
+            var response = new
+            {
+                userInfoWithOrgSettings,
+                Roles = userRoles,
+                IsPartnerGlobalAdmin = isPartnerGlobalAdmin,
+                // PARTNER_GLOB_ADMIN always has self-management enabled regardless of org setting
+                CanManageOffice = isPartnerGlobalAdmin || 
+                                 (userInfoWithOrgSettings.GetType().GetProperty("IsSelfManagementEnabled")?.GetValue(userInfoWithOrgSettings) as bool? ?? false),
+                UserPreferences = userPreferences
+            };
+
+            // Cache the response for future use
+            await _userProfileCacheService.SetCachedUserProfileAsync(cacheKey, response);
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user profile details");
+            return null;
+        }
+    }
+
+    // Enhance state with user profile information, screen context, and geo-time data
+    private async Task<string> EnhanceStateWithUserProfile(string? originalState, object? userProfileDetails)
+    {
+        try
+        {
+            var stateObject = new Dictionary<string, object>();
+            
+            // Parse existing state if it exists
+            if (!string.IsNullOrEmpty(originalState))
+            {
+                try
+                {
+                    var existingState = JsonConvert.DeserializeObject<Dictionary<string, object>>(originalState);
+                    if (existingState != null)
+                    {
+                        stateObject = existingState;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to parse existing state, starting with empty state");
+                }
+            }
+            
+            // Add user profile details to state
+            if (userProfileDetails != null)
+            {
+                stateObject["user_profile"] = userProfileDetails;
+            }
+            
+            // Add screen context if available in state
+            await AddScreenContextToState(stateObject);
+            
+            // Add geo-time data
+            await AddGeoTimeToState(stateObject);
+            
+            return JsonConvert.SerializeObject(stateObject);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error enhancing state with context data");
+            return originalState ?? "{}";
+        }
+    }
+
+    private async Task AddScreenContextToState(Dictionary<string, object> stateObject)
+    {
+        try
+        {
+            // Extract screen URL and user focus context from existing state
+            var screenUrl = stateObject.TryGetValue("screen_url", out var screenUrlObj) ? screenUrlObj?.ToString() : "";
+            var userFocusContext = stateObject.TryGetValue("user_focus_context", out var userFocusObj) ? userFocusObj?.ToString() : "";
+            
+            if (!string.IsNullOrEmpty(screenUrl) || !string.IsNullOrEmpty(userFocusContext))
+            {
+                // Get current user ID for context
+                var userId = stateObject.TryGetValue("user_id", out var userIdObj) ? userIdObj?.ToString() : "";
+                
+                var screenContext = await _screenContextCacheService.GetScreenContextAsync(screenUrl, userFocusContext, userId);
+                if (screenContext != null)
+                {
+                    stateObject["screen_context"] = screenContext;
+                    _logger.LogDebug("Added screen context to state for URL: {ScreenUrl}", screenUrl);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to add screen context to state");
+        }
+    }
+
+    private async Task AddGeoTimeToState(Dictionary<string, object> stateObject)
+    {
+        try
+        {
+            // Extract user IP if available from state
+            var userIp = stateObject.TryGetValue("user_ip", out var userIpObj) ? userIpObj?.ToString() : null;
+            
+            var geoTimeData = await _geoTimeCacheService.GetGeoTimeDataAsync(userIp);
+            if (geoTimeData != null)
+            {
+                stateObject["user_geo_stats"] = geoTimeData;
+                _logger.LogDebug("Added geo-time data to state");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to add geo-time data to state");
+        }
+    }
+
     public async Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req)
     {
         string relatedMessage = "";
@@ -237,16 +381,90 @@ public class UNOPSGeminiManager : IGeminiManager
         AiPrompt promptModel = MapModelToEntity(req);
 
         // Call the GetPromptData method and get the first prompt
-        var promptData = (await GetPromptData(promptModel.Type)).FirstOrDefault();
+        AiPrompt promptData = (await GetPromptData(promptModel.Type)).FirstOrDefault();
 
         if (promptData == null)
         {
             return "";
         }
 
-        // Query the AiScreenMapping table based on Type
-        var screenMappings = (await _aiService.GetScreenMappingsByType(promptData.Type)).ToArray();
-        relatedMessage = await _aiService.GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
+        // Check if promptFunction is available (new approach)
+        if (!string.IsNullOrEmpty(promptData.PromptFunction))
+        {
+            try
+            {
+                // Determine the correct manager based on entity type
+                string managerTypeName = $"UNOPS.PAO.UNOPSBusiness.Managers.UNOPS{promptData.Name.TrimEnd('s')}Manager";
+                System.Type managerType = System.Type.GetType(managerTypeName);
+                
+                if (managerType == null)
+                {
+                    throw new InvalidOperationException($"Manager type not found for entity: {promptData.Name}");
+                }
+                
+                // Get constructor parameters that the manager needs
+                var constructors = managerType.GetConstructors();
+                var constructor = constructors.FirstOrDefault();
+                
+                if (constructor == null)
+                {
+                    throw new InvalidOperationException($"No suitable constructor found for {managerType.Name}");
+                }
+                
+                // Prepare constructor arguments (common ones that most managers need)
+                var parameterTypes = constructor.GetParameters().Select(p => p.ParameterType).ToArray();
+                var args = new List<object>();
+                
+                foreach (var paramType in parameterTypes)
+                {
+                    if (paramType == typeof(IMapper))
+                        args.Add(_mapper);
+                    else if (paramType == typeof(UNOPSAppDbContext))
+                        args.Add(_context);
+                    else if (paramType == typeof(IConfiguration))
+                        args.Add(_configuration);
+                    else
+                        args.Add(null); // Pass null for other dependencies we don't have
+                }
+                
+                // Create instance of the manager
+                var managerInstance = Activator.CreateInstance(managerType, args.ToArray());
+                
+                // Check if it's a BaseUNOPSManager that has CallFunctionByNameAsync
+                var callFunctionMethod = managerType.GetMethod("CallFunctionByNameAsync");
+                if (callFunctionMethod != null)
+                {
+                    // Use the BaseUNOPSManager's CallFunctionByNameAsync method which handles parameter matching
+                    var task = (Task<object>)callFunctionMethod.Invoke(managerInstance, new object[] { promptData.PromptFunction, req.Id, null });
+                    var entityData = await task;
+                    
+                    if (entityData != null)
+                    {
+                        // Serialize the entity data to JSON for AI processing with enum string conversion
+                        var settings = new JsonSerializerSettings
+                        {
+                            Formatting = Formatting.Indented,
+                            Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+                        };
+                        relatedMessage = JsonConvert.SerializeObject(entityData, settings);
+                    }
+                    else
+                    {
+                        return "Entity not found or function returned null.";
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Manager {managerType.Name} does not inherit from BaseUNOPSManager or does not have CallFunctionByNameAsync method");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error and fallback to empty response
+                _logger.LogError(ex, "Error calling function {PromptFunction}: {ErrorMessage}", promptData.PromptFunction, ex.Message);
+                return $"Error retrieving data: {ex.Message}";
+            }
+        }
 
         // Fetch result from Gemini
         return await FetchResultFromGemini(promptData, relatedMessage);
@@ -258,145 +476,239 @@ public class UNOPSGeminiManager : IGeminiManager
         string type = req?.Type;
 
         if (!string.IsNullOrEmpty(type)) {
-            var promptData = (await GetPromptData(type)).FirstOrDefault();
-
-            if (promptData == null)
+            // For partner_action type, use the enhanced AiContextualService approach
+            if (type.Equals("partner_action", StringComparison.OrdinalIgnoreCase))
             {
-                return "";
-            }
+                var promptData = (await _aiService.GetPromptData("partner_action")).FirstOrDefault();
+                if (promptData == null)
+                {
+                    return "";
+                }
 
-            // Fetch result from Gemini
-            return await FetchResultFromGemini(promptData, extractedText);
+                // Send to Gemini with the extracted text
+                var geminiResponse = await _aiService.FetchResultFromGemini(promptData, extractedText);
+                var parsedResponse = _aiService.GetDetailsFromGeminiResponse(geminiResponse);
+
+                // Process dependents to convert text to IDs using enhanced logic
+                var dependents = parsedResponse["dependents"]?.ToString();
+                var processedResponse = await _aiService.GetDependentDropdownValues(dependents, parsedResponse, promptData);
+
+                // Return the processed response as JSON string
+                return Newtonsoft.Json.JsonConvert.SerializeObject(processedResponse);
+            }
+            else
+            {
+                // For other types, use the existing logic
+                var promptData = (await GetPromptData(type)).FirstOrDefault();
+
+                if (promptData == null)
+                {
+                    return "";
+                }
+
+                // Fetch result from Gemini
+                return await FetchResultFromGemini(promptData, extractedText);
+            }
         }
 
         return extractedText;
     }
 
-    public async Task<dynamic> ProcessChatWithGemini(GeminiAssistantRequest req, int currentUserId)
+    /// <summary>
+    /// Maps prompt types to entity names for duplicate detection
+    /// </summary>
+    /// <param name="promptType">The prompt type (e.g., "bulk_contact_action")</param>
+    /// <returns>The entity name for duplicate detection (e.g., "Contacts")</returns>
+    private string GetEntityNameFromPromptType(string promptType)
     {
-        string extractedText = "";
-        string fileUrl = "";
-        string fileType = "";
+        if (string.IsNullOrEmpty(promptType))
+            return "Contacts"; // Default fallback
 
-        if (string.IsNullOrEmpty(req?.Message)) {
-            req.Message = "";
-        }
-
-        // If any other session is active, mark it as inactive and activate this session (if required)
-        var session = await UpdateCurrentSessionIfInactive(currentUserId, req.sessionId);
-
-        if (req.File != null) {
-            fileType = FindFileType(req.File);
-            extractedText = await ExtractDataFromFile(req.File);
-            fileUrl = await UploadFileToGCS(req.File);
-
-        }
-
-        var chatHistory = await GetChatHistory(req.sessionId, "entity_intent_detection");
-
-        if (!string.IsNullOrEmpty(extractedText)) 
+        return promptType.ToLower() switch
         {
-            if (!string.IsNullOrEmpty(req.Message))
-            {
-                req.ExtractedText = req.Message + "\\n";
-            }
-            req.ExtractedText = req.ExtractedText + extractedText + ".\\n"; 
-        }
-
-        var formattedChatHistory = chatHistory.Select(x => new {
-            role = x.Sender,
-            parts = new[] { new { text = x.RawMessage } }
-        }).ToList();
-
-        // Entity detection and intent classification to be done
-        var entityResponse = await EntityDetectionThroughGemini(session, formattedChatHistory, req, fileUrl, fileType);
-        var forward = entityResponse.Forward.ToString();
-        if (forward == string.Empty || forward == "No") {
-            return entityResponse;
-        }
-
-        var promptType = entityResponse.Type.ToString();
-        var summary = entityResponse.Summary.ToString();
-        var shortSummary = entityResponse.ShortSummary.ToString();
-
-        var content = "";
-
-        chatHistory = await GetChatHistory(req.sessionId, promptType);
-
-        if (forward == "Yes" && promptType.StartsWith("retrieve"))
-        {
-            var embeddingString = await _aiService.CreateEmbeddingForText(shortSummary);
-            var entityId = await _aiService.RetrieveEntityId(entityResponse.Entity.ToString(), embeddingString, shortSummary);
-            content = await _aiService.RetrieveContent(promptType, entityId);
-            req.Message = "Summary of the conversation with the user: " + summary + ". Content: " + content;
-        } else {
-            req.Message = "Summary: " + summary;
-        }
-
-        formattedChatHistory = chatHistory.Select(x => new {
-            role = x.Sender,
-            parts = new[] { new { text = x.RawMessage } }
-        }).ToList();
-
-        var detailedResponse = await FetchDetailedResponseFromGemini(session, formattedChatHistory, req, promptType, fileUrl, fileType);
-        var updatedMessage = await _aiService.GetDependentDropdownValues(detailedResponse?.Dependents, JsonConvert.DeserializeObject(detailedResponse.RawMessage));
-        var updatedDetailedResponse = new
-        {
-            detailedResponse.Entity,
-            detailedResponse.Intent,
-            detailedResponse.Message,
-            detailedResponse.Type,
-            detailedResponse.Summary,
-            detailedResponse.Forward,
-            RawMessage = JsonConvert.SerializeObject(updatedMessage),
-            detailedResponse.MediaUrl,
-            detailedResponse.MediaType,
-            detailedResponse.ShortSummary,
-            detailedResponse.Dependents,
-            detailedResponse.Url,
-            detailedResponse.Files
+            "bulk_contact_action" or "contact_action" => "Contacts",
+            "bulk_partner_action" or "partner_action" => "Partners", 
+            "bulk_interaction_action" or "interaction_action" => "Interactions",
+            _ => "Contacts" // Default fallback
         };
-
-        _sessionService.UpdateChatHistoryTable(req.sessionId, "model", updatedDetailedResponse.Message.ToString(), updatedDetailedResponse.RawMessage
-                                        , updatedDetailedResponse.Entity, updatedDetailedResponse.Intent, "entity_intent_detection", updatedDetailedResponse.MediaUrl, updatedDetailedResponse.MediaType);
-        
-        return updatedDetailedResponse;
-
     }
 
-    public IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId) 
+    public async Task<SessionWithChats> GetSessionDataWithChats(string sessionId, int userId) 
     {
-        return _sessionService.GetSessionDataWithChats(sessionId, userId);
+        try
+        {
+            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+            var appName = _configuration.GetValue<string>("AgenticAi:AppName");
+            
+            if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+            {
+                throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+            }
+            
+            var apiUrl = $"/session-with-chats?app_name={appName}&user_id={userId}&session_id={sessionId}";
+            
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+            
+            var response = await httpClient.GetAsync(apiUrl);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                var sessionWithChats = JsonConvert.DeserializeObject<SessionWithChats>(jsonContent);
+                
+                if (sessionWithChats?.Session != null)
+                {
+                    // Get the actual session data from database to get real title, starred, archived status
+                    var dbSession = await _context.AiChatSession
+                        .FirstOrDefaultAsync(x => x.Id == sessionId && x.UserId == userId);
+                    
+                    if (dbSession != null)
+                    {
+                        // Update session with database values
+                        sessionWithChats.Session.Title = dbSession.Title ?? "New Chat";
+                        sessionWithChats.Session.Starred = dbSession.Starred;
+                        sessionWithChats.Session.Archived = dbSession.Archived;
+                        sessionWithChats.Session.AiGenerateTitle = dbSession.AiGenerateTitle;
+                        sessionWithChats.Session.LastUpdated = dbSession.LastUpdated;
+                    }
+                }
+                
+                return sessionWithChats ?? new SessionWithChats();
+            }
+            else
+            {
+                throw new HttpRequestException($"Failed to fetch session with chats from external API. Status: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error calling external API for session with chats: {ex.Message}", ex);
+        }
     }
 
-    public async Task<IEnumerable<AiChatSession>> GetSessionData(Guid sessionId, int userId) 
+    public async Task<IEnumerable<AiChatSession>> GetSessionData(string sessionId, int userId) 
     {
-        return await _sessionService.GetSessionData(sessionId, userId);
+        try
+        {
+            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+            var appName = _configuration.GetValue<string>("AgenticAi:AppName");
+            
+            if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+            {
+                throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+            }
+            
+            var apiUrl = $"/session-data?app_name={appName}&user_id={userId}&session_id={sessionId}";
+            
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+            
+            var response = await httpClient.GetAsync(apiUrl);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                var sessionData = JsonConvert.DeserializeObject<IEnumerable<AiChatSession>>(jsonContent);
+                
+                return sessionData ?? new List<AiChatSession>();
+            }
+            else
+            {
+                throw new HttpRequestException($"Failed to fetch session data from external API. Status: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error calling external API for session data: {ex.Message}", ex);
+        }
     }
 
-    public IEnumerable<AiChatSession> GetUserSessions(int userId) 
+    public async Task<IEnumerable<AiChatSession>> GetUserSessions(int userId) 
     {
-        return _sessionService.GetUserSessions(userId);
-    }
-
-    public Guid CreateNewSession(int userId) 
-    {
-        return _sessionService.CreateNewSession(userId);
-    }
-
-    public bool EndSession(Guid sessionId) 
-    {
-        return _sessionService.EndSession(sessionId);
-    }
-
-    public async Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId, string type) 
-    {
-        return await _sessionService.GetChatHistory(sessionId, type);
-    }
-
-    public async Task<AiChatSession> UpdateCurrentSessionIfInactive(int userId, Guid sessionId)
-    {
-        return await _sessionService.UpdateCurrentSessionIfInactive(userId, sessionId);
+        try
+        {
+            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+            var appName = _configuration.GetValue<string>("AgenticAi:AppName");
+            
+            if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+            {
+                throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+            }
+            
+            var apiUrl = $"/user-sessions?app_name={appName}&user_id={userId}";
+            
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+            
+            var response = await httpClient.GetAsync(apiUrl);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                var externalSessions = JsonConvert.DeserializeObject<IEnumerable<AiChatSession>>(jsonContent);
+                
+                if (externalSessions == null || !externalSessions.Any())
+                {
+                    return new List<AiChatSession>();
+                }
+                
+                // Get session IDs from external API response
+                var sessionIds = externalSessions.Select(s => s.Id).ToList();
+                
+                // Query AiChatSession table to get additional details
+                var dbSessions = await _context.AiChatSession
+                    .Where(x => sessionIds.Contains(x.Id) && x.UserId == userId)
+                    .ToListAsync();
+                
+                // Join external sessions with database sessions to combine data
+                var joinedSessions = externalSessions.Select(extSession =>
+                {
+                    var dbSession = dbSessions.FirstOrDefault(db => db.Id == extSession.Id);
+                    if (dbSession != null)
+                    {
+                        // Use database session data for fields like Title, Starred, Archived, etc.
+                        // but keep external session data for chat-related fields
+                        return new AiChatSession
+                        {
+                            Id = extSession.Id,
+                            UserId = extSession.UserId,
+                            Status = extSession.Status,
+                            LastUpdated = dbSession.LastUpdated, // Use actual database timestamp
+                            Title = dbSession.Title ?? "New Chat",
+                            Starred = dbSession.Starred,
+                            Archived = dbSession.Archived,
+                            AiGenerateTitle = dbSession.AiGenerateTitle
+                        };
+                    }
+                    else
+                    {
+                        // If no database record found, use external session data with defaults
+                        return new AiChatSession
+                        {
+                            Id = extSession.Id,
+                            UserId = extSession.UserId,
+                            Status = extSession.Status,
+                            LastUpdated = DateTime.UtcNow, // Use current time for new sessions
+                            Title = "New Chat",
+                            Starred = false,
+                            Archived = false,
+                            AiGenerateTitle = true
+                        };
+                    }
+                }).ToList();
+                
+                return joinedSessions.OrderByDescending(s => s.LastUpdated);
+            }
+            else
+            {
+                throw new HttpRequestException($"Failed to fetch sessions from external API. Status: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error calling external API for user sessions: {ex.Message}", ex);
+        }
     }
 
     public async Task<string> ExtractDataFromFile(IFormFile file) {
@@ -416,22 +728,107 @@ public class UNOPSGeminiManager : IGeminiManager
 
     public async Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req)
     {
-        return await _sessionService.UpdateAiAssistantAccessibility(req);
+        var session = await _context.AiChatSession
+                                .FirstOrDefaultAsync(x => x.Id == req.SessionId);
+
+        if (session != null)
+        {
+            // Note: TextToSpeech property not available in AiChatSession entity
+            // This functionality may need to be implemented separately or added to the entity
+            await _context.SaveChangesAsync();
+            return true; // Save changes to DB
+        }
+
+        return false; // No session found
+    }
+
+    public async Task<bool> UpdateSessionStar(string sessionId, bool starred)
+    {
+        var session = await _context.AiChatSession
+                                .FirstOrDefaultAsync(x => x.Id == sessionId);
+
+        if (session != null)
+        {
+            session.Starred = starred;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        return false;
+    }
+
+    public async Task<bool> UpdateSessionArchive(string sessionId, bool archived)
+    {
+        var session = await _context.AiChatSession
+                                .FirstOrDefaultAsync(x => x.Id == sessionId);
+
+        if (session != null)
+        {
+            session.Archived = archived;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        return false;
+    }
+
+    public async Task<bool> UpdateSessionTitle(string sessionId, string title)
+    {
+        var session = await _context.AiChatSession
+                                .FirstOrDefaultAsync(x => x.Id == sessionId);
+
+        if (session != null)
+        {
+            session.Title = title;
+            session.AiGenerateTitle = false;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        return false;
+    }
+
+    public async Task UpdateSessionTitleAndFlag(string sessionId, string title)
+    {
+        var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
+        if (session != null)
+        {
+            session.Title = title;
+            session.AiGenerateTitle = false;
+            await _context.SaveChangesAsync();
+        }
     }
 
     public async Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req, int currentUserId)
     {
-        var promptData = (await GetPromptData(req.Type)).FirstOrDefault();
-        if (promptData == null)
+        try
         {
-            return null;
-        }
+            var promptData = (await GetPromptData(req.Type)).FirstOrDefault();
+            if (promptData == null)
+            {
+                throw new Exception($"No prompt configuration found for type: {req.Type}");
+            }
 
-        var fileData = await _aiService.ReadFileData(req.FileId);
-        var fileDataArray = JArray.Parse(fileData);
+            var fileData = await _aiService.ReadFileData(req.FileId);
+            if (string.IsNullOrEmpty(fileData))
+            {
+                throw new Exception("No data found in the Google Sheet. Please ensure the sheet contains data.");
+            }
 
-        // Check if we should process asynchronously
-        if (fileDataArray.Count > 100)
+            var fileDataArray = JArray.Parse(fileData);
+
+        // Determine entity name for batch size optimization
+        string entityName = GetEntityNameFromPromptType(req.Type);
+        
+        // For Partners: Always use batch size 5, but check total rows for async vs sync
+        // For other entities: Use existing logic (batch size 25, async if > 100 rows)
+        bool isPartnerEntity = entityName.Equals("Partners", StringComparison.OrdinalIgnoreCase);
+        int totalRows = fileDataArray.Count - 1; // Excluding header row
+        
+        // Check if we should process asynchronously (changed threshold to 50)
+        bool shouldProcessAsync = isPartnerEntity ? (totalRows > 50) : (fileDataArray.Count > 50);
+        
+        if (shouldProcessAsync)
         {
             var message = new MyPubSubMessage
             {
@@ -439,7 +836,8 @@ public class UNOPSGeminiManager : IGeminiManager
                 EntityName = req.Type,
                 PromptType = promptData.Type,
                 BatchData = JsonConvert.SerializeObject(fileDataArray.ToObject<List<object>>()), // Convert to JSON string
-                UserId = currentUserId
+                UserId = currentUserId,
+                FileId = req.FileId // Include Google Sheet ID for identification
             };
 
             var pubSubPublisher = new PubSubPublisher(_configuration);
@@ -466,14 +864,59 @@ public class UNOPSGeminiManager : IGeminiManager
             {
                 batch.Add(fileDataArray[i]);
             }
-
+            
             finalResponse = await _aiService.ProcessBulkImport(
                 JsonConvert.SerializeObject(batch),
                 promptData,
                 currentUserId,
-                req.Type,
+                entityName,
                 false
             );
+
+            // Check for internal duplicates within the uploaded file first
+            if (finalResponse != null && finalResponse.Count > 0)
+            {
+                // Convert records to dynamic list for internal duplicate detection
+                var recordsList = finalResponse.Select(r => (dynamic)r).ToList();
+                
+                // Check for duplicates within the file itself
+                var internalDuplicateResult = await _aiService.DetectInternalDuplicatesAsync(entityName, recordsList, 0.8);
+                
+                // If internal duplicates are found, stop and ask user to fix the file
+                if (internalDuplicateResult.HasInternalDuplicates)
+                {
+                    return new
+                    {
+                        message = !string.IsNullOrEmpty(req.FileId) 
+                            ? $"Internal duplicates found in the uploaded file (Sheet ID: {req.FileId}). Please fix the duplicates before proceeding."
+                            : "Internal duplicates found in the uploaded file. Please fix the duplicates before proceeding.",
+                        entity = req.Type,
+                        intent = "InternalDuplicatesFound",
+                        fileId = req.FileId, // Include sheet ID for identification
+                        internalDuplicates = new
+                        {
+                            totalGroups = internalDuplicateResult.TotalDuplicateGroups,
+                            totalDuplicateRecords = internalDuplicateResult.TotalDuplicateRecords,
+                            totalRecords = internalDuplicateResult.TotalRecords,
+                            cleanRecords = internalDuplicateResult.CleanRecords,
+                            duplicateGroups = internalDuplicateResult.DuplicateGroups.Select(group => new
+                            {
+                                masterRowNumber = group.MasterIndex + 2, // +2 because: +1 for 0-based index, +1 for header row
+                                duplicateRowNumbers = group.DuplicateIndices.Select(idx => idx + 2).ToList(),
+                                matchReasons = group.MatchReasons,
+                                masterRecord = ExtractDisplayFields(group.MasterRecord, entityName),
+                                duplicateRecords = group.DuplicateRecords.Select(rec => ExtractDisplayFields(rec, entityName)).ToList()
+                            }).ToList()
+                        }
+                    };
+                }
+                
+                // If no internal duplicates, proceed with database duplicate detection
+                var recordsWithDuplicates = await _aiService.DetectDuplicatesAsync(entityName, recordsList, 0.65);
+                
+                // Update finalResponse with duplicate information
+                finalResponse = recordsWithDuplicates.Select(r => (object)r).ToList();
+            }
 
             return new
             {
@@ -481,6 +924,22 @@ public class UNOPSGeminiManager : IGeminiManager
                 Entity = req.Type,
                 Intent = "Success",
                 Records = JsonConvert.SerializeObject(finalResponse)
+            };
+        }
+        }
+        catch (Exception ex)
+        {
+            // Log the error for debugging
+            _logger.LogError(ex, "Error in ExtractDataAfterAnalysis for type: {Type}, fileId: {FileId}. Error: {ErrorMessage}", 
+                req.Type, req.FileId, ex.Message);
+            
+            // Return a structured error response
+            return new
+            {
+                Message = $"Error processing file: {ex.Message}",
+                Entity = req.Type,
+                Intent = "Error",
+                Error = ex.Message
             };
         }
     }
@@ -509,14 +968,14 @@ public class UNOPSGeminiManager : IGeminiManager
 
             if (dbSetProperty == null)
             {
-                Console.WriteLine($"DbSet for table '{tableName}' not found.");
+                _logger.LogWarning("DbSet for table '{TableName}' not found.", tableName);
                 continue;
             }
 
             var dbSet = dbSetProperty.GetValue(_context) as IQueryable<object>;
             if (dbSet == null)
             {
-                Console.WriteLine($"Unable to retrieve DbSet for table '{tableName}'.");
+                _logger.LogWarning("Unable to retrieve DbSet for table '{TableName}'.", tableName);
                 continue;
             }
 
@@ -546,7 +1005,7 @@ public class UNOPSGeminiManager : IGeminiManager
 
                 if (entityId == 0)
                 {
-                    Console.WriteLine($"No valid Id found for record in table '{tableName}'.");
+                    _logger.LogWarning("No valid Id found for record in table '{TableName}'.", tableName);
                     continue;
                 }
 
@@ -556,11 +1015,15 @@ public class UNOPSGeminiManager : IGeminiManager
 
                 if (exists)
                 {
-                    Console.WriteLine($"Embedding already exists for Entity '{tableName}' with Id '{entityId}'. Skipping...");
+                    _logger.LogInformation("Embedding already exists for Entity '{TableName}' with Id '{EntityId}'. Skipping...", tableName, entityId);
                     continue;
                 }
 
-                var content = JsonConvert.SerializeObject(record, Formatting.Indented);
+                var content = JsonConvert.SerializeObject(record, new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented,
+                    Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+                });
 
                 result.Add(new MyPubSubMessage
                 {
@@ -588,6 +1051,36 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     public async Task<string> BulkInsertRecordsAsync(BulkUploadRequest request)
+    {
+        var type = request.Type;
+        
+        // Special handling for User Role Import (ASP.NET Core Identity User-Role assignments)
+        if (type.Equals("user_role_import", StringComparison.OrdinalIgnoreCase))
+        {
+            return await BulkInsertUserRolesAsync(request);
+        }
+
+        // Use specific manager methods instead of generic entity mapping
+        if (type.Equals("interaction", StringComparison.OrdinalIgnoreCase))
+        {
+            return await BulkInsertInteractionsAsync(request);
+        }
+        
+        if (type.Equals("partner", StringComparison.OrdinalIgnoreCase))
+        {
+            return await BulkInsertPartnersAsync(request);
+        }
+        
+        if (type.Equals("contact", StringComparison.OrdinalIgnoreCase))
+        {
+            return await BulkInsertContactsAsync(request);
+        }
+
+        // Fallback to generic method for other types
+        return await BulkInsertGenericRecordsAsync(request);
+    }
+
+    private async Task<string> BulkInsertGenericRecordsAsync(BulkUploadRequest request)
     {
         var type = request.Type;
         var camelCaseType = char.ToUpper(type[0]) + type.Substring(1).ToLower();
@@ -633,7 +1126,16 @@ public class UNOPSGeminiManager : IGeminiManager
             if (idProperty != null)
             {
                 var idValue = idProperty.GetValue(record);
-                if (idValue != null && idValue is int id && id > 0)
+                
+                // Fix: Set ID to null if it's 0 to prevent primary key constraint violations
+                if (idValue != null && idValue is int id && id == 0)
+                {
+                    _logger.LogInformation("Setting ID from 0 to null for record to prevent primary key constraint violation");
+                    idProperty.SetValue(record, null);
+                    idValue = null;
+                }
+                
+                if (idValue != null && idValue is int validId && validId > 0)
                 {
                     // This is an existing record, so it should be updated
                     recordsToUpdate.Add(record);
@@ -701,6 +1203,10 @@ public class UNOPSGeminiManager : IGeminiManager
             var typedArray = Array.CreateInstance(modelType, recordsToAdd.Count);
             for (int i = 0; i < recordsToAdd.Count; i++)
             {
+                var idProperty = recordsToAdd[i].GetType()
+                    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase));
+                idProperty.SetValue(recordsToAdd[i], null);
                 typedArray.SetValue(recordsToAdd[i], i);
             }
 
@@ -718,6 +1224,9 @@ public class UNOPSGeminiManager : IGeminiManager
         try
         {
             await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("Bulk insert completed successfully. Inserted: {InsertedCount}, Updated: {UpdatedCount}", 
+                recordsToAdd.Count, recordsToUpdate.Count);
 
             // Collect all updated and added records for the response
             var processedRecords = new List<object>();
@@ -754,7 +1263,10 @@ public class UNOPSGeminiManager : IGeminiManager
             isSuccess = false;
             foreach (var entry in dbEx.Entries)
             {
-                var entityJson = JsonConvert.SerializeObject(entry.Entity);
+                var entityJson = JsonConvert.SerializeObject(entry.Entity, new JsonSerializerSettings
+                {
+                    Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+                });
                 var errorMsg = dbEx.InnerException?.Message ?? dbEx.Message;
                 errorMessages.Add($"Error saving entity {entry.Entity.GetType().Name}: {entityJson} - {errorMsg}");
             }
@@ -789,7 +1301,7 @@ public class UNOPSGeminiManager : IGeminiManager
             catch (Exception ex)
             {
                 // Log the error but don't fail the operation
-                Console.WriteLine($"Error publishing entity processing messages to PubSub: {ex.Message}");
+                _logger.LogError(ex, "Error publishing entity processing messages to PubSub: {ErrorMessage}", ex.Message);
             }
         }
 
@@ -804,12 +1316,977 @@ public class UNOPSGeminiManager : IGeminiManager
             InsertedCount = recordsToAdd.Count
         };
 
-        return JsonConvert.SerializeObject(result, Formatting.Indented);
+        return JsonConvert.SerializeObject(result, new JsonSerializerSettings
+        {
+            Formatting = Formatting.Indented,
+            Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+        });
     }
 
-
-    IEnumerable<AiPromptModel> IGeminiManager.GetPromptData(string type)
+    private async Task<string> BulkInsertInteractionsAsync(BulkUploadRequest request)
     {
-        throw new NotImplementedException();
+        var successList = new List<object>();
+        var errorMessages = new List<string>();
+        var isSuccess = true;
+
+        try
+        {
+            foreach (var record in request.Records)
+            {
+                try
+                {
+                    // Convert JsonElement to JObject for property access
+                    JObject recordObj;
+                    if (record is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+                    {
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonElement.GetRawText());
+                        recordObj = JObject.FromObject(dictionary);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unsupported record format. Expected JSON object.");
+                    }
+
+                    // Convert JObject to InteractionRequest
+                    var interactionRequest = recordObj.ToObject<UpdateInteractionRequest>();
+                    
+                    if (interactionRequest == null)
+                    {
+                        errorMessages.Add("Failed to convert record to InteractionRequest");
+                        isSuccess = false;
+                        continue;
+                    }
+
+                    // Check if this is an update (has ID) or create (no ID or ID = 0)
+                    if (interactionRequest.Id > 0)
+                    {
+                        // Update existing interaction
+                        var updateRequest = new UpdateInteractionRequest
+                        {
+                            Id = interactionRequest.Id,
+                            Type = interactionRequest.Type,
+                            Date = interactionRequest.Date,
+                            Subject = interactionRequest.Subject,
+                            Description = interactionRequest.Description,
+                            Location = interactionRequest.Location,
+                            ContactIds = interactionRequest.ContactIds,
+                            PartnerIds = interactionRequest.PartnerIds,
+                            UserIds = interactionRequest.UserIds,
+                            EmailAddresses = interactionRequest.EmailAddresses,
+                            PhoneNumbers = interactionRequest.PhoneNumbers,
+                            OrganizationHierarchyIds = interactionRequest.OrganizationHierarchyIds
+                        };
+
+                        var updatedResult = await _managerWrapper.InteractionManager.UpdateInteractionAsync(0, updateRequest);
+                        if (updatedResult != null)
+                        {
+                            successList.Add(new { Id = updatedResult.Id, Action = "Updated", Subject = updatedResult.Subject });
+                        }
+                        else
+                        {
+                            errorMessages.Add($"Failed to update interaction with ID {interactionRequest.Id}");
+                            isSuccess = false;
+                        }
+                    }
+                    else
+                    {
+                        // Create new interaction
+                        interactionRequest.Id = 0; // Ensure ID is 0 for new records
+                        var createdResult = await _managerWrapper.InteractionManager.CreateInteractionAsync(interactionRequest);
+                        if (createdResult != null)
+                        {
+                            successList.Add(new { Id = createdResult.Id, Action = "Created", Subject = createdResult.Subject });
+                        }
+                        else
+                        {
+                            errorMessages.Add("Failed to create interaction");
+                            isSuccess = false;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessages.Add($"Error processing interaction record: {ex.Message}");
+                    isSuccess = false;
+                }
+            }
+
+            var result = new
+            {
+                IsSuccess = isSuccess,
+                SuccessCount = successList.Count,
+                ErrorCount = errorMessages.Count,   
+                Errors = errorMessages,
+                SuccessRecords = successList,
+                Message = isSuccess ? 
+                    $"Successfully processed {successList.Count} interactions" :
+                    $"Processed {successList.Count} interactions with {errorMessages.Count} errors"
+            };
+
+            return JsonConvert.SerializeObject(result, new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during bulk interaction operation");
+            
+            var errorResult = new
+            {
+                IsSuccess = false,
+                SuccessCount = 0,
+                ErrorCount = 1,
+                Errors = new[] { $"Bulk interaction operation failed: {ex.Message}" },
+                SuccessRecords = new object[0],
+                Message = $"Bulk interaction operation failed: {ex.Message}"
+            };
+
+            return JsonConvert.SerializeObject(errorResult);
+        }
     }
-}
+
+    private async Task<string> BulkInsertPartnersAsync(BulkUploadRequest request)
+    {
+        var successList = new List<object>();
+        var errorMessages = new List<string>();
+        var isSuccess = true;
+
+        try
+        {
+            foreach (var record in request.Records)
+            {
+                try
+                {
+                    // Convert JsonElement to JObject for property access
+                    JObject recordObj;
+                    if (record is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+                    {
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonElement.GetRawText());
+                        recordObj = JObject.FromObject(dictionary);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unsupported record format. Expected JSON object.");
+                    }
+
+                    // Convert JObject to PartnerRequest
+                    var partnerRequest = recordObj.ToObject<UpdatePartnerRequest>();
+                    
+                    if (partnerRequest == null)
+                    {
+                        errorMessages.Add("Failed to convert record to PartnerRequest");
+                        isSuccess = false;
+                        continue;
+                    }
+
+                    // Check if this is an update (has ID) or create (no ID or ID = 0)
+                    if (partnerRequest.Id > 0)
+                    {
+                        // Update existing partner
+                        var updateRequest = new UpdatePartnerRequest
+                        {
+                            Id = partnerRequest.Id,
+                            Name = partnerRequest.Name,
+                            PartnerShortDescription = partnerRequest.PartnerShortDescription,
+                            PartnerLongDescription = partnerRequest.PartnerLongDescription,
+                            Status = partnerRequest.Status,
+                            PartnerGroupId = partnerRequest.PartnerGroupId,
+                            UNAndStateEntity = partnerRequest.UNAndStateEntity,
+                            CanCreateNewOpportunities = partnerRequest.CanCreateNewOpportunities,
+                            PooledFund = partnerRequest.PooledFund,
+                            OrganizationHierarchyIds = partnerRequest.OrganizationHierarchyIds
+                        };
+
+                        var updatedPartnerResult = await _managerWrapper.PartnerManager.UpdatePartnerAsync(0, updateRequest);
+                        if (updatedPartnerResult != null)
+                        {
+                            successList.Add(new { Id = updatedPartnerResult.Id, Action = "Updated", Name = updatedPartnerResult.Name });
+                        }
+                        else
+                        {
+                            errorMessages.Add($"Failed to update partner with ID {partnerRequest.Id}");
+                            isSuccess = false;
+                        }
+                    }
+                    else
+                    {
+                        // Create new partner
+                        partnerRequest.Id = 0; // Ensure ID is 0 for new records
+                        var createdResult = await _managerWrapper.PartnerManager.CreatePartnerAsync(partnerRequest);
+                        if (createdResult != null)
+                        {
+                            successList.Add(new { Id = createdResult.Id, Action = "Created", Name = createdResult.Name });
+                        }
+                        else
+                        {
+                            errorMessages.Add("Failed to create partner");
+                            isSuccess = false;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessages.Add($"Error processing partner record: {ex.Message}");
+                    isSuccess = false;
+                }
+            }
+
+            var result = new
+            {
+                IsSuccess = isSuccess,
+                SuccessCount = successList.Count,
+                ErrorCount = errorMessages.Count,
+                Errors = errorMessages,
+                SuccessRecords = successList,
+                Message = isSuccess ? 
+                    $"Successfully processed {successList.Count} partners" :
+                    $"Processed {successList.Count} partners with {errorMessages.Count} errors"
+            };
+
+            return JsonConvert.SerializeObject(result, new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during bulk partner operation");
+            
+            var errorResult = new
+            {
+                IsSuccess = false,
+                SuccessCount = 0,
+                ErrorCount = 1,
+                Errors = new[] { $"Bulk partner operation failed: {ex.Message}" },
+                SuccessRecords = new object[0],
+                Message = $"Bulk partner operation failed: {ex.Message}"
+            };
+
+            return JsonConvert.SerializeObject(errorResult);
+        }
+    }
+
+    private async Task<string> BulkInsertContactsAsync(BulkUploadRequest request)
+    {
+        var successList = new List<object>();
+        var errorMessages = new List<string>();
+        var isSuccess = true;
+
+        try
+        {
+            foreach (var record in request.Records)
+            {
+                try
+                {
+                    // Convert JsonElement to JObject for property access
+                    JObject recordObj;
+                    if (record is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+                    {
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonElement.GetRawText());
+                        recordObj = JObject.FromObject(dictionary);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Unsupported record format. Expected JSON object.");
+                    }
+
+                    // Convert JObject to ContactRequest
+                    var contactRequest = recordObj.ToObject<UpdateContactRequest>();
+                    
+                    if (contactRequest == null)
+                    {
+                        errorMessages.Add("Failed to convert record to ContactRequest");
+                        isSuccess = false;
+                        continue;
+                    }
+
+                    // Check if this is an update (has ID) or create (no ID or ID = 0)
+                    if (contactRequest.Id > 0)
+                    {
+                        // Update existing contact
+                        var updateRequest = new UpdateContactRequest
+                        {
+                            Id = contactRequest.Id,
+                            Salutation = contactRequest.Salutation,
+                            FirstName = contactRequest.FirstName,
+                            MiddleName = contactRequest.MiddleName,
+                            LastName = contactRequest.LastName,
+                            Suffix = contactRequest.Suffix,
+                            Title = contactRequest.Title,
+                            Department = contactRequest.Department,
+                            Description = contactRequest.Description,
+                            Email = contactRequest.Email,
+                            Phone = contactRequest.Phone,
+                            Mobile = contactRequest.Mobile,
+                            Assistant = contactRequest.Assistant,
+                            AssistantPhone = contactRequest.AssistantPhone,
+                            AssistantEmail = contactRequest.AssistantEmail,
+                            MailingStreet = contactRequest.MailingStreet,
+                            MailingStreet2 = contactRequest.MailingStreet2,
+                            MailingCity = contactRequest.MailingCity,
+                            MailingStateProvince = contactRequest.MailingStateProvince,
+                            MailingPostalCode = contactRequest.MailingPostalCode,
+                            MailingCountry = contactRequest.MailingCountry,
+                            PartnerId = contactRequest.PartnerId
+                        };
+
+                        var updatedResult = await _managerWrapper.ContactManager.UpdateContactAsync(0, updateRequest);
+                        if (updatedResult != null)
+                        {
+                            successList.Add(new { Id = updatedResult.Id, Action = "Updated", Name = $"{updatedResult.FirstName} {updatedResult.LastName}", Email = updatedResult.Email });
+                        }
+                        else
+                        {
+                            errorMessages.Add($"Failed to update contact with ID {contactRequest.Id}");
+                            isSuccess = false;
+                        }
+                    }
+                    else
+                    {
+                        // Create new contact
+                        contactRequest.Id = 0; // Ensure ID is 0 for new records
+                        var createdResult = await _managerWrapper.ContactManager.CreateContactAsync(contactRequest);
+                        if (createdResult != null)
+                        {
+                            successList.Add(new { Id = createdResult.Id, Action = "Created", Name = $"{createdResult.FirstName} {createdResult.LastName}", Email = createdResult.Email });
+                        }
+                        else
+                        {
+                            errorMessages.Add("Failed to create contact");
+                            isSuccess = false;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessages.Add($"Error processing contact record: {ex.Message}");
+                    isSuccess = false;
+                }
+            }
+
+            var result = new
+            {
+                IsSuccess = isSuccess,
+                SuccessCount = successList.Count,
+                ErrorCount = errorMessages.Count,
+                Errors = errorMessages,
+                SuccessRecords = successList,
+                Message = isSuccess ? 
+                    $"Successfully processed {successList.Count} contacts" :
+                    $"Processed {successList.Count} contacts with {errorMessages.Count} errors"
+            };
+
+            return JsonConvert.SerializeObject(result, new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during bulk contact operation");
+            
+            var errorResult = new
+            {
+                IsSuccess = false,
+                SuccessCount = 0,
+                ErrorCount = 1,
+                Errors = new[] { $"Bulk contact operation failed: {ex.Message}" },
+                SuccessRecords = new object[0],
+                Message = $"Bulk contact operation failed: {ex.Message}"
+            };
+
+            return JsonConvert.SerializeObject(errorResult);
+        }
+    }
+
+    public async Task<string> ChatWithGemini(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null)
+    {
+        var appName = _configuration.GetValue<string>("AgenticAi:AppName");
+        var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+        if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+        {
+            throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+        }
+        
+        // Extract user ID from claims
+        var currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        
+        // Get user email from currentUserId using UserManagementManager
+        // TODO: may be fix the interface...
+        // var currentUser = await ((UNOPSUserManagementManager)_userManagementManager).GetBasicEntityAsync(currentUserId) as UserManagementModel;
+        // TODO: In DEV mode, somehow the currentUserId is set to 90, but the email in the database is empty
+        var currentUserEmail = user.FindFirst(ClaimTypes.Email)?.Value;
+        
+        if (string.IsNullOrEmpty(currentUserEmail) || string.IsNullOrEmpty(currentUserId))
+        {
+          throw new InvalidOperationException($"Unable to lookup both current user email {currentUserEmail} and current user id {currentUserId}");
+        }
+        currentUserEmail = currentUserEmail.Contains(':') ? currentUserEmail.Split(':').Last() : currentUserEmail;
+
+        // Get user profile details to include in state
+        var userProfileDetails = await GetUserProfileDetailsAsync(user);
+        
+        // Enhance the state with user profile information
+        var enhancedState = await EnhanceStateWithUserProfile(req.State, userProfileDetails);
+
+        var apiUrl = $"/chat";
+        HttpContent httpContent;
+
+        // Check if request has files
+        if (req.Files != null && req.Files.Any())
+        {
+            // Use multipart form data for requests with files
+            var multipartContent = new MultipartFormDataContent();
+            
+            // Add form fields
+            multipartContent.Add(new StringContent(appName), "app_name");
+            multipartContent.Add(new StringContent(currentUserId.ToString()), "user_id");
+            multipartContent.Add(new StringContent(currentUserEmail), "user_email");
+            multipartContent.Add(new StringContent(req.sessionId?.ToString() ?? ""), "session_id");
+            multipartContent.Add(new StringContent(req.Message ?? ""), "message");
+            multipartContent.Add(new StringContent("false"), "streaming");
+            multipartContent.Add(new StringContent(enhancedState ?? ""), "state");
+            
+            // Add files
+            foreach (var file in req.Files)
+            {
+                if (file != null && file.Length > 0)
+                {
+                    var streamContent = new StreamContent(file.OpenReadStream());
+                    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
+                    multipartContent.Add(streamContent, "files", file.FileName);
+                }
+            }
+            
+            httpContent = multipartContent;
+            _logger.LogInformation($"Sending chat request with {req.Files.Count()} files to AI service");
+        }
+        else
+        {
+            // Use JSON for requests without files (backward compatibility)
+            var aiChatRequest = new AiChatRequest
+            {
+                AppName = appName,
+                UserId = currentUserId.ToString(),
+                UserEmail = currentUserEmail,
+                SessionId = req.sessionId?.ToString() ?? "",
+                Message = req.Message ?? "",
+                Streaming = false,
+                State = enhancedState
+            };
+
+            var jsonContent = System.Text.Json.JsonSerializer.Serialize(aiChatRequest);
+            httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            _logger.LogInformation("Sending chat request without files to AI service");
+        }
+
+        using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+
+        var response = await httpClient.PostAsync(apiUrl, httpContent);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"AI service call failed. Status: {response.StatusCode}");
+        }
+
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        // Check for data_modifications in the response and create notifications
+        await ProcessDataModificationsForNotifications(responseContent, int.Parse(currentUserId));
+
+        // Extract sessionId from req or responseContent
+        string sessionId = req.sessionId;
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            try
+            {
+                var responseObj = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
+                sessionId = responseObj["session_id"]?.ToString();
+            }
+            catch { /* ignore parse errors, sessionId will remain null if not found */ }
+        }
+
+        if (!string.IsNullOrEmpty(sessionId))
+        {
+            var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
+            if (session != null)
+            {
+                session.LastUpdated = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                var newSession = new AiChatSession
+                {
+                    Id = sessionId,
+                    UserId = int.Parse(currentUserId),
+                    Status = "Active",
+                    Title = "New Chat",
+                    LastUpdated = DateTime.UtcNow,
+                    AiGenerateTitle = true,
+                    Archived = false,
+                    Starred = false
+                };
+                _context.AiChatSession.Add(newSession);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        return responseContent;
+    }
+
+    public async Task<string> GenerateTitle(string sessionId, int userId)
+    {
+        // If sessionId is null or empty, throw
+        if (string.IsNullOrEmpty(sessionId))
+            throw new ArgumentException("SessionId is required");
+
+        var canGenerate = await CanGenerateTitle(sessionId);
+        if (!canGenerate)
+            throw new InvalidOperationException("Title generation is not allowed for this session.");
+
+        var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+        var apiUrl = $"/generate-title?session_id={sessionId}&user_id={userId}";
+        using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+        var response = await httpClient.GetAsync(apiUrl);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException("Failed to generate title");
+
+        var content = await response.Content.ReadAsStringAsync();
+        var result = Newtonsoft.Json.Linq.JObject.Parse(content);
+        string title = result["title"]?.ToString();
+        await UpdateSessionTitleAndFlag(sessionId, title);
+        return title;
+    }
+
+    public async Task<bool> CanGenerateTitle(string sessionId)
+    {
+        var session = await _context.AiChatSession.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sessionId);
+        return session != null && session.AiGenerateTitle;
+    }
+
+    public async Task<object> GenerateSuggestions(int userId)
+    {
+        try
+        {
+            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+            var apiUrl = $"/generate-suggestions?user_id={userId}";
+            
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            var response = await httpClient.GetAsync(apiUrl);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError($"Failed to generate suggestions. Status: {response.StatusCode}");
+                throw new InvalidOperationException($"Failed to generate suggestions. Status: {response.StatusCode}");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var result = Newtonsoft.Json.Linq.JObject.Parse(content);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error generating suggestions: {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Process AI response for data_modifications and create notifications
+    /// </summary>
+    /// <param name="responseContent">The AI response content</param>
+    /// <param name="userId">The user ID who triggered the AI action</param>
+    private async Task ProcessDataModificationsForNotifications(string responseContent, int userId)
+    {
+        try
+        {
+            // Parse the response content to look for data_modifications
+            var responseObj = JObject.Parse(responseContent);
+            
+            // Look for data_modifications in events
+            var events = responseObj["events"] as JArray;
+            if (events != null)
+            {
+                foreach (var eventObj in events)
+                {
+                    await ProcessEventForDataModifications(eventObj, userId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Error processing data modifications for notifications: {ex.Message}");
+            // Don't rethrow - notification failures shouldn't break the chat response
+        }
+    }
+
+    /// <summary>
+    /// Process a single event for data_modifications
+    /// </summary>
+    /// <param name="eventObj">The event object to process</param>
+    /// <param name="userId">The user ID</param>
+    private async Task ProcessEventForDataModifications(JToken eventObj, int userId)
+    {
+        try
+        {
+            // Check if event has content
+            var content = eventObj["content"];
+            if (content != null)
+            {
+                // Look for data_modifications in the content
+                await ExtractAndCreateNotifications(content, userId);
+                
+                // Also check content parts if they exist
+                var parts = content["parts"] as JArray;
+                if (parts != null)
+                {
+                    foreach (var part in parts)
+                    {
+                        var text = part["text"]?.ToString();
+                        if (!string.IsNullOrEmpty(text))
+                        {
+                            await ExtractAndCreateNotificationsFromText(text, userId);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Error processing event for data modifications: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Extract data_modifications from content and create notifications
+    /// </summary>
+    /// <param name="content">The content to process</param>
+    /// <param name="userId">The user ID</param>
+    private async Task ExtractAndCreateNotifications(JToken content, int userId)
+    {
+        try
+        {
+            // Convert content to string and try to parse as JSON
+            var contentStr = content.ToString();
+            
+            // Try to parse the content as JSON to find data_modifications
+            if (contentStr.Trim().StartsWith("{") || contentStr.Trim().StartsWith("["))
+            {
+                var contentData = JObject.Parse(contentStr);
+                var dataModifications = contentData["data_modifications"] as JArray;
+                
+                if (dataModifications != null && dataModifications.Count > 0)
+                {
+                    await CreateNotificationsFromModifications(dataModifications, userId);
+                }
+            }
+        }
+        catch (JsonReaderException)
+        {
+            // Content is not valid JSON, skip
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Error extracting notifications from content: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Extract data_modifications from text content and create notifications
+    /// </summary>
+    /// <param name="text">The text to process</param>
+    /// <param name="userId">The user ID</param>
+    private async Task ExtractAndCreateNotificationsFromText(string text, int userId)
+    {
+        try
+        {
+            // Try to parse the text as JSON to find data_modifications
+            if (text.Trim().StartsWith("{") || text.Trim().StartsWith("["))
+            {
+                var textData = JObject.Parse(text);
+                var dataModifications = textData["data_modifications"] as JArray;
+                
+                if (dataModifications != null && dataModifications.Count > 0)
+                {
+                    await CreateNotificationsFromModifications(dataModifications, userId);
+                }
+            }
+        }
+        catch (JsonReaderException)
+        {
+            // Text is not valid JSON, skip
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Error extracting notifications from text: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Create notification records from data_modifications array
+    /// </summary>
+    /// <param name="dataModifications">Array of data modification objects</param>
+    /// <param name="userId">The user ID</param>
+    private async Task CreateNotificationsFromModifications(JArray dataModifications, int userId)
+    {
+        try
+        {
+            foreach (var modification in dataModifications)
+            {
+                var modificationType = modification["type"]?.ToString() ?? "unknown";
+                var message = modification["message"]?.ToString() ?? "Data modification performed";
+                var entityType = modification["entity_type"]?.ToString() ?? "unknown";
+                var entityIdRaw = modification["entity_id"]?.ToString();
+
+                // Process entityId - handle cases where it might be "entity_<id>" format
+                string cleanEntityId = entityIdRaw;
+                if (!string.IsNullOrEmpty(entityIdRaw) && entityIdRaw.Contains('_'))
+                {
+                    var parts = entityIdRaw.Split('_');
+                    if (parts.Length > 1)
+                    {
+                        cleanEntityId = parts[1]; // Take the ID part after the underscore
+                    }
+                }
+
+                // Create category in format "ENTITYTYPE_ID"
+                var category = $"{entityType?.ToLower() ?? "UNKNOWN"}_{cleanEntityId ?? "0"}";
+
+                // Create notification record
+                var notification = new UNOPS.PAO.Domain.Entities.Notification
+                {
+                    UserId = userId,
+                    Message = message,
+                    Category = category,
+                    ResponseType = modificationType,
+                    RecordData = "[]",
+                    IsRead = false,
+                    Status = UNOPS.PAO.Domain.Enums.NotificationStatus.Done,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.Notifications.Add(notification);
+                
+                _logger.LogInformation($"Created notification for user {userId}: {modificationType} on {entityType} {cleanEntityId}");
+            }
+
+            // Save all notifications to database
+            await _context.SaveChangesAsync();
+            
+            _logger.LogInformation($"Successfully saved {dataModifications.Count} notifications for user {userId}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error creating notifications from modifications: {ex.Message}");
+            throw;
+        }
+    }
+
+        /// <summary>
+        /// Extracts display fields for showing duplicate information to the user
+        /// </summary>
+        private object ExtractDisplayFields(dynamic record, string entityName)
+        {
+            try
+            {
+                var obj = JObject.FromObject(record);
+                
+                return entityName.ToLower() switch
+                {
+                    "contact" or "contacts" => new
+                    {
+                        firstName = obj["firstName"]?.ToString(),
+                        lastName = obj["lastName"]?.ToString(),
+                        email = obj["email"]?.ToString(),
+                        phone = obj["phone"]?.ToString(),
+                        title = obj["title"]?.ToString()
+                    },
+                    "partner" or "partners" => new
+                    {
+                        name = obj["name"]?.ToString(),
+                        partnerShortDescription = obj["partnerShortDescription"]?.ToString(),
+                        erpDimValue = obj["erpDimValue"]?.ToString(),
+                        status = obj["status"]?.ToString()
+                    },
+                    "interaction" or "interactions" => new
+                    {
+                        type = obj["type"]?.ToString(),
+                        subject = obj["subject"]?.ToString(),
+                        date = obj["date"]?.ToString(),
+                        description = obj["description"]?.ToString()
+                    },
+                    _ => new
+                    {
+                        name = obj["name"]?.ToString(),
+                        title = obj["title"]?.ToString(),
+                        email = obj["email"]?.ToString()
+                    }
+                };
+            }
+            catch (Exception)
+            {
+                return new { error = "Unable to extract display fields" };
+            }
+        }
+
+        /// <summary>
+        /// Handles bulk user-role assignments for ASP.NET Core Identity
+        /// </summary>
+        private async Task<string> BulkInsertUserRolesAsync(BulkUploadRequest request)
+        {
+            try
+            {
+                var successList = new List<object>();
+                var errorMessages = new List<string>();
+                var isSuccess = true;
+
+                foreach (var record in request.Records)
+                {
+                    try
+                    {
+                        // Handle JsonElement properly - convert to JObject for easier access
+                        JObject userRoleData;
+                        if (record is JsonElement jsonElement)
+                        {
+                            var jsonString = jsonElement.GetRawText();
+                            userRoleData = JObject.Parse(jsonString);
+                        }
+                        else
+                        {
+                            // Fallback for other types
+                            var recordJson = JsonConvert.SerializeObject(record);
+                            userRoleData = JObject.Parse(recordJson);
+                        }
+                        
+                        // Extract resolved userId and roleIds (should already be resolved at this point)
+                        var userIdValue = userRoleData["userId"]?.ToString();
+                        var roleIdsArray = userRoleData["roleIds"]?.ToObject<List<string>>();
+                        
+                        if (string.IsNullOrEmpty(userIdValue))
+                        {
+                            errorMessages.Add("No user ID found in record");
+                            isSuccess = false;
+                            continue;
+                        }
+                        
+                        if (roleIdsArray == null || !roleIdsArray.Any())
+                        {
+                            errorMessages.Add("No role IDs found in record");
+                            isSuccess = false;
+                            continue;
+                        }
+
+                        // Parse userId (should be a resolved integer)
+                        if (!int.TryParse(userIdValue, out int userId))
+                        {
+                            errorMessages.Add($"Invalid user ID format: {userIdValue}");
+                            isSuccess = false;
+                            continue;
+                        }
+
+                        // Get the user object for AddToRolesAsync
+                        var user = await _userManager.FindByIdAsync(userId.ToString());
+                        if (user == null)
+                        {
+                            errorMessages.Add($"Could not find user with ID: {userId}");
+                            isSuccess = false;
+                            continue;
+                        }
+
+                        // Convert role IDs to role names and check for existing roles
+                        var roleNames = new List<string>();
+                        foreach (var roleId in roleIdsArray)
+                        {
+                            var role = await _roleManager.FindByIdAsync(roleId);
+                            if (role != null)
+                            {
+                                roleNames.Add(role.Name);
+                            }
+                            else
+                            {
+                                errorMessages.Add($"Could not find role with ID: {roleId}");
+                                isSuccess = false;
+                            }
+                        }
+
+                        if (!roleNames.Any())
+                        {
+                            errorMessages.Add($"No valid roles found for user: {userId}");
+                            isSuccess = false;
+                            continue;
+                        }
+
+                        // Get current user roles to avoid duplicates
+                        var currentRoles = await _userManager.GetRolesAsync(user);
+                        
+                        // Filter out roles the user already has
+                        var rolesToAdd = roleNames.Where(roleName => !currentRoles.Contains(roleName)).ToList();
+                        
+                        if (rolesToAdd.Any())
+                        {
+                            // Only add roles that the user doesn't already have
+                            var addRolesResult = await _userManager.AddToRolesAsync(user, rolesToAdd);
+                            if (!addRolesResult.Succeeded)
+                            {
+                                var errors = string.Join(", ", addRolesResult.Errors.Select(e => e.Description));
+                                errorMessages.Add($"Failed to assign roles to user {userId}: {errors}");
+                                isSuccess = false;
+                                continue;
+                            }
+                        }
+                        
+                        // Determine which roles were skipped (already existed)
+                        var skippedRoles = roleNames.Where(roleName => currentRoles.Contains(roleName)).ToList();
+                        
+                        successList.Add(new 
+                        { 
+                            userId = userId,
+                            rolesAdded = rolesToAdd,
+                            rolesSkipped = skippedRoles,
+                            allRequestedRoles = roleNames,
+                            action = rolesToAdd.Any() ? (skippedRoles.Any() ? "partially_assigned" : "assigned") : "already_assigned"
+                        });
+                    }
+                    catch (Exception recordEx)
+                    {
+                        errorMessages.Add($"Error processing user-role record: {recordEx.Message}");
+                        isSuccess = false;
+                    }
+                }
+
+                var result = new
+                {
+                    IsSuccess = isSuccess,
+                    SuccessCount = successList.Count,
+                    ErrorCount = errorMessages.Count,
+                    Errors = errorMessages.ToArray(),
+                    SuccessRecords = successList.ToArray(),
+                    Message = isSuccess ? 
+                        $"Successfully processed {successList.Count} user-role assignments" :
+                        $"Processed {successList.Count} user-role assignments with {errorMessages.Count} errors"
+                };
+
+                return JsonConvert.SerializeObject(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during bulk user-role operation");
+                
+                var errorResult = new
+                {
+                    IsSuccess = false,
+                    SuccessCount = 0,
+                    ErrorCount = 1,
+                    Errors = new[] { $"Bulk user-role operation failed: {ex.Message}" },
+                    SuccessRecords = new object[0],
+                    Message = $"Bulk user-role operation failed: {ex.Message}"
+                };
+
+                return JsonConvert.SerializeObject(errorResult);
+            }
+        }
+    }

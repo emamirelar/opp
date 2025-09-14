@@ -32,493 +32,6 @@
       "SearchMetadata": null
     },
     {
-      "Name": "ContactAnalyticsController",
-      "FullName": "UNOPS.PAO.Presentation.Controllers.ContactAnalyticsController",
-      "BaseRoute": "/api/contact-analytics",
-      "Methods": [
-        {
-          "Name": "GetMostActiveContacts",
-          "HttpMethod": "GET",
-          "Route": "getMostActiveContacts",
-          "FullRoute": "api/contact-analytics/getMostActiveContacts",
-          "Summary": "Get contacts with highest interaction activity",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "limit",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 10,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "timeframe",
-              "Type": "string",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": "30d",
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "metric",
-              "Type": "string",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": "interactions",
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetContactsByGeographicRegion",
-          "HttpMethod": "GET",
-          "Route": "getContactsByGeographicRegion",
-          "FullRoute": "api/contact-analytics/getContactsByGeographicRegion",
-          "Summary": "Get contact distribution by geographic regions",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "period",
-              "Type": "string",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": "all",
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "minCount",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 1,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "groupBy",
-              "Type": "string",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": "country",
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetContactEngagementTrends",
-          "HttpMethod": "GET",
-          "Route": "getContactEngagementTrends",
-          "FullRoute": "api/contact-analytics/getContactEngagementTrends",
-          "Summary": "Get contact engagement trends over time",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "period",
-              "Type": "string",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": "monthly",
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "months",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 12,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "metric",
-              "Type": "string",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": "interactions",
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetContactsByInteractionType",
-          "HttpMethod": "GET",
-          "Route": "getContactsByInteractionType",
-          "FullRoute": "api/contact-analytics/getContactsByInteractionType",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "type",
-              "Type": "Nullable<InteractionType>",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "startDate",
-              "Type": "Nullable<DateTime>",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "endDate",
-              "Type": "Nullable<DateTime>",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "limit",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 20,
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetContactsByPartner",
-          "HttpMethod": "GET",
-          "Route": "getContactsByPartner",
-          "FullRoute": "api/contact-analytics/getContactsByPartner",
-          "Summary": "Get contact distribution across partners",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "minContacts",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 1,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "includeInactive",
-              "Type": "bool",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": false,
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetRecentlyActiveContacts",
-          "HttpMethod": "GET",
-          "Route": "getRecentlyActiveContacts",
-          "FullRoute": "api/contact-analytics/getRecentlyActiveContacts",
-          "Summary": "Get recently active contacts",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "days",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 30,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "limit",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 20,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "sortBy",
-              "Type": "string",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": "lastInteraction",
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetContactsByJobTitle",
-          "HttpMethod": "GET",
-          "Route": "getContactsByJobTitle",
-          "FullRoute": "api/contact-analytics/getContactsByJobTitle",
-          "Summary": "Get contact activity by job titles",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "minContacts",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 1,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "includeInteractions",
-              "Type": "bool",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": false,
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetContactGrowthTrends",
-          "HttpMethod": "GET",
-          "Route": "getContactGrowthTrends",
-          "FullRoute": "api/contact-analytics/getContactGrowthTrends",
-          "Summary": "Get contact growth trends over time",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "period",
-              "Type": "string",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": "monthly",
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "months",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 12,
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetContactsWithMostDocuments",
-          "HttpMethod": "GET",
-          "Route": "getContactsWithMostDocuments",
-          "FullRoute": "api/contact-analytics/getContactsWithMostDocuments",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "limit",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 10,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "startDate",
-              "Type": "Nullable<DateTime>",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "endDate",
-              "Type": "Nullable<DateTime>",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        }
-      ],
-      "Attributes": [
-        "NullableContextAttribute",
-        "NullableAttribute",
-        "ApiControllerAttribute",
-        "RouteAttribute",
-        "AuthorizeAttribute",
-        "ControllerAttribute"
-      ],
-      "SearchMetadata": null
-    },
-    {
       "Name": "ContactController",
       "FullName": "UNOPS.PAO.Presentation.Controllers.ContactController",
       "BaseRoute": "/",
@@ -806,17 +319,6 @@
                   "NestedProperties": []
                 },
                 {
-                  "Name": "ConfirmDuplicateCreation",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
                   "Name": "Extensions",
                   "Type": "IDictionary<string, Object>",
                   "Description": "Property of type IDictionary<string, Object>",
@@ -1090,17 +592,6 @@
                     "NestedProperties": []
                   },
                   {
-                    "Name": "ConfirmDuplicateCreation",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
                     "Name": "Extensions",
                     "Type": "IDictionary<string, Object>",
                     "Description": "Property of type IDictionary<string, Object>",
@@ -1113,8 +604,7 @@
                   }
                 ],
                 "RequiredFields": [
-                  "PartnerId",
-                  "ConfirmDuplicateCreation"
+                  "PartnerId"
                 ],
                 "Examples": {}
               }
@@ -1133,15 +623,21 @@
           "HttpMethod": "GET",
           "Route": "/api/contact",
           "FullRoute": "api/contact",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
+          "Summary": "Retrieves all contacts with basic pagination and ordering (no search criteria).",
+          "Returns": "Paginated list of all contacts",
+          "ExampleUses": [
+            "Show me all contacts",
+            "List all contacts in the system",
+            "Display the contact directory",
+            "Get all contact records",
+            "Browse contacts"
+          ],
+          "WhenToUse": "Use this when the user wants to see ALL contacts without any search criteria or when asking for a general contact list.",
           "Parameters": [
             {
               "Name": "pageIndex",
               "Type": "int",
-              "Description": "",
+              "Description": "Page number (1-based, default: 1)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -1153,7 +649,7 @@
             {
               "Name": "pageSize",
               "Type": "int",
-              "Description": "",
+              "Description": "Number of items per page (default: 20)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -1165,7 +661,7 @@
             {
               "Name": "orderBy",
               "Type": "string",
-              "Description": "",
+              "Description": "Field to order results by (optional)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -1177,24 +673,12 @@
             {
               "Name": "ascending",
               "Type": "bool",
-              "Description": "",
+              "Description": "Sort direction - true for ascending, false for descending (default: true)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
               "DefaultValue": true,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "partnerId",
-              "Type": "Nullable<int>",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
               "Properties": [],
               "Schema": null
             }
@@ -1900,17 +1384,6 @@
                   "NestedProperties": []
                 },
                 {
-                  "Name": "ConfirmDuplicateCreation",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
                   "Name": "Extensions",
                   "Type": "IDictionary<string, Object>",
                   "Description": "Property of type IDictionary<string, Object>",
@@ -2202,17 +1675,6 @@
                     "NestedProperties": []
                   },
                   {
-                    "Name": "ConfirmDuplicateCreation",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
                     "Name": "Extensions",
                     "Type": "IDictionary<string, Object>",
                     "Description": "Property of type IDictionary<string, Object>",
@@ -2226,8 +1688,7 @@
                 ],
                 "RequiredFields": [
                   "Id",
-                  "PartnerId",
-                  "ConfirmDuplicateCreation"
+                  "PartnerId"
                 ],
                 "Examples": {}
               }
@@ -3116,67 +2577,6 @@
             "AccessControlledAttribute"
           ],
           "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "DeepSearch",
-          "HttpMethod": "GET",
-          "Route": "/api/contact/deepSearch",
-          "FullRoute": "api/contact/deepSearch",
-          "Summary": "Performs semantic search on contacts using AI embeddings to find similar contacts based on natural language queries.",
-          "Returns": "List of similar contacts with similarity scores",
-          "ExampleUses": [
-            "Find contacts similar to John Doe",
-            "Search for program managers in healthcare",
-            "Find technical leads in engineering",
-            "Search for contacts in the education sector",
-            "Find executives similar to CEO"
-          ],
-          "WhenToUse": "Use this when the user wants to find contacts using natural language queries or semantic similarity.",
-          "Parameters": [
-            {
-              "Name": "query",
-              "Type": "string",
-              "Description": "Natural language search query",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "threshold",
-              "Type": "float",
-              "Description": "Similarity threshold (0.0 to 1.0, default: 0.7)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 0.7,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "limit",
-              "Type": "int",
-              "Description": "Maximum number of results to return (default: 10)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 10,
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
         }
       ],
       "Attributes": [
@@ -3903,91 +3303,6 @@
               "IsFromQuery": true,
               "IsFromRoute": false,
               "DefaultValue": true,
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute"
-          ],
-          "AccessControl": ""
-        },
-        {
-          "Name": "GetEngagementsByPartnerName",
-          "HttpMethod": "GET",
-          "Route": "/api/engagement/partner/by-name/{partnerName}",
-          "FullRoute": "api/engagement/partner/by-name/{partnerName}",
-          "Summary": "Retrieves all engagements for a partner using AI-powered smart search by partner name with complete details.\r\n            Uses semantic similarity search to find the best matching partner, supporting partial names, abbreviations, and synonyms.",
-          "Returns": "Paginated list of engagements for the best matching partner",
-          "ExampleUses": [
-            "Show all engagements for partner named \"UNICEF\"",
-            "List engagements for \"World Bank\" organization (works with \"WB\", \"World Bank\", \"bank\")",
-            "Get engagement history for partner \"Red Cross\" (works with \"ICRC\", \"Red Cross\", \"Cross\")",
-            "Display engagements for \"WHO\" partner (works with \"World Health\", \"WHO\", \"Health Organization\")",
-            "Show engagement records using partial names like \"UN\" or \"Development\"",
-            "Find engagements by organization type like \"Government\" or \"NGO\""
-          ],
-          "WhenToUse": "Use this when the user wants to see all engagements for a partner using any variation of the partner name, abbreviation, or description. The AI search will find the best match even with incomplete or alternative names.",
-          "Parameters": [
-            {
-              "Name": "partnerName",
-              "Type": "string",
-              "Description": "Partner name or partial name to search for (supports fuzzy matching, abbreviations, synonyms)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "pageIndex",
-              "Type": "int",
-              "Description": "Page number (1-based, default: 1)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 1,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "pageSize",
-              "Type": "int",
-              "Description": "Number of items per page (default: 20)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 20,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "orderBy",
-              "Type": "string",
-              "Description": "Field to order results by (default: 'createdDate')",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": "CreatedDate",
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "ascending",
-              "Type": "bool",
-              "Description": "Sort direction - true for ascending, false for descending (default: false for newest first)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": false,
               "Properties": [],
               "Schema": null
             }
@@ -7455,29 +6770,6 @@
           "AccessControl": "AccessControlledAttribute"
         },
         {
-          "Name": "ExportAiPromptsAsync",
-          "HttpMethod": "GET",
-          "Route": "/api/ai-prompt-management/export-developer",
-          "FullRoute": "api/ai-prompt-management/export-developer",
-          "Summary": "Exports all AI prompts as a C# seeder file for developers",
-          "Returns": "C# code file content for seeding AI prompts",
-          "ExampleUses": [
-            "Export AI prompts for development",
-            "Download seeder file for AI prompts",
-            "Generate developer version of prompts",
-            "Export prompts as C# code"
-          ],
-          "WhenToUse": "Use this when developers need to export AI prompts as C# code for seeding or backup purposes.",
-          "Parameters": [],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
           "Name": "DeletePromptAsync",
           "HttpMethod": "DELETE",
           "Route": "/api/ai-prompt-management/{id}",
@@ -10611,6 +9903,24 @@
                   "NestedProperties": []
                 },
                 {
+                  "Name": "ContactId",
+                  "Type": "int",
+                  "Description": "Property of type int",
+                  "IsRequired": true,
+                  "IsNullable": false,
+                  "DefaultValue": null,
+                  "Format": null,
+                  "Relationship": {
+                    "RelationType": "Reference",
+                    "ReferencedEntity": null,
+                    "ReferencedProperty": null,
+                    "LookupEndpoint": null,
+                    "DisplayProperty": null,
+                    "RequiresIdResolution": true
+                  },
+                  "NestedProperties": []
+                },
+                {
                   "Name": "EmailAddresses",
                   "Type": "List<string>",
                   "Description": "Property of type List<string>",
@@ -10721,28 +10031,6 @@
                   "NestedProperties": []
                 },
                 {
-                  "Name": "Status",
-                  "Type": "string",
-                  "Description": "Property of type string",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "ConfirmDuplicateCreation",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
                   "Name": "Extensions",
                   "Type": "IDictionary<string, Object>",
                   "Description": "Property of type IDictionary<string, Object>",
@@ -10790,6 +10078,24 @@
                     "DefaultValue": null,
                     "Format": null,
                     "Relationship": null,
+                    "NestedProperties": []
+                  },
+                  {
+                    "Name": "ContactId",
+                    "Type": "int",
+                    "Description": "Property of type int",
+                    "IsRequired": true,
+                    "IsNullable": false,
+                    "DefaultValue": null,
+                    "Format": null,
+                    "Relationship": {
+                      "RelationType": "Reference",
+                      "ReferencedEntity": null,
+                      "ReferencedProperty": null,
+                      "LookupEndpoint": null,
+                      "DisplayProperty": null,
+                      "RequiresIdResolution": true
+                    },
                     "NestedProperties": []
                   },
                   {
@@ -10903,28 +10209,6 @@
                     "NestedProperties": []
                   },
                   {
-                    "Name": "Status",
-                    "Type": "string",
-                    "Description": "Property of type string",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "ConfirmDuplicateCreation",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
                     "Name": "Extensions",
                     "Type": "IDictionary<string, Object>",
                     "Description": "Property of type IDictionary<string, Object>",
@@ -10939,7 +10223,7 @@
                 "RequiredFields": [
                   "Type",
                   "Date",
-                  "ConfirmDuplicateCreation"
+                  "ContactId"
                 ],
                 "Examples": {}
               }
@@ -11025,6 +10309,24 @@
                   "NestedProperties": []
                 },
                 {
+                  "Name": "ContactId",
+                  "Type": "int",
+                  "Description": "Property of type int",
+                  "IsRequired": true,
+                  "IsNullable": false,
+                  "DefaultValue": null,
+                  "Format": null,
+                  "Relationship": {
+                    "RelationType": "Reference",
+                    "ReferencedEntity": null,
+                    "ReferencedProperty": null,
+                    "LookupEndpoint": null,
+                    "DisplayProperty": null,
+                    "RequiresIdResolution": true
+                  },
+                  "NestedProperties": []
+                },
+                {
                   "Name": "EmailAddresses",
                   "Type": "List<string>",
                   "Description": "Property of type List<string>",
@@ -11135,28 +10437,6 @@
                   "NestedProperties": []
                 },
                 {
-                  "Name": "Status",
-                  "Type": "string",
-                  "Description": "Property of type string",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "ConfirmDuplicateCreation",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
                   "Name": "Extensions",
                   "Type": "IDictionary<string, Object>",
                   "Description": "Property of type IDictionary<string, Object>",
@@ -11222,6 +10502,24 @@
                     "DefaultValue": null,
                     "Format": null,
                     "Relationship": null,
+                    "NestedProperties": []
+                  },
+                  {
+                    "Name": "ContactId",
+                    "Type": "int",
+                    "Description": "Property of type int",
+                    "IsRequired": true,
+                    "IsNullable": false,
+                    "DefaultValue": null,
+                    "Format": null,
+                    "Relationship": {
+                      "RelationType": "Reference",
+                      "ReferencedEntity": null,
+                      "ReferencedProperty": null,
+                      "LookupEndpoint": null,
+                      "DisplayProperty": null,
+                      "RequiresIdResolution": true
+                    },
                     "NestedProperties": []
                   },
                   {
@@ -11335,28 +10633,6 @@
                     "NestedProperties": []
                   },
                   {
-                    "Name": "Status",
-                    "Type": "string",
-                    "Description": "Property of type string",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "ConfirmDuplicateCreation",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
                     "Name": "Extensions",
                     "Type": "IDictionary<string, Object>",
                     "Description": "Property of type IDictionary<string, Object>",
@@ -11372,7 +10648,7 @@
                   "Id",
                   "Type",
                   "Date",
-                  "ConfirmDuplicateCreation"
+                  "ContactId"
                 ],
                 "Examples": {}
               }
@@ -11575,8 +10851,8 @@
               "Properties": [
                 {
                   "Name": "SelectedContacts",
-                  "Type": "List<GmailSelectedEmailModel>",
-                  "Description": "Property of type List<GmailSelectedEmailModel>",
+                  "Type": "List<GmailSelectedContact>",
+                  "Description": "Property of type List<GmailSelectedContact>",
                   "IsRequired": false,
                   "IsNullable": true,
                   "DefaultValue": null,
@@ -11607,8 +10883,8 @@
                     },
                     {
                       "Name": "Item",
-                      "Type": "GmailSelectedEmailModel",
-                      "Description": "Property of type GmailSelectedEmailModel",
+                      "Type": "GmailSelectedContact",
+                      "Description": "Property of type GmailSelectedContact",
                       "IsRequired": false,
                       "IsNullable": true,
                       "DefaultValue": null,
@@ -11654,65 +10930,10 @@
                             "RequiresIdResolution": true
                           },
                           "NestedProperties": []
-                        },
-                        {
-                          "Name": "FirstName",
-                          "Type": "string",
-                          "Description": "Property of type string",
-                          "IsRequired": false,
-                          "IsNullable": true,
-                          "DefaultValue": null,
-                          "Format": null,
-                          "Relationship": null,
-                          "NestedProperties": []
-                        },
-                        {
-                          "Name": "MiddleName",
-                          "Type": "string",
-                          "Description": "Property of type string",
-                          "IsRequired": false,
-                          "IsNullable": true,
-                          "DefaultValue": null,
-                          "Format": null,
-                          "Relationship": null,
-                          "NestedProperties": []
-                        },
-                        {
-                          "Name": "LastName",
-                          "Type": "string",
-                          "Description": "Property of type string",
-                          "IsRequired": false,
-                          "IsNullable": true,
-                          "DefaultValue": null,
-                          "Format": null,
-                          "Relationship": null,
-                          "NestedProperties": []
                         }
                       ]
                     }
                   ]
-                },
-                {
-                  "Name": "GmailThreadId",
-                  "Type": "string",
-                  "Description": "Property of type string",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "GmailMessageId",
-                  "Type": "string",
-                  "Description": "Property of type string",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
                 }
               ],
               "Schema": {
@@ -11722,8 +10943,8 @@
                 "Properties": [
                   {
                     "Name": "SelectedContacts",
-                    "Type": "List<GmailSelectedEmailModel>",
-                    "Description": "Property of type List<GmailSelectedEmailModel>",
+                    "Type": "List<GmailSelectedContact>",
+                    "Description": "Property of type List<GmailSelectedContact>",
                     "IsRequired": false,
                     "IsNullable": true,
                     "DefaultValue": null,
@@ -11754,8 +10975,8 @@
                       },
                       {
                         "Name": "Item",
-                        "Type": "GmailSelectedEmailModel",
-                        "Description": "Property of type GmailSelectedEmailModel",
+                        "Type": "GmailSelectedContact",
+                        "Description": "Property of type GmailSelectedContact",
                         "IsRequired": false,
                         "IsNullable": true,
                         "DefaultValue": null,
@@ -11801,65 +11022,10 @@
                               "RequiresIdResolution": true
                             },
                             "NestedProperties": []
-                          },
-                          {
-                            "Name": "FirstName",
-                            "Type": "string",
-                            "Description": "Property of type string",
-                            "IsRequired": false,
-                            "IsNullable": true,
-                            "DefaultValue": null,
-                            "Format": null,
-                            "Relationship": null,
-                            "NestedProperties": []
-                          },
-                          {
-                            "Name": "MiddleName",
-                            "Type": "string",
-                            "Description": "Property of type string",
-                            "IsRequired": false,
-                            "IsNullable": true,
-                            "DefaultValue": null,
-                            "Format": null,
-                            "Relationship": null,
-                            "NestedProperties": []
-                          },
-                          {
-                            "Name": "LastName",
-                            "Type": "string",
-                            "Description": "Property of type string",
-                            "IsRequired": false,
-                            "IsNullable": true,
-                            "DefaultValue": null,
-                            "Format": null,
-                            "Relationship": null,
-                            "NestedProperties": []
                           }
                         ]
                       }
                     ]
-                  },
-                  {
-                    "Name": "GmailThreadId",
-                    "Type": "string",
-                    "Description": "Property of type string",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "GmailMessageId",
-                    "Type": "string",
-                    "Description": "Property of type string",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
                   }
                 ],
                 "RequiredFields": [],
@@ -11949,6 +11115,24 @@
                   "DefaultValue": null,
                   "Format": null,
                   "Relationship": null,
+                  "NestedProperties": []
+                },
+                {
+                  "Name": "ContactId",
+                  "Type": "int",
+                  "Description": "Property of type int",
+                  "IsRequired": true,
+                  "IsNullable": false,
+                  "DefaultValue": null,
+                  "Format": null,
+                  "Relationship": {
+                    "RelationType": "Reference",
+                    "ReferencedEntity": null,
+                    "ReferencedProperty": null,
+                    "LookupEndpoint": null,
+                    "DisplayProperty": null,
+                    "RequiresIdResolution": true
+                  },
                   "NestedProperties": []
                 },
                 {
@@ -12062,28 +11246,6 @@
                   "NestedProperties": []
                 },
                 {
-                  "Name": "Status",
-                  "Type": "string",
-                  "Description": "Property of type string",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "ConfirmDuplicateCreation",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
                   "Name": "Extensions",
                   "Type": "IDictionary<string, Object>",
                   "Description": "Property of type IDictionary<string, Object>",
@@ -12131,6 +11293,24 @@
                     "DefaultValue": null,
                     "Format": null,
                     "Relationship": null,
+                    "NestedProperties": []
+                  },
+                  {
+                    "Name": "ContactId",
+                    "Type": "int",
+                    "Description": "Property of type int",
+                    "IsRequired": true,
+                    "IsNullable": false,
+                    "DefaultValue": null,
+                    "Format": null,
+                    "Relationship": {
+                      "RelationType": "Reference",
+                      "ReferencedEntity": null,
+                      "ReferencedProperty": null,
+                      "LookupEndpoint": null,
+                      "DisplayProperty": null,
+                      "RequiresIdResolution": true
+                    },
                     "NestedProperties": []
                   },
                   {
@@ -12244,28 +11424,6 @@
                     "NestedProperties": []
                   },
                   {
-                    "Name": "Status",
-                    "Type": "string",
-                    "Description": "Property of type string",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "ConfirmDuplicateCreation",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
                     "Name": "Extensions",
                     "Type": "IDictionary<string, Object>",
                     "Description": "Property of type IDictionary<string, Object>",
@@ -12280,7 +11438,7 @@
                 "RequiredFields": [
                   "Type",
                   "Date",
-                  "ConfirmDuplicateCreation"
+                  "ContactId"
                 ],
                 "Examples": {}
               }
@@ -12299,15 +11457,21 @@
           "HttpMethod": "GET",
           "Route": "/api/interactions",
           "FullRoute": "api/interactions",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
+          "Summary": "Retrieves all interactions with basic pagination and ordering (no search criteria).",
+          "Returns": "Paginated list of all interactions",
+          "ExampleUses": [
+            "Show me all interactions",
+            "List all interactions in the system",
+            "Display the interaction history",
+            "Get all interaction records",
+            "Browse interactions"
+          ],
+          "WhenToUse": "Use this when the user wants to see ALL interactions without any search criteria or when asking for a general interaction list.",
           "Parameters": [
             {
               "Name": "pageIndex",
               "Type": "int",
-              "Description": "",
+              "Description": "Page number (1-based, default: 1)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -12319,7 +11483,7 @@
             {
               "Name": "pageSize",
               "Type": "int",
-              "Description": "",
+              "Description": "Number of items per page (default: 20)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -12331,7 +11495,7 @@
             {
               "Name": "orderBy",
               "Type": "string",
-              "Description": "",
+              "Description": "Field to order results by (optional)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -12343,36 +11507,12 @@
             {
               "Name": "ascending",
               "Type": "bool",
-              "Description": "",
+              "Description": "Sort direction - true for ascending, false for descending (default: true)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
               "DefaultValue": true,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "partnerId",
-              "Type": "Nullable<int>",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "contactId",
-              "Type": "Nullable<int>",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
               "Properties": [],
               "Schema": null
             }
@@ -12855,6 +11995,24 @@
                   "NestedProperties": []
                 },
                 {
+                  "Name": "ContactId",
+                  "Type": "int",
+                  "Description": "Property of type int",
+                  "IsRequired": true,
+                  "IsNullable": false,
+                  "DefaultValue": null,
+                  "Format": null,
+                  "Relationship": {
+                    "RelationType": "Reference",
+                    "ReferencedEntity": null,
+                    "ReferencedProperty": null,
+                    "LookupEndpoint": null,
+                    "DisplayProperty": null,
+                    "RequiresIdResolution": true
+                  },
+                  "NestedProperties": []
+                },
+                {
                   "Name": "EmailAddresses",
                   "Type": "List<string>",
                   "Description": "Property of type List<string>",
@@ -12965,28 +12123,6 @@
                   "NestedProperties": []
                 },
                 {
-                  "Name": "Status",
-                  "Type": "string",
-                  "Description": "Property of type string",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "ConfirmDuplicateCreation",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
                   "Name": "Extensions",
                   "Type": "IDictionary<string, Object>",
                   "Description": "Property of type IDictionary<string, Object>",
@@ -13052,6 +12188,24 @@
                     "DefaultValue": null,
                     "Format": null,
                     "Relationship": null,
+                    "NestedProperties": []
+                  },
+                  {
+                    "Name": "ContactId",
+                    "Type": "int",
+                    "Description": "Property of type int",
+                    "IsRequired": true,
+                    "IsNullable": false,
+                    "DefaultValue": null,
+                    "Format": null,
+                    "Relationship": {
+                      "RelationType": "Reference",
+                      "ReferencedEntity": null,
+                      "ReferencedProperty": null,
+                      "LookupEndpoint": null,
+                      "DisplayProperty": null,
+                      "RequiresIdResolution": true
+                    },
                     "NestedProperties": []
                   },
                   {
@@ -13165,28 +12319,6 @@
                     "NestedProperties": []
                   },
                   {
-                    "Name": "Status",
-                    "Type": "string",
-                    "Description": "Property of type string",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "ConfirmDuplicateCreation",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
                     "Name": "Extensions",
                     "Type": "IDictionary<string, Object>",
                     "Description": "Property of type IDictionary<string, Object>",
@@ -13202,7 +12334,7 @@
                   "Id",
                   "Type",
                   "Date",
-                  "ConfirmDuplicateCreation"
+                  "ContactId"
                 ],
                 "Examples": {}
               }
@@ -13856,67 +12988,6 @@
           "ExampleUses": [],
           "WhenToUse": "",
           "Parameters": [],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "DeepSearch",
-          "HttpMethod": "GET",
-          "Route": "/api/interactions/deepSearch",
-          "FullRoute": "api/interactions/deepSearch",
-          "Summary": "Performs semantic search on interactions using AI embeddings to find similar interactions based on natural language queries.",
-          "Returns": "List of similar interactions with similarity scores",
-          "ExampleUses": [
-            "Find interactions similar to project planning meetings",
-            "Search for email communications about healthcare",
-            "Find conference calls about technical issues",
-            "Search for meetings in the education sector",
-            "Find interactions similar to contract negotiations"
-          ],
-          "WhenToUse": "Use this when the user wants to find interactions using natural language queries or semantic similarity.",
-          "Parameters": [
-            {
-              "Name": "query",
-              "Type": "string",
-              "Description": "Natural language search query",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "threshold",
-              "Type": "float",
-              "Description": "Similarity threshold (0.0 to 1.0, default: 0.7)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 0.7,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "limit",
-              "Type": "int",
-              "Description": "Maximum number of results to return (default: 10)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 10,
-              "Properties": [],
-              "Schema": null
-            }
-          ],
           "Attributes": [
             "AsyncStateMachineAttribute",
             "DebuggerStepThroughAttribute",
@@ -15474,17 +14545,6 @@
                   "NestedProperties": []
                 },
                 {
-                  "Name": "ConfirmDuplicateCreation",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
                   "Name": "Extensions",
                   "Type": "IDictionary<string, Object>",
                   "Description": "Property of type IDictionary<string, Object>",
@@ -15816,17 +14876,6 @@
                     "NestedProperties": []
                   },
                   {
-                    "Name": "ConfirmDuplicateCreation",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
                     "Name": "Extensions",
                     "Type": "IDictionary<string, Object>",
                     "Description": "Property of type IDictionary<string, Object>",
@@ -15843,8 +14892,7 @@
                   "KeyGlobalPartner",
                   "UNSecretariatPartner",
                   "PooledFund",
-                  "CanCreateNewOpportunities",
-                  "ConfirmDuplicateCreation"
+                  "CanCreateNewOpportunities"
                 ],
                 "Examples": {}
               }
@@ -15894,31 +14942,31 @@
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
-              "DefaultValue": 5,
+              "DefaultValue": 20,
               "Properties": [],
               "Schema": null
             },
             {
               "Name": "orderBy",
               "Type": "string",
-              "Description": "Field to order results by (default: 'createdDate')",
+              "Description": "Field to order results by (optional)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
-              "DefaultValue": "CreatedDate",
+              "DefaultValue": null,
               "Properties": [],
               "Schema": null
             },
             {
               "Name": "ascending",
               "Type": "bool",
-              "Description": "Sort direction - true for ascending, false for descending (default: false for newest first)",
+              "Description": "Sort direction - true for ascending, false for descending (default: true)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
-              "DefaultValue": false,
+              "DefaultValue": true,
               "Properties": [],
               "Schema": null
             }
@@ -16110,14 +15158,14 @@
           "Summary": "Performs advanced search with structured criteria including status, dates, relationships, and complex filters.",
           "Returns": "Paginated list of partners matching the advanced search criteria",
           "ExampleUses": [
-            "Find active government partners",
+            "Find active partners",
             "Show partners with global key account status",
             "Get partners created this month",
-            "Find partners by status and office location",
-            "List partners involved in climate projects",
+            "Find partners by approval status",
+            "List partners with due diligence requirements",
             "Search for partners by complex criteria combinations"
           ],
-          "WhenToUse": "Use this for searches involving partner status, dates, types, complex criteria, or multiple field combinations.",
+          "WhenToUse": "Use this for searches involving partner status, dates, approval status, or multiple field combinations.",
           "Parameters": [
             {
               "Name": "request",
@@ -16682,17 +15730,6 @@
                   "NestedProperties": []
                 },
                 {
-                  "Name": "ConfirmDuplicateCreation",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
                   "Name": "Extensions",
                   "Type": "IDictionary<string, Object>",
                   "Description": "Property of type IDictionary<string, Object>",
@@ -17042,17 +16079,6 @@
                     "NestedProperties": []
                   },
                   {
-                    "Name": "ConfirmDuplicateCreation",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
                     "Name": "Extensions",
                     "Type": "IDictionary<string, Object>",
                     "Description": "Property of type IDictionary<string, Object>",
@@ -17070,8 +16096,7 @@
                   "KeyGlobalPartner",
                   "UNSecretariatPartner",
                   "PooledFund",
-                  "CanCreateNewOpportunities",
-                  "ConfirmDuplicateCreation"
+                  "CanCreateNewOpportunities"
                 ],
                 "Examples": {}
               }
@@ -17140,24 +16165,24 @@
             {
               "Name": "orderBy",
               "Type": "string",
-              "Description": "Field to order results by (default: 'createdDate')",
+              "Description": "Field to order results by (optional)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
-              "DefaultValue": "CreatedDate",
+              "DefaultValue": null,
               "Properties": [],
               "Schema": null
             },
             {
               "Name": "ascending",
               "Type": "bool",
-              "Description": "Sort direction - true for ascending, false for descending (default: false for newest first)",
+              "Description": "Sort direction - true for ascending, false for descending (default: true)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
-              "DefaultValue": false,
+              "DefaultValue": true,
               "Properties": [],
               "Schema": null
             }
@@ -17225,24 +16250,24 @@
             {
               "Name": "orderBy",
               "Type": "string",
-              "Description": "Field to order results by (default: 'createdDate')",
+              "Description": "Field to order results by (optional)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
-              "DefaultValue": "CreatedDate",
+              "DefaultValue": null,
               "Properties": [],
               "Schema": null
             },
             {
               "Name": "ascending",
               "Type": "bool",
-              "Description": "Sort direction - true for ascending, false for descending (default: false for newest first)",
+              "Description": "Sort direction - true for ascending, false for descending (default: true)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
-              "DefaultValue": false,
+              "DefaultValue": true,
               "Properties": [],
               "Schema": null
             }
@@ -17921,17 +16946,6 @@
                   "NestedProperties": []
                 },
                 {
-                  "Name": "ConfirmDuplicateCreation",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
                   "Name": "Extensions",
                   "Type": "IDictionary<string, Object>",
                   "Description": "Property of type IDictionary<string, Object>",
@@ -18281,17 +17295,6 @@
                     "NestedProperties": []
                   },
                   {
-                    "Name": "ConfirmDuplicateCreation",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
                     "Name": "Extensions",
                     "Type": "IDictionary<string, Object>",
                     "Description": "Property of type IDictionary<string, Object>",
@@ -18309,8 +17312,7 @@
                   "KeyGlobalPartner",
                   "UNSecretariatPartner",
                   "PooledFund",
-                  "CanCreateNewOpportunities",
-                  "ConfirmDuplicateCreation"
+                  "CanCreateNewOpportunities"
                 ],
                 "Examples": {}
               }
@@ -19541,67 +18543,6 @@
             "AccessControlledAttribute"
           ],
           "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "DeepSearch",
-          "HttpMethod": "GET",
-          "Route": "/api/partner/deepSearch",
-          "FullRoute": "api/partner/deepSearch",
-          "Summary": "Performs semantic search on partners using AI embeddings to find similar partners based on natural language queries.",
-          "Returns": "List of similar partners with similarity scores",
-          "ExampleUses": [
-            "Find partners similar to UNICEF",
-            "Search for government organizations in Africa",
-            "Find NGOs working on healthcare",
-            "Search for partners in the education sector",
-            "Find organizations similar to Red Cross"
-          ],
-          "WhenToUse": "Use this when the user wants to find partners using natural language queries or semantic similarity.",
-          "Parameters": [
-            {
-              "Name": "query",
-              "Type": "string",
-              "Description": "Natural language search query",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "threshold",
-              "Type": "float",
-              "Description": "Similarity threshold (0.0 to 1.0, default: 0.7)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 0.7,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "limit",
-              "Type": "int",
-              "Description": "Maximum number of results to return (default: 10)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 10,
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
         }
       ],
       "Attributes": [
@@ -19624,8 +18565,6 @@
           "partnerCategoryId",
           "liaisonOfficeId",
           "partnerFocalPointUserId",
-          "partnerGroupCode",
-          "erpDimValue",
           "unAndStateEntity",
           "keyGlobalPartner",
           "unSecretariatPartner",
@@ -19647,7 +18586,13 @@
           "lastModifiedDate",
           "createdBy",
           "lastModifiedBy",
-          "isDeleted"
+          "isDeleted",
+          "shortName",
+          "description",
+          "phone",
+          "website",
+          "email",
+          "modifiedDate"
         ],
         "NestedFields": {},
         "Operators": [
@@ -21876,8 +20821,8 @@
                 },
                 {
                   "Name": "RoleFilter",
-                  "Type": "List<string>",
-                  "Description": "Property of type List<string>",
+                  "Type": "string",
+                  "Description": "Property of type string",
                   "IsRequired": false,
                   "IsNullable": true,
                   "DefaultValue": null,
@@ -21898,8 +20843,8 @@
                 },
                 {
                   "Name": "OrgUnitFilter",
-                  "Type": "List<int>",
-                  "Description": "Property of type List<int>",
+                  "Type": "string",
+                  "Description": "Property of type string",
                   "IsRequired": false,
                   "IsNullable": true,
                   "DefaultValue": null,
@@ -22003,8 +20948,8 @@
                   },
                   {
                     "Name": "RoleFilter",
-                    "Type": "List<string>",
-                    "Description": "Property of type List<string>",
+                    "Type": "string",
+                    "Description": "Property of type string",
                     "IsRequired": false,
                     "IsNullable": true,
                     "DefaultValue": null,
@@ -22025,8 +20970,8 @@
                   },
                   {
                     "Name": "OrgUnitFilter",
-                    "Type": "List<int>",
-                    "Description": "Property of type List<int>",
+                    "Type": "string",
+                    "Description": "Property of type string",
                     "IsRequired": false,
                     "IsNullable": true,
                     "DefaultValue": null,
@@ -22255,24 +21200,6 @@
           "AccessControl": "AccessControlledAttribute"
         },
         {
-          "Name": "GetAvailableOrgUnits",
-          "HttpMethod": "GET",
-          "Route": "/api/user-management/org-units",
-          "FullRoute": "api/user-management/org-units",
-          "Summary": "Get available organization units for filtering",
-          "Returns": "List of organization units",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
           "Name": "GetCurrentUserOrgUnit",
           "HttpMethod": "GET",
           "Route": "/api/user-management/current-user-org-unit",
@@ -22393,451 +21320,6 @@
             "AsyncStateMachineAttribute",
             "DebuggerStepThroughAttribute",
             "HttpPutAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "AnalyzeUserRoleFile",
-          "HttpMethod": "POST",
-          "Route": "/api/user-management/analyse-file",
-          "FullRoute": "api/user-management/analyse-file",
-          "Summary": "Analyzes a Google Sheets file for user role import data",
-          "Returns": "Analysis result with processed user role data",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "request",
-              "Type": "AnalyseFileRequest",
-              "Description": "File analysis request with type and fileId",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [
-                {
-                  "Name": "Type",
-                  "Type": "string",
-                  "Description": "Property of type string",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "FileId",
-                  "Type": "string",
-                  "Description": "Property of type string",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "CurrentUserId",
-                  "Type": "int",
-                  "Description": "Property of type int",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": {
-                    "RelationType": "Reference",
-                    "ReferencedEntity": "User",
-                    "ReferencedProperty": null,
-                    "LookupEndpoint": "api/values/users",
-                    "DisplayProperty": "Name",
-                    "RequiresIdResolution": true
-                  },
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "IsUpdate",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                }
-              ],
-              "Schema": {
-                "TypeName": "AnalyseFileRequest",
-                "FullTypeName": "UNOPS.PAO.Models.AnalyseFileRequest",
-                "Description": "Schema for AnalyseFileRequest",
-                "Properties": [
-                  {
-                    "Name": "Type",
-                    "Type": "string",
-                    "Description": "Property of type string",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "FileId",
-                    "Type": "string",
-                    "Description": "Property of type string",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "CurrentUserId",
-                    "Type": "int",
-                    "Description": "Property of type int",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": {
-                      "RelationType": "Reference",
-                      "ReferencedEntity": "User",
-                      "ReferencedProperty": null,
-                      "LookupEndpoint": "api/values/users",
-                      "DisplayProperty": "Name",
-                      "RequiresIdResolution": true
-                    },
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "IsUpdate",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  }
-                ],
-                "RequiredFields": [
-                  "CurrentUserId",
-                  "IsUpdate"
-                ],
-                "Examples": {}
-              }
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "BulkUploadUserRoles",
-          "HttpMethod": "POST",
-          "Route": "/api/user-management/bulk-upload",
-          "FullRoute": "api/user-management/bulk-upload",
-          "Summary": "Performs bulk import of user role assignments",
-          "Returns": "Import result",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "request",
-              "Type": "BulkUploadRequest",
-              "Description": "Bulk upload request with user role data",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [
-                {
-                  "Name": "Type",
-                  "Type": "string",
-                  "Description": "Property of type string",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "Records",
-                  "Type": "List<Object>",
-                  "Description": "Property of type List<Object>",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": [
-                    {
-                      "Name": "Capacity",
-                      "Type": "int",
-                      "Description": "Property of type int",
-                      "IsRequired": true,
-                      "IsNullable": false,
-                      "DefaultValue": null,
-                      "Format": null,
-                      "Relationship": null,
-                      "NestedProperties": []
-                    },
-                    {
-                      "Name": "Count",
-                      "Type": "int",
-                      "Description": "Property of type int",
-                      "IsRequired": true,
-                      "IsNullable": false,
-                      "DefaultValue": null,
-                      "Format": null,
-                      "Relationship": null,
-                      "NestedProperties": []
-                    },
-                    {
-                      "Name": "Item",
-                      "Type": "Object",
-                      "Description": "Property of type Object",
-                      "IsRequired": false,
-                      "IsNullable": true,
-                      "DefaultValue": null,
-                      "Format": null,
-                      "Relationship": null,
-                      "NestedProperties": []
-                    }
-                  ]
-                },
-                {
-                  "Name": "IsUpdate",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                }
-              ],
-              "Schema": {
-                "TypeName": "BulkUploadRequest",
-                "FullTypeName": "UNOPS.PAO.Models.BulkUploadRequest",
-                "Description": "Schema for BulkUploadRequest",
-                "Properties": [
-                  {
-                    "Name": "Type",
-                    "Type": "string",
-                    "Description": "Property of type string",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "Records",
-                    "Type": "List<Object>",
-                    "Description": "Property of type List<Object>",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": [
-                      {
-                        "Name": "Capacity",
-                        "Type": "int",
-                        "Description": "Property of type int",
-                        "IsRequired": true,
-                        "IsNullable": false,
-                        "DefaultValue": null,
-                        "Format": null,
-                        "Relationship": null,
-                        "NestedProperties": []
-                      },
-                      {
-                        "Name": "Count",
-                        "Type": "int",
-                        "Description": "Property of type int",
-                        "IsRequired": true,
-                        "IsNullable": false,
-                        "DefaultValue": null,
-                        "Format": null,
-                        "Relationship": null,
-                        "NestedProperties": []
-                      },
-                      {
-                        "Name": "Item",
-                        "Type": "Object",
-                        "Description": "Property of type Object",
-                        "IsRequired": false,
-                        "IsNullable": true,
-                        "DefaultValue": null,
-                        "Format": null,
-                        "Relationship": null,
-                        "NestedProperties": []
-                      }
-                    ]
-                  },
-                  {
-                    "Name": "IsUpdate",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  }
-                ],
-                "RequiredFields": [
-                  "IsUpdate"
-                ],
-                "Examples": {}
-              }
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "ResolveUsers",
-          "HttpMethod": "POST",
-          "Route": "/api/user-management/resolve-users",
-          "FullRoute": "api/user-management/resolve-users",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "request",
-              "Type": "ResolveUsersRequest",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [
-                {
-                  "Name": "UserIds",
-                  "Type": "List<int>",
-                  "Description": "Property of type List<int>",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                }
-              ],
-              "Schema": {
-                "TypeName": "ResolveUsersRequest",
-                "FullTypeName": "UNOPS.PAO.Models.ResolveUsersRequest",
-                "Description": "Schema for ResolveUsersRequest",
-                "Properties": [
-                  {
-                    "Name": "UserIds",
-                    "Type": "List<int>",
-                    "Description": "Property of type List<int>",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  }
-                ],
-                "RequiredFields": [],
-                "Examples": {}
-              }
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "ResolveRoles",
-          "HttpMethod": "POST",
-          "Route": "/api/user-management/resolve-roles",
-          "FullRoute": "api/user-management/resolve-roles",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "request",
-              "Type": "ResolveRolesRequest",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [
-                {
-                  "Name": "RoleIds",
-                  "Type": "List<int>",
-                  "Description": "Property of type List<int>",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                }
-              ],
-              "Schema": {
-                "TypeName": "ResolveRolesRequest",
-                "FullTypeName": "UNOPS.PAO.Models.ResolveRolesRequest",
-                "Description": "Schema for ResolveRolesRequest",
-                "Properties": [
-                  {
-                    "Name": "RoleIds",
-                    "Type": "List<int>",
-                    "Description": "Property of type List<int>",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  }
-                ],
-                "RequiredFields": [],
-                "Examples": {}
-              }
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute",
             "AccessControlledAttribute"
           ],
           "AccessControl": "AccessControlledAttribute"
@@ -24382,214 +22864,6 @@
           "AccessControl": ""
         },
         {
-          "Name": "GetUsersPaged",
-          "HttpMethod": "POST",
-          "Route": "/api/values/users/paged",
-          "FullRoute": "api/values/users/paged",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "request",
-              "Type": "UsersPagedRequest",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [
-                {
-                  "Name": "PageIndex",
-                  "Type": "int",
-                  "Description": "Property of type int",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "PageSize",
-                  "Type": "int",
-                  "Description": "Property of type int",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "SearchTerm",
-                  "Type": "string",
-                  "Description": "Property of type string",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "ActiveOnly",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "SelectedUserIds",
-                  "Type": "Int32[]",
-                  "Description": "Property of type Int32[]",
-                  "IsRequired": false,
-                  "IsNullable": true,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                }
-              ],
-              "Schema": {
-                "TypeName": "UsersPagedRequest",
-                "FullTypeName": "UNOPS.PAO.Models.UsersPagedRequest",
-                "Description": "Schema for UsersPagedRequest",
-                "Properties": [
-                  {
-                    "Name": "PageIndex",
-                    "Type": "int",
-                    "Description": "Property of type int",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "PageSize",
-                    "Type": "int",
-                    "Description": "Property of type int",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "SearchTerm",
-                    "Type": "string",
-                    "Description": "Property of type string",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "ActiveOnly",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "SelectedUserIds",
-                    "Type": "Int32[]",
-                    "Description": "Property of type Int32[]",
-                    "IsRequired": false,
-                    "IsNullable": true,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  }
-                ],
-                "RequiredFields": [
-                  "PageIndex",
-                  "PageSize",
-                  "ActiveOnly"
-                ],
-                "Examples": {}
-              }
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute"
-          ],
-          "AccessControl": ""
-        },
-        {
-          "Name": "SearchUsers",
-          "HttpMethod": "GET",
-          "Route": "/api/values/users/search",
-          "FullRoute": "api/values/users/search",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "searchTerm",
-              "Type": "string",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "maxResults",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 20,
-              "Properties": [],
-              "Schema": null
-            },
-            {
-              "Name": "selectedUserIds",
-              "Type": "Int32[]",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": [],
-              "Schema": null
-            }
-          ],
-          "Attributes": [
-            "NullableContextAttribute",
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute"
-          ],
-          "AccessControl": ""
-        },
-        {
           "Name": "GetGeminiModels",
           "HttpMethod": "GET",
           "Route": "/api/values/gemini-models",
@@ -24726,8 +23000,6 @@
         "partnerCategoryId",
         "liaisonOfficeId",
         "partnerFocalPointUserId",
-        "partnerGroupCode",
-        "erpDimValue",
         "unAndStateEntity",
         "keyGlobalPartner",
         "unSecretariatPartner",
@@ -24749,7 +23021,13 @@
         "lastModifiedDate",
         "createdBy",
         "lastModifiedBy",
-        "isDeleted"
+        "isDeleted",
+        "shortName",
+        "description",
+        "phone",
+        "website",
+        "email",
+        "modifiedDate"
       ],
       "NestedFields": {},
       "Operators": [
@@ -24896,7 +23174,7 @@
       ]
     }
   ],
-  "ExtractedAt": "2025-09-12T10:49:03.0481222Z",
+  "ExtractedAt": "2025-08-26T18:41:54.8926276Z",
   "AssemblyName": "UNOPS.PAO.Presentation",
   "AssemblyVersion": "1.0.0.0"
 }
