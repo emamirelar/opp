@@ -197,10 +197,10 @@ export class AiPromptService {
   }
 
   /**
-   * Exports all AI prompts as a C# seeder file for developers
+   * Exports all AI prompts as a SQL script file for seeding
    */
-  exportAiPrompts(): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/export-developer`, {
+  exportAiPromptsAsSql(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/export-sql`, {
       responseType: 'blob'
     });
   }

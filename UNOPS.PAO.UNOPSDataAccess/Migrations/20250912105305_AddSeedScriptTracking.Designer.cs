@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250912105305_AddSeedScriptTracking")]
+    partial class AddSeedScriptTracking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1291,9 +1294,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("PartnerGroupCode")
                         .HasColumnType("text");
 
-                    b.Property<int?>("PartnerGroupId")
-                        .HasColumnType("integer");
-
                     b.Property<Guid>("PartnerKey")
                         .HasColumnType("uuid");
 
@@ -1344,7 +1344,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.HasIndex("PartnerFocalPointUserId");
 
-                    b.HasIndex("PartnerGroupId");
+                    b.HasIndex("PartnerGroupCode");
 
                     b.ToTable("Partners", "public");
 
@@ -1355,14 +1355,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PartnerTree", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
                     b.Property<string>("Code")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("CreatedBy")
@@ -1383,8 +1376,14 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("character varying(13)");
+                        .HasMaxLength(21)
+                        .HasColumnType("character varying(21)");
+
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -1415,11 +1414,13 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Id");
+                    b.HasKey("Code");
 
                     b.ToTable("PartnerTrees", "public");
 
                     b.HasDiscriminator().HasValue("PartnerTree");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.SavedFilter", b =>
@@ -2159,9 +2160,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<int>("ExecutionOrder")
-                        .HasColumnType("integer");
-
                     b.Property<string>("FileHash")
                         .IsRequired()
                         .HasColumnType("text");
@@ -2174,10 +2172,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("ScriptName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ScriptType")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -2232,7 +2226,17 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 {
                     b.HasBaseType("UNOPS.PAO.Domain.Entities.Partner");
 
+                    b.Property<string>("PartnerCode")
+                        .HasColumnType("text");
+
                     b.HasDiscriminator().HasValue("UNOPSPartner");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSPartnerTree", b =>
+                {
+                    b.HasBaseType("UNOPS.PAO.Domain.Entities.PartnerTree");
+
+                    b.HasDiscriminator().HasValue("UNOPSPartnerTree");
                 });
 
             modelBuilder.Entity("PartnerProjects", b =>
@@ -2421,8 +2425,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.HasOne("UNOPS.PAO.Domain.Entities.PartnerTree", "PartnerGroup")
                         .WithMany("Partners")
-                        .HasForeignKey("PartnerGroupId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("PartnerGroupCode");
 
                     b.Navigation("LiaisonOffice");
 

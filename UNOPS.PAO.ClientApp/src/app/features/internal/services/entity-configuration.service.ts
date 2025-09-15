@@ -85,6 +85,8 @@ export interface EntityPermissionsModel {
   canRead: boolean;
   canUpdate: boolean;
   canDelete: boolean;
+  canExport: boolean;
+  canImport: boolean;
 }
 
 export interface RelatedFieldOption {
@@ -176,7 +178,9 @@ export class EntityConfigurationService {
         canCreate: permissions.permissions.canCreate,
         canRead: permissions.permissions.canRead,
         canUpdate: permissions.permissions.canUpdate,
-        canDelete: permissions.permissions.canDelete
+        canDelete: permissions.permissions.canDelete,
+        canExport: permissions.permissions.canExport,
+        canImport: permissions.permissions.canImport
       }))
     );
   }
@@ -253,5 +257,15 @@ export class EntityConfigurationService {
         return null;
       })
     );
+  }
+
+  /**
+   * Exports all entity configurations as a single SQL script file
+   */
+  exportEntityConfigurationAsSql(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/export-sql`, {
+      headers: this.getHeaders(),
+      responseType: 'blob'
+    });
   }
 } 

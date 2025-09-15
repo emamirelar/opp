@@ -5,7 +5,17 @@
       <p class="text-3xl font-bold"> {{ 'title.partners' | translate }} </p>
     </div>
     <div class="ml-auto flex gap-2">
-      @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
+      @if (!permissionsLoading() && entityPermissions().permissions.canExport) {
+        <p-button
+          icon="pi pi-file-export"
+          [label]="'button.export' | translate"
+          (click)="exportData()"
+          rounded
+          text
+          class="partner-export-button"
+        />
+      }
+      @if (!permissionsLoading() && entityPermissions().permissions.canImport) {
         <p-button
           icon="pi pi-file-import"
           [label]="'button.import' | translate"
@@ -14,6 +24,8 @@
           text
           class="partner-import-button"
         />
+      }
+      @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
         <p-button
           icon="pi pi-plus"
           label="New"
@@ -27,6 +39,7 @@
   </div>
 
   <app-listview
+    #listviewComponent
     [dataUrl]="'/api/partner'"
     [entityType]="'Partner'"
     [columns]="columns()"

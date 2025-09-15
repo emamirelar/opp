@@ -24,7 +24,6 @@ public class InteractionModel
     public List<int>? PartnerIds { get; set; } = new List<int>();
     [JsonIgnore]
     public virtual ICollection<InteractionPartnerModel>? InteractionPartners { get; set; }
-    public List<int>? UserIds { get; set; } = new List<int>();
     [JsonIgnore]
     public virtual ICollection<InteractionUserModel>? InteractionUsers { get; set; }
     public string? Location { get; set; }

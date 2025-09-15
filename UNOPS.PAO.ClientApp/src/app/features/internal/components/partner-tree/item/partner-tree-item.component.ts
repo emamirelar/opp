@@ -138,7 +138,9 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
             canRead: true,
             canCreate: true,
             canUpdate: true,
-            canDelete: false
+            canDelete: false,
+            canExport: false,
+            canImport: false
           }
         });
       }
@@ -152,7 +154,9 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
           canRead: true,
           canCreate: true,
           canUpdate: true,
-          canDelete: false
+          canDelete: false,
+          canExport: false,
+          canImport: false
         }
       });
     }

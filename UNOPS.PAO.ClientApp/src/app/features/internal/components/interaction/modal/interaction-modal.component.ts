@@ -330,7 +330,9 @@ export class InteractionModalComponent {
           canRead: true,
           canCreate: true, // Allow creation for new records
           canUpdate: true, // Allow editing form fields for new records
-          canDelete: false // New records can't be deleted
+          canDelete: false, // New records can't be deleted
+          canExport: false,
+          canImport: false
         }
       });
 
@@ -395,8 +397,8 @@ export class InteractionModalComponent {
       });
     }
 
-    // User IDs for form population
-    const userIds = record.userIds || [];
+    // User IDs for form population - extract from users array
+    const userIds = record.users?.map(user => user.id) || [];
 
     // Convert email addresses to lowercase for case-insensitive handling
     const lowercaseEmails = (record.emailAddresses || []).map(email => email.toLowerCase());

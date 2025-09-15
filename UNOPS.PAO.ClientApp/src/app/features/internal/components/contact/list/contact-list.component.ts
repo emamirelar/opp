@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed, ViewChild } from '@angular/core';
 import { NgIf } from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
@@ -77,6 +77,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Contact');
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
+
+  // Reference to listview component for export functionality
+  @ViewChild(ListviewComponent) listviewComponent!: ListviewComponent;
 
   // Dynamic contact columns loaded from API
   contactColumns = signal<ListViewColumn[]>([]);
@@ -458,6 +461,20 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('contact');
+  }
+
+  /**
+   * @uiButton export_contacts
+   * @description Exports contact data to Google Sheets respecting current search and filter criteria
+   * @label Export Contacts
+   * @icon pi pi-file-export
+   * @when_to_use When you need to export contact data with current filters applied for external analysis or reporting
+   * @permissions PARTNER_GLOB_ADMIN
+   */
+  exportData() {
+    if (this.listviewComponent) {
+      this.listviewComponent.exportData();
+    }
   }
 
   /**
