@@ -205,26 +205,26 @@ public class GeminiController : BaseController
     }
 
     /// <summary>
-    /// Exports all AI prompts as a C# seeder file for developers
+    /// Exports all AI prompts as a SQL script file for seeding
     /// </summary>
-    /// <returns>C# code file content for seeding AI prompts</returns>
+    /// <returns>SQL script file content for seeding AI prompts</returns>
     /// <example_uses>
-    /// Export AI prompts for development
-    /// Download seeder file for AI prompts
-    /// Generate developer version of prompts
-    /// Export prompts as C# code
+    /// Export AI prompts as SQL script
+    /// Download SQL file for AI prompts
+    /// Generate SQL version of prompts for seeding
+    /// Export prompts as SQL with PROJECT_ID placeholder
     /// </example_uses>
-    /// <when_to_use>Use this when developers need to export AI prompts as C# code for seeding or backup purposes.</when_to_use>
-    [HttpGet(APIDictionary.AiPrompts + "/export-developer")]
+    /// <when_to_use>Use this when you need to export AI prompts as SQL scripts for database seeding with configurable PROJECT_ID.</when_to_use>
+    [HttpGet(APIDictionary.AiPrompts + "/export-sql")]
     [AccessControlled(EntityTypes.AiPromptManagement, "read")]
-    public async Task<ActionResult> ExportAiPromptsAsync()
+    public async Task<ActionResult> ExportAiPromptsAsSqlAsync()
     {
         // RBAC interceptor handles permission checking
-        var csharpCode = await _managerWrapper.AiPromptManager.ExportAiPromptsAsync(User);
+        var sqlScript = await _managerWrapper.AiPromptManager.ExportAiPromptsAsSqlAsync(User);
         
-        var fileName = $"AiPromptSeeder_{DateTime.UtcNow:yyyyMMddHHmmss}.cs";
+        var fileName = $"05_AiPrompts_{DateTime.UtcNow:yyyyMMddHHmmss}.sql";
         var contentType = "text/plain";
-        var fileBytes = System.Text.Encoding.UTF8.GetBytes(csharpCode);
+        var fileBytes = System.Text.Encoding.UTF8.GetBytes(sqlScript);
         
         return File(fileBytes, contentType, fileName);
     }

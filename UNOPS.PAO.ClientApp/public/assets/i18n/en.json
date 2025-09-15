@@ -100,6 +100,7 @@
     "cancel": "Cancel",
     "close": "Close",
     "darkMode": "Dark Mode",
+    "export": "Export",
     "import": "Import",
     "language": "Language",
     "lightMode": "Light Mode",
@@ -771,9 +772,11 @@
       "constraints": "Add any limitations or requirements"
     },
     "descriptionPlaceholder": "Enter a brief description of what this prompt does...",
-    "exportDeveloper": "Export AiPrompt (Developer Version)",
+    "exportSql": "Export AiPrompt (SQL Script)",
     "exportSuccess": "AI prompts exported successfully as C# seeder file",
+    "exportSqlSuccess": "AI prompts exported successfully as SQL script file",
     "exportError": "Failed to export AI prompts",
+    "exportSqlError": "Failed to export AI prompts as SQL",
     "exporting": "Exporting..."
   },
   "entityManager": {
@@ -783,7 +786,9 @@
     "noDataAvailable": "No data available for preview",
     "templateValid": "Template valid but no result",
     "templateError": "Template error",
-    "examplePlaceholder": "e.g., {name} ({shortName})"
+    "examplePlaceholder": "e.g., {name} ({shortName})",
+    "exportSql": "Export SQL Script",
+    "exportSqlTooltip": "Export all entity configurations as a single SQL script file"
   },
   "search": {
     "placeholder": "Search...",

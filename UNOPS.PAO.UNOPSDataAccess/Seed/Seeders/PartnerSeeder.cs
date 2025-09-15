@@ -6,7 +6,7 @@ using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
-namespace UNOPS.PAO.UNOPSDataAccess.Seed
+namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
 {
     public static class PartnerSeeder
     {

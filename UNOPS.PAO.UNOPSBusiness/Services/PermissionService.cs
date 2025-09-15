@@ -49,25 +49,25 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 return false;
             }
 
-            // Check the specific action permission
-            foreach (var permission in permissions)
+            // Get the permission from the highest priority role
+            var highestPriorityPermission = GetHighestPriorityPermission(permissions, userRoles);
+            
+            if (highestPriorityPermission == null)
             {
-                bool hasPermission = action.ToLower() switch
-                {
-                    "read" => permission.CanRead,
-                    "create" => permission.CanCreate,
-                    "update" => permission.CanUpdate,
-                    "delete" => permission.CanDelete,
-                    _ => false
-                };
-
-                if (hasPermission)
-                {
-                    return true;
-                }
+                return false;
             }
 
-            return false;
+            // Check the specific action permission using the highest priority role
+            bool hasPermission = action.ToLower() switch
+            {
+                "read" => highestPriorityPermission.CanRead,
+                "create" => highestPriorityPermission.CanCreate,
+                "update" => highestPriorityPermission.CanUpdate,
+                "delete" => highestPriorityPermission.CanDelete,
+                _ => false
+            };
+
+            return hasPermission;
         }
 
         public async Task<object> ApplyAccessControlFiltersAsync<T>(IQueryable<T> query, ClaimsPrincipal user, string action, string entityName) where T : class
@@ -81,64 +81,70 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             if (!permissions.Any())
                 return new List<T>(); // No permissions found
 
-            // Check if user has permission for this action
-            bool hasPermission = false;
+            // Get user roles from claims
+            var userRoles = user.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            // Get the permission from the highest priority role
+            var highestPriorityPermission = GetHighestPriorityPermission(permissions, userRoles);
+            
+            if (highestPriorityPermission == null)
+                return new List<T>(); // No permissions found
+
+            // Check if user has permission for this action using the highest priority role
+            bool hasPermission = action.ToLower() switch
+            {
+                "read" => highestPriorityPermission.CanRead,
+                "create" => highestPriorityPermission.CanCreate,
+                "update" => highestPriorityPermission.CanUpdate,
+                "delete" => highestPriorityPermission.CanDelete,
+                _ => false
+            };
+
             string rowFilterConditions = null;
             var permittedColumns = new HashSet<string>();
 
-            foreach (var permission in permissions)
+            if (hasPermission)
             {
-                bool actionAllowed = action.ToLower() switch
+                // Get row filter conditions if available from the highest priority permission
+                if (!string.IsNullOrEmpty(highestPriorityPermission.RowFilter))
                 {
-                    "read" => permission.CanRead,
-                    "create" => permission.CanCreate,
-                    "update" => permission.CanUpdate,
-                    "delete" => permission.CanDelete,
-                    _ => false
-                };
-
-                if (actionAllowed)
-                {
-                    hasPermission = true;
-                    
-                    // Get row filter conditions if available
-                    if (!string.IsNullOrEmpty(permission.RowFilter))
+                    try
                     {
-                        try
+                        var rowFilterJson = JsonSerializer.Deserialize<Dictionary<string, string>>(highestPriorityPermission.RowFilter);
+                        if (rowFilterJson != null && rowFilterJson.TryGetValue($"Can{char.ToUpper(action[0])}{action.Substring(1).ToLower()}", out var filter))
                         {
-                            var rowFilterJson = JsonSerializer.Deserialize<Dictionary<string, string>>(permission.RowFilter);
-                            if (rowFilterJson != null && rowFilterJson.TryGetValue($"Can{char.ToUpper(action[0])}{action.Substring(1).ToLower()}", out var filter))
+                            if (!string.IsNullOrEmpty(filter))
                             {
-                                if (!string.IsNullOrEmpty(filter))
-                                {
-                                    rowFilterConditions = filter;
-                                }
+                                rowFilterConditions = filter;
                             }
-                        }
-                        catch (JsonException)
-                        {
-                            // Invalid JSON, skip row filtering for this permission
                         }
                     }
-
-                    // Get column filter restrictions if available
-                    if (!string.IsNullOrEmpty(permission.PropertyFilter))
+                    catch (JsonException)
                     {
-                        try
+                        // Invalid JSON, skip row filtering for this permission
+                    }
+                }
+
+                // Get column filter restrictions if available from the highest priority permission
+                if (!string.IsNullOrEmpty(highestPriorityPermission.PropertyFilter))
+                {
+                    try
+                    {
+                        var propertyFilterJson = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(highestPriorityPermission.PropertyFilter);
+                        if (propertyFilterJson != null && propertyFilterJson.TryGetValue($"Can{char.ToUpper(action[0])}{action.Substring(1).ToLower()}", out var columns))
                         {
-                            var propertyFilterJson = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(permission.PropertyFilter);
-                            if (propertyFilterJson != null && propertyFilterJson.TryGetValue($"Can{char.ToUpper(action[0])}{action.Substring(1).ToLower()}", out var columns))
+                            foreach (var column in columns)
                             {
-                                foreach (var column in columns)
-                                {
-                                    permittedColumns.Add(column);
-                                }
+                                permittedColumns.Add(column);
                             }
                         }
-                        catch (JsonException)
-                        {
-                            // Invalid JSON, skip column filtering for this permission
-                        }
+                    }
+                    catch (JsonException)
+                    {
+                        // Invalid JSON, skip column filtering for this permission
                     }
                 }
             }
@@ -388,7 +394,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                     CanRead = false,
                     CanCreate = false,
                     CanUpdate = false,
-                    CanDelete = false
+                    CanDelete = false,
+                    CanExport = false,
+                    CanImport = false
                 };
             }
             
@@ -397,7 +405,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 CanRead = await HasPermissionAsync(user, entityName, "read"),
                 CanCreate = await HasPermissionAsync(user, entityName, "create"),
                 CanUpdate = await HasPermissionAsync(user, entityName, "update"),
-                CanDelete = await HasPermissionAsync(user, entityName, "delete")
+                CanDelete = await HasPermissionAsync(user, entityName, "delete"),
+                CanExport = CanExport(user),
+                CanImport = CanImport(user)
             };
         }
 
@@ -419,61 +429,68 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 return false;
             }
 
+            // Get user roles from claims
+            var userRoles = user.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            // Get the permission from the highest priority role
+            var highestPriorityPermission = GetHighestPriorityPermission(permissions, userRoles);
+            
+            if (highestPriorityPermission == null)
+            {
+                return false;
+            }
+
+            // Check if user has the basic permission for this action using the highest priority role
+            bool hasBasicPermission = action.ToLower() switch
+            {
+                "read" => highestPriorityPermission.CanRead,
+                "create" => highestPriorityPermission.CanCreate,
+                "update" => highestPriorityPermission.CanUpdate,
+                "delete" => highestPriorityPermission.CanDelete,
+                _ => false
+            };
+
+            if (!hasBasicPermission)
+                return false;
+
+            // If there's no row filter, user has access to all instances
+            if (string.IsNullOrEmpty(highestPriorityPermission.RowFilter))
+            {
+                return true;
+            }
+
             // Determine which permission property to check based on action
             var actionKey = $"Can{char.ToUpper(action[0])}{action.Substring(1).ToLower()}";
 
-            // Check if any role has row filtering conditions for the specified action
-            foreach (var permission in permissions)
+            try
             {
-                // Check if user has the basic permission for this action
-                bool hasBasicPermission = action.ToLower() switch
+                // Parse row filter conditions from the highest priority permission
+                var rowFilterJson = JsonSerializer.Deserialize<Dictionary<string, string>>(highestPriorityPermission.RowFilter);
+                if (rowFilterJson != null && rowFilterJson.TryGetValue(actionKey, out var filter))
                 {
-                    "read" => permission.CanRead,
-                    "create" => permission.CanCreate,
-                    "update" => permission.CanUpdate,
-                    "delete" => permission.CanDelete,
-                    _ => false
-                };
-
-                if (!hasBasicPermission)
-                    continue;
-
-                // If there's no row filter, user has access to all instances
-                if (string.IsNullOrEmpty(permission.RowFilter))
-                {
-                    return true;
-                }
-
-                try
-                {
-                    // Parse row filter conditions
-                    var rowFilterJson = JsonSerializer.Deserialize<Dictionary<string, string>>(permission.RowFilter);
-                    if (rowFilterJson != null && rowFilterJson.TryGetValue(actionKey, out var filter))
+                    if (string.IsNullOrEmpty(filter))
                     {
-                        if (string.IsNullOrEmpty(filter))
-                        {
-                            // Empty filter means access to all instances
-                            return true;
-                        }
-
-                        // Apply row filter to check if this specific instance is accessible
-                        var hasAccess = await CheckRowFilterCondition(entity, filter, user);
-                        if (hasAccess)
-                        {
-                            return true;
-                        }
-                    }
-                    else
-                    {
-                        // No specific filter for this action, assume access granted
+                        // Empty filter means access to all instances
                         return true;
                     }
+
+                    // Apply row filter to check if this specific instance is accessible
+                    var hasAccess = await CheckRowFilterCondition(entity, filter, user);
+                    return hasAccess;
                 }
-                catch (JsonException)
+                else
                 {
-                    // Invalid JSON, assume access granted to avoid breaking functionality
+                    // No specific filter for this action, assume access granted
                     return true;
                 }
+            }
+            catch (JsonException)
+            {
+                // Invalid JSON, assume access granted to avoid breaking functionality
+                return true;
             }
 
             return false;
@@ -537,6 +554,133 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 System.Diagnostics.Debug.WriteLine($"Dynamic LINQ evaluation failed: {ex.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Gets the permission from the highest priority role when user has multiple roles.
+        /// Role hierarchy (highest to lowest priority):
+        /// 1. PARTNER_GLOB_ADMIN - Full access
+        /// 2. ORG_UNIT_ADMIN - Admin access for specific org units
+        /// 3. PARTNER_USER - Standard partnership user
+        /// 4. UNOPS_GEN_USER - Limited general user access
+        /// </summary>
+        /// <param name="permissions">All permissions for the user's roles</param>
+        /// <param name="userRoles">User's roles</param>
+        /// <returns>The permission from the highest priority role</returns>
+        private EntityPermission GetHighestPriorityPermission(List<EntityPermission> permissions, List<string> userRoles)
+        {
+            // Define role hierarchy (order matters - first = highest priority)
+            var roleHierarchy = new List<string>
+            {
+                "PARTNER_GLOB_ADMIN",   // Highest priority - full access
+                "ORG_UNIT_ADMIN",       // Second - admin access for org units
+                "PARTNER_USER",         // Third - standard partnership user
+                "UNOPS_GEN_USER"        // Lowest priority - limited access
+            };
+
+            // Find the highest priority role that the user has permissions for
+            foreach (var role in roleHierarchy)
+            {
+                if (userRoles.Contains(role))
+                {
+                    var permission = permissions.FirstOrDefault(p => p.Role == role);
+                    if (permission != null)
+                    {
+                        return permission;
+                    }
+                }
+            }
+
+            // Fallback: return the first permission if no role matches hierarchy
+            return permissions.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Gets the highest priority role from user's roles based on the role hierarchy
+        /// </summary>
+        /// <param name="userRoles">User's roles</param>
+        /// <returns>The highest priority role name</returns>
+        private string GetHighestPriorityRole(List<string> userRoles)
+        {
+            // Define role hierarchy (order matters - first = highest priority)
+            var roleHierarchy = new List<string>
+            {
+                "PARTNER_GLOB_ADMIN",   // Highest priority - full access
+                "ORG_UNIT_ADMIN",       // Second - admin access for org units  
+                "PARTNER_USER",         // Third - standard partnership user
+                "UNOPS_GEN_USER"        // Lowest priority - limited access
+            };
+
+            // Return the first role in hierarchy that the user has
+            foreach (var role in roleHierarchy)
+            {
+                if (userRoles.Contains(role))
+                {
+                    return role;
+                }
+            }
+
+            // Fallback to first user role if none match hierarchy
+            return userRoles.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Gets the effective role for a user based on role hierarchy.
+        /// This is useful for debugging and logging which role is being used for permission decisions.
+        /// </summary>
+        /// <param name="user">The user</param>
+        /// <returns>The effective role name</returns>
+        public string GetEffectiveRole(ClaimsPrincipal user)
+        {
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return null;
+            }
+
+            // Get user roles from claims
+            var userRoles = user.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            if (!userRoles.Any())
+            {
+                return null;
+            }
+
+            return GetHighestPriorityRole(userRoles);
+        }
+
+        public bool CanExport(ClaimsPrincipal user)
+        {
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return false;
+            }
+
+            // Only PARTNER_GLOB_ADMIN can export
+            var userRoles = user.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            return userRoles.Contains("PARTNER_GLOB_ADMIN");
+        }
+
+        public bool CanImport(ClaimsPrincipal user)
+        {
+            if (user == null || !user.Identity.IsAuthenticated)
+            {
+                return false;
+            }
+
+            // Only PARTNER_GLOB_ADMIN can import
+            var userRoles = user.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            return userRoles.Contains("PARTNER_GLOB_ADMIN");
         }
     }
 }

@@ -121,13 +121,28 @@ export class EntityManagerComponent implements OnInit {
   // Additional loading state
   loading = computed(() => this.entitiesLoading() || this.configLoading());
 
+  // Working fields state for field management
+  workingFields = signal<EntityFieldConfigurationDto[]>([]);
+
+  // Effect to sync workingFields when currentEntityConfig changes
+  private syncWorkingFieldsEffect = computed(() => {
+    const config = this.currentEntityConfig();
+    if (config && config.fields) {
+      this.workingFields.set([...config.fields]);
+    } else {
+      this.workingFields.set([]);
+    }
+  });
+
   // Permissions
   permissions = signal<EntityPermissionsModel>({
     entity: 'EntityManager',
     canCreate: false,
     canRead: false,
     canUpdate: false,
-    canDelete: false
+    canDelete: false,
+    canExport: false,
+    canImport: false
   });
 
   // UI state
@@ -295,8 +310,6 @@ export class EntityManagerComponent implements OnInit {
     isActive: true,
     enableChangeLog: false
   });
-
-  workingFields = signal<EntityFieldConfigurationDto[]>([]);
 
   ngOnInit() {
     this.loadPermissions();
@@ -494,6 +507,18 @@ export class EntityManagerComponent implements OnInit {
       
       if (showInListView) {
         const currentListViewFields = fields.filter(f => f.showInListView && f.listViewOrder != null);
+        
+        // Check if we already have 5 fields in list view
+        if (currentListViewFields.length >= 5) {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Maximum Fields Reached',
+            detail: 'You can only have a maximum of 5 fields in the List View. Please remove a field before adding a new one.',
+            life: 5000
+          });
+          return;
+        }
+        
         const maxListViewOrder = currentListViewFields.length > 0
           ? Math.max(...currentListViewFields.map(f => f.listViewOrder!))
           : 0;
@@ -503,6 +528,15 @@ export class EntityManagerComponent implements OnInit {
           showInListView: true,
           listViewOrder: maxListViewOrder + 1
         };
+
+        // Show success message
+        const field = updatedFields[fieldIndex];
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Field Added',
+          detail: `${field.fieldName} has been added to the List View`,
+          life: 3000
+        });
       } else {
         updatedFields[fieldIndex] = {
           ...updatedFields[fieldIndex],
@@ -516,6 +550,15 @@ export class EntityManagerComponent implements OnInit {
         
         remainingListViewFields.forEach((field, index) => {
           field.listViewOrder = index + 1;
+        });
+
+        // Show success message
+        const field = updatedFields[fieldIndex];
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Field Removed',
+          detail: `${field.fieldName} has been removed from the List View`,
+          life: 3000
         });
       }
       
@@ -531,15 +574,6 @@ export class EntityManagerComponent implements OnInit {
 
   removeFieldFromListView(fieldId: number | undefined) {
     this.onFieldShowInListViewChange(fieldId, false);
-  }
-
-  // Alias methods for the new two-column interface
-  addFieldToListView(fieldId: number | undefined) {
-    this.moveFieldToListView(fieldId);
-  }
-
-  removeFieldFromListViewByStringId(fieldId: number | undefined) {
-    this.removeFieldFromListView(fieldId);
   }
 
   onListViewFieldDrop(event: CdkDragDrop<EntityFieldConfigurationDto[]>) {
@@ -922,18 +956,40 @@ export class EntityManagerComponent implements OnInit {
     };
 
     this.entityConfigService.saveEntityConfiguration(entityName, saveRequest).subscribe({
-      next: (response) => {
+      next: (response: EntityConfigurationDetailsResponse) => {
+        // Check if this was a new field being created
+        const isNewField = !field.id || field.id <= 0;
+        
+        if (isNewField && response && response.fields) {
+          // Find the newly created field in the response by fieldName
+          const savedField = response.fields.find(f => f.fieldName === field.fieldName);
+          if (savedField && savedField.id) {
+            // Update the local field object with the database-generated ID
+            field.id = savedField.id;
+            console.log(`Updated new field ${field.fieldName} with ID: ${savedField.id}`);
+          }
+        }
+        
+        // Update the current entity config with the complete response
+        this.currentEntityConfig.set(response);
+        
         // Optimistic update: update local state instead of full reload
         this.updateLocalFieldState(field, fieldRequest);
         
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: `Field ${field.fieldName} saved successfully`
+          detail: `Field ${field.fieldName} ${isNewField ? 'created' : 'updated'} successfully`
         });
         this.fieldSaving.set(false);
         this.hasUnsavedChanges.set(false);
         this.closeFieldEditDialog();
+        
+        // Auto-save for new fields: immediately save the configuration again to ensure consistency
+        if (isNewField) {
+          console.log('Auto-saving configuration after creating new field...');
+          this.scheduleAutoSave();
+        }
         
         // Only reload sample data if template fields were changed
         if (field.listViewType === 'template' || field.displayTemplate) {
@@ -957,7 +1013,7 @@ export class EntityManagerComponent implements OnInit {
     const fields = [...this.workingFields()];
     
     if (editedField.id && editedField.id > 0) {
-      // Update existing field
+      // For existing fields, find by ID and update
       const fieldIndex = fields.findIndex(f => f.id === editedField.id);
       if (fieldIndex !== -1) {
         fields[fieldIndex] = {
@@ -965,9 +1021,26 @@ export class EntityManagerComponent implements OnInit {
           ...fieldRequest,
           id: editedField.id // Ensure ID is preserved
         };
+      } else {
+        // This might be a new field that just got an ID - find by fieldName and update
+        const fieldByNameIndex = fields.findIndex(f => f.fieldName === editedField.fieldName);
+        if (fieldByNameIndex !== -1) {
+          fields[fieldByNameIndex] = {
+            ...fields[fieldByNameIndex],
+            ...fieldRequest,
+            id: editedField.id // Update with the new real ID
+          };
+        } else {
+          // Truly new field - add it with the real ID
+          const newField = {
+            ...fieldRequest,
+            id: editedField.id // Use the real ID from database
+          };
+          fields.push(newField);
+        }
       }
     } else {
-      // Add new field - simulate server response with a temporary ID
+      // Add new field with temporary ID (this should be rare now)
       const newField = {
         ...fieldRequest,
         id: Date.now() // Temporary ID until next full reload
@@ -1528,5 +1601,81 @@ export class EntityManagerComponent implements OnInit {
       default:
         return 'text';
     }
+  }
+
+  /**
+   * @uiButton export_entity_configuration_sql
+   * @description Exports all entity configurations as a single SQL script file
+   * @label Export Entity Configuration (SQL Script)
+   * @icon pi pi-download
+   * @when_to_use When you need to export entity configurations as SQL script for database seeding or backup purposes
+   * @permissions ENTITY_MANAGER_READ
+   */
+  exportEntityConfigurationAsSql(): void {
+    // Check read permissions
+    const permissions = this.permissions();
+    if (!permissions.canRead) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Permission Denied',
+        detail: 'You do not have permission to export entity configurations'
+      });
+      return;
+    }
+
+    this.saving.set(true);
+
+    const sub = this.entityConfigService.exportEntityConfigurationAsSql().subscribe({
+      next: (blob) => {
+        console.log('Received blob:', blob);
+        console.log('Blob size:', blob.size);
+        console.log('Blob type:', blob.type);
+
+        if (blob.size === 0) {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Empty Export',
+            detail: 'The exported SQL file is empty. Please check if there are entity configurations to export.'
+          });
+          return;
+        }
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        link.download = `EntityConfiguration_${timestamp}.sql`;
+
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Export Complete',
+          detail: 'Entity configurations exported successfully as SQL script file'
+        });
+      },
+      error: (error) => {
+        console.error('Error exporting entity configurations as SQL:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Export Failed',
+          detail: 'Failed to export entity configurations as SQL'
+        });
+      },
+      complete: () => {
+        this.saving.set(false);
+      }
+    });
+
+    // Note: We don't need to store this subscription since the component already handles cleanup
   }
 }

@@ -58,6 +58,7 @@
         "cancel": "Cancelar",
         "close": "Fechar",
         "darkMode": "Modo Escuro",
+        "export": "Exportar",
         "import": "Importar",
         "language": "Idioma",
         "lightMode": "Modo Claro",
@@ -446,7 +447,9 @@
         "noDataAvailable": "Nenhum dado disponível para prévia",
         "templateValid": "Template válido mas sem resultado",
         "templateError": "Erro no template",
-        "examplePlaceholder": "ex. {nome} ({nomeAbreviado})"
+        "examplePlaceholder": "ex. {nome} ({nomeAbreviado})",
+        "exportSql": "Exportar Script SQL",
+        "exportSqlTooltip": "Exportar todas as configurações de entidades como um único arquivo de script SQL"
     },
     "search": {
         "results": "Resultados da Pesquisa",

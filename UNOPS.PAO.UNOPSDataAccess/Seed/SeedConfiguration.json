@@ -1,0 +1,71 @@
+{
+  "seedSteps": [
+    {
+      "order": 0,
+      "name": "Roles",
+      "type": "sql",
+      "path": "Roles.sql",
+      "description": "Roles configuration"
+    },
+    {
+      "order": 1,
+      "name": "Entities",
+      "type": "sql",
+      "path": "Entities.sql",
+      "description": "Base entity types configuration"
+    },
+    {
+      "order": 2,
+      "name": "EntityManagers", 
+      "type": "sql",
+      "path": "EntityManagers_Complete.sql",
+      "description": "Entity managers and field managers complete configuration"
+    },
+    {
+      "order": 3,
+      "name": "DocumentTypes",
+      "type": "sql", 
+      "path": "DocumentTypes.sql",
+      "description": "Document types configuration"
+    },
+    {
+      "order": 4,
+      "name": "LiaisonOffices",
+      "type": "sql",
+      "path": "LiaisonOffices.sql", 
+      "description": "Liaison offices data"
+    },
+    {
+      "order": 5,
+      "description": "Partner tree structure",
+      "name": "PartnerTree",
+      "type": "seeder",
+      "className": "PartnerTreeSeeder",
+      "methodName": "SeedPartnerTreesAsync",
+      "filePath": "Seeders/PartnerTreeSeeder.cs"
+    },
+    {
+      "order": 6,
+      "name": "AiPrompts",
+      "type": "sql",
+      "path": "AiPrompts.sql",
+      "description": "AI prompts configuration"
+    },
+    {
+      "order": 7,
+      "name": "EntityPermissions", 
+      "type": "sql",
+      "path": "EntityPermissions.sql",
+      "description": "Entity permissions configuration"
+    },
+    {
+      "order": 8,
+      "name": "Partners",
+      "type": "seeder",
+      "className": "PartnerSeeder",
+      "methodName": "SeedPartnersAsync",
+      "filePath": "Seeders/PartnerSeeder.cs",
+      "description": "Partners data seeding"
+    }
+  ]
+}
