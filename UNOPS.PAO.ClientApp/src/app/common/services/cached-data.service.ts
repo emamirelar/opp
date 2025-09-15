@@ -121,7 +121,7 @@ export class CachedDataService {
   allContacts = this.allContactsData.asReadonly();
 
   private allUsersData = signal<any[]>([]);
-  allUsers = this.allUsersData.asReadonly();
+  allUsers  = this.allUsersData.asReadonly();
 
   private currentUserData = signal<any>({});
   currentUser = this.currentUserData.asReadonly();
@@ -179,7 +179,7 @@ export class CachedDataService {
     this.allContactsData.set([]);
     this.allOrganizationUnitsData.set([]);
     this.allPartnerCategoriesData.set([]);
-    this.partnerCategoryGroupData.set([]); // Clear category and group structure    
+    this.partnerCategoryGroupData.set([]); // Clear category and group structure
     this.allLiaisonOfficesData.set([]);
   }
 
@@ -603,14 +603,14 @@ export class CachedDataService {
       this.allUsersData.set([]);
 
       this.isLoading.set(true);
-      
+
       // Use the new paginated endpoint to load only the first 100 users
       const initialRequest = {
         pageIndex: 0,
         pageSize: 100,
         activeOnly: true
       };
-      
+
       this.http.post('/api/values/users/paged', initialRequest).subscribe({
         next: (response: any) => {
           // Set only the records from the paginated response

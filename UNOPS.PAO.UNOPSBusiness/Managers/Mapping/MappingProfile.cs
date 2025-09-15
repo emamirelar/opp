@@ -65,8 +65,7 @@ public class MappingProfile : Profile
                 src.InteractionContacts != null ? src.InteractionContacts.Select(ic => ic.ContactId).ToList() : new List<int>()))
             .ForMember(dest => dest.PartnerIds, opt => opt.MapFrom(src => 
                 src.InteractionPartners != null ? src.InteractionPartners.Select(ip => ip.PartnerId).ToList() : new List<int>()))
-            .ForMember(dest => dest.UserIds, opt => opt.MapFrom(src => 
-                src.InteractionUsers != null ? src.InteractionUsers.Select(iu => iu.UserId).ToList() : new List<int>()));
+;
         CreateMap<InteractionModel, UNOPSInteraction>()
             .ForMember(dest => dest.InteractionContacts, opt => opt.Ignore()); // Handle via junction table processing
         CreateMap<PartnerTreeRequest, UNOPSPartnerTree>();

@@ -395,8 +395,8 @@ export class InteractionModalComponent {
       });
     }
 
-    // User IDs for form population
-    const userIds = record.userIds || [];
+    // User IDs for form population - extract from users array
+    const userIds = record.users?.map(user => user.id) || [];
 
     // Convert email addresses to lowercase for case-insensitive handling
     const lowercaseEmails = (record.emailAddresses || []).map(email => email.toLowerCase());
