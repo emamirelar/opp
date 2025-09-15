@@ -10,21 +10,41 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Check if the constraint exists before trying to drop it
+            migrationBuilder.Sql(
+                @"DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_constraint 
+                        WHERE conname = 'FK_Partners_PartnerTrees_PartnerGroupCode'
+                    ) THEN
+                        ALTER TABLE ""public"".""Partners"" DROP CONSTRAINT ""FK_Partners_PartnerTrees_PartnerGroupCode"";
+                    END IF;
+                END $$;");
 
-            migrationBuilder.DropForeignKey(
-                name: "FK_Partners_PartnerTrees_PartnerGroupCode",
-                schema: "public",
-                table: "Partners");
+            // Check if the primary key constraint exists before trying to drop it
+            migrationBuilder.Sql(
+                @"DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_constraint 
+                        WHERE conname = 'PK_PartnerTrees'
+                    ) THEN
+                        ALTER TABLE ""public"".""PartnerTrees"" DROP CONSTRAINT ""PK_PartnerTrees"";
+                    END IF;
+                END $$;");
 
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_PartnerTrees",
-                schema: "public",
-                table: "PartnerTrees");
-
-            migrationBuilder.DropIndex(
-                name: "IX_Partners_PartnerGroupCode",
-                schema: "public",
-                table: "Partners");
+            // Check if the index exists before trying to drop it
+            migrationBuilder.Sql(
+                @"DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_indexes 
+                        WHERE indexname = 'IX_Partners_PartnerGroupCode'
+                    ) THEN
+                        DROP INDEX ""public"".""IX_Partners_PartnerGroupCode"";
+                    END IF;
+                END $$;");
 
             migrationBuilder.AddColumn<int>(
                 name: "PartnerGroupId",
@@ -44,6 +64,12 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 schema: "public",
                 table: "Partners",
                 column: "PartnerGroupId");
+
+            // Clean up orphaned Engagement records before adding the new foreign key constraint
+            migrationBuilder.Sql(
+                @"UPDATE ""public"".""Engagements"" 
+                  SET ""PartnerId"" = NULL 
+                  WHERE ""PartnerId"" NOT IN (SELECT ""Id"" FROM ""public"".""Partners"")");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_Engagements_Partners_PartnerId",
