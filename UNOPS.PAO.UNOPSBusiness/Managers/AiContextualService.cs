@@ -130,25 +130,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 var embeddingResult = await ExecuteEmbeddingSearch(entityName, vectorEmbedding, embeddingThreshold, "1=1");
                 return embeddingResult;
             }
-            
-            // Step 3: If we have search text but no embedding, generate embedding and search
-            if (!string.IsNullOrEmpty(searchText))
-            {
-                var generatedEmbedding = await CreateEmbeddingForText(searchText);
-                if (!string.IsNullOrEmpty(generatedEmbedding))
-                {
-                    var embeddingResult = await ExecuteEmbeddingSearch(entityName, generatedEmbedding, embeddingThreshold, "1=1");
-                    
-                    // If embedding search also fails but we have a vector, log for future searches
-                    if ((embeddingResult == null || embeddingResult is DBNull))
-                    {
-                        Console.WriteLine($"No match found for '{searchText}' in '{entityName}', but embedding created for future searches.");
-                    }
-                    
-                    return embeddingResult;
-                }
-            }
-            
+
             return null;
         }
 
