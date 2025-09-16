@@ -249,6 +249,25 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             return false;
         }
 
+        public async Task<List<int>> GetAllDescendantsAsync(string parentCode)
+        {
+            var allPartnerTrees = await LoadPartnerTreesAsync();
+            var descendants = new List<int>();
+            await GetDescendantsRecursive(parentCode, allPartnerTrees.ToList(), descendants);
+            return descendants;
+        }
+
+        private async Task GetDescendantsRecursive(string parentCode, List<UNOPSPartnerTree> allPartnerTrees, List<int> descendants)
+        {
+            var children = allPartnerTrees.Where(pt => pt.Parent == parentCode && !pt.IsDeleted).ToList();
+            
+            foreach (var child in children)
+            {
+                descendants.Add(child.Id);
+                await GetDescendantsRecursive(child.Code, allPartnerTrees, descendants);
+            }
+        }
+
         
     }
 }

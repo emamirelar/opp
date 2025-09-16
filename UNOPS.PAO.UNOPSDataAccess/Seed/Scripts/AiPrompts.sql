@@ -736,13 +736,13 @@ Input data: {promptData}',
         false
     );
 
-    -- Insert parnter_category_interactions_summary prompt
+    -- Insert partner_category_interactions_summary prompt
     INSERT INTO public."AiPrompt" (
         "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
         "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
     ) VALUES (
-        'parnter_category_interactions_summary',
+        'partner_category_interactions_summary',
         'I am providing a partner category name, please provide a summary of recent interactions for partners unders this partner category. 
 
 ##Summary of key interactions
@@ -770,7 +770,7 @@ If there are no interactions with the partner please state "Currently, there are
 
 ',
         NOW(),
-        'Interaction',
+        'PartnerTree',
         0,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
         '{"temperature":1,"top_p":0.2,"max_output_tokens":8192}',
@@ -780,7 +780,7 @@ If there are no interactions with the partner please state "Currently, there are
         NULL,
         '[]',
         'GetBasicPartnerCategoryDetailsAsync',
-        'Creates detailed interaction summaries for a partner ctegory with contact details, interaction history, and overall partnership assessment in structured Markdown format.',
+        'Creates detailed interaction summaries for a partner category with contact details, interaction history, and overall partnership assessment in structured Markdown format.',
         true
     );
 
@@ -858,7 +858,7 @@ Please include a line between each story
 Data: {promptData}
 ',
         NOW(),
-        'Partner',
+        'PartnerTree',
         0,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
         '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
@@ -867,7 +867,7 @@ Data: {promptData}
         '{{PROJECT_ID}}',
         '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]',
         '[{"googleSearch":{}}]',
-        'GetBasicPartnerDetailsAsync',
+        'GetPartnerGroupNewsDetailsAsync',
         'Searches for and summarizes the latest news articles about a partner group, identifying current focus areas and trends from recent developments.',
         true
     );
@@ -906,7 +906,7 @@ If there are no interactions with the partner please state "Currently, there are
 
 ',
         NOW(),
-        'Partner',
+        'PartnerTree',
         0,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
         '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
@@ -915,7 +915,7 @@ If there are no interactions with the partner please state "Currently, there are
         '{{PROJECT_ID}}',
         NULL,
         '[]',
-        'GetBasicPartnerDetailsAsync',
+        'GetBasicPartnerGroupDetailsAsync',
         'Creates detailed interaction summaries for a partner group with contact details, interaction history, and overall partnership assessment in structured Markdown format.',
         true
     );
@@ -946,7 +946,7 @@ Please include a line between each story
 Data: {promptData}
 ',
         NOW(),
-        'Partner',
+        'PartnerTree',
         0,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
         '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
@@ -955,7 +955,7 @@ Data: {promptData}
         '{{PROJECT_ID}}',
         '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]',
         '[{"googleSearch":{}}]',
-        'GetBasicPartnerDetailsAsync',
+        'GetPartnerCategoryNewsDetailsAsync',
         'Searches for and summarizes the latest news articles about a partner category, identifying current focus areas and trends from recent developments.',
         true
     );

@@ -16,14 +16,80 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.UNOPSDataAccess.Seed
 {
+    /// <summary>
+    /// Generic seed runner that can execute SQL scripts and C# seeders in configured order.
+    /// 
+    /// By default, seed files are read from the bin directory (copied during build).
+    /// To read directly from source files instead, set environment variable:
+    /// SEED_USE_SOURCE_FILES=true
+    /// 
+    /// This is useful during development to avoid the need to rebuild when modifying seed files.
+    /// </summary>
     public static class GenericSeedRunner
     {
+        /// <summary>
+        /// Always read seed files from source directory instead of bin directory
+        /// This ensures that changes to seed files are immediately reflected without needing to rebuild
+        /// </summary>
+        private static bool UseSourceFiles => true;
+
+        /// <summary>
+        /// Gets the source project directory path for UNOPS.PAO.UNOPSDataAccess
+        /// </summary>
+        private static string GetSourceProjectDirectory()
+        {
+            // Start from the assembly location and work up to find the solution root
+            var assemblyLocation = Assembly.GetExecutingAssembly().Location;
+            var currentDir = new DirectoryInfo(Path.GetDirectoryName(assemblyLocation)!);
+            
+            // First, find the solution root directory (contains multiple UNOPS.PAO.* directories)
+            while (currentDir != null)
+            {
+                var subDirectories = currentDir.GetDirectories("UNOPS.PAO.*");
+                if (subDirectories.Length >= 3) // Solution root should contain multiple UNOPS.PAO.* projects
+                {
+                    // Found solution root, now look for UNOPS.PAO.UNOPSDataAccess
+                    var dataAccessDir = Path.Combine(currentDir.FullName, "UNOPS.PAO.UNOPSDataAccess");
+                    if (Directory.Exists(dataAccessDir) && File.Exists(Path.Combine(dataAccessDir, "UNOPS.PAO.UNOPSDataAccess.csproj")))
+                    {
+                        Console.WriteLine($"Located UNOPS.PAO.UNOPSDataAccess project: {dataAccessDir}");
+                        return dataAccessDir;
+                    }
+                }
+                currentDir = currentDir.Parent;
+            }
+            
+            // Fallback: Direct search for UNOPS.PAO.UNOPSDataAccess.csproj from assembly location
+            currentDir = new DirectoryInfo(Path.GetDirectoryName(assemblyLocation)!);
+            while (currentDir != null && !File.Exists(Path.Combine(currentDir.FullName, "UNOPS.PAO.UNOPSDataAccess.csproj")))
+            {
+                currentDir = currentDir.Parent;
+            }
+            
+            if (currentDir != null)
+            {
+                Console.WriteLine($"Located UNOPS.PAO.UNOPSDataAccess project (fallback): {currentDir.FullName}");
+                return currentDir.FullName;
+            }
+            
+            throw new DirectoryNotFoundException($"Could not locate UNOPS.PAO.UNOPSDataAccess project directory. Assembly location: {assemblyLocation}");
+        }
+
         /// <summary>
         /// Executes all configured seed steps (SQL scripts and C# seeders) in the specified order
         /// </summary>
         public static async Task ExecuteConfiguredSeedsAsync(UNOPSAppDbContext context, IConfiguration? appConfiguration = null)
         {
             Console.WriteLine("Starting generic seed execution...");
+            Console.WriteLine($"Seed file mode: {(UseSourceFiles ? "SOURCE FILES" : "BIN DIRECTORY")}");
+            if (UseSourceFiles)
+            {
+                Console.WriteLine($"Reading seed files from: {GetSourceProjectDirectory()}");
+            }
+            else
+            {
+                Console.WriteLine($"Reading seed files from: {AppDomain.CurrentDomain.BaseDirectory}");
+            }
             
             var seedConfiguration = await LoadSeedConfigurationAsync();
             var orderedSteps = seedConfiguration.SeedSteps.OrderBy(s => s.Order).ToList();
@@ -106,7 +172,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         /// </summary>
         private static string GetSeedConfigurationPath()
         {
-            var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            var baseDirectory = UseSourceFiles ? GetSourceProjectDirectory() : AppDomain.CurrentDomain.BaseDirectory;
             return Path.Combine(baseDirectory, "Seed", "SeedConfiguration.json");
         }
 
@@ -370,7 +436,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         /// </summary>
         private static string GetScriptsDirectory()
         {
-            var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            var baseDirectory = UseSourceFiles ? GetSourceProjectDirectory() : AppDomain.CurrentDomain.BaseDirectory;
             return Path.Combine(baseDirectory, "Seed", "Scripts");
         }
 
@@ -379,7 +445,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         /// </summary>
         private static string GetSeedDirectory()
         {
-            var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            var baseDirectory = UseSourceFiles ? GetSourceProjectDirectory() : AppDomain.CurrentDomain.BaseDirectory;
             return Path.Combine(baseDirectory, "Seed");
         }
 
@@ -388,7 +454,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         /// </summary>
         private static string GetSeedersDirectory()
         {
-            var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            var baseDirectory = UseSourceFiles ? GetSourceProjectDirectory() : AppDomain.CurrentDomain.BaseDirectory;
             return Path.Combine(baseDirectory, "Seed", "Seeders");
         }
     }
