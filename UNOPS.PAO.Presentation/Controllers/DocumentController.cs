@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Managers;
@@ -13,11 +12,6 @@ using UNOPS.PAO.Identity.Security.Enums;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
-using UNOPS.PAO.Domain.Entities;
-using System.Text;
-using Newtonsoft.Json;
-using System.Text.Json;
-using Google.Apis.Auth.OAuth2;
 using static Google.Cloud.SecretManager.V1.Replication.Types;
 
 namespace UNOPS.PAO.Presentation.Controllers;
@@ -26,19 +20,16 @@ public class DocumentController : BaseController
 {
     private readonly IDocumentManager _manager;
     private readonly IManagerWrapper _managerWrapper;
-    private readonly IConfiguration _configuration;
 
     public DocumentController(
         IManagerWrapper managerWrapper, 
         IAuthorizationService authorizationService,
         ILogger<DocumentController> logger,
-        UserResolverService<int> userResolverService,
-        IConfiguration configuration)
+        UserResolverService<int> userResolverService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = managerWrapper.DocumentManager;
         _managerWrapper = managerWrapper;
-        _configuration = configuration;
     }
 
     /// <summary>

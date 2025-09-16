@@ -27,9 +27,7 @@ DECLARE
 BEGIN
     RAISE NOTICE 'EntityFieldManagers table cleared, inserting UI configuration...';
 
-    -- ================================================================
-    -- CONTACT ENTITY FIELDS (25 fields)
-    -- ================================================================
+    -- Insert EntityFieldManagers data
     INSERT INTO public."EntityFieldManagers" (
         "EntityManagerId", "FieldName", "DataType", "Description", "IsRequired", "IsActive", "DefaultValue", "MaxLength", "DisplayOrder", "ShowInListView", "ListViewOrder", "RelatedDisplayProperty", "DisplayFieldPath", "DisplayTemplate", "ListViewLabel", "ListViewType", "ListViewWidth", "ListViewEllipsis", "ListViewSortable", "FirstLetterFallbackField", "HelperText",
         "Name", "Status", "CreatedBy", "CreatedDate", "LastModifiedBy", "LastModifiedDate", "IsDeleted", "DeletedBy", "DeletedDate"
@@ -206,6 +204,6 @@ BEGIN
         (5, 'ParentId', 'int', 'Parent organization hierarchy ID', false, true, NULL, NULL, 5, true, 5, NULL, 'parentId', NULL, 'Parent ID', 'text', '15%', false, true, NULL, NULL, 'ParentId', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
     SELECT COUNT(*) INTO field_managers_count FROM public."EntityFieldManagers";
-    RAISE NOTICE 'All EntityFieldManagers setup complete with % total records', field_managers_count;
+    RAISE NOTICE 'EntityFieldManagers setup complete with % total records', field_managers_count;
 
 END $$;

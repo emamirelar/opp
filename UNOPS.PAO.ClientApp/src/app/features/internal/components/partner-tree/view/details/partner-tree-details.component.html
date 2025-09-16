@@ -107,46 +107,23 @@
 
                     <!-- AI Summary of interactions -->
                     <app-ai-panel
+                    #interactionsSummaryPanel
                     [title]="'label.partner.summaryOfInteractions'"
                     [entityId]="entityId()"
-                    [promptType]="'summary-interactions'"
-                    [aiService]="mockAiService"
-                    [loadOnInit]="true">
+                    [promptType]="!partnerTree()?.partnerGroupId ? 'partner_category_interactions_summary' : 'partner_group_interactions_summary'"
+                    [aiService]="geminiService"
+                    [loadOnInit]="false">
                   </app-ai-panel>
 
                   <!-- AI summary of partner News -->
                   <app-ai-panel
+                  #newsPanel
                   [title]="'label.partner.partnerNews'"
                   [entityId]="entityId()"
-                  [promptType]="'partner-news'"
-                  [aiService]="mockAiService"
-                  [loadOnInit]="true">
+                  [promptType]="!partnerTree()?.partnerGroupId ? 'partner_category_news' : 'partner_group_news'"
+                  [aiService]="geminiService"
+                  [loadOnInit]="false">
                 </app-ai-panel>
-
-
-
-          @if (!partnerTree()?.partnerGroupId) {
-          <!-- AI summary of partner category -->
-            <app-ai-panel
-              [title]="'label.partner.categorySummary'"
-              [entityId]="entityId()"
-              [promptType]="'category-summary'"
-              [aiService]="mockAiService"
-              [loadOnInit]="true">
-            </app-ai-panel>
-          } @else {
-            <!-- AI summary of partner group -->
-            <app-ai-panel
-              [title]="'label.partner.groupSummary'"
-              [entityId]="entityId()"
-              [promptType]="'group-summary'"
-              [aiService]="mockAiService"
-              [loadOnInit]="true">
-            </app-ai-panel>
-          }
-
-
-
         </div>
 
     </div>

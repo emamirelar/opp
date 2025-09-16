@@ -49,7 +49,7 @@ const internalRoutes: Routes = [
       },
       {
         path: 'partnerships',
-        canActivate: [authGuard, routePermissionGuard],
+        canActivate: [routePermissionGuard],
         data: { breadcrumb: 'Partnerships' },
         children: [
           {
@@ -142,7 +142,7 @@ const internalRoutes: Routes = [
           {
             path: 'partnership-agreements',
             component: ComingSoonComponent,
-            canActivate: [authGuard, routePermissionGuard],
+            canActivate: [authGuard],
             data: {
               breadcrumb: 'Partnership Agreements',
               featureName: 'Partnership Agreements'

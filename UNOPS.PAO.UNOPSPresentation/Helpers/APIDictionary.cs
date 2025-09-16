@@ -11,5 +11,4 @@ public class APIDictionary
     public const string Document = APIPrefix + "document";
     public const string DocumentUpload = Document + "/upload";
     public const string DocumentLink = Document + "/link";
-    public const string DocumentGenerate = Document + "/generate-document";
 }
