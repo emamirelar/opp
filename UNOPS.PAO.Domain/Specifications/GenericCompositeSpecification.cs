@@ -1111,7 +1111,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             return SearchTextMode.ExactPhrase;
 
         // Si le texte contient plusieurs mots, utiliser la recherche par mots multiples
-        if (searchText.Contains(' '))
+        if (searchText.Contains('|'))
             return SearchTextMode.MultipleWords;
 
         // Sinon, recherche de phrase exacte (mot unique)
