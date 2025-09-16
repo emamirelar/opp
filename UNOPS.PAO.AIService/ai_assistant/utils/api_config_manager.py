@@ -44,12 +44,9 @@ class ApiConfigManager:
                 # Fallback: try config/tools/endpoints/ directory structure
                 endpoints_dir = os.path.join(self._config_directory, "tools", "endpoints")
                 if os.path.exists(endpoints_dir):
+                    print(f"📁 Loading entity configs from: {endpoints_dir}")
                     # Load all JSON files from endpoints directory
                     self._tools_config = self._load_from_endpoints_directory(endpoints_dir)
-                    # The function already extracts tools correctly
-                    tools_count = len(self._tools_config.get("tools", []))
-                    print(f"✅ Loaded {tools_count} tools from endpoints directory")
-                    return self._tools_config
                 else:
                     # Final fallback to package default
                     package_tools = os.path.join(
@@ -60,7 +57,7 @@ class ApiConfigManager:
                         print(f"ℹ️ Using package default tools config")
                     else:
                         print(f"❌ No tools config found")
-                        self._tools_config = {"entities": [], "tools": []}
+                        self._tools_config = {"entities": []}
                         return self._tools_config
             
             try:
@@ -69,54 +66,29 @@ class ApiConfigManager:
                 print(f"✅ Loaded tools configuration from {tools_config_path}")
             except FileNotFoundError:
                 print(f"❌ Tools config file not found: {tools_config_path}")
-                self._tools_config = {"entities": [], "tools": []}
+                self._tools_config = {"entities": []}
             except json.JSONDecodeError as e:
                 print(f"❌ Invalid JSON in tools config: {e}")
-                self._tools_config = {"entities": [], "tools": []}
+                self._tools_config = {"entities": []}
                 
         return self._tools_config
     
     def _load_from_endpoints_directory(self, endpoints_dir: str) -> Dict[str, Any]:
         """Load entity configurations from config/tools/endpoints/ directory"""
         entities = []
-        tools = []
-        loaded_configs = []
-        failed_configs = []
         
         for json_file in os.listdir(endpoints_dir):
             if json_file.endswith('.json'):
                 try:
                     with open(os.path.join(endpoints_dir, json_file), 'r', encoding='utf-8') as f:
                         entity_config = json.load(f)
-                        
-                        # Handle the actual structure: {"entity": "Partner", "endpoints": [...]}
-                        if "entity" in entity_config and "endpoints" in entity_config:
-                            entities.append(entity_config)
-                            # Extract endpoints as tools
-                            for endpoint in entity_config["endpoints"]:
-                                tools.append(endpoint)
-                        # Fallback: handle legacy structure with "entities" array
-                        elif "entities" in entity_config:
+                        if "entities" in entity_config:
                             entities.extend(entity_config["entities"])
-                            for entity in entity_config["entities"]:
-                                if "tools" in entity:
-                                    tools.extend(entity["tools"])
-                                elif "endpoints" in entity:
-                                    tools.extend(entity["endpoints"])
-                        
-                        loaded_configs.append(json_file)
+                        print(f"✅ Loaded entity config: {json_file}")
                 except Exception as e:
-                    failed_configs.append(f"{json_file}: {e}")
+                    print(f"❌ Failed to load {json_file}: {e}")
         
-        # Summary logging instead of individual file messages
-        if loaded_configs:
-            print(f"✅ Loaded {len(loaded_configs)} entity configs")
-        if failed_configs:
-            print(f"❌ Failed to load {len(failed_configs)} configs:")
-            for failure in failed_configs:
-                print(f"   - {failure}")
-        
-        return {"entities": entities, "tools": tools}
+        return {"entities": entities}
     
     def load_entity_api_config(self, entity_name: str) -> Dict[str, Any]:
         """
@@ -489,12 +461,6 @@ class ApiConfigManager:
         """Get API base URL from framework configuration"""
         server_config = self.framework_config.get("server", {})
         return server_config.get("api_base_url", "https://localhost:44426")
-    
-    def get_iap_audience(self) -> Optional[str]:
-        """Get IAP audience for authentication from framework configuration"""
-        auth_config = self.framework_config.get("auth", {})
-        iap_config = auth_config.get("iap", {})
-        return iap_config.get("audience")
     
     def get_gemini_model(self) -> str:
         """Get Gemini model from framework configuration with safe fallback"""
@@ -1355,6 +1321,7 @@ This entity may support basic search functionality.
         self._tools_config = None
         self._entity_tools_cache.clear()
         self._discovered_entities = None
+        print(f"📁 API config directory set to: {config_dir}")
 
 
 # Global singleton instance
@@ -1367,10 +1334,5 @@ config_manager = api_config_manager
 def get_api_base_url():
     return api_config_manager.get_api_base_url()
 
-# Create a module-level variable for direct access (lazy loading to avoid circular imports)
-def get_api_base_url_lazy():
-    """Lazy loading wrapper to avoid circular imports"""
-    return api_config_manager.get_api_base_url()
-
-# For backward compatibility - use function call instead of direct access
-API_BASE_URL = None  # Will be set on first access 
+# Create a module-level variable for direct access
+API_BASE_URL = api_config_manager.get_api_base_url() 

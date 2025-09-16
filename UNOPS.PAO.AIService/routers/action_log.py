@@ -297,7 +297,7 @@ async def _get_recent_conversations(user_id: str) -> List[dict]:
                                     for j in range(i + 1, len(session.events)):
                                         next_message = session.events[j]
                                         if (hasattr(next_message, 'author') and
-                                            next_message.author in ["TaskExecutorAgent", "response_formatter_agent", "api_caller_agent"]):
+                                            next_message.author in ["user_request_agent", "response_formatter_agent", "task_planner_agent", "api_caller_agent"]):
                                             if hasattr(next_message, 'content') and next_message.content and hasattr(next_message.content, 'parts'):
                                                 assistant_parts = []
                                                 for part in next_message.content.parts:

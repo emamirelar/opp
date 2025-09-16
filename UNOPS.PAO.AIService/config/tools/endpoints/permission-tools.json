@@ -1,216 +1,110 @@
 {
   "entity": "Permission",
-  "description": "Manages user permissions and role-based access control within the system.",
+  "description": "This entity manages system permissions, user roles, and access control configurations within the application. It allows checking user access to routes, retrieving entity-specific permissions, and managing system-wide role definitions.",
   "synonyms": [
-    "Authorization",
     "Access Control",
     "Roles",
-    "Privileges",
-    "Security"
+    "Authorization",
+    "Rights",
+    "Privileges"
   ],
   "mandatoryFields": [],
-  "baseUrl": "/api/permissions",
   "endpoints": [
     {
       "name": "GetSystemPermissionConfiguration",
-      "url": "/api/permissions",
+      "url": "api/permissions",
       "method": "GET",
-      "intent": [
-        "get",
-        "retrieve",
-        "configuration"
-      ],
-      "description": "Retrieves the complete system permission configuration, including all roles and their associated capabilities.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
-      },
+      "description": "Retrieves the entire system permission configuration, including all roles and their capabilities, for frontend initialization.",
       "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/permissions",
-      "requiredFields": [],
       "example_uses": [
-        "Get the system's permission configuration.",
-        "Retrieve all roles and capabilities."
+        "Get the full permission structure of the system.",
+        "Retrieve all defined roles and their associated permissions.",
+        "Initialize the frontend with the complete system permission configuration."
       ],
-      "when_to_use": "When needing to initialize the frontend with the system's permission settings.",
-      "scoring": {
-        "searchBonus": 10,
-        "intentMatch": 90,
-        "complexity": "simple"
-      }
+      "when_to_use": "Use this endpoint to fetch the comprehensive, system-wide permission configuration, typically at application startup or for administrative overview."
     },
     {
       "name": "CheckUserRoutePermission",
-      "url": "/api/permissions/check/{route}",
+      "url": "api/permissions/check/{*route}",
       "method": "GET",
-      "intent": [
-        "check",
-        "verify",
-        "validate",
-        "access"
-      ],
-      "description": "Checks if the current user has permission to access a specific route or page.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
+      "description": "Checks if the current authenticated user has permission to access a specific route or page, returning access status and specific permissions for that route.",
+      "parameters": {
+        "route": {
+          "type": "string",
+          "required": false,
+          "description": "The route/URL path to check permissions for (e.g., '/partnerships/contacts/123')"
+        }
       },
-      "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/permissions/check//partnerships/contacts/123",
-      "requiredFields": [],
       "example_uses": [
-        "Check if the user can access a specific route.",
-        "Verify user permissions for a given URL."
+        "Check if the current user can access the '/admin/users' page.",
+        "Verify permissions for the route '/projects/123/details'.",
+        "Determine if a user has access to a specific application path."
       ],
-      "when_to_use": "When needing to determine if the current user has access to a particular route.",
-      "scoring": {
-        "searchBonus": 10,
-        "intentMatch": 95,
-        "complexity": "simple"
-      }
+      "when_to_use": "Use this endpoint to dynamically verify if the current user is authorized to view or interact with a particular application route or page."
     },
     {
       "name": "GetEntityPermissionDetails",
-      "url": "/api/permissions/entity-permissions/{entityName}",
+      "url": "api/permissions/entity-permissions/{entityName}",
       "method": "GET",
-      "intent": [
-        "get",
-        "retrieve",
-        "details"
-      ],
-      "description": "Retrieves detailed permission information for a specific entity, including all possible operations and role requirements.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
+      "description": "Retrieves complete permission details for a specific entity, including all possible operations and role requirements for that entity.",
+      "parameters": {
+        "entityName": {
+          "type": "string",
+          "required": false,
+          "description": "Name of the entity (e.g., 'Contact', 'Partner', 'Interaction')"
+        }
       },
-      "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/permissions/entity-permissions/Contact",
-      "requiredFields": [],
       "example_uses": [
-        "Get permission details for a specific entity.",
-        "Retrieve entity-specific permission configuration."
+        "Get all permissions related to the 'Contact' entity.",
+        "Show what operations are allowed on the 'Partner' entity.",
+        "Retrieve the detailed permission configuration for the 'Interaction' entity."
       ],
-      "when_to_use": "When needing to understand the permission structure for a particular entity.",
-      "scoring": {
-        "searchBonus": 10,
-        "intentMatch": 90,
-        "complexity": "simple"
-      }
+      "when_to_use": "Use this endpoint to understand the granular permissions and role requirements associated with a specific data entity within the system."
     },
     {
       "name": "GetCurrentUserRoles",
-      "url": "/api/permissions/user-roles",
+      "url": "api/permissions/user-roles",
       "method": "GET",
-      "intent": [
-        "get",
-        "retrieve",
-        "roles"
-      ],
-      "description": "Retrieves the roles and permissions of the currently authenticated user.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
-      },
+      "description": "Retrieves the current authenticated user's assigned roles and basic permission information.",
       "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/permissions/user-roles",
-      "requiredFields": [],
       "example_uses": [
-        "Get the current user's roles.",
-        "Retrieve the user's permission assignments."
+        "Find out what roles the currently logged-in user has.",
+        "Display the roles assigned to me.",
+        "Get my current authorization profile."
       ],
-      "when_to_use": "When needing to know the roles and permissions of the current user.",
-      "scoring": {
-        "searchBonus": 10,
-        "intentMatch": 95,
-        "complexity": "simple"
-      }
+      "when_to_use": "Use this endpoint to quickly fetch the roles and basic permissions of the user currently making the request."
     },
     {
       "name": "GetUserRolesByUserId",
-      "url": "/api/permissions/user/{userId}",
+      "url": "api/permissions/user/{userId}",
       "method": "GET",
-      "intent": [
-        "get",
-        "retrieve",
-        "roles",
-        "user"
-      ],
-      "description": "Retrieves the roles and basic information for a specific user, identified by their user ID.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
+      "description": "Retrieves roles and basic information for a specific user identified by their ID. This operation typically requires administrative access.",
+      "parameters": {
+        "userId": {
+          "type": "string",
+          "required": false,
+          "description": "The ID of the user to retrieve role information for"
+        }
       },
-      "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/permissions/user/123",
-      "requiredFields": [],
       "example_uses": [
-        "Get roles for a specific user.",
-        "Retrieve user roles by user ID."
+        "Get the roles for user 'user123'.",
+        "Check the permissions of a specific user by their ID.",
+        "Retrieve the role assignments for user 'abc-def-ghi'."
       ],
-      "when_to_use": "When needing to know the roles of a specific user, typically for administrative purposes.",
-      "scoring": {
-        "searchBonus": 10,
-        "intentMatch": 90,
-        "complexity": "simple"
-      }
+      "when_to_use": "Use this endpoint (with appropriate administrative privileges) to look up the roles and basic information for any user in the system by their unique ID."
     },
     {
       "name": "GetAvailableSystemRoles",
-      "url": "/api/permissions/available-roles",
+      "url": "api/permissions/available-roles",
       "method": "GET",
-      "intent": [
-        "get",
-        "retrieve",
-        "list",
-        "roles"
-      ],
-      "description": "Retrieves a list of all available system roles and their descriptions.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
-      },
+      "description": "Retrieves a list of all available system roles along with their descriptions.",
       "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/permissions/available-roles",
-      "requiredFields": [],
       "example_uses": [
-        "Get a list of available system roles.",
-        "Retrieve all possible roles in the system."
+        "List all roles that can be assigned in the system.",
+        "Get a catalog of all predefined system roles.",
+        "Display the names and descriptions of all available roles."
       ],
-      "when_to_use": "When needing to know the available roles within the system.",
-      "scoring": {
-        "searchBonus": 10,
-        "intentMatch": 90,
-        "complexity": "simple"
-      }
+      "when_to_use": "Use this endpoint to get a comprehensive list of all roles defined within the system, useful for role management interfaces or understanding system capabilities."
     }
-  ],
-  "commonPatterns": {
-    "pagination": {
-      "pageIndex": "1-based page number (default: 1)",
-      "pageSize": "items per page (default: 20)",
-      "orderBy": "field name for sorting",
-      "ascending": "sort direction boolean"
-    },
-    "search": {
-      "simple": "use SearchPartners with searchText parameter",
-      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
-    }
-  }
+  ]
 }

@@ -108,14 +108,6 @@ public class Partner : ModifiableDeletableEntity
                  .ThenByDescending(c => c.Id) // Fallback ordering by Id when CreatedDate is default
                  .Take(5) ?? Enumerable.Empty<Contact>();
 
-    // Computed property to get organization hierarchies as comma-separated string
-    [NotMapped]
-    public string OrganizationHierarchiesCommaSeparated => 
-        string.Join(", ", OrganizationUnitRelationships?
-            .Where(r => r?.OrganizationHierarchy != null && r.Status == EntityStatus.Active && !r.IsDeleted)
-            .Select(r => r.OrganizationHierarchy.Name)
-            .OrderBy(name => name) ?? Enumerable.Empty<string>());
-
     /// <summary>
     /// Gets all interactions related to this partner through its contacts
     /// </summary>

@@ -1,100 +1,46 @@
 {
   "entity": "UserPreference",
-  "description": "Manages user preferences such as default organizational unit.",
+  "description": "Manages user-specific preferences and settings, such as default organizational unit assignments.",
   "synonyms": [
-    "Preference",
-    "UserSettings",
-    "UserOptions",
-    "Personalization",
-    "Configuration"
+    "User Setting",
+    "Personal Preference",
+    "Account Setting",
+    "User Configuration",
+    "Default Setting"
   ],
   "mandatoryFields": [],
-  "baseUrl": "/api/user-preferences",
   "endpoints": [
     {
       "name": "GetDefaultOrgUnit",
-      "url": "/api/user-preferences/default-org-unit",
+      "url": "api/user-preferences/default-org-unit",
       "method": "GET",
-      "intent": [
-        "get",
-        "retrieve",
-        "show",
-        "details"
-      ],
-      "description": "Retrieves the current user's default organizational unit preference.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
-      },
+      "description": "Retrieves the current user's default organizational unit preference for filtering and access control.",
       "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/user-preferences/default-org-unit",
-      "requiredFields": [],
       "example_uses": [
         "Get my default organizational unit setting",
-        "What's my default org unit preference?"
+        "What's my default org unit preference?",
+        "Show my default office assignment"
       ],
-      "when_to_use": "Use this when loading user's default organizational unit for filtering.",
-      "scoring": {
-        "searchBonus": 10,
-        "intentMatch": 100,
-        "complexity": "simple"
-      }
+      "when_to_use": "Use this when loading user's default organizational unit for filtering or when determining the user's default office context."
     },
     {
       "name": "SetDefaultOrgUnit",
-      "url": "/api/user-preferences/default-org-unit",
+      "url": "api/user-preferences/default-org-unit",
       "method": "PUT",
-      "intent": [
-        "update",
-        "modify",
-        "edit",
-        "change"
-      ],
-      "description": "Updates the current user's default organizational unit preference.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
-      },
+      "description": "Updates the current user's default organizational unit preference for filtering and access control.",
       "parameters": {
         "request": {
           "type": "object",
-          "required": true,
-          "description": "Default org unit request containing the new setting",
-          "default": null
+          "required": false,
+          "description": "Default org unit request containing the new setting"
         }
       },
-      "exampleBody": {
-        "OrgUnitId": 123
-      },
-      "exampleUrl": "/api/user-preferences/default-org-unit",
-      "requiredFields": [],
       "example_uses": [
         "Set my default org unit to Headquarters",
-        "Change my default office to Field Office 123"
+        "Change my default office to Field Office 123",
+        "Update my organizational unit preference"
       ],
-      "when_to_use": "Use this when the user wants to change their default organizational unit.",
-      "scoring": {
-        "searchBonus": 0,
-        "intentMatch": 100,
-        "complexity": "simple"
-      }
+      "when_to_use": "Use this when the user wants to change their default organizational unit for filtering and access control purposes."
     }
-  ],
-  "commonPatterns": {
-    "pagination": {
-      "pageIndex": "1-based page number (default: 1)",
-      "pageSize": "items per page (default: 20)",
-      "orderBy": "field name for sorting",
-      "ascending": "sort direction boolean"
-    },
-    "search": {
-      "simple": "use SearchPartners with searchText parameter",
-      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
-    }
-  }
+  ]
 }

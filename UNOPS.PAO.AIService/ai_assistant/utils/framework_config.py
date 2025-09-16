@@ -34,7 +34,7 @@ def set_config_directory(config_dir: str = "config"):
     global _config_loader
     framework_dir = os.path.join(config_dir, "framework")
     _config_loader = ConfigLoader(framework_dir)
-    logger.debug(f"Framework config directory: {framework_dir}")
+    logger.info(f"📁 Framework config directory set to: {framework_dir}")
     
     # Also update the API config manager to use the same base path
     from ai_assistant.utils.api_config_manager import config_manager

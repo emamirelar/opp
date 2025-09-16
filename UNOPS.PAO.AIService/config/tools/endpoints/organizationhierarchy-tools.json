@@ -1,95 +1,57 @@
 {
   "entity": "OrganizationHierarchy",
-  "description": "Manages the organization hierarchy and organizational units.",
+  "description": "Manages and provides access to the organizational structure and hierarchy within the system.",
   "synonyms": [
-    "OrgUnits",
-    "OrganizationalUnits",
-    "Hierarchy",
-    "OrgStructure",
-    "BusinessUnits"
+    "Org Unit",
+    "Department",
+    "Division",
+    "Organizational Structure",
+    "Hierarchy"
   ],
-  "mandatoryFields": [
-    "id"
-  ],
-  "baseUrl": "/api/organization-hierarchy",
+  "mandatoryFields": [],
   "endpoints": [
     {
       "name": "GetOrganizationHierarchy",
       "url": "/api/organization-hierarchy",
       "method": "GET",
-      "intent": [
-        "list",
-        "get",
-        "browse"
-      ],
-      "description": "Retrieves the complete organization hierarchy.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
-      },
+      "description": "Retrieves the complete organizational hierarchy structure.",
       "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/organization-hierarchy",
-      "requiredFields": [],
-      "example_uses": [],
-      "when_to_use": "Use this when the user asks for the entire organization hierarchy.",
-      "scoring": {
-        "searchBonus": 20,
-        "intentMatch": 80,
-        "complexity": "simple"
-      }
+      "example_uses": [
+        "Show me the entire organizational structure.",
+        "Can I see the full company hierarchy?",
+        "List all organizational units.",
+        "Display the current organizational chart.",
+        "What is the complete organizational breakdown?"
+      ],
+      "when_to_use": "When you need to retrieve the entire organizational structure without specifying a particular unit."
     },
     {
       "name": "GetOrganizationHierarchyLegacy",
       "url": "/api/organization-hierarchy/legacy",
       "method": "GET",
-      "intent": [
-        "list",
-        "get",
-        "browse"
-      ],
-      "description": "Retrieves the organization hierarchy in a legacy format.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
-      },
+      "description": "Retrieves the legacy organizational hierarchy structure. Use this only if specifically instructed or for compatibility reasons.",
       "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/organization-hierarchy/legacy",
-      "requiredFields": [],
-      "example_uses": [],
-      "when_to_use": "Use this when the user specifically asks for the legacy format of the organization hierarchy.",
-      "scoring": {
-        "searchBonus": 20,
-        "intentMatch": 80,
-        "complexity": "simple"
-      }
+      "example_uses": [
+        "Get the old organizational hierarchy.",
+        "Show me the legacy org structure.",
+        "Access the historical organizational data.",
+        "Retrieve the previous version of the hierarchy.",
+        "Can I see the legacy organizational units?"
+      ],
+      "when_to_use": "Only when specifically instructed to retrieve the legacy organizational hierarchy for historical or compatibility purposes."
     },
     {
       "name": "GetOrganizationHierarchyById",
       "url": "/api/organization-hierarchy/{id}",
       "method": "GET",
-      "intent": [
-        "get",
-        "retrieve",
-        "show",
-        "details"
-      ],
       "description": "Retrieves a specific organizational unit by ID with complete details including hierarchy information.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": "Organizational unit ID"
+        }
       },
-      "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/organization-hierarchy/123",
-      "requiredFields": [],
       "example_uses": [
         "Show me details for org unit ID 138",
         "Get information about organizational unit 123",
@@ -97,53 +59,22 @@
         "Display org unit details for ID 789",
         "Get description of organizational unit 321"
       ],
-      "when_to_use": "Use this when the user asks for specific organizational unit details by ID.",
-      "scoring": {
-        "searchBonus": 10,
-        "intentMatch": 90,
-        "complexity": "simple"
-      }
+      "when_to_use": "Use this when the user asks for specific organizational unit details by ID."
     },
     {
       "name": "GetMetadataInfo",
       "url": "/api/organization-hierarchy/metadata-info",
       "method": "GET",
-      "intent": [
-        "get",
-        "retrieve",
-        "show",
-        "details"
-      ],
-      "description": "Describes the OrganizationHierarchy entity structure including all field configurations",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
-      },
+      "description": "Describes the OrganizationHierarchy entity structure including all field configurations.",
       "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/organization-hierarchy/metadata-info",
-      "requiredFields": [],
-      "example_uses": [],
-      "when_to_use": "Use this to retrieve metadata information about the OrganizationHierarchy entity.",
-      "scoring": {
-        "searchBonus": 10,
-        "intentMatch": 70,
-        "complexity": "simple"
-      }
+      "example_uses": [
+        "What fields are available for organizational hierarchy?",
+        "Show me the metadata for org units.",
+        "Describe the structure of the organization hierarchy entity.",
+        "What data can I get about organizational units?",
+        "Provide details on the OrganizationHierarchy entity fields."
+      ],
+      "when_to_use": "When you need to understand the data structure or available fields for organizational hierarchy, or to programmatically inspect the entity's schema."
     }
-  ],
-  "commonPatterns": {
-    "pagination": {
-      "pageIndex": "1-based page number (default: 1)",
-      "pageSize": "items per page (default: 20)",
-      "orderBy": "field name for sorting",
-      "ascending": "sort direction boolean"
-    },
-    "search": {
-      "simple": "use SearchPartners with searchText parameter",
-      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
-    }
-  }
+  ]
 }
