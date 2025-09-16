@@ -526,7 +526,7 @@ class TaskExecutorAgent(LlmAgent):
             if "pageSize" not in parameters:
                 parameters["pageSize"] = 5
             if "orderBy" not in parameters:
-                parameters["orderBy"] = "name"
+                parameters["orderBy"] = "CreatedDate"
             if "ascending" not in parameters:
                 parameters["ascending"] = True
 
@@ -578,18 +578,21 @@ class TaskExecutorAgent(LlmAgent):
             logger.info(f"[{self.name}] 🧠 LLM-ASSISTED EXECUTION STARTED: {entity}/{intent}")
             # STEP 1: Find the endpoint BEFORE creating the agent
             logger.info(f"[{self.name}] 🔍 Finding endpoint for {entity}/{intent}...")
-            endpoint_info = find_entity_endpoint(entity, intent, parameters)
-            logger.info(f"[{self.name}] 📍 Endpoint discovery result: {json.dumps(endpoint_info, indent=2)}")
+            # Convert parameters dict to JSON string for find_entity_endpoint
+            params_json = json.dumps(parameters) if parameters else "{}"
+            endpoint_info = find_entity_endpoint(entity, intent, params_json)
+            endpoint_data = json.loads(endpoint_info)  # Parse back to dict for logging
+            logger.info(f"[{self.name}] 📍 Endpoint discovery result: {json.dumps(endpoint_data, indent=2)}")
             
             # STEP 2: Create Constructor Agent instruction with endpoint info included
             logger.info(f"[{self.name}] 🏗️ Creating API URL Constructor Agent with pre-discovered endpoint info")
             
             # Create API URL Constructor Agent instruction with angle brackets to avoid context variables
-            endpoint_info_safe = json.dumps(endpoint_info, indent=2).replace("{", "<").replace("}", ">")
+            endpoint_info_safe = endpoint_info.replace("{", "<").replace("}", ">")
             previous_results_safe = json.dumps(previous_results, indent=2).replace("{", "<").replace("}", ">")
             parameters_safe = json.dumps(parameters, indent=2).replace("{", "<").replace("}", ">")
             
-            constructor_instruction = f"""You are an API URL Constructor Agent. Your job is to analyze previous API results and construct the proper API call for dependent operations.
+            constructor_instruction = f"""You are an API URL Constructor Agent. Your job is to analyze previous API results, the endpoint template and construct the proper API call for dependent operations.
 
 CURRENT TASK:
 - Entity: {entity}
@@ -603,22 +606,28 @@ PREVIOUS RESULTS:
 
 YOUR MISSION:
 1. Find the most appropriate data and extract the parameters required for the current api to run. 
-2.For example, the user would be asking to get the engagements of a partner, so we need to get the partner id from the previous results and use it as the partnerId parameter for the engagement endpoint.
-3. Use your knowledge and smartness to correctly determine the parameters needed for the "Endpoint Info" to work properly.
+2. Use your knowledge and smartness to correctly determine the parameters needed for the "Endpoint Info" to work properly.
+3. Examples: if the endpoint would need to work with partnerId -> look in the previous results if there is any "id" field that you can use.
+4. Examples: if the endpoint would need to work with a partnerName -> look in the current parameters / results to find the most appropriate partnerName and replace.
+5. Use your knowledge to finally return a JSON that has ONLY the parameters that are needed for the endpoint to work properly. DONOT change any property name.
 
 
 REQUIRED OUTPUT FORMAT (example):
 {{
-  "partnerId": <Id of the closest relevant partner from the previous results>,
+  <relevant_parameter_name>: value either by looking at any previous results or by looking at the endpoint info,
   "pageIndex": 1,
   "pageSize": 5,
-  "orderBy": "name",
+  "orderBy": "CreatedDate",
   "ascending": true
 }}
 
 CRITICAL RULES:
-- Never leave any placeholder unreplaced in the endpoint info. pageIndex, pageSize, 
+- Never leave any placeholder unreplaced in the endpoint info
+- ALWAYS include these pagination parameters: "pageIndex": 1, "pageSize": 5, "orderBy": "CreatedDate", "ascending": true UNLESS any other condition is specified by the user
+- Override pagination defaults only if explicitly specified in the parameters
 Return ONLY the JSON object, no explanations"""
+
+            print(constructor_instruction)
 
             # Import the tools for the constructor agent
             from .utils.task_execution_utils import invoke_api_tool, find_entity_endpoint
@@ -627,7 +636,7 @@ Return ONLY the JSON object, no explanations"""
             # Create the API URL Constructor Agent with both tools
             constructor_agent = LlmAgent(
                 name=f"param_constructor_{entity}",
-                description="Extract partner ID and construct API parameters.",
+                description="Extract relevant parameters to make the API call.",
                 model="gemini-2.5-flash-lite",
                 instruction=constructor_instruction
             )
@@ -667,6 +676,28 @@ Return ONLY the JSON object, no explanations"""
                         constructed_parameters = json.loads(last_response)
                     
                     logger.info(f"[{self.name}] ✅ Successfully parsed parameters: {json.dumps(constructed_parameters, indent=2)}")
+                    
+                    # CRITICAL: Add missing default pagination parameters
+                    if constructed_parameters and isinstance(constructed_parameters, dict):
+                        # Add default pagination values if missing
+                        defaults = {
+                            "pageIndex": 1,
+                            "pageSize": 5,
+                            "orderBy": "CreatedDate",
+                            "ascending": True
+                        }
+                        
+                        added_defaults = []
+                        for key, default_value in defaults.items():
+                            if key not in constructed_parameters:
+                                constructed_parameters[key] = default_value
+                                added_defaults.append(f"{key}={default_value}")
+                        
+                        if added_defaults:
+                            logger.info(f"[{self.name}] 🔧 Added missing defaults: {', '.join(added_defaults)}")
+                            logger.info(f"[{self.name}] 📋 Final request body: {json.dumps(constructed_parameters, indent=2)}")
+                        else:
+                            logger.info(f"[{self.name}] ✅ All default parameters already present")
                     
                 except json.JSONDecodeError as e:
                     logger.error(f"[{self.name}] ❌ Failed to parse constructor response as JSON: {e}")

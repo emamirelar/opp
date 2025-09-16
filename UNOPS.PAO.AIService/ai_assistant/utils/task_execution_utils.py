@@ -147,7 +147,7 @@ def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = 
                 default_params = {
                     'pageIndex': params_dict.get('pageIndex', 1),
                     'pageSize': params_dict.get('pageSize', 10), 
-                    'orderBy': params_dict.get('orderBy', 'name'),
+                    'orderBy': params_dict.get('orderBy', 'CreatedDate'),
                     'ascending': params_dict.get('ascending', True)
                 }
                 # Merge with any extracted path params
@@ -280,7 +280,7 @@ def invoke_api_tool(entity_name: str, intent: str, params: Optional[dict] = None
             request_body.update({
                 "pageIndex": 1,
                 "pageSize": 10,
-                "orderBy": "name",
+                "orderBy": "CreatedDate",
                 "ascending": True
             })
         

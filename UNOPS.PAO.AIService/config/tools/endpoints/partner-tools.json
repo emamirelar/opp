@@ -125,7 +125,7 @@
     },
     {
       "name": "SearchPartners",
-      "url": "/api/partner/search?searchText={searchText}&request.pageIndex={request.pageIndex}&request.pageSize={request.pageSize}&request.orderBy={request.orderBy}&request.ascending={request.ascending}",
+      "url": "/api/partner/search?searchText={searchText}&pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
       "intent": [
         "search",
@@ -146,7 +146,7 @@
       },
       "parameters": {},
       "exampleBody": {},
-      "exampleUrl": "/api/partner/search?searchText=UNICEF&request.pageIndex=1&request.pageSize=20&request.orderBy=name&request.ascending=true",
+      "exampleUrl": "/api/partner/search?searchText=UNICEF&pageIndex=1&pageSize=20&orderBy=name&ascending=true",
       "requiredFields": [],
       "example_uses": [
         "Search for partners named UNICEF",
@@ -161,7 +161,7 @@
     },
     {
       "name": "AdvancedSearchPartners",
-      "url": "/api/partner/advanced-search?searchCriteria={searchCriteria}&searchText={searchText}&request.pageIndex={request.pageIndex}&request.pageSize={request.pageSize}&request.orderBy={request.orderBy}&request.ascending={request.ascending}",
+      "url": "/api/partner/advanced-search?searchCriteria={searchCriteria}&searchText={searchText}&pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
       "intent": [
         "search",
@@ -211,7 +211,7 @@
       },
       "parameters": {},
       "exampleBody": {},
-      "exampleUrl": "/api/partner/advanced-search?searchCriteria=[{\"Field\":\"status\",\"Operator\":\"is\",\"Value\":\"Active\"}]&searchText=UNICEF&request.pageIndex=1&request.pageSize=20&request.orderBy=name&request.ascending=true",
+      "exampleUrl": "/api/partner/advanced-search?searchCriteria=[{\"Field\":\"status\",\"Operator\":\"is\",\"Value\":\"Active\"}]&searchText=UNICEF&pageIndex=1&pageSize=20&orderBy=name&ascending=true",
       "requiredFields": [],
       "example_uses": [
         "Find active government partners",
@@ -675,7 +675,7 @@
     },
     {
       "name": "GetPartnersByPartnerGroup",
-      "url": "/api/partner/by-partner-group-code/{code}?request.pageIndex={request.pageIndex}&request.pageSize={request.pageSize}&request.orderBy={request.orderBy}&request.ascending={request.ascending}",
+      "url": "/api/partner/by-partner-group-code/{code}?pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
       "intent": [
         "list",
@@ -693,7 +693,7 @@
       },
       "parameters": {},
       "exampleBody": {},
-      "exampleUrl": "/api/partner/by-partner-group-code/GOV?request.pageIndex=1&request.pageSize=20&request.orderBy=name&request.ascending=true",
+      "exampleUrl": "/api/partner/by-partner-group-code/GOV?pageIndex=1&pageSize=20&orderBy=name&ascending=true",
       "requiredFields": [],
       "example_uses": [
         "Show all government partners (GOV group)",
@@ -708,7 +708,7 @@
     },
     {
       "name": "GetPartnersByPartnerCategory",
-      "url": "/api/partner/by-partner-category-code/{code}?request.pageIndex={request.pageIndex}&request.pageSize={request.pageSize}&request.orderBy={request.orderBy}&request.ascending={request.ascending}",
+      "url": "/api/partner/by-partner-category-code/{code}?pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
       "intent": [
         "list",
@@ -726,7 +726,7 @@
       },
       "parameters": {},
       "exampleBody": {},
-      "exampleUrl": "/api/partner/by-partner-category-code/NATIONAL?request.pageIndex=1&request.pageSize=20&request.orderBy=name&request.ascending=true",
+      "exampleUrl": "/api/partner/by-partner-category-code/NATIONAL?pageIndex=1&pageSize=20&orderBy=name&ascending=true",
       "requiredFields": [],
       "example_uses": [
         "Show all national partners in this category",
