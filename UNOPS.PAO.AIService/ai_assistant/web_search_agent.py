@@ -7,14 +7,164 @@ when information is not available in the knowledge base or for current events.
 
 from google.adk.agents import LlmAgent
 from google.adk.tools import google_search
-
 from google.adk.callback_context import CallbackContext
 from google.adk.llm_response import LlmResponse
 from google.genai import types
 from ai_assistant.utils.api_config_manager import config_manager
 import json
 import copy
-from typing import Optional
+import re
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+
+
+# Enhanced Search Utilities (integrated from sub_agents/search_agent/utils.py)
+
+def optimize_search_query(user_query: str, current_year: int = 2024) -> str:
+    """
+    Optimize a user query for better Google search results.
+    
+    Args:
+        user_query: The original user query
+        current_year: Current year for temporal focus
+        
+    Returns:
+        str: Optimized search query
+    """
+    query = user_query.lower().strip()
+    
+    # Add current year for news/recent information
+    temporal_keywords = ["latest", "recent", "current", "new", "updates", "news"]
+    if any(keyword in query for keyword in temporal_keywords):
+        if str(current_year) not in query:
+            query += f" {current_year}"
+    
+    # Add authority terms for better source quality
+    if "news" in query or "information" in query:
+        if "official" not in query:
+            query += " official news"
+    
+    return query
+
+
+def assess_source_authority(url: str) -> int:
+    """
+    Assess the authority level of a source based on its URL.
+    
+    Args:
+        url: Source URL
+        
+    Returns:
+        int: Authority score (1-5, higher is better)
+    """
+    url_lower = url.lower()
+    
+    # High authority domains
+    if any(domain in url_lower for domain in [".gov", ".edu", ".org"]):
+        return 5
+    
+    # Major news outlets
+    if any(outlet in url_lower for outlet in ["reuters", "bbc", "ap.org", "bloomberg", "wsj"]):
+        return 4
+    
+    # Other news sites
+    if any(term in url_lower for term in ["news", "times", "post", "guardian"]):
+        return 3
+    
+    # Corporate/commercial sites
+    if ".com" in url_lower:
+        return 2
+    
+    # Default
+    return 1
+
+
+def validate_search_source(source: Dict[str, Any]) -> bool:
+    """
+    Validate that a search source has required fields and quality.
+    
+    Args:
+        source: Source dictionary to validate
+        
+    Returns:
+        bool: True if source is valid
+    """
+    required_fields = ["title", "url", "description"]
+    
+    # Check required fields exist and are not empty
+    for field in required_fields:
+        if field not in source or not source[field] or not isinstance(source[field], str):
+            return False
+    
+    # Basic URL validation
+    url = source["url"]
+    if not url.startswith(("http://", "https://")):
+        return False
+    
+    # Check for minimum content quality
+    if len(source["title"].strip()) < 5:
+        return False
+        
+    if len(source["description"].strip()) < 10:
+        return False
+    
+    return True
+
+
+def filter_sources_by_quality(sources: List[Dict[str, Any]], min_authority: int = 2) -> List[Dict[str, Any]]:
+    """
+    Filter sources based on quality and authority.
+    
+    Args:
+        sources: List of source dictionaries
+        min_authority: Minimum authority score required
+        
+    Returns:
+        list: Filtered list of high-quality sources
+    """
+    quality_sources = []
+    
+    for source in sources:
+        if not validate_search_source(source):
+            continue
+            
+        authority_score = assess_source_authority(source["url"])
+        if authority_score >= min_authority:
+            # Add authority score for potential sorting
+            source["authority_score"] = authority_score
+            quality_sources.append(source)
+    
+    # Sort by authority score (highest first)
+    quality_sources.sort(key=lambda x: x.get("authority_score", 0), reverse=True)
+    
+    # Remove authority score before returning (internal use only)
+    for source in quality_sources:
+        source.pop("authority_score", None)
+    
+    return quality_sources
+
+
+def extract_key_terms(user_query: str) -> List[str]:
+    """
+    Extract key terms from user query for search optimization.
+    
+    Args:
+        user_query: User's search query
+        
+    Returns:
+        list: List of key terms
+    """
+    # Remove common stop words
+    stop_words = {
+        "the", "is", "at", "which", "on", "a", "an", "and", "or", "but", "in", "with", "to", "for", "of", "as", "by"
+    }
+    
+    # Extract words, clean and filter
+    words = re.findall(r'\b\w+\b', user_query.lower())
+    key_terms = [word for word in words if word not in stop_words and len(word) > 2]
+    
+    return key_terms
+
 
 def search_agent_after_model_callback(
     callback_context: CallbackContext, llm_response: LlmResponse
@@ -31,12 +181,21 @@ def search_agent_after_model_callback(
                     search_content = part.text
                     
                     # Extract sources from the content if possible (look for URLs)
-                    import re
                     sources = []
                     url_pattern = r'https?://[^\s\)]+|www\.[^\s\)]+'
                     urls = re.findall(url_pattern, search_content)
-                    for url in urls[:5]:  # Limit to 5 sources
-                        sources.append({"url": url, "title": "Search Result"})
+                    
+                    # Create sources with enhanced metadata
+                    raw_sources = []
+                    for url in urls[:10]:  # Get more URLs initially
+                        raw_sources.append({
+                            "url": url,
+                            "title": "Search Result",
+                            "description": f"Source from search results"
+                        })
+                    
+                    # Filter and enhance sources using utilities
+                    sources = filter_sources_by_quality(raw_sources, min_authority=1)[:5]  # Keep top 5
                     
                     # Format as markdown with proper markers
                     markdown_content = f"# Search Results\n\n{search_content}"
@@ -66,8 +225,8 @@ def search_agent_after_model_callback(
         # On any error, return None to use original response
         return None
 
-search_agent = LlmAgent(
-    name="search_agent",
+web_search_agent = LlmAgent(
+    name="web_search_agent",
     model=config_manager.get_gemini_model(),
     description="Specialized agent for performing Google searches for current events, external information, and topics not covered in the knowledge base",
     instruction="""

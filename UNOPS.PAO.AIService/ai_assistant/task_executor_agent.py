@@ -14,12 +14,44 @@ from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events.event import Event
 from google.genai import types
 import json
+from typing import List, Dict, Any
 
 from .utils.api_config_manager import config_manager
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
+def _load_all_tools(self) -> List[Dict[str, Any]]:
+    """
+    Load all available tools with their metadata
+    
+    Returns:
+        List of tool dictionaries with name, description, and scoring info
+    """
+    tools = [
+        {
+            "name": "api_tool_agent",
+            "description": "Automatically finds and calls API endpoints for any entity and intent",
+            "keywords": ["api", "call", "endpoint", "data", "fetch", "get", "create", "update", "delete", 
+                        "list", "retrieve", "entity"],
+            "score_weight": 100
+        },
+        {
+            "name": "web_search_agent", 
+            "description": "Search web and knowledge bases for latest news, information, and research",
+            "keywords": ["search", "web", "google", "find", "information", "lookup", "query", "research", 
+                        "news", "latest", "current", "recent", "today", "trending", "updates", "breaking"],
+            "score_weight": 90
+        },
+        {
+            "name": "read_content_from_url",
+            "description": "Read and extract content from web URLs",
+            "keywords": ["url", "web", "content", "read", "extract", "webpage", "link", "fetch"],
+            "score_weight": 70
+        }
+    ]
+    
+    return tools
 
 def get_available_tools() -> str:
     """
@@ -29,11 +61,7 @@ def get_available_tools() -> str:
         Formatted string containing tool information
     """
     try:
-        # Import here to avoid circular dependencies
-        from .sub_agents.task_executor_agent.dynamic_tool_registry import DynamicToolRegistry
-        
-        registry = DynamicToolRegistry()
-        tools = registry.get_available_tools()
+        tools = _load_all_tools()
         
         tools_section = "## Available Tools\n\n"
         
@@ -101,8 +129,7 @@ You are presented the following tools>
 ## Your Task
 
 Analyze the user message and respond with a JSON object containing the tools to execute in order. The format should be:
-Example user query: Get me details of partner XYZ and their contacts and engagements
-
+Example 1 - API queries: "Get me details of partner XYZ and their contacts and engagements"
 ```json
 {{
   "tools_by_order": [
@@ -111,7 +138,8 @@ Example user query: Get me details of partner XYZ and their contacts and engagem
       "entity": "Partner",
       "intent": "retrieve", 
       "parameters": {{
-        "search_terms": ["XYZ"]
+        "search_terms": ["XYZ"],
+        "searchText": "XYZ"
       }}
     }},
     {{
@@ -119,7 +147,7 @@ Example user query: Get me details of partner XYZ and their contacts and engagem
       "entity": "Contact",
       "intent": "retrieve",
       "parameters": {{
-        "partner_reference": "from_previous_result",
+        "reference": "from_previous_result",
         "search_terms": ["related_to_partner"]
       }}
     }},
@@ -128,7 +156,7 @@ Example user query: Get me details of partner XYZ and their contacts and engagem
       "entity": "Engagement",
       "intent": "retrieve",
       "parameters": {{
-        "partner_reference": "from_previous_result",
+        "reference": "from_previous_result",
         "search_terms": ["related_to_partner"]
       }}
     }}
@@ -136,7 +164,41 @@ Example user query: Get me details of partner XYZ and their contacts and engagem
 }}
 ```
 
-**NOTE: You do not need to call any tools - just return the JSON structure**
+Example 2 - Web search: "Tell me about VTF UN Voluntary Trust Fund for Assistance in Mine Action"
+```json
+{{
+  "tools_by_order": [
+    {{
+      "tool_name": "web_search_agent",
+      "entity": "Partner",
+      "intent": "search",
+      "parameters": {{
+        "query": "Search for VTF UN Voluntary Trust Fund for Assistance in Mine Action official information activities and their related information"
+      }}
+    }}
+  ]
+}}
+```
+
+Example 3 - URL content reading: "Read this document: https://example.com/report.pdf"
+```json
+{{
+  "tools_by_order": [
+    {{
+      "tool_name": "read_content_from_url",
+      "entity": "Document",
+      "intent": "read",
+      "parameters": {{
+        "url": "https://example.com/report.pdf",
+        "title": "Report PDF",
+        "description": "User-provided document to read and analyze"
+      }}
+    }}
+  ]
+}}
+```
+
+**IMPORTANT: You do NOT call tools or transfer to other agents. ONLY return the JSON structure.**
 
 ## Instructions
 
@@ -145,8 +207,15 @@ Example user query: Get me details of partner XYZ and their contacts and engagem
 3. **Parameter Extraction**: Extract relevant parameters like IDs, search terms, quoted phrases, etc.
 4. **Tool Planning**: Based on the entities, intent, and parameters, determine which tools need to be executed in order. Consider:
    - Use `invoke_api_tool` for any entity data operations (get, create, update, delete) - specify the exact entity and intent
-   - Use `search_agent` for web searches, latest information, news, or research - entity can be the subject of search
-   - Use `read_content_from_url` when user provides URLs or mentions reading web content
+   - Use `web_search_agent` for web searches, latest information, news, or research:
+     * Provide an optimized `query` parameter with the full search phrase
+     * Include relevant `search_terms` array with key terms for backup
+     * Make queries specific and complete (e.g., "organization name official website activities" instead of just "organization")
+     * When the tool is web_search_agent, add a *query* parameter with the full search phrase
+   - Use `read_content_from_url` when user provides URLs or mentions reading web content:
+     * Include the full URL in parameters.url
+     * Provide meaningful title and description parameters when possible
+     * Can handle PDF, DOC, web pages, and other document types
    - **IMPORTANT**: Break down complex requests into multiple sequential steps:
      * If user asks for "contacts and engagements of partner XYZ", create 3 separate tool calls:
        1. First: Get Partner details (to obtain Partner ID)
@@ -181,7 +250,13 @@ Example user query: Get me details of partner XYZ and their contacts and engagem
 2. invoke_api_tool + Contact + retrieve (get contacts for that partner)
 3. invoke_api_tool + Engagement + retrieve (get engagements for that partner)
 
-IMPORTANT: Always return a valid JSON object with the exact structure shown above."""
+CRITICAL RULES:
+1. ONLY return valid JSON - never transfer to any agent or send any json_payload functions. 
+2. NEVER call tools yourself - just plan them in the JSON structure  
+3. ALWAYS use the exact JSON format with "tools_by_order" array
+4. For greetings/help, return empty tools_by_order: []
+
+ONLY VALID RESPONSE: JSON object with tools_by_order structure."""
 
 
 class TaskExecutorAgent(LlmAgent):
@@ -215,7 +290,6 @@ class TaskExecutorAgent(LlmAgent):
         tools_to_execute = ctx.session.state.get("tools_to_execute", [])
         if not tools_to_execute:
             logger.info(f"[{self.name}] No tools detected - workflow complete")
-            return
         
         logger.info(f"[{self.name}] Found {len(tools_to_execute)} tools to execute")
         
@@ -223,24 +297,61 @@ class TaskExecutorAgent(LlmAgent):
         execution_results = []
         for i, tool in enumerate(tools_to_execute, 1):
             tool_name = tool.get("tool_name", "Unknown")
-            entity = tool.get("entity", "Unknown")
-            intent = tool.get("intent", "Unknown")
+            entity_raw = tool.get("entity", "Unknown")
+            intent_raw = tool.get("intent", "Unknown")
             parameters = tool.get("parameters", {})
             
-            logger.info(f"[{self.name}] Processing tool {i}: {tool_name} for {entity}/{intent}")
+            # Ensure entity and intent are strings
+            entity = str(entity_raw) if entity_raw else "Unknown"
+            intent = str(intent_raw) if intent_raw else "Unknown"
+            
+            logger.info(f"[{self.name}] Processing tool {i}: {tool_name} for {entity}/{intent} with params: {parameters}")
             
             if tool_name == "invoke_api_tool":
+                # Pre-process: Convert retrieve with no search terms to list BEFORE strategy determination
+                if intent == "retrieve" and (not parameters or not parameters.get("search_terms") or len(parameters.get("search_terms", [])) == 0):
+                    logger.info(f"[{self.name}] PRE-PROCESSING: Converting retrieve with no search terms to list operation")
+                    intent = "list"
+                    parameters = {}  # Clear for list operations
+                
                 # Determine execution strategy
                 execution_strategy = self._determine_execution_strategy(entity, intent, parameters, execution_results)
+                logger.info(f"Execution strategy: {execution_strategy}")
+                
+                if execution_strategy == "direct":
+                    # Check if URL can be constructed properly - if not, switch to LLM assisted
+                    from .utils.task_execution_utils import find_entity_endpoint
+                    import json
+                    import re
+                    
+                    # Test URL construction
+                    test_params = json.dumps(parameters) if parameters else "{}"
+                    endpoint_result = find_entity_endpoint(entity, intent, test_params)
+                    endpoint_data = json.loads(endpoint_result)
+                    
+                    # Check if URL has unresolved placeholders
+                    test_url = endpoint_data.get('full_url', '')
+                    unresolved_placeholders = re.findall(r'\{([^}]+)\}', test_url)
+                    
+                    if unresolved_placeholders:
+                        logger.info(f"[{self.name}] ⚠️ STRATEGY CHANGE: URL has unresolved placeholders: {unresolved_placeholders}")
+                        logger.info(f"[{self.name}] 🔄 SWITCHING: Direct → LLM-Assisted to resolve: {test_url}")
+                        execution_strategy = "llm_assisted"
+                    else:
+                        logger.info(f"[{self.name}] ✅ URL construction verified: {test_url}")
                 
                 if execution_strategy == "direct":
                     # Simple case - execute directly
+                    logger.info(f"[{self.name}] ✅ EXECUTING: Direct API call for {entity}/{intent}")
+                    logger.info(f"[{self.name}] 🔄 FLOW: Task Executor → invoke_api_tool → HTTP Request")
                     result = await self._execute_direct_api_call(entity, intent, parameters, ctx)
                     execution_results.append(result)
                     yield self._create_result_event(f"📊 Direct API Result for {entity}", result)
                     
                 elif execution_strategy == "llm_assisted":
                     # Complex case - use LLM to help construct the call
+                    logger.info(f"[{self.name}] 🧠 EXECUTING: LLM-Assisted API call for {entity}/{intent}")
+                    logger.info(f"[{self.name}] 🔄 FLOW: Task Executor → LLM Parameter Assistant → Extract IDs → invoke_api_tool → HTTP Request")
                     result = await self._execute_llm_assisted_call(entity, intent, parameters, execution_results, ctx)
                     execution_results.append(result)
                     yield self._create_result_event(f"🤖 LLM-Assisted Result for {entity}", result)
@@ -249,13 +360,16 @@ class TaskExecutorAgent(LlmAgent):
                     logger.warning(f"[{self.name}] Unknown execution strategy: {execution_strategy}")
             
             else:
-                # Handle other tool types (search_agent, read_content_from_url, etc.)
+                # Handle other tool types (web_search_agent, read_content_from_url, etc.)
                 result = await self._execute_other_tool(tool_name, entity, intent, parameters, ctx)
                 execution_results.append(result)
                 yield self._create_result_event(f"🔧 Tool Result: {tool_name}", result)
         
-        # 4. Provide summary
+        # 4. Provide summary and store in state for next agent
         summary = self._create_execution_summary(execution_results)
+        ctx.session.state["execution_results"] = summary
+        ctx.session.state["execution_details"] = execution_results
+        
         yield self._create_result_event("✅ Execution Complete", summary)
         
         logger.info(f"[{self.name}] Intelligent workflow finished with {len(execution_results)} results")
@@ -274,7 +388,7 @@ class TaskExecutorAgent(LlmAgent):
         """
         try:
             # Use invoke_api_tool directly - it already handles find_entity_endpoint internally
-            from .sub_agents.task_executor_agent.utils import invoke_api_tool
+            from .utils.task_execution_utils import invoke_api_tool
             
             logger.info(f"[{self.name}] Executing API tool for {entity}/{intent} with params: {parameters}")
             result = invoke_api_tool(entity, intent, parameters)
@@ -292,58 +406,6 @@ class TaskExecutorAgent(LlmAgent):
             }
             return json.dumps(error_result)
     
-    def _create_dynamic_execution_agent(self, tools_to_execute: list) -> LlmAgent:
-        """
-        Create a dynamic LlmAgent that will handle tool execution.
-        
-        Args:
-            tools_to_execute: List of tools that were detected and need to be executed
-            
-        Returns:
-            A new LlmAgent configured for tool execution
-        """
-        try:
-            # For now, just create a simple hello agent as requested
-            dynamic_agent_name = f"DynamicExecutor_{len(tools_to_execute)}tools"
-            
-            # Simple hello instruction for now
-            hello_instruction = f"""Hello! I am a dynamic execution agent created to handle {len(tools_to_execute)} tool(s).
-
-Tools to execute:
-{json.dumps(tools_to_execute, indent=2)}
-
-For now, I'm just saying hello as requested. Future implementation will execute these tools.
-
-Please respond with a friendly greeting and confirmation that you're ready to execute the tools."""
-            
-            # Create the dynamic LlmAgent
-            dynamic_agent = LlmAgent(
-                name=dynamic_agent_name,
-                model="gemini-2.5-flash-lite",
-                instruction=hello_instruction,
-                # Prevent this agent from transferring further
-                disallow_transfer_to_parent=True,
-                disallow_transfer_to_peers=True
-            )
-            
-            logger.info(f"[{self.name}] Created dynamic agent: {dynamic_agent.name}")
-            logger.info(f"[{self.name}] Dynamic agent will handle {len(tools_to_execute)} tools")
-            
-            return dynamic_agent
-            
-        except Exception as e:
-            logger.error(f"[{self.name}] Error creating dynamic execution agent: {e}")
-            
-            # Fallback: create a simple error agent
-            fallback_agent = LlmAgent(
-                name="ErrorAgent",
-                model="gemini-2.5-flash-lite",
-                instruction="Hello! There was an error creating the execution agent. Please try again.",
-                disallow_transfer_to_parent=True,
-                disallow_transfer_to_peers=True
-            )
-            
-            return fallback_agent
     
     def _determine_execution_strategy(self, entity: str, intent: str, parameters: dict, previous_results: list) -> str:
         """
@@ -358,40 +420,123 @@ Please respond with a friendly greeting and confirmation that you're ready to ex
         Returns:
             "direct" for simple calls, "llm_assisted" for complex calls
         """
-        # Check if this is a simple list/get all operation
-        simple_operations = {
-            "Partner": ["list", "retrieve_all"],
-            "Contact": ["list", "retrieve_all"], 
-            "Engagement": ["list", "retrieve_all"],
-            "Opportunity": ["list", "retrieve_all"]
-        }
+        # Dynamically determine simple operations based on available entities
+        try:
+            entities = config_manager.get_entities()
+            simple_operations = {}
+            for entity_config in entities:
+                entity_name = entity_config.get('entity', '')
+                if entity_name and 'google' not in entity_name.lower():
+                    # All entities support basic operations
+                    simple_operations[entity_name] = ["list", "retrieve_all", "retrieve"]
+            logger.info(f"[{self.name}] Dynamic simple operations: {list(simple_operations.keys())}")
+        except Exception as e:
+            logger.warning(f"[{self.name}] Failed to load entities, using fallback operations: {e}")
+            # Fallback to basic operations
+            simple_operations = {
+                "Partner": ["list", "retrieve_all", "retrieve"],
+                "Contact": ["list", "retrieve_all", "retrieve"], 
+                "Engagement": ["list", "retrieve_all", "retrieve"],
+                "Opportunity": ["list", "retrieve_all", "retrieve"]
+            }
         
         # Check if parameters suggest dependencies
         has_dependencies = any(key in str(parameters) for key in [
-            "from_previous_result", "partner_reference", "contact_reference", 
-            "engagement_reference", "{", "}", "placeholder"
+            "from_previous_result", "reference", "placeholder"
         ])
+
+        if has_dependencies:
+            matching_keys = [key for key in ["from_previous_result", "reference", "{", "}", "placeholder"] if key in str(parameters)]
+            logger.info(f"[{self.name}]   Matching dependency keys: {matching_keys}")
         
-        # Check if we need data from previous results
-        needs_previous_data = len(previous_results) > 0 and has_dependencies
+        # ENHANCED: Check if we need data from previous results
+        needs_previous_data = len(previous_results) > 0 and (
+            has_dependencies or 
+            # If parameters suggest this is a related/dependent call (but only if there are previous results)
+            any(keyword in str(parameters).lower() for keyword in [
+                "related_to", "related", "associated", "belonging_to"
+            ])
+        )
         
-        if intent in simple_operations.get(entity, []) and not has_dependencies:
-            logger.info(f"[{self.name}] Strategy: DIRECT - Simple {intent} for {entity}")
-            return "direct"
+        if len(previous_results) == 0:
+            needs_previous_data = False
+        
+        # Special case: if it's a retrieve with empty parameters, treat as list all
+        is_list_all_request = (intent == "retrieve" and 
+                              (not parameters or 
+                               not parameters.get("search_terms") or 
+                               len(parameters.get("search_terms", [])) == 0 or
+                               parameters.get("search_terms") == []))
+        
+        # Decision logic with clear reasoning
+        if intent in simple_operations.get(entity, []) and not has_dependencies and not needs_previous_data:
+            if is_list_all_request:
+                strategy = "direct"
+                reason = f"List all {entity} with no search terms - simple operation"
+                logger.info(f"[{self.name}] ✅ STRATEGY: DIRECT")
+                logger.info(f"[{self.name}] 💡 REASON: {reason}")
+                return strategy
+            elif intent in ["list", "retrieve_all"]:
+                strategy = "direct"
+                reason = f"Simple {intent} operation for {entity} - no dependencies"
+                logger.info(f"[{self.name}] ✅ STRATEGY: DIRECT")
+                logger.info(f"[{self.name}] 💡 REASON: {reason}")
+                return strategy
+            else:
+                strategy = "direct"
+                reason = f"Simple {intent} for {entity} without dependencies or previous data needs"
+                logger.info(f"[{self.name}] ✅ STRATEGY: DIRECT")
+                logger.info(f"[{self.name}] 💡 REASON: {reason}")
+                return strategy
         elif needs_previous_data or has_dependencies:
-            logger.info(f"[{self.name}] Strategy: LLM_ASSISTED - Complex {intent} for {entity} with dependencies")
-            return "llm_assisted"
+            strategy = "llm_assisted"
+            reasons = []
+            if has_dependencies:
+                reasons.append("explicit dependency markers found")
+            if len(previous_results) > 0 and entity != "Partner":
+                reasons.append(f"dependent {entity} call after previous results")
+            if any(keyword in str(parameters).lower() for keyword in ["related_to", "related", "associated", "belonging_to"]):
+                reasons.append("relationship keywords detected")
+            
+            reason = f"Complex {intent} for {entity} - " + " + ".join(reasons)
+            logger.info(f"[{self.name}] 🧠 STRATEGY: LLM_ASSISTED")
+            logger.info(f"[{self.name}] 💡 REASON: {reason}")
+            logger.info(f"[{self.name}] 🔗 WILL EXTRACT: IDs from previous results to construct proper URL parameters")
+            return strategy
         else:
-            logger.info(f"[{self.name}] Strategy: DIRECT - Default for {intent} on {entity}")
-            return "direct"
+            strategy = "direct"
+            reason = f"Default direct execution for {intent} on {entity}"
+            logger.info(f"[{self.name}] ✅ STRATEGY: DIRECT")
+            logger.info(f"[{self.name}] 💡 REASON: {reason}")
+            return strategy
     
     async def _execute_direct_api_call(self, entity: str, intent: str, parameters: dict, ctx: InvocationContext) -> dict:
         """Execute a direct API call without LLM assistance."""
         try:
-            logger.info(f"[{self.name}] Direct execution: {entity}/{intent}")
+            logger.info(f"[{self.name}] 🚀 DIRECT EXECUTION STARTED: {entity}/{intent}")
+            logger.info(f"[{self.name}] 📋 No LLM assistance needed - using parameters as-is")
+            
+            # Always ensure default values for pagination parameters
+            if not parameters:
+                parameters = {}
+            
+            # Set default pagination values if not already present
+            if "pageIndex" not in parameters:
+                parameters["pageIndex"] = 1
+            if "pageSize" not in parameters:
+                parameters["pageSize"] = 5
+            if "orderBy" not in parameters:
+                parameters["orderBy"] = "name"
+            if "ascending" not in parameters:
+                parameters["ascending"] = True
+
+            if "search_terms" in parameters:
+                parameters["searchText"] = parameters["search_terms"][0] if len(parameters["search_terms"]) == 1 else ' '.join(parameters["search_terms"])
+                
+            logger.info(f"[{self.name}] Using parameters with defaults: {parameters}")
             
             # Use the existing invoke_api_tool function
-            from .sub_agents.task_executor_agent.utils import invoke_api_tool
+            from .utils.task_execution_utils import invoke_api_tool
             result = invoke_api_tool(entity, intent, parameters)
             
             # Parse result if it's a string
@@ -403,13 +548,17 @@ Please respond with a friendly greeting and confirmation that you're ready to ex
                     result = {"raw_result": result}
             
             logger.info(f"[{self.name}] Direct execution completed for {entity}/{intent}")
-            return {
+            
+            # Prepare the final result
+            final_result = {
                 "execution_type": "direct",
                 "entity": entity,
                 "intent": intent,
                 "success": True,
                 "result": result
             }
+            
+            return final_result
             
         except Exception as e:
             logger.error(f"[{self.name}] Direct execution failed: {e}")
@@ -422,83 +571,145 @@ Please respond with a friendly greeting and confirmation that you're ready to ex
             }
     
     async def _execute_llm_assisted_call(self, entity: str, intent: str, parameters: dict, previous_results: list, ctx: InvocationContext) -> dict:
-        """Execute an LLM-assisted API call that requires data from previous results."""
+        """Execute an LLM-assisted API call using a dedicated API URL Constructor agent."""
         try:
-            logger.info(f"[{self.name}] LLM-assisted execution: {entity}/{intent}")
+            import json  # Import json at the very beginning
+            from .utils.task_execution_utils import find_entity_endpoint
+            logger.info(f"[{self.name}] 🧠 LLM-ASSISTED EXECUTION STARTED: {entity}/{intent}")
+            # STEP 1: Find the endpoint BEFORE creating the agent
+            logger.info(f"[{self.name}] 🔍 Finding endpoint for {entity}/{intent}...")
+            endpoint_info = find_entity_endpoint(entity, intent, parameters)
+            logger.info(f"[{self.name}] 📍 Endpoint discovery result: {json.dumps(endpoint_info, indent=2)}")
             
-            # Create dynamic agent for LLM assistance
-            assistant_instruction = f"""You are an API parameter assistant. Your job is to help construct API calls using data from previous results.
+            # STEP 2: Create Constructor Agent instruction with endpoint info included
+            logger.info(f"[{self.name}] 🏗️ Creating API URL Constructor Agent with pre-discovered endpoint info")
+            
+            # Create API URL Constructor Agent instruction with angle brackets to avoid context variables
+            endpoint_info_safe = json.dumps(endpoint_info, indent=2).replace("{", "<").replace("}", ">")
+            previous_results_safe = json.dumps(previous_results, indent=2).replace("{", "<").replace("}", ">")
+            parameters_safe = json.dumps(parameters, indent=2).replace("{", "<").replace("}", ">")
+            
+            constructor_instruction = f"""You are an API URL Constructor Agent. Your job is to analyze previous API results and construct the proper API call for dependent operations.
 
-Current Task:
+CURRENT TASK:
 - Entity: {entity}
-- Intent: {intent}  
-- Parameters: {json.dumps(parameters, indent=2)}
+- Intent: {intent}
+- Original Parameters: {parameters_safe}
+- Endpoint Info: {endpoint_info_safe}
 
-Previous Results Available:
-{json.dumps(previous_results, indent=2)}
+PREVIOUS RESULTS:
+{previous_results_safe}
 
-Instructions:
-1. If parameters contain references like "from_previous_result" or "partner_reference", extract the actual values from previous results
-2. If you find an ID or reference in previous results, use it to replace placeholders
-3. Return the updated parameters as JSON
 
-Example:
-If previous result has {{"result": {{"data": [{{"id": "123", "name": "ABC Corp"}}]}}}}, and parameters need partner_reference, use "123".
+YOUR MISSION:
+1. Find the most appropriate data and extract the parameters required for the current api to run. 
+2.For example, the user would be asking to get the engagements of a partner, so we need to get the partner id from the previous results and use it as the partnerId parameter for the engagement endpoint.
+3. Use your knowledge and smartness to correctly determine the parameters needed for the "Endpoint Info" to work properly.
 
-Return only the updated parameters as valid JSON."""
 
-            # Create dynamic LLM agent
-            assistant_agent = LlmAgent(
-                name=f"ParameterAssistant_{entity}",
+REQUIRED OUTPUT FORMAT (example):
+{{
+  "partnerId": <Id of the closest relevant partner from the previous results>,
+  "pageIndex": 1,
+  "pageSize": 5,
+  "orderBy": "name",
+  "ascending": true
+}}
+
+CRITICAL RULES:
+- Never leave any placeholder unreplaced in the endpoint info. pageIndex, pageSize, 
+Return ONLY the JSON object, no explanations"""
+
+            # Import the tools for the constructor agent
+            from .utils.task_execution_utils import invoke_api_tool, find_entity_endpoint
+            from google.adk.tools import FunctionTool
+            
+            # Create the API URL Constructor Agent with both tools
+            constructor_agent = LlmAgent(
+                name=f"param_constructor_{entity}",
+                description="Extract partner ID and construct API parameters.",
                 model="gemini-2.5-flash-lite",
-                instruction=assistant_instruction
+                instruction=constructor_instruction
             )
             
-            # Run the assistant to get updated parameters
-            assistant_results = []
-            async for event in assistant_agent.run_async(ctx):
-                if event.content and event.content.parts:
+            logger.info(f"[{self.name}] ✅ API URL Constructor Agent created successfully")
+            logger.info(f"[{self.name}] 🏃 Running API Constructor to analyze and execute API call...")
+            
+            # Run the constructor agent - it will analyze and return JSON parameters
+            constructor_results = []
+            
+            async for event in constructor_agent.run_async(ctx):
+                logger.info(f"[{self.name}] 📨 Constructor event type: {type(event)}")
+                
+                # Capture text responses (should be JSON parameters)
+                if hasattr(event, 'content') and event.content and event.content.parts:
                     for part in event.content.parts:
                         if part.text:
-                            assistant_results.append(part.text)
+                            constructor_results.append(part.text)
+                            logger.info(f"[{self.name}] 📝 Constructor JSON response: {part.text}")
             
-            # Parse assistant response
-            updated_params = parameters  # fallback
-            if assistant_results:
+            logger.info(f"[{self.name}] ✅ Constructor Agent completed with {len(constructor_results)} responses")
+            
+            # Extract and parse the JSON parameters from constructor response
+            constructed_parameters = None
+            if constructor_results:
                 try:
-                    assistant_response = "".join(assistant_results)
-                    # Clean JSON from markdown if needed
-                    if "```json" in assistant_response:
-                        assistant_response = assistant_response.split("```json")[1].split("```")[0]
-                    updated_params = json.loads(assistant_response.strip())
-                    logger.info(f"[{self.name}] LLM updated parameters: {updated_params}")
+                    last_response = constructor_results[-1].strip()
+                    logger.info(f"[{self.name}] 🔍 Parsing constructor response as JSON...")
+                    
+                    # Handle case where response might be wrapped in markdown code blocks
+                    if last_response.startswith('```') and last_response.endswith('```'):
+                        # Extract JSON from code block
+                        lines = last_response.split('\n')
+                        json_content = '\n'.join(lines[1:-1])  # Remove first and last line
+                        constructed_parameters = json.loads(json_content)
+                    else:
+                        constructed_parameters = json.loads(last_response)
+                    
+                    logger.info(f"[{self.name}] ✅ Successfully parsed parameters: {json.dumps(constructed_parameters, indent=2)}")
+                    
+                except json.JSONDecodeError as e:
+                    logger.error(f"[{self.name}] ❌ Failed to parse constructor response as JSON: {e}")
+                    logger.error(f"[{self.name}] Raw response: {last_response}")
                 except Exception as e:
-                    logger.warning(f"[{self.name}] Failed to parse LLM response, using original params: {e}")
+                    logger.error(f"[{self.name}] ❌ Unexpected error parsing JSON: {e}")
+                    logger.error(f"[{self.name}] Raw response: {last_response if 'last_response' in locals() else 'N/A'}")
             
-            # Now execute with updated parameters
-            from .sub_agents.task_executor_agent.utils import invoke_api_tool
-            result = invoke_api_tool(entity, intent, updated_params)
+            # Now WE call invoke_api_tool with the constructed parameters
+            if constructed_parameters:
+                logger.info(f"[{self.name}] 🚀 Calling invoke_api_tool with constructed parameters...")
+                from .utils.task_execution_utils import invoke_api_tool
+                
+                api_result = invoke_api_tool(entity, intent, constructed_parameters)
+                logger.info(f"[{self.name}] ✅ API call completed")
+                
+                final_result = {
+                    "execution_type": "llm_assisted",
+                    "entity": entity,
+                    "intent": intent,
+                    "original_parameters": parameters,
+                    "constructed_parameters": constructed_parameters,
+                    "constructor_response": constructor_results,
+                    "success": True,
+                    "result": api_result
+                }
+            else:
+                logger.error(f"[{self.name}] ❌ Could not extract parameters from constructor response")
+                final_result = {
+                    "execution_type": "llm_assisted",
+                    "entity": entity,
+                    "intent": intent,
+                    "original_parameters": parameters,
+                    "constructor_response": constructor_results,
+                    "success": False,
+                    "error": "Failed to parse parameters from constructor response"
+                }
+                
             
-            # Parse result if it's a string
-            if isinstance(result, str):
-                try:
-                    result = json.loads(result)
-                except json.JSONDecodeError:
-                    result = {"raw_result": result}
-            
-            logger.info(f"[{self.name}] LLM-assisted execution completed for {entity}/{intent}")
-            return {
-                "execution_type": "llm_assisted",
-                "entity": entity,
-                "intent": intent,
-                "original_parameters": parameters,
-                "updated_parameters": updated_params,
-                "success": True,
-                "result": result
-            }
+            return final_result
             
         except Exception as e:
-            logger.error(f"[{self.name}] LLM-assisted execution failed: {e}")
+            logger.error(f"[{self.name}] ❌ LLM-assisted execution failed: {e}")
             return {
                 "execution_type": "llm_assisted",
                 "entity": entity,
@@ -508,25 +719,136 @@ Return only the updated parameters as valid JSON."""
             }
     
     async def _execute_other_tool(self, tool_name: str, entity: str, intent: str, parameters: dict, ctx: InvocationContext) -> dict:
-        """Execute non-API tools like search_agent, read_content_from_url, etc."""
+        """Execute non-API tools like web_search_agent, read_content_from_url, etc."""
         try:
-            logger.info(f"[{self.name}] Executing other tool: {tool_name}")
+            import json
+            logger.info(f"[{self.name}] 🔧 Executing other tool: {tool_name}")
             
-            if tool_name == "search_agent":
-                # Use existing search agent
-                search_query = parameters.get("search_terms", [entity, intent])
-                # TODO: Implement actual search agent execution
-                result = {"search_query": search_query, "results": "Search functionality to be implemented"}
+            if tool_name == "web_search_agent":
+                # Create a simple search agent directly here
+                from google.adk.agents import LlmAgent
+                from google.adk.tools import google_search
+                instruction = f"""You are an intelligent web search agent. You MUST use the google_search tool to search: {parameters["query"]}
+                
+                Get a very comprehensive search result with the most relevant information."""
+                web_search_agent = LlmAgent(
+                    name="web_search_agent",
+                    model="gemini-2.5-flash-lite",
+                    description="Agent that searches the internet for information",
+                    instruction=instruction,
+                    # google_search is a pre-built tool which allows the agent to perform Google searches.
+                    tools=[google_search]
+                )
+                
+                # Execute the web search agent
+                search_results = []
+                
+                async for event in web_search_agent.run_async(ctx):
+                    logger.info(f"[{self.name}] 📨 Search agent event type: {type(event)}")
+                    
+                    # Capture text responses (final results)
+                    if hasattr(event, 'content') and event.content and event.content.parts:
+                        for part in event.content.parts:
+                            if part.text:
+                                search_results.append(part.text)
+                                logger.info(f"[{self.name}] 📝 Search agent text: {part.text[:200]}...")
+                    
+                    # Also capture tool call responses (google_search results)
+                    if hasattr(event, 'tool_call_response'):
+                        tool_response = event.tool_call_response
+                        logger.info(f"[{self.name}] 🔧 Search tool response: {str(tool_response)[:300]}...")
+                        # Let the agent process this, don't add to search_results directly
+                
+                logger.info(f"[{self.name}] ✅ Simple Search Agent completed with {len(search_results)} responses")
+                
+                # Try to parse the search result as JSON, fallback to text
+                search_result_data = None
+                if search_results:
+                    try:
+                        last_response = search_results[-1].strip()
+                        # Handle markdown code blocks
+                        if last_response.startswith('```') and last_response.endswith('```'):
+                            lines = last_response.split('\n')
+                            json_content = '\n'.join(lines[1:-1])
+                            search_result_data = json.loads(json_content)
+                        else:
+                            search_result_data = json.loads(last_response)
+                        logger.info(f"[{self.name}] ✅ Successfully parsed search results as JSON")
+                    except json.JSONDecodeError:
+                        logger.info(f"[{self.name}] 📝 Using search results as text (not JSON)")
+                        search_result_data = {"content": last_response, "sources": []}
+                
+                result = {
+                    "tool_name": "web_search_agent",
+                    "search_query": parameters["query"],
+                    "search_response": search_result_data or {"content": "No search results", "sources": []},
+                    "type": "json"
+                }
                 
             elif tool_name == "read_content_from_url":
+                from ai_assistant.tools.google_drive_utils import read_content_from_url
+                
                 url = parameters.get("url", "")
-                # TODO: Implement URL content reading
-                result = {"url": url, "content": "URL reading functionality to be implemented"}
+                title = parameters.get("title", "")
+                description = parameters.get("description", "")
+                
+                logger.info(f"[{self.name}] 📄 Reading content from URL: {url}")
+                
+                if not url:
+                    result = {
+                        "tool_name": "read_content_from_url",
+                        "error": "No URL provided",
+                        "type": "error"
+                    }
+                else:
+                    try:
+                        # Get tool context from session state or create one
+                        tool_context = getattr(ctx.session.state, 'tool_context', None)
+                        if not tool_context:
+                            # Create a tool context using the current invocation context
+                            from google.adk.tools import ToolContext
+                            tool_context = ToolContext(invocation_context=ctx)
+                        
+                        # Call the actual URL content reader
+                        content_result = read_content_from_url(
+                            tool_context=tool_context,
+                            url=url,
+                            title=title,
+                            description=description
+                        )
+                        
+                        # Parse the result which should be a JSON string
+                        try:
+                            result = json.loads(content_result)
+                            
+                            # Check if the result contains an error
+                            if result.get("error") or result.get("type") == "error":
+                                logger.error(f"[{self.name}] ❌ URL reading failed: {result.get('error', 'Unknown error')}")
+                            else:
+                                logger.info(f"[{self.name}] ✅ Successfully read content from URL: {url}")
+                                
+                        except json.JSONDecodeError:
+                            result = {
+                                "tool_name": "read_content_from_url",
+                                "message": content_result,
+                                "type": "text",
+                                "url": url
+                            }
+                            
+                    except Exception as e:
+                        logger.error(f"[{self.name}] ❌ Error reading URL content: {str(e)}")
+                        result = {
+                            "tool_name": "read_content_from_url",
+                            "error": f"Failed to read URL content: {str(e)}",
+                            "url": url,
+                            "type": "error"
+                        }
                 
             else:
                 result = {"error": f"Unknown tool: {tool_name}"}
             
-            return {
+            # Prepare the final result
+            final_result = {
                 "execution_type": "other_tool",
                 "tool_name": tool_name,
                 "entity": entity,
@@ -535,8 +857,12 @@ Return only the updated parameters as valid JSON."""
                 "result": result
             }
             
+            
+            
+            return final_result
+            
         except Exception as e:
-            logger.error(f"[{self.name}] Other tool execution failed: {e}")
+            logger.error(f"[{self.name}] ❌ Other tool execution failed: {e}")
             return {
                 "execution_type": "other_tool",
                 "tool_name": tool_name,
@@ -571,6 +897,7 @@ Return only the updated parameters as valid JSON."""
             "details": results
         }
         return summary
+    
     
     def _process_llm_response(self, callback_context, llm_response):
         """
@@ -615,24 +942,10 @@ Return only the updated parameters as valid JSON."""
                         callback_context.state["tools_to_execute"] = tools_to_execute
                         logger.info(f"[{self.name}] Found {len(tools_to_execute)} tools to execute")
                         
-                        # If tools are detected, create and store dynamic agent for later use
+                        # Tools detected - they will be executed directly in _run_async_impl
                         if tools_to_execute:
-                            logger.info(f"[{self.name}] Tools detected! Creating dynamic LlmAgent for execution...")
-                            
-                            # Create a new LlmAgent dynamically
-                            dynamic_agent = self._create_dynamic_execution_agent(tools_to_execute)
-                            
-                            # Store the dynamic agent as a sub-agent for transfer
-                            self.sub_agents = [dynamic_agent]
-                            
-                            # Store the dynamic agent in callback context for potential transfer
-                            callback_context.state["dynamic_agent"] = dynamic_agent.name
-                            
-                            # Instead of modifying the response, let's return None to use the original response
-                            # and let the ADK flow handle the transfer naturally
-                            logger.info(f"[{self.name}] Dynamic agent {dynamic_agent.name} ready for execution")
-                            # Don't modify the response - let it show the original JSON plan
-                            # The transfer will happen through ADK's natural flow
+                            logger.info(f"[{self.name}] Tools detected! Will execute directly in workflow (no agent transfer needed)")
+                            # Just store the tools for execution - no dynamic agent creation
                         
                     else:
                         logger.warning(f"[{self.name}] No 'tools_by_order' found in response")

@@ -422,18 +422,29 @@ def read_content_from_url(tool_context: ToolContext, url: str, include_json: boo
         
         print(f"🌐 [URL-CONVERT] Reading content from URL: {url}")
         
+        # Convert Google Docs edit links to export format for better compatibility
+        processed_url = url
+        if "docs.google.com/document" in url and "/edit" in url:
+            # Convert to export format (plain text or PDF)
+            doc_id = url.split("/d/")[1].split("/")[0] if "/d/" in url else None
+            if doc_id:
+                processed_url = f"https://docs.google.com/document/d/{doc_id}/export?format=txt"
+                print(f"🔄 [URL-CONVERT] Converted Google Docs URL to export format: {processed_url}")
+        
         headers = {"Content-Type": "application/json"}
         
         body = {
-            "includeJson": include_json,
+            "includeJson": False,
             "outputFormat": output_format,
             "gcsOutput": "",
             "chunkSize": 1,
             "embeddingsModel": "",
             "title": title,
             "description": description,
-            "url": url
+            "url": processed_url
         }
+        
+        print(f"📝 [URL-CONVERT] Request body: {json.dumps(body, indent=2)}")
         
         response = invoke_api_tool(
             url=convert_endpoint,
@@ -443,10 +454,22 @@ def read_content_from_url(tool_context: ToolContext, url: str, include_json: boo
             tool_context=tool_context
         )
         
+        # Check for HTTP errors first (500, 400, etc.)
         if response.get("status") == "error":
+            error_details = response.get('error', 'Unknown error')
+            status_code = response.get('status_code', 'Unknown')
+            api_call = response.get('api_call', 'POST /v1/convert/url')
+            
+            print(f"❌ [URL-CONVERT] API Error {status_code}: {error_details}")
+            print(f"📝 [URL-CONVERT] Failed API call: {api_call}")
+            
             return json.dumps({
-                "error": f"Error calling URL convert service: {response.get('error')}",
-                "url": url
+                "tool_name": "read_content_from_url",
+                "error": f"URL convert service error (HTTP {status_code}): {error_details}",
+                "url": url,
+                "status_code": status_code,
+                "api_call": api_call,
+                "type": "error"
             })
         
         # Handle both JSON and string responses

@@ -4,7 +4,7 @@ Test script to verify entities loading from api_config_manager in UNOPS.PAO.AISe
 """
 
 from ai_assistant.utils.api_config_manager import config_manager
-from ai_assistant.sub_agents.user_request_agent.agent import _get_entities_information
+from ai_assistant.task_executor_agent import get_task_executor_instruction
 
 def test_entities_loading():
     print("🧪 Testing entities loading from api_config_manager...")
@@ -28,8 +28,8 @@ def test_entities_loading():
         if synonyms:
             print(f"    Synonyms: {', '.join(synonyms[:3])}{'...' if len(synonyms) > 3 else ''}")
     
-    print("\n📝 Formatted entities information for user_request_agent:")
-    entities_info = _get_entities_information()
+    print("\n📝 Formatted entities information for TaskExecutorAgent:")
+    entities_info = get_task_executor_instruction()
     print(entities_info[:500] + "..." if len(entities_info) > 500 else entities_info)
 
 if __name__ == "__main__":

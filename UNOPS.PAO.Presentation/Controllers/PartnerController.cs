@@ -198,13 +198,16 @@ public class PartnerController : BaseController
     /// Performs simple text search across multiple partner fields (name, description, etc.).
     /// </summary>
     /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
-    /// <param name="searchText">Text to search across partner name, description, and other basic fields</param>
+    /// <param name="searchText">Text to search across partner name, description, and other basic fields. 
+    /// Supports phrase search (e.g., "University of Oxford") and OR search with pipe separator (e.g., "UNICEF|WHO")</param>
     /// <example_uses>
     /// Search for partners named UNICEF
     /// Find partners containing 'Government'
     /// Search for partners with 'Development' in description
     /// Look for partners with specific keywords
     /// Find partner by short name or acronym
+    /// Search for full partner names with spaces: "University of Oxford"
+    /// Search for multiple terms with OR: "UNICEF|WHO|UNDP"
     /// </example_uses>
     /// <when_to_use>Use this for simple name, description, or basic field searches. NOT for complex criteria or relationship searches.</when_to_use>
     /// <returns>Paginated list of partners matching the search text</returns>
