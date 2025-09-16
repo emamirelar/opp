@@ -422,18 +422,29 @@ def read_content_from_url(tool_context: ToolContext, url: str, include_json: boo
         
         print(f"🌐 [URL-CONVERT] Reading content from URL: {url}")
         
+        # Convert Google Docs edit links to export format for better compatibility
+        processed_url = url
+        if "docs.google.com/document" in url and "/edit" in url:
+            # Convert to export format (plain text or PDF)
+            doc_id = url.split("/d/")[1].split("/")[0] if "/d/" in url else None
+            if doc_id:
+                processed_url = f"https://docs.google.com/document/d/{doc_id}/export?format=txt"
+                print(f"🔄 [URL-CONVERT] Converted Google Docs URL to export format: {processed_url}")
+        
         headers = {"Content-Type": "application/json"}
         
         body = {
-            "includeJson": include_json,
+            "includeJson": False,
             "outputFormat": output_format,
             "gcsOutput": "",
             "chunkSize": 1,
             "embeddingsModel": "",
             "title": title,
             "description": description,
-            "url": url
+            "url": processed_url
         }
+        
+        print(f"📝 [URL-CONVERT] Request body: {json.dumps(body, indent=2)}")
         
         response = invoke_api_tool(
             url=convert_endpoint,
@@ -443,10 +454,22 @@ def read_content_from_url(tool_context: ToolContext, url: str, include_json: boo
             tool_context=tool_context
         )
         
+        # Check for HTTP errors first (500, 400, etc.)
         if response.get("status") == "error":
+            error_details = response.get('error', 'Unknown error')
+            status_code = response.get('status_code', 'Unknown')
+            api_call = response.get('api_call', 'POST /v1/convert/url')
+            
+            print(f"❌ [URL-CONVERT] API Error {status_code}: {error_details}")
+            print(f"📝 [URL-CONVERT] Failed API call: {api_call}")
+            
             return json.dumps({
-                "error": f"Error calling URL convert service: {response.get('error')}",
-                "url": url
+                "tool_name": "read_content_from_url",
+                "error": f"URL convert service error (HTTP {status_code}): {error_details}",
+                "url": url,
+                "status_code": status_code,
+                "api_call": api_call,
+                "type": "error"
             })
         
         # Handle both JSON and string responses
@@ -469,19 +492,26 @@ def read_content_from_url(tool_context: ToolContext, url: str, include_json: boo
         
         print(f"🌐 [URL-CONVERT] Successfully read content from URL")
         
+        # Format the content as markdown with proper markers
+        if isinstance(content_data, dict):
+            markdown_content = f"# Content from {url}\n\n{json.dumps(content_data, indent=2)}"
+        else:
+            markdown_content = f"# Content from {url}\n\n{content_data}"
+        
         return json.dumps({
-            "content": content_data,
-            "url": url,
-            "format": output_format,
-            "success": True
+            "tool_name": "read_content_from_url",
+            "message": markdown_content,
+            "type": "markdown",
+            "sources": [{"url": url, "title": title or "Web Content"}]
         })
         
     except Exception as e:
         logging.error(f"Error reading content from URL {url}: {str(e)}", exc_info=True)
         return json.dumps({
-            "error": f"Failed to read content from URL: {str(e)}",
-            "url": url,
-            "suggestion": "Check if the URL is accessible and the convert service is available"
+            "tool_name": "read_content_from_url",
+            "message": f"# Error Reading URL\n\nFailed to read content from URL: {str(e)}\n\n**Suggestion:** Check if the URL is accessible and the convert service is available",
+            "type": "markdown",
+            "sources": [{"url": url, "title": "Error"}]
         })
 
 def convert_markdown_to_google_doc(tool_context: ToolContext, markdown_content: str, filename: str, metadata: Optional[Dict[str, Any]] = None) -> str:
@@ -681,17 +711,23 @@ def convert_markdown_to_google_doc(tool_context: ToolContext, markdown_content: 
                 response_data = response.json()
                 print(f"✅ [MARKDOWN-TO-GDOC] Successfully converted markdown to Google Doc")
                 
+                # Extract document URL if available
+                doc_url = ""
+                if isinstance(response_data, dict):
+                    doc_url = response_data.get('documentUrl', response_data.get('webViewLink', ''))
+                
                 return json.dumps({
-                    "status": "success",
-                    "response": response_data,
-                    "filename": filename
+                    "tool_name": "convert_markdown_to_google_doc",
+                    "message": f"# Document Created Successfully\n\n**Filename:** {filename}\n\n**Status:** Document created successfully\n\n**URL:** {doc_url}",
+                    "type": "markdown",
+                    "sources": [{"url": doc_url, "title": filename}] if doc_url else []
                 })
             except json.JSONDecodeError:
                 return json.dumps({
-                    "status": "success",
-                    "response": {"text": response.text},
-                    "filename": filename,
-                    "note": "Response was not JSON"
+                    "tool_name": "convert_markdown_to_google_doc",
+                    "message": f"# Document Created (Non-JSON Response)\n\n**Filename:** {filename}\n\n**Status:** Document created successfully but response format was unexpected\n\n**Response:** {response.text[:500]}",
+                    "type": "markdown",
+                    "sources": []
                 })
         else:
             error_message = f"HTTP {response.status_code}"
@@ -705,15 +741,17 @@ def convert_markdown_to_google_doc(tool_context: ToolContext, markdown_content: 
             print(f"❌ [MARKDOWN-TO-GDOC] Error {response.status_code}: {error_message}")
         
         return json.dumps({
-                "status": "error",
-                "error": error_message,
-                "filename": filename
-            })
+            "tool_name": "convert_markdown_to_google_doc",
+            "message": f"# Document Creation Failed\n\n**Filename:** {filename}\n\n**Error:** {error_message}",
+            "type": "markdown",
+            "sources": []
+        })
         
     except Exception as e:
         logging.error(f"Error converting markdown to Google Doc: {str(e)}", exc_info=True)
         return json.dumps({
-            "error": f"Failed to convert markdown to Google Doc: {str(e)}",
-            "filename": filename,
-            "suggestion": "Check if the convert service is available and the file is valid markdown"
+            "tool_name": "convert_markdown_to_google_doc",
+            "message": f"# Document Creation Error\n\n**Filename:** {filename}\n\n**Error:** Failed to convert markdown to Google Doc: {str(e)}\n\n**Suggestion:** Check if the convert service is available and the file is valid markdown",
+            "type": "markdown",
+            "sources": []
         }) 

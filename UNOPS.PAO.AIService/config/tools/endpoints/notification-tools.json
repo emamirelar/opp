@@ -1,91 +1,138 @@
 {
   "entity": "Notification",
-  "description": "Manages system notifications, alerts, and messages for users, allowing retrieval, marking as read, and administrative updates.",
+  "description": "Manages user notifications and their statuses.",
   "synonyms": [
     "Alert",
     "Message",
-    "System Message",
+    "Announcement",
     "Update",
-    "Announcement"
+    "Information"
   ],
   "mandatoryFields": [
     "notificationId",
     "Status"
   ],
+  "baseUrl": "/api/notifications",
   "endpoints": [
     {
       "name": "GetNotifications",
-      "url": "api/notifications",
+      "url": "/api/notifications?unreadOnly={unreadOnly}",
       "method": "GET",
-      "description": "Retrieves a list of notifications for the current user. Can filter to show only unread notifications.",
-      "parameters": {
-        "unreadOnly": {
-          "type": "boolean",
-          "required": false,
-          "description": "If true, only unread notifications are returned."
-        }
-      },
-      "example_uses": [
-        "Get all my notifications.",
-        "Show me only my unread notifications.",
-        "List all system alerts."
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
       ],
-      "when_to_use": "Use this to fetch a user's notifications, optionally filtering for unread ones."
+      "description": "Retrieves a list of notifications, optionally filtering by unread status.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/notifications?unreadOnly=true",
+      "requiredFields": [],
+      "example_uses": [
+        "Get all notifications",
+        "List unread notifications"
+      ],
+      "when_to_use": "When a user needs to view their notifications.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "MarkAsRead",
-      "url": "api/notifications/{notificationId}/read",
+      "url": "/api/notifications/{notificationId}/read",
       "method": "PUT",
-      "description": "Marks a specific notification as read for the current user to update notification status.",
-      "parameters": {
-        "notificationId": {
-          "type": "integer",
-          "required": true,
-          "description": "The unique identifier of the notification to mark as read."
-        }
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Marks a specific notification as read.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/notifications/123/read",
+      "requiredFields": [],
       "example_uses": [
         "Mark notification 123 as read",
-        "Read notification about system update",
-        "Clear unread status for alert 456"
+        "Acknowledge notification"
       ],
-      "when_to_use": "Use this when the user opens, reads, or acknowledges a notification to update its status."
+      "when_to_use": "When a user reads or acknowledges a notification.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "UpdateNotification",
-      "url": "api/notifications/{notificationId}/update",
+      "url": "/api/notifications/{notificationId}/update",
       "method": "PUT",
-      "description": "Updates a notification's content and status for administrative or system management purposes.",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates the content and status of a notification.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
-        "notificationId": {
-          "type": "integer",
-          "required": true,
-          "description": "The unique identifier of the notification to update."
-        },
         "request": {
           "type": "object",
-          "required": false,
+          "required": true,
           "description": "Update request containing new message and status",
-          "properties": {
-            "Message": {
-              "type": "string",
-              "required": false,
-              "description": "The new message content for the notification."
-            },
-            "Status": {
-              "type": "string",
-              "required": true,
-              "description": "The new status for the notification (e.g., Read, Unread, Archived)."
-            }
-          }
+          "default": ""
         }
       },
-      "example_uses": [
-        "Update notification 123's message content",
-        "Change notification status to resolved",
-        "Modify system alert text"
+      "exampleBody": {
+        "Message": "System maintenance scheduled",
+        "Status": "Resolved"
+      },
+      "exampleUrl": "/api/notifications/456/update",
+      "requiredFields": [
+        "Status"
       ],
-      "when_to_use": "Use this when administrators need to update notification content or status for system management."
+      "example_uses": [
+        "Update notification 456 with new message",
+        "Change notification status to resolved"
+      ],
+      "when_to_use": "When an administrator needs to update notification content or status.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 80,
+        "complexity": "medium"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
 }
