@@ -29,6 +29,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     private readonly UNOPSAppDbContext context;
     private GoogleCloudStorageService googleCloudStorageService;
     private readonly IUserProfileCacheService userProfileCacheService;
+    private readonly PartnerTreeService partnerTreeService;
 
     private InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
     {
@@ -229,11 +230,12 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         await context.SaveChangesAsync();
     }
 
-    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null, IUserProfileCacheService userProfileCacheService = null)
+    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null, IUserProfileCacheService userProfileCacheService = null)
         : base(mapper, context, configuration, null, "Interaction", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
         this.context = context;
+        this.partnerTreeService = partnerTreeService;
         interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration, serviceProvider);
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
@@ -1029,6 +1031,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         }
         return null;
     }
+
 
     public virtual async Task<InteractionModel> FindGmailInteractionAsync(GmailInteractionRequest model)
     {

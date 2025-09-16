@@ -28,6 +28,8 @@ using Google.Cloud.Speech.V1;
 using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.Http;
 using Google.Cloud.TextToSpeech.V1;
+using UNOPS.PAO.UNOPSBusiness.Services;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using System.Globalization;
 using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
@@ -415,6 +417,15 @@ public class UNOPSGeminiManager : IGeminiManager
                 var parameterTypes = constructor.GetParameters().Select(p => p.ParameterType).ToArray();
                 var args = new List<object>();
                 
+                // Create PartnerTreeService instance if needed
+                PartnerTreeService partnerTreeService = null;
+                if (parameterTypes.Contains(typeof(PartnerTreeService)))
+                {
+                    var partnerTreeRepository = new DataRepository<UNOPSDomain.Entities.UNOPSPartnerTree>(_context);
+                    var memoryCache = new MemoryCache(new MemoryCacheOptions());
+                    partnerTreeService = new PartnerTreeService(partnerTreeRepository, memoryCache);
+                }
+                
                 foreach (var paramType in parameterTypes)
                 {
                     if (paramType == typeof(IMapper))
@@ -423,6 +434,8 @@ public class UNOPSGeminiManager : IGeminiManager
                         args.Add(_context);
                     else if (paramType == typeof(IConfiguration))
                         args.Add(_configuration);
+                    else if (paramType == typeof(PartnerTreeService))
+                        args.Add(partnerTreeService);
                     else
                         args.Add(null); // Pass null for other dependencies we don't have
                 }
