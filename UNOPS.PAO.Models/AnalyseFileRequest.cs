@@ -13,7 +13,7 @@ public class AnalyseFileRequest
 
     public string FileId { get; set; } = string.Empty;
 
-    public string? SheetName { get; set; } = string.Empty; // Optional: Custom sheet name for manual entry
+    public string? SheetName { get; set; }
 
     public int CurrentUserId { get; set; } // User who initiated the analysis
 

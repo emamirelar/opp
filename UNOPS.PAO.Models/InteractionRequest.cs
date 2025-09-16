@@ -1,6 +1,8 @@
 using UNOPS.PAO.Domain.Enums;
 using System.Text.Json.Serialization;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Models.Converters;
+using Newtonsoft.Json;
 
 namespace UNOPS.PAO.Models;
 
@@ -11,7 +13,10 @@ public class InteractionRequest : ExtensibleModel
     public DateTime Date { get; set; } = DateTime.UtcNow;
     
     public string? Description { get; set; }
+    [Newtonsoft.Json.JsonConverter(typeof(StringOrStringArrayConverter))]
     public List<string>? EmailAddresses { get; set; } = new List<string>();
+    
+    [Newtonsoft.Json.JsonConverter(typeof(StringOrStringArrayConverter))]
     public List<string>? PhoneNumbers { get; set; } = new List<string>();
     public List<int>? ContactIds { get; set; } = new List<int>();
     public List<int>? PartnerIds { get; set; } = new List<int>();

@@ -7,16 +7,16 @@ TRUNCATE TABLE public."EntityFieldManagers" RESTART IDENTITY CASCADE;
 
 -- Insert Entity Managers
 INSERT INTO public."EntityManagers" (
-    "EntityName", "TableName", "Description", "IsActive", "EnableChangeLog", 
+    "Id", "EntityName", "TableName", "Description", "IsActive", "EnableChangeLog", 
     "Name", "Status", "CreatedBy", "CreatedDate", "LastModifiedBy", 
     "LastModifiedDate", "IsDeleted", "DeletedBy", "DeletedDate"
 )
 VALUES 
-    ('Contact', 'Contacts', 'Individual contact persons associated with partners', true, false, 'Contact', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    ('Partner', 'Partners', 'Organizations and entities that work with UNOPS', true, false, 'Partner', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    ('Interaction', 'Interactions', 'Communication and interaction records between UNOPS and partners/contacts', true, false, 'Interaction', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    ('PartnerTree', 'PartnerTrees', 'Hierarchical structure and classification of partners', true, false, 'PartnerTree', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    ('OrganizationHierarchy', 'OrganizationHierarchies', 'UNOPS organizational hierarchy and office structure', true, false, 'OrganizationHierarchy', 0, 1, NOW(), 0, NULL, false, 0, NULL);
+    (1, 'Contact', 'Contacts', 'Individual contact persons associated with partners', true, false, 'Contact', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'Partner', 'Partners', 'Organizations and entities that work with UNOPS', true, false, 'Partner', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'Interaction', 'Interactions', 'Communication and interaction records between UNOPS and partners/contacts', true, false, 'Interaction', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (4, 'PartnerTree', 'PartnerTrees', 'Hierarchical structure and classification of partners', true, false, 'PartnerTree', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (5, 'OrganizationHierarchy', 'OrganizationHierarchies', 'UNOPS organizational hierarchy and office structure', true, false, 'OrganizationHierarchy', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
 -- EntityFieldManagers configuration seeding
 -- This section seeds the UI field configuration for all entities

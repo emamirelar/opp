@@ -657,20 +657,25 @@ export class ImportDialogService {
         var parsedResponse = JSON.parse(response.message);
         
         // Handle partial success/failure scenarios
-        if (parsedResponse.IsSuccess === false) {
-          // Check if this is a complete failure or partial failure
-          const errorDetails = parsedResponse.ErrorDetails || [];
-          const totalRecords = dataWithDefaults.length;
-          const failedRecords = errorDetails.length;
-          const successfulRecords = totalRecords - failedRecords;
-          
-          if (successfulRecords > 0) {
+        const errorDetails = parsedResponse.ErrorDetails || parsedResponse.Errors || [];
+        const totalRecords = dataWithDefaults.length;
+        const failedRecords = errorDetails.length;
+        const successfulRecords = totalRecords - failedRecords;
+        
+        // Check if the backend explicitly marked this as a failure
+        if (parsedResponse.IsSuccess === false || failedRecords > 0) {
+          // There are some failures or backend marked as failed
+          if (successfulRecords > 0 && failedRecords > 0) {
             // Partial success - some records imported, some failed
             this.handlePartialImportSuccess(successfulRecords, failedRecords, errorDetails);
           } else {
-            // Complete failure - no records imported
+            // Complete failure - no records imported or backend failure
+            const errorMessage = errorDetails.length > 0 
+              ? `Import failed: ${errorDetails.join(', ')}`
+              : 'Import failed: No records were imported. Ensure the basic mandatory fields are filled in';
+            
             this.feedbackDialogService.showErrorToast({ 
-              detail: 'Import failed: No records were imported. Ensure the basic mandatory fields are filled in'
+              detail: errorMessage
             });
           }
           return;

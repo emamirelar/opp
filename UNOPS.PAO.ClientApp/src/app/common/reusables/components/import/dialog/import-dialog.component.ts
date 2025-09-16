@@ -138,6 +138,7 @@ export class ImportDialogComponent implements OnInit {
 
   // Contact-specific columns
   contactColumns: ImportColumn[] = [
+    { field: 'id', header: 'contact.id', required: false, label: 'ID', type: 'text', sortable: false },
     { field: 'salutation', header: 'contact.salutation', required: false, label: 'Salutation', type: 'text', sortable: false },
     { field: 'firstName', header: 'contact.firstName', required: false, label: 'First Name', type: 'text', sortable: false },
     { field: 'middleName', header: 'contact.middleName', required: false, label: 'Middle Name', type: 'text', sortable: false },
@@ -169,6 +170,7 @@ export class ImportDialogComponent implements OnInit {
 
   // Partner-specific columns (all fields from Partner.cs, filtered by permissions)
   allPartnerColumns: ImportColumn[] = [
+    { field: 'id', header: 'partner.id', required: false, label: 'ID', type: 'text', sortable: false },
     // Essential Fields
     { field: 'name', header: 'partner.name', required: true, label: 'Name', type: 'text', sortable: false },
     { field: 'partnerShortDescription', header: 'partner.shortName', required: false, label: 'Short Name', type: 'text', sortable: false },
@@ -187,6 +189,7 @@ export class ImportDialogComponent implements OnInit {
 
   // Interaction-specific columns
   interactionColumns: ImportColumn[] = [
+    { field: 'id', header: 'interaction.id', required: false, label: 'ID', type: 'text', sortable: false },
     { field: 'type', header: 'interaction.type', required: true, label: 'Type', type: 'text', sortable: false },
     { field: 'date', header: 'interaction.date', required: true, label: 'Date', type: 'text', sortable: false },
     { field: 'subject', header: 'interaction.subject', required: true, label: 'Subject', type: 'text', sortable: false },
