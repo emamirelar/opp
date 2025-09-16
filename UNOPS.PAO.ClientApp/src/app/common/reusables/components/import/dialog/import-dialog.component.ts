@@ -175,7 +175,6 @@ export class ImportDialogComponent implements OnInit {
     { field: 'partnerLongDescription', header: 'partner.longDescription', required: false, label: 'Long Description', type: 'text', sortable: false },
     
     // Classification & Organization
-    { field: 'partnerCategoryId', header: 'partner.partnerCategory', required: false, label: 'Partner Category', type: 'text', sortable: false },
     { field: 'partnerGroupId', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'number', sortable: false },
     { field: 'liaisonOfficeId', header: 'partner.liaisonOffice', required: false, label: 'Liaison Office', type: 'text', sortable: false },
     { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPoint', required: false, label: 'Partner Focal Point', type: 'text', sortable: false },
@@ -836,6 +835,17 @@ export class ImportDialogComponent implements OnInit {
             // Update paginated data and trigger change detection
             this.updatePaginatedData();
             
+            const selectedRows = this.selectedRows();
+            const selectedIndex = selectedRows.findIndex(item => item._importRowId === importRowId);
+            if (selectedIndex !== -1) {
+              const updatedSelectedRows = [...selectedRows];
+              updatedSelectedRows[selectedIndex] = updatedData[rowIndex];
+              this.selectedRows.set(updatedSelectedRows);
+              // Also update the service
+              this.importDialogService.setSelectedRows(updatedSelectedRows);
+              console.log(`✅ Updated selected row ${importRowId} with edited data for import`);
+            }
+            
             // Check for missing required fields
             this.checkRowForMissingFields(updatedData[rowIndex]);
           }
@@ -1127,6 +1137,7 @@ export class ImportDialogComponent implements OnInit {
     ];
     return shortTextFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
   }
+
 
 
 }

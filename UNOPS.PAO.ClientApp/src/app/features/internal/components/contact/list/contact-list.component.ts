@@ -7,8 +7,9 @@ import { ButtonModule } from 'primeng/button';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogService } from 'primeng/dynamicdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MenuItem } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
+import { MenuModule } from 'primeng/menu';
 
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -57,7 +58,8 @@ import { EntityConfigurationService } from '../../../services/entity-configurati
     TranslateModule,
     ListviewComponent,
     ConfirmDialog,
-    NgIf
+    NgIf,
+    MenuModule
   ],
   providers: [DialogService, ConfirmationService]
 })
@@ -441,6 +443,22 @@ export class ContactListComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Import menu items
+  importMenuItems = signal<MenuItem[]>([
+    {
+      label: 'Select from Google Drive',
+      icon: 'pi pi-google',
+      command: () => this.openGooglePickerImport(),
+      title: 'Select a Google Sheet from your Drive. Make sure to set the sheet to "Anyone with the link can view" for public access.'
+    },
+    {
+      label: 'Manual Entry',
+      icon: 'pi pi-link',
+      command: () => this.openManualEntryImport(),
+      title: 'Paste a Google Sheet URL directly and specify the sheet name'
+    }
+  ]);
+
   /**
    * @uiButton import_contacts
    * @description Opens the import dialog to bulk import contacts from Google Sheets or CSV files
@@ -450,6 +468,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
    * @permissions CONTACT_CREATE
    */
   openImportDialog() {
+    // This method now shows the import menu instead of directly opening the picker
+    // The actual menu is handled in the template via p-menu
+  }
+
+  /**
+   * Open Google Picker for import (original flow)
+   */
+  openGooglePickerImport() {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
@@ -461,6 +487,22 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('contact');
+  }
+
+  /**
+   * Open manual entry dialog for import
+   */
+  openManualEntryImport() {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'message.noPermissionToImport',
+        summary: 'message.permissionDenied'
+      });
+      return;
+    }
+
+    this.importDialogService.openManualEntryDialog('contact');
   }
 
   /**

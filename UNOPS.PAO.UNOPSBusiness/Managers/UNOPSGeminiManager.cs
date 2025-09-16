@@ -809,7 +809,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 throw new Exception($"No prompt configuration found for type: {req.Type}");
             }
 
-            var fileData = await _aiService.ReadFileData(req.FileId);
+            var fileData = await _aiService.ReadFileData(req.FileId, req.SheetName);
             if (string.IsNullOrEmpty(fileData))
             {
                 throw new Exception("No data found in the Google Sheet. Please ensure the sheet contains data.");

@@ -17,13 +17,20 @@
       }
       @if (!permissionsLoading() && entityPermissions().permissions.canImport) {
         <p-button
+          #importBtn
           icon="pi pi-file-import"
           [label]="'button.import' | translate"
-          (click)="openImportDialog()"
+          (click)="importMenu.toggle($event)"
           rounded
           text
           class="partner-import-button"
         />
+        <p-menu 
+          #importMenu 
+          [model]="importMenuItems()" 
+          [popup]="true"
+          appendTo="body">
+        </p-menu>
       }
       @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
         <p-button

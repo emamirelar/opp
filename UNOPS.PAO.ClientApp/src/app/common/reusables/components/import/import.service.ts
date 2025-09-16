@@ -9,6 +9,7 @@ import { InteractionType } from '../../../../features/internal/models/interactio
 export interface AnalyzeFileRequest {
   type: string;
   fileId: string;
+  sheetName?: string; // Optional: Custom sheet name for manual entry
 }
 
 export interface CancelAnalysisRequest {
@@ -92,12 +93,13 @@ export class ImportService {
    * @param fileId The Google Sheets ID
    * @param type The type of data being imported (e.g., 'bulk_contact_action')
    */
-  analyzeFile(fileId: string, type: string): Observable<ImportAnalysisResponse> {
-    console.log('🔍 ImportService.analyzeFile called with:', { fileId, type });
+  analyzeFile(fileId: string, type: string, sheetName?: string): Observable<ImportAnalysisResponse> {
+    console.log('🔍 ImportService.analyzeFile called with:', { fileId, type, sheetName });
     this.processingFile = true;
     const payload: AnalyzeFileRequest = {
       type,
-      fileId
+      fileId,
+      ...(sheetName && { sheetName }) // Only include sheetName if provided
     };
 
     // Determine the entity-specific endpoint based on the type
@@ -130,6 +132,7 @@ export class ImportService {
       records: EXAMPLE_CONTACTS,
     });*/
   }
+
 
   /**
    * Cancel an in-progress file analysis

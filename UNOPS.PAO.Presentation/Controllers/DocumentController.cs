@@ -329,50 +329,63 @@ public class DocumentController : BaseController
     {
         try
         {
-            // Get OAuth configuration from appsettings 
-            // First try to get from OAuth config (if added to appsettings)
-            var clientId = _configuration.GetValue<string>("OAuth:ClientId");
+            // Enhanced debugging for development mode detection
+            var envIsDevelopment = Environment.GetEnvironmentVariable("IS_DEVELOPMENT")?.ToUpper() == "TRUE";
+            var configIsDevelopment = _configuration.GetValue<bool>("Development:IAPSimulation:Enabled");
+            var isDevelopment = envIsDevelopment || configIsDevelopment;
             
-            if (string.IsNullOrEmpty(clientId))
-            {
-                // Fallback: construct from IAP settings based on Python config format
-                // Python config: "1069310298210-ubl2naqi5bjeqlqrroiqb4qdm482aans.apps.googleusercontent.com"
-                var projectNumber = _configuration.GetValue<string>("IAP:ProjectNumber");
-                var clientIdSuffix = "ubl2naqi5bjeqlqrroiqb4qdm482aans"; // This should match your OAuth client ID
-                clientId = $"{projectNumber}-{clientIdSuffix}.apps.googleusercontent.com";
-                _logger.LogInformation("Constructed OAuth client ID from IAP config: {ClientId}", clientId);
-            }
-            else
-            {
-                _logger.LogInformation("Using OAuth client ID from config: {ClientId}", clientId);
-            }
+            var envDevEmail = Environment.GetEnvironmentVariable("DEV_EMAIL");
+            var configDevEmail = _configuration.GetValue<string>("Development:IAPSimulation:UserEmail");
+            var devEmail = envDevEmail ?? configDevEmail;
             
+            _logger.LogInformation("Development mode detection - EnvIsDev: {EnvIsDev}, ConfigIsDev: {ConfigIsDev}, Final: {IsDev}", 
+                envIsDevelopment, configIsDevelopment, isDevelopment);
+            _logger.LogInformation("Dev email sources - Env: {EnvEmail}, Config: {ConfigEmail}, Final: {DevEmail}", 
+                envDevEmail, configDevEmail, devEmail);
+            
+            // Try multiple configuration sources for OAuth client ID (needed for both dev and prod)
+            // The Python code uses the QA config: "351976372264-du8e5b5r2d1s6jqn6e4i7ig3ddanqmbc.apps.googleusercontent.com"
+            var oauthClientId = _configuration.GetValue<string>("OAuth:ClientId");
+            var googleAuthClientId = _configuration.GetValue<string>("GoogleAuthSettings:clientId");
+            
+            // For QA environment, we should use the same client ID as Python
+            var qaClientId = "351976372264-du8e5b5r2d1s6jqn6e4i7ig3ddanqmbc.apps.googleusercontent.com";
+            
+            _logger.LogInformation("OAuth client ID sources - OAuth:ClientId: {OAuthId}, GoogleAuthSettings:clientId: {GoogleAuthId}, QA: {QAId}", 
+                oauthClientId, googleAuthClientId, qaClientId);
+            
+            // Use QA client ID for now to match Python behavior
+            var clientId = googleAuthClientId;
+            
+            // Always generate Authorization token (required by external API even in dev mode)
             if (!string.IsNullOrEmpty(clientId))
             {
+                _logger.LogInformation("🎯 Using client ID for OIDC token: {ClientId}", clientId);
+                
                 // Get OIDC token with the client ID as target audience
                 var oidcToken = await GetOidcTokenAsync(clientId);
                 if (!string.IsNullOrEmpty(oidcToken))
                 {
                     httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", oidcToken);
-                    _logger.LogInformation("Added OIDC token to Authorization header for audience: {ClientId}", clientId);
+                    _logger.LogInformation("✅ Added OIDC Bearer token to Authorization header for audience: {ClientId}", clientId);
+                    
+                    // Log token info (masked for security)
+                    var tokenPreview = oidcToken.Length > 20 ? $"{oidcToken.Substring(0, 20)}..." : oidcToken;
+                    _logger.LogInformation("🔑 Token preview: {TokenPreview}", tokenPreview);
                 }
                 else
                 {
-                    _logger.LogWarning("Failed to get OIDC token for client ID: {ClientId}", clientId);
+                    _logger.LogError("❌ Failed to get OIDC token for client ID: {ClientId}", clientId);
                 }
             }
             else
             {
-                _logger.LogWarning("No OAuth client ID found in configuration");
+                _logger.LogError("❌ No OAuth client ID found in any configuration source");
             }
-            
-            // Add development headers if in development mode
-            var isDevelopment = Environment.GetEnvironmentVariable("IS_DEVELOPMENT")?.ToUpper() == "TRUE";
-            var devEmail = Environment.GetEnvironmentVariable("DEV_EMAIL");
-            
+
             if (isDevelopment && !string.IsNullOrEmpty(devEmail))
             {
-                _logger.LogInformation("Adding development IAP headers for email: {Email}", devEmail);
+                _logger.LogInformation("🧪 Using DEVELOPMENT mode - adding IAP simulation headers with email: {Email}", devEmail);
                 var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
                 
                 httpClient.DefaultRequestHeaders.Add("x-goog-authenticated-user-email", $"accounts.google.com:{devEmail}");
@@ -381,26 +394,48 @@ public class DocumentController : BaseController
                 httpClient.DefaultRequestHeaders.Add("x-forwarded-email", devEmail);
                 httpClient.DefaultRequestHeaders.Add("X-Dev-IAP-Simulation", "true");
                 httpClient.DefaultRequestHeaders.Add("X-Dev-Auth-Timestamp", currentTimestamp);
-            }
-            
-            // Add user impersonation header
-            var userEmail = User?.Identity?.Name;
-            if (!string.IsNullOrEmpty(userEmail))
-            {
-                httpClient.DefaultRequestHeaders.Add("x-unops-impersonated-user", userEmail);
-                _logger.LogInformation("Added impersonated user header: {Email}", userEmail);
-            }
-            else if (isDevelopment && !string.IsNullOrEmpty(devEmail))
-            {
                 httpClient.DefaultRequestHeaders.Add("x-unops-impersonated-user", devEmail);
-                _logger.LogInformation("Added impersonated user header (dev): {Email}", devEmail);
+                
+                _logger.LogInformation("✅ Added development IAP headers and impersonation for: {Email}", devEmail);
+            }
+            else
+            {
+                _logger.LogInformation("🔐 Using PRODUCTION mode authentication");
+                
+                // Add user impersonation header for production
+                var userEmail = User?.Identity?.Name;
+                if (!string.IsNullOrEmpty(userEmail))
+                {
+                    httpClient.DefaultRequestHeaders.Add("x-unops-impersonated-user", userEmail);
+                    _logger.LogInformation("✅ Added impersonated user header: {Email}", userEmail);
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ No user email available for impersonation header");
+                }
             }
             
-            _logger.LogInformation("Authentication headers added successfully");
+            // Log all headers being sent (safely)
+            _logger.LogInformation("📋 Final request headers count: {HeaderCount}", httpClient.DefaultRequestHeaders.Count());
+            foreach (var header in httpClient.DefaultRequestHeaders)
+            {
+                var headerValues = string.Join(", ", header.Value);
+                if (header.Key.ToLower().Contains("authorization"))
+                {
+                    var maskedValue = headerValues.Length > 20 ? $"{headerValues.Substring(0, 20)}..." : "***";
+                    _logger.LogInformation("   {Key}: {Value} (masked)", header.Key, maskedValue);
+                }
+                else
+                {
+                    _logger.LogInformation("   {Key}: {Value}", header.Key, headerValues);
+                }
+            }
+            
+            _logger.LogInformation("✅ Authentication headers setup completed");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error adding authentication headers");
+            _logger.LogError(ex, "❌ Error adding authentication headers");
         }
     }
 
@@ -408,22 +443,72 @@ public class DocumentController : BaseController
     {
         try
         {
-            var credential = await Google.Apis.Auth.OAuth2.GoogleCredential.GetApplicationDefaultAsync();
+            _logger.LogInformation("🔑 Starting OIDC token generation for audience: {Audience}", targetAudience);
             
-            // Get OIDC token with the target audience (similar to CloudRunHelper)
-            var oidcToken = await credential.GetOidcTokenAsync(Google.Apis.Auth.OAuth2.OidcTokenOptions.FromTargetAudience(targetAudience));
+            // Try the simpler approach first - use service account credentials directly
+            // Get service account JSON from configuration
+            var serviceAccountJsonSecretName = _configuration.GetValue<string>("GoogleDriveSettings:GoogleDriveServiceAccountJSONSecretName");
             
-            // Note: Despite the confusing name, GetAccessTokenAsync() on an OidcToken 
-            // actually returns the ID token string, not an access token
-            var idToken = await oidcToken.GetAccessTokenAsync();
+            if (!string.IsNullOrEmpty(serviceAccountJsonSecretName))
+            {
+                _logger.LogInformation("🔓 Attempting to use service account JSON from secret: {SecretName}", serviceAccountJsonSecretName);
+                
+                try
+                {
+                    // This would require implementing secret manager access
+                    // For now, let's try application default credentials with a fallback
+                    _logger.LogInformation("🔄 Falling back to application default credentials approach");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "⚠️ Could not access service account JSON secret: {SecretName}", serviceAccountJsonSecretName);
+                }
+            }
             
-            _logger.LogInformation("Generated OIDC token for audience: {Audience}", targetAudience);
+            // Fallback approach: Use application default credentials directly
+            // This should work if the environment has service account credentials set up
+            _logger.LogInformation("🔓 Getting application default credentials...");
+            var credential = await GoogleCredential.GetApplicationDefaultAsync();
             
-            return idToken;
+            // Add cloud platform scope
+            credential = credential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
+            
+            _logger.LogInformation("✅ Successfully obtained application default credentials");
+            
+            // Try to get OIDC token directly (this will work if credential is service account)
+            _logger.LogInformation("🎯 Creating OIDC token with target audience: {Audience}", targetAudience);
+            
+            try
+            {
+                var oidcToken = await credential.GetOidcTokenAsync(OidcTokenOptions.FromTargetAudience(targetAudience));
+                _logger.LogInformation("✅ Successfully created OIDC token object");
+                
+                var idToken = await oidcToken.GetAccessTokenAsync();
+                
+                if (!string.IsNullOrEmpty(idToken))
+                {
+                    var tokenPreview = idToken.Length > 50 ? $"{idToken.Substring(0, 50)}..." : idToken;
+                    _logger.LogInformation("✅ Generated OIDC token for audience: {Audience}, Token preview: {TokenPreview}", 
+                        targetAudience, tokenPreview);
+                    return idToken;
+                }
+                else
+                {
+                    _logger.LogError("❌ OIDC token generation returned empty/null token for audience: {Audience}", targetAudience);
+                    return null;
+                }
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("UnderlyingCredential is not an OIDC token provider"))
+            {
+                _logger.LogWarning("⚠️ Application default credentials don't support OIDC tokens directly. This means we're running with user credentials instead of service account credentials.");
+                _logger.LogInformation("💡 In development, you might need to set up service account credentials or run with gcloud auth application-default login --impersonate-service-account=pno-ai-service@unops-opportunityplus-qa.iam.gserviceaccount.com");
+                return null;
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to get OIDC token for audience: {Audience}", targetAudience);
+            _logger.LogError(ex, "❌ Failed to get OIDC token for audience: {Audience}. Error: {Error}", targetAudience, ex.Message);
+            _logger.LogDebug(ex, "Full OIDC token generation exception");
             return null;
         }
     }
