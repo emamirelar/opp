@@ -1,59 +1,29 @@
 {
   "entity": "SystemAdmin",
-  "description": "Manages system-level administrative tasks and configurations.",
+  "description": "Manages system-level administrative tasks, such as database migrations.",
   "synonyms": [
-    "AdminTasks",
-    "SystemManagement",
-    "AdminControls",
-    "SystemConfiguration",
-    "Maintenance"
+    "System Administration",
+    "Maintenance",
+    "Setup",
+    "Configuration",
+    "Admin"
   ],
   "mandatoryFields": [],
-  "baseUrl": "/api/system-admin",
   "endpoints": [
     {
       "name": "RunMigrations",
       "url": "/api/system-admin/migrations/run",
       "method": "GET",
-      "intent": [
-        "execute",
-        "run",
-        "update",
-        "migrate"
-      ],
-      "description": "Executes database migrations to update the system schema.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
-      },
+      "description": "Executes pending database migrations to update the system's schema. This is typically used for initial setup or system upgrades.",
       "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/system-admin/migrations/run",
-      "requiredFields": [],
       "example_uses": [
-        "Run the latest database migrations.",
-        "Execute system updates."
+        "Run the necessary database migrations.",
+        "Initialize the database schema for the first time.",
+        "Update the system's database to the latest version.",
+        "Perform a database schema upgrade.",
+        "Execute all pending database changes."
       ],
-      "when_to_use": "When database schema updates are required.",
-      "scoring": {
-        "searchBonus": 10,
-        "intentMatch": 90,
-        "complexity": "simple"
-      }
+      "when_to_use": "Use this endpoint to execute pending database migrations, typically during system deployment, initial setup, or upgrade processes. This operation ensures the database schema is up-to-date with the application's requirements. It should be used with caution as it modifies the database structure."
     }
-  ],
-  "commonPatterns": {
-    "pagination": {
-      "pageIndex": "1-based page number (default: 1)",
-      "pageSize": "items per page (default: 20)",
-      "orderBy": "field name for sorting",
-      "ascending": "sort direction boolean"
-    },
-    "search": {
-      "simple": "use SearchPartners with searchText parameter",
-      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
-    }
-  }
+  ]
 }

@@ -1,58 +1,27 @@
 {
   "entity": "Configuration",
-  "description": "Manages application configurations.",
+  "description": "Manages system-wide settings, application parameters, and global configurations.",
   "synonyms": [
     "Settings",
-    "Preferences",
-    "Options",
-    "Setup"
+    "Parameters",
+    "App Config",
+    "System Settings",
+    "Global Settings"
   ],
   "mandatoryFields": [],
-  "baseUrl": "/api/configuration",
   "endpoints": [
     {
       "name": "Get",
       "url": "/api/configuration",
       "method": "GET",
-      "intent": [
-        "get",
-        "retrieve",
-        "show",
-        "details"
-      ],
-      "description": "Retrieves the application configuration.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": false,
-        "supportsSort": false
-      },
+      "description": "Retrieves the current system configuration or application settings.",
       "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/configuration",
-      "requiredFields": [],
       "example_uses": [
-        "Get the current configuration settings.",
-        "Retrieve application preferences."
+        "How do I get the current application configuration?",
+        "Retrieve all system settings.",
+        "Show me the global configuration parameters."
       ],
-      "when_to_use": "When you need to access the application's configuration settings.",
-      "scoring": {
-        "searchBonus": 10,
-        "intentMatch": 100,
-        "complexity": "simple"
-      }
+      "when_to_use": "Use this endpoint to fetch the current application or system-wide configuration settings."
     }
-  ],
-  "commonPatterns": {
-    "pagination": {
-      "pageIndex": "1-based page number (default: 1)",
-      "pageSize": "items per page (default: 20)",
-      "orderBy": "field name for sorting",
-      "ascending": "sort direction boolean"
-    },
-    "search": {
-      "simple": "use SearchPartners with searchText parameter",
-      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
-    }
-  }
+  ]
 }

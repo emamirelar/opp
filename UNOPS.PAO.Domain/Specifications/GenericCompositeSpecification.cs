@@ -1110,16 +1110,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         if (searchText.StartsWith("\"") && searchText.EndsWith("\"") && searchText.Length > 2)
             return SearchTextMode.ExactPhrase;
 
-        // If the text contains pipe (|), use multiple words mode for OR behavior
-        // e.g., "VTF|UN" will search for partners containing "VTF" OR "UN"
-        if (searchText.Contains('|'))
-            return SearchTextMode.MultipleWords;
-
-        // For simple searches with spaces, treat as exact phrase to match full partner names
-        // Users expect "VTF UN" to match exactly, not find all partners with "VTF" OR "UN"
-        // Only use MultipleWords mode when explicitly needed (for advanced search scenarios)
+        // Si le texte contient plusieurs mots, utiliser la recherche par mots multiples
         if (searchText.Contains(' '))
-            return SearchTextMode.ExactPhrase;
+            return SearchTextMode.MultipleWords;
 
         // Sinon, recherche de phrase exacte (mot unique)
         return SearchTextMode.ExactPhrase;
@@ -1141,17 +1134,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                 return new[] { cleanText };
 
             case SearchTextMode.MultipleWords:
-                // If using pipe separator, split by pipe
-                if (searchText.Contains('|'))
-                {
-                    return searchText
-                        .Split('|', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(term => term.Trim())
-                        .Where(term => term.Length >= 2) // Ignorer les termes trop courts
-                        .ToArray();
-                }
-                
-                // Otherwise, diviser en mots individuels et filtrer les termes trop courts
+                // Diviser en mots individuels et filtrer les termes trop courts
                 return searchText
                     .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                     .Where(word => word.Length >= 2) // Ignorer les mots d'une lettre
