@@ -8,7 +8,6 @@ namespace UNOPS.PAO.Models;
 
 public class InteractionRequest : ExtensibleModel
 {
-    [Newtonsoft.Json.JsonConverter(typeof(JsonStringEnumConverter))]
     public InteractionType Type { get; set; } = InteractionType.Email;
     public DateTime Date { get; set; } = DateTime.UtcNow;
     
