@@ -418,7 +418,7 @@ export class InteractionModalComponent {
     this.formGroup.patchValue({
       id: record.id,
       type: record.type,
-      date: new Date(record.date),
+      date: record.date ? new Date(record.date) : null,
       description: record.description,
       contactId: record.contactId,
       contactIds: record.contactIds || [],
