@@ -727,7 +727,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
         {
             sqlBuilder.AppendLine("-- Insert Entity Managers");
             sqlBuilder.AppendLine("INSERT INTO public.\"EntityManagers\" (");
-            sqlBuilder.AppendLine("    \"EntityName\", \"TableName\", \"Description\", \"IsActive\", \"EnableChangeLog\", ");
+            sqlBuilder.AppendLine("    \"Id\", \"EntityName\", \"TableName\", \"Description\", \"IsActive\", \"EnableChangeLog\", ");
             sqlBuilder.AppendLine("    \"Name\", \"Status\", \"CreatedBy\", \"CreatedDate\", \"LastModifiedBy\", ");
             sqlBuilder.AppendLine("    \"LastModifiedDate\", \"IsDeleted\", \"DeletedBy\", \"DeletedDate\"");
             sqlBuilder.AppendLine(")");
@@ -738,7 +738,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                 var entity = entityManagers[i];
                 var comma = i < entityManagers.Count - 1 ? "," : ";";
                 
-                sqlBuilder.AppendLine($"('{EscapeSqlString(entity.EntityName)}', '{EscapeSqlString(entity.TableName ?? "")}', '{EscapeSqlString(entity.Description ?? "")}', {entity.IsActive.ToString().ToLower()}, {entity.EnableChangeLog.ToString().ToLower()}, '{EscapeSqlString(entity.Name)}', {(int)entity.Status}, {entity.CreatedBy}, NOW(), {entity.LastModifiedBy}, {(entity.LastModifiedDate.HasValue ? "NOW()" : "NULL")}, {entity.IsDeleted.ToString().ToLower()}, {entity.DeletedBy}, {(entity.DeletedDate.HasValue ? "NOW()" : "NULL")}){comma}");
+                sqlBuilder.AppendLine($"    ({i + 1}, '{EscapeSqlString(entity.EntityName)}', '{EscapeSqlString(entity.TableName ?? "")}', '{EscapeSqlString(entity.Description ?? "")}', {entity.IsActive.ToString().ToLower()}, {entity.EnableChangeLog.ToString().ToLower()}, '{EscapeSqlString(entity.Name)}', {(int)entity.Status}, 1, NOW(), 0, NULL, {entity.IsDeleted.ToString().ToLower()}, 0, NULL){comma}");
             }
             sqlBuilder.AppendLine();
         }
@@ -769,14 +769,12 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                 var entityName = entityGroup.Key;
                 var fields = entityGroup.OrderBy(f => f.DisplayOrder).ToList();
                 
-                sqlBuilder.AppendLine($"    -- {entityName} Entity Fields (EntityManagerId = {entityGroup.First().EntityManagerId})");
+                sqlBuilder.AppendLine($"    -- ================================================================");
+                sqlBuilder.AppendLine($"    -- {entityName.ToUpper()} ENTITY FIELDS ({fields.Count} fields)");
+                sqlBuilder.AppendLine($"    -- ================================================================");
                 sqlBuilder.AppendLine("    INSERT INTO public.\"EntityFieldManagers\" (");
-                sqlBuilder.AppendLine("        \"EntityManagerId\", \"FieldName\", \"DataType\", \"Description\", \"IsRequired\", \"IsActive\", ");
-                sqlBuilder.AppendLine("        \"DefaultValue\", \"MaxLength\", \"DisplayOrder\", \"ShowInListView\", \"ListViewOrder\", ");
-                sqlBuilder.AppendLine("        \"RelatedDisplayProperty\", \"DisplayFieldPath\", \"DisplayTemplate\", \"ListViewLabel\", ");
-                sqlBuilder.AppendLine("        \"ListViewType\", \"ListViewWidth\", \"ListViewEllipsis\", \"ListViewSortable\", ");
-                sqlBuilder.AppendLine("        \"FirstLetterFallbackField\", \"HelperText\", \"Name\", \"Status\", \"CreatedBy\", ");
-                sqlBuilder.AppendLine("        \"CreatedDate\", \"LastModifiedBy\", \"LastModifiedDate\", \"IsDeleted\", \"DeletedBy\", \"DeletedDate\"");
+                sqlBuilder.AppendLine("        \"EntityManagerId\", \"FieldName\", \"DataType\", \"Description\", \"IsRequired\", \"IsActive\", \"DefaultValue\", \"MaxLength\", \"DisplayOrder\", \"ShowInListView\", \"ListViewOrder\", \"RelatedDisplayProperty\", \"DisplayFieldPath\", \"DisplayTemplate\", \"ListViewLabel\", \"ListViewType\", \"ListViewWidth\", \"ListViewEllipsis\", \"ListViewSortable\", \"FirstLetterFallbackField\", \"HelperText\",");
+                sqlBuilder.AppendLine("        \"Name\", \"Status\", \"CreatedBy\", \"CreatedDate\", \"LastModifiedBy\", \"LastModifiedDate\", \"IsDeleted\", \"DeletedBy\", \"DeletedDate\"");
                 sqlBuilder.AppendLine("    ) VALUES ");
 
                 for (int i = 0; i < fields.Count; i++)
@@ -784,25 +782,15 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                     var field = fields[i];
                     var comma = i < fields.Count - 1 ? "," : ";";
                     
-                    sqlBuilder.AppendLine($"    -- {field.FieldName}");
-                    sqlBuilder.AppendLine($"    ({field.EntityManagerId}, '{EscapeSqlString(field.FieldName)}', '{EscapeSqlString(field.DataType)}', '{EscapeSqlString(field.Description ?? "")}', {field.IsRequired.ToString().ToLower()}, {field.IsActive.ToString().ToLower()}, ");
-                    sqlBuilder.AppendLine($"     {(field.DefaultValue != null ? $"'{EscapeSqlString(field.DefaultValue)}'" : "NULL")}, {field.MaxLength?.ToString() ?? "NULL"}, {field.DisplayOrder}, {field.ShowInListView.ToString().ToLower()}, {field.ListViewOrder?.ToString() ?? "NULL"}, ");
-                    sqlBuilder.AppendLine($"     {(field.RelatedDisplayProperty != null ? $"'{EscapeSqlString(field.RelatedDisplayProperty)}'" : "NULL")}, '{EscapeSqlString(field.DisplayFieldPath ?? "")}', {(field.DisplayTemplate != null ? $"'{EscapeSqlString(field.DisplayTemplate)}'" : "NULL")}, '{EscapeSqlString(field.ListViewLabel ?? "")}', ");
-                    sqlBuilder.AppendLine($"     '{EscapeSqlString(field.ListViewType ?? "")}', '{EscapeSqlString(field.ListViewWidth ?? "")}', {(field.ListViewEllipsis?.ToString().ToLower() ?? "false")}, {(field.ListViewSortable?.ToString().ToLower() ?? "false")}, ");
-                    sqlBuilder.AppendLine($"     {(field.FirstLetterFallbackField != null ? $"'{EscapeSqlString(field.FirstLetterFallbackField)}'" : "NULL")}, '{EscapeSqlString(field.HelperText ?? "")}', '{EscapeSqlString(field.Name)}', {(int)field.Status}, {field.CreatedBy}, ");
-                    sqlBuilder.AppendLine($"     NOW(), {field.LastModifiedBy}, {(field.LastModifiedDate.HasValue ? "NOW()" : "NULL")}, {field.IsDeleted.ToString().ToLower()}, {field.DeletedBy}, {(field.DeletedDate.HasValue ? "NOW()" : "NULL")}){comma}");
-                    
-                    if (i < fields.Count - 1)
-                    {
-                        sqlBuilder.AppendLine();
-                    }
+                    // Generate single line format like in EntityManagers_Complete.sql
+                    sqlBuilder.AppendLine($"        ({field.EntityManagerId}, '{EscapeSqlString(field.FieldName)}', '{EscapeSqlString(field.DataType)}', '{EscapeSqlString(field.Description ?? "")}', {field.IsRequired.ToString().ToLower()}, {field.IsActive.ToString().ToLower()}, {(field.DefaultValue != null ? $"'{EscapeSqlString(field.DefaultValue)}'" : "NULL")}, {field.MaxLength?.ToString() ?? "NULL"}, {field.DisplayOrder}, {field.ShowInListView.ToString().ToLower()}, {field.ListViewOrder?.ToString() ?? "NULL"}, {(field.RelatedDisplayProperty != null ? $"'{EscapeSqlString(field.RelatedDisplayProperty)}'" : "NULL")}, '{EscapeSqlString(field.DisplayFieldPath ?? "")}', {(field.DisplayTemplate != null ? $"'{EscapeSqlString(field.DisplayTemplate)}'" : "NULL")}, '{EscapeSqlString(field.ListViewLabel ?? "")}', '{EscapeSqlString(field.ListViewType ?? "")}', '{EscapeSqlString(field.ListViewWidth ?? "")}', {(field.ListViewEllipsis?.ToString().ToLower() ?? "false")}, {(field.ListViewSortable?.ToString().ToLower() ?? "false")}, {(field.FirstLetterFallbackField != null ? $"'{EscapeSqlString(field.FirstLetterFallbackField)}'" : "NULL")}, '{EscapeSqlString(field.HelperText ?? "")}', '{EscapeSqlString(field.Name)}', {(int)field.Status}, 1, NOW(), 0, NULL, {field.IsDeleted.ToString().ToLower()}, 0, NULL){comma}");
                 }
 
                 sqlBuilder.AppendLine();
             }
 
             sqlBuilder.AppendLine("    SELECT COUNT(*) INTO field_managers_count FROM public.\"EntityFieldManagers\";");
-            sqlBuilder.AppendLine("    RAISE NOTICE 'EntityFieldManagers setup complete with % total records', field_managers_count;");
+            sqlBuilder.AppendLine("    RAISE NOTICE 'All EntityFieldManagers setup complete with % total records', field_managers_count;");
         }
         else
         {

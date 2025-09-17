@@ -55,6 +55,12 @@ public class InteractionModel
     public string? GmailThreadId { get; set; }
     public string? GmailMessageId { get; set; }
     
+    // Computed properties from NotMapped fields in Interaction entity
+    public string? InteractionContactsList { get; set; }
+    public string? InteractionPartnersList { get; set; }
+    public string? InteractionUsersList { get; set; }
+    public string? InteractionOrgUnits { get; set; }
+    
     // Audit fields from ModifiableDeletableEntity (read-only from frontend perspective)
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public DateTime? CreatedDate { get; set; }

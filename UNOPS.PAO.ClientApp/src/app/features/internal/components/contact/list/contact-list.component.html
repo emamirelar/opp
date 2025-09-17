@@ -15,14 +15,22 @@
         text rounded
         class="contact-export-button"
       />
-      <p-button
-        *ngIf="entityPermissions().permissions.canImport"
-        icon="pi pi-file-import"
-        [label]="'button.import' | translate"
-        (click)="openImportDialog()"
-        text rounded
-        class="contact-import-button"
-      />
+      <div *ngIf="entityPermissions().permissions.canImport" class="relative">
+        <p-button
+          #importBtn
+          icon="pi pi-file-import"
+          [label]="'button.import' | translate"
+          (click)="importMenu.toggle($event)"
+          text rounded
+          class="contact-import-button"
+        />
+        <p-menu 
+          #importMenu 
+          [model]="importMenuItems()" 
+          [popup]="true"
+          appendTo="body">
+        </p-menu>
+      </div>
       <p-button
         *ngIf="entityPermissions().permissions.canCreate"
         icon="pi pi-camera"

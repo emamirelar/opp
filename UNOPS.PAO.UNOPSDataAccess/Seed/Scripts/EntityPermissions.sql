@@ -61,7 +61,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     false,
     '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "Name", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerFocalPointUserId", "PartnerLiasionOfficeId", "PartnerGroupId", "OrganizationHierarchyIds", "OrganizationUnitRelationships"], "CanDelete": []}',
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3)", "CanDelete": ""}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && (OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)", "CanDelete": ""}'
 );
 
 -- Org Unit Admin role permissions for Partner (NO ACCESS)
@@ -147,7 +147,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "Partner != null && Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3)", "CanUpdate": "Partner != null && Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3)", "CanDelete": "Partner != null && Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3)"}'
+    '{"CanRead": "", "CanCreate": "Partner != null && (Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)", "CanUpdate": "Partner != null && (Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)", "CanDelete": "Partner != null && (Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)"}'
 );
 
 -- Org Unit Admin role permissions for Contact
@@ -319,7 +319,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || InteractionUsers.Any(iu => iu.UserId == @currentUserId)", "CanDelete": "OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3)"}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "(OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || InteractionUsers.Any(iu => iu.UserId == @currentUserId)) || CreatedBy == @currentUserId", "CanDelete": "OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId"}'
 );
 
 -- Org Unit Admin role permissions for Interaction
@@ -651,6 +651,92 @@ INSERT INTO public."EntityPermissions" (
     'EntityFieldManager',
     'ORG_UNIT_ADMIN',
     false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- PartnershipAgreement Entity Permissions
+
+-- UNOPS General User role permissions for PartnershipAgreement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnershipAgreement',
+    'UNOPS_GEN_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Partnership Global Admin role permissions for PartnershipAgreement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnershipAgreement',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    true,
+    true,
+    true,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Partnerships User role permissions for PartnershipAgreement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnershipAgreement',
+    'PARTNER_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Org Unit Admin role permissions for PartnershipAgreement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnershipAgreement',
+    'ORG_UNIT_ADMIN',
+    true,
     false,
     false,
     false,

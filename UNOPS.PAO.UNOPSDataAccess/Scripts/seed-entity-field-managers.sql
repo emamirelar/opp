@@ -37,7 +37,7 @@ INSERT INTO public."EntityManagers" (
     ('OrganizationHierarchy', 'OrganizationHierarchies', 'UNOPS organizational hierarchy and office structure', true, false, 'OrganizationHierarchy', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
 -- ================================================================
--- CONTACT ENTITY FIELDS (27 fields)
+-- CONTACT ENTITY FIELDS (25 fields)
 -- ================================================================
 INSERT INTO public."EntityFieldManagers" (
     "EntityManagerId", "FieldName", "DataType", "Description", "IsRequired", "IsActive", "DefaultValue", "MaxLength", "DisplayOrder", "ShowInListView", "ListViewOrder", "RelatedDisplayProperty", "DisplayFieldPath", "DisplayTemplate", "ListViewLabel", "ListViewType", "ListViewWidth", "ListViewEllipsis", "ListViewSortable", "FirstLetterFallbackField", "HelperText",
@@ -45,90 +45,129 @@ INSERT INTO public."EntityFieldManagers" (
 ) VALUES 
     -- Primary List View Fields
     (1, 'ProfilePictureUrl', 'string', 'URL to contact profile picture', false, true, NULL, 500, 1, true, 1, NULL, 'profilePictureUrl', NULL, 'Photo', 'avatar', '8%', false, false, 'firstName', 'Contact profile photo', 'ProfilePictureUrl', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'Partner', 'Partner', 'Associated partner organization', true, true, NULL, NULL, 2, true, 2, 'name', 'partnerName', NULL, 'Partner', 'text', '20%', true, true, NULL, 'Partner organization', 'Partner', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'Partner', 'Partner', 'Associated partner organization', true, true, NULL, NULL, 2, true, 2, 'name', 'partner.name', NULL, 'Partner', 'text', '20%', true, true, NULL, 'Partner organization', 'Partner', 0, 1, NOW(), 0, NULL, false, 0, NULL),
     (1, 'ContactName', 'string', 'Full contact name combining first, middle, and last names', false, true, NULL, NULL, 3, true, 3, NULL, 'firstName,middleName,lastName', '{firstName} {middleName} {lastName}', 'Contact Name', 'template', '25%', true, true, NULL, 'Complete name of the contact', 'ContactName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
     (1, 'Title', 'string', 'Job title or position', false, true, NULL, 150, 4, true, 4, NULL, 'title', NULL, 'Title', 'text', '15%', true, true, NULL, 'Job title or position', 'Title', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'CreatedByName', 'string', 'Name of user who created this contact', false, true, NULL, 200, 5, true, 5, NULL, 'createdByName', NULL, 'Created By', 'text', '15%', true, true, NULL, 'User who created this contact', 'CreatedByName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'CreatedByOfficeName', 'string', 'Office name of user who created this contact', false, true, NULL, 200, 6, true, 6, NULL, 'createdByOfficeName', NULL, 'Created By Office', 'text', '17%', true, true, NULL, 'Office of the user who created this contact', 'CreatedByOfficeName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'Email', 'string', 'Primary email address', true, true, NULL, 255, 5, true, 5, NULL, 'email', NULL, 'Email', 'text', '15%', true, true, NULL, 'Primary email address', 'Email', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'Phone', 'string', 'Primary phone number', false, true, NULL, 20, 6, true, 6, NULL, 'phone', NULL, 'Phone', 'text', '17%', false, true, NULL, 'Primary phone number', 'Phone', 0, 1, NOW(), 0, NULL, false, 0, NULL),
 
     -- Core Contact Fields (Non-List View)
     (1, 'Id', 'int', 'Unique identifier for the contact', true, true, NULL, NULL, 7, false, NULL, NULL, 'id', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Id', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'FirstName', 'string', 'First name of the contact', true, true, NULL, 100, 8, false, NULL, NULL, 'firstName', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'FirstName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'LastName', 'string', 'Last name of the contact', true, true, NULL, 100, 9, false, NULL, NULL, 'lastName', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'LastName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'Salutation', 'string', 'Contact salutation (Mr., Ms., Dr., etc.)', false, true, NULL, 50, 8, false, NULL, NULL, 'salutation', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Salutation', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'FirstName', 'string', 'First name of the contact', false, true, NULL, 100, 9, false, NULL, NULL, 'firstName', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'FirstName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
     (1, 'MiddleName', 'string', 'Contact middle name', false, true, NULL, 100, 10, false, NULL, NULL, 'middleName', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'MiddleName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'Email', 'string', 'Primary email address', true, true, NULL, 255, 11, false, NULL, NULL, 'email', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'Email', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'Phone', 'string', 'Primary phone number', false, true, NULL, 20, 12, false, NULL, NULL, 'phone', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Phone', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'Salutation', 'string', 'Contact salutation (Mr., Ms., Dr., etc.)', false, true, NULL, 50, 13, false, NULL, NULL, 'salutation', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Salutation', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'Suffix', 'string', 'Contact suffix (Jr., Sr., III, etc.)', false, true, NULL, 50, 14, false, NULL, NULL, 'suffix', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Suffix', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'Department', 'string', 'Contact department', false, true, NULL, 200, 15, false, NULL, NULL, 'department', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'Department', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'Description', 'string', 'Contact description or notes', false, true, NULL, 1000, 16, false, NULL, NULL, 'description', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'Description', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'Mobile', 'string', 'Contact mobile number', false, true, NULL, 50, 17, false, NULL, NULL, 'mobile', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Mobile', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'Assistant', 'string', 'Assistant name', false, true, NULL, 200, 18, false, NULL, NULL, 'assistant', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Assistant', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'AssistantPhone', 'string', 'Assistant phone number', false, true, NULL, 50, 19, false, NULL, NULL, 'assistantPhone', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'AssistantPhone', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'AssistantEmail', 'string', 'Assistant email address', false, true, NULL, 200, 20, false, NULL, NULL, 'assistantEmail', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'AssistantEmail', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'Status', 'string', 'Contact status', true, true, 'Active', 50, 21, false, NULL, NULL, 'status', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Status', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'MailingStreet', 'string', 'Mailing address street', false, true, NULL, 300, 22, false, NULL, NULL, 'mailingStreet', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'MailingStreet', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'MailingStreet2', 'string', 'Mailing address street line 2', false, true, NULL, 300, 23, false, NULL, NULL, 'mailingStreet2', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'MailingStreet2', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'MailingCity', 'string', 'Mailing address city', false, true, NULL, 100, 24, false, NULL, NULL, 'mailingCity', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'MailingCity', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'MailingStateProvince', 'string', 'Mailing address state/province', false, true, NULL, 100, 25, false, NULL, NULL, 'mailingStateProvince', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'MailingStateProvince', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'MailingPostalCode', 'string', 'Mailing address postal code', false, true, NULL, 20, 26, false, NULL, NULL, 'mailingPostalCode', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'MailingPostalCode', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'MailingCountry', 'string', 'Mailing address country', false, true, NULL, 100, 27, false, NULL, NULL, 'mailingCountry', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'MailingCountry', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (1, 'ContactNumber', 'string', 'UNOPS-specific contact number', false, true, NULL, 50, 28, false, NULL, NULL, 'contactNumber', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'ContactNumber', 0, 1, NOW(), 0, NULL, false, 0, NULL);
+    (1, 'LastName', 'string', 'Last name of the contact', true, true, NULL, 100, 11, false, NULL, NULL, 'lastName', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'LastName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'Suffix', 'string', 'Contact suffix (Jr., Sr., III, etc.)', false, true, NULL, 50, 12, false, NULL, NULL, 'suffix', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Suffix', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'Department', 'string', 'Contact department', false, true, NULL, 200, 13, false, NULL, NULL, 'department', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'Department', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'Description', 'string', 'Contact description or notes', false, true, NULL, 1000, 14, false, NULL, NULL, 'description', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'Description', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'Mobile', 'string', 'Contact mobile number', false, true, NULL, 50, 15, false, NULL, NULL, 'mobile', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Mobile', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'Assistant', 'string', 'Assistant name', false, true, NULL, 200, 16, false, NULL, NULL, 'assistant', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Assistant', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'AssistantPhone', 'string', 'Assistant phone number', false, true, NULL, 50, 17, false, NULL, NULL, 'assistantPhone', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'AssistantPhone', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'AssistantEmail', 'string', 'Assistant email address', false, true, NULL, 200, 18, false, NULL, NULL, 'assistantEmail', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'AssistantEmail', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'MailingStreet', 'string', 'Mailing address street', false, true, NULL, 300, 19, false, NULL, NULL, 'mailingStreet', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'MailingStreet', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'MailingStreet2', 'string', 'Mailing address street line 2', false, true, NULL, 300, 20, false, NULL, NULL, 'mailingStreet2', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'MailingStreet2', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'MailingCity', 'string', 'Mailing address city', false, true, NULL, 100, 21, false, NULL, NULL, 'mailingCity', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'MailingCity', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'MailingStateProvince', 'string', 'Mailing address state/province', false, true, NULL, 100, 22, false, NULL, NULL, 'mailingStateProvince', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'MailingStateProvince', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'MailingPostalCode', 'string', 'Mailing address postal code', false, true, NULL, 20, 23, false, NULL, NULL, 'mailingPostalCode', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'MailingPostalCode', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (1, 'MailingCountry', 'string', 'Mailing address country', false, true, NULL, 100, 24, false, NULL, NULL, 'mailingCountry', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'MailingCountry', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    
+    -- Navigation Properties
+    (1, 'PartnerId', 'int', 'Foreign key to partner', true, true, NULL, NULL, 25, false, NULL, NULL, 'partnerId', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'PartnerId', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
 -- ================================================================
--- PARTNER ENTITY FIELDS (18 fields) - Enhanced with Navigation Properties
+-- PARTNER ENTITY FIELDS (40 fields) - Complete Partner Entity
 -- ================================================================
 INSERT INTO public."EntityFieldManagers" (
     "EntityManagerId", "FieldName", "DataType", "Description", "IsRequired", "IsActive", "DefaultValue", "MaxLength", "DisplayOrder", "ShowInListView", "ListViewOrder", "RelatedDisplayProperty", "DisplayFieldPath", "DisplayTemplate", "ListViewLabel", "ListViewType", "ListViewWidth", "ListViewEllipsis", "ListViewSortable", "FirstLetterFallbackField", "HelperText",
     "Name", "Status", "CreatedBy", "CreatedDate", "LastModifiedBy", "LastModifiedDate", "IsDeleted", "DeletedBy", "DeletedDate"
 ) VALUES 
     -- Primary List View Fields
-    (2, 'PartnerCategoryName', 'string', 'Partner category classification', false, true, NULL, 200, 1, true, 1, NULL, 'partnerCategoryName', NULL, 'Partner Category', 'text', '15%', true, false, NULL, 'Partner category classification', 'PartnerCategoryName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'PartnerGroupName', 'string', 'Partner group classification', false, true, NULL, 200, 2, true, 2, NULL, 'partnerGroupName', NULL, 'Partner Group', 'text', '15%', true, false, NULL, 'Partner group classification', 'PartnerGroupName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'LogoUrl', 'string', 'Partner logo image URL', false, true, NULL, 500, 3, true, 3, NULL, 'logoUrl', NULL, '', 'avatar', NULL, false, false, 'name', 'Partner logo image', 'LogoUrl', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'Name', 'string', 'Partner organization name', true, true, NULL, 300, 4, true, 4, NULL, 'name', NULL, 'Name', 'text', NULL, false, false, NULL, 'Partner organization name', 'Name', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'PartnerOfficeName', 'OrganizationHierarchy', 'Organization hierarchy for partner office structure', false, true, NULL, NULL, 5, true, 5, 'name', 'partnerOfficeName', '{partnerOffice.name}', 'Partner Office', 'template', '20%', true, false, NULL, 'Partner office organization', 'PartnerOfficeName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'First5ContactsByDate', 'Contact[]', 'Collection of first 5 contacts ordered by date', false, true, NULL, NULL, 6, true, 6, NULL, 'first5ContactsByDate.profilePictureUrl', NULL, 'Partner Team', 'multiple-avatars', '10%', false, false, 'first5ContactsByDate.firstName', 'Partner team contacts', 'First5ContactsByDate', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'LogoUrl', 'string', 'Partner logo image URL', false, true, NULL, 500, 1, true, 1, NULL, 'logoUrl', NULL, '', 'avatar', '8%', false, false, 'name', 'Partner logo image', 'LogoUrl', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'Name', 'string', 'Partner organization name', true, true, NULL, 300, 2, true, 2, NULL, 'name', NULL, 'Name', 'text', '25%', false, true, NULL, 'Partner organization name', 'Name', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerShortDescription', 'string', 'Partner short name or abbreviation', false, true, NULL, 100, 3, true, 3, NULL, 'partnerShortDescription', NULL, 'Short Name', 'text', '15%', true, true, NULL, 'Short name/acronym', 'PartnerShortDescription', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'Status', 'enum', 'Partner status (Draft, Active, Closed, Archived)', true, true, 'Draft', 50, 4, true, 4, NULL, 'status', NULL, 'Status', 'badge', '10%', false, true, NULL, 'Partner status', 'Status', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerApprovalStatus', 'enum', 'Partner approval status', false, true, 'NotApproved', NULL, 5, true, 5, NULL, 'partnerApprovalStatus', NULL, 'Approval Status', 'badge', '12%', false, true, NULL, 'Partner approval status', 'PartnerApprovalStatus', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'First5ContactsByDate', 'Contact[]', 'Collection of first 5 contacts ordered by date', false, true, NULL, NULL, 6, true, 6, NULL, 'first5ContactsByDate.profilePictureUrl', NULL, 'Team', 'multiple-avatars', '20%', false, false, 'first5ContactsByDate.firstName', 'Partner team contacts', 'First5ContactsByDate', 0, 1, NOW(), 0, NULL, false, 0, NULL),
 
     -- Core Partner Fields (Non-List View)
     (2, 'Id', 'int', 'Unique identifier for the partner', true, true, NULL, NULL, 7, false, NULL, NULL, 'id', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Id', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'ShortName', 'string', 'Partner short name or abbreviation', false, true, NULL, 100, 8, false, NULL, NULL, 'shortName', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'ShortName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'PartnerCode', 'string', 'Unique partner identification code', false, true, NULL, 50, 9, false, NULL, NULL, 'partnerCode', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'PartnerCode', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'Status', 'string', 'Partner status (Active, Inactive, etc.)', true, true, 'Active', 50, 10, false, NULL, NULL, 'status', NULL, NULL, 'badge', NULL, false, true, NULL, NULL, 'Status', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'Website', 'string', 'Partner website URL', false, true, NULL, 500, 11, false, NULL, NULL, 'website', NULL, NULL, 'link', NULL, true, true, NULL, NULL, 'Website', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'Phone', 'string', 'Partner primary phone number', false, true, NULL, 50, 12, false, NULL, NULL, 'phone', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Phone', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerLongDescription', 'string', 'Optional long description', false, true, NULL, 4000, 8, false, NULL, NULL, 'partnerLongDescription', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'PartnerLongDescription', 0, 1, NOW(), 0, NULL, false, 0, NULL),
     
-    -- Address Information
-    (2, 'Address1Street', 'string', 'Partner street address', false, true, NULL, 300, 13, false, NULL, NULL, 'address1Street', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'Address1Street', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'Address1City', 'string', 'Partner city', false, true, NULL, 100, 14, false, NULL, NULL, 'address1City', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Address1City', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'Address1Country', 'string', 'Partner country', false, true, NULL, 100, 15, false, NULL, NULL, 'address1Country', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Address1Country', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    -- System Generated Keys
+    (2, 'UniqueKey', 'guid', 'System-generated unique identifier', true, true, NULL, NULL, 9, false, NULL, NULL, 'uniqueKey', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'UniqueKey', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerKey', 'guid', 'System-generated partner key', true, true, NULL, NULL, 10, false, NULL, NULL, 'partnerKey', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'PartnerKey', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerCategoryInternalKey', 'guid', 'System-generated category internal key', true, true, NULL, NULL, 11, false, NULL, NULL, 'partnerCategoryInternalKey', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'PartnerCategoryInternalKey', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerCategoryKey', 'guid', 'System-generated category key', true, true, NULL, NULL, 12, false, NULL, NULL, 'partnerCategoryKey', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'PartnerCategoryKey', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerTypeKey', 'guid', 'System-generated type key', true, true, NULL, NULL, 13, false, NULL, NULL, 'partnerTypeKey', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'PartnerTypeKey', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    
+    -- Foreign Keys and Relationships
+    (2, 'PartnerGroupId', 'int', 'FK to Partner Group', false, true, NULL, NULL, 14, false, NULL, NULL, 'partnerGroupId', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'PartnerGroupId', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerCategoryId', 'int', 'FK to Partner Category', false, true, NULL, NULL, 15, false, NULL, NULL, 'partnerCategoryId', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'PartnerCategoryId', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'ErpDimValue', 'int', 'ERP dimension value', false, true, NULL, NULL, 16, false, NULL, NULL, 'erpDimValue', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'ErpDimValue', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'LiaisonOfficeId', 'int', 'FK to LiaisonOffice', false, true, NULL, NULL, 17, false, NULL, NULL, 'liaisonOfficeId', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'LiaisonOfficeId', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerFocalPointUserId', 'int', 'Business Developer UserId', false, true, NULL, NULL, 18, false, NULL, NULL, 'partnerFocalPointUserId', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'PartnerFocalPointUserId', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    
+    -- Boolean Fields
+    (2, 'UNAndStateEntity', 'boolean', 'UN & State Entity flag', false, true, 'false', NULL, 19, false, NULL, NULL, 'unAndStateEntity', NULL, NULL, 'boolean', NULL, false, true, NULL, NULL, 'UNAndStateEntity', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'KeyGlobalPartner', 'boolean', 'Key Global Partner flag (Admin only)', false, true, 'false', NULL, 20, false, NULL, NULL, 'keyGlobalPartner', NULL, NULL, 'boolean', NULL, false, true, NULL, NULL, 'KeyGlobalPartner', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'UNSecretariatPartner', 'boolean', 'UN Secretariat Partner flag (Admin only)', false, true, 'false', NULL, 21, false, NULL, NULL, 'unSecretariatPartner', NULL, NULL, 'boolean', NULL, false, true, NULL, NULL, 'UNSecretariatPartner', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PooledFund', 'boolean', 'Pooled Fund flag', false, true, 'false', NULL, 22, false, NULL, NULL, 'pooledFund', NULL, NULL, 'boolean', NULL, false, true, NULL, NULL, 'PooledFund', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'CanCreateNewOpportunities', 'boolean', 'Can Create New Opportunities flag', false, true, 'false', NULL, 23, false, NULL, NULL, 'canCreateNewOpportunities', NULL, NULL, 'boolean', NULL, false, true, NULL, NULL, 'CanCreateNewOpportunities', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    
+    -- Due Diligence Fields
+    (2, 'DueDiligenceRequired', 'enum', 'Due diligence requirement status', false, true, NULL, NULL, 24, false, NULL, NULL, 'dueDiligenceRequired', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'DueDiligenceRequired', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'DueDiligenceApproval', 'enum', 'Due diligence approval status', false, true, NULL, NULL, 25, false, NULL, NULL, 'dueDiligenceApproval', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'DueDiligenceApproval', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'DueDiligenceApprovalDate', 'datetime', 'Due diligence approval date', false, true, NULL, NULL, 26, false, NULL, NULL, 'dueDiligenceApprovalDate', NULL, NULL, 'date', NULL, false, true, NULL, NULL, 'DueDiligenceApprovalDate', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'DueDiligenceExpiryDate', 'datetime', 'Due diligence expiry date', false, true, NULL, NULL, 27, false, NULL, NULL, 'dueDiligenceExpiryDate', NULL, NULL, 'date', NULL, false, true, NULL, NULL, 'DueDiligenceExpiryDate', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    
+    -- Partner Approval Fields
+    (2, 'PartnerApprovalDate', 'datetime', 'Partner approval date', false, true, NULL, NULL, 28, false, NULL, NULL, 'partnerApprovalDate', NULL, NULL, 'date', NULL, false, true, NULL, NULL, 'PartnerApprovalDate', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerApprovalReference', 'string', 'Approval notes/reference', false, true, NULL, 500, 29, false, NULL, NULL, 'partnerApprovalReference', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'PartnerApprovalReference', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerApprovedBy', 'string', 'User who approved the partner', false, true, NULL, 500, 30, false, NULL, NULL, 'partnerApprovedBy', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'PartnerApprovedBy', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    
+    -- Levy Fields
+    (2, 'PartnerLevyStatus', 'enum', 'Partner levy status', false, true, NULL, NULL, 31, false, NULL, NULL, 'partnerLevyStatus', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'PartnerLevyStatus', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'ReasonForLevy', 'string', 'Reason for levy', false, true, NULL, 500, 32, false, NULL, NULL, 'reasonForLevy', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'ReasonForLevy', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'LevyTreatment', 'string', 'Levy treatment', false, true, NULL, 500, 33, false, NULL, NULL, 'levyTreatment', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'LevyTreatment', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'ReasonForNoNewOpportunity', 'string', 'Reason for no new opportunity', false, true, NULL, 500, 34, false, NULL, NULL, 'reasonForNoNewOpportunity', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'ReasonForNoNewOpportunity', 0, 1, NOW(), 0, NULL, false, 0, NULL),
 
-    -- Navigation Properties and Complex Fields
-    (2, 'Documents', 'Document[]', 'Collection of partner-related documents', false, true, NULL, NULL, 16, false, NULL, NULL, 'documents', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'Documents', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'Projects', 'Project[]', 'Collection of partner-related projects', false, true, NULL, NULL, 17, false, NULL, NULL, 'projects', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'Projects', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-
-    -- Boolean Flags
-    (2, 'GlobalKeyAccount', 'boolean', 'Indicates if partner is a global key account', false, true, 'false', NULL, 18, false, NULL, NULL, 'globalKeyAccount', NULL, NULL, 'boolean', NULL, false, true, NULL, NULL, 'GlobalKeyAccount', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (2, 'UNSecretariatEntity', 'boolean', 'Indicates if partner is a UN Secretariat entity', false, true, 'false', NULL, 19, false, NULL, NULL, 'unSecretariatEntity', NULL, NULL, 'boolean', NULL, false, true, NULL, NULL, 'UNSecretariatEntity', 0, 1, NOW(), 0, NULL, false, 0, NULL);
+    -- Navigation Properties Collections (read-only for list management)
+    (2, 'Documents', 'Document[]', 'Collection of partner-related documents', false, true, NULL, NULL, 35, false, NULL, NULL, 'documents', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'Documents', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'Contacts', 'Contact[]', 'Collection of partner contacts', false, true, NULL, NULL, 36, false, NULL, NULL, 'contacts', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'Contacts', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'OrganizationUnitRelationships', 'OrganizationUnitRelationship[]', 'Organization unit relationships', false, true, NULL, NULL, 37, false, NULL, NULL, 'organizationUnitRelationships', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'OrganizationUnitRelationships', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    
+    -- Navigation Properties (Single)
+    (2, 'PartnerGroup', 'PartnerTree', 'Partner group relationship', false, true, NULL, NULL, 38, false, NULL, 'name', 'partnerGroup.name', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'PartnerGroup', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'LiaisonOffice', 'LiaisonOffice', 'Liaison office relationship', false, true, NULL, NULL, 39, false, NULL, 'name', 'liaisonOffice.name', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'LiaisonOffice', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (2, 'PartnerFocalPointUser', 'PAOUser', 'Partner focal point user', false, true, NULL, NULL, 40, false, NULL, 'name', 'partnerFocalPointUser.name', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'PartnerFocalPointUser', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
 -- ================================================================
--- INTERACTION ENTITY FIELDS (8 fields)
+-- INTERACTION ENTITY FIELDS (15 fields)
 -- ================================================================
 INSERT INTO public."EntityFieldManagers" (
     "EntityManagerId", "FieldName", "DataType", "Description", "IsRequired", "IsActive", "DefaultValue", "MaxLength", "DisplayOrder", "ShowInListView", "ListViewOrder", "RelatedDisplayProperty", "DisplayFieldPath", "DisplayTemplate", "ListViewLabel", "ListViewType", "ListViewWidth", "ListViewEllipsis", "ListViewSortable", "FirstLetterFallbackField", "HelperText",
     "Name", "Status", "CreatedBy", "CreatedDate", "LastModifiedBy", "LastModifiedDate", "IsDeleted", "DeletedBy", "DeletedDate"
 ) VALUES 
     -- Primary List View Fields
-    (3, 'Type', 'enum', 'Type of interaction (Meeting, Email, Call, etc.)', true, true, NULL, NULL, 1, true, 1, NULL, 'type', NULL, 'Type', 'text', NULL, false, true, NULL, 'Interaction type classification', 'Type', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (3, 'Date', 'datetime', 'Date and time of the interaction', true, true, NULL, NULL, 2, true, 2, NULL, 'date', NULL, 'Date', 'date', NULL, false, true, NULL, 'When the interaction occurred', 'Date', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (3, 'Subject', 'string', 'Subject or title of the interaction', true, true, NULL, 300, 3, true, 3, NULL, 'subject', NULL, 'Subject', 'text', NULL, false, false, NULL, 'Interaction subject or title', 'Subject', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (3, 'Description', 'string', 'Detailed description of the interaction', false, true, NULL, 2000, 4, true, 4, NULL, 'description', NULL, 'Description', 'text', NULL, false, false, NULL, 'Detailed interaction description', 'Description', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'Type', 'enum', 'Type of interaction (Meeting, Email, Call, etc.)', true, true, NULL, NULL, 1, true, 1, NULL, 'type', NULL, 'Type', 'badge', '10%', false, true, NULL, 'Interaction type classification', 'Type', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'Date', 'datetime', 'Date and time of the interaction', true, true, NULL, NULL, 2, true, 2, NULL, 'date', NULL, 'Date', 'date', '15%', false, true, NULL, 'When the interaction occurred', 'Date', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'Subject', 'string', 'Subject or title of the interaction', true, true, NULL, 300, 3, true, 3, NULL, 'subject', NULL, 'Subject', 'text', '35%', true, true, NULL, 'Interaction subject or title', 'Subject', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'Description', 'string', 'Detailed description of the interaction', false, true, NULL, 2000, 4, true, 4, NULL, 'description', NULL, 'Description', 'text', '30%', true, false, NULL, 'Detailed interaction description', 'Description', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'Location', 'string', 'Location where interaction took place', false, true, NULL, 200, 5, true, 5, NULL, 'location', NULL, 'Location', 'text', '10%', true, true, NULL, 'Location where interaction took place', 'Location', 0, 1, NOW(), 0, NULL, false, 0, NULL),
 
     -- Core Interaction Fields (Non-List View)
-    (3, 'Id', 'int', 'Unique identifier for the interaction', true, true, NULL, NULL, 5, false, NULL, NULL, 'id', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Id', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (3, 'Contact', 'Contact', 'Contact entity for managing partner contact information', true, true, NULL, NULL, 6, false, NULL, 'firstname,lastname', 'contact.firstName,contact.lastName', '{firstName} {lastName}', NULL, 'template', NULL, true, true, NULL, NULL, 'Contact', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (3, 'Location', 'string', 'Location where interaction took place', false, true, NULL, 200, 7, false, NULL, NULL, 'location', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Location', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (3, 'OrgUnit', 'OrganizationHierarchy', 'Organization hierarchy for managing office structure and geographic locations', false, true, NULL, NULL, 8, false, NULL, 'name', 'orgUnit.name', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'OrgUnit', 0, 1, NOW(), 0, NULL, false, 0, NULL);
+    (3, 'Id', 'int', 'Unique identifier for the interaction', true, true, NULL, NULL, 6, false, NULL, NULL, 'id', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Id', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'EmailAddresses', 'string[]', 'List of email addresses associated with the interaction', false, true, NULL, NULL, 7, false, NULL, NULL, 'emailAddresses', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'EmailAddresses', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'PhoneNumbers', 'string[]', 'List of phone numbers associated with the interaction', false, true, NULL, NULL, 8, false, NULL, NULL, 'phoneNumbers', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'PhoneNumbers', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'GmailThreadId', 'string', 'Gmail thread identifier for email interactions', false, true, NULL, NULL, 9, false, NULL, NULL, 'gmailThreadId', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'GmailThreadId', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'GmailMessageId', 'string', 'Gmail message identifier for email interactions', false, true, NULL, 80, 10, false, NULL, NULL, 'gmailMessageId', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'GmailMessageId', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    
+    -- Navigation Properties (Many-to-Many Collections)
+    (3, 'InteractionContacts', 'InteractionContact[]', 'Many-to-many relationship with contacts', false, true, NULL, NULL, 11, false, NULL, NULL, 'interactionContacts', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'InteractionContacts', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'InteractionPartners', 'InteractionPartner[]', 'Many-to-many relationship with partners', false, true, NULL, NULL, 12, false, NULL, NULL, 'interactionPartners', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'InteractionPartners', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'InteractionUsers', 'InteractionUser[]', 'Many-to-many relationship with users', false, true, NULL, NULL, 13, false, NULL, NULL, 'interactionUsers', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'InteractionUsers', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'OrganizationUnitRelationships', 'OrganizationUnitRelationship[]', 'Many-to-many relationship with organization units', false, true, NULL, NULL, 14, false, NULL, NULL, 'organizationUnitRelationships', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'OrganizationUnitRelationships', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'Documents', 'Document[]', 'Collection of interaction-related documents', false, true, NULL, NULL, 15, false, NULL, NULL, 'documents', NULL, NULL, 'text', NULL, false, false, NULL, NULL, 'Documents', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
 -- ================================================================
 -- PARTNERTREE ENTITY FIELDS (8 fields)

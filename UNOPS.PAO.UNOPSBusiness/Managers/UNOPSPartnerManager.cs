@@ -1468,7 +1468,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public override async Task<object> GetBasicEntityDataAsync(int id)
     {
-        var partner = await _context.Partners.FirstOrDefaultAsync(e => e.Id == id);
+        var partner = await _context.Partners
+            .Include(p => p.PartnerGroup)
+            .Include(p => p.LiaisonOffice)
+            .FirstOrDefaultAsync(e => e.Id == id);
         if (partner != null)
         {
             return _mapper.Map<UNOPSPartner, PartnerModel>(partner);

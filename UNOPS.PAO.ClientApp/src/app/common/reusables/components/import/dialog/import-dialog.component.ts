@@ -99,6 +99,26 @@ interface ImportColumn extends ListViewColumn {
         max-width: 100px;
       }
     }
+    
+    /* Import error styling */
+    .import-error {
+      background-color: #fef2f2 !important;
+      border-left: 4px solid #ef4444 !important;
+    }
+    
+    .import-error td {
+      background-color: #fef2f2 !important;
+    }
+    
+    /* Validation error styling - slightly different from import errors */
+    .p-error:not(.import-error) {
+      background-color: #fef3cd !important;
+      border-left: 4px solid #f59e0b !important;
+    }
+    
+    .p-error:not(.import-error) td {
+      background-color: #fef3cd !important;
+    }
   `]
 })
 export class ImportDialogComponent implements OnInit {
@@ -138,6 +158,7 @@ export class ImportDialogComponent implements OnInit {
 
   // Contact-specific columns
   contactColumns: ImportColumn[] = [
+    { field: 'id', header: 'contact.id', required: false, label: 'ID', type: 'text', sortable: false },
     { field: 'salutation', header: 'contact.salutation', required: false, label: 'Salutation', type: 'text', sortable: false },
     { field: 'firstName', header: 'contact.firstName', required: false, label: 'First Name', type: 'text', sortable: false },
     { field: 'middleName', header: 'contact.middleName', required: false, label: 'Middle Name', type: 'text', sortable: false },
@@ -146,7 +167,7 @@ export class ImportDialogComponent implements OnInit {
     { field: 'title', header: 'contact.title', required: true, label: 'Title', type: 'text', sortable: false },
     { field: 'pronouns', header: 'contact.pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
     { field: 'birthDate', header: 'contact.birthDate', required: false, label: 'Birth Date', type: 'text', sortable: false },
-    { field: 'partnerId', header: 'contact.partnerId', required: true, label: 'Partner ID', type: 'text', sortable: false },
+    { field: 'partnerId', header: 'contact.partnerId', required: true, label: 'Partner Id', type: 'text', sortable: false },
     { field: 'email', header: 'contact.email', required: true, label: 'Email', type: 'text', sortable: false },
     { field: 'phone', header: 'contact.phone', required: false, label: 'Phone', type: 'text', sortable: false },
     { field: 'mobile', header: 'contact.mobile', required: false, label: 'Mobile', type: 'text', sortable: false },
@@ -169,16 +190,17 @@ export class ImportDialogComponent implements OnInit {
 
   // Partner-specific columns (all fields from Partner.cs, filtered by permissions)
   allPartnerColumns: ImportColumn[] = [
+    { field: 'id', header: 'partner.id', required: false, label: 'ID', type: 'text', sortable: false },
     // Essential Fields
-    { field: 'name', header: 'partner.name', required: true, label: 'Name', type: 'text', sortable: false },
-    { field: 'partnerShortDescription', header: 'partner.shortName', required: false, label: 'Short Name', type: 'text', sortable: false },
-    { field: 'partnerLongDescription', header: 'partner.longDescription', required: false, label: 'Long Description', type: 'text', sortable: false },
+    { field: 'name', header: 'partner.partnerName', required: true, label: 'Partner Name', type: 'text', sortable: false },
+    { field: 'partnerShortDescription', header: 'partner.shortName', required: false, label: 'Partner Short Description', type: 'text', sortable: false },
+    { field: 'partnerLongDescription', header: 'partner.longDescription', required: false, label: 'Partner Long Description', type: 'text', sortable: false },
     
     // Classification & Organization
-    { field: 'partnerCategoryId', header: 'partner.partnerCategory', required: false, label: 'Partner Category', type: 'text', sortable: false },
-    { field: 'partnerGroupId', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'number', sortable: false },
-    { field: 'liaisonOfficeId', header: 'partner.liaisonOffice', required: false, label: 'Liaison Office', type: 'text', sortable: false },
-    { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPoint', required: false, label: 'Partner Focal Point', type: 'text', sortable: false },
+    { field: 'partnerGroupId', header: 'partner.partnerGroupId', required: false, label: 'Partner Group Id', type: 'number', sortable: false },
+    { field: 'liaisonOfficeId', header: 'partner.partnerLiaisonOfficeId', required: false, label: 'Partner Liaison Office Id', type: 'text', sortable: false },
+    { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPointUserId', required: false, label: 'Focal Point User Id', type: 'text', sortable: false },
+    { field: 'organizationUnitRelationshipsName', header: 'partner.partnerOrgUnit', required: false, label: 'Partner Org Unit', type: 'text', sortable: false },
     // Status & Operational
     { field: 'status', header: 'partner.status', required: false, label: 'Status', type: 'text', sortable: false },
   ];
@@ -188,6 +210,7 @@ export class ImportDialogComponent implements OnInit {
 
   // Interaction-specific columns
   interactionColumns: ImportColumn[] = [
+    { field: 'id', header: 'interaction.id', required: false, label: 'ID', type: 'text', sortable: false },
     { field: 'type', header: 'interaction.type', required: true, label: 'Type', type: 'text', sortable: false },
     { field: 'date', header: 'interaction.date', required: true, label: 'Date', type: 'text', sortable: false },
     { field: 'subject', header: 'interaction.subject', required: true, label: 'Subject', type: 'text', sortable: false },
@@ -198,7 +221,7 @@ export class ImportDialogComponent implements OnInit {
     { field: 'userIds', header: 'interaction.userIds', required: false, label: 'User IDs', type: 'text', sortable: false },
     { field: 'emailAddresses', header: 'interaction.emailAddresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
     { field: 'phoneNumbers', header: 'interaction.phoneNumbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
-    { field: 'organizationHierarchyIds', header: 'interaction.organizationUnitIds', required: false, label: 'Organization Unit IDs', type: 'text', sortable: false }
+    { field: 'organizationHierarchyIdsName', header: 'interaction.organizationUnitIdsName', required: false, label: 'Organization Unit', type: 'text', sortable: false }
   ];
 
   // User Role-specific columns
@@ -240,11 +263,34 @@ export class ImportDialogComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    // Clear any previous import errors to prevent state leakage
+    this.importDialogService.clearImportErrorDetails();
+    console.log('🧹 Cleared import errors on component init');
+    
     // Set the table columns based on the current import type (with permissions)
     await this.updateColumnsForEntityType();
     
     // Immediately check data on init
     this.checkAndProcessData();
+    
+    // Listen for data changes (e.g., after filtering failed records)
+    effect(() => {
+      const serviceData = this.importDialogService.data();
+      const serviceSelection = this.importDialogService.selectedRows();
+      
+      // Sync component selection with service selection
+      if (serviceSelection.length !== this.selectedRows().length) {
+        console.log('🔄 Syncing component selection with service:', serviceSelection.length, 'records');
+        this.selectedRows.set([...serviceSelection]);
+      }
+      
+      // Update pagination when data changes
+      if (serviceData.length !== this.totalRecords()) {
+        console.log('🔄 Updating total records:', this.totalRecords(), '->', serviceData.length);
+        this.totalRecords.set(serviceData.length);
+        this.updatePaginatedData();
+      }
+    });
   }
 
   // Update the table columns based on the current import type and user permissions
@@ -442,6 +488,49 @@ export class ImportDialogComponent implements OnInit {
     // Adjust the row index to account for pagination
     const actualRowIndex = this.first() + rowIndex;
     return this.validationErrors().get(actualRowIndex) || [];
+  }
+
+  hasImportErrors(rowIndex: number): boolean {
+    const rowData = this.paginatedData()[rowIndex];
+    if (!rowData) return false;
+    
+    const recordId = rowData._importRowId || rowData.id || (this.first() + rowIndex);
+    return this.importDialogService.hasImportError(recordId);
+  }
+
+  getImportErrors(rowIndex: number): string[] {
+    const rowData = this.paginatedData()[rowIndex];
+    if (!rowData) return [];
+    
+    const recordId = rowData._importRowId || rowData.id || (this.first() + rowIndex);
+    const errorInfo = this.importDialogService.getImportError(recordId);
+    
+    if (!errorInfo) return [];
+    
+    const errors = [];
+    
+    // Add main error message
+    if (errorInfo.message) {
+      errors.push(errorInfo.message);
+    }
+    
+    // Add additional details if available
+    if (errorInfo.details && typeof errorInfo.details === 'string') {
+      errors.push(`Details: ${errorInfo.details}`);
+    } else if (errorInfo.details && Array.isArray(errorInfo.details)) {
+      errors.push(...errorInfo.details.map((d: any) => `Details: ${d}`));
+    }
+    
+    // Add exception type for technical users
+    if (errorInfo.exceptionType && errorInfo.exceptionType !== 'Exception') {
+      errors.push(`Type: ${errorInfo.exceptionType}`);
+    }
+    
+    return errors;
+  }
+
+  getFailedImportCount(): number {
+    return this.importDialogService.importErrors().size;
   }
 
   hasMissingRequiredRows(): boolean {
@@ -836,6 +925,17 @@ export class ImportDialogComponent implements OnInit {
             // Update paginated data and trigger change detection
             this.updatePaginatedData();
             
+            const selectedRows = this.selectedRows();
+            const selectedIndex = selectedRows.findIndex(item => item._importRowId === importRowId);
+            if (selectedIndex !== -1) {
+              const updatedSelectedRows = [...selectedRows];
+              updatedSelectedRows[selectedIndex] = updatedData[rowIndex];
+              this.selectedRows.set(updatedSelectedRows);
+              // Also update the service
+              this.importDialogService.setSelectedRows(updatedSelectedRows);
+              console.log(`✅ Updated selected row ${importRowId} with edited data for import`);
+            }
+            
             // Check for missing required fields
             this.checkRowForMissingFields(updatedData[rowIndex]);
           }
@@ -1127,6 +1227,7 @@ export class ImportDialogComponent implements OnInit {
     ];
     return shortTextFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
   }
+
 
 
 }

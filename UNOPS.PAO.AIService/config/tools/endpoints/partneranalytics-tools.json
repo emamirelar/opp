@@ -1,143 +1,155 @@
 {
   "entity": "PartnerAnalytics",
-  "description": "Provides analytical insights and aggregated data related to partners, such as activity trends, user-specific partner lists, and geographic distribution.",
+  "description": "Provides analytics and insights related to partners.",
   "synonyms": [
-    "partner insights",
-    "partner reports",
-    "partner metrics",
-    "partner statistics",
-    "partner analysis"
+    "Partner Insights",
+    "Partner Metrics",
+    "Partner Statistics",
+    "Partner Analysis",
+    "Partner Reporting"
   ],
-  "mandatoryFields": [
-    "userId"
-  ],
+  "mandatoryFields": [],
+  "baseUrl": "/api/partner/analytics",
   "endpoints": [
     {
       "name": "GetMostActivePartners",
-      "url": "api/partner/analytics/mostActive",
+      "url": "/api/partner/analytics/mostActive?limit={limit}&timeframe={timeframe}&metric={metric}",
       "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "retrieve",
+        "show",
+        "analyze"
+      ],
       "description": "Retrieves the most active partners based on engagement count, interaction count, or recent activity.",
-      "parameters": {
-        "limit": {
-          "type": "integer",
-          "required": false,
-          "description": "Maximum number of partners to return (default: 10)"
-        },
-        "timeframe": {
-          "type": "string",
-          "required": false,
-          "description": "Time period to analyze (daily, weekly, monthly, quarterly, yearly)"
-        },
-        "metric": {
-          "type": "string",
-          "required": false,
-          "description": "Activity metric to measure (engagements, interactions, lastActivity)"
-        }
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/analytics/mostActive?limit=5&timeframe=monthly&metric=engagements",
+      "requiredFields": [],
       "example_uses": [
         "Show most active partners this month",
-        "Get top 5 partners by engagement count",
-        "List partners with most interactions",
-        "Find most recently active partners",
-        "Show partners with highest engagement in the last quarter"
+        "Get top 5 partners by engagement count"
       ],
-      "when_to_use": "Use this when you need to identify the most active or engaged partners based on various metrics."
+      "when_to_use": "Use this when you need to identify the most active or engaged partners based on various metrics.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetPartnersByUser",
-      "url": "api/partner/analytics/byUser/{userId}",
+      "url": "/api/partner/analytics/byUser/{userId}?timeframe={timeframe}&includeCreated={includeCreated}&includeModified={includeModified}&includeFocalPoint={includeFocalPoint}",
       "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "retrieve",
+        "show"
+      ],
       "description": "Retrieves partners created or managed by a specific user with activity metrics.",
-      "parameters": {
-        "userId": {
-          "type": "integer",
-          "required": true,
-          "description": "User ID to get partners for"
-        },
-        "timeframe": {
-          "type": "string",
-          "required": false,
-          "description": "Time period to analyze (daily, weekly, monthly, quarterly, yearly)"
-        },
-        "includeCreated": {
-          "type": "boolean",
-          "required": false,
-          "description": "Include partners created by the user (default: true)"
-        },
-        "includeModified": {
-          "type": "boolean",
-          "required": false,
-          "description": "Include partners modified by the user (default: true)"
-        },
-        "includeFocalPoint": {
-          "type": "boolean",
-          "required": false,
-          "description": "Include partners where user is focal point (default: true)"
-        }
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/analytics/byUser/123?timeframe=monthly&includeCreated=true&includeModified=false&includeFocalPoint=true",
+      "requiredFields": [],
       "example_uses": [
         "Show all partners created by user 123",
-        "Get partners managed by specific user",
-        "List partners modified by user 456 this month",
-        "Find partners where user 789 is the focal point",
-        "Show all partner activity for a specific user"
+        "Get partners managed by specific user"
       ],
-      "when_to_use": "Use this when you need to see all partners associated with a specific user's activities."
+      "when_to_use": "Use this when you need to see all partners associated with a specific user's activities.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetEngagementTrends",
-      "url": "api/partner/analytics/engagementTrends",
+      "url": "/api/partner/analytics/engagementTrends?period={period}&months={months}&partnerId={partnerId}",
       "method": "GET",
-      "description": "Retrieves historical engagement trends for partners over a specified period.",
-      "parameters": {
-        "period": {
-          "type": "string",
-          "required": false,
-          "description": "Time period for the trend analysis (e.g., monthly, quarterly)"
-        },
-        "months": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of months to include in the trend analysis (default: 12)"
-        },
-        "partnerId": {
-          "type": "integer",
-          "required": false,
-          "description": "Optional: Filter engagement trends for a specific partner."
-        }
-      },
-      "example_uses": [
-        "Show monthly engagement trends for the last year",
-        "Get quarterly engagement trends for partner 123",
-        "Analyze overall engagement growth over time"
+      "intent": [
+        "list",
+        "get",
+        "retrieve",
+        "show",
+        "analyze"
       ],
-      "when_to_use": "Use this to understand how partner engagement has evolved over time, either overall or for a specific partner."
+      "description": "Retrieves engagement trends for partners over a specified period.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/analytics/engagementTrends?period=monthly&months=6&partnerId=456",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 70,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetPartnersByCountry",
-      "url": "api/partner/analytics/byCountry",
+      "url": "/api/partner/analytics/byCountry?limit={limit}&minCount={minCount}",
       "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "retrieve",
+        "show",
+        "analyze"
+      ],
       "description": "Retrieves partners grouped by country with counts and metrics.",
-      "parameters": {
-        "limit": {
-          "type": "integer",
-          "required": false,
-          "description": "Maximum number of countries to return (default: 20)"
-        },
-        "minCount": {
-          "type": "integer",
-          "required": false,
-          "description": "Minimum number of partners per country to include (default: 1)"
-        }
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/analytics/byCountry?limit=10&minCount=5",
+      "requiredFields": [],
       "example_uses": [
         "Show partners by country",
-        "Get geographic distribution of partners",
-        "List top countries by partner count",
-        "Analyze partner distribution across regions",
-        "View countries with most partners"
+        "Get geographic distribution of partners"
       ],
-      "when_to_use": "Use this when you need to analyze the geographic distribution of partners."
+      "when_to_use": "Use this when you need to analyze the geographic distribution of partners.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use GetMostActivePartners with searchText parameter",
+      "advanced": "use GetPartnersByUser with searchCriteria JSON array"
+    }
+  }
 }

@@ -1,80 +1,181 @@
 {
   "entity": "UserProfile",
-  "description": "Manages user profiles, personal information, and preferences within the system.",
+  "description": "Manages user profile information and preferences.",
   "synonyms": [
-    "user profile",
-    "user info",
-    "account settings",
-    "my profile",
-    "user details"
+    "User Account",
+    "Profile Settings",
+    "User Info",
+    "Account Details",
+    "My Profile"
   ],
   "mandatoryFields": [
     "UserId",
-    "Id",
-    "Status",
-    "CreatedBy",
-    "CreatedDate",
-    "LastModifiedBy",
-    "IsDeleted",
-    "DeletedBy"
+    "Email"
   ],
+  "baseUrl": "/api",
   "endpoints": [
     {
       "name": "UpdateProfile",
       "url": "/api/profile",
       "method": "POST",
-      "description": "Updates the current user's basic profile information.",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates the current user's profile information.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "profile": {
           "type": "object",
-          "required": false,
-          "description": "Updated profile model containing new information"
+          "required": true,
+          "description": "Updated profile model containing new information",
+          "default": null
         }
       },
+      "exampleBody": {
+        "Email": "test@example.com",
+        "FirstName": "John",
+        "LastName": "Doe"
+      },
+      "exampleUrl": "/api/profile",
+      "requiredFields": [],
       "example_uses": [
-        "Update my email address to new.email@example.com.",
-        "Change my first name to John and last name to Doe.",
-        "I need to update my profile with new contact details."
+        "Update my profile with new contact information.",
+        "Change my email address in my profile."
       ],
-      "when_to_use": "Use this endpoint to modify basic profile details such as email, first name, and last name for the currently authenticated user."
+      "when_to_use": "When a user needs to update their personal profile details.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     },
     {
       "name": "UpdateUserInfo",
       "url": "/api/user-info/update",
       "method": "PUT",
-      "description": "Updates current user's comprehensive information and profile settings.",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates current user's information and profile settings.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "userProfile": {
           "type": "object",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "",
+          "default": null
         }
       },
-      "example_uses": [
-        "Update my organizational unit and duty station.",
-        "Set my preferred language and theme in my user preferences.",
-        "I want to update my supervisor ID and position details."
+      "exampleBody": {
+        "UserId": 123,
+        "FirstName": "UpdatedFirstName",
+        "LastName": "UpdatedLastName",
+        "UserEmail": "updated@example.com",
+        "OrgUnit": "UpdatedOrgUnit",
+        "SupervisorId": 456,
+        "DutyStation": "UpdatedDutyStation",
+        "Position": "UpdatedPosition",
+        "Name": "UpdatedName",
+        "UserPreference": {
+          "Id": 789,
+          "UserId": 123,
+          "GlobalFilterJson": "{}",
+          "GlobalFilters": {
+            "RelatedToMe": true
+          },
+          "AdditionalSettingsJson": "{}"
+        },
+        "Id": 123,
+        "Status": 1,
+        "CreatedBy": 1,
+        "CreatedDate": "2024-01-01T00:00:00",
+        "LastModifiedBy": 1,
+        "LastModifiedDate": "2024-01-02T00:00:00",
+        "IsDeleted": false,
+        "DeletedBy": 0,
+        "DeletedDate": null
+      },
+      "exampleUrl": "/api/user-info/update",
+      "requiredFields": [
+        "UserId",
+        "Id",
+        "Status",
+        "CreatedBy",
+        "CreatedDate",
+        "LastModifiedBy",
+        "IsDeleted",
+        "DeletedBy"
       ],
-      "when_to_use": "Use this endpoint to update comprehensive user information, including personal details, organizational unit, and user preferences."
+      "example_uses": [
+        "Update my user information.",
+        "Modify my profile settings."
+      ],
+      "when_to_use": "When a user needs to update their user information and profile settings.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "complex"
+      }
     },
     {
       "name": "GetUserProfileDetails",
-      "url": "/api/user-info/current",
+      "url": "/api/user-info/current?email={email}",
       "method": "GET",
-      "description": "Retrieves comprehensive current user information including profile, roles, permissions, organizational settings, and user preferences. Supports both authenticated user lookup and explicit email parameter for administrative purposes.",
-      "parameters": {
-        "email": {
-          "type": "string",
-          "required": false,
-          "description": "Optional specific email to get user info for (if not provided, uses current authenticated user)"
-        }
-      },
-      "example_uses": [
-        "Get my current user profile details.",
-        "Retrieve the profile information for user@example.com.",
-        "Show me all the details about my account, including preferences and organizational context."
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
       ],
-      "when_to_use": "Use this endpoint to fetch the complete profile and settings for the current user, or for a specific user by email if you have administrative privileges."
+      "description": "Retrieves comprehensive current user information including profile, roles, permissions, organizational settings, and user preferences. Supports both authenticated user lookup and explicit email parameter for administrative purposes.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/user-info/current?email=test@example.com",
+      "requiredFields": [],
+      "example_uses": [
+        "Show my profile details.",
+        "Get user information for a specific email."
+      ],
+      "when_to_use": "When a user or administrator needs to retrieve detailed user profile information.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
 }
