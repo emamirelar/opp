@@ -751,7 +751,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 if (interactionType)
                                     entityType = "Interaction";
                                     
-                                await HandleOrganizationUnitRelationships(responseObject, text, entityType);
+                                await HandleOrganizationUnitRelationships(responseObject, text, entityType, dependent);
                                 continue;
                             }
                             
@@ -814,6 +814,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 }
                                 
                                 responseObject[dependent] = idsArray;
+                                responseObject[dependent + "Name"] = await GetEntityNameFromId(idsArray, dependent);
                             }
                             else
                             {
@@ -876,6 +877,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                     {
                                         // Handle as single value
                                         responseObject[dependent] = entityId;
+                                        responseObject[dependent + "Name"] = await GetEntityNameFromId(entityId, dependent);
                                     }
                                 }
                                 
@@ -1123,6 +1125,143 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         }
 
         /// <summary>
+        /// Gets entity names from array of IDs using the same mapping strategy as GetEntityIdFromText but in reverse
+        /// </summary>
+        /// <param name="ids">The entity IDs to lookup (can be JArray or int[])</param>
+        /// <param name="dependent">The dependent field name (e.g., "partnerGroupId", "partnerCategoryId")</param>
+        /// <returns>Comma-separated string of entity names if found, null otherwise</returns>
+        public async Task<string> GetEntityNameFromId(dynamic ids, string dependent)
+        {
+            try
+            {
+                // Handle different input types
+                int[] idArray = null;
+                
+                if (ids is JArray jArray)
+                {
+                    // Convert JArray to int array
+                    idArray = jArray.Select(token => 
+                    {
+                        if (int.TryParse(token.ToString(), out int id))
+                            return id;
+                        return 0; // Default for invalid values
+                    }).Where(id => id > 0).ToArray();
+                }
+                else if (ids is int[] intArray)
+                {
+                    idArray = intArray;
+                }
+                else if (ids is List<int> intList)
+                {
+                    idArray = intList.ToArray();
+                }
+                else if (ids is int singleId)
+                {
+                    // Single ID case - use existing method
+                    return await GetEntityNameFromId(singleId, dependent);
+                }
+                else if (ids != null)
+                {
+                    // Try to parse as single ID
+                    if (int.TryParse(ids.ToString(), out int parsedId))
+                    {
+                        return await GetEntityNameFromId(parsedId, dependent);
+                    }
+                }
+
+                if (idArray == null || idArray.Length == 0)
+                {
+                    Console.WriteLine($"[DEBUG] GetEntityNameFromId: No valid IDs found in input for dependent='{dependent}'");
+                    return null;
+                }
+
+                Console.WriteLine($"[DEBUG] GetEntityNameFromId called with ids=[{string.Join(",", idArray)}], dependent='{dependent}'");
+                
+                // Convert dependent to entity name using the same logic as single ID method
+                string baseEntityName = dependent.EndsWith("Ids", StringComparison.OrdinalIgnoreCase) ? 
+                    dependent.Substring(0, dependent.Length - 3) : 
+                    dependent.Replace("Id", "", StringComparison.OrdinalIgnoreCase);
+                
+                // Capitalize only the first letter, preserving existing capitalization
+                string entityName = string.IsNullOrEmpty(baseEntityName) ? 
+                    baseEntityName : 
+                    char.ToUpper(baseEntityName[0]) + baseEntityName.Substring(1);
+                
+                Console.WriteLine($"[DEBUG] baseEntityName='{baseEntityName}', entityName='{entityName}'");
+                
+                string whereCondition = "1=1"; // Default WHERE condition
+                string tableName = "";
+                string nameField = "Name"; // Default name field
+                
+                // Apply the same mapping logic as single ID method
+                if (dependent.Equals("organizationUnitRelationships", StringComparison.OrdinalIgnoreCase)
+                        || dependent.Equals("organizationHierarchyIds", StringComparison.OrdinalIgnoreCase)
+                        || entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "OrganizationHierarchies";
+                    whereCondition = "\"Type\" = 'OrgUnit'";
+                    nameField = "Name";
+                }
+                else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase) 
+                         || dependent.Equals("partnerfocalpointuserid", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("createdby", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("lastmodifiedby", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "UserProfile";
+                    nameField = "Name"; // UserProfile has a Name field
+                    whereCondition = "1=1";
+                }
+                else if (entityName.Equals("Contact", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "Contacts";
+                    nameField = "CONCAT(\"FirstName\", ' ', \"LastName\")"; // Contacts use FirstName + LastName
+                    whereCondition = "1=1";
+                }
+                else if (dependent.Equals("partnerGroupId", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "PartnerTrees";
+                    nameField = "Name";
+                    whereCondition = "1=1";
+                }
+                else if (dependent.Equals("partnerCategoryId", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "PartnerTrees";
+                    nameField = "Name";
+                    whereCondition = "1=1";
+                }
+                else if (dependent.Equals("liaisonofficeid", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "LiaisonOffices";
+                    nameField = "Name";
+                    whereCondition = "1=1";
+                }
+                else if (dependent.Equals("roleIds", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "AspNetRoles";
+                    nameField = "Name";
+                    whereCondition = "1=1";
+                }
+                else
+                {
+                    tableName = entityName.Pluralize();
+                    nameField = "Name";
+                }
+
+                Console.WriteLine($"[DEBUG] Final mapping for array: tableName='{tableName}', nameField='{nameField}', whereCondition='{whereCondition}'");
+
+                // Execute the database query to get the names
+                return await ExecuteNameLookupQuery(tableName, nameField, idArray, whereCondition);
+            }
+            catch (Exception ex)
+            {
+                // Log the error but return null instead of throwing
+                Console.WriteLine($"Error getting entity names for {dependent} IDs: {ex.Message}");
+                Console.WriteLine($"Exception details: {ex}");
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Executes the database query to lookup entity name by ID
         /// </summary>
         /// <param name="tableName">The table to query</param>
@@ -1163,10 +1302,75 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 return null;
             }
         }
+
+        /// <summary>
+        /// Executes the database query to lookup entity names by array of IDs
+        /// </summary>
+        /// <param name="tableName">The table to query</param>
+        /// <param name="nameField">The field containing the name (can be a computed field)</param>
+        /// <param name="ids">The array of IDs to lookup</param>
+        /// <param name="whereCondition">Additional WHERE conditions</param>
+        /// <returns>Comma-separated string of entity names if found, null otherwise</returns>
+        private async Task<string> ExecuteNameLookupQuery(string tableName, string nameField, int[] ids, string whereCondition)
+        {
+            try
+            {
+                if (ids == null || ids.Length == 0)
+                    return null;
+
+                // Handle single ID case by calling the single ID method
+                if (ids.Length == 1)
+                {
+                    return await ExecuteNameLookupQuery(tableName, nameField, ids[0], whereCondition);
+                }
+
+                // Create parameterized query for multiple IDs
+                var parameterPlaceholders = string.Join(",", ids.Select((id, index) => $"@id{index}"));
+                var sql = $"SELECT {nameField} as EntityName FROM \"{tableName}\" WHERE \"Id\" IN ({parameterPlaceholders}) AND ({whereCondition}) ORDER BY \"Id\"";
+                
+                Console.WriteLine($"[DEBUG] Executing multi-ID query: {sql}");
+                Console.WriteLine($"[DEBUG] Parameters: ids=[{string.Join(",", ids)}]");
+                
+                var parameters = ids.Select((id, index) => 
+                    new NpgsqlParameter($"@id{index}", NpgsqlTypes.NpgsqlDbType.Integer) { Value = id })
+                    .ToArray();
+
+                var connection = _context.Database.GetDbConnection();
+                if (connection.State != ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = sql;
+                command.Parameters.AddRange(parameters);
+
+                var names = new List<string>();
+                using var reader = await command.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    var name = reader["EntityName"]?.ToString();
+                    if (!string.IsNullOrEmpty(name))
+                    {
+                        names.Add(name);
+                    }
+                }
+
+                var result = names.Count > 0 ? string.Join(", ", names) : null;
+                Console.WriteLine($"[DEBUG] Multi-ID query result: '{result}'");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing name lookup query for table {tableName}, IDs [{string.Join(",", ids)}]: {ex.Message}");
+                Console.WriteLine($"Exception details: {ex}");
+                return null;
+            }
+        }
         
-        private async Task HandleOrganizationUnitRelationships(dynamic responseObject, dynamic orgUnitText, string entityType = "Partner")
+        private async Task HandleOrganizationUnitRelationships(dynamic responseObject, dynamic orgUnitText, string entityType = "Partner", string dependent = "organizationUnitRelationships")
         {
             var orgUnitRelationships = new JArray();
+            var orgUnitCodes = new List<string>(); // For collecting codes for the Name field
             
             // Handle different types of orgUnitText input
             string[] orgUnitNames = null;
@@ -1216,6 +1420,18 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                             if (orgUnitData != null)
                             {
                                 orgUnitRelationships.Add(orgUnitData);
+                                
+                                // Extract the code for the Name field
+                                var orgHierarchy = orgUnitData["organizationHierarchy"];
+                                if (orgHierarchy != null && orgHierarchy["code"] != null)
+                                {
+                                    var code = orgHierarchy["code"].ToString();
+                                    if (!string.IsNullOrEmpty(code))
+                                    {
+                                        orgUnitCodes.Add(code);
+                                    }
+                                }
+                                
                                 Console.WriteLine($"[DEBUG] Successfully added org unit relationship for ID {orgUnitId} ('{orgUnitTextValue}')");
                             }
                             else
@@ -1239,7 +1455,15 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 Console.WriteLine($"[WARNING] No valid org unit names found in: '{orgUnitText}'");
             }
             
-            responseObject["organizationUnitRelationships"] = orgUnitRelationships;
+            // Set the relationships array
+            responseObject[dependent] = orgUnitRelationships;
+            
+            // Set the Name field with comma-separated codes
+            var commaSeparatedCodes = orgUnitCodes.Count > 0 ? string.Join(", ", orgUnitCodes) : null;
+            var nameField = dependent + "Name";
+            responseObject[nameField] = commaSeparatedCodes;
+            
+            Console.WriteLine($"[DEBUG] Set {dependent} with {orgUnitRelationships.Count} items and {nameField}: '{commaSeparatedCodes}'");
         }
         
         /// <summary>

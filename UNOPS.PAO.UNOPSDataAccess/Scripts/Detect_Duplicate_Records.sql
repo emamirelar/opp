@@ -105,7 +105,17 @@ BEGIN
         input_name := TRIM(parsed_entity_data->>'name');
         input_phone := TRIM(parsed_entity_data->>'phone');
         input_mobile := TRIM(parsed_entity_data->>'mobile');
-        input_partner_id := (parsed_entity_data->>'partnerId')::INTEGER;
+        
+        -- Safely handle partnerId conversion with null/empty string check
+        BEGIN
+            input_partner_id := CASE 
+                WHEN (parsed_entity_data->>'partnerId') IS NULL OR TRIM(parsed_entity_data->>'partnerId') = '' 
+                THEN NULL 
+                ELSE (parsed_entity_data->>'partnerId')::INTEGER 
+            END;
+        EXCEPTION WHEN OTHERS THEN
+            input_partner_id := NULL;
+        END;
         
         -- Build name for comparison if not provided
         IF input_name IS NULL OR input_name = '' THEN
@@ -198,7 +208,17 @@ BEGIN
         -- Extract partner fields from JSON
         input_partner_name := TRIM(parsed_entity_data->>'name');
         input_partner_short_desc := TRIM(parsed_entity_data->>'partnerShortDescription');
-        input_erp_dim_value := (parsed_entity_data->>'erpDimValue')::INTEGER;
+        
+        -- Safely handle erpDimValue conversion with null/empty string check
+        BEGIN
+            input_erp_dim_value := CASE 
+                WHEN (parsed_entity_data->>'erpDimValue') IS NULL OR TRIM(parsed_entity_data->>'erpDimValue') = '' 
+                THEN NULL 
+                ELSE (parsed_entity_data->>'erpDimValue')::INTEGER 
+            END;
+        EXCEPTION WHEN OTHERS THEN
+            input_erp_dim_value := NULL;
+        END;
         
         field_search_sql := '
             WITH partner_matches AS (
@@ -261,7 +281,18 @@ BEGIN
     ELSIF UPPER(entity_type) = 'INTERACTION' THEN
         -- Extract interaction fields from JSON
         input_subject := TRIM(parsed_entity_data->>'subject');
-        input_date := (parsed_entity_data->>'date')::TIMESTAMP;
+        
+        -- Safely handle date conversion with null/empty string check
+        BEGIN
+            input_date := CASE 
+                WHEN (parsed_entity_data->>'date') IS NULL OR TRIM(parsed_entity_data->>'date') = '' 
+                THEN NULL 
+                ELSE (parsed_entity_data->>'date')::TIMESTAMP 
+            END;
+        EXCEPTION WHEN OTHERS THEN
+            input_date := NULL;
+        END;
+        
         input_location := TRIM(parsed_entity_data->>'location');
         
         -- Extract contact and partner IDs if provided as arrays
