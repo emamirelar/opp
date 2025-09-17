@@ -1585,13 +1585,14 @@ public class UNOPSGeminiManager : IGeminiManager
     private async Task<string> BulkInsertContactsAsync(BulkUploadRequest request)
     {
         var successList = new List<object>();
-        var errorMessages = new List<string>();
+        var errorDetails = new List<object>(); // Changed from List<string> to include record IDs
         var isSuccess = true;
 
         try
         {
             foreach (var record in request.Records)
             {
+                string recordId = null; // Track the record ID for error reporting
                 try
                 {
                     // Convert JsonElement to JObject for property access
@@ -1606,12 +1607,21 @@ public class UNOPSGeminiManager : IGeminiManager
                         throw new InvalidOperationException("Unsupported record format. Expected JSON object.");
                     }
 
+                    // Extract _importRowId for error tracking
+                    recordId = recordObj["_importRowId"]?.ToString();
+
                     // Convert JObject to ContactRequest
                     var contactRequest = recordObj.ToObject<UpdateContactRequest>();
                     
                     if (contactRequest == null)
                     {
-                        errorMessages.Add("Failed to convert record to ContactRequest");
+                        errorDetails.Add(new {
+                            recordId = recordId,
+                            _importRowId = recordId,
+                            message = "Failed to convert record data - Invalid data format or missing required fields",
+                            error = "Data Conversion Failed",
+                            details = "Record structure does not match expected contact format"
+                        });
                         isSuccess = false;
                         continue;
                     }
@@ -1619,42 +1629,65 @@ public class UNOPSGeminiManager : IGeminiManager
                     // Check if this is an update (has ID) or create (no ID or ID = 0)
                     if (contactRequest.Id > 0)
                     {
-                        // Update existing contact
-                        var updateRequest = new UpdateContactRequest
+                        // First, check if the contact exists before attempting update
+                        var existingContact = await _managerWrapper.ContactManager.GetContactAsync(contactRequest.Id);
+                        
+                        if (existingContact == null)
                         {
-                            Id = contactRequest.Id,
-                            Salutation = contactRequest.Salutation,
-                            FirstName = contactRequest.FirstName,
-                            MiddleName = contactRequest.MiddleName,
-                            LastName = contactRequest.LastName,
-                            Suffix = contactRequest.Suffix,
-                            Title = contactRequest.Title,
-                            Department = contactRequest.Department,
-                            Description = contactRequest.Description,
-                            Email = contactRequest.Email,
-                            Phone = contactRequest.Phone,
-                            Mobile = contactRequest.Mobile,
-                            Assistant = contactRequest.Assistant,
-                            AssistantPhone = contactRequest.AssistantPhone,
-                            AssistantEmail = contactRequest.AssistantEmail,
-                            MailingStreet = contactRequest.MailingStreet,
-                            MailingStreet2 = contactRequest.MailingStreet2,
-                            MailingCity = contactRequest.MailingCity,
-                            MailingStateProvince = contactRequest.MailingStateProvince,
-                            MailingPostalCode = contactRequest.MailingPostalCode,
-                            MailingCountry = contactRequest.MailingCountry,
-                            PartnerId = contactRequest.PartnerId
-                        };
-
-                        var updatedResult = await _managerWrapper.ContactManager.UpdateContactAsync(0, updateRequest);
-                        if (updatedResult != null)
-                        {
-                            successList.Add(new { Id = updatedResult.Id, Action = "Updated", Name = $"{updatedResult.FirstName} {updatedResult.LastName}", Email = updatedResult.Email });
+                            errorDetails.Add(new {
+                                recordId = recordId,
+                                _importRowId = recordId,
+                                message = $"Contact with ID {contactRequest.Id} does not exist in the system",
+                                error = "Record Not Found",
+                                details = $"Cannot update non-existent contact. The contact with ID {contactRequest.Id} was not found in the database. Consider removing the ID to create a new contact instead."
+                            });
+                            isSuccess = false;
                         }
                         else
                         {
-                            errorMessages.Add($"Failed to update contact with ID {contactRequest.Id}");
-                            isSuccess = false;
+                            // Update existing contact
+                            var updateRequest = new UpdateContactRequest
+                            {
+                                Id = contactRequest.Id,
+                                Salutation = contactRequest.Salutation,
+                                FirstName = contactRequest.FirstName,
+                                MiddleName = contactRequest.MiddleName,
+                                LastName = contactRequest.LastName,
+                                Suffix = contactRequest.Suffix,
+                                Title = contactRequest.Title,
+                                Department = contactRequest.Department,
+                                Description = contactRequest.Description,
+                                Email = contactRequest.Email,
+                                Phone = contactRequest.Phone,
+                                Mobile = contactRequest.Mobile,
+                                Assistant = contactRequest.Assistant,
+                                AssistantPhone = contactRequest.AssistantPhone,
+                                AssistantEmail = contactRequest.AssistantEmail,
+                                MailingStreet = contactRequest.MailingStreet,
+                                MailingStreet2 = contactRequest.MailingStreet2,
+                                MailingCity = contactRequest.MailingCity,
+                                MailingStateProvince = contactRequest.MailingStateProvince,
+                                MailingPostalCode = contactRequest.MailingPostalCode,
+                                MailingCountry = contactRequest.MailingCountry,
+                                PartnerId = contactRequest.PartnerId
+                            };
+
+                            var updatedResult = await _managerWrapper.ContactManager.UpdateContactAsync(0, updateRequest);
+                            if (updatedResult != null)
+                            {
+                                successList.Add(new { Id = updatedResult.Id, Action = "Updated", Name = $"{updatedResult.FirstName} {updatedResult.LastName}", Email = updatedResult.Email });
+                            }
+                            else
+                            {
+                                errorDetails.Add(new {
+                                    recordId = recordId,
+                                    _importRowId = recordId,
+                                    message = $"Failed to update contact with ID {contactRequest.Id} - Update operation failed",
+                                    error = "Update Failed", 
+                                    details = "Update operation completed but returned null - possible business rule validation failure"
+                                });
+                                isSuccess = false;
+                            }
                         }
                     }
                     else
@@ -1668,14 +1701,32 @@ public class UNOPSGeminiManager : IGeminiManager
                         }
                         else
                         {
-                            errorMessages.Add("Failed to create contact");
+                            errorDetails.Add(new {
+                                recordId = recordId,
+                                _importRowId = recordId,
+                                message = "Failed to create contact - Please check all required fields are provided and valid",
+                                error = "Creation Failed",
+                                details = "Contact creation returned null - validation or business rule failure"
+                            });
                             isSuccess = false;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    errorMessages.Add($"Error processing contact record: {ex.Message}");
+                    // Extract detailed error information
+                    string errorMessage = ExtractDetailedErrorMessage(ex);
+                    string specificError = ExtractSpecificErrorType(ex);
+                    
+                    errorDetails.Add(new {
+                        recordId = recordId,
+                        _importRowId = recordId,
+                        message = $"Error processing contact: {errorMessage}",
+                        error = specificError,
+                        details = ex.InnerException?.Message,
+                        stackTrace = ex.StackTrace?.Split('\n').Take(3).ToArray(), // First 3 lines for debugging
+                        exceptionType = ex.GetType().Name
+                    });
                     isSuccess = false;
                 }
             }
@@ -1684,12 +1735,13 @@ public class UNOPSGeminiManager : IGeminiManager
             {
                 IsSuccess = isSuccess,
                 SuccessCount = successList.Count,
-                ErrorCount = errorMessages.Count,
-                Errors = errorMessages,
+                ErrorCount = errorDetails.Count,
+                ErrorDetails = errorDetails, // New structured error details with record IDs
+                Errors = errorDetails.Select(e => ((dynamic)e).message).ToList(), // Backward compatibility
                 SuccessRecords = successList,
                 Message = isSuccess ? 
                     $"Successfully processed {successList.Count} contacts" :
-                    $"Processed {successList.Count} contacts with {errorMessages.Count} errors"
+                    $"Processed {successList.Count} contacts with {errorDetails.Count} errors"
             };
 
             return JsonConvert.SerializeObject(result, new JsonSerializerSettings
@@ -1714,6 +1766,93 @@ public class UNOPSGeminiManager : IGeminiManager
 
             return JsonConvert.SerializeObject(errorResult);
         }
+    }
+
+    /// <summary>
+    /// Extract detailed error message from exception, handling common database and validation errors
+    /// </summary>
+    private string ExtractDetailedErrorMessage(Exception ex)
+    {
+        // Handle DbUpdateException (Entity Framework errors)
+        if (ex is DbUpdateException dbEx)
+        {
+            if (dbEx.InnerException != null)
+            {
+                var innerMessage = dbEx.InnerException.Message;
+                
+                // Handle common SQL Server errors with user-friendly messages
+                if (innerMessage.Contains("UNIQUE KEY constraint") || innerMessage.Contains("duplicate key"))
+                {
+                    if (innerMessage.Contains("Email"))
+                        return "Email address already exists in the system";
+                    if (innerMessage.Contains("Phone"))
+                        return "Phone number already exists in the system";
+                    return "Duplicate entry detected - this record already exists";
+                }
+                
+                if (innerMessage.Contains("FOREIGN KEY constraint"))
+                    return "Referenced data not found - please check related fields";
+                
+                if (innerMessage.Contains("CHECK constraint"))
+                    return "Data validation failed - invalid value provided";
+                
+                if (innerMessage.Contains("NOT NULL constraint"))
+                    return "Required field is missing";
+                
+                return $"Database error: {innerMessage}";
+            }
+            return "Database update failed";
+        }
+        
+        // Handle validation exceptions
+        if (ex is ArgumentException || ex is ArgumentNullException)
+        {
+            return $"Validation error: {ex.Message}";
+        }
+        
+        // Handle other specific exceptions
+        if (ex is InvalidOperationException)
+        {
+            return $"Operation error: {ex.Message}";
+        }
+        
+        if (ex is UnauthorizedAccessException)
+        {
+            return "Access denied - insufficient permissions";
+        }
+        
+        // Default to the main exception message
+        return ex.Message ?? "Unknown error occurred";
+    }
+
+    /// <summary>
+    /// Extract specific error type for categorization
+    /// </summary>
+    private string ExtractSpecificErrorType(Exception ex)
+    {
+        if (ex is DbUpdateException dbEx)
+        {
+            if (dbEx.InnerException?.Message.Contains("UNIQUE KEY") == true)
+                return "Duplicate Entry";
+            if (dbEx.InnerException?.Message.Contains("FOREIGN KEY") == true)
+                return "Reference Error";
+            if (dbEx.InnerException?.Message.Contains("CHECK constraint") == true)
+                return "Validation Error";
+            if (dbEx.InnerException?.Message.Contains("NOT NULL") == true)
+                return "Required Field Missing";
+            return "Database Error";
+        }
+        
+        if (ex is ArgumentException || ex is ArgumentNullException)
+            return "Validation Error";
+        
+        if (ex is InvalidOperationException)
+            return "Operation Error";
+        
+        if (ex is UnauthorizedAccessException)
+            return "Permission Error";
+        
+        return ex.GetType().Name;
     }
 
     public async Task<string> ChatWithGemini(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null)

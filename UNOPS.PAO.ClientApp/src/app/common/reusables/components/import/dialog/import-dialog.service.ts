@@ -30,6 +30,7 @@ export class ImportDialogService {
   private notificationMessage: string | null = null;
 
   data = signal<Array<any>>([])
+  importErrors = signal<Map<number, any>>(new Map()); // Store import error details by row index
 
   isLoading = signal(false);
 
@@ -118,6 +119,9 @@ export class ImportDialogService {
     if (this.dialogRef) {
       this.dialogRef.close(result);
     }
+    // Clear import errors when dialog is closed to prevent state leakage
+    this.clearImportErrorDetails();
+    console.log('🧹 Cleared import errors on dialog close');
   }
 
   /**
@@ -599,6 +603,8 @@ export class ImportDialogService {
     if (!data || data.length === 0) {
       console.warn('Empty or null data provided to ImportDialogService.setData()');
       this.data.set([]);
+      // Clear import errors even for empty data
+      this.clearImportErrorDetails();
       return;
     }
 
@@ -607,6 +613,9 @@ export class ImportDialogService {
     
     // Set the normalized data
     this.data.set(normalizedData);
+    // Clear any previous import errors when new data is loaded
+    this.clearImportErrorDetails();
+    console.log('🧹 Cleared previous import errors for new data load');
   }
 
   /**
@@ -616,6 +625,12 @@ export class ImportDialogService {
    * @returns Observable of dialog result
    */
   openSynchronousImport(data: any[], type: string): Observable<any> {
+    // Clear any previous state from previous imports
+    this.clearImportErrorDetails();
+    console.log('🧹 Cleared previous import state for new synchronous import');
+    
+    this.setImportType(type);
+    
     // First set the data
     this.setData(data);
     
@@ -635,6 +650,10 @@ export class ImportDialogService {
     
     // Get the selected rows for import
     const selectedData = this.getSelectedRowsForImport();
+    console.log('🔍 Import triggered - Selected data:', selectedData);
+    console.log('🔍 Total records in dialog:', this.data().length);
+    console.log('🔍 Selected records for import:', selectedData.length);
+    
     if (!selectedData || selectedData.length === 0) {
       this.feedbackDialogService.showWarningToast({ 
         detail: 'No rows selected for import' 
@@ -654,10 +673,43 @@ export class ImportDialogService {
         this.isLoading.set(false);
         this.loadingOverlayService.hide();
         
-        var parsedResponse = JSON.parse(response.message);
+        console.log('🔍 Raw import response:', response);
+        
+        let parsedResponse: any;
+        try {
+          // Handle different response formats
+          if (typeof response.message === 'string') {
+            parsedResponse = JSON.parse(response.message);
+          } else if (response.message && typeof response.message === 'object') {
+            parsedResponse = response.message;
+          } else if (typeof response === 'object') {
+            parsedResponse = response;
+          } else {
+            throw new Error('Unexpected response format');
+          }
+        } catch (error) {
+          console.error('Error parsing import response:', error);
+          console.error('Raw response:', response);
+          // Fallback for unparseable responses
+          const errorMessage = error instanceof Error ? error.message : 'Unknown parsing error';
+          parsedResponse = {
+            IsSuccess: false,
+            ErrorDetails: [`Failed to parse import response: ${errorMessage}`],
+            message: 'Import processing error'
+          };
+        }
+        
+        console.log('🔍 Parsed import response:', parsedResponse);
         
         // Handle partial success/failure scenarios
-        const errorDetails = parsedResponse.ErrorDetails || parsedResponse.Errors || [];
+        // Priority: ErrorDetails (new structured format) > Errors (backward compatibility)
+        const errorDetails = parsedResponse.ErrorDetails || 
+                           parsedResponse.Errors || 
+                           parsedResponse.errors || 
+                           parsedResponse.errorDetails || 
+                           [];
+        
+        console.log('🔍 Extracted error details:', errorDetails);
         const totalRecords = dataWithDefaults.length;
         const failedRecords = errorDetails.length;
         const successfulRecords = totalRecords - failedRecords;
@@ -817,10 +869,16 @@ export class ImportDialogService {
    * Handle partial import success - some records succeeded, some failed
    */
   private handlePartialImportSuccess(successfulRecords: number, failedRecords: number, errorDetails: any[]): void {
+    // Store error details for visual highlighting and detailed error display
+    this.storeImportErrorDetails(errorDetails);
+    
     // Remove successfully imported records from the dialog
     this.removeSuccessfulRecordsFromDialog(errorDetails);
     
-    // Show detailed feedback to user
+    // Get summary of error types for better user feedback
+    const errorSummary = this.getErrorSummary(errorDetails);
+    
+    // Show detailed feedback to user with error details
     const messageHtml = `
       <div class="partial-import-result">
         <p><strong>Partial Import Completed:</strong></p>
@@ -828,8 +886,9 @@ export class ImportDialogService {
           <p class="text-green-600">✅ Successfully imported: ${successfulRecords} records</p>
           <p class="text-red-600">❌ Failed to import: ${failedRecords} records</p>
         </div>
-        <p><strong>Failed records remain in the dialog for you to review and re-import.</strong></p>
-        <p class="text-sm text-gray-600">You can edit the failed records and try importing them again, or cancel to close the dialog.</p>
+        ${errorSummary ? `<div class="mb-3"><p><strong>Common Issues:</strong></p><ul class="text-sm text-gray-700 ml-4">${errorSummary}</ul></div>` : ''}
+        <p><strong>Failed records are highlighted in red and remain in the dialog for you to review and re-import.</strong></p>
+        <p class="text-sm text-gray-600">Review the error details for each failed record, make corrections, and try importing them again.</p>
       </div>
     `;
 
@@ -845,12 +904,14 @@ export class ImportDialogService {
       accept: () => {
         // User wants to continue editing failed records
         this.feedbackDialogService.showInfoToast({
-          detail: `${failedRecords} failed records remain for editing. Fix the issues and try importing again.`,
-          life: 5000
+          detail: `${failedRecords} failed records remain highlighted for editing. Review error details and fix issues before re-importing.`,
+          life: 7000
         });
       },
       reject: () => {
         // User wants to close the dialog
+        // Clear error details when closing
+        this.clearImportErrorDetails();
         // Trigger refresh when closing after partial success
         window.dispatchEvent(new CustomEvent('refresh-listview'));
         this.closeDialog();
@@ -984,39 +1045,229 @@ export class ImportDialogService {
       const currentData = this.data();
       const currentSelectedRows = this.selectedRows();
       
-      // Create a set of failed record identifiers for quick lookup
-      // This depends on how error details are structured - adapt as needed
-      const failedRecordIds = new Set(
-        errorDetails.map(error => error.recordId || error.index || error.id).filter(id => id !== undefined)
-      );
+      console.log('🔍 Attempting to remove successful records. Total current records:', currentData.length);
+      console.log('🔍 Error details received:', errorDetails);
       
-      // If we don't have specific record identifiers, fall back to keeping all records
-      // This is safer than accidentally removing records that might not have been processed
+      // Create a set of failed record identifiers for quick lookup
+      const failedRecordIds = new Set();
+      errorDetails.forEach((error, index) => {
+        const recordId = error.recordId || 
+                        error.index || 
+                        error.id || 
+                        error._importRowId ||
+                        error.rowId ||
+                        error.rowIndex ||
+                        index; // Fallback to error index
+        failedRecordIds.add(recordId);
+      });
+      
+      console.log('🔍 Failed record IDs:', Array.from(failedRecordIds));
+      
+      // If we have same number of errors as records, it means all failed (don't filter)
+      if (failedRecordIds.size >= currentData.length) {
+        console.log('⚠️ All records failed, keeping all records in dialog');
+        return;
+      }
+      
+      // If we don't have any error identifiers, keep all records as safety measure
       if (failedRecordIds.size === 0) {
-        console.warn('No failed record identifiers found, keeping all records in dialog');
+        console.warn('⚠️ No failed record identifiers found, keeping all records in dialog');
         return;
       }
       
       // Filter data to keep only failed records
+      // Try multiple matching strategies
       const failedRecords = currentData.filter((record, index) => {
-        const recordId = record._importRowId || record.id || index;
-        return failedRecordIds.has(recordId);
+        // Strategy 1: Match by _importRowId
+        if (record._importRowId && failedRecordIds.has(record._importRowId)) {
+          return true;
+        }
+        
+        // Strategy 2: Match by record.id
+        if (record.id && failedRecordIds.has(record.id)) {
+          return true;
+        }
+        
+        // Strategy 3: Match by index position
+        if (failedRecordIds.has(index)) {
+          return true;
+        }
+        
+        // Strategy 4: Match by the numerical part of _importRowId if it exists
+        if (record._importRowId && typeof record._importRowId === 'string') {
+          const importIdIndex = parseInt(record._importRowId.replace('import-', ''));
+          if (!isNaN(importIdIndex) && failedRecordIds.has(importIdIndex)) {
+            return true;
+          }
+        }
+        
+        return false;
       });
       
       // Filter selected rows to keep only failed records
       const failedSelectedRows = currentSelectedRows.filter((record, index) => {
-        const recordId = record._importRowId || record.id || index;
-        return failedRecordIds.has(recordId);
+        // Use same matching logic as above
+        if (record._importRowId && failedRecordIds.has(record._importRowId)) {
+          return true;
+        }
+        if (record.id && failedRecordIds.has(record.id)) {
+          return true;
+        }
+        if (failedRecordIds.has(index)) {
+          return true;
+        }
+        if (record._importRowId && typeof record._importRowId === 'string') {
+          const importIdIndex = parseInt(record._importRowId.replace('import-', ''));
+          if (!isNaN(importIdIndex) && failedRecordIds.has(importIdIndex)) {
+            return true;
+          }
+        }
+        return false;
       });
+      
+      console.log(`✅ Filtered records: ${currentData.length} -> ${failedRecords.length} (removed ${currentData.length - failedRecords.length} successful)`);
+      console.log(`✅ Filtered selections: ${currentSelectedRows.length} -> ${failedSelectedRows.length}`);
       
       // Update the data and selected rows
       this.data.set(failedRecords);
       this.selectedRows.set(failedSelectedRows);
       
-      console.log(`Removed ${currentData.length - failedRecords.length} successful records from dialog`);
+      // Auto-select all failed records for user convenience
+      if (failedRecords.length > 0) {
+        const allFailedRecords = [...failedRecords];
+        this.selectedRows.set(allFailedRecords);
+        console.log(`✅ Auto-selected ${allFailedRecords.length} failed records for re-import`);
+      }
+      
+      // Force refresh to sync component state
+      setTimeout(() => {
+        this.refreshSelection();
+      }, 100);
+      
     } catch (error) {
       console.error('Error removing successful records from dialog:', error);
       // On error, keep all records to avoid data loss
     }
+  }
+
+  /**
+   * Store import error details for visual highlighting and detailed error display
+   */
+  private storeImportErrorDetails(errorDetails: any[]): void {
+    const errorMap = new Map<number, any>();
+    const currentData = this.data();
+    
+    console.log('🔍 Processing import error details:', errorDetails);
+    console.log('🔍 Current data sample:', currentData.slice(0, 2));
+    
+    errorDetails.forEach((error, index) => {
+      // Try multiple ways to extract record identifier
+      let recordId = error.recordId || 
+                    error.index || 
+                    error.id || 
+                    error._importRowId ||
+                    error.rowId ||
+                    error.rowIndex;
+      
+      // If no explicit ID, try to match by record order/index as fallback
+      if (recordId === undefined) {
+        recordId = index; // Use error index as fallback
+        console.log(`⚠️ No recordId found for error ${index}, using index as fallback`);
+      }
+      
+      // Extract meaningful error message
+      let message = 'Import failed';
+      if (typeof error === 'string') {
+        message = error;
+      } else if (error) {
+        message = error.message || 
+                 error.error || 
+                 error.errorMessage || 
+                 error.description || 
+                 'Import failed - see details';
+      }
+      
+      const errorInfo = {
+        message: message,
+        details: error.details || error.validationErrors || error.errors || [],
+        field: error.field || null,
+        value: error.value || null,
+        originalError: error // Keep original for debugging
+      };
+      
+      errorMap.set(recordId, errorInfo);
+      console.log(`🔍 Mapped error for recordId ${recordId}:`, errorInfo.message);
+    });
+    
+    this.importErrors.set(errorMap);
+    console.log('✅ Stored import errors for', errorMap.size, 'records');
+  }
+
+  /**
+   * Clear import error details
+   */
+  clearImportErrorDetails(): void {
+    this.importErrors.set(new Map());
+  }
+
+  /**
+   * Get error summary for user feedback
+   */
+  private getErrorSummary(errorDetails: any[]): string {
+    const errorTypes = new Map<string, number>();
+    
+    errorDetails.forEach(error => {
+      // Try to extract a meaningful error message from various possible structures
+      let message = 'Unknown error';
+      
+      if (typeof error === 'string') {
+        message = error;
+      } else if (error) {
+        message = error.message || 
+                 error.error || 
+                 error.errorMessage || 
+                 error.description || 
+                 error.details || 
+                 (typeof error === 'object' ? JSON.stringify(error) : 'Unknown error');
+      }
+      
+      const count = errorTypes.get(message) || 0;
+      errorTypes.set(message, count + 1);
+    });
+    
+    const summaryItems = Array.from(errorTypes.entries())
+      .map(([message, count]) => `<li>${message} (${count} record${count > 1 ? 's' : ''})</li>`)
+      .slice(0, 5); // Limit to top 5 error types
+    
+    return summaryItems.length > 0 ? summaryItems.join('') : '';
+  }
+
+  /**
+   * Check if a record has import errors
+   */
+  hasImportError(recordId: any): boolean {
+    return this.importErrors().has(recordId);
+  }
+
+  /**
+   * Get import error details for a record
+   */
+  getImportError(recordId: any): any {
+    return this.importErrors().get(recordId);
+  }
+
+  /**
+   * Force refresh of selection state - useful after filtering records
+   */
+  refreshSelection(): void {
+    // Trigger reactivity by setting the same values
+    const currentData = this.data();
+    const currentSelection = this.selectedRows();
+    
+    // Force signals to update
+    this.data.set([...currentData]);
+    this.selectedRows.set([...currentSelection]);
+    
+    console.log('🔄 Refreshed selection state:', currentSelection.length, 'records selected out of', currentData.length, 'total');
   }
 }
