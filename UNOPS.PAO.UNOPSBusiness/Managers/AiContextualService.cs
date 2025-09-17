@@ -1292,7 +1292,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                         id = oh.Id,
                         code = oh.Code,
                         name = oh.Name,
-                        type = (int)oh.Type,
+                        type = oh.Type,
                         description = oh.Description,
                         parentId = oh.ParentId
                     })
