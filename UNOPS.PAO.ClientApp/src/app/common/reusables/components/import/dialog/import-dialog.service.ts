@@ -11,6 +11,7 @@ import { catchError, finalize, mergeMap, map, timeout } from 'rxjs/operators';
 import { ConfirmationService } from 'primeng/api';
 import { NotificationService } from '../../../../services/notification.service';
 import { LoadingOverlayService } from '../../../components/loading-overlay/loading-overlay.component';
+import { ManualEntryDialogComponent } from './manual-entry/manual-entry-dialog.component';
 
 @Injectable({
   providedIn: 'root'
@@ -138,6 +139,10 @@ export class ImportDialogService {
         if (this.notificationId) {
           this.markNotificationAsRead();
         }
+        
+        // Always refresh on cancel in case some records were already imported
+        window.dispatchEvent(new CustomEvent('refresh-listview'));
+        
         this.closeDialog('canceled');
         this.data.set([]);
         this.feedbackDialogService.showInfoToast({ 
@@ -403,6 +408,92 @@ export class ImportDialogService {
     };
   }
 
+  /**
+   * Open manual entry dialog for Google Sheet URL and sheet name
+   */
+  openManualEntryDialog(type: string): void {
+    // Set the import type
+    this.setImportType(type);
+    
+    const dialogRef = this.dialogService.open(ManualEntryDialogComponent, {
+      header: `Import ${type.charAt(0).toUpperCase() + type.slice(1)}s - Manual Entry`,
+      width: '600px',
+      height: 'auto',
+      closable: true,
+      data: {
+        entityType: type
+      }
+    });
+
+    dialogRef.onClose.subscribe((result) => {
+      if (result && result.url && result.sheetName) {
+        // Extract sheet ID from URL
+        const sheetId = this.extractSheetIdFromUrl(result.url);
+        if (sheetId) {
+          this.processManualEntry(sheetId, result.sheetName, type);
+        } else {
+          this.feedbackDialogService.showErrorToast({
+            detail: 'Invalid Google Sheet URL. Please check the URL and try again.',
+            life: 5000
+          });
+        }
+      }
+    });
+  }
+
+  /**
+   * Extract Google Sheet ID from URL
+   */
+  private extractSheetIdFromUrl(url: string): string | null {
+    try {
+      // Match patterns like:
+      // https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit...
+      // https://docs.google.com/spreadsheets/d/{SHEET_ID}/...
+      const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      return match ? match[1] : null;
+    } catch (error) {
+      console.error('Error extracting sheet ID from URL:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Process manual entry with sheet ID and custom sheet name
+   */
+  private processManualEntry(sheetId: string, sheetName: string, type: string): void {
+    this.isLoading.set(true);
+    
+    let sheetType = type;
+    if (type === 'user_role_import') {
+      sheetType = 'User Role Import';
+    }
+    
+    this.loadingOverlayService.show(`Processing ${sheetType} spreadsheet (${sheetName}), please wait...`);
+    
+    this.feedbackDialogService.showInfoToast({ 
+      detail: `Processing ${sheetType} spreadsheet (${sheetName}), please wait...`,
+      life: 3000
+    });
+
+    const timeoutDuration = 300000; // 5 minutes timeout
+
+    // Call analyzeFile with custom sheet name
+    this.importService.analyzeFile(sheetId, type.includes('user_role') ? type : `bulk_${type}_action`, sheetName).pipe(
+      timeout(timeoutDuration),
+      catchError((error) => {
+        console.error('🔍 Caught error in analyzeFileManual pipe:', error);
+        throw error;
+      })
+    ).subscribe({
+      next: (response: any) => {
+        this.handleAnalyzeFileResponse(response, sheetType, sheetId);
+      },
+      error: (error) => {
+        this.handleAnalyzeFileError(error, sheetType);
+      }
+    });
+  }
+
   openGoogleSheetPicker(type: string) {
     try {
       
@@ -453,104 +544,10 @@ export class ImportDialogService {
           })
         ).subscribe({
           next: (response: any) => {
-            
-            // Check for error response
-            if (response.intent === 'Error') {
-              console.error('🔍 File analysis returned error:', response.error);
-              this.isLoading.set(false);
-              this.loadingOverlayService.hide();
-              
-              this.feedbackDialogService.showErrorToast({ 
-                detail: response.message || 'Error processing file. Please try again.',
-                life: 7000
-              });
-              
-              // Close the dialog when an error occurs
-              this.closeDialog();
-              return;
-            }
-            
-            if (response.intent === 'Processing') {
-              // If this is an asynchronous operation
-              const jobId = this.importService.getActiveJobId();
-              const jobInfo = jobId ? ` (Job ID: ${jobId})` : '';
-              
-              this.isLoading.set(false);
-              this.loadingOverlayService.hide();
-              this.data.set([]);
-              this.feedbackDialogService.showInfoToast({ 
-                detail: `Pre-processing ${sheetType} spreadsheet${jobInfo}. ${response.message}`,
-                life: 5000
-              });
-              return;
-            } else if (response.intent === 'InternalDuplicatesFound') {
-              // Handle internal duplicates found in the uploaded file
-              this.isLoading.set(false);
-              this.loadingOverlayService.hide();
-              this.showInternalDuplicateError(response, sheetType);
-              return;
-            } else if (response.intent === 'Success') {
-              // Parse the records from the response
-              let parsedRecords;
-              try {
-                parsedRecords = JSON.parse(response.records);
-              } catch (error) {
-                console.error('Error parsing records:', error);
-                this.isLoading.set(false);
-                this.loadingOverlayService.hide();
-                this.feedbackDialogService.showErrorToast({ 
-                  detail: 'Error processing file data. Please try again.' 
-                });
-                return;
-              }
-              
-              // Set the data (without auto-detection, using the explicit type)
-              this.data.set(parsedRecords);
-              
-              // Only open the dialog if we have data
-              if (this.data() && this.data().length > 0) {
-                this.openImportDialog(`Import ${sheetType}(s) - ${this.data().length} records`);
-                // Keep loading state until dialog opens then set to false
-                setTimeout(() => {
-                  this.isLoading.set(false);
-                  this.loadingOverlayService.hide();
-                }, 500);
-              } else {
-                this.isLoading.set(false);
-                this.loadingOverlayService.hide();
-                this.feedbackDialogService.showWarningToast({ 
-                  detail: 'No data available to import' 
-                });
-              }
-            }
+            this.handleAnalyzeFileResponse(response, sheetType, sheetId);
           },
           error: (error) => {
-            this.isLoading.set(false);
-            this.loadingOverlayService.hide();
-            console.error('Error analyzing file:', error);
-            
-            // Extract the detailed error message if available
-            let errorMessage = 'Error analyzing file: Unknown error';
-            
-            if (error.error) {
-              if (error.error.details) {
-                errorMessage = `Error: ${error.error.details}`;
-              } else if (error.error.message) {
-                errorMessage = `Error: ${error.error.message}`;
-              } else if (typeof error.error === 'string') {
-                errorMessage = `Error: ${error.error}`;
-              }
-            } else if (error.message) {
-              errorMessage = `Error: ${error.message}`;
-            }
-            
-            this.feedbackDialogService.showErrorToast({ 
-              detail: errorMessage,
-              life: 7000 // Show longer since it's a detailed message
-            });
-            
-            // Close the dialog when an error occurs
-            this.closeDialog();
+            this.handleAnalyzeFileError(error, sheetType);
           }
         });
       },
@@ -654,18 +651,40 @@ export class ImportDialogService {
     // Execute the import with the specified type
     this.importService.bulkUpload(dataWithDefaults, type).subscribe({
       next: (response: any) => {
-        var parsedResponse = JSON.parse(response.message);
-        if (parsedResponse.IsSuccess == false) {
-          this.isLoading.set(false);
-          this.loadingOverlayService.hide();
-          this.feedbackDialogService.showErrorToast({ 
-            detail: 'Import failed with one or more errors. Ensure the basic mandatory fields are filled in'
-          });
-          return;
-        }
         this.isLoading.set(false);
         this.loadingOverlayService.hide();
-        this.feedbackDialogService.showSuccessToast({ detail: 'Import successful' });
+        
+        var parsedResponse = JSON.parse(response.message);
+        
+        // Handle partial success/failure scenarios
+        const errorDetails = parsedResponse.ErrorDetails || parsedResponse.Errors || [];
+        const totalRecords = dataWithDefaults.length;
+        const failedRecords = errorDetails.length;
+        const successfulRecords = totalRecords - failedRecords;
+        
+        // Check if the backend explicitly marked this as a failure
+        if (parsedResponse.IsSuccess === false || failedRecords > 0) {
+          // There are some failures or backend marked as failed
+          if (successfulRecords > 0 && failedRecords > 0) {
+            // Partial success - some records imported, some failed
+            this.handlePartialImportSuccess(successfulRecords, failedRecords, errorDetails);
+          } else {
+            // Complete failure - no records imported or backend failure
+            const errorMessage = errorDetails.length > 0 
+              ? `Import failed: ${errorDetails.join(', ')}`
+              : 'Import failed: No records were imported. Ensure the basic mandatory fields are filled in';
+            
+            this.feedbackDialogService.showErrorToast({ 
+              detail: errorMessage
+            });
+          }
+          return;
+        }
+        
+        // Complete success - all records imported
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: `Import successful: All ${dataWithDefaults.length} records imported successfully` 
+        });
         
         // Mark notification as read if this was from a notification
         if (this.notificationId) {
@@ -791,6 +810,213 @@ export class ImportDialogService {
       }
     } catch (error) {
       return 'Error displaying record';
+    }
+  }
+
+  /**
+   * Handle partial import success - some records succeeded, some failed
+   */
+  private handlePartialImportSuccess(successfulRecords: number, failedRecords: number, errorDetails: any[]): void {
+    // Remove successfully imported records from the dialog
+    this.removeSuccessfulRecordsFromDialog(errorDetails);
+    
+    // Show detailed feedback to user
+    const messageHtml = `
+      <div class="partial-import-result">
+        <p><strong>Partial Import Completed:</strong></p>
+        <div class="import-summary mb-3">
+          <p class="text-green-600">✅ Successfully imported: ${successfulRecords} records</p>
+          <p class="text-red-600">❌ Failed to import: ${failedRecords} records</p>
+        </div>
+        <p><strong>Failed records remain in the dialog for you to review and re-import.</strong></p>
+        <p class="text-sm text-gray-600">You can edit the failed records and try importing them again, or cancel to close the dialog.</p>
+      </div>
+    `;
+
+    // Show confirmation dialog with detailed information
+    this.confirmationService.confirm({
+      message: messageHtml,
+      header: 'Partial Import Success',
+      acceptLabel: 'Continue Editing',
+      rejectLabel: 'Close Dialog',
+      acceptButtonStyleClass: 'p-button-primary',
+      rejectButtonStyleClass: 'p-button-secondary',
+      dismissableMask: true,
+      accept: () => {
+        // User wants to continue editing failed records
+        this.feedbackDialogService.showInfoToast({
+          detail: `${failedRecords} failed records remain for editing. Fix the issues and try importing again.`,
+          life: 5000
+        });
+      },
+      reject: () => {
+        // User wants to close the dialog
+        // Trigger refresh when closing after partial success
+        window.dispatchEvent(new CustomEvent('refresh-listview'));
+        this.closeDialog();
+        this.data.set([]);
+        this.selectedRows.set([]);
+      }
+    });
+
+    // Trigger refresh of the list view for successfully imported records
+    window.dispatchEvent(new CustomEvent('refresh-listview'));
+
+    // Mark notification as read if this was from a notification
+    if (this.notificationId) {
+      this.markNotificationAsRead();
+    }
+  }
+
+  /**
+   * Handle the response from analyzeFile API call
+   */
+  private handleAnalyzeFileResponse(response: any, sheetType: string, sheetId?: string): void {
+    // Check for error response
+    if (response.intent === 'Error') {
+      console.error('🔍 File analysis returned error:', response.error);
+      this.isLoading.set(false);
+      this.loadingOverlayService.hide();
+      
+      this.feedbackDialogService.showErrorToast({ 
+        detail: response.message || 'Error processing file. Please try again.',
+        life: 7000
+      });
+      
+      // Close the dialog when an error occurs
+      this.closeDialog();
+      return;
+    }
+    
+    if (response.intent === 'Processing') {
+      // If this is an asynchronous operation
+      const jobId = this.importService.getActiveJobId();
+      const jobInfo = jobId ? ` (Job ID: ${jobId})` : '';
+      
+      this.isLoading.set(false);
+      this.loadingOverlayService.hide();
+      this.data.set([]);
+      this.feedbackDialogService.showInfoToast({ 
+        detail: `Pre-processing ${sheetType} spreadsheet${jobInfo}. ${response.message}`,
+        life: 5000
+      });
+      return;
+    } else if (response.intent === 'InternalDuplicatesFound') {
+      // Handle internal duplicates found in the uploaded file
+      this.isLoading.set(false);
+      this.loadingOverlayService.hide();
+      this.showInternalDuplicateError(response, sheetType);
+      return;
+    } else if (response.intent === 'Success') {
+      // Parse the records from the response
+      let parsedRecords;
+      try {
+        parsedRecords = JSON.parse(response.records);
+      } catch (error) {
+        console.error('Error parsing records:', error);
+        this.isLoading.set(false);
+        this.loadingOverlayService.hide();
+        this.feedbackDialogService.showErrorToast({ 
+          detail: 'Error processing file data. Please try again.' 
+        });
+        return;
+      }
+      
+      // Set the data (without auto-detection, using the explicit type)
+      this.data.set(parsedRecords);
+      
+      // Only open the dialog if we have data
+      if (this.data() && this.data().length > 0) {
+        const headerSuffix = sheetId ? ` (Sheet ID: ${sheetId})` : '';
+        this.openImportDialog(`Import ${sheetType}(s) - ${this.data().length} records${headerSuffix}`);
+        // Keep loading state until dialog opens then set to false
+        setTimeout(() => {
+          this.isLoading.set(false);
+          this.loadingOverlayService.hide();
+        }, 500);
+      } else {
+        this.isLoading.set(false);
+        this.loadingOverlayService.hide();
+        this.feedbackDialogService.showWarningToast({ 
+          detail: 'No data available to import' 
+        });
+      }
+    }
+  }
+
+  /**
+   * Handle errors from analyzeFile API call
+   */
+  private handleAnalyzeFileError(error: any, sheetType: string): void {
+    this.isLoading.set(false);
+    this.loadingOverlayService.hide();
+    console.error('Error analyzing file:', error);
+    
+    // Extract the detailed error message if available
+    let errorMessage = 'Error analyzing file: Unknown error';
+    
+    if (error.error) {
+      if (error.error.details) {
+        errorMessage = `Error: ${error.error.details}`;
+      } else if (error.error.message) {
+        errorMessage = `Error: ${error.error.message}`;
+      } else if (typeof error.error === 'string') {
+        errorMessage = `Error: ${error.error}`;
+      }
+    } else if (error.message) {
+      errorMessage = `Error: ${error.message}`;
+    }
+    
+    this.feedbackDialogService.showErrorToast({ 
+      detail: errorMessage,
+      life: 7000 // Show longer since it's a detailed message
+    });
+    
+    // Close the dialog when an error occurs
+    this.closeDialog();
+  }
+
+  /**
+   * Remove successfully imported records from the dialog, leaving only failed records
+   */
+  private removeSuccessfulRecordsFromDialog(errorDetails: any[]): void {
+    try {
+      const currentData = this.data();
+      const currentSelectedRows = this.selectedRows();
+      
+      // Create a set of failed record identifiers for quick lookup
+      // This depends on how error details are structured - adapt as needed
+      const failedRecordIds = new Set(
+        errorDetails.map(error => error.recordId || error.index || error.id).filter(id => id !== undefined)
+      );
+      
+      // If we don't have specific record identifiers, fall back to keeping all records
+      // This is safer than accidentally removing records that might not have been processed
+      if (failedRecordIds.size === 0) {
+        console.warn('No failed record identifiers found, keeping all records in dialog');
+        return;
+      }
+      
+      // Filter data to keep only failed records
+      const failedRecords = currentData.filter((record, index) => {
+        const recordId = record._importRowId || record.id || index;
+        return failedRecordIds.has(recordId);
+      });
+      
+      // Filter selected rows to keep only failed records
+      const failedSelectedRows = currentSelectedRows.filter((record, index) => {
+        const recordId = record._importRowId || record.id || index;
+        return failedRecordIds.has(recordId);
+      });
+      
+      // Update the data and selected rows
+      this.data.set(failedRecords);
+      this.selectedRows.set(failedSelectedRows);
+      
+      console.log(`Removed ${currentData.length - failedRecords.length} successful records from dialog`);
+    } catch (error) {
+      console.error('Error removing successful records from dialog:', error);
+      // On error, keep all records to avoid data loss
     }
   }
 }

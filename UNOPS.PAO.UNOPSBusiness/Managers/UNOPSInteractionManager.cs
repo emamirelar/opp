@@ -600,7 +600,10 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
         entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
         //Update CreatedBy value selected by the User on the Interaction edit page
-        entity.CreatedBy = model.CreatedBy.Value;
+        if (model.CreatedBy.HasValue)
+        {
+            entity.CreatedBy = model.CreatedBy.Value;
+        }
 
         // Handle OrganizationHierarchyIds if provided
         if (model.OrganizationHierarchyIds != null)

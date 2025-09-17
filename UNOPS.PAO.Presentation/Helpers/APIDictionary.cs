@@ -10,6 +10,7 @@ public class APIDictionary
     // Document
     public const string Document = APIPrefix + "document";
     public const string DocumentType = APIPrefix + "document-type";
+    public const string DocumentGenerate = Document + "/generate-document";
 
     // Profile
     public const string Profile = APIPrefix + "profile";

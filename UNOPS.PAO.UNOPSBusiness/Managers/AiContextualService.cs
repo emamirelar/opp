@@ -130,25 +130,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 var embeddingResult = await ExecuteEmbeddingSearch(entityName, vectorEmbedding, embeddingThreshold, "1=1");
                 return embeddingResult;
             }
-            
-            // Step 3: If we have search text but no embedding, generate embedding and search
-            if (!string.IsNullOrEmpty(searchText))
-            {
-                var generatedEmbedding = await CreateEmbeddingForText(searchText);
-                if (!string.IsNullOrEmpty(generatedEmbedding))
-                {
-                    var embeddingResult = await ExecuteEmbeddingSearch(entityName, generatedEmbedding, embeddingThreshold, "1=1");
-                    
-                    // If embedding search also fails but we have a vector, log for future searches
-                    if ((embeddingResult == null || embeddingResult is DBNull))
-                    {
-                        Console.WriteLine($"No match found for '{searchText}' in '{entityName}', but embedding created for future searches.");
-                    }
-                    
-                    return embeddingResult;
-                }
-            }
-            
+
             return null;
         }
 
@@ -280,7 +262,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return results;
         }
 
-        public async Task<string> ReadFileData(string fileId)
+        public async Task<string> ReadFileData(string fileId, string sheetName = null)
         {
             try
             {
@@ -290,7 +272,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     ApplicationName = "GoogleSheetsReader",
                 });
                 var spreadsheet = service.Spreadsheets.Get(fileId).Execute();
-                var firstSheetName = spreadsheet.Sheets[0].Properties.Title;
+                var firstSheetName = sheetName ?? spreadsheet.Sheets[0].Properties.Title;
 
                 // Read values
                 var request = service.Spreadsheets.Values.Get(fileId, firstSheetName);
@@ -751,6 +733,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                         interactionType = true;
                     }
                     
+                    bool partnerType = false;
+                    if (promptData?.Type?.Contains("partner", StringComparison.OrdinalIgnoreCase) == true)
+                    {
+                        partnerType = true;
+                    }
+                    
                     foreach (var dependent in dependentsList)
                     {
                         var text = responseObject[dependent];
@@ -759,7 +747,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                             // Special case: OrganizationUnitRelationships (many-to-many)
                             if (dependent == "organizationUnitRelationships")
                             {
-                                await HandleOrganizationUnitRelationships(responseObject, text);
+                                string entityType = "Partner"; // Default to Partner
+                                if (interactionType)
+                                    entityType = "Interaction";
+                                    
+                                await HandleOrganizationUnitRelationships(responseObject, text, entityType);
                                 continue;
                             }
                             
@@ -811,6 +803,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                                     }
                                                 }
                                             }
+                                            else
+                                            {
+                                                // Log warning for array items that couldn't be resolved
+                                                Console.WriteLine($"[WARNING] Could not find ID for '{dependent}' array item with value '{textValue}'. Skipping this item.");
+                                                // Don't add anything to the array for unresolved items
+                                            }
                                         }
                                     }
                                 }
@@ -858,6 +856,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 entityId = await GetEntityIdFromText(text?.ToString(), dependent);
                                 if (entityId == null || entityId is DBNull)
                                 {
+                                    // Set the field to null if no ID was found
+                                    Console.WriteLine($"[WARNING] Could not find ID for '{dependent}' with value '{text}'. Setting field to null.");
+                                    responseObject[dependent] = null;
                                     continue;
                                 }
                                 else
@@ -961,6 +962,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         private async Task<dynamic> GetEntityIdFromText(string text, string dependent)
         {
+            Console.WriteLine($"[DEBUG] GetEntityIdFromText called with text='{text}', dependent='{dependent}'");
+            
             // Convert dependent to entity name - remove "Id"/"Ids" and capitalize first letter only
             string baseEntityName = dependent.EndsWith("Ids", StringComparison.OrdinalIgnoreCase) ? 
                 dependent.Substring(0, dependent.Length - 3) : 
@@ -983,7 +986,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 whereCondition = "\"Type\" = 'OrgUnit'";
             }
             // Special case for User/UserIds - should look at UserProfile table (which has searchable Name field)
-            else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase))
+            else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase)
+                || (entityName.Equals("PartnerFocalPointUser", StringComparison.OrdinalIgnoreCase)))
             {
                 entityName = "UserProfile";
                 // UserProfile can be searched by Name field directly
@@ -1015,32 +1019,307 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 entityName = entityName.Pluralize();
             }
             
-            return await RetrieveEntityId(entityName, null, text, 0.3f, 0.7f, whereCondition);
+            Console.WriteLine($"[DEBUG] Looking up '{text}' in entity '{entityName}' with where condition: '{whereCondition}'");
+            var result = await RetrieveEntityId(entityName, null, text, 0.3f, 0.7f, whereCondition);
+            Console.WriteLine($"[DEBUG] GetEntityIdFromText result: {(result != null && !(result is DBNull) ? result.ToString() : "NOT FOUND")}");
+            
+            return result;
+        }
+
+        /// <summary>
+        /// Gets entity name from ID using the same mapping strategy as GetEntityIdFromText but in reverse
+        /// </summary>
+        /// <param name="id">The entity ID to lookup</param>
+        /// <param name="dependent">The dependent field name (e.g., "partnerGroupId", "partnerCategoryId")</param>
+        /// <returns>The entity name if found, null otherwise</returns>
+        public async Task<string> GetEntityNameFromId(int id, string dependent)
+        {
+            try
+            {
+                Console.WriteLine($"[DEBUG] GetEntityNameFromId called with id={id}, dependent='{dependent}'");
+                
+                // Convert dependent to entity name using the same logic as GetEntityIdFromText
+                string baseEntityName = dependent.EndsWith("Ids", StringComparison.OrdinalIgnoreCase) ? 
+                    dependent.Substring(0, dependent.Length - 3) : 
+                    dependent.Replace("Id", "", StringComparison.OrdinalIgnoreCase);
+                
+                // Capitalize only the first letter, preserving existing capitalization
+                string entityName = string.IsNullOrEmpty(baseEntityName) ? 
+                    baseEntityName : 
+                    char.ToUpper(baseEntityName[0]) + baseEntityName.Substring(1);
+                
+                Console.WriteLine($"[DEBUG] baseEntityName='{baseEntityName}', entityName='{entityName}'");
+                
+                string whereCondition = "1=1"; // Default WHERE condition
+                string tableName = "";
+                string nameField = "Name"; // Default name field
+                
+                // Apply the same mapping logic as GetEntityIdFromText
+                if (dependent.Equals("organizationUnitRelationships", StringComparison.OrdinalIgnoreCase)
+                        || dependent.Equals("organizationHierarchyIds", StringComparison.OrdinalIgnoreCase)
+                        || entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "OrganizationHierarchies";
+                    whereCondition = "\"Type\" = 'OrgUnit'";
+                    nameField = "Name";
+                }
+                else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase) 
+                         || dependent.Equals("partnerfocalpointuserid", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("createdby", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("lastmodifiedby", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "UserProfile";
+                    nameField = "Name"; // UserProfile has a Name field
+                    whereCondition = "1=1";
+                }
+                else if (entityName.Equals("Contact", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "Contacts";
+                    nameField = "CONCAT(\"FirstName\", ' ', \"LastName\")"; // Contacts use FirstName + LastName
+                    whereCondition = "1=1";
+                }
+                else if (dependent.Equals("partnerGroupId", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "PartnerTrees";
+                    nameField = "Name";
+                    whereCondition = "1=1";
+                }
+                else if (dependent.Equals("partnerCategoryId", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "PartnerTrees";
+                    nameField = "Name";
+                    whereCondition = "1=1";
+                }
+                else if (dependent.Equals("liaisonofficeid", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "LiaisonOffices";
+                    nameField = "Name";
+                    whereCondition = "1=1";
+                }
+                else if (dependent.Equals("roleIds", StringComparison.OrdinalIgnoreCase))
+                {
+                    tableName = "AspNetRoles";
+                    nameField = "Name";
+                    whereCondition = "1=1";
+                }
+                else
+                {
+                    tableName = entityName.Pluralize();
+                    nameField = "Name";
+                }
+
+                Console.WriteLine($"[DEBUG] Final mapping: tableName='{tableName}', nameField='{nameField}', whereCondition='{whereCondition}'");
+
+                // Execute the database query to get the name
+                return await ExecuteNameLookupQuery(tableName, nameField, id, whereCondition);
+            }
+            catch (Exception ex)
+            {
+                // Log the error but return null instead of throwing
+                Console.WriteLine($"Error getting entity name for {dependent} ID {id}: {ex.Message}");
+                Console.WriteLine($"Exception details: {ex}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Executes the database query to lookup entity name by ID
+        /// </summary>
+        /// <param name="tableName">The table to query</param>
+        /// <param name="nameField">The field containing the name (can be a computed field)</param>
+        /// <param name="id">The ID to lookup</param>
+        /// <param name="whereCondition">Additional WHERE conditions</param>
+        /// <returns>The entity name if found, null otherwise</returns>
+        private async Task<string> ExecuteNameLookupQuery(string tableName, string nameField, int id, string whereCondition)
+        {
+            try
+            {
+                var sql = $"SELECT {nameField} as EntityName FROM \"{tableName}\" WHERE \"Id\" = @id AND ({whereCondition}) LIMIT 1";
+                
+                Console.WriteLine($"[DEBUG] Executing query: {sql}");
+                Console.WriteLine($"[DEBUG] Parameters: id={id}");
+                
+                var parameters = new[] 
+                {
+                    new NpgsqlParameter("@id", NpgsqlTypes.NpgsqlDbType.Integer) { Value = id }
+                };
+
+                var connection = _context.Database.GetDbConnection();
+                if (connection.State != ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = sql;
+                command.Parameters.AddRange(parameters);
+
+                var result = await command.ExecuteScalarAsync();
+                Console.WriteLine($"[DEBUG] Query result: '{result}'");
+                return result?.ToString();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing name lookup query for table {tableName}, ID {id}: {ex.Message}");
+                Console.WriteLine($"Exception details: {ex}");
+                return null;
+            }
         }
         
-        private async Task HandleOrganizationUnitRelationships(dynamic responseObject, dynamic orgUnitText)
+        private async Task HandleOrganizationUnitRelationships(dynamic responseObject, dynamic orgUnitText, string entityType = "Partner")
         {
-            var orgUnitIds = new JArray();
+            var orgUnitRelationships = new JArray();
+            
+            // Handle different types of orgUnitText input
+            string[] orgUnitNames = null;
             
             if (orgUnitText is JArray orgUnitArray)
             {
                 // Handle array of org unit names
-                foreach (var orgUnitName in orgUnitArray)
+                orgUnitNames = orgUnitArray.Select(item => ExtractOrgUnitName(item)).Where(name => !string.IsNullOrEmpty(name)).ToArray();
+            }
+            else if (orgUnitText is JValue jValue)
+            {
+                // Handle JValue (like {ITG}) - extract the actual value
+                var extractedName = ExtractOrgUnitName(jValue);
+                if (!string.IsNullOrEmpty(extractedName))
                 {
-                    var orgUnitId = await GetEntityIdFromText(orgUnitName?.ToString(), "organizationUnitRelationships");
-                    if (orgUnitId != null && !(orgUnitId is DBNull))
-                        orgUnitIds.Add(orgUnitId);
+                    orgUnitNames = new[] { extractedName };
                 }
             }
             else if (orgUnitText != null)
             {
-                // Handle single org unit name
-                var orgUnitId = await GetEntityIdFromText(orgUnitText.ToString(), "organizationUnitRelationships");
-                if (orgUnitId != null && !(orgUnitId is DBNull))
-                    orgUnitIds.Add(orgUnitId);
+                // Handle single org unit name as string or other types
+                var extractedName = ExtractOrgUnitName(orgUnitText);
+                if (!string.IsNullOrEmpty(extractedName))
+                {
+                    orgUnitNames = (string[]?)(new[] { extractedName });
+                }
             }
             
-            responseObject["organizationUnitRelationships"] = orgUnitIds;
+            // Process each org unit name
+            if (orgUnitNames != null && orgUnitNames.Length > 0)
+            {
+                foreach (var orgUnitTextValue in orgUnitNames)
+                {
+                    Console.WriteLine($"[DEBUG] Processing org unit text: '{orgUnitTextValue}'");
+                    
+                    try
+                    {
+                        // First resolve the text to an ID
+                        var orgUnitId = await GetEntityIdFromText(orgUnitTextValue, "organizationHierarchyIds");
+                        
+                        if (orgUnitId != null && !(orgUnitId is DBNull))
+                        {
+                            Console.WriteLine($"[DEBUG] Resolved '{orgUnitTextValue}' to org unit ID: {orgUnitId}");
+                            
+                            // Then get the full object by ID
+                            var orgUnitData = await GetOrganizationUnitRelationshipDataById(Convert.ToInt32(orgUnitId), entityType);
+                            if (orgUnitData != null)
+                            {
+                                orgUnitRelationships.Add(orgUnitData);
+                                Console.WriteLine($"[DEBUG] Successfully added org unit relationship for ID {orgUnitId} ('{orgUnitTextValue}')");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"[WARNING] No org unit object found for resolved ID {orgUnitId} ('{orgUnitTextValue}')");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[WARNING] Could not resolve org unit text '{orgUnitTextValue}' to an ID");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[ERROR] Error processing org unit '{orgUnitTextValue}': {ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[WARNING] No valid org unit names found in: '{orgUnitText}'");
+            }
+            
+            responseObject["organizationUnitRelationships"] = orgUnitRelationships;
+        }
+        
+        /// <summary>
+        /// Extract org unit name from various input types (JValue, string, etc.)
+        /// </summary>
+        private string ExtractOrgUnitName(dynamic input)
+        {
+            try
+            {
+                if (input == null) return null;
+                
+                if (input is JValue jValue)
+                {
+                    // For JValue, get the actual value
+                    var value = jValue.Value?.ToString();
+                    Console.WriteLine($"[DEBUG] Extracted from JValue: '{value}'");
+                    return value;
+                }
+                else if (input is JToken jToken)
+                {
+                    // For other JToken types
+                    var value = jToken.ToString();
+                    Console.WriteLine($"[DEBUG] Extracted from JToken: '{value}'");
+                    return value;
+                }
+                else
+                {
+                    // For other types, convert to string
+                    var value = input.ToString();
+                    Console.WriteLine($"[DEBUG] Extracted from other type: '{value}'");
+                    return value;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to extract org unit name from '{input}': {ex.Message}");
+                return null;
+            }
+        }
+        
+        private async Task<JObject> GetOrganizationUnitRelationshipDataById(int orgUnitId, string entityType = "Partner")
+        {
+            try
+            {
+                // Get the organization hierarchy data by exact ID
+                var orgHierarchy = await _context.OrganizationHierarchies
+                    .Where(oh => oh.Id == orgUnitId)
+                    .Select(oh => new
+                    {
+                        id = oh.Id,
+                        code = oh.Code,
+                        name = oh.Name,
+                        type = (int)oh.Type,
+                        description = oh.Description,
+                        parentId = oh.ParentId
+                    })
+                    .FirstOrDefaultAsync();
+                    
+                if (orgHierarchy == null)
+                {
+                    Console.WriteLine($"[WARNING] No organization hierarchy found for ID {orgUnitId}");
+                    return null;
+                }
+                    
+                var relationshipData = new JObject
+                {
+                    ["organizationHierarchyId"] = orgHierarchy.id,
+                    ["organizationHierarchy"] = JObject.FromObject(orgHierarchy),
+                    ["entityId"] = 0,
+                    ["entityType"] = entityType
+                };
+                
+                Console.WriteLine($"[DEBUG] Created relationship data for org unit ID {orgUnitId} ('{orgHierarchy.name}')");
+                return relationshipData;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error getting organization unit relationship data by ID {orgUnitId}: {ex.Message}");
+                return null;
+            }
         }
         
         private async Task AddEmailToResponse(dynamic responseObject, dynamic entityId)

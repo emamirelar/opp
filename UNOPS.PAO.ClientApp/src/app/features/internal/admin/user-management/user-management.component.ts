@@ -19,11 +19,12 @@ import { ChipModule } from 'primeng/chip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { MessageService, ConfirmationService } from 'primeng/api';
+import { MessageService, ConfirmationService, MenuItem } from 'primeng/api';
 import { UserManagementService } from './user-management.service';
 import { PermissionService, EntityPermissions } from '../../../../essentials/services/permission.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
 import { ImportDialogService } from '../../../../common/reusables/components/import/dialog/import-dialog.service';
+import { MenuModule } from 'primeng/menu';
 
 interface UserManagementModel {
   userId: number;
@@ -98,7 +99,8 @@ interface PaginationResponse<T> {
     CheckboxModule,
     ChipModule,
     ProgressSpinnerModule,
-    TooltipModule
+    TooltipModule,
+    MenuModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './user-management.component.html',
@@ -482,10 +484,34 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     return isActive ? 'Active' : 'Inactive';
   }
 
+  // Import menu items
+  importMenuItems = signal<MenuItem[]>([
+    {
+      label: 'Select from Google Drive',
+      icon: 'pi pi-google',
+      command: () => this.openGooglePickerImport(),
+      title: 'Select a Google Sheet from your Drive. Make sure to set the sheet to "Anyone with the link can view" for public access.'
+    },
+    {
+      label: 'Manual Entry',
+      icon: 'pi pi-link',
+      command: () => this.openManualEntryImport(),
+      title: 'Paste a Google Sheet URL directly and specify the sheet name'
+    }
+  ]);
+
   /**
    * Opens the import dialog for user role assignments
    */
   openImportDialog(): void {
+    // This method now shows the import menu instead of directly opening the picker
+    // The actual menu is handled in the template via p-menu
+  }
+
+  /**
+   * Open Google Picker for import (original flow)
+   */
+  openGooglePickerImport(): void {
     // Check if user has update permissions
     if (!this.canUpdate()) {
       this.messageService.add({
@@ -499,5 +525,22 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     // Use Google Picker to select and import user role data
     // This will automatically open the import dialog after file selection and analysis
     this.importDialogService.openGoogleSheetPicker('user_role_import');
+  }
+
+  /**
+   * Open manual entry dialog for import
+   */
+  openManualEntryImport(): void {
+    // Check if user has update permissions
+    if (!this.canUpdate()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Permission Denied',
+        detail: 'You do not have permission to import user roles'
+      });
+      return;
+    }
+
+    this.importDialogService.openManualEntryDialog('user_role_import');
   }
 } 

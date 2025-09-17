@@ -71,6 +71,9 @@ public class PartnerModel
     // First 5 contacts by date (computed property will be handled in mapping)
     public List<ContactModel>? First5ContactsByDate { get; set; }
     
+    // Computed property from NotMapped field in Partner entity
+    public string? PartnerOrgUnit { get; set; }
+    
     public List<DocumentModel>? Documents { get; set; }
     
     // Organization Unit Relationships

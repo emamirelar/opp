@@ -1,7 +1,9 @@
 using System;
+using System.Linq;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Infrastructure;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Newtonsoft.Json;
 
 
@@ -51,5 +53,35 @@ namespace UNOPS.PAO.Domain.Entities
         public string? GmailThreadId { get; set; }
         [MaxLength(80)]
         public string? GmailMessageId { get; set; }
+
+        // Computed properties for comma-separated lists
+        [NotMapped]
+        public string InteractionContactsList => 
+            string.Join(", ", InteractionContacts?
+                .Where(ic => ic?.Contact != null)
+                .Select(ic => $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim())
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .OrderBy(name => name) ?? Enumerable.Empty<string>());
+
+        [NotMapped]
+        public string InteractionPartnersList => 
+            string.Join(", ", InteractionPartners?
+                .Where(ip => ip?.Partner != null && !string.IsNullOrWhiteSpace(ip.Partner.Name))
+                .Select(ip => ip.Partner.Name)
+                .OrderBy(name => name) ?? Enumerable.Empty<string>());
+
+        [NotMapped]
+        public string InteractionUsersList => 
+            string.Join(", ", InteractionUsers?
+                .Where(iu => iu?.User != null && !string.IsNullOrWhiteSpace(iu.User.Name))
+                .Select(iu => iu.User.Name)
+                .OrderBy(name => name) ?? Enumerable.Empty<string>());
+
+        [NotMapped]
+        public string InteractionOrgUnits => 
+            string.Join(", ", OrganizationUnitRelationships?
+                .Where(r => r?.OrganizationHierarchy != null && r.Status == EntityStatus.Active && !r.IsDeleted)
+                .Select(r => r.OrganizationHierarchy.Name)
+                .OrderBy(name => name) ?? Enumerable.Empty<string>());
     }
 }
