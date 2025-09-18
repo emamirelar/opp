@@ -1,5 +1,5 @@
 /* Import UNOPS design tokens */
-@import '../../../../../styles/unops-design-tokens.scss';
+@use '../../../../../styles/unops-design-tokens.scss' as tokens;
 
 /* Fix topbar height for proper AI layout positioning */
 :host {

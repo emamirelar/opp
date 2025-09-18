@@ -9,7 +9,7 @@
 <!--</div>-->
 <div class="flex flex-col gap-8">
   <div class="flex flex-col xl:flex-row gap-8">
-    <div class="flex flex-col gap-8" [ngClass]="showAiPanel ? 'xl:w-1/2' : 'w-full'">
+    <div class="flex flex-col gap-8" [ngClass]="showAiPanel ? 'xl:w-2/3' : 'w-full'">
       <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} unops-card unops-surface-elevated unops-rounded-lg unops-shadow-lg">
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
@@ -477,7 +477,7 @@
 
 
     </div>
-    <div class="md:w-1/2 flex flex-col gap-8" *ngIf="showAiPanel">
+    <div class="xl:w-1/3 flex flex-col gap-8" *ngIf="showAiPanel">
       <app-ai-panel
         [title]="'label.partner.summaryOfInteractions'"
         [entityId]="recordId"
