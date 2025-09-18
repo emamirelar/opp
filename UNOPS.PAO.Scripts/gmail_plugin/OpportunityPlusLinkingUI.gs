@@ -1,3 +1,13 @@
+// Helper function to determine if an unmatched email can be selected
+function canSelectUnmatchedEmail(unmatchedEmailObj, relatedRecords) {
+  const canCreateContacts = relatedRecords.canCreateContacts;
+  const canCreatePartners = relatedRecords.canCreatePartners;
+  const partnerId = unmatchedEmailObj.partnerId;
+  
+  // Must be able to create contacts AND either create partners OR have existing partner
+  return canCreateContacts && (canCreatePartners || (partnerId !== null && partnerId !== undefined));
+}
+
 function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
   
   //Icon Images
@@ -33,8 +43,19 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
     Logger.log('relatedRecords: ' + JSON.stringify(relatedRecords));
 
     const unmatchedEmailsDataLength = unmatchedEmailsData ? unmatchedEmailsData.length : 0;
+    
+    // Count selectable records
+    let selectableRecordsCount = 0;
+    if (unmatchedEmailsData) {
+      unmatchedEmailsData.forEach(function(unmatchedEmailObj) {
+        if (canSelectUnmatchedEmail(unmatchedEmailObj, relatedRecords)) {
+          selectableRecordsCount++;
+        }
+      });
+    }
 
     Logger.log('unmatchedEmailsDataLength: ' + JSON.stringify(unmatchedEmailsDataLength));
+    Logger.log('selectableRecordsCount: ' + JSON.stringify(selectableRecordsCount));
 
 
     const collapseButton =
@@ -47,7 +68,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
         CardService.newTextButton()
           .setMaterialIcon(CardService.newMaterialIcon().setName('keyboard_arrow_down'))
           .setTextButtonStyle(CardService.TextButtonStyle.BORDERLESS)
-          .setText('Select And Add Unknown ' + `(${unmatchedEmailsDataLength})`);
+          .setText('Select And Add Unknown ' + `(${selectableRecordsCount}/${unmatchedEmailsDataLength})`);
 
     const numUncollapsed = checkboxStates ? unmatchedEmailsDataLength + 2 : 0;
 
@@ -70,26 +91,35 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
         var partnerId = unmatchedEmailObj.partnerId;
         var partnerName = partnerId !== undefined && partnerId !== null ? unmatchedEmailObj.partnerName : unmatchedEmailObj.partnerName + ' (Powered By AI)';
         
-        // Determine checkbox state - use checkboxStates if provided, otherwise default to false
-        var checkboxValue = false;
-        if (checkboxStates && checkboxStates['cb' + emailAddress] !== undefined) {
-          checkboxValue = checkboxStates['cb' + emailAddress];
-          Logger.log('checkboxStates[cb' + emailAddress + ']: ' + checkboxStates['cb' + emailAddress]);
-          Logger.log('checkboxValue: ' + checkboxValue);
-        }
-                      
-        // Add widgets to section 1
+        // Check if this record can be selected
+        var isSelectable = canSelectUnmatchedEmail(unmatchedEmailObj, relatedRecords);
+        
+        // Create the decorated text widget
         const decoratedText = CardService.newDecoratedText()
           .setStartIcon(contactIconImage)
           .setTopLabel(partnerName)
-          .setText(emailAddress)
-          .setSwitchControl(
-            CardService.newSwitch()
-              .setFieldName('cb' + emailAddress)
-              .setValue(String(checkboxValue))
-              .setSelected(checkboxValue)
-              .setControlType(CardService.SwitchControlType.CHECK_BOX)
-            );
+          .setText(emailAddress);
+        
+        // Only add switch control for selectable records
+        if (isSelectable) {
+          // Determine checkbox state - use checkboxStates if provided, otherwise default to false
+          var checkboxValue = false;
+          if (checkboxStates && checkboxStates['cb' + emailAddress] !== undefined) {
+            checkboxValue = checkboxStates['cb' + emailAddress];
+            Logger.log('checkboxStates[cb' + emailAddress + ']: ' + checkboxStates['cb' + emailAddress]);
+            Logger.log('checkboxValue: ' + checkboxValue);
+          }
+          
+          // Create and add switch control
+          const switchControl = CardService.newSwitch()
+            .setFieldName('cb' + emailAddress)
+            .setValue(String(checkboxValue))
+            .setSelected(checkboxValue)
+            .setControlType(CardService.SwitchControlType.CHECK_BOX);
+          
+          decoratedText.setSwitchControl(switchControl);
+        }
+        // For non-selectable records, no switch control is added
 
         Logger.log('decoratedText: ' + decoratedText);
 
@@ -97,35 +127,43 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
       });
 
       // Determine if "Select all" should be checked based on checkboxStates
+      // Only consider selectable records
       var selectAllState = false;
-      if (checkboxStates) {
-        // Check if all checkboxes are selected
-        var allSelected = true;
+      if (checkboxStates && selectableRecordsCount > 0) {
+        // Check if all selectable checkboxes are selected
+        var allSelectableSelected = true;
         for (var i = 0; i < unmatchedEmailsData.length; i++) {
-          var emailAddress = unmatchedEmailsData[i].unmatchedEmail;
-          if (!checkboxStates['cb' + emailAddress] || checkboxStates['cb' + emailAddress] === false) {
-            allSelected = false;
-            break;
+          var unmatchedEmailObj = unmatchedEmailsData[i];
+          if (canSelectUnmatchedEmail(unmatchedEmailObj, relatedRecords)) {
+            var emailAddress = unmatchedEmailObj.unmatchedEmail;
+            if (!checkboxStates['cb' + emailAddress] || checkboxStates['cb' + emailAddress] === false) {
+              allSelectableSelected = false;
+              break;
+            }
           }
         }
-        selectAllState = allSelected;
+        selectAllState = allSelectableSelected;
       }
 
-      dontKnowSection.addWidget(
-        CardService.newSelectionInput()
-        .setType(CardService.SelectionInputType.SWITCH)
-        .setFieldName('select_all')
-        .addItem('Select all', 'ALL', selectAllState)
-        .setOnChangeAction(
-          CardService.newAction()
-                  .setFunctionName('handleSelectAll')
-                  .setParameters({ 
-                    relatedRecords: JSON.stringify(relatedRecords),
-                    messageData: JSON.stringify(messageData),
-                    totalCheckboxes: unmatchedEmailsData.length.toString()
-                  })
-        )
-      );
+      // Only show "Select all" if there are selectable records
+      if (selectableRecordsCount > 0) {
+        dontKnowSection.addWidget(
+          CardService.newSelectionInput()
+          .setType(CardService.SelectionInputType.SWITCH)
+          .setFieldName('select_all')
+          .addItem('Select all', 'ALL', selectAllState)
+          .setOnChangeAction(
+            CardService.newAction()
+                    .setFunctionName('handleSelectAll')
+                    .setParameters({ 
+                      relatedRecords: JSON.stringify(relatedRecords),
+                      messageData: JSON.stringify(messageData),
+                      totalCheckboxes: unmatchedEmailsData.length.toString(),
+                      selectableCount: selectableRecordsCount.toString()
+                    })
+          )
+        );
+      }
 
       dontKnowSection.addWidget(
         CardService.newButtonSet()
@@ -135,6 +173,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
             .setMaterialIcon(CardService.newMaterialIcon().setName('add'))
             .setBackgroundColor('#adedff')
             .setTextButtonStyle(CardService.TextButtonStyle.FILLED_TONAL)
+            .setDisabled(selectableRecordsCount === 0)
             .setOnClickAction(
             CardService.newAction()
               .setFunctionName('handleAddSelected')
@@ -348,6 +387,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
       const footerButton = CardService.newTextButton()
           .setText('Log this')
           .setBackgroundColor('#006699')
+          .setDisabled(!relatedRecords.canCreateInteractions)
           .setOnClickAction(
             CardService.newAction()
               .setFunctionName('createOrUpdateInteraction')
@@ -405,18 +445,19 @@ function handleAddSelected(e) {
     
     Logger.log('Email to name info mapping: ' + JSON.stringify(emailToNameInfo));
     
-    // Collect selected emails
+    // Collect selected emails - only process selectable records
     var selectedEmails = [];
     var unmatchedEmailsData = relatedRecords.unmatchedEmails;
     Logger.log('unmatchedEmailsData: ' + JSON.stringify(unmatchedEmailsData));
     
     for (var i = 0; i < unmatchedEmailsData.length; i++) {
-      var emailAddress = unmatchedEmailsData[i].unmatchedEmail;
+      var unmatchedEmailObj = unmatchedEmailsData[i];
+      var emailAddress = unmatchedEmailObj.unmatchedEmail;
       var fieldName = 'cb' + emailAddress;
       
-      
-      // Check if this checkbox is selected
-      if (formInputs[fieldName] && formInputs[fieldName].length > 0) {
+      // Only process if the record is selectable and checkbox is selected
+      if (canSelectUnmatchedEmail(unmatchedEmailObj, relatedRecords) && 
+          formInputs[fieldName] && formInputs[fieldName].length > 0) {
         // Use pre-parsed name information
         var nameInfo = emailToNameInfo[emailAddress.toLowerCase()] || { firstName: '', middleName: '', lastName: '' };
         
@@ -424,9 +465,9 @@ function handleAddSelected(e) {
         
         selectedEmails.push({
           emailAddress: emailAddress,
-          partnerName: unmatchedEmailsData[i].partnerName || '',
-          partnerId: unmatchedEmailsData[i].partnerId !== undefined && unmatchedEmailsData[i].partnerId !== null 
-                    ? unmatchedEmailsData[i].partnerId 
+          partnerName: unmatchedEmailObj.partnerName || '',
+          partnerId: unmatchedEmailObj.partnerId !== undefined && unmatchedEmailObj.partnerId !== null 
+                    ? unmatchedEmailObj.partnerId 
                     : null,
           firstName: nameInfo.firstName,
           middleName: nameInfo.middleName,
@@ -473,11 +514,16 @@ function handleSelectAll(e) {
     // Create checkbox states object
     var checkboxStates = {};
     
-    // Set all checkboxes to the same state as "Select all"
+    // Set checkboxes to the same state as "Select all" only for selectable records
     var unmatchedEmailsData = relatedRecords.unmatchedEmails;
     for (var i = 0; i < unmatchedEmailsData.length; i++) {
-      var emailAddress = unmatchedEmailsData[i].unmatchedEmail;
-      checkboxStates['cb' + emailAddress] = selectAllState;
+      var unmatchedEmailObj = unmatchedEmailsData[i];
+      var emailAddress = unmatchedEmailObj.unmatchedEmail;
+      
+      // Only set state for selectable records (non-selectable records don't have checkboxes)
+      if (canSelectUnmatchedEmail(unmatchedEmailObj, relatedRecords)) {
+        checkboxStates['cb' + emailAddress] = selectAllState;
+      }
     }
     
     Logger.log('checkboxStates: ' + JSON.stringify(checkboxStates));
