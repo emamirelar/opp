@@ -11,6 +11,8 @@ public class GmailRelatedRecordsResponse
     public List<GmailRelatedUser> Users { get; set; }
     public List<UnmatchedEmailModel> UnmatchedEmails { get; set; }
     public bool CanCreateContacts { get; set; }
+    public bool CanCreatePartners { get; set; }
+    public bool CanCreateInteractions { get; set; }
 
     public GmailRelatedRecordsResponse()
     {
