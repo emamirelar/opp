@@ -499,8 +499,8 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         try
         {
             // Use the latest available model value - hardcoded as the newest in system
-            var latestModelValue = "gemini-2.5-flash";
-            var latestModelDisplay = "Gemini 2.5 Flash";
+            var latestModelValue = "gemini-2.5-flash-lite";
+            var latestModelDisplay = "Gemini 2.5 Flash Lite";
 
             // Get all prompts using the repository's existing methods
             var allPrompts = _promptRepository.GetAll().ToList();
@@ -512,7 +512,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                 {
                     Success = true,
                     UpdatedCount = 0,
-                    Message = "All AI prompts are already using the latest available model configured in the system.",
+                    Message = "All AI prompts are already using the latest available model (Gemini 2.5 Flash Lite) configured in the system.",
                     LatestModel = latestModelDisplay,
                     AlreadyLatest = true
                 };

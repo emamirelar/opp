@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect, computed } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect, computed } from '@angular/core';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { UserSearchService } from '../../../../../common/services/user-search.service';
 import { UserProfileService } from '../../../../../common/services/user-profile.service';
@@ -106,6 +108,7 @@ interface DuplicateDetectionResponse {
 export class InteractionModalComponent {
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
+  private cdr = inject(ChangeDetectorRef);
 
   // Custom validator for contactIds - requires at least one contact to be selected
   private static atLeastOneContactValidator(control: AbstractControl): ValidationErrors | null {
@@ -226,13 +229,19 @@ export class InteractionModalComponent {
       // Organization Unit - Array for backend compatibility
       organizationHierarchyIds: [[]],
       // UI FormControl for single select (synced with array)
-      selectedOrgUnitId: [null]
+      selectedOrgUnitId: [null],
+      // System generated fields
+      contactNames: '',
+      partnerNames: '',
+      userNames: '',
+      organizationHierarchyNames: ''
     });
 
     this.setupContactIdsChangeListener();
     this.setupEmailChangeListener();
     this.setupPhoneNumberChangeListener();
     this.setupUserIdsChangeListener();
+    this.setupPartnerIdsChangeListener();
     this.setupOrganizationUnitSyncListener();
 
     // Effect to prepopulate form fields from current user profile (org unit and created by)
@@ -401,16 +410,48 @@ export class InteractionModalComponent {
   }
 
   private populateForm(record: Interaction) {
+    console.log('🔧 populateForm called with record:', record);
+    console.log('🔧 isImportEdit:', this.isImportEdit);
+    
     // Handle organization unit relationships - extract all IDs for array support
     const organizationHierarchyIds: number[] = [];
-    if (record.organizationUnitRelationships && record.organizationUnitRelationships.length > 0) {
+    
+    // Check if this is an imported record (has organizationHierarchyIds directly)
+    const recordWithOrgIds = record as any; // Cast to any to access potential import fields
+    if (recordWithOrgIds.organizationHierarchyIds && Array.isArray(recordWithOrgIds.organizationHierarchyIds)) {
+      // Import record format - organizationHierarchyIds is already an array
+      console.log('🔧 Found import record organizationHierarchyIds:', recordWithOrgIds.organizationHierarchyIds);
+      organizationHierarchyIds.push(...recordWithOrgIds.organizationHierarchyIds);
+    } else if (record.organizationUnitRelationships && record.organizationUnitRelationships.length > 0) {
+      // Regular database record format - extract from relationships
+      console.log('🔧 Found regular record organizationUnitRelationships:', record.organizationUnitRelationships);
       record.organizationUnitRelationships.forEach(rel => {
         organizationHierarchyIds.push(rel.organizationHierarchyId);
       });
+    } else {
+      console.log('🔧 No organization unit data found in record');
     }
+    
+    console.log('🔧 Final organizationHierarchyIds:', organizationHierarchyIds);
 
-    // User IDs for form population - extract from users array
-    const userIds = record.users?.map(user => user.id) || [];
+    // User IDs for form population - handle both import and regular record formats
+    let userIds: number[] = [];
+    const recordWithUserIds = record as any; // Cast to access potential import fields
+    
+    if (recordWithUserIds.userIds && Array.isArray(recordWithUserIds.userIds)) {
+      // Import record format - userIds is already an array
+      console.log('🔧 Found import record userIds:', recordWithUserIds.userIds);
+      userIds = recordWithUserIds.userIds;
+    } else if (record.users && Array.isArray(record.users)) {
+      // Regular database record format - extract from users array
+      console.log('🔧 Found regular record users:', record.users);
+      userIds = record.users.map(user => user.id);
+    } else {
+      console.log('🔧 No user data found in record');
+      userIds = [];
+    }
+    
+    console.log('🔧 Final userIds for population:', userIds);
 
     // Convert email addresses to lowercase for case-insensitive handling
     const lowercaseEmails = (record.emailAddresses || []).map(email => email.toLowerCase());
@@ -429,24 +470,45 @@ export class InteractionModalComponent {
       location: record.location,
       subject: record.subject,
       createdBy: record.createdBy,
+      organizationHierarchyIds: organizationHierarchyIds,
       previousContactIds: record.contactIds || [],
       previousEmails: lowercaseEmails,
       previousPhones: record.phoneNumbers || [],
       previousUserIds: userIds
     });
 
+    // Initialize name fields for existing interaction
+    this.updateContactNames(record.contactIds || []);
+    this.updatePartnerNames(record.partnerIds || []);
+    this.updateUserNames(userIds);
+    this.updateOrganizationHierarchyNames(organizationHierarchyIds);
+
     // Load selected users separately for each field to avoid UI confusion
 
     // Ensure Users multi-select field has selected users available
     if (userIds.length > 0) {
-      this.userSearchService.searchUsers('', 50, userIds).subscribe({
-        next: (users) => {
-          this.userSearchResults.set(users);
-        },
-        error: (error) => {
-          console.warn('Failed to load selected users for Users field:', error);
-        }
-      });
+      console.log('🔧 Loading selected users for userIds:', userIds);
+      
+      // Use setTimeout to ensure form is fully initialized before triggering user search
+      setTimeout(() => {
+        this.userSearchService.searchUsers('', 50, userIds).subscribe({
+          next: (users) => {
+            console.log('🔧 Successfully loaded users for dropdown:', users);
+            this.userSearchResults.set(users);
+            
+            // Trigger change detection to ensure UI updates
+            if (this.cdr) {
+              this.cdr.detectChanges();
+            }
+          },
+          error: (error) => {
+            console.warn('🔧 Failed to load selected users for Users field:', error);
+          }
+        });
+      }, 100); // Small delay to ensure form is ready
+    } else {
+      console.log('🔧 No userIds to load, clearing user search results');
+      this.userSearchResults.set([]);
     }
 
     // Ensure Created By single-select field has selected user available
@@ -833,6 +895,10 @@ export class InteractionModalComponent {
       )
       .subscribe((newContactIds: number[]) => {
         this.updatePartnerIdsBasedOnContacts();
+        
+        // Update contact names
+        this.updateContactNames(newContactIds);
+        
         const currentEmails = this.formGroup.get('emailAddresses')?.value as string[];
         const validEmailsForNewContactIds = this.getEmailsForContactIds(newContactIds);
 
@@ -866,6 +932,8 @@ export class InteractionModalComponent {
         distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
       )
       .subscribe((newUserIds: number[]) => {
+        // Update user names
+        this.updateUserNames(newUserIds);
         const currentEmails = this.formGroup.get('emailAddresses')?.value as string[];
         const validEmailsForNewUserIds = this.getEmailsForUserIds(newUserIds);
 
@@ -1008,6 +1076,8 @@ export class InteractionModalComponent {
       const newArray = value ? [value] : [];
       this.formGroup.get('organizationHierarchyIds')?.setValue(newArray, { emitEvent: false });
       this.selectedOrgUnitSignal.set(value);
+      // Update organization hierarchy names
+      this.updateOrganizationHierarchyNames(newArray);
     });
 
     // When array FormControl changes (from backend data), update UI FormControl
@@ -1016,6 +1086,8 @@ export class InteractionModalComponent {
       const firstElement = array.length > 0 ? array[0] : null;
       this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
       this.selectedOrgUnitSignal.set(firstElement);
+      // Update organization hierarchy names
+      this.updateOrganizationHierarchyNames(array);
     });
 
     // Initialize both controls
@@ -1150,5 +1222,137 @@ export class InteractionModalComponent {
 
   private showInfoMessage(message: string): void {
     this.feedbackDialogService.showInfoToast({ detail: message });
+  }
+
+  // Setup partner IDs change listener
+  private setupPartnerIdsChangeListener() {
+    this.formGroup.get('partnerIds')?.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+      )
+      .subscribe((newPartnerIds: number[]) => {
+        this.updatePartnerNames(newPartnerIds);
+      });
+  }
+
+  // Update contact names based on contact IDs
+  private updateContactNames(contactIds: number[]) {
+    if (!contactIds || contactIds.length === 0) {
+      this.formGroup.get('contactNames')?.setValue('');
+      return;
+    }
+
+    const allContacts = this.allContacts();
+    const contactNames = contactIds
+      .map(id => {
+        const contact = allContacts.find((c: any) => c.id === id);
+        return contact ? contact.name : null;
+      })
+      .filter(name => name !== null)
+      .join(', ');
+
+    this.formGroup.get('contactNames')?.setValue(contactNames);
+  }
+
+  // Update partner names based on partner IDs
+  private updatePartnerNames(partnerIds: number[]) {
+    if (!partnerIds || partnerIds.length === 0) {
+      this.formGroup.get('partnerNames')?.setValue('');
+      return;
+    }
+
+    console.log('🔧 updatePartnerNames called with partnerIds:', partnerIds);
+    const allPartners = this.allPartners();
+    console.log('🔧 allPartners cache contains:', allPartners?.length || 0, 'partners');
+
+    const foundPartners: string[] = [];
+    const missingPartnerIds: number[] = [];
+
+    // First, try to find partners in the cache
+    partnerIds.forEach(id => {
+      const partner = allPartners.find((p: any) => p.id === id);
+      if (partner) {
+        foundPartners.push(partner.name);
+      } else {
+        missingPartnerIds.push(id);
+      }
+    });
+
+    // If we found all partners in cache, set the names and return
+    if (missingPartnerIds.length === 0) {
+      console.log('🔧 All partners found in cache:', foundPartners);
+      this.formGroup.get('partnerNames')?.setValue(foundPartners.join(', '));
+      return;
+    }
+
+    // If some partners are missing from cache, load them individually
+    console.log('🔧 Missing partners from cache, loading:', missingPartnerIds);
+    const loadObservables = missingPartnerIds.map(id => 
+      this.partnerService.getPartnerById(id.toString()).pipe(
+        map(partner => partner ? partner.name : null),
+        catchError(error => {
+          console.warn(`🔧 Failed to load partner ${id}:`, error);
+          return of(null);
+        })
+      )
+    );
+
+    forkJoin(loadObservables).subscribe({
+      next: (loadedPartnerNames) => {
+        // Combine found partners with loaded partners
+        const validLoadedNames = loadedPartnerNames.filter(name => name !== null) as string[];
+        const allPartnerNames = [...foundPartners, ...validLoadedNames];
+        
+        console.log('🔧 Final partner names:', allPartnerNames);
+        this.formGroup.get('partnerNames')?.setValue(allPartnerNames.join(', '));
+        
+        // Trigger change detection
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.warn('🔧 Error loading partner names:', error);
+        // Fallback to showing found partners only
+        this.formGroup.get('partnerNames')?.setValue(foundPartners.join(', '));
+      }
+    });
+  }
+
+  // Update user names based on user IDs
+  private updateUserNames(userIds: number[]) {
+    if (!userIds || userIds.length === 0) {
+      this.formGroup.get('userNames')?.setValue('');
+      return;
+    }
+
+    const allUsers = this.allUsers();
+    const userNames = userIds
+      .map(id => {
+        const user = allUsers.find((u: any) => u.id === id);
+        return user ? user.name : null;
+      })
+      .filter(name => name !== null)
+      .join(', ');
+
+    this.formGroup.get('userNames')?.setValue(userNames);
+  }
+
+  // Update organization hierarchy names based on organization hierarchy IDs
+  private updateOrganizationHierarchyNames(orgUnitIds: number[]) {
+    if (!orgUnitIds || orgUnitIds.length === 0) {
+      this.formGroup.get('organizationHierarchyNames')?.setValue('');
+      return;
+    }
+
+    const allOrgUnits = this.allOrgUnits() as any[];
+    const orgUnitNames = orgUnitIds
+      .map(id => {
+        const orgUnit = allOrgUnits.find((ou: any) => ou.id === id);
+        return orgUnit ? orgUnit.name : null;
+      })
+      .filter(name => name !== null)
+      .join(', ');
+
+    this.formGroup.get('organizationHierarchyNames')?.setValue(orgUnitNames);
   }
 }

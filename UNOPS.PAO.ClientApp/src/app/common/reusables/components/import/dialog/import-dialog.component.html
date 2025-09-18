@@ -229,8 +229,8 @@
                       'truncate-text': isLongTextField(col.field),
                       'truncate-short': isShortTextField(col.field)
                     }"
-                    [title]="rowData[col.field]">
-                    {{ rowData[col.field] }}
+                    [title]="isDateField(col.field) ? formatDateValue(rowData[col.field]) : rowData[col.field]">
+                    {{ isDateField(col.field) ? formatDateValue(rowData[col.field]) : rowData[col.field] }}
                   </div>
                 } @else {
                   <i class="text-red-100 pi pi-warning"></i>

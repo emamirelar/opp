@@ -167,9 +167,6 @@ export class ImportService {
    * @param type The type of data being uploaded (e.g., 'bulk_contact_action')
    */
   bulkUpload(records: any[], type: string): Observable<any> {
-    console.log('🔍 BulkUpload starting with', records.length, 'records');
-    console.log('🔍 Sample record before processing:', records[0]);
-    
     // Process records to ensure proper handling - delete empty/falsy properties
     const processedRecords = records.map(record => {
       const processedRecord = { ...record };
@@ -194,8 +191,6 @@ export class ImportService {
       
       return processedRecord;
     });
-    
-    console.log('🔍 Sample record after processing:', processedRecords[0]);
 
     const payload: BulkUploadRequest = {
       type,

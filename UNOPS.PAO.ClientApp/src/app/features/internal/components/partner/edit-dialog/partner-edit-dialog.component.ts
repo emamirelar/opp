@@ -143,7 +143,12 @@ export class PartnerEditDialogComponent implements OnInit {
       lastModifiedDate: new FormControl(new Date()),
       isDeleted: new FormControl(null),
       deletedBy: new FormControl(null),
-      deletedDate: new FormControl(null)
+      deletedDate: new FormControl(null),
+      // Bulk Import display fields
+      liaisonOfficeName: new FormControl(null),
+      partnerFocalPointUserName: new FormControl(null),
+      partnerGroupName: new FormControl(null),
+      organizationHierarchyNames: new FormControl(null),
   });
 
   cachedDataService = inject(CachedDataService);
@@ -331,6 +336,58 @@ export class PartnerEditDialogComponent implements OnInit {
     this.selectedOrgUnitSignal.set(firstElement);
   }
 
+  /**
+   * Initialize display name fields based on currently selected IDs
+   */
+  private initializeDisplayNames(): void {
+    // Initialize liaison office name
+    const liaisonOfficeId = this.formGroup.get('liaisonOfficeId')?.value;
+    if (liaisonOfficeId) {
+      const liaisonOffices = this.allLiaisonOfficesData() as any[];
+      const selectedOffice = liaisonOffices.find((office: any) => office.id === liaisonOfficeId);
+      if (selectedOffice) {
+        this.formGroup.get('liaisonOfficeName')?.setValue(selectedOffice.name);
+      }
+    }
+
+    // Initialize partner group name
+    const partnerGroupId = this.formGroup.get('partnerGroupId')?.value;
+    if (partnerGroupId) {
+      const partnerGroups = this.allPartnerGroupsForSelect() as any[];
+      // Search through categories and their child groups to find the matching partnerGroupId
+      let selectedGroup = null;
+      for (const category of partnerGroups) {
+        if (category.items) {
+          selectedGroup = category.items.find((group: any) => group.value === partnerGroupId);
+          if (selectedGroup) break;
+        }
+      }
+      if (selectedGroup) {
+        this.formGroup.get('partnerGroupName')?.setValue(selectedGroup.name);
+      }
+    }
+
+    // Initialize focal point user name
+    const partnerFocalPointUserId = this.formGroup.get('partnerFocalPointUserId')?.value;
+    if (partnerFocalPointUserId) {
+      const users = this.availableUsers();
+      const selectedUser = users.find((user: any) => user.id === partnerFocalPointUserId);
+      if (selectedUser) {
+        this.formGroup.get('partnerFocalPointUserName')?.setValue(selectedUser.name);
+      }
+    }
+
+    // Initialize organization hierarchy name
+    const selectedOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
+    if (selectedOrgUnitId) {
+      const orgUnits = this.allOrganizationUnitsData() as any[];
+      const selectedUnit = orgUnits.find((unit: any) => unit.id === selectedOrgUnitId);
+      if (selectedUnit) {
+        this.formGroup.get('organizationHierarchyNames')?.setValue(selectedUnit.name);
+      }
+    }
+  }
+
   getSelectedOrganizationHierarchyIds(): number[] {
     // Return the full array for backend compatibility
     return this.formGroup.get('organizationHierarchyIds')?.value || [];
@@ -401,6 +458,9 @@ export class PartnerEditDialogComponent implements OnInit {
           // Initialize the partnerLevyStatus signal after patching form data
           this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
 
+          // Initialize display name fields
+          this.initializeDisplayNames();
+
           // Set loading to false after a short delay to ensure form is properly initialized
           setTimeout(() => {
             this.isLoading.set(false);
@@ -439,6 +499,66 @@ export class PartnerEditDialogComponent implements OnInit {
       // Clear reasonForLevy when it should be hidden
       if (value !== 'DoesNotApply' && value !== 'PotentiallyNotApplied') {
         this.formGroup.get('reasonForLevy')?.setValue(null);
+      }
+    });
+
+    // Subscribe to liaisonOfficeId changes to set the display name
+    this.formGroup.get('liaisonOfficeId')?.valueChanges.subscribe(value => {
+      if (value) {
+        const liaisonOffices = this.allLiaisonOfficesData() as any[];
+        const selectedOffice = liaisonOffices.find((office: any) => office.id === value);
+        if (selectedOffice) {
+          this.formGroup.get('liaisonOfficeName')?.setValue(selectedOffice.name);
+        }
+      } else {
+        this.formGroup.get('liaisonOfficeName')?.setValue(null);
+      }
+    });
+
+    // Subscribe to partnerGroupId changes to set the display name
+    this.formGroup.get('partnerGroupId')?.valueChanges.subscribe(value => {
+      if (value) {
+        const partnerGroups = this.allPartnerGroupsForSelect() as any[];
+        // Search through categories and their child groups to find the matching partnerGroupId
+        let selectedGroup = null;
+        for (const category of partnerGroups) {
+          if (category.items) {
+            selectedGroup = category.items.find((group: any) => group.value === value);
+            if (selectedGroup) break;
+          }
+        }
+        if (selectedGroup) {
+          this.formGroup.get('partnerGroupName')?.setValue(selectedGroup.name);
+        }
+      } else {
+        this.formGroup.get('partnerGroupName')?.setValue(null);
+      }
+    });
+
+    // Subscribe to partnerFocalPointUserId changes to set the display name
+    this.formGroup.get('partnerFocalPointUserId')?.valueChanges.subscribe(value => {
+      if (value) {
+        const users = this.availableUsers();
+        const selectedUser = users.find((user: any) => user.id === value);
+        if (selectedUser) {
+          this.formGroup.get('partnerFocalPointUserName')?.setValue(selectedUser.name);
+        }
+      } else {
+        this.formGroup.get('partnerFocalPointUserName')?.setValue(null);
+      }
+    });
+
+    // Subscribe to selectedOrgUnitId changes to set the display names
+    this.formGroup.get('selectedOrgUnitId')?.valueChanges.subscribe(value => {
+      if (value) {
+        const orgUnits = this.allOrganizationUnitsData() as any[];
+        const selectedUnit = orgUnits.find((unit: any) => unit.id === value);
+        if (selectedUnit) {
+          // Set single organization hierarchy name
+          this.formGroup.get('organizationHierarchyNames')?.setValue(selectedUnit.name);
+        }
+      } else {
+        this.formGroup.get('organizationHierarchyNames')?.setValue(null);
       }
     });
 
@@ -564,6 +684,9 @@ export class PartnerEditDialogComponent implements OnInit {
         // Initialize the partnerLevyStatus signal after patching form data
         this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
 
+        // Initialize display name fields
+        this.initializeDisplayNames();
+
         this.isLoading.set(false);
       },
       error: (error) => {
@@ -673,6 +796,11 @@ export class PartnerEditDialogComponent implements OnInit {
       else if (data.organizationHierarchyIds && Array.isArray(data.organizationHierarchyIds)) {
         this.setOrganizationHierarchyIds(data.organizationHierarchyIds);
       }
+
+      // Update display names after AI transcription
+      setTimeout(() => {
+        this.initializeDisplayNames();
+      }, 100);
 
       this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.preFillSuccess') });
     }
