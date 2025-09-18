@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed, ViewChild } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -19,6 +19,8 @@ import { PermissionUtilityService } from '../../../../essentials/services/permis
 import { EntityPermissions } from '../../../../essentials/services/permission.service';
 import { EntityConfigurationService } from '../../services/entity-configuration.service';
 import { CachedDataService } from '../../../../common/services/cached-data.service';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 
 
 /**
@@ -48,6 +50,7 @@ import { CachedDataService } from '../../../../common/services/cached-data.servi
     PartnerNewComponent,
     TranslateModule,
     ListviewComponent,
+    MenuModule,
   ],
   providers: [DialogService]
 })
@@ -69,6 +72,9 @@ export class PartnerComponent implements OnDestroy, OnInit {
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Partner');
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
+
+  // Reference to listview component for export functionality
+  @ViewChild(ListviewComponent) listviewComponent!: ListviewComponent;
 
   // Dynamic partner columns loaded from API
   columns = signal<ListViewColumn[]>([]);
@@ -308,6 +314,22 @@ export class PartnerComponent implements OnDestroy, OnInit {
     });
   }
 
+  // Import menu items
+  importMenuItems = signal<MenuItem[]>([
+    {
+      label: 'Select from Google Drive',
+      icon: 'pi pi-google',
+      command: () => this.openGooglePickerImport(),
+      title: 'Select a Google Sheet from your Drive. Make sure to set the sheet to "Anyone with the link can view" for public access.'
+    },
+    {
+      label: 'Manual Entry',
+      icon: 'pi pi-link',
+      command: () => this.openManualEntryImport(),
+      title: 'Paste a Google Sheet URL directly and specify the sheet name'
+    }
+  ]);
+
   /**
    * @uiButton import_partners
    * @description Opens the import dialog to bulk import partner organizations from Google Sheets or CSV files
@@ -317,8 +339,37 @@ export class PartnerComponent implements OnDestroy, OnInit {
    * @permissions PARTNER_CREATE
    */
   openImportDialog() {
+    // This method now shows the import menu instead of directly opening the picker
+    // The actual menu is handled in the template via p-menu
+  }
+
+  /**
+   * Open Google Picker for import (original flow)
+   */
+  openGooglePickerImport() {
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('partner');
+  }
+
+  /**
+   * Open manual entry dialog for import
+   */
+  openManualEntryImport() {
+    this.importDialogService.openManualEntryDialog('partner');
+  }
+
+  /**
+   * @uiButton export_partners
+   * @description Exports partner data to Google Sheets respecting current search and filter criteria
+   * @label Export Partners
+   * @icon pi pi-file-export
+   * @when_to_use When you need to export partner data with current filters applied for external analysis or reporting
+   * @permissions PARTNER_GLOB_ADMIN
+   */
+  exportData() {
+    if (this.listviewComponent) {
+      this.listviewComponent.exportData();
+    }
   }
 
   onSearchChange(searchParams: SearchParams) {

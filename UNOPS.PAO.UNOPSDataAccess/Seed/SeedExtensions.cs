@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -19,7 +20,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
             try
             {
                 var dbContext = services.GetRequiredService<UNOPSAppDbContext>();
-                await EntityPermissionSeeder.SeedEntityPermissionsAsync(dbContext);
+                var configuration = services.GetRequiredService<IConfiguration>();
+                // Now handled by generic configurable system
+                await GenericSeedRunner.ExecuteConfiguredSeedsAsync(dbContext, configuration);
             }
             catch (Exception ex)
             {
@@ -33,9 +36,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         /// Seeds the entity permissions if they don't exist yet.
         /// This method can be called from controllers or services as needed.
         /// </summary>
-        public static async Task SeedEntityPermissionsAsync(this UNOPSAppDbContext context)
+        public static async Task SeedEntityPermissionsAsync(this UNOPSAppDbContext context, IConfiguration? configuration = null)
         {
-            await EntityPermissionSeeder.SeedEntityPermissionsAsync(context);
+            // Now handled by generic configurable system
+            await GenericSeedRunner.ExecuteConfiguredSeedsAsync(context, configuration);
         }
 
         /// <summary>
@@ -74,52 +78,23 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
     {
         private readonly UNOPSAppDbContext _context;
         private readonly ILogger<DataSeeder> _logger;
+        private readonly IConfiguration _configuration;
 
-        public DataSeeder(UNOPSAppDbContext context, ILogger<DataSeeder> logger)
+        public DataSeeder(UNOPSAppDbContext context, ILogger<DataSeeder> logger, IConfiguration configuration)
         {
             _context = context;
             _logger = logger;
+            _configuration = configuration;
         }
 
         public async Task SeedDataAsync()
         {
             try
             {
-                _logger.LogInformation("Seeding entities...");
-                await EntitiesSeeder.SeedEntitiesAsync(_context);
-                _logger.LogInformation("Entities seeded successfully.");
-
-                _logger.LogInformation("Seeding entity managers...");
-                await EntityManagerSeeder.SeedEntityManagersAsync(_context);
-                _logger.LogInformation("Entity managers seeded successfully.");
-
-                _logger.LogInformation("Seeding entity field managers...");
-                await EntityManagerSeeder.SeedEntityFieldManagersAsync(_context);
-                _logger.LogInformation("Entity field managers seeded successfully.");
-
-                _logger.LogInformation("Seeding document types...");
-                await DocumentTypeSeeder.SeedDocumentTypesAsync(_context);
-                _logger.LogInformation("Document types seeded successfully.");
-
-                _logger.LogInformation("Seeding AI prompts...");
-                await AiPromptSeeder.SeedAiPromptsAsync(_context);
-                _logger.LogInformation("AI prompts seeded successfully.");
-
-                _logger.LogInformation("Seeding liaison offices...");
-                await LiaisonOfficeSeeder.SeedLiaisonOfficesAsync(_context);
-                _logger.LogInformation("Liaison offices seeded successfully.");
-
-                _logger.LogInformation("Seeding partner trees...");
-                await PartnerTreeSeeder.SeedPartnerTreesAsync(_context);
-                _logger.LogInformation("Partner trees seeded successfully.");
-
-                _logger.LogInformation("Seeding partners...");
-                await PartnerSeeder.SeedPartnersAsync(_context);
-                _logger.LogInformation("Partners seeded successfully.");
-
-                _logger.LogInformation("Seeding entity permissions...");
-                await EntityPermissionSeeder.SeedEntityPermissionsAsync(_context);
-                _logger.LogInformation("Entity permissions seeded successfully.");
+                // ALL configuration seeding is now done via generic configurable system!
+                _logger.LogInformation("Running all configured seed steps...");
+                await GenericSeedRunner.ExecuteConfiguredSeedsAsync(_context, _configuration);
+                _logger.LogInformation("All seed steps completed successfully.");
             }
             catch (Exception ex)
             {

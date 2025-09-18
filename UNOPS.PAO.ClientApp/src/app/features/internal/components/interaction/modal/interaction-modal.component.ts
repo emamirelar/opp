@@ -121,6 +121,7 @@ export class InteractionModalComponent {
 
   record?: Interaction;
   isSaving = signal(false);
+  isLoadingExistingData = signal(false);
 
   // Input property for recordId when used in AI layout
   @Input() recordId: string = '';
@@ -235,13 +236,17 @@ export class InteractionModalComponent {
     this.setupOrganizationUnitSyncListener();
 
     // Effect to prepopulate form fields from current user profile (org unit and created by)
+    // Only for new records and only after server data has had time to load
     effect(() => {
       const orgUnits = this.allOrgUnits();
-      const currentOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
-      const currentCreatedBy = this.formGroup.get('createdBy')?.value;
-
-      if ((orgUnits && orgUnits.length > 0 && !currentOrgUnitId) || !currentCreatedBy) {
-        this.prepopulateFromCurrentUserProfile();
+      const isLoadingData = this.isLoadingExistingData();
+      
+      // Only prepopulate for new records (no ID) and when org units are available and not loading data
+      if (orgUnits && orgUnits.length > 0 && !this.recordId && !isLoadingData && !this.isImportEdit) {
+        // Add timeout to allow any async form population to complete first
+        setTimeout(() => {
+          this.prepopulateFromCurrentUserProfileIfEmpty();
+        }, 2000); // Wait 2 seconds for any async data to load
       }
     });
 
@@ -309,18 +314,22 @@ export class InteractionModalComponent {
       this.loadInteractionById(Number(recordId));
     } else if (initialData && initialData.id) {
       // Existing record passed as initial data (fallback)
+      this.isLoadingExistingData.set(true);
       this.record = initialData;
       if (this.record) {
         this.recordId = this.record.id + '';
         this.populateForm(this.record);
       }
+      this.isLoadingExistingData.set(false);
     } else if (recordData && Object.keys(recordData).length > 0) {
       // Import edit data - use record data directly
+      this.isLoadingExistingData.set(true);
       this.record = recordData;
       if (this.record) {
         this.recordId = this.record.id ? this.record.id + '' : '';
         this.populateForm(this.record);
       }
+      this.isLoadingExistingData.set(false);
     } else {
       // New interaction - set default permissions that allow creation
       this.recordPermissions.set({
@@ -330,7 +339,9 @@ export class InteractionModalComponent {
           canRead: true,
           canCreate: true, // Allow creation for new records
           canUpdate: true, // Allow editing form fields for new records
-          canDelete: false // New records can't be deleted
+          canDelete: false, // New records can't be deleted
+          canExport: false,
+          canImport: false
         }
       });
 
@@ -369,15 +380,18 @@ export class InteractionModalComponent {
   }
 
   private loadInteractionById(id: number) {
+    this.isLoadingExistingData.set(true);
     this.interactionService.getById(id).subscribe({
       next: (response) => {
         if (response.body) {
           this.record = response.body;
           this.populateForm(this.record);
         }
+        this.isLoadingExistingData.set(false);
       },
       error: (error) => {
         console.error('Failed to load interaction:', error);
+        this.isLoadingExistingData.set(false);
         this.feedbackDialogService.showErrorToast({
           detail: 'Failed to load interaction details',
           summary: 'Error'
@@ -395,8 +409,8 @@ export class InteractionModalComponent {
       });
     }
 
-    // User IDs for form population
-    const userIds = record.userIds || [];
+    // User IDs for form population - extract from users array
+    const userIds = record.users?.map(user => user.id) || [];
 
     // Convert email addresses to lowercase for case-insensitive handling
     const lowercaseEmails = (record.emailAddresses || []).map(email => email.toLowerCase());
@@ -404,7 +418,7 @@ export class InteractionModalComponent {
     this.formGroup.patchValue({
       id: record.id,
       type: record.type,
-      date: new Date(record.date),
+      date: record.date ? new Date(record.date) : null,
       description: record.description,
       contactId: record.contactId,
       contactIds: record.contactIds || [],
@@ -679,16 +693,39 @@ export class InteractionModalComponent {
 
   /**
    * Prepopulates form fields from current user's profile (org unit and created by)
+   * Only applies defaults if the fields are truly empty (not set by server data)
    */
-  private prepopulateFromCurrentUserProfile(): void {
+  private prepopulateFromCurrentUserProfileIfEmpty(): void {
+    console.log('🔄 prepopulateFromCurrentUserProfileIfEmpty called - recordId:', this.recordId, 'isImportEdit:', this.isImportEdit, 'isLoadingExistingData:', this.isLoadingExistingData());
+    
+    // Skip if this is an edit (has recordId) - server data should take precedence
+    if (this.recordId && this.recordId !== '') {
+      console.log('⏭️ Skipping prepopulation - existing record detected');
+      return;
+    }
+
+    // Skip if this is an import edit - preserve import data
+    if (this.isImportEdit) {
+      console.log('⏭️ Skipping prepopulation - import edit detected');
+      return;
+    }
+
+    // Skip if we're currently loading existing data
+    if (this.isLoadingExistingData()) {
+      console.log('⏭️ Skipping prepopulation - currently loading existing data');
+      return;
+    }
+
     this.userProfileService.getCurrentUserProfile().subscribe({
       next: (response) => {
         const userProfile = response.userInfoWithOrgSettings;
 
         // Prepopulate Organization Unit from user's org unit code
-        if (userProfile?.orgUnit) {
-          const currentOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
-          if (!currentOrgUnitId) {
+        // Only if no org unit is currently set in either the UI control or the array
+        const currentOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
+        const currentOrgUnitArray = this.formGroup.get('organizationHierarchyIds')?.value || [];
+        
+        if (userProfile?.orgUnit && !currentOrgUnitId && currentOrgUnitArray.length === 0) {
           // Find matching organization unit by code
           const orgUnits = this.allOrgUnits() || [];
           const matchingOrgUnit = orgUnits.find((unit: any) =>
@@ -696,27 +733,34 @@ export class InteractionModalComponent {
           ) as any;
 
           if (matchingOrgUnit?.id) {
-              this.setOrganizationHierarchyId(matchingOrgUnit.id);
-            }
+            console.log('✅ Prepopulating org unit with user default:', matchingOrgUnit.id, 'for user org unit:', userProfile.orgUnit);
+            this.setOrganizationHierarchyId(matchingOrgUnit.id);
+          } else {
+            console.log('⚠️ No matching org unit found for user org unit:', userProfile.orgUnit);
           }
+        } else {
+          console.log('⏭️ Skipping org unit prepopulation - currentOrgUnitId:', currentOrgUnitId, 'currentOrgUnitArray.length:', currentOrgUnitArray.length, 'userProfile.orgUnit:', userProfile?.orgUnit);
         }
 
         // Prepopulate Created By with current user ID
-        if (userProfile?.userId) {
-          const currentCreatedBy = this.formGroup.get('createdBy')?.value;
-          if (!currentCreatedBy) { // Only set if not already set
-            this.formGroup.patchValue({ createdBy: userProfile.userId });
+        // Only if no created by is currently set
+        const currentCreatedBy = this.formGroup.get('createdBy')?.value;
+        
+        if (userProfile?.userId && !currentCreatedBy) {
+          console.log('✅ Prepopulating created by with current user:', userProfile.userId);
+          this.formGroup.patchValue({ createdBy: userProfile.userId });
 
-            // Ensure the created by user is available in the dropdown
-            this.userSearchService.searchUsers('', 50, [userProfile.userId]).subscribe({
-              next: (users) => {
-                this.createdBySearchResults.set(users);
-              },
-              error: (error) => {
-                console.warn('Failed to load current user for Created By field:', error);
-              }
-            });
-          }
+          // Ensure the created by user is available in the dropdown
+          this.userSearchService.searchUsers('', 50, [userProfile.userId]).subscribe({
+            next: (users) => {
+              this.createdBySearchResults.set(users);
+            },
+            error: (error) => {
+              console.warn('Failed to load current user for Created By field:', error);
+            }
+          });
+        } else {
+          console.log('⏭️ Skipping created by prepopulation - currentCreatedBy:', currentCreatedBy, 'userProfile.userId:', userProfile?.userId);
         }
       },
       error: (error) => {

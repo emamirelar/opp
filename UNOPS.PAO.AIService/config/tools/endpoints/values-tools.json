@@ -1,144 +1,407 @@
 {
   "entity": "Values",
-  "description": "Manages various lookup and reference data such as currencies, countries, partners, organizational units, and other system-wide static values.",
+  "description": "Manages various lookup values and user data.",
   "synonyms": [
-    "Reference Data",
     "Lookups",
-    "Master Data",
-    "Static Data",
-    "System Values"
+    "Reference Data",
+    "User Management",
+    "Configuration Values",
+    "System Data"
   ],
   "mandatoryFields": [],
+  "baseUrl": "/api/values",
   "endpoints": [
     {
       "name": "GetCurrencies",
-      "url": "api/values/currency",
+      "url": "/api/values/currency",
       "method": "GET",
-      "description": "Retrieves a list of all available currencies.",
-      "parameters": {},
-      "example_uses": [
-        "Show me all the currencies supported by the system.",
-        "I need a list of currency codes and names.",
-        "What are the available currencies for financial transactions?"
+      "intent": [
+        "list",
+        "get"
       ],
-      "when_to_use": "When you need a comprehensive list of currency codes and names for display or selection."
+      "description": "Retrieves a list of currencies.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/values/currency",
+      "requiredFields": [],
+      "example_uses": [
+        "Get available currencies."
+      ],
+      "when_to_use": "When you need a list of supported currencies.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetEligibleEntities",
-      "url": "api/values/eligible-entity",
+      "url": "/api/values/eligible-entity",
       "method": "GET",
-      "description": "Retrieves a list of entities that are eligible for certain operations or classifications.",
-      "parameters": {},
-      "example_uses": [
-        "List all entities that are eligible for funding.",
-        "Which entities can participate in this program?",
-        "Provide a list of eligible organizational entities."
+      "intent": [
+        "list",
+        "get"
       ],
-      "when_to_use": "When you need to identify or select from a predefined list of eligible entities."
+      "description": "Retrieves a list of eligible entities.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/values/eligible-entity",
+      "requiredFields": [],
+      "example_uses": [
+        "Get a list of eligible entities."
+      ],
+      "when_to_use": "When you need a list of eligible entities.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetCountries",
-      "url": "api/values/country",
+      "url": "/api/values/country",
       "method": "GET",
-      "description": "Retrieves a list of all countries.",
-      "parameters": {},
-      "example_uses": [
-        "Show me all the countries.",
-        "I need a list of country names and codes.",
-        "What are the available countries for address selection?"
+      "intent": [
+        "list",
+        "get"
       ],
-      "when_to_use": "When you need a comprehensive list of countries for display, selection, or validation."
+      "description": "Retrieves a list of countries.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/values/country",
+      "requiredFields": [],
+      "example_uses": [
+        "Get a list of countries."
+      ],
+      "when_to_use": "When you need a list of countries.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetApplicationTypes",
-      "url": "api/values/application-type",
+      "url": "/api/values/application-type",
       "method": "GET",
-      "description": "Retrieves a list of all defined application types.",
-      "parameters": {},
-      "example_uses": [
-        "What are the different types of applications?",
-        "List all available application categories.",
-        "Show me the application types for new submissions."
+      "intent": [
+        "list",
+        "get"
       ],
-      "when_to_use": "When you need to know the various categories or types of applications supported by the system."
+      "description": "Retrieves a list of application types.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/values/application-type",
+      "requiredFields": [],
+      "example_uses": [
+        "Get a list of application types."
+      ],
+      "when_to_use": "When you need a list of application types.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetPartners",
-      "url": "api/values/partners",
+      "url": "/api/values/partners",
       "method": "GET",
-      "description": "Retrieves a list of all registered partners.",
-      "parameters": {},
-      "example_uses": [
-        "List all our current partners.",
-        "Who are the partners we collaborate with?",
-        "Show me the full list of partner organizations."
+      "intent": [
+        "list",
+        "get"
       ],
-      "when_to_use": "When you need a complete list of all partners in the system."
+      "description": "Retrieves a list of partners.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/values/partners",
+      "requiredFields": [],
+      "example_uses": [
+        "Get a list of partners."
+      ],
+      "when_to_use": "When you need a list of partners.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetOrganizationUnits",
-      "url": "api/values/organization-units",
+      "url": "/api/values/organization-units",
       "method": "GET",
-      "description": "Retrieves a list of all organizational units within the system.",
-      "parameters": {},
-      "example_uses": [
-        "Show me all the organizational units.",
-        "List the departments and divisions.",
-        "What are the available organizational structures?"
+      "intent": [
+        "list",
+        "get"
       ],
-      "when_to_use": "When you need a list of internal organizational units for reporting, assignment, or filtering."
+      "description": "Retrieves a list of organization units.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/values/organization-units",
+      "requiredFields": [],
+      "example_uses": [
+        "Get a list of organization units."
+      ],
+      "when_to_use": "When you need a list of organization units.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetLiaisonOffices",
-      "url": "api/values/liaison-offices",
+      "url": "/api/values/liaison-offices",
       "method": "GET",
-      "description": "Retrieves a list of all liaison offices.",
-      "parameters": {},
-      "example_uses": [
-        "List all liaison offices.",
-        "Where are our liaison offices located?",
-        "Show me the contact details for liaison offices."
+      "intent": [
+        "list",
+        "get"
       ],
-      "when_to_use": "When you need to identify or select from a list of liaison offices."
+      "description": "Retrieves a list of liaison offices.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/values/liaison-offices",
+      "requiredFields": [],
+      "example_uses": [
+        "Get a list of liaison offices."
+      ],
+      "when_to_use": "When you need a list of liaison offices.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetContacts",
-      "url": "api/values/contacts",
+      "url": "/api/values/contacts",
       "method": "GET",
-      "description": "Retrieves a list of all contacts.",
-      "parameters": {},
-      "example_uses": [
-        "List all contacts in the system.",
-        "Who are the registered contacts?",
-        "Show me the full list of contact persons."
+      "intent": [
+        "list",
+        "get"
       ],
-      "when_to_use": "When you need a complete list of all contacts in the system."
+      "description": "Retrieves a list of contacts.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/values/contacts",
+      "requiredFields": [],
+      "example_uses": [
+        "Get a list of contacts."
+      ],
+      "when_to_use": "When you need a list of contacts.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetUsers",
-      "url": "api/values/users",
+      "url": "/api/values/users",
       "method": "GET",
-      "description": "Retrieves a list of all system users.",
-      "parameters": {},
-      "example_uses": [
-        "List all registered users.",
-        "Who has access to the system?",
-        "Show me the full list of user accounts."
+      "intent": [
+        "list",
+        "get"
       ],
-      "when_to_use": "When you need a complete list of all system users for administration or reporting."
+      "description": "Retrieves a list of users.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/values/users",
+      "requiredFields": [],
+      "example_uses": [
+        "Get a list of users."
+      ],
+      "when_to_use": "When you need a list of users.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetUsersPaged",
+      "url": "/api/values/users/paged",
+      "method": "POST",
+      "intent": [
+        "list",
+        "get",
+        "search"
+      ],
+      "description": "Retrieves a paged list of users based on search criteria.",
+      "searchCapability": {
+        "type": "advanced",
+        "searchFields": [
+          "SearchTerm",
+          "ActiveOnly",
+          "SelectedUserIds"
+        ],
+        "supportsPagination": true,
+        "supportsSort": false
+      },
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": true,
+          "description": "Request object for paged user retrieval.",
+          "default": null
+        }
+      },
+      "exampleBody": {
+        "PageIndex": 1,
+        "PageSize": 20,
+        "SearchTerm": "John",
+        "ActiveOnly": true,
+        "SelectedUserIds": [
+          1,
+          2,
+          3
+        ]
+      },
+      "exampleUrl": "/api/values/users/paged",
+      "requiredFields": [
+        "PageIndex",
+        "PageSize",
+        "ActiveOnly"
+      ],
+      "example_uses": [
+        "Get a paged list of users with search criteria.",
+        "Find users by name and active status."
+      ],
+      "when_to_use": "When you need to retrieve a paged list of users with filtering and search options.",
+      "scoring": {
+        "searchBonus": 80,
+        "intentMatch": 80,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "SearchUsers",
+      "url": "/api/values/users/search?searchTerm={searchTerm}&maxResults={maxResults}&selectedUserIds={selectedUserIds}",
+      "method": "GET",
+      "intent": [
+        "search",
+        "find",
+        "lookup",
+        "query"
+      ],
+      "description": "Searches for users based on a search term and optional filters.",
+      "searchCapability": {
+        "type": "simple",
+        "searchFields": [
+          "searchTerm"
+        ],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/values/users/search?searchTerm=John&maxResults=10&selectedUserIds=1,2",
+      "requiredFields": [],
+      "example_uses": [
+        "Search for users by name.",
+        "Find users matching a specific search term."
+      ],
+      "when_to_use": "When you need to search for users based on a text search term.",
+      "scoring": {
+        "searchBonus": 100,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetGeminiModels",
-      "url": "api/values/gemini-models",
+      "url": "/api/values/gemini-models",
       "method": "GET",
-      "description": "Retrieves a list of available Gemini AI models.",
-      "parameters": {},
-      "example_uses": [
-        "What Gemini models are available?",
-        "List the AI models I can use.",
-        "Show me the supported Gemini versions."
+      "intent": [
+        "list",
+        "get"
       ],
-      "when_to_use": "When you need to know which Gemini AI models are configured and available for use."
+      "description": "Retrieves a list of Gemini models.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/values/gemini-models",
+      "requiredFields": [],
+      "example_uses": [
+        "Get a list of Gemini models."
+      ],
+      "when_to_use": "When you need a list of available Gemini models.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchUsers with searchTerm parameter",
+      "advanced": "use GetUsersPaged with request body parameters"
+    }
+  }
 }

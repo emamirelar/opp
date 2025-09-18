@@ -9,6 +9,7 @@ import { InteractionType } from '../../../../features/internal/models/interactio
 export interface AnalyzeFileRequest {
   type: string;
   fileId: string;
+  sheetName?: string; // Optional: Custom sheet name for manual entry
 }
 
 export interface CancelAnalysisRequest {
@@ -92,12 +93,13 @@ export class ImportService {
    * @param fileId The Google Sheets ID
    * @param type The type of data being imported (e.g., 'bulk_contact_action')
    */
-  analyzeFile(fileId: string, type: string): Observable<ImportAnalysisResponse> {
-    console.log('🔍 ImportService.analyzeFile called with:', { fileId, type });
+  analyzeFile(fileId: string, type: string, sheetName?: string): Observable<ImportAnalysisResponse> {
+    console.log('🔍 ImportService.analyzeFile called with:', { fileId, type, sheetName });
     this.processingFile = true;
     const payload: AnalyzeFileRequest = {
       type,
-      fileId
+      fileId,
+      ...(sheetName && { sheetName }) // Only include sheetName if provided
     };
 
     // Determine the entity-specific endpoint based on the type
@@ -130,6 +132,7 @@ export class ImportService {
       records: EXAMPLE_CONTACTS,
     });*/
   }
+
 
   /**
    * Cancel an in-progress file analysis
@@ -164,6 +167,9 @@ export class ImportService {
    * @param type The type of data being uploaded (e.g., 'bulk_contact_action')
    */
   bulkUpload(records: any[], type: string): Observable<any> {
+    console.log('🔍 BulkUpload starting with', records.length, 'records');
+    console.log('🔍 Sample record before processing:', records[0]);
+    
     // Process records to ensure proper handling - delete empty/falsy properties
     const processedRecords = records.map(record => {
       const processedRecord = { ...record };
@@ -176,15 +182,20 @@ export class ImportService {
       }
       });
       
+      // IMPORTANT: Always preserve _importRowId for error matching (don't delete even if falsy)
+      // This is crucial for matching failed records back to the dialog
+      
       // For all other properties, delete if empty string to avoid serialization issues
       Object.keys(processedRecord).forEach(prop => {
-        if (!specialProperties.includes(prop) && processedRecord[prop] === '') {
+        if (!specialProperties.includes(prop) && prop !== '_importRowId' && processedRecord[prop] === '') {
           delete processedRecord[prop];
         }
       });
       
       return processedRecord;
     });
+    
+    console.log('🔍 Sample record after processing:', processedRecords[0]);
 
     const payload: BulkUploadRequest = {
       type,

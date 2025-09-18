@@ -40,6 +40,8 @@ export interface EntityPermissions {
     canActivate?: boolean;
     canClose?: boolean;
     canArchive?: boolean;
+    canExport: boolean;
+    canImport: boolean;
   };
 }
 
@@ -159,6 +161,12 @@ export class PermissionService {
         canCreate: boolean;
         canUpdate: boolean;
         canDelete: boolean;
+        canApprove?: boolean;
+        canActivate?: boolean;
+        canClose?: boolean;
+        canArchive?: boolean;
+        canExport: boolean;
+        canImport: boolean;
       };
     }>(permissionUrl).pipe(
       map(response => {
@@ -178,7 +186,9 @@ export class PermissionService {
             canRead: false,
             canCreate: false,
             canUpdate: false,
-            canDelete: false
+            canDelete: false,
+            canExport: false,
+            canImport: false
           }
         });
       }),
@@ -215,7 +225,9 @@ export class PermissionService {
           canRead: false,
           canCreate: false,
           canUpdate: false,
-          canDelete: false
+          canDelete: false,
+          canExport: false,
+          canImport: false
         }
       });
     }

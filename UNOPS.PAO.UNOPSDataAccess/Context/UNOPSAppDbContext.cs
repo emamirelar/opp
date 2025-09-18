@@ -187,4 +187,7 @@ public class UNOPSAppDbContext : AppDbContext
     
     // AI-related DbSets
     public DbSet<AiPrompt> AiPrompts { get; set; }
+    
+    // Seed script tracking
+    public DbSet<SeedScript> SeedScripts { get; set; }
 }

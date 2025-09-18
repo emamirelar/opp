@@ -15,5 +15,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Interfaces
         Task<object> GetEntityPermissionsAsync(string entityName, object entity = null);
         
         Task<bool> HasInstanceAccessAsync(string entityName, object entity, ClaimsPrincipal user, string action);
+        
+        string GetEffectiveRole(ClaimsPrincipal user);
+        
+        bool CanExport(ClaimsPrincipal user);
+        
+        bool CanImport(ClaimsPrincipal user);
     }
 } 

@@ -87,6 +87,18 @@
         class="add-field-button">
       </p-button>
 
+      <p-button
+        icon="pi pi-download"
+        label="{{ 'entityManager.exportSql' | translate }}"
+        rounded
+        (onClick)="exportEntityConfigurationAsSql()"
+        [disabled]="!hasAccessToManage() || saving()"
+        [loading]="saving()"
+        pTooltip="{{ 'entityManager.exportSqlTooltip' | translate }}"
+        tooltipPosition="bottom"
+        class="export-sql-button">
+      </p-button>
+
     }
   </div>
 
@@ -177,7 +189,7 @@
                     rounded
                     tooltip="Add to List View"
                     tooltipPosition="left"
-                    (onClick)="addFieldToListView(field.id); $event.stopPropagation()"
+                    (onClick)="moveFieldToListView(field.id); $event.stopPropagation()"
                     [disabled]="canViewOnly() || autoSaving() || fieldSaving()">
                   </p-button>
                 </div>
@@ -295,7 +307,7 @@
                       rounded
                       tooltip="Remove from List View"
                       tooltipPosition="left"
-                      (onClick)="removeFieldFromListViewByStringId(field.id); $event.stopPropagation()"
+                      (onClick)="removeFieldFromListView(field.id); $event.stopPropagation()"
                       [disabled]="canViewOnly() || autoSaving() || fieldSaving()">
                     </p-button>
                   </div>

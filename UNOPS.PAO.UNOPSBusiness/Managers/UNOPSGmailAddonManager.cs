@@ -92,6 +92,10 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
     {
         var contactCreatePermissionResult = await _permissionService.CanPerformActionAsync("Contact", "create", user);
         response.CanCreateContacts = contactCreatePermissionResult;
+        var partnerCreatePermissionResult = await _permissionService.CanPerformActionAsync("Partner", "create", user);
+        response.CanCreatePartners = partnerCreatePermissionResult;
+        var interactionCreatePermissionResult = await _permissionService.CanPerformActionAsync("Interaction", "create", user);
+        response.CanCreateInteractions = interactionCreatePermissionResult;
         return true;
     }
 
@@ -545,7 +549,7 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
                 Subject = existingInteraction.Subject,
                 ContactIds = existingInteraction.ContactIds,
                 PartnerIds = existingInteraction.PartnerIds,
-                UserIds = existingInteraction.UserIds,
+                UserIds = existingInteraction.Users?.Select(u => u.Id).ToList() ?? new List<int>(),
                 EmailAddresses = existingInteraction.EmailAddresses,
                 PhoneNumbers = existingInteraction.PhoneNumbers,
                 Location = existingInteraction.Location,

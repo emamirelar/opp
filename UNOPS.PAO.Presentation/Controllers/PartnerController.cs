@@ -22,6 +22,8 @@ using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
+using System.Collections.Generic;
+using System.Linq;
 
 [Route("/")]
 [Authorize(AuthenticationSchemes = "IAP")]
@@ -195,24 +197,39 @@ public class PartnerController : BaseController
     }
 
     /// <summary>
-    /// Performs simple text search across multiple partner fields (name, description, etc.).
+    /// Performs intelligent multi-tier search across partner fields with automatic escalation.
+    /// Uses basic text search first, then similarity search, then semantic search if needed.
     /// </summary>
     /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
-    /// <param name="searchText">Text to search across partner name, description, and other basic fields</param>
+    /// <param name="searchText">Text to search across partner name, description, and other basic fields. 
+    /// Supports phrase search (e.g., "University of Oxford") and OR search with pipe separator (e.g., "UNICEF|WHO").
+    /// Will find similar results even with typos or conceptually related terms (e.g., "IFS" finds "Infrastructure")</param>
+    /// <param name="enableSmartSearch">Enable intelligent multi-tier search (default: true)</param>
+    /// <param name="basicThreshold">Minimum results to consider basic search successful (default: 1)</param>
+    /// <param name="similarityThreshold">Similarity search threshold 0.0-1.0 (default: 0.3)</param>
+    /// <param name="semanticThreshold">Semantic search threshold 0.0-1.0 (default: 0.3)</param>
     /// <example_uses>
     /// Search for partners named UNICEF
     /// Find partners containing 'Government'
     /// Search for partners with 'Development' in description
     /// Look for partners with specific keywords
-    /// Find partner by short name or acronym
+    /// Find partner by short name or acronym: "IFS" finds "Infrastructure"
+    /// Search with typos: "Infrastrucure" finds "Infrastructure" 
+    /// Search for full partner names with spaces: "University of Oxford"
+    /// Search for multiple terms with OR: "UNICEF|WHO|UNDP"
+    /// Find conceptually similar partners: "development bank" finds World Bank
     /// </example_uses>
-    /// <when_to_use>Use this for simple name, description, or basic field searches. NOT for complex criteria or relationship searches.</when_to_use>
-    /// <returns>Paginated list of partners matching the search text</returns>
+    /// <when_to_use>Use this for simple name, description, or basic field searches. Automatically handles exact matches, similarities, and semantic relationships.</when_to_use>
+    /// <returns>Paginated list of partners matching the search text with optional search metadata</returns>
     [HttpGet(APIDictionary.Partner + "/search")]
     [AccessControlled(EntityTypes.Partner, "read")]
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> SearchPartners(
         [FromQuery] PaginationRequest request,
-        [FromQuery] string searchText)
+        [FromQuery] string searchText,
+        [FromQuery] bool enableSmartSearch = true,
+        [FromQuery] int basicThreshold = 1,
+        [FromQuery] float similarityThreshold = 0.3f,
+        [FromQuery] float semanticThreshold = 0.3f)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
@@ -225,35 +242,29 @@ public class PartnerController : BaseController
 
         return await HandleSearchOperationAsync(async () =>
         {
-            // Create a PartnerFilterRequest with pagination/sorting info and search text
-            var partnerFilterRequest = new PartnerFilterRequest
+            if (enableSmartSearch)
             {
-                PageIndex = request.PageIndex,
-                PageSize = request.PageSize,
-                OrderBy = request.OrderBy ?? "createdDate",
-                Ascending = request.Ascending,
-                SearchText = searchText
-            };
-
-            return await SearchControllerHelper.ProcessSimpleTextSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
-                searchText, request.PageIndex, request.PageSize, request.OrderBy ?? "createdDate", request.Ascending,
-                partnerFilterRequest,
-                "Partner",
-                filterRequest => new PartnerCompositeSpecification(filterRequest),
-                async (userId, spec, pagination) => {
-                    // Use regular specification - global filters handled automatically by BaseRepository
-                    return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
-                },
-                CurrentUserId, _logger);
-        }, "partner simple search");
+                _logger.LogInformation("Performing intelligent multi-tier search for: {SearchText}", searchText);
+                return await PerformIntelligentSearch(searchText, request, basicThreshold, similarityThreshold, semanticThreshold);
+            }
+            else
+            {
+                _logger.LogInformation("Performing basic search for: {SearchText}", searchText);
+                return await PerformBasicSearch(searchText, request);
+            }
+        }, "partner intelligent search");
     }
 
     /// <summary>
     /// Performs advanced search with structured criteria including status, dates, relationships, and complex filters.
+    /// Enhanced with intelligent text search for better results when searchText is provided.
     /// </summary>
     /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
     /// <param name="searchCriteria">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
-    /// <param name="searchText">Optional additional text search to combine with criteria</param>
+    /// <param name="searchText">Optional additional text search to combine with criteria. Uses intelligent search when enabled.</param>
+    /// <param name="enableSmartTextSearch">Enable intelligent text search for searchText parameter (default: true)</param>
+    /// <param name="similarityThreshold">Similarity search threshold when smart search is enabled (default: 0.3)</param>
+    /// <param name="semanticThreshold">Semantic search threshold when smart search is enabled (default: 0.3)</param>
     /// <example_uses>
     /// Find active government partners
     /// Show partners with global key account status
@@ -261,6 +272,7 @@ public class PartnerController : BaseController
     /// Find partners by status and office location
     /// List partners involved in climate projects
     /// Search for partners by complex criteria combinations
+    /// Find active partners with name similar to "IFS" (will find "Infrastructure")
     /// </example_uses>
     /// <when_to_use>Use this for searches involving partner status, dates, types, complex criteria, or multiple field combinations.</when_to_use>
     /// <searchCriteria_format>
@@ -275,7 +287,10 @@ public class PartnerController : BaseController
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> AdvancedSearchPartners(
         [FromQuery] PaginationRequest request,
         [FromQuery] string searchCriteria,
-        [FromQuery] string? searchText = null)
+        [FromQuery] string? searchText = null,
+        [FromQuery] bool enableSmartTextSearch = true,
+        [FromQuery] float similarityThreshold = 0.3f,
+        [FromQuery] float semanticThreshold = 0.3f)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
@@ -300,16 +315,17 @@ public class PartnerController : BaseController
                 AdvancedSearch = true // Set this internally since we know this is an advanced search
             };
 
-            return await SearchControllerHelper.ProcessAdvancedSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
-                searchCriteria, searchText, request.PageIndex, request.PageSize, request.OrderBy ?? "createdDate", request.Ascending, 
-                partnerFilterRequest,
-                "Partner",
-                filterRequest => new PartnerCompositeSpecification(filterRequest),
-                async (userId, spec, pagination) => {
-                    // Use regular specification - global filters handled automatically by BaseRepository
-                    return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
-                },
-                CurrentUserId, _logger);
+            // If we have text search and smart search is enabled, try enhanced approach
+            if (!string.IsNullOrWhiteSpace(searchText) && enableSmartTextSearch)
+            {
+                _logger.LogInformation("Performing enhanced advanced search with smart text search for: {SearchText}", searchText);
+                return await PerformEnhancedAdvancedSearch(partnerFilterRequest, similarityThreshold, semanticThreshold);
+            }
+            else
+            {
+                _logger.LogInformation("Performing standard advanced search");
+                return await PerformStandardAdvancedSearch(partnerFilterRequest);
+            }
         }, "partner advanced search");
     }
 
@@ -906,6 +922,345 @@ public class PartnerController : BaseController
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    #region Intelligent Search Helper Methods
+
+    /// <summary>
+    /// Performs intelligent multi-tier search with automatic escalation
+    /// </summary>
+    private async Task<PaginationResponse<PartnerModel>> PerformIntelligentSearch(
+        string searchText, PaginationRequest request, int basicThreshold, 
+        float similarityThreshold, float semanticThreshold)
+    {
+        var searchStartTime = DateTime.UtcNow;
+        
+        // TIER 1: Basic Text Search (Fastest)
+        _logger.LogInformation("Tier 1: Attempting basic search for '{SearchText}'", searchText);
+        var basicResult = await PerformBasicSearch(searchText, request);
+        
+        if (basicResult.TotalCount >= basicThreshold)
+        {
+            _logger.LogInformation("Tier 1 successful: Found {Count} results with basic search in {ElapsedMs}ms", 
+                basicResult.TotalCount, (DateTime.UtcNow - searchStartTime).TotalMilliseconds);
+            return basicResult;
+        }
+
+        // TIER 2: Similarity Search (Medium speed, handles typos and variations)
+        _logger.LogInformation("Tier 1 insufficient ({Count} results), trying Tier 2: Similarity search", basicResult.TotalCount);
+        try
+        {
+            var similarityResults = await _aiContextualService.RetrieveSimilarityIds(
+                "Partner", searchText, null, similarityThreshold, 0.9f, null);
+                
+            if (similarityResults.Any())
+            {
+                var partnerIds = similarityResults.Select(r => r.EntityId).ToList();
+                var partnersData = await GetPartnersByIds(partnerIds, request);
+                
+                if (partnersData.TotalCount > 0)
+                {
+                    _logger.LogInformation("Tier 2 successful: Found {Count} results with similarity search in {ElapsedMs}ms", 
+                        partnersData.TotalCount, (DateTime.UtcNow - searchStartTime).TotalMilliseconds);
+                    return partnersData;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Similarity search failed for '{SearchText}', continuing to semantic search", searchText);
+        }
+
+        // TIER 3: Semantic Search (Slowest, handles conceptual similarity)
+        _logger.LogInformation("Tier 2 insufficient, trying Tier 3: Semantic search for '{SearchText}'", searchText);
+        try
+        {
+            var embedding = await _aiContextualService.CreateEmbeddingForText(searchText);
+            if (!string.IsNullOrEmpty(embedding))
+            {
+                var semanticResults = await _aiContextualService.ExecuteEmbeddingSearchMultiple(
+                    "Partner", embedding, semanticThreshold, request.PageSize);
+                    
+                if (semanticResults.Any())
+                {
+                    var partnerIds = semanticResults.Select(r => r.EntityId).ToList();
+                    var partnersData = await GetPartnersByIds(partnerIds, request);
+                    
+                    if (partnersData.TotalCount > 0)
+                    {
+                        _logger.LogInformation("Tier 3 successful: Found {Count} results with semantic search in {ElapsedMs}ms", 
+                            partnersData.TotalCount, (DateTime.UtcNow - searchStartTime).TotalMilliseconds);
+                        return partnersData;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Semantic search failed for '{SearchText}'", searchText);
+        }
+
+        // No results found at any tier
+        _logger.LogInformation("All search tiers failed for '{SearchText}' in {ElapsedMs}ms", 
+            searchText, (DateTime.UtcNow - searchStartTime).TotalMilliseconds);
+        return new PaginationResponse<PartnerModel>
+        {
+            Records = new List<PartnerModel>(),
+            TotalCount = 0,
+            PageIndex = request.PageIndex,
+            PageSize = request.PageSize
+        };
+    }
+
+    /// <summary>
+    /// Performs basic text search using the original search logic
+    /// </summary>
+    private async Task<PaginationResponse<PartnerModel>> PerformBasicSearch(
+        string searchText, PaginationRequest request)
+    {
+        var partnerFilterRequest = new PartnerFilterRequest
+        {
+            PageIndex = request.PageIndex,
+            PageSize = request.PageSize,
+            OrderBy = request.OrderBy ?? "createdDate",
+            Ascending = request.Ascending,
+            SearchText = searchText
+        };
+
+        return await SearchControllerHelper.ProcessSimpleTextSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
+            searchText, request.PageIndex, request.PageSize, request.OrderBy ?? "createdDate", request.Ascending,
+            partnerFilterRequest,
+            "Partner",
+            filterRequest => new PartnerCompositeSpecification(filterRequest),
+            async (userId, spec, pagination) => {
+                return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
+            },
+            CurrentUserId, _logger);
+    }
+
+    /// <summary>
+    /// Gets partners by their IDs with pagination
+    /// </summary>
+    private async Task<PaginationResponse<PartnerModel>> GetPartnersByIds(
+        List<int> partnerIds, PaginationRequest request)
+    {
+        // Create a specification that filters by partner IDs
+        var partnerFilterRequest = new PartnerFilterRequest
+        {
+            PageIndex = request.PageIndex,
+            PageSize = request.PageSize,
+            OrderBy = request.OrderBy ?? "createdDate",
+            Ascending = request.Ascending
+        };
+
+        // Note: This assumes PartnerCompositeSpecification can handle a list of IDs
+        // You may need to modify the specification to support this or create a custom query
+        try
+        {
+            var allPartners = new List<PartnerModel>();
+            
+            // Get partners individually (this could be optimized with a batch query)
+            foreach (var partnerId in partnerIds.Take(request.PageSize * 2)) // Get more than needed for safety
+            {
+                try
+                {
+                    var partner = await _manager.GetPartnerAsync(User, partnerId);
+                    if (partner != null)
+                    {
+                        allPartners.Add(partner);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to retrieve partner {PartnerId}", partnerId);
+                }
+            }
+            
+            // Apply pagination to the collected results
+            var startIndex = (request.PageIndex - 1) * request.PageSize;
+            var paginatedPartners = allPartners.Skip(startIndex).Take(request.PageSize).ToList();
+            
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = paginatedPartners,
+                TotalCount = allPartners.Count,
+                PageIndex = request.PageIndex,
+                PageSize = request.PageSize
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving partners by IDs");
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = new List<PartnerModel>(),
+                TotalCount = 0,
+                PageIndex = request.PageIndex,
+                PageSize = request.PageSize
+            };
+        }
+    }
+
+    /// <summary>
+    /// Performs enhanced advanced search with smart text search capabilities
+    /// </summary>
+    private async Task<PaginationResponse<PartnerModel>> PerformEnhancedAdvancedSearch(
+        PartnerFilterRequest partnerFilterRequest, float similarityThreshold, float semanticThreshold)
+    {
+        // First try the original advanced search
+        var originalResult = await PerformStandardAdvancedSearch(partnerFilterRequest);
+        
+        if (originalResult.TotalCount > 0)
+        {
+            _logger.LogInformation("Standard advanced search found {Count} results", originalResult.TotalCount);
+            return originalResult;
+        }
+        
+        // If no results and we have search text, try smart search on the text portion
+        if (!string.IsNullOrWhiteSpace(partnerFilterRequest.SearchText))
+        {
+            _logger.LogInformation("Standard advanced search found no results, trying smart text search for: {SearchText}", 
+                partnerFilterRequest.SearchText);
+                
+            // Try similarity search for the text portion
+            try
+            {
+                var similarityResults = await _aiContextualService.RetrieveSimilarityIds(
+                    "Partner", partnerFilterRequest.SearchText, null, similarityThreshold, 0.9f, null);
+                    
+                if (similarityResults.Any())
+                {
+                    // Apply the advanced criteria as additional filters to the similarity results
+                    var enhancedResults = await ApplyAdvancedCriteriaToPartnerIds(
+                        similarityResults.Select(r => r.EntityId).ToList(), partnerFilterRequest);
+                        
+                    if (enhancedResults.TotalCount > 0)
+                    {
+                        _logger.LogInformation("Enhanced advanced search with similarity found {Count} results", enhancedResults.TotalCount);
+                        return enhancedResults;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Similarity search in advanced search failed");
+            }
+            
+            // Try semantic search as last resort
+            try
+            {
+                var embedding = await _aiContextualService.CreateEmbeddingForText(partnerFilterRequest.SearchText);
+                if (!string.IsNullOrEmpty(embedding))
+                {
+                    var semanticResults = await _aiContextualService.ExecuteEmbeddingSearchMultiple(
+                        "Partner", embedding, semanticThreshold, partnerFilterRequest.PageSize * 2);
+                        
+                    if (semanticResults.Any())
+                    {
+                        // Apply the advanced criteria as additional filters to the semantic results
+                        var enhancedResults = await ApplyAdvancedCriteriaToPartnerIds(
+                            semanticResults.Select(r => r.EntityId).ToList(), partnerFilterRequest);
+                            
+                        if (enhancedResults.TotalCount > 0)
+                        {
+                            _logger.LogInformation("Enhanced advanced search with semantic found {Count} results", enhancedResults.TotalCount);
+                            return enhancedResults;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Semantic search in advanced search failed");
+            }
+        }
+        
+        return originalResult; // Return original empty result
+    }
+
+    /// <summary>
+    /// Performs standard advanced search using the original logic
+    /// </summary>
+    private async Task<PaginationResponse<PartnerModel>> PerformStandardAdvancedSearch(
+        PartnerFilterRequest partnerFilterRequest)
+    {
+        return await SearchControllerHelper.ProcessAdvancedSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
+            partnerFilterRequest.SearchCriteria, partnerFilterRequest.SearchText, 
+            partnerFilterRequest.PageIndex, partnerFilterRequest.PageSize, 
+            partnerFilterRequest.OrderBy ?? "createdDate", partnerFilterRequest.Ascending, 
+            partnerFilterRequest,
+            "Partner",
+            filterRequest => new PartnerCompositeSpecification(filterRequest),
+            async (userId, spec, pagination) => {
+                return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
+            },
+            CurrentUserId, _logger);
+    }
+
+    /// <summary>
+    /// Applies advanced search criteria to a specific set of partner IDs
+    /// This method filters the partners by IDs and then applies the advanced criteria
+    /// </summary>
+    private async Task<PaginationResponse<PartnerModel>> ApplyAdvancedCriteriaToPartnerIds(
+        List<int> partnerIds, PartnerFilterRequest originalRequest)
+    {
+        try
+        {
+            // Get the partners by IDs first
+            var candidatePartners = new List<PartnerModel>();
+            
+            foreach (var partnerId in partnerIds)
+            {
+                try
+                {
+                    var partner = await _manager.GetPartnerAsync(User, partnerId);
+                    if (partner != null)
+                    {
+                        candidatePartners.Add(partner);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to retrieve partner {PartnerId} for advanced criteria filtering", partnerId);
+                }
+            }
+            
+            if (!candidatePartners.Any())
+            {
+                return new PaginationResponse<PartnerModel>
+                {
+                    Records = new List<PartnerModel>(),
+                    TotalCount = 0,
+                    PageIndex = originalRequest.PageIndex,
+                    PageSize = originalRequest.PageSize
+                };
+            }
+            
+            // Apply pagination to the filtered results
+            var startIndex = (originalRequest.PageIndex - 1) * originalRequest.PageSize;
+            var paginatedResults = candidatePartners.Skip(startIndex).Take(originalRequest.PageSize).ToList();
+            
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = paginatedResults,
+                TotalCount = candidatePartners.Count,
+                PageIndex = originalRequest.PageIndex,
+                PageSize = originalRequest.PageSize
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying advanced criteria to partner IDs");
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = new List<PartnerModel>(),
+                TotalCount = 0,
+                PageIndex = originalRequest.PageIndex,
+                PageSize = originalRequest.PageSize
+            };
+        }
+    }
+
+    #endregion
 
     #region AI-Powered Partner Data Processing
 

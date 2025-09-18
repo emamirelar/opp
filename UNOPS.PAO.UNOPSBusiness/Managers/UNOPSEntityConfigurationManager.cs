@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
+using System.Text;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -676,5 +677,142 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                 HelperText = f.HelperText
             })
             .ToList();
+    }
+
+    /// <summary>
+    /// Exports all entity configurations as a single SQL script
+    /// </summary>
+    public async Task<string> ExportEntityConfigurationAsSqlAsync(ClaimsPrincipal user)
+    {
+        // RBAC interceptor handles security enforcement
+        var allEntityManagers = await _context.EntityManagers
+            .Include(em => em.EntityFields.Where(f => !f.IsDeleted))
+            .Where(em => !em.IsDeleted)
+            .OrderBy(em => em.EntityName)
+            .ToListAsync();
+
+        var allEntityFields = await _context.EntityFieldManagers
+            .Include(efm => efm.EntityManager)
+            .Where(efm => !efm.IsDeleted && !efm.EntityManager.IsDeleted)
+            .OrderBy(efm => efm.EntityManager.EntityName)
+            .ThenBy(efm => efm.DisplayOrder)
+            .ToListAsync();
+
+        // Debug logging
+        Console.WriteLine($"Found {allEntityManagers.Count} entity managers and {allEntityFields.Count} entity fields for export");
+
+        // Generate combined SQL script
+        var combinedSql = GenerateCombinedEntityManagerSql(allEntityManagers, allEntityFields);
+
+        Console.WriteLine($"Generated combined SQL length: {combinedSql.Length} characters");
+        return combinedSql;
+    }
+
+    /// <summary>
+    /// Generates combined SQL script for both EntityManagers and EntityFieldManagers tables
+    /// </summary>
+    private string GenerateCombinedEntityManagerSql(List<EntityManager> entityManagers, List<EntityFieldManager> entityFields)
+    {
+        var sqlBuilder = new StringBuilder();
+        sqlBuilder.AppendLine("-- Entity Managers and Field Managers Complete Configuration");
+        sqlBuilder.AppendLine("-- This script manages both entity manager definitions and their field configurations");
+        sqlBuilder.AppendLine();
+        sqlBuilder.AppendLine("-- Clear existing data and reset");
+        sqlBuilder.AppendLine("TRUNCATE TABLE public.\"EntityManagers\" RESTART IDENTITY CASCADE;");
+        sqlBuilder.AppendLine("TRUNCATE TABLE public.\"EntityFieldManagers\" RESTART IDENTITY CASCADE;");
+        sqlBuilder.AppendLine();
+
+        // Generate EntityManagers section
+        if (entityManagers != null && entityManagers.Count > 0)
+        {
+            sqlBuilder.AppendLine("-- Insert Entity Managers");
+            sqlBuilder.AppendLine("INSERT INTO public.\"EntityManagers\" (");
+            sqlBuilder.AppendLine("    \"Id\", \"EntityName\", \"TableName\", \"Description\", \"IsActive\", \"EnableChangeLog\", ");
+            sqlBuilder.AppendLine("    \"Name\", \"Status\", \"CreatedBy\", \"CreatedDate\", \"LastModifiedBy\", ");
+            sqlBuilder.AppendLine("    \"LastModifiedDate\", \"IsDeleted\", \"DeletedBy\", \"DeletedDate\"");
+            sqlBuilder.AppendLine(")");
+            sqlBuilder.AppendLine("VALUES ");
+
+            for (int i = 0; i < entityManagers.Count; i++)
+            {
+                var entity = entityManagers[i];
+                var comma = i < entityManagers.Count - 1 ? "," : ";";
+                
+                sqlBuilder.AppendLine($"    ({i + 1}, '{EscapeSqlString(entity.EntityName)}', '{EscapeSqlString(entity.TableName ?? "")}', '{EscapeSqlString(entity.Description ?? "")}', {entity.IsActive.ToString().ToLower()}, {entity.EnableChangeLog.ToString().ToLower()}, '{EscapeSqlString(entity.Name)}', {(int)entity.Status}, 1, NOW(), 0, NULL, {entity.IsDeleted.ToString().ToLower()}, 0, NULL){comma}");
+            }
+            sqlBuilder.AppendLine();
+        }
+        else
+        {
+            sqlBuilder.AppendLine("-- No entity managers found to export");
+            sqlBuilder.AppendLine();
+        }
+
+        // Generate EntityFieldManagers section
+        sqlBuilder.AppendLine("-- EntityFieldManagers configuration seeding");
+        sqlBuilder.AppendLine("-- This section seeds the UI field configuration for all entities");
+        sqlBuilder.AppendLine();
+        sqlBuilder.AppendLine("DO $$");
+        sqlBuilder.AppendLine("DECLARE");
+        sqlBuilder.AppendLine("    field_managers_count INTEGER;");
+        sqlBuilder.AppendLine("BEGIN");
+        sqlBuilder.AppendLine("    RAISE NOTICE 'EntityFieldManagers table cleared, inserting UI configuration...';");
+        sqlBuilder.AppendLine();
+
+        if (entityFields != null && entityFields.Count > 0)
+        {
+            // Group fields by entity
+            var fieldsByEntity = entityFields.GroupBy(f => f.EntityManager.EntityName).OrderBy(g => g.Key);
+
+            foreach (var entityGroup in fieldsByEntity)
+            {
+                var entityName = entityGroup.Key;
+                var fields = entityGroup.OrderBy(f => f.DisplayOrder).ToList();
+                
+                sqlBuilder.AppendLine($"    -- ================================================================");
+                sqlBuilder.AppendLine($"    -- {entityName.ToUpper()} ENTITY FIELDS ({fields.Count} fields)");
+                sqlBuilder.AppendLine($"    -- ================================================================");
+                sqlBuilder.AppendLine("    INSERT INTO public.\"EntityFieldManagers\" (");
+                sqlBuilder.AppendLine("        \"EntityManagerId\", \"FieldName\", \"DataType\", \"Description\", \"IsRequired\", \"IsActive\", \"DefaultValue\", \"MaxLength\", \"DisplayOrder\", \"ShowInListView\", \"ListViewOrder\", \"RelatedDisplayProperty\", \"DisplayFieldPath\", \"DisplayTemplate\", \"ListViewLabel\", \"ListViewType\", \"ListViewWidth\", \"ListViewEllipsis\", \"ListViewSortable\", \"FirstLetterFallbackField\", \"HelperText\",");
+                sqlBuilder.AppendLine("        \"Name\", \"Status\", \"CreatedBy\", \"CreatedDate\", \"LastModifiedBy\", \"LastModifiedDate\", \"IsDeleted\", \"DeletedBy\", \"DeletedDate\"");
+                sqlBuilder.AppendLine("    ) VALUES ");
+
+                for (int i = 0; i < fields.Count; i++)
+                {
+                    var field = fields[i];
+                    var comma = i < fields.Count - 1 ? "," : ";";
+                    
+                    // Generate single line format like in EntityManagers_Complete.sql
+                    sqlBuilder.AppendLine($"        ({field.EntityManagerId}, '{EscapeSqlString(field.FieldName)}', '{EscapeSqlString(field.DataType)}', '{EscapeSqlString(field.Description ?? "")}', {field.IsRequired.ToString().ToLower()}, {field.IsActive.ToString().ToLower()}, {(field.DefaultValue != null ? $"'{EscapeSqlString(field.DefaultValue)}'" : "NULL")}, {field.MaxLength?.ToString() ?? "NULL"}, {field.DisplayOrder}, {field.ShowInListView.ToString().ToLower()}, {field.ListViewOrder?.ToString() ?? "NULL"}, {(field.RelatedDisplayProperty != null ? $"'{EscapeSqlString(field.RelatedDisplayProperty)}'" : "NULL")}, '{EscapeSqlString(field.DisplayFieldPath ?? "")}', {(field.DisplayTemplate != null ? $"'{EscapeSqlString(field.DisplayTemplate)}'" : "NULL")}, '{EscapeSqlString(field.ListViewLabel ?? "")}', '{EscapeSqlString(field.ListViewType ?? "")}', '{EscapeSqlString(field.ListViewWidth ?? "")}', {(field.ListViewEllipsis?.ToString().ToLower() ?? "false")}, {(field.ListViewSortable?.ToString().ToLower() ?? "false")}, {(field.FirstLetterFallbackField != null ? $"'{EscapeSqlString(field.FirstLetterFallbackField)}'" : "NULL")}, '{EscapeSqlString(field.HelperText ?? "")}', '{EscapeSqlString(field.Name)}', {(int)field.Status}, 1, NOW(), 0, NULL, {field.IsDeleted.ToString().ToLower()}, 0, NULL){comma}");
+                }
+
+                sqlBuilder.AppendLine();
+            }
+
+            sqlBuilder.AppendLine("    SELECT COUNT(*) INTO field_managers_count FROM public.\"EntityFieldManagers\";");
+            sqlBuilder.AppendLine("    RAISE NOTICE 'All EntityFieldManagers setup complete with % total records', field_managers_count;");
+        }
+        else
+        {
+            sqlBuilder.AppendLine("    RAISE NOTICE 'No entity field managers found to export';");
+        }
+
+        sqlBuilder.AppendLine();
+        sqlBuilder.AppendLine("END $$;");
+
+        return sqlBuilder.ToString();
+    }
+
+
+    /// <summary>
+    /// Escapes strings for SQL script generation
+    /// </summary>
+    private string EscapeSqlString(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return "";
+
+        return input.Replace("'", "''")  // Escape single quotes for SQL
+                   .Replace("\\", "\\\\"); // Escape backslashes
     }
 } 

@@ -29,6 +29,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     private readonly UNOPSAppDbContext context;
     private GoogleCloudStorageService googleCloudStorageService;
     private readonly IUserProfileCacheService userProfileCacheService;
+    private readonly PartnerTreeService partnerTreeService;
 
     private InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
     {
@@ -229,11 +230,12 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         await context.SaveChangesAsync();
     }
 
-    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null, IUserProfileCacheService userProfileCacheService = null)
+    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null, IUserProfileCacheService userProfileCacheService = null)
         : base(mapper, context, configuration, null, "Interaction", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
         this.context = context;
+        this.partnerTreeService = partnerTreeService;
         interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration, serviceProvider);
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
@@ -575,11 +577,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             retVal.PartnerIds.Add(partner.PartnerId);
         }
 
-        foreach (var user in item.InteractionUsers)
-        {
-            retVal.UserIds.Add(user.UserId);
-        }
-
         return retVal;
     }
 
@@ -603,7 +600,10 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
         entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
         //Update CreatedBy value selected by the User on the Interaction edit page
-        entity.CreatedBy = model.CreatedBy.Value;
+        if (model.CreatedBy.HasValue)
+        {
+            entity.CreatedBy = model.CreatedBy.Value;
+        }
 
         // Handle OrganizationHierarchyIds if provided
         if (model.OrganizationHierarchyIds != null)
@@ -960,11 +960,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             result.PartnerIds = item.InteractionPartners.Select(ip => ip.PartnerId).ToList();
         }
 
-        if (item.InteractionUsers != null)
-        {
-            result.UserIds = item.InteractionUsers.Select(iu => iu.UserId).ToList();
-        }
-
         return result;
     }
 
@@ -1007,11 +1002,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         {
             result.PartnerIds = item.InteractionPartners.Select(ip => ip.PartnerId).ToList();
         }
-
-        if (item.InteractionUsers != null)
-        {
-            result.UserIds = item.InteractionUsers.Select(iu => iu.UserId).ToList();
-        }
+        
 
         return result;
     }
@@ -1043,6 +1034,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         }
         return null;
     }
+
 
     public virtual async Task<InteractionModel> FindGmailInteractionAsync(GmailInteractionRequest model)
     {

@@ -24,7 +24,6 @@ public class InteractionModel
     public List<int>? PartnerIds { get; set; } = new List<int>();
     [JsonIgnore]
     public virtual ICollection<InteractionPartnerModel>? InteractionPartners { get; set; }
-    public List<int>? UserIds { get; set; } = new List<int>();
     [JsonIgnore]
     public virtual ICollection<InteractionUserModel>? InteractionUsers { get; set; }
     public string? Location { get; set; }
@@ -55,6 +54,12 @@ public class InteractionModel
     public EntityPermissionsModel? Permissions { get; set; }
     public string? GmailThreadId { get; set; }
     public string? GmailMessageId { get; set; }
+    
+    // Computed properties from NotMapped fields in Interaction entity
+    public string? InteractionContactsList { get; set; }
+    public string? InteractionPartnersList { get; set; }
+    public string? InteractionUsersList { get; set; }
+    public string? InteractionOrgUnits { get; set; }
     
     // Audit fields from ModifiableDeletableEntity (read-only from frontend perspective)
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
