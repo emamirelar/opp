@@ -145,24 +145,25 @@ def create_app():
 
 def add_routers_and_endpoints(app: FastAPI):
     """Add all routers and endpoints to the FastAPI app"""
-    # Add chat router (POST /chat)
-    app.include_router(chat_router)
-    logger.info("✅ Chat router included")
+    # Add chat router with proper API prefix
+    app.include_router(chat_router, prefix="/api/ai-assistant")
+    logger.info("✅ Chat router included at /api/ai-assistant")
 
-    # Add session router (GET /generate-title)
-    app.include_router(session_router)
-    logger.info("✅ Session router included")
+    # Add session router with proper API prefix  
+    app.include_router(session_router, prefix="/api/ai-assistant")
+    logger.info("✅ Session router included at /api/ai-assistant")
 
-    # Add action log router (GET /generate-suggestions)
-    app.include_router(action_log_router)
-    logger.info("✅ Action log router included")
+    # Add action log router with proper API prefix
+    app.include_router(action_log_router, prefix="/api/ai-assistant") 
+    logger.info("✅ Action log router included at /api/ai-assistant")
 
     # Add framework endpoints (external API tools handled automatically)
     add_framework_endpoints(None)
     from routers.framework import router as framework_router
     
-    app.include_router(framework_router)
-    logger.info("✅ Framework router included")
+    # Framework router typically goes at root level for system endpoints
+    app.include_router(framework_router, prefix="/framework")
+    logger.info("✅ Framework router included at /framework")
 
 
  

@@ -31,7 +31,8 @@ public class PartnerModel
     
     // Partner Focal Point  
     public int? PartnerFocalPointUserId { get; set; } // Business Developer UserId
-    public string? PartnerFocalPointUserName { get; set; } // Business Developer Name (from navigation)
+    public string? PartnerFocalPointUserName { get; set; } // Business Developer Email (from navigation)
+    public string? PartnerFocalPointName { get; set; } // Business Developer Display Name (from navigation)
     
     // Partner Group Information
     public string? PartnerGroupCode { get; set; }

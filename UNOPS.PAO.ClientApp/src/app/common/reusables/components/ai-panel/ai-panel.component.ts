@@ -22,8 +22,13 @@ export interface AiDataService {
   templateUrl: './ai-panel.component.html',
   standalone: true,
   styles: `
-    :host {
-      @apply shadow-sm rounded-lg;
+    .ai-panel .p-panel {
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+      border-radius: 0.5rem !important;
+    }
+    .ai-panel ::ng-deep .p-panel-content {
+      border-bottom-left-radius: 8px !important;
+      border-bottom-right-radius: 8px !important;
     }
   `
 })
@@ -40,7 +45,7 @@ export class AiPanelComponent implements OnInit, OnDestroy {
   showAiIcon = input<boolean>(true);
   loadOnInit = input<boolean>(true);
   errorMessage = input<string>('errors.failedToLoad');
-  customStyles = input<string>('background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent');
+  customStyles = input<string>('unops-text-body-medium bg-gradient-to-r from-unops-secondary via-unops-primary to-unops-primary-light bg-clip-text text-transparent');
   truncateLength = input<number>(300); // Maximum characters to show before "See more"
 
   // Outputs
@@ -76,6 +81,19 @@ export class AiPanelComponent implements OnInit, OnDestroy {
   showSeeMoreButton = computed(() => {
     const content = this.content();
     return content && content.length > this.truncateLength() && !this.showFullContent();
+  });
+
+  showSeeLessButton = computed(() => {
+    const content = this.content();
+    return content && content.length > this.truncateLength() && this.showFullContent();
+  });
+
+  toggleButtonLabel = computed(() => {
+    return this.showFullContent() ? 'button.seeLess' : 'button.seeMore';
+  });
+
+  toggleButtonIcon = computed(() => {
+    return this.showFullContent() ? 'pi pi-chevron-up' : 'pi pi-chevron-down';
   });
 
   ngOnInit() {

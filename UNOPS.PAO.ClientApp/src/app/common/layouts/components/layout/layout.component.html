@@ -1,38 +1,37 @@
 <div [ngClass]="containerClass"
-	class="layout-wrapper"
+	class="layout-wrapper font-unops-body text-unops-neutral-900 bg-unops-surface-primary"
 	[class.layout-mobile]="isMobile">
 	<app-topbar></app-topbar>
 	<app-sidebar></app-sidebar>
 	<!-- Splitter container for main content and AI Assistant -->
-	<div class="layout-main-container">
-
-			<app-splitter
-				#splitter
-				[style]="{ height: 'calc(100vh - 105px)' }"
-				[minSizes]="minSplitterSizes"
-				[panels]="splitterPanels"
-				[panelSizes]="splitterSizes"
-				layout="horizontal"
-				stateKey="ai-assistant-splitter"
-				[gutterSize]="16"
-				(onResizeEnd)="rememberSplitterState($event)"
-				>
-			</app-splitter>
+	<div class="layout-main-container relative">
+		<app-splitter
+			#splitter
+			[style]="{ height: 'calc(100vh - 56px)' }"
+			[minSizes]="minSplitterSizes"
+			[panels]="splitterPanels"
+			[panelSizes]="splitterSizes"
+			layout="horizontal"
+			stateKey="ai-assistant-splitter"
+			[gutterSize]="16"
+			(onResizeEnd)="rememberSplitterState($event)"
+			>
+		</app-splitter>
 	</div>
 
 	<!-- Templates for splitter panels -->
 	<ng-template #mainContentTemplate>
-		<div class="mr-1 w-full h-full overflow-auto">
+		<div class="bg-unops-surface-secondary p-unops-md px-unops-2xl w-full h-full overflow-auto">
 			<router-outlet></router-outlet>
 		</div>
 	</ng-template>
 
 	<ng-template #aiAssistantTemplate>
-		<div class="ai-assistant-panel h-full w-full">
+		<div class="ai-assistant-panel h-full w-full bg-unops-surface-primary">
 			<app-ai-assistant-panel></app-ai-assistant-panel>
 		</div>
 	</ng-template>
 
-	<div class="layout-mask animate-fadein"></div>
+	<div class="layout-mask animate-fade-in bg-unops-neutral-900/20 backdrop-blur-sm"></div>
 	<app-loading-overlay></app-loading-overlay>
 </div>

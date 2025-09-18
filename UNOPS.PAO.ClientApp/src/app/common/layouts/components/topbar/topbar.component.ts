@@ -130,6 +130,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
   
   // Mobile detection
   isMobile: boolean = false;
+  
+  // AI Assistant icon fallback
+  showFallbackIcon: boolean = false;
 
   // Chat history properties
   chatSessions: any[] = [];
@@ -1065,5 +1068,29 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   trackByChatId(index: number, session: any): string {
     return session.id || index;
+  }
+
+  // Debug methods for AI assistant image
+  onImageLoad(event: any): void {
+    console.log('AI assistant image loaded successfully:', event);
+  }
+
+  onImageError(event: any): void {
+    console.error('AI assistant image failed to load:', event);
+    console.error('Image src:', event.target?.src);
+    // Try alternative paths first
+    const img = event.target;
+    if (img.src.includes('./images/')) {
+      console.log('Trying alternative path: images/AI_visual_64.svg');
+      img.src = 'images/AI_visual_64.svg';
+    } else if (img.src.includes('images/AI_visual_64.svg') && !img.src.includes('assets/')) {
+      console.log('Trying alternative path: assets/images/AI_visual_64.svg');
+      img.src = 'assets/images/AI_visual_64.svg';
+    } else {
+      // All paths failed, show fallback icon
+      console.log('All image paths failed, showing fallback icon');
+      this.showFallbackIcon = true;
+      this.cdr.markForCheck();
+    }
   }
 }

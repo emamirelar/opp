@@ -136,12 +136,20 @@ if __name__ == "__main__":
         logger.info(f"🔧 Development Mode: {server_config.get('is_development', False)}")
         logger.info(f"🏢 Application: {branding_config.get('application_name', 'AI Service')}")
 
+        # Enhanced uvicorn configuration for streaming support
         uvicorn.run(
             'main:app',
             host=server_config.get('host', '0.0.0.0'),
             port=server_config.get('port', 8000),
             reload=server_config.get('is_development', False),
-            log_level="info"
+            log_level="info",
+            # Critical flags for streaming to work properly
+            loop="asyncio",           # Use asyncio event loop for streaming
+            access_log=False,         # Disable access logging to prevent buffering
+            server_header=False,      # Reduce header overhead
+            date_header=False,        # Reduce header overhead
+            # Ensure single worker for streaming compatibility
+            workers=1 if not server_config.get('is_development', False) else None
         )
 
     except KeyboardInterrupt:

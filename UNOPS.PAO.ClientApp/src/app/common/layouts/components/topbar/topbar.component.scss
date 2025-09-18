@@ -1,7 +1,12 @@
+/* Import UNOPS design tokens */
+@import '../../../../../styles/unops-design-tokens.scss';
+
 /* Fix topbar height for proper AI layout positioning */
 :host {
-  height: 8vh;
+  height: 56px;
   display: block;
+  background-color: var(--unops-surface-primary);
+  border-bottom: 1px solid var(--unops-neutral-200);
 }
 
 /* Notifications container - similar to tour control */
@@ -14,24 +19,24 @@
   position: absolute;
   top: -8px;
   right: -8px;
-  background-color: var(--primary-color);
-  color: white;
-  border-radius: 12px;
-  padding: 2px 6px;
-  font-size: 10px;
+  background-color: var(--unops-primary);
+  color: var(--unops-primary-on);
+  border-radius: var(--unops-radius-lg);
+  padding: var(--unops-spacing-xs) var(--unops-spacing-sm);
+  font-size: var(--unops-font-size-caption);
   min-width: 20px;
   height: 20px;
   text-align: center;
-  z-index: 2;
+  z-index: var(--unops-z-dropdown);
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
   box-sizing: border-box;
   line-height: 1;
-  font-weight: 600;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-weight: var(--unops-font-weight-semibold);
+  border: 2px solid var(--unops-surface-primary);
+  box-shadow: var(--unops-shadow-sm);
   
   /* Auto-adjust width for larger numbers */
   width: auto;
@@ -57,9 +62,9 @@
       outline: none;
       
       &:focus-visible {
-        outline: 2px solid var(--primary-color);
+        outline: 2px solid var(--unops-primary);
         outline-offset: 2px;
-        border-radius: 4px;
+        border-radius: var(--unops-radius-md);
       }
       
       &:hover {
@@ -74,13 +79,13 @@
   
   .notification-header {
     padding: 1rem 1rem 0.5rem 1rem;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--unops-neutral-200);
     
     h3 {
       margin: 0;
       font-size: 1.1rem;
       font-weight: 600;
-      color: #374151;
+      color: var(--unops-neutral-900);
     }
   }
   
@@ -88,7 +93,7 @@
     display: flex;
     padding: 0 1rem;
     margin-bottom: 0.5rem;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--unops-neutral-200);
     
     .tab-button {
       flex: 1;
@@ -98,7 +103,7 @@
       cursor: pointer;
       position: relative;
       font-weight: 500;
-      color: #6b7280;
+      color: var(--unops-neutral-600);
       transition: all 0.2s ease;
       border-bottom: 2px solid transparent;
       display: flex;
@@ -107,19 +112,19 @@
       gap: 0.5rem;
       
       &:hover {
-        color: #374151;
-        background-color: #f9fafb;
+        color: var(--unops-neutral-900);
+        background-color: var(--unops-neutral-50);
       }
       
       &.active {
-        color: var(--primary-color);
-        border-bottom-color: var(--primary-color);
-        background-color: rgba(var(--primary-color-rgb), 0.05);
+        color: var(--unops-primary);
+        border-bottom-color: var(--unops-primary);
+        background-color: rgba(var(--unops-primary-rgb), 0.05);
       }
       
       .tab-badge {
-        background-color: #e5e7eb;
-        color: #374151;
+        background-color: var(--unops-neutral-200);
+        color: var(--unops-neutral-900);
         border-radius: 12px;
         padding: 2px 8px;
         font-size: 11px;
@@ -129,7 +134,7 @@
       }
       
       &.active .tab-badge {
-        background-color: var(--primary-color);
+        background-color: var(--unops-primary);
         color: white;
       }
     }
@@ -142,35 +147,35 @@
       display: flex;
       gap: 0.5rem;
       padding: 1rem;
-      border-bottom: 1px solid #f3f4f6;
+      border-bottom: 1px solid var(--unops-neutral-100);
       cursor: pointer;
       transition: background-color 0.2s ease;
       
       &:hover {
-        background-color: #f9fafb;
+        background-color: var(--unops-neutral-50);
       }
       
       &.notification-read {
         opacity: 0.7;
         
         .notification-content p {
-          color: #6b7280;
+          color: var(--unops-neutral-600);
         }
       }
       
       &.notification-unread {
-        background-color: rgba(var(--primary-color-rgb), 0.02);
-        border-left: 3px solid var(--primary-color);
+        background-color: rgba(var(--unops-primary-rgb), 0.02);
+        border-left: 3px solid var(--unops-primary);
         
         .notification-content p {
           font-weight: 500;
-          color: #374151;
+          color: var(--unops-neutral-900);
         }
       }
       
       &.notification-progress {
-        background-color: rgba(59, 130, 246, 0.05);
-        border-left: 3px solid #3b82f6;
+        background-color: var(--unops-primary-container-soft);
+        border-left: 3px solid var(--unops-accent-blue);
       }
       
       .notification-category-icon {
@@ -178,7 +183,7 @@
         width: 40px;
         height: 40px;
         border-radius: 20px;
-        background-color: #f3f4f6;
+        background-color: var(--unops-neutral-100);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -215,7 +220,7 @@
           margin-top: 0.5rem;
           
           small {
-            color: #9ca3af;
+            color: var(--unops-neutral-400);
             font-size: 11px;
           }
         }
@@ -232,14 +237,14 @@
     
     .see-more-container {
       padding: 1rem;
-      border-top: 1px solid #f3f4f6;
-      background-color: #fafafa;
+      border-top: 1px solid var(--unops-neutral-100);
+      background-color: var(--unops-neutral-50);
     }
     
     .no-notifications {
       text-align: center;
       padding: 3rem 2rem;
-      color: #6b7280;
+      color: var(--unops-neutral-600);
       
       i {
         display: block;
@@ -262,7 +267,7 @@
   
   .p-dialog-header {
     padding: 1.5rem 2rem 1rem 2rem;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--unops-neutral-200);
   }
 }
 
@@ -273,7 +278,7 @@
 .notification-dialog-tabs {
   display: flex;
   margin-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--unops-neutral-200);
   margin: 0 -2rem 1rem -2rem;
   padding: 0 2rem;
   
@@ -285,7 +290,7 @@
     cursor: pointer;
     position: relative;
     font-weight: 500;
-    color: #6b7280;
+    color: var(--unops-neutral-600);
     transition: all 0.2s ease;
     border-bottom: 2px solid transparent;
     display: flex;
@@ -294,19 +299,19 @@
     gap: 0.5rem;
     
     &:hover {
-      color: #374151;
-      background-color: #f9fafb;
+      color: var(--unops-neutral-900);
+      background-color: var(--unops-neutral-50);
     }
     
     &.active {
-      color: var(--primary-color);
-      border-bottom-color: var(--primary-color);
-      background-color: rgba(var(--primary-color-rgb), 0.05);
+      color: var(--unops-primary);
+      border-bottom-color: var(--unops-primary);
+      background-color: rgba(var(--unops-primary-rgb), 0.05);
     }
     
     .tab-badge {
-      background-color: #e5e7eb;
-      color: #374151;
+      background-color: var(--unops-neutral-200);
+      color: var(--unops-neutral-900);
       border-radius: 12px;
       padding: 2px 8px;
       font-size: 11px;
@@ -316,7 +321,7 @@
     }
     
     &.active .tab-badge {
-      background-color: var(--primary-color);
+      background-color: var(--unops-primary);
       color: white;
     }
   }
@@ -331,12 +336,12 @@
     display: flex;
     gap: 0.5rem;
     padding: 1rem 2rem;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--unops-neutral-100);
     cursor: pointer;
     transition: all 0.2s ease;
     
     &:hover {
-      background-color: #f9fafb;
+      background-color: var(--unops-neutral-50);
       transform: translateY(-1px);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
@@ -349,23 +354,23 @@
       opacity: 0.7;
       
       .notification-content p {
-        color: #6b7280;
+        color: var(--unops-neutral-600);
       }
     }
     
     &.notification-unread {
-      background-color: rgba(var(--primary-color-rgb), 0.02);
-      border-left: 3px solid var(--primary-color);
+      background-color: rgba(var(--unops-primary-rgb), 0.02);
+      border-left: 3px solid var(--unops-primary);
       
       .notification-content p {
         font-weight: 500;
-        color: #374151;
+        color: var(--unops-neutral-900);
       }
     }
     
     &.notification-progress {
-      background-color: rgba(59, 130, 246, 0.05);
-      border-left: 3px solid #3b82f6;
+      background-color: var(--unops-primary-container-soft);
+      border-left: 3px solid var(--unops-accent-blue);
     }
     
     .notification-category-icon {
@@ -373,7 +378,7 @@
       width: 40px;
       height: 40px;
       border-radius: 20px;
-      background-color: #f3f4f6;
+      background-color: var(--unops-neutral-100);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -401,7 +406,7 @@
         margin-top: 0.5rem;
         
         small {
-          color: #9ca3af;
+          color: var(--unops-neutral-400);
           font-size: 11px;
         }
       }
@@ -419,7 +424,7 @@
   .no-notifications {
     text-align: center;
     padding: 3rem 2rem;
-    color: #6b7280;
+    color: var(--unops-neutral-600);
     margin: 0 2rem;
     
     i {
@@ -432,4 +437,66 @@
       font-size: 14px;
     }
   }
+}
+
+// AI Assistant Button Styles
+.ai-assistant-toggle {
+  // Ensure the button is visible and properly sized
+  button.p-button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  // Target the image directly with multiple selectors
+  img,
+  button img,
+  .p-button img,
+  button.p-button img {
+    display: block !important;
+    width: 24px !important;
+    height: 24px !important;
+    object-fit: contain !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+}
+
+// Global override using ::ng-deep to penetrate Angular's view encapsulation
+:host ::ng-deep .ai-assistant-toggle {
+  button.p-button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  img,
+  .ai-icon {
+    display: block !important;
+    width: 24px !important;
+    height: 24px !important;
+    object-fit: contain !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+}
+
+// Additional global override for the ai-icon class specifically
+:host ::ng-deep .ai-icon {
+  display: block !important;
+  width: 24px !important;
+  height: 24px !important;
+  object-fit: contain !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  max-width: none !important;
+  max-height: none !important;
 }

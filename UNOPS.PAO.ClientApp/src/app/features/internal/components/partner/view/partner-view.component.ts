@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -153,6 +153,15 @@ export class PartnerViewComponent implements OnInit {
   showCommentDialog = false;
   entityTypePartner = EntityType.Partner;
   infoLoading = signal<boolean>(false);
+
+  // ViewChild reference for link list component
+  @ViewChild('linkListComponent') linkListComponent!: LinkListComponent;
+  
+  // ViewChild reference for document component
+  @ViewChild('appDocument') documentComponent!: DocumentComponent;
+  
+  // ViewChild reference for GDrive document component
+  @ViewChild('gdriveComponent') gdriveComponent!: GDriveDocumentComponent;
 
   //To be handled by permissions later so that only PRM Admin has this value set to true
   showAdditionalInfo = signal<boolean>(true);
@@ -597,6 +606,33 @@ export class PartnerViewComponent implements OnInit {
 
   toggleFullContent() {
     this.showFullContent.set(!this.showFullContent());
+  }
+
+  /**
+   * Opens the add link dialog by calling the link list component's openEditDialog method
+   */
+  openAddLinkDialog() {
+    if (this.linkListComponent) {
+      this.linkListComponent.openEditDialog();
+    }
+  }
+
+  /**
+   * Opens the upload document dialog by calling the document component's openUploadDialog method
+   */
+  openUploadDialog() {
+    if (this.documentComponent) {
+      this.documentComponent.openUploadDialog();
+    }
+  }
+
+  /**
+   * Opens the Google Drive picker by calling the GDrive component's openGoogleDrivePicker method
+   */
+  openGoogleDriveDialog() {
+    if (this.gdriveComponent) {
+      this.gdriveComponent.openGoogleDrivePicker();
+    }
   }
 
 

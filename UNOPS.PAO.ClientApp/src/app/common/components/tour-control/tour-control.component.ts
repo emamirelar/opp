@@ -15,40 +15,24 @@ import { WelcomeTourService } from '../../services/welcome-tour.service';
   styles: [`
     :host ::ng-deep .tour-button {
       position: relative;
-      overflow: hidden;
+      transition: all 0.2s ease;
     }
 
-    :host ::ng-deep .tour-button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      transition: left 0.6s;
-    }
-
-    :host ::ng-deep .tour-button:hover::before {
-      left: 100%;
-    }
-
-    :host ::ng-deep .tour-button .p-button-label {
-      color: white !important;
+    :host ::ng-deep .tour-button:hover {
+      background: var(--unops-neutral-50) !important;
+      transform: translateY(-1px);
     }
 
     :host ::ng-deep .tour-button:focus {
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+      box-shadow: 0 0 0 2px var(--unops-primary-lighter) !important;
     }
 
-    /* Special styling for AI prompt dialog context - match main top bar colors */
-    :host.ai-prompt-tour-control ::ng-deep .tour-button {
-      background: linear-gradient(135deg, #3b82f6 0%, #9333ea 100%) !important;
+    :host ::ng-deep .tour-button i {
+      color: var(--unops-primary);
     }
 
-    :host.ai-prompt-tour-control ::ng-deep .tour-button:hover {
-      background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
-      transform: scale(1.05);
+    :host ::ng-deep .tour-button:hover i {
+      color: var(--unops-primary-dark);
     }
   `]
 })

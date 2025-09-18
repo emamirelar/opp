@@ -34,9 +34,9 @@
       </ng-container>
     </div>
 
-    <!-- Gutter (resizer) - only between panels, not after the last one -->
+    <!-- Gutter (resizer) - only between panels, not after the last one, and only when both adjacent panels have non-zero size -->
     <div 
-      *ngIf="i < visiblePanels().length - 1"
+      *ngIf="i < visiblePanels().length - 1 && shouldShowGutter(i)"
       #gutter
       class="splitter-gutter"
       [class.splitter-gutter-horizontal]="layout === 'horizontal'"

@@ -23,10 +23,35 @@
 	</div>
 
 	<div class="flex items-center justify-end" [class.search-expanded-hide-mobile]="isSearchExpanded">
-		<!-- Tour Button -->
-		<app-tour-control [class.search-expanded-hide-mobile]="isSearchExpanded"></app-tour-control>
+		<!-- AI Assistant - Key feature, most prominent position -->
+		<p-button
+			(onClick)="onAIAssistantToggle()"
+			type="button"
+			[rounded]="true"
+			[text]="true"
+			[ariaLabel]="isMobile ? 'Open AI Assistant Page' : 'Toggle AI Assistant Panel'"
+			data-ai-assistant-toggle
+			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center ai-assistant-toggle-btn"
+			[class.hidden-on-mobile]="isOnAiPage()"
+			[pTooltip]="isMobile ? 'Open AI Assistant Page' : 'Toggle AI Assistant Panel'"
+			tooltipPosition="bottom"
+			class="ai-assistant-toggle">
+			<ng-template pTemplate="content">
+				<!-- Try SVG first -->
+				<img 
+					src="./images/AI_visual_64.svg" 
+					alt="AI Assistant" 
+					class="ai-icon w-6 h-6" 
+					style="display: block !important; width: 24px !important; height: 24px !important;"
+					(error)="onImageError($event)"
+					(load)="onImageLoad($event)"
+					[hidden]="showFallbackIcon" />
+				<!-- Fallback icon -->
+				<i *ngIf="showFallbackIcon" class="pi pi-cog text-xl" style="color: #0092d1;"></i>
+			</ng-template>
+		</p-button>
 		
-		<!-- Global Filters button (moved before globe icon) -->
+		<!-- Global Filters button -->
 		<p-button
 			type="button"
 			[rounded]="true"
@@ -42,24 +67,11 @@
 			</ng-template>
 		</p-button>
 		
-      <app-language-selector class="language-selector"></app-language-selector>
+		<!-- Tour Control - Help/onboarding -->
+		<app-tour-control [class.search-expanded-hide-mobile]="isSearchExpanded"></app-tour-control>
 		
-		<p-button
-			(onClick)="onAIAssistantToggle()"
-			type="button"
-			[rounded]="true"
-			[text]="true"
-			[ariaLabel]="isMobile ? 'Open AI Assistant Page' : 'Toggle AI Assistant Panel'"
-			data-ai-assistant-toggle
-			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center ai-assistant-toggle-btn"
-			[class.hidden-on-mobile]="isOnAiPage()"
-			[pTooltip]="isMobile ? 'Open AI Assistant Page' : 'Toggle AI Assistant Panel'"
-			tooltipPosition="bottom"
-			class="ai-assistant-toggle">
-			<ng-template pTemplate="content">
-				<img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-6 h-6" />
-			</ng-template>
-		</p-button>
+		<!-- Language Selector - Less frequent use -->
+		<app-language-selector class="language-selector"></app-language-selector>
 		
       <div class="relative notifications-container">
 			<p-button

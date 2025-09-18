@@ -510,6 +510,23 @@ export class SplitterComponent implements AfterViewInit, OnDestroy {
     return panel.id;
   }
 
+  // Check if gutter should be shown between panels
+  shouldShowGutter(index: number): boolean {
+    const sizes = this.computedSizes();
+    const visiblePanels = this.visiblePanels();
+    
+    // Only show gutter if both current and next panels have non-zero size
+    if (index >= 0 && index < visiblePanels.length - 1 && index < sizes.length - 1) {
+      const currentPanelSize = sizes[index] || 0;
+      const nextPanelSize = sizes[index + 1] || 0;
+      
+      // Show gutter only if both panels have size > 0
+      return currentPanelSize > 0 && nextPanelSize > 0;
+    }
+    
+    return false;
+  }
+
   // Get computed gutter style
   getGutterStyle(): { [key: string]: string } {
     return {

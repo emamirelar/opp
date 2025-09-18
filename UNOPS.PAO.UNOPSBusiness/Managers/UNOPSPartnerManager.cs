@@ -84,15 +84,17 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
-        // Populate PartnerFocalPointUserName if PartnerFocalPointUserId exists
+        // Populate PartnerFocalPointUserName and PartnerFocalPointName if PartnerFocalPointUserId exists
         if (result.PartnerFocalPointUserId.HasValue && result.PartnerFocalPointUserId.Value > 0)
         {
             var focalPointUser = await _context.PAOUsers
+                .Include(u => u.UserProfile)
                 .Where(u => u.Id == result.PartnerFocalPointUserId.Value)
                 .FirstOrDefaultAsync();
             if (focalPointUser != null)
             {
-                result.PartnerFocalPointUserName = focalPointUser.Email;
+                result.PartnerFocalPointUserName = focalPointUser.Email; // Username is the email
+                result.PartnerFocalPointName = !string.IsNullOrEmpty(focalPointUser.Name) ? focalPointUser.Name : focalPointUser.Email; // Display name
             }
         }
 
@@ -386,7 +388,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     public async Task<PartnerModel?> GetPartner(int userId, int id)
     {
-        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerGroup"]);
+        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerGroup", "LiaisonOffice"]);
         if (item == null)
         {
             return default;
@@ -403,7 +405,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetBasicPartnerDetailsAsync(int id)
     {
-        string[] includes = ["PartnerGroup"];
+        string[] includes = ["PartnerGroup", "LiaisonOffice"];
 
         var item = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -898,7 +900,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetPartnerAsync(ClaimsPrincipal user, int id)
     {
-        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerGroup"]);
+        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerGroup", "LiaisonOffice"]);
         if (item == null)
         {
             return null;
@@ -907,7 +909,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Check if user has permission to access this specific entity
         // Create a single-item query and apply access control filters
         var query = PartnerRepository
-            .GetAll(["PartnerGroup"])
+            .GetAll(["PartnerGroup", "LiaisonOffice"])
             .Where(x => x.Id == id && !x.IsDeleted)
             .AsQueryable();
 
@@ -1873,6 +1875,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             var partner = await _context.Partners
                 .Where(p => p.Name.ToLower() == name.ToLower() && !p.IsDeleted)
                 .Include(p => p.PartnerGroup)
+                .Include(p => p.LiaisonOffice)
                 .AsQueryable()
                 .FirstOrDefaultAsync();
 
@@ -1888,6 +1891,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             var query = _context.Partners
                 .Where(p => p.Id == partner.Id)
                 .Include(p => p.PartnerGroup)
+                .Include(p => p.LiaisonOffice)
                 .AsQueryable();
 
             var filteredData = await ApplyAccessControlFilters(query, user, "read");

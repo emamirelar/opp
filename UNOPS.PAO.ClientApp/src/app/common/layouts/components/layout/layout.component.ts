@@ -1,4 +1,4 @@
-import { NgClass } from '@angular/common';
+import { NgClass, CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, Renderer2, ViewChild, effect, signal, TemplateRef, AfterViewInit, HostListener } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterModule } from '@angular/router';
 import { SidebarComponent } from '../sidebar/sidebar.component';
@@ -21,6 +21,7 @@ import { WelcomeTourService } from '../../../services/welcome-tour.service';
     SplitterComponent,
     AiAssistantPanelComponent,
     NgClass,
+    CommonModule,
     LoadingOverlayComponent
   ],
   templateUrl: './layout.component.html',
@@ -97,6 +98,32 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
           this.addAiAssistantOutsideClickListener();
         } else {
           this.removeAiAssistantOutsideClickListener();
+        }
+      });
+
+      // Listen for AI assistant active state changes to update sizes only
+      effect(() => {
+        const state = this.layoutService.layoutState();
+        const isActive = state.aiAssistantActive ?? false;
+        
+        // Check if the state actually changed to avoid unnecessary recalculation
+        if (this._lastAiAssistantActive !== isActive) {
+          // Update the tracked state FIRST to prevent infinite loops
+          this._lastAiAssistantActive = isActive;
+          
+          // Clear cache to force recalculation of sizes only
+          this._splitterSizes = [];
+          this._minSplitterSizes = [];
+          
+          // No need to reinitialize panels - they're always present, just sizes change
+          
+          // Update localStorage
+          localStorage.setItem('aiAssistantActive', isActive.toString());
+          
+          // Force change detection
+          setTimeout(() => {
+            this.cdr.markForCheck();
+          });
         }
       });
 
@@ -185,7 +212,7 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
           id: 'ai-assistant',
           template: this.aiAssistantTemplate,
           resizable: true,
-          visible: true, // Always visible, but size will be 0 when inactive
+          visible: true, // Always visible in DOM - visibility controlled by size calculations
           data: { title: 'AI Assistant' }
         }
       ];
@@ -275,7 +302,7 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
 
   rememberSplitterState(event: SplitterResizeEvent) {
     // Update the assistant state based on panel size (0 means hidden)
-    const isActive = event.sizes[1] > 0;
+    const isActive = event.sizes.length >= 2 && event.sizes[1] > 0;
     const wasActive = this.layoutService.layoutState().aiAssistantActive ?? false;
     
     // Only update if the active state actually changed
@@ -286,6 +313,8 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
       this._lastAiAssistantActive = null;
       this._splitterSizes = [];
       this._minSplitterSizes = [];
+      
+      // No need to reinitialize panels since they're always present now
       
       localStorage.setItem('aiAssistantActive', isActive.toString());
       
@@ -319,10 +348,13 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
     
     this.layoutService.layoutState.update((prev) => ({ ...prev, aiAssistantActive: isActive }));
     
-    // Clear cache to force recalculation
+    // Clear cache to force recalculation of sizes
     this._lastAiAssistantActive = null;
     this._splitterSizes = [];
     this._minSplitterSizes = [];
+    
+    // Initialize panels (only needed once during component initialization)
+    this.initializeSplitterPanels();
     
     // IMPORTANT: Clear splitter's own state if AI assistant should be closed
     if (!isActive) {
@@ -367,16 +399,17 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
   private calculateSplitterSizes(): number[] {
     const isActive = this.layoutService.layoutState().aiAssistantActive;
     
-    // Mobile behavior: AI assistant takes full width when active, 0 when inactive
-    if (this.isMobile) {
-      return isActive ? [0, 100] : [100, 0];
-    }
-    
-    // Desktop behavior (existing logic)
+    // When AI assistant is not active, give it 0% size but keep it in DOM
     if (!isActive) {
-      return [100, 0]; // AI assistant hidden (width = 0)
+      return [100, 0]; // Main content takes full width, AI assistant is 0% (hidden but in DOM)
     }
     
+    // Mobile behavior: AI assistant takes full width when active
+    if (this.isMobile) {
+      return [0, 100]; // Hide main content, show AI assistant full screen
+    }
+    
+    // Desktop behavior with AI assistant active
     // Try to restore saved size, with minimum constraint
     const savedState = localStorage.getItem('aiAssistantSplitterState');
     if (savedState) {
@@ -400,13 +433,18 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
   private calculateMinSplitterSizes(): number[] {
     const isActive = this.layoutService.layoutState().aiAssistantActive;
     
-    // Mobile behavior: no minimum constraints needed
-    if (this.isMobile) {
-      return isActive ? [0, 100] : [100, 0];
+    // When AI assistant is not active, main content can be 100%, AI assistant stays at 0%
+    if (!isActive) {
+      return [0, 0]; // Main content minimum 0% (can be 100%), AI assistant fixed at 0%
     }
     
-    // Desktop behavior (existing logic)
-    return isActive ? [50, this.minAiAssistantSize] : [100, 0];
+    // Mobile behavior: no minimum constraints needed
+    if (this.isMobile) {
+      return [0, 100];
+    }
+    
+    // Desktop behavior with AI assistant active
+    return [50, this.minAiAssistantSize];
   }
 
   toggleAiAssistant() {
@@ -418,10 +456,12 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
       aiAssistantActive: newActiveState 
     }));
     
-    // Clear cache to force recalculation
+    // Clear cache to force recalculation of sizes
     this._lastAiAssistantActive = null;
     this._splitterSizes = [];
     this._minSplitterSizes = [];
+    
+    // No need to reinitialize panels - they're always present, just sizes change
     
     localStorage.setItem('aiAssistantActive', newActiveState.toString());
     
@@ -438,10 +478,12 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
       aiAssistantActive: false 
     }));
     
-    // Clear cache to force recalculation
+    // Clear cache to force recalculation of sizes
     this._lastAiAssistantActive = null;
     this._splitterSizes = [];
     this._minSplitterSizes = [];
+    
+    // No need to reinitialize panels - they're always present, just sizes change
     
     // Update localStorage to reflect closed state
     localStorage.setItem('aiAssistantActive', 'false');
