@@ -8,7 +8,6 @@ namespace UNOPS.PAO.Models;
 public class InteractionModel
 {
     public int Id { get; set; }
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     public InteractionType Type { get; set; }
     public DateTime Date { get; set; }
 
