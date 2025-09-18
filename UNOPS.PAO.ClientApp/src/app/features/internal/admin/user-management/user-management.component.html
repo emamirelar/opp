@@ -79,6 +79,7 @@
                 [showClear]="true"
                 [showToggleAll]="true"
                 (onChange)="onFilterChange()"
+                [disabled]="showMyOrgUnitOnly()"
                 class="w-full">
               </p-multiSelect>
             </div>
