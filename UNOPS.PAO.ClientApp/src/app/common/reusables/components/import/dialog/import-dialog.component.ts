@@ -120,6 +120,16 @@ interface ImportColumn extends ListViewColumn {
     .p-error:not(.import-error) td {
       background-color: #fef3cd !important;
     }
+    
+    /* Style for internal duplicate badge in banner only */
+    .internal-duplicate-badge {
+      background-color: #f97316;
+      color: white;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
   `]
 })
 export class ImportDialogComponent implements OnInit {
@@ -146,6 +156,11 @@ export class ImportDialogComponent implements OnInit {
   nonDuplicateRows = signal<any[]>([]);
   showDuplicateWarning = signal<boolean>(false);
   duplicateWarningMessage = signal<string>('');
+
+  // Internal duplicate warning properties
+  internalDuplicateRows = signal<any[]>([]);
+  showInternalDuplicateWarning = signal<boolean>(false);
+  internalDuplicateWarningMessage = signal<string>('');
 
   // Pagination properties
   first = signal(0);
@@ -538,6 +553,35 @@ export class ImportDialogComponent implements OnInit {
     return this.rowsWithMissingRequired().length > 0;
   }
 
+
+  /**
+   * Get display row number for a record (1-based, accounting for header)
+   */
+  getDisplayRowNumber(record: any): number {
+    const data = this.importDialogService.data();
+    const index = data.findIndex(r => r._importRowId === record._importRowId);
+    return index + 2; // +1 for 0-based index, +1 for header row
+  }
+
+  /**
+   * Get display name for a record (name or first few chars of key field)
+   */
+  getRecordDisplayName(record: any): string {
+    // Try to get the most descriptive field based on entity type
+    const entityType = this.currentImportType().toLowerCase();
+    
+    switch (entityType) {
+      case 'partner':
+        return record.name || record.partnerName || record.shortName || `Partner #${this.getDisplayRowNumber(record)}`;
+      case 'contact':
+        return record.name || `${record.firstName || ''} ${record.lastName || ''}`.trim() || record.email || `Contact #${this.getDisplayRowNumber(record)}`;
+      case 'interaction':
+        return record.subject || record.type || `Interaction #${this.getDisplayRowNumber(record)}`;
+      default:
+        return record.name || record.title || record.description || `Record #${this.getDisplayRowNumber(record)}`;
+    }
+  }
+
   /**
    * Process duplicate detection and add duplicateInfo to each record
    */
@@ -545,8 +589,32 @@ export class ImportDialogComponent implements OnInit {
     const processedData = [...data];
     const duplicateRows: any[] = [];
     const nonDuplicateRows: any[] = [];
+    const internalDuplicateRows: any[] = [];
 
     processedData.forEach((record, index) => {
+      
+      // Check for internal duplicate warnings first
+      if (record.internalDuplicateWarning) {
+        const internalWarning = record.internalDuplicateWarning;
+        
+        record.internalDuplicateInfo = {
+          hasInternalDuplicate: true,
+          isMaster: internalWarning.isMaster,
+          duplicateCount: internalWarning.duplicateCount,
+          duplicateRows: internalWarning.duplicateRows,
+          masterRow: internalWarning.masterRow,
+          matchReasons: internalWarning.matchReasons,
+          message: internalWarning.message,
+          tooltip: internalWarning.message
+        };
+        
+        internalDuplicateRows.push(record);
+      } else {
+        record.internalDuplicateInfo = {
+          hasInternalDuplicate: false,
+          tooltip: 'No internal duplicates'
+        };
+      }
       
       // Check if record has duplicateDetection from the new AI service
       const duplicateDetection = record.duplicateDetection;
@@ -607,6 +675,7 @@ export class ImportDialogComponent implements OnInit {
     // Update signals
     this.duplicateRows.set(duplicateRows);
     this.nonDuplicateRows.set(nonDuplicateRows);
+    this.internalDuplicateRows.set(internalDuplicateRows);
     
     // Show warning if duplicates found
     if (duplicateRows.length > 0) {
@@ -616,6 +685,16 @@ export class ImportDialogComponent implements OnInit {
       );
     } else {
       this.showDuplicateWarning.set(false);
+    }
+
+    // Show warning if internal duplicates found
+    if (internalDuplicateRows.length > 0) {
+      this.showInternalDuplicateWarning.set(true);
+      this.internalDuplicateWarningMessage.set(
+        `${internalDuplicateRows.length} record(s) have internal duplicates within the file. Please review and fix duplicates in your source file.`
+      );
+    } else {
+      this.showInternalDuplicateWarning.set(false);
     }
 
     return processedData;
