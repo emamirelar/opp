@@ -856,12 +856,39 @@ export class ImportDialogService {
         case 'partner':
           return `${record.name || 'Unnamed'} ${record.partnerShortDescription ? '- ' + record.partnerShortDescription : ''}`.trim();
         case 'interaction':
-          return `${record.type || 'Unknown type'}: ${record.subject || 'No subject'} (${record.date || 'No date'})`.trim();
+          const formattedDate = this.formatDateForDisplay(record.date);
+          return `${record.type || 'Unknown type'}: ${record.subject || 'No subject'} (${formattedDate})`.trim();
         default:
           return JSON.stringify(record).substring(0, 100) + '...';
       }
     } catch (error) {
       return 'Error displaying record';
+    }
+  }
+
+  /**
+   * Format date for display in error messages and dialogs
+   */
+  private formatDateForDisplay(dateValue: any): string {
+    if (!dateValue) return 'No date';
+    
+    try {
+      const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+      
+      if (date instanceof Date && !isNaN(date.getTime())) {
+        // Use a simple, readable format
+        return date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+      
+      return dateValue.toString();
+    } catch (error) {
+      return dateValue ? dateValue.toString() : 'Invalid date';
     }
   }
 

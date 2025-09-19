@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, EventEmitter, inject, Input, OnInit, Output, signal } from '@angular/core';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
@@ -17,6 +19,7 @@ import { AutoFocusModule } from 'primeng/autofocus';
 import { BlockUI } from 'primeng/blockui';
 import { MessageModule } from 'primeng/message';
 import { ContactService } from '../../../services/contact.service';
+import { PartnerService } from '../../../services/partner.service';
 import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -106,6 +109,7 @@ export class ContactEditDialogComponent implements OnInit {
     isDeleted: [false],
     deletedBy: [''],
     deletedDate: [null],
+    partnerName: [''],
     
     // Duplicate detection field
     confirmDuplicateCreation: [false]
@@ -114,10 +118,12 @@ export class ContactEditDialogComponent implements OnInit {
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
   contactService = inject(ContactService);
+  partnerService = inject(PartnerService);
   languageService = inject(LanguageService);
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
   private dialogService = inject(DialogService);
+  private cdr = inject(ChangeDetectorRef);
 
   @Input() public record: Contact = {};
   @Output() onRecordCreationSuccess = new EventEmitter<any>();
@@ -139,6 +145,9 @@ export class ContactEditDialogComponent implements OnInit {
     this.dialogConfig.templates = {
       footer: ContactEditDialogFooterComponent
     };
+
+    // Set up partner ID change listener to update partner name
+    this.setupPartnerIdChangeListener();
   }
 
   ngOnInit() {
@@ -156,6 +165,11 @@ export class ContactEditDialogComponent implements OnInit {
       }
       
       this.formGroup.patchValue(formData);
+      
+      // Update partner name if partnerId is set
+      if (formData.partnerId) {
+        this.updatePartnerName(formData.partnerId);
+      }
     }
     
     // Check if any assistant fields have values
@@ -347,6 +361,70 @@ export class ContactEditDialogComponent implements OnInit {
         this.feedbackDialogService.showInfoToast({ 
           detail: 'Contact creation cancelled.' 
         });
+      }
+    });
+  }
+
+  /**
+   * Sets up the partner ID change listener to automatically update partner name
+   */
+  private setupPartnerIdChangeListener() {
+    this.formGroup.get('partnerId')?.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe((newPartnerId: number) => {
+        console.log('🔧 Partner ID changed to:', newPartnerId);
+        this.updatePartnerName(newPartnerId);
+      });
+  }
+
+  /**
+   * Updates the partner name based on partner ID
+   */
+  private updatePartnerName(partnerId: number) {
+    if (!partnerId) {
+      this.formGroup.get('partnerName')?.setValue('');
+      return;
+    }
+
+    console.log('🔧 updatePartnerName called with partnerId:', partnerId);
+    const allPartners = this.cachedDataService.allPartners();
+    console.log('🔧 allPartners cache contains:', allPartners?.length || 0, 'partners');
+
+    // First, try to find partner in the cache
+    const partner = allPartners.find((p: any) => p.id === partnerId);
+    if (partner) {
+      console.log('🔧 Partner found in cache:', partner.name);
+      this.formGroup.get('partnerName')?.setValue(partner.name);
+      return;
+    }
+
+    // If partner is missing from cache, load it from API
+    console.log('🔧 Partner not found in cache, loading from API:', partnerId);
+    this.partnerService.getPartnerById(partnerId.toString()).pipe(
+      map(partner => partner ? partner.name : null),
+      catchError(error => {
+        console.warn(`🔧 Failed to load partner ${partnerId}:`, error);
+        return of(null);
+      })
+    ).subscribe({
+      next: (partnerName) => {
+        if (partnerName) {
+          console.log('🔧 Partner loaded from API:', partnerName);
+          this.formGroup.get('partnerName')?.setValue(partnerName);
+        } else {
+          console.log('🔧 Partner not found, clearing partner name');
+          this.formGroup.get('partnerName')?.setValue('');
+        }
+        
+        // Trigger change detection
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.warn('🔧 Error loading partner name:', error);
+        this.formGroup.get('partnerName')?.setValue('');
       }
     });
   }

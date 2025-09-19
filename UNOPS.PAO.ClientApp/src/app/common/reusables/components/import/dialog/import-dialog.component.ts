@@ -12,7 +12,7 @@ import { MessageModule } from 'primeng/message';
 import { BlockUIModule } from 'primeng/blockui';
 import { StepperModule } from 'primeng/stepper';
 import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
-import { NgClass, JsonPipe, TitleCasePipe } from '@angular/common';
+import { NgClass, JsonPipe, TitleCasePipe, DatePipe } from '@angular/common';
 import { ImportDialogService } from './import-dialog.service';
 import { PaginatorModule } from 'primeng/paginator';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -57,6 +57,7 @@ interface ImportColumn extends ListViewColumn {
     CheckboxModule,
     ChipModule,
     TitleCasePipe,
+    DatePipe,
     DuplicateIndicatorComponent,
     DuplicateSummaryComponent
   ],
@@ -167,7 +168,7 @@ export class ImportDialogComponent implements OnInit {
     { field: 'title', header: 'contact.title', required: true, label: 'Title', type: 'text', sortable: false },
     { field: 'pronouns', header: 'contact.pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
     { field: 'birthDate', header: 'contact.birthDate', required: false, label: 'Birth Date', type: 'text', sortable: false },
-    { field: 'partnerId', header: 'contact.partnerId', required: true, label: 'Partner Id', type: 'text', sortable: false },
+    { field: 'partnerName', header: 'contact.partner', required: true, label: 'Partner', type: 'text', sortable: false },
     { field: 'email', header: 'contact.email', required: true, label: 'Email', type: 'text', sortable: false },
     { field: 'phone', header: 'contact.phone', required: false, label: 'Phone', type: 'text', sortable: false },
     { field: 'mobile', header: 'contact.mobile', required: false, label: 'Mobile', type: 'text', sortable: false },
@@ -197,10 +198,10 @@ export class ImportDialogComponent implements OnInit {
     { field: 'partnerLongDescription', header: 'partner.longDescription', required: false, label: 'Partner Long Description', type: 'text', sortable: false },
     
     // Classification & Organization
-    { field: 'partnerGroupId', header: 'partner.partnerGroupId', required: false, label: 'Partner Group Id', type: 'number', sortable: false },
-    { field: 'liaisonOfficeId', header: 'partner.partnerLiaisonOfficeId', required: false, label: 'Partner Liaison Office Id', type: 'text', sortable: false },
-    { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPointUserId', required: false, label: 'Focal Point User Id', type: 'text', sortable: false },
-    { field: 'organizationUnitRelationshipsName', header: 'partner.partnerOrgUnit', required: false, label: 'Partner Org Unit', type: 'text', sortable: false },
+    { field: 'partnerGroupName', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'text', sortable: false },
+    { field: 'liaisonOfficeName', header: 'partner.partnerLiaisonOffice', required: false, label: 'Partner Liaison Office', type: 'text', sortable: false },
+    { field: 'partnerFocalPointUserName', header: 'partner.partnerFocalPointUser', required: false, label: 'Focal Point User', type: 'text', sortable: false },
+    { field: 'organizationHierarchyNames', header: 'partner.partnerOrgUnit', required: false, label: 'Partner Org Unit', type: 'text', sortable: false },
     // Status & Operational
     { field: 'status', header: 'partner.status', required: false, label: 'Status', type: 'text', sortable: false },
   ];
@@ -216,12 +217,12 @@ export class ImportDialogComponent implements OnInit {
     { field: 'subject', header: 'interaction.subject', required: true, label: 'Subject', type: 'text', sortable: false },
     { field: 'description', header: 'interaction.description', required: false, label: 'Description', type: 'text', sortable: false },
     { field: 'location', header: 'interaction.location', required: false, label: 'Location', type: 'text', sortable: false },
-    { field: 'contactIds', header: 'interaction.contactIds', required: false, label: 'Contact IDs', type: 'text', sortable: false },
-    { field: 'partnerIds', header: 'interaction.partnerIds', required: false, label: 'Partner IDs', type: 'text', sortable: false },
-    { field: 'userIds', header: 'interaction.userIds', required: false, label: 'User IDs', type: 'text', sortable: false },
+    { field: 'contactNames', header: 'interaction.contacts', required: false, label: 'Contacts', type: 'text', sortable: false },
+    { field: 'partnerNames', header: 'interaction.partners', required: false, label: 'Partners', type: 'text', sortable: false },
+    { field: 'userNames', header: 'interaction.users', required: false, label: 'Users', type: 'text', sortable: false },
     { field: 'emailAddresses', header: 'interaction.emailAddresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
     { field: 'phoneNumbers', header: 'interaction.phoneNumbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
-    { field: 'organizationHierarchyIdsName', header: 'interaction.organizationUnitIdsName', required: false, label: 'Organization Unit', type: 'text', sortable: false }
+    { field: 'organizationHierarchyNames', header: 'interaction.organizationUnit', required: false, label: 'Organization Unit', type: 'text', sortable: false }
   ];
 
   // User Role-specific columns
@@ -1226,6 +1227,38 @@ export class ImportDialogComponent implements OnInit {
       'email'
     ];
     return shortTextFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
+  }
+
+  /**
+   * Check if field is a date field that should be formatted
+   */
+  isDateField(fieldName: string): boolean {
+    const dateFields = ['date', 'createdDate', 'modifiedDate', 'lastModifiedDate', 'approvalDate', 'expiryDate'];
+    return dateFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
+  }
+
+  /**
+   * Format date value for display
+   */
+  formatDateValue(value: any): string {
+    if (!value) return '';
+    
+    try {
+      // Try to parse the date if it's a string
+      const date = typeof value === 'string' ? new Date(value) : value;
+      
+      // Check if it's a valid date
+      if (date instanceof Date && !isNaN(date.getTime())) {
+        // Use Angular DatePipe for consistent formatting
+        const datePipe = new DatePipe('en-US');
+        return datePipe.transform(date, 'medium') || value;
+      }
+      
+      return value;
+    } catch (error) {
+      // If parsing fails, return original value
+      return value;
+    }
   }
 
 

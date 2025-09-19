@@ -814,7 +814,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 }
                                 
                                 responseObject[dependent] = idsArray;
-                                responseObject[dependent + "Name"] = await GetEntityNameFromId(idsArray, dependent);
+                                string nameField = dependent.Replace("Id", "Name");
+                                responseObject[nameField] = await GetEntityNameFromId(idsArray, dependent);
                             }
                             else
                             {
@@ -829,7 +830,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 // Check if 'text' is already a numeric value (long/int)
                                 if (text is long longValue)
                                 {
-                                    // It is already an ID, just continue
+                                    // It is already an ID, set name and continue
+                                    string nameField = dependent.Replace("Id", "Name");
+                                    responseObject[nameField] = await GetEntityNameFromId((int)longValue, dependent);
                                     if (interactionType && dependent == "contactIds")
                                     {
                                         await HandleInteractionContactLogic(responseObject, longValue);
@@ -837,7 +840,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                     continue;
                                 } else if (text is int intValue)
                                 {
-                                    // It is already an ID, just continue
+                                    // It is already an ID, set name and continue
+                                    string nameField = dependent.Replace("Id", "Name");
+                                    responseObject[nameField] = await GetEntityNameFromId(intValue, dependent);
                                     if (interactionType && dependent == "contactIds")
                                     {
                                         await HandleInteractionContactLogic(responseObject, intValue);
@@ -846,6 +851,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 }
                                 else if (int.TryParse(text?.ToString(), out id))
                                 {
+                                    // It is already an ID, set name and continue
+                                    string nameField = dependent.Replace("Id", "Name");
+                                    responseObject[nameField] = await GetEntityNameFromId(id, dependent);
                                     if (interactionType && dependent == "contactIds")
                                     {
                                         await HandleInteractionContactLogic(responseObject, id);
@@ -873,12 +881,21 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                             existingArray.Add(entityId);
                                         }
                                     }
+                                else
+                                {
+                                    // Handle as single value
+                                    responseObject[dependent] = entityId;
+                                    // Convert entityId to int for name lookup
+                                    string nameField = dependent.Replace("Id", "Name");
+                                    if (int.TryParse(entityId.ToString(), out int idForNameLookup))
+                                    {
+                                        responseObject[nameField] = await GetEntityNameFromId(idForNameLookup, dependent);
+                                    }
                                     else
                                     {
-                                        // Handle as single value
-                                        responseObject[dependent] = entityId;
-                                        responseObject[dependent + "Name"] = await GetEntityNameFromId(entityId, dependent);
+                                        responseObject[nameField] = null;
                                     }
+                                }
                                 }
                                 
                                 // Special handling for interactions
@@ -1029,7 +1046,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         }
 
         /// <summary>
-        /// Gets entity name from ID using the same mapping strategy as GetEntityIdFromText but in reverse
+        /// Gets entity name from ID using direct DbSet queries
         /// </summary>
         /// <param name="id">The entity ID to lookup</param>
         /// <param name="dependent">The dependent field name (e.g., "partnerGroupId", "partnerCategoryId")</param>
@@ -1038,7 +1055,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         {
             try
             {
-                Console.WriteLine($"[DEBUG] GetEntityNameFromId called with id={id}, dependent='{dependent}'");
+                string name = null;
                 
                 // Convert dependent to entity name using the same logic as GetEntityIdFromText
                 string baseEntityName = dependent.EndsWith("Ids", StringComparison.OrdinalIgnoreCase) ? 
@@ -1050,70 +1067,74 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     baseEntityName : 
                     char.ToUpper(baseEntityName[0]) + baseEntityName.Substring(1);
                 
-                Console.WriteLine($"[DEBUG] baseEntityName='{baseEntityName}', entityName='{entityName}'");
-                
-                string whereCondition = "1=1"; // Default WHERE condition
-                string tableName = "";
-                string nameField = "Name"; // Default name field
-                
                 // Apply the same mapping logic as GetEntityIdFromText
                 if (dependent.Equals("organizationUnitRelationships", StringComparison.OrdinalIgnoreCase)
                         || dependent.Equals("organizationHierarchyIds", StringComparison.OrdinalIgnoreCase)
                         || entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
                 {
-                    tableName = "OrganizationHierarchies";
-                    whereCondition = "\"Type\" = 'OrgUnit'";
-                    nameField = "Name";
+                    name = await _context.OrganizationHierarchies
+                        .Where(x => x.Id == id && x.Type == OrganizationUnitType.OrgUnit)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
                 }
                 else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase) 
                          || dependent.Equals("partnerfocalpointuserid", StringComparison.OrdinalIgnoreCase)
                          || dependent.Equals("createdby", StringComparison.OrdinalIgnoreCase)
                          || dependent.Equals("lastmodifiedby", StringComparison.OrdinalIgnoreCase))
                 {
-                    tableName = "UserProfile";
-                    nameField = "Name"; // UserProfile has a Name field
-                    whereCondition = "1=1";
+                    name = await _context.UserProfile
+                        .Where(x => x.UserId == id && !x.IsDeleted)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
                 }
-                else if (entityName.Equals("Contact", StringComparison.OrdinalIgnoreCase))
+                else if (entityName.Equals("Contact", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("contactIds", StringComparison.OrdinalIgnoreCase))
                 {
-                    tableName = "Contacts";
-                    nameField = "CONCAT(\"FirstName\", ' ', \"LastName\")"; // Contacts use FirstName + LastName
-                    whereCondition = "1=1";
+                    name = await _context.Contacts
+                        .Where(x => x.Id == id && !x.IsDeleted)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
                 }
-                else if (dependent.Equals("partnerGroupId", StringComparison.OrdinalIgnoreCase))
+                else if (entityName.Equals("Partner", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("partnerIds", StringComparison.OrdinalIgnoreCase))
                 {
-                    tableName = "PartnerTrees";
-                    nameField = "Name";
-                    whereCondition = "1=1";
+                    name = await _context.Partners
+                        .Where(x => x.Id == id && !x.IsDeleted)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
                 }
-                else if (dependent.Equals("partnerCategoryId", StringComparison.OrdinalIgnoreCase))
+                else if (entityName.Equals("Interaction", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("interactionIds", StringComparison.OrdinalIgnoreCase))
                 {
-                    tableName = "PartnerTrees";
-                    nameField = "Name";
-                    whereCondition = "1=1";
+                    name = await _context.Interactions
+                        .Where(x => x.Id == id && !x.IsDeleted)
+                        .Select(x => x.Subject)
+                        .FirstOrDefaultAsync();
                 }
-                else if (dependent.Equals("liaisonofficeid", StringComparison.OrdinalIgnoreCase))
+                else if (dependent.Equals("partnerGroupId", StringComparison.OrdinalIgnoreCase)
+                    || dependent.Equals("partnerCategoryId", StringComparison.OrdinalIgnoreCase))
                 {
-                    tableName = "LiaisonOffices";
-                    nameField = "Name";
-                    whereCondition = "1=1";
+                    name = await _context.PartnerTrees
+                        .Where(x => x.Id == id)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
                 }
-                else if (dependent.Equals("roleIds", StringComparison.OrdinalIgnoreCase))
+                else if (dependent.Equals("liaisonofficeid", StringComparison.OrdinalIgnoreCase)
+                         || entityName.Equals("Office", StringComparison.OrdinalIgnoreCase))
                 {
-                    tableName = "AspNetRoles";
-                    nameField = "Name";
-                    whereCondition = "1=1";
+                    name = await _context.LiaisonOffices
+                        .Where(x => x.Id == id)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
                 }
                 else
                 {
-                    tableName = entityName.Pluralize();
-                    nameField = "Name";
+                    // For other entities, try to find by convention using the pluralized entity name
+                    // This is a fallback that might work for entities following standard naming conventions
+                    Console.WriteLine($"[DEBUG] No specific mapping found for dependent '{dependent}', entityName '{entityName}'");
                 }
 
-                Console.WriteLine($"[DEBUG] Final mapping: tableName='{tableName}', nameField='{nameField}', whereCondition='{whereCondition}'");
-
-                // Execute the database query to get the name
-                return await ExecuteNameLookupQuery(tableName, nameField, id, whereCondition);
+                return name;
             }
             catch (Exception ex)
             {
@@ -1123,6 +1144,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 return null;
             }
         }
+
 
         /// <summary>
         /// Gets entity names from array of IDs using the same mapping strategy as GetEntityIdFromText but in reverse
@@ -1146,6 +1168,18 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                             return id;
                         return 0; // Default for invalid values
                     }).Where(id => id > 0).ToArray();
+
+                    var names = new List<string>();
+                    for (int i = 0; i < idArray.Length; i++)
+                    {
+                        var entityName = await GetEntityNameFromId(idArray[i], dependent);
+                        if (!string.IsNullOrEmpty(entityName))
+                        {
+                            names.Add(entityName);
+                        }
+                    }
+
+                    return names.Count > 0 ? string.Join(", ", names) : null;
                 }
                 else if (ids is int[] intArray)
                 {
@@ -1153,7 +1187,17 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 }
                 else if (ids is List<int> intList)
                 {
-                    idArray = intList.ToArray();
+                    var names = new List<string>();
+                    for (int i = 0; i < intList.Count; i++)
+                    {
+                        var entityName = await GetEntityNameFromId(intList[i], dependent);
+                        if (!string.IsNullOrEmpty(entityName))
+                        {
+                            names.Add(entityName);
+                        }
+                    }
+
+                    return names.Count > 0 ? string.Join(", ", names) : null;
                 }
                 else if (ids is int singleId)
                 {
@@ -1175,82 +1219,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     return null;
                 }
 
-                Console.WriteLine($"[DEBUG] GetEntityNameFromId called with ids=[{string.Join(",", idArray)}], dependent='{dependent}'");
-                
-                // Convert dependent to entity name using the same logic as single ID method
-                string baseEntityName = dependent.EndsWith("Ids", StringComparison.OrdinalIgnoreCase) ? 
-                    dependent.Substring(0, dependent.Length - 3) : 
-                    dependent.Replace("Id", "", StringComparison.OrdinalIgnoreCase);
-                
-                // Capitalize only the first letter, preserving existing capitalization
-                string entityName = string.IsNullOrEmpty(baseEntityName) ? 
-                    baseEntityName : 
-                    char.ToUpper(baseEntityName[0]) + baseEntityName.Substring(1);
-                
-                Console.WriteLine($"[DEBUG] baseEntityName='{baseEntityName}', entityName='{entityName}'");
-                
-                string whereCondition = "1=1"; // Default WHERE condition
-                string tableName = "";
-                string nameField = "Name"; // Default name field
-                
-                // Apply the same mapping logic as single ID method
-                if (dependent.Equals("organizationUnitRelationships", StringComparison.OrdinalIgnoreCase)
-                        || dependent.Equals("organizationHierarchyIds", StringComparison.OrdinalIgnoreCase)
-                        || entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
-                {
-                    tableName = "OrganizationHierarchies";
-                    whereCondition = "\"Type\" = 'OrgUnit'";
-                    nameField = "Name";
-                }
-                else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase) 
-                         || dependent.Equals("partnerfocalpointuserid", StringComparison.OrdinalIgnoreCase)
-                         || dependent.Equals("createdby", StringComparison.OrdinalIgnoreCase)
-                         || dependent.Equals("lastmodifiedby", StringComparison.OrdinalIgnoreCase))
-                {
-                    tableName = "UserProfile";
-                    nameField = "Name"; // UserProfile has a Name field
-                    whereCondition = "1=1";
-                }
-                else if (entityName.Equals("Contact", StringComparison.OrdinalIgnoreCase))
-                {
-                    tableName = "Contacts";
-                    nameField = "CONCAT(\"FirstName\", ' ', \"LastName\")"; // Contacts use FirstName + LastName
-                    whereCondition = "1=1";
-                }
-                else if (dependent.Equals("partnerGroupId", StringComparison.OrdinalIgnoreCase))
-                {
-                    tableName = "PartnerTrees";
-                    nameField = "Name";
-                    whereCondition = "1=1";
-                }
-                else if (dependent.Equals("partnerCategoryId", StringComparison.OrdinalIgnoreCase))
-                {
-                    tableName = "PartnerTrees";
-                    nameField = "Name";
-                    whereCondition = "1=1";
-                }
-                else if (dependent.Equals("liaisonofficeid", StringComparison.OrdinalIgnoreCase))
-                {
-                    tableName = "LiaisonOffices";
-                    nameField = "Name";
-                    whereCondition = "1=1";
-                }
-                else if (dependent.Equals("roleIds", StringComparison.OrdinalIgnoreCase))
-                {
-                    tableName = "AspNetRoles";
-                    nameField = "Name";
-                    whereCondition = "1=1";
-                }
-                else
-                {
-                    tableName = entityName.Pluralize();
-                    nameField = "Name";
-                }
-
-                Console.WriteLine($"[DEBUG] Final mapping for array: tableName='{tableName}', nameField='{nameField}', whereCondition='{whereCondition}'");
-
-                // Execute the database query to get the names
-                return await ExecuteNameLookupQuery(tableName, nameField, idArray, whereCondition);
+                return null;
             }
             catch (Exception ex)
             {
@@ -1399,6 +1368,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 }
             }
             
+            var detectedOrgUnitNamesList = new List<string>();
             // Process each org unit name
             if (orgUnitNames != null && orgUnitNames.Length > 0)
             {
@@ -1430,6 +1400,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                     {
                                         orgUnitCodes.Add(code);
                                     }
+                                    var orgUnitName = orgHierarchy["name"]?.ToString();
+                                    if (!string.IsNullOrEmpty(orgUnitName))
+                                    {
+                                        detectedOrgUnitNamesList.Add(orgUnitName);
+                                    }
                                 }
                                 
                                 Console.WriteLine($"[DEBUG] Successfully added org unit relationship for ID {orgUnitId} ('{orgUnitTextValue}')");
@@ -1458,12 +1433,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             // Set the relationships array
             responseObject[dependent] = orgUnitRelationships;
             
-            // Set the Name field with comma-separated codes
-            var commaSeparatedCodes = orgUnitCodes.Count > 0 ? string.Join(", ", orgUnitCodes) : null;
-            var nameField = dependent + "Name";
-            responseObject[nameField] = commaSeparatedCodes;
-            
-            Console.WriteLine($"[DEBUG] Set {dependent} with {orgUnitRelationships.Count} items and {nameField}: '{commaSeparatedCodes}'");
+            // Set the Name field with comma-separated names
+            var nameField = dependent.Replace("Id", "Name");
+            responseObject[nameField] = detectedOrgUnitNamesList.Count > 0 ? string.Join(", ", detectedOrgUnitNamesList) : null;
         }
         
         /// <summary>
@@ -1625,6 +1597,23 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     if (!partnerArray.Any(p => p.ToString() == contact.PartnerId.ToString()))
                     {
                         partnerArray.Add(contact.PartnerId);
+                        
+                        // Get existing partner names or create new list
+                        var partnerNamesList = new List<string>();
+                        var existingPartnerNames = responseObject["partnerNames"]?.ToString();
+                        if (!string.IsNullOrEmpty(existingPartnerNames))
+                        {
+                            partnerNamesList.AddRange(existingPartnerNames.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries));
+                        }
+                        
+                        // Add new partner name
+                        var newPartnerName = await GetEntityNameFromId(contact.PartnerId, "partnerIds");
+                        if (!string.IsNullOrEmpty(newPartnerName))
+                        {
+                            partnerNamesList.Add(newPartnerName);
+                        }
+                        
+                        responseObject["partnerNames"] = partnerNamesList.Count > 0 ? string.Join(", ", partnerNamesList) : null;
                     }
                 }
             }
