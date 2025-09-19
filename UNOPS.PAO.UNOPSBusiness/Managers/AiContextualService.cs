@@ -648,46 +648,50 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 // Check for internal duplicates within the file first
                 var internalDuplicateResult = await DetectInternalDuplicatesAsync(entityName, recordsList, 0.8);
                 
-                // If internal duplicates are found, create error notification
+                // Add internal duplicate warning to each record if found
                 if (internalDuplicateResult.HasInternalDuplicates)
                 {
-                    var errorNotification = new Notification
+                    // Add internal duplicate information to affected records
+                    foreach (var group in internalDuplicateResult.DuplicateGroups)
                     {
-                        UserId = userId,
-                        Message = !string.IsNullOrEmpty(fileId) 
-                            ? $"Internal duplicates found in the uploaded file (Sheet ID: {fileId}). Please fix the duplicates before proceeding."
-                            : "Internal duplicates found in the uploaded file. Please fix the duplicates before proceeding.",
-                        Category = promptData.Type,
-                        ResponseType = "InternalDuplicatesFound",
-                        RecordData = JsonConvert.SerializeObject(new
+                        // Mark master record
+                        if (group.MasterIndex < recordsList.Count)
                         {
-                            intent = "InternalDuplicatesFound",
-                            fileId = fileId, // Include sheet ID in the data
-                            internalDuplicates = new
+                            var masterRecord = recordsList[group.MasterIndex];
+                            if (masterRecord is JObject masterObj)
                             {
-                                totalGroups = internalDuplicateResult.TotalDuplicateGroups,
-                                totalDuplicateRecords = internalDuplicateResult.TotalDuplicateRecords,
-                                totalRecords = internalDuplicateResult.TotalRecords,
-                                cleanRecords = internalDuplicateResult.CleanRecords,
-                                duplicateGroups = internalDuplicateResult.DuplicateGroups.Select(group => new
+                                masterObj["internalDuplicateWarning"] = new JObject
                                 {
-                                    masterRowNumber = group.MasterIndex + 2, // +2 because: +1 for 0-based index, +1 for header row
-                                    duplicateRowNumbers = group.DuplicateIndices.Select(idx => idx + 2).ToList(),
-                                    matchReasons = group.MatchReasons
-                                }).ToList()
+                                    ["isMaster"] = true,
+                                    ["duplicateCount"] = group.DuplicateIndices.Count,
+                                    ["duplicateRows"] = JArray.FromObject(group.DuplicateIndices.Select(idx => idx + 2).ToList()),
+                                    ["message"] = $"This record has {group.DuplicateIndices.Count} duplicate(s) in rows {string.Join(", ", group.DuplicateIndices.Select(idx => idx + 2))}"
+                                };
                             }
-                        }),
-                        IsRead = false,
-                        Status = NotificationStatus.Done,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                    await _context.Notifications.AddAsync(errorNotification);
-                    await _context.SaveChangesAsync();
-                    return finalResponse; // Return without database duplicate detection
+                        }
+                        
+                        // Mark duplicate records
+                        foreach (var duplicateIndex in group.DuplicateIndices)
+                        {
+                            if (duplicateIndex < recordsList.Count)
+                            {
+                                var duplicateRecord = recordsList[duplicateIndex];
+                                if (duplicateRecord is JObject duplicateObj)
+                                {
+                                    duplicateObj["internalDuplicateWarning"] = new JObject
+                                    {
+                                        ["isMaster"] = false,
+                                        ["masterRow"] = group.MasterIndex + 2,
+                                        ["matchReasons"] = JArray.FromObject(group.MatchReasons),
+                                        ["message"] = $"This record is a duplicate of the record in row {group.MasterIndex + 2}"
+                                    };
+                                }
+                            }
+                        }
+                    }
                 }
                 
-                // If no internal duplicates, proceed with database duplicate detection
+                // Always proceed with database duplicate detection
                 var recordsWithDuplicates = await DetectDuplicatesAsync(entityName, recordsList, 0.65);
                 finalResponse = recordsWithDuplicates.Select(r => (object)r).ToList();
             }
@@ -695,14 +699,19 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             if (isAsync)
             {
                 // Create a single notification for the entire batch
+                var hasInternalDuplicates = finalResponse.Any(r => r is JObject obj && obj["internalDuplicateWarning"] != null);
                 var notification = new Notification
                 {
                     UserId = userId,
                     Message = !string.IsNullOrEmpty(fileId) 
-                        ? $"Batch processed successfully with duplicate detection (Sheet ID: {fileId})"
-                        : "Batch processed successfully with duplicate detection",
+                        ? (hasInternalDuplicates 
+                            ? $"Batch processed successfully with warnings - Internal duplicates found in file (Sheet ID: {fileId}). Please review and fix duplicates."
+                            : $"Batch processed successfully with duplicate detection (Sheet ID: {fileId})")
+                        : (hasInternalDuplicates 
+                            ? "Batch processed successfully with warnings - Internal duplicates found in file. Please review and fix duplicates."
+                            : "Batch processed successfully with duplicate detection"),
                     Category = promptData.Type,
-                    ResponseType = "Success",
+                    ResponseType = hasInternalDuplicates ? "SuccessWithWarnings" : "Success",
                     RecordData = JsonConvert.SerializeObject(finalResponse),
                     IsRead = false,
                     Status = NotificationStatus.Done,
