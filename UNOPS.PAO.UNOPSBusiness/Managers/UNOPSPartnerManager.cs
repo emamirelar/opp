@@ -1684,6 +1684,18 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     }
 
     /// <summary>
+    /// Gets the next available ErpDimValue based on the highest existing value
+    /// </summary>
+    private async Task<int> GetNextErpDimValueAsync()
+    {
+        var highestErpDimValue = await _context.Partners
+            .Where(p => p.ErpDimValue.HasValue && !p.IsDeleted)
+            .MaxAsync(p => (int?)p.ErpDimValue) ?? 0;
+        
+        return highestErpDimValue + 1;
+    }
+
+    /// <summary>
     /// Approves an active partner (Admin only) - locks data fields and records approval audit trail
     /// </summary>
     public async Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, UpdatePartnerRequest request)
@@ -1708,8 +1720,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
         var userName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown Admin";
 
-        // Now approve the partner (this sets the approval status and audit trail)
-        entity.ApprovePartner(int.Parse(userId), userName);
+        // Get the next ErpDimValue for this partner
+        var nextErpDimValue = await GetNextErpDimValueAsync();
+
+        // Now approve the partner (this sets the approval status, audit trail, and ErpDimValue)
+        entity.ApprovePartner(int.Parse(userId), userName, nextErpDimValue);
         await PartnerRepository.UpdateAsync(entity);
         
         // Load relationships and return updated model

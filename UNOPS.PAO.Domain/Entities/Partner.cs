@@ -335,15 +335,21 @@ public class Partner : ModifiableDeletableEntity
     /// </summary>
     /// <param name="approverId">ID of the admin user performing the approval</param>
     /// <param name="approverName">Name of the admin user performing the approval</param>
-    public void ApprovePartner(int approverId, string approverName)
+    /// <param name="nextErpDimValue">The next available ERP dimension value (calculated by business layer)</param>
+    public void ApprovePartner(int approverId, string approverName, int nextErpDimValue)
     {
         if (Status != EntityStatus.Active)
         {
             throw new InvalidOperationException("Only Active partners can be approved.");
         }
+        
         string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
         PartnerApprovalStatus = PartnerApprovalStatus.Approved;
+        PartnerApprovalDate = DateTime.UtcNow;
         PartnerApprovedBy = $"Approved by {approverName} (ID: {approverId}) on {currentDate}";
+        
+        // Auto-assign the next ERP dimension value when approved
+        ErpDimValue = nextErpDimValue;
     }
     
     /// <summary>
