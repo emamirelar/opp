@@ -1720,10 +1720,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
         var userName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown Admin";
 
-        // Get the next ErpDimValue for this partner
-        var nextErpDimValue = await GetNextErpDimValueAsync();
+        // Get the next ErpDimValue for this partner (only if not already assigned)
+        var nextErpDimValue = entity.ErpDimValue ?? await GetNextErpDimValueAsync();
 
-        // Now approve the partner (this sets the approval status, audit trail, and ErpDimValue)
+        // Now approve the partner (this sets the approval status, audit trail, and ErpDimValue if not already set)
         entity.ApprovePartner(int.Parse(userId), userName, nextErpDimValue);
         await PartnerRepository.UpdateAsync(entity);
         
