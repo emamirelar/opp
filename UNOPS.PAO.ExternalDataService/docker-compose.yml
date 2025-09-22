@@ -1,0 +1,110 @@
+# Docker Compose for External Data Integration Service Development
+version: '3.8'
+
+services:
+  # PostgreSQL database for monitoring (service-specific logs and metadata)
+  postgres-monitoring:
+    image: postgres:15
+    container_name: external-data-monitoring-postgres
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: unops_pao_external_data_monitoring_dev
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_monitoring_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d unops_pao_external_data_monitoring_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - external-data-network
+      
+  # PostgreSQL database for application data (simulates main UNOPS PAO database)
+  postgres-app:
+    image: postgres:15
+    container_name: external-data-app-postgres
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: unops_pao_dev
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_app_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d unops_pao_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - external-data-network
+
+  # External Data Integration Service
+  external-data-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: external-data-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__MonitoringConnection=Host=postgres-monitoring;Database=unops_pao_external_data_monitoring_dev;Username=dev;Password=dev;Port=5432;
+      - ConnectionStrings__ApplicationConnection=Host=postgres-app;Database=unops_pao_dev;Username=dev;Password=dev;Port=5432;
+      - ConnectionStrings__DefaultConnection=Host=postgres-app;Database=unops_pao_dev;Username=dev;Password=dev;Port=5432;
+      - ExternalDataService__ConfigurationPath=/app/config
+      - ExternalDataService__AutoCreateTables=true
+      - ExternalDataService__TestMode=true
+      - BigQuery__UseDefaultCredentials=false
+      - AdminApiKey=dev-api-key
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+    depends_on:
+      postgres-monitoring:
+        condition: service_healthy
+      postgres-app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - external-data-network
+
+  # pgAdmin for database management (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: external-data-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8081:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres-monitoring
+      - postgres-app
+    networks:
+      - external-data-network
+
+volumes:
+  postgres_monitoring_data:
+  postgres_app_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  external-data-network:
+    driver: bridge

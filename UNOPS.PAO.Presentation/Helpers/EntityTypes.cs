@@ -8,4 +8,5 @@ public class EntityTypes
     public const string UserManagement = "UserManagement";
     public const string AiPromptManagement = "AiPromptManagement";
     public const string EntityConfiguration = "EntityManager";
+    public const string BaseEngagement = "BaseEngagement";
 }

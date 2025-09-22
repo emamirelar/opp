@@ -1,0 +1,403 @@
+@{
+    ViewData["Title"] = "External Data Sync - Admin Dashboard";
+    var systemHealth = ViewBag.SystemHealth as Dictionary<string, object>;
+    var allStatus = ViewBag.AllStatus as Dictionary<string, object>;
+    var error = ViewBag.Error as string;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .status-healthy { color: #28a745; }
+        .status-warning { color: #ffc107; }
+        .status-error { color: #dc3545; }
+        .config-card { margin-bottom: 1rem; }
+        .config-card.running { border-left: 4px solid #007bff; }
+        .config-card.completed { border-left: 4px solid #28a745; }
+        .config-card.failed { border-left: 4px solid #dc3545; }
+        .config-card.disabled { opacity: 0.7; }
+        .auto-refresh { font-size: 0.875rem; color: #6c757d; }
+        .metric-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .metric-card .card-title { font-size: 2rem; font-weight: bold; }
+        .execution-details { display: none; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2 mb-1">
+                            <i class="fas fa-sync-alt me-2"></i>
+                            External Data Sync Dashboard
+                        </h1>
+                        <p class="text-muted mb-0">Monitor and manage data synchronization processes</p>
+                    </div>
+                    <div class="auto-refresh">
+                        <i class="fas fa-clock me-1"></i>
+                        Auto-refresh: <span id="countdown">30</span>s
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error loading dashboard: @error
+            </div>
+        }
+        else
+        {
+            <!-- System Health Overview -->
+            @if (systemHealth != null)
+            {
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card metric-card text-center">
+                            <div class="card-body">
+                                <div class="card-title">@systemHealth.GetValueOrDefault("totalConfigurations", 0)</div>
+                                <p class="card-text">Total Configurations</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card text-center">
+                            <div class="card-body">
+                                <div class="card-title">@systemHealth.GetValueOrDefault("enabledConfigurations", 0)</div>
+                                <p class="card-text">Enabled</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card text-center">
+                            <div class="card-body">
+                                <div class="card-title">@systemHealth.GetValueOrDefault("runningExecutions", 0)</div>
+                                <p class="card-text">Running Now</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card text-center">
+                            <div class="card-body">
+                                <div class="card-title">@systemHealth.GetValueOrDefault("unresolvedErrors", 0)</div>
+                                <p class="card-text">Errors</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Action Buttons -->
+            <div class="row mb-4">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-play-circle me-2"></i>
+                                Quick Actions
+                            </h5>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <form method="post" asp-action="ExecuteAllSyncs" style="display: inline;">
+                                    <button type="submit" class="btn btn-primary" onclick="return confirm('Execute all enabled sync configurations?')">
+                                        <i class="fas fa-play me-2"></i>
+                                        Execute All Syncs
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-outline-primary" onclick="refreshStatus()">
+                                    <i class="fas fa-refresh me-2"></i>
+                                    Refresh Status
+                                </button>
+                                <button type="button" class="btn btn-outline-info" onclick="toggleAutoRefresh()">
+                                    <i class="fas fa-pause me-2"></i>
+                                    <span id="auto-refresh-text">Pause Auto-Refresh</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configurations List -->
+            <div class="row">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cogs me-2"></i>
+                                Sync Configurations
+                            </h5>
+                            <small class="text-muted">Last updated: <span id="last-updated">@DateTime.Now.ToString("HH:mm:ss")</span></small>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="configurations-container">
+                                <!-- Configurations will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Execution Details Modal -->
+    <div class="modal fade" id="executionModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Execution Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="executionModalBody">
+                    <!-- Details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let autoRefreshEnabled = true;
+        let countdownTimer;
+        let countdownSeconds = 30;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfigurations();
+            startAutoRefresh();
+            
+            // Show any server-side messages
+            @if (TempData["Success"] != null)
+            {
+                <text>showToast('Success', '@TempData["Success"]', 'success');</text>
+            }
+            @if (TempData["Warning"] != null)
+            {
+                <text>showToast('Warning', '@TempData["Warning"]', 'warning');</text>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <text>showToast('Error', '@TempData["Error"]', 'error');</text>
+            }
+        });
+
+        // Load configurations via API
+        async function loadConfigurations() {
+            try {
+                const response = await fetch('/admin/api/status');
+                const data = await response.json();
+                
+                if (data.configurations) {
+                    displayConfigurations(data.configurations);
+                }
+                
+                // Update metrics if available
+                if (data.totalConfigurations !== undefined) {
+                    updateMetrics(data);
+                }
+                
+                document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error('Error loading configurations:', error);
+                showToast('Error', 'Failed to load configurations', 'error');
+            }
+        }
+
+        // Display configurations in the UI
+        function displayConfigurations(configurations) {
+            const container = document.getElementById('configurations-container');
+            
+            if (configurations.length === 0) {
+                container.innerHTML = '<div class="text-center p-4 text-muted">No configurations found</div>';
+                return;
+            }
+
+            container.innerHTML = configurations.map(config => `
+                <div class="config-card card mb-3 ${getConfigCardClass(config)}">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <h6 class="mb-1">
+                                    <a href="/admin/configuration/${encodeURIComponent(config.configurationName)}" 
+                                       class="text-decoration-none text-dark fw-bold" 
+                                       title="View execution history and details">
+                                        ${getStatusIcon(config)} ${config.configurationName}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">${config.description || 'No description'}</small>
+                            </div>
+                            <div class="col-md-2">
+                                <small class="text-muted">Schedule:</small><br>
+                                <code>${config.schedule || 'Manual only'}</code>
+                            </div>
+                            <div class="col-md-2">
+                                <small class="text-muted">Last Run:</small><br>
+                                <span>${config.lastExecutionTime ? new Date(config.lastExecutionTime).toLocaleString() : 'Never'}</span>
+                            </div>
+                            <div class="col-md-2">
+                                <small class="text-muted">Status:</small><br>
+                                <span class="badge ${getStatusBadgeClass(config.lastExecutionStatus)}">
+                                    ${config.lastExecutionStatus || 'Unknown'}
+                                </span>
+                            </div>
+                            <div class="col-md-2">
+                                <small class="text-muted">Duration:</small><br>
+                                <span>${config.lastExecutionDuration ? Math.round(config.lastExecutionDuration) + 's' : 'N/A'}</span>
+                            </div>
+                            <div class="col-md-1">
+                                ${config.enabled ? `
+                                    <form method="post" action="/admin/sync/${config.configurationName}" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary" 
+                                                ${config.isRunning ? 'disabled' : ''}
+                                                onclick="return confirm('Execute sync for ${config.configurationName}?')">
+                                            ${config.isRunning ? '<i class="fas fa-spinner fa-spin"></i>' : '<i class="fas fa-play"></i>'}
+                                        </button>
+                                    </form>
+                                ` : '<span class="text-muted">Disabled</span>'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update metrics display
+        function updateMetrics(data) {
+            const metricsData = [
+                { selector: '.col-md-3:nth-child(1) .card-title', value: data.totalConfigurations || 0 },
+                { selector: '.col-md-3:nth-child(2) .card-title', value: data.enabledConfigurations || 0 },
+                { selector: '.col-md-3:nth-child(3) .card-title', value: data.runningExecutions || 0 },
+                { selector: '.col-md-3:nth-child(4) .card-title', value: data.unresolvedErrors || 0 }
+            ];
+
+            metricsData.forEach(metric => {
+                const element = document.querySelector(metric.selector);
+                if (element) {
+                    element.textContent = metric.value;
+                } else {
+                    console.warn('Could not find element with selector:', metric.selector);
+                }
+            });
+        }
+
+        // Helper functions
+        function getConfigCardClass(config) {
+            if (!config.enabled) return 'disabled';
+            if (config.isRunning) return 'running';
+            if (config.lastExecutionStatus === 'Completed') return 'completed';
+            if (config.lastExecutionStatus === 'Failed') return 'failed';
+            return '';
+        }
+
+        function getStatusIcon(config) {
+            if (!config.enabled) return '<i class="fas fa-pause-circle text-muted"></i>';
+            if (config.isRunning) return '<i class="fas fa-spinner fa-spin text-primary"></i>';
+            if (config.lastExecutionStatus === 'Completed') return '<i class="fas fa-check-circle text-success"></i>';
+            if (config.lastExecutionStatus === 'Failed') return '<i class="fas fa-times-circle text-danger"></i>';
+            return '<i class="fas fa-clock text-warning"></i>';
+        }
+
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'Completed': return 'bg-success';
+                case 'CompletedWithErrors': return 'bg-warning text-dark';
+                case 'Failed': return 'bg-danger';
+                case 'Running': return 'bg-primary';
+                case 'Cancelled': return 'bg-secondary';
+                default: return 'bg-light text-dark';
+            }
+        }
+
+        // Auto-refresh functionality
+        function startAutoRefresh() {
+            if (autoRefreshEnabled) {
+                countdownSeconds = 30;
+                updateCountdown();
+                countdownTimer = setInterval(updateCountdown, 1000);
+            }
+        }
+
+        function updateCountdown() {
+            document.getElementById('countdown').textContent = countdownSeconds;
+            
+            if (countdownSeconds <= 0) {
+                if (autoRefreshEnabled) {
+                    refreshStatus();
+                    countdownSeconds = 30;
+                }
+            } else {
+                countdownSeconds--;
+            }
+        }
+
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            const button = document.getElementById('auto-refresh-text');
+            
+            if (autoRefreshEnabled) {
+                button.textContent = 'Pause Auto-Refresh';
+                startAutoRefresh();
+            } else {
+                button.textContent = 'Resume Auto-Refresh';
+                clearInterval(countdownTimer);
+                document.getElementById('countdown').textContent = '∞';
+            }
+        }
+
+        function refreshStatus() {
+            loadConfigurations();
+        }
+
+        // Toast notifications
+        function showToast(title, message, type = 'info') {
+            const toastId = 'toast-' + Date.now();
+            const bgClass = {
+                'success': 'bg-success',
+                'warning': 'bg-warning',
+                'error': 'bg-danger',
+                'info': 'bg-info'
+            }[type] || 'bg-info';
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast ${bgClass} text-white" role="alert">
+                    <div class="toast-header ${bgClass} text-white border-0">
+                        <strong class="me-auto">${title}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body">${message}</div>
+                </div>
+            `;
+
+            document.getElementById('toast-container').insertAdjacentHTML('beforeend', toastHtml);
+            
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', function() {
+                toastElement.remove();
+            });
+        }
+
+        // Show execution details
+        function showExecutionDetails(executionId) {
+            // This would load detailed execution information in a modal
+            // Implementation would fetch from /admin/execution/{executionId}
+        }
+    </script>
+</body>
+</html>

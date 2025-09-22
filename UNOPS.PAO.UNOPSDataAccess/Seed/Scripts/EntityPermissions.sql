@@ -743,3 +743,89 @@ INSERT INTO public."EntityPermissions" (
     null,
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
+
+-- BaseEngagement Entity Permissions (read-only, externally managed)
+
+-- UNOPS General User role permissions for BaseEngagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'BaseEngagement',
+    'UNOPS_GEN_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnership Global Admin role permissions for BaseEngagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'BaseEngagement',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnerships User role permissions for BaseEngagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'BaseEngagement',
+    'PARTNER_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Org Unit Admin role permissions for BaseEngagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'BaseEngagement',
+    'ORG_UNIT_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);

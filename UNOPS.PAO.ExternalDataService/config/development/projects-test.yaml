@@ -1,0 +1,149 @@
+metadata:
+  name: "Projects Test Sync"
+  description: "Local development test for project data sync"
+  version: "1.0"
+  enabled: true
+  max_retry_attempts: 1
+  timeout_minutes: 5
+
+source:
+  type: "bigquery"
+  connection:
+    project_id: "unops-dev-project"
+    use_environment_auth: true
+  
+  query: |
+    SELECT 
+      'PROJ-' || CAST(ROW_NUMBER() OVER (ORDER BY RAND()) as STRING) as project_id,
+      project_name,
+      status,
+      start_date,
+      end_date,
+      budget_usd,
+      'TEST-1' as partner_external_id,  -- Reference test partner
+      'US' as country_code,
+      'AMERICAS' as region_code,
+      CURRENT_TIMESTAMP() as last_modified
+    FROM (
+      SELECT 
+        'Clean Water Initiative' as project_name,
+        'Active' as status,
+        DATE('2024-01-01') as start_date,
+        DATE('2024-12-31') as end_date,
+        500000.00 as budget_usd
+      UNION ALL
+      SELECT 
+        'Education Technology Program',
+        'Active',
+        DATE('2024-03-01'),
+        DATE('2025-02-28'),
+        750000.00
+      UNION ALL
+      SELECT 
+        'Healthcare Access Project',
+        'Completed',
+        DATE('2023-06-01'),
+        DATE('2024-05-31'),
+        1200000.00
+      UNION ALL
+      SELECT 
+        'Renewable Energy Development',
+        'Draft',
+        DATE('2024-08-01'),
+        DATE('2025-07-31'),
+        2000000.00
+    ) sample_projects
+  
+  primary_key_field: "project_id"
+  batch_size: 3
+
+destination:
+  table_name: "TestExternalProjects"
+  schema: "integration"
+  
+  field_mappings:
+    - source_field: "project_id"
+      destination_field: "ExternalProjectId"
+      data_type: "varchar(50)"
+      is_required: true
+      is_unique: true
+    
+    - source_field: "project_name"
+      destination_field: "ProjectName"
+      data_type: "varchar(500)"
+      is_required: true
+      transformations:
+        - type: "trim"
+        - type: "title_case"
+    
+    - source_field: "status"
+      destination_field: "Status"
+      data_type: "varchar(50)"
+      is_required: true
+      transformations:
+        - type: "status_mapping"
+          parameters:
+            mapping:
+              "ACTIVE": "Active"
+              "COMPLETED": "Completed"
+              "DRAFT": "Draft"
+    
+    - source_field: "budget_usd"
+      destination_field: "BudgetUSD"
+      data_type: "decimal(18,2)"
+      is_required: false
+      transformations:
+        - type: "round"
+          parameters:
+            decimal_places: 2
+    
+    - source_field: "start_date"
+      destination_field: "StartDate"
+      data_type: "date"
+      is_required: true
+    
+    - source_field: "end_date"
+      destination_field: "EndDate"
+      data_type: "date"
+      is_required: false
+
+  foreign_key_mappings:
+    - source_field: "partner_external_id"
+      lookup_table: "TestExternalPartners"
+      lookup_field: "ExternalId"
+      destination_field: "PartnerId"
+      lookup_return_field: "Id"
+      is_required: false
+      on_lookup_fail: LogWarning
+    
+    - source_field: "country_code"
+      lookup_table: "Countries"
+      lookup_field: "CountryCode"
+      destination_field: "CountryId"
+      lookup_return_field: "Id"
+      is_required: false
+      on_lookup_fail: SetNull
+
+sync_options:
+  sync_mode: Upsert
+  batch_processing: true
+
+validation:
+  required_source_fields:
+    - "project_id"
+    - "project_name"
+    - "status"
+  
+  data_quality_checks:
+    - field: "budget_usd"
+      rule: "min_value:0"
+      action: LogWarning
+
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+
+logging:
+  log_level: "Debug"
+  log_sql_queries: true
+  log_record_details: true

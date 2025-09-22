@@ -1,0 +1,134 @@
+metadata:
+  name: "CHANGE_ME - Descriptive Name"
+  description: "CHANGE_ME - What does this sync do?"
+  version: "1.0"
+  enabled: false  # Start disabled for safety
+  schedule_cron: ""  # Add cron expression when ready for automatic scheduling
+  max_retry_attempts: 3
+  timeout_minutes: 30
+
+source:
+  type: "bigquery"
+  connection:
+    # Option 1: Specify project_id in sync configuration
+    project_id: "CHANGE_ME - Your BigQuery Project ID"
+    
+    # Option 2: Omit project_id to use appsettings.BigQuery.ProjectId fallback
+    # project_id: ""  # Uses appsettings.json BigQuery.ProjectId
+    
+    use_environment_auth: true
+    # Alternative: use credentials file
+    # credentials_file: "path/to/service-account.json"
+  
+  query: |
+    SELECT 
+      -- CHANGE_ME: Add your fields here
+      id as external_id,
+      name,
+      email,
+      created_date,
+      updated_at
+    FROM `CHANGE_ME.dataset.table`
+    WHERE updated_at >= @last_sync_date  -- Incremental sync support
+    ORDER BY updated_at ASC
+    LIMIT 1000  -- Remove for production, useful for testing
+  
+  primary_key_field: "external_id"
+  incremental_field: "updated_at"  # Field used for incremental syncs
+  batch_size: 100
+
+destination:
+  table_name: "CHANGE_ME_TableName"  # e.g., "ExternalPartners"
+  schema: "external"  # Optional: schema to create table in
+  
+  field_mappings:
+    - source_field: "external_id"
+      destination_field: "ExternalId"
+      data_type: "varchar(100)"
+      is_required: true
+      is_unique: true  # Used for UPSERT operations
+    
+    - source_field: "name"
+      destination_field: "Name"
+      data_type: "varchar(255)"
+      is_required: true
+      transformations:
+        - type: "trim"
+        - type: "title_case"
+    
+    - source_field: "email"
+      destination_field: "Email"
+      data_type: "varchar(255)"
+      is_required: false
+      transformations:
+        - type: "lowercase"
+        - type: "validate_email"
+    
+    - source_field: "created_date"
+      destination_field: "ExternalCreatedDate"
+      data_type: "timestamp"
+      is_required: false
+    
+    # Add more field mappings as needed
+
+  foreign_key_mappings:
+    # Example FK mapping - uncomment and modify as needed
+    # - source_field: "country_code"
+    #   lookup_table: "Countries"
+    #   lookup_field: "CountryCode"
+    #   destination_field: "CountryId"
+    #   lookup_return_field: "Id"
+    #   is_required: false
+    #   on_lookup_fail: LogWarning  # Options: LogWarning, SetNull, FailRecord
+
+  # Audit fields are automatically added:
+  # - CreatedBy (always 0 for external data)
+  # - CreatedDate
+  # - LastModifiedBy (always 0 for external data) 
+  # - LastModifiedDate
+  # - SyncDate
+  # - SyncBatchId
+  # - SourceSystem
+  # - IsDeleted
+
+sync_options:
+  sync_mode: Upsert  # Options: Upsert, InsertOnly, FullReplace
+  delete_missing_records: false
+  conflict_resolution: SourceWins  # Options: SourceWins, DestinationWins, Manual
+  batch_processing: true
+  parallel_processing: false  # Enable for large datasets
+  max_parallel_batches: 2
+
+validation:
+  required_source_fields:
+    - "external_id"
+    - "name"
+  
+  data_quality_checks:
+    # Example validations - uncomment and modify as needed
+    # - field: "email"
+    #   rule: "valid_email_format"
+    #   action: LogWarning
+    
+    # - field: "name"
+    #   rule: "min_length:2"
+    #   action: FailRecord
+
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_query_error: FailBatch
+  on_mapping_error: SkipRecord
+  on_fk_lookup_error: LogAndContinue
+  
+  notification:
+    on_failure: true
+    on_success: false
+    on_warning: true
+    email_recipients: []
+    # - "admin@yourorg.com"
+
+logging:
+  log_level: "Information"
+  log_sql_queries: false  # Set to true for debugging
+  log_record_details: false  # Set to true for detailed debugging
+  retention_days: 30

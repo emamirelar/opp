@@ -1,0 +1,85 @@
+# Cloud Scheduler Jobs for External Data Integration Service
+# Deploy these after the Cloud Run service is running
+
+# Daily Partner Sync
+partners-daily-sync:
+  name: "external-data-partners-daily"
+  description: "Daily synchronization of partner data from external CRM"
+  schedule: "0 6 * * *"  # 6 AM UTC daily
+  timeZone: "UTC"
+  httpTarget:
+    uri: "https://unops-pao-external-data-service-PROJECT_ID.a.run.app/api/sync/execute/partners-prod"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+      X-API-Key: "${ADMIN_API_KEY}"
+    oidcToken:
+      serviceAccountEmail: "scheduler@PROJECT_ID.iam.gserviceaccount.com"
+  retryConfig:
+    retryCount: 3
+    maxBackoffDuration: "300s"
+    minBackoffDuration: "5s"
+    maxRetryDuration: "1800s"  # 30 minutes max retry duration
+  attemptDeadline: "3600s"  # 1 hour timeout per attempt
+
+# Hourly Project Sync (if needed)
+projects-hourly-sync:
+  name: "external-data-projects-hourly"
+  description: "Hourly synchronization of project data"
+  schedule: "0 * * * *"  # Every hour
+  timeZone: "UTC"
+  httpTarget:
+    uri: "https://unops-pao-external-data-service-PROJECT_ID.a.run.app/api/sync/execute/projects-prod"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+      X-API-Key: "${ADMIN_API_KEY}"
+    oidcToken:
+      serviceAccountEmail: "scheduler@PROJECT_ID.iam.gserviceaccount.com"
+  retryConfig:
+    retryCount: 2
+    maxBackoffDuration: "180s"
+    minBackoffDuration: "10s"
+    maxRetryDuration: "900s"  # 15 minutes max retry duration
+  attemptDeadline: "1800s"  # 30 minutes timeout per attempt
+
+# Weekly Full Sync (optional - for data validation)
+weekly-full-sync:
+  name: "external-data-weekly-full-sync"
+  description: "Weekly full synchronization of all configurations"
+  schedule: "0 2 * * 1"  # Monday at 2 AM UTC
+  timeZone: "UTC"
+  httpTarget:
+    uri: "https://unops-pao-external-data-service-PROJECT_ID.a.run.app/api/sync/execute-all"
+    httpMethod: "POST"
+    headers:
+      Content-Type: "application/json"
+      X-API-Key: "${ADMIN_API_KEY}"
+    oidcToken:
+      serviceAccountEmail: "scheduler@PROJECT_ID.iam.gserviceaccount.com"
+  retryConfig:
+    retryCount: 2
+    maxBackoffDuration: "600s"
+    minBackoffDuration: "30s"
+    maxRetryDuration: "3600s"  # 1 hour max retry duration
+  attemptDeadline: "7200s"  # 2 hours timeout per attempt
+
+# Health Check Job
+health-check:
+  name: "external-data-health-check"
+  description: "Regular health check of the external data service"
+  schedule: "*/15 * * * *"  # Every 15 minutes
+  timeZone: "UTC"
+  httpTarget:
+    uri: "https://unops-pao-external-data-service-PROJECT_ID.a.run.app/health"
+    httpMethod: "GET"
+    headers:
+      X-API-Key: "${ADMIN_API_KEY}"
+    oidcToken:
+      serviceAccountEmail: "scheduler@PROJECT_ID.iam.gserviceaccount.com"
+  retryConfig:
+    retryCount: 1
+    maxBackoffDuration: "30s"
+    minBackoffDuration: "5s"
+    maxRetryDuration: "60s"
+  attemptDeadline: "30s"

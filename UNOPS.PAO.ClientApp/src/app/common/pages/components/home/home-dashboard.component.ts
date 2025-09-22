@@ -21,6 +21,7 @@ import { GlobalFilterService } from '../../../../services/global-filter.service'
 import { Partner } from '../../../../features/internal/models/partner.model';
 import { Contact } from '../../../../features/internal/models/contact.model';
 import { Interaction } from '../../../../features/internal/models/interaction.model';
+// import { InteractionType } from '../../../../features/internal/models/interaction-type.enum'; // Uncomment for dummy data testing
 
 interface DashboardData {
   myPartners: Partner[];
@@ -96,13 +97,8 @@ export class HomeDashboardComponent implements OnInit {
     totalDraftActions: 0
   });
 
-  // Visibility toggles for list views
-  showPartnersListView = signal(false);
-  showContactsListView = signal(false);
-  showInteractionsListView = signal(false);
-  showOpportunitiesListView = signal(false);
-  showActionsRequiredView = signal(false);
-  showOrgUnitUpdatesView = signal(false);
+  // Panel expansion state - only one panel can be expanded at a time
+  expandedPanel = signal<string | null>(null);
 
   // Interaction chart filtering
   selectedInteractionType = signal<string | null>(null);
@@ -119,6 +115,9 @@ export class HomeDashboardComponent implements OnInit {
 
   // Navigation loading state
   navigatingToEntity = signal<string | null>(null);
+
+  // UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
+  // useDummyData = signal(false);
 
   // Chart data for interactions pie chart
   interactionsChartData = signal<any>(null);
@@ -205,6 +204,13 @@ export class HomeDashboardComponent implements OnInit {
   private loadDashboardData() {
     this.loading.set(true);
     this.error.set(null);
+
+    // UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
+    // if (this.useDummyData()) {
+    //   console.log('Loading dummy data for testing...');
+    //   this.loadDummyDashboardData();
+    //   return;
+    // }
 
     // Load user's partners using dedicated dashboard API
     const myPartners$ = this.http.get<any>(`/api/dashboard/my-partners`, {
@@ -329,6 +335,42 @@ export class HomeDashboardComponent implements OnInit {
     });
   }
 
+  /* UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
+  private loadDummyDashboardData() {
+    // Simulate loading delay for realism
+    setTimeout(() => {
+      const dashboardData: DashboardData = {
+        myPartners: this.generateDummyPartners(15), // More than the 2 shown in normal view
+        myContacts: this.generateDummyContacts(20), // More than the 1 shown in normal view
+        myInteractions: this.generateDummyInteractions(25), // More than the 3 shown in normal view
+        draftActions: {
+          partners: this.generateDummyPartners(8).map(p => ({ ...p, status: 'Draft' })), // More than the 3 shown
+          contacts: this.generateDummyContacts(12).map(c => ({ ...c, status: 'Draft' })), // More than the 3 shown
+          interactions: this.generateDummyInteractions(10).map(i => ({ ...i, status: 'Draft' })) // More than the 3 shown
+        },
+        orgUnitRecentUpdates: this.generateDummyRecentUpdates(18), // More than the 3 shown in normal view
+        orgUnitName: 'Test Organization Unit (Dummy Data)'
+      };
+
+      this.dashboardData.set(dashboardData);
+      this.updateSummary(dashboardData);
+      this.updateInteractionsChart(dashboardData);
+      this.updateActionableChart(dashboardData);
+      this.loading.set(false);
+      
+      console.log('Dummy data loaded:', {
+        partners: dashboardData.myPartners.length,
+        contacts: dashboardData.myContacts.length,
+        interactions: dashboardData.myInteractions.length,
+        draftPartners: dashboardData.draftActions.partners.length,
+        draftContacts: dashboardData.draftActions.contacts.length,
+        draftInteractions: dashboardData.draftActions.interactions.length,
+        recentUpdates: dashboardData.orgUnitRecentUpdates.length
+      });
+    }, 500); // 500ms delay to simulate loading
+  }
+  */
+
   private updateSummary(data: DashboardData) {
     const summary: DashboardSummary = {
       totalMyPartners: data.myPartners.length,
@@ -406,8 +448,8 @@ export class HomeDashboardComponent implements OnInit {
   }
 
   navigateToPartners() {
-    // Toggle the visibility of the Partners list view
-    this.showPartnersListView.set(!this.showPartnersListView());
+    // Navigate directly to partners page
+    this.navigateToPartnersPage();
   }
 
   navigateToPartnersPage() {
@@ -418,8 +460,8 @@ export class HomeDashboardComponent implements OnInit {
   }
 
   navigateToContacts() {
-    // Toggle the visibility of the Contacts list view
-    this.showContactsListView.set(!this.showContactsListView());
+    // Navigate directly to contacts page
+    this.navigateToContactsPage();
   }
 
   navigateToContactsPage() {
@@ -429,24 +471,61 @@ export class HomeDashboardComponent implements OnInit {
     });
   }
 
-  toggleInteractionsListView() {
-    // Toggle the visibility of the Interactions list view
-    this.showInteractionsListView.set(!this.showInteractionsListView());
+  // Panel expansion methods
+  expandPanel(panelName: string) {
+    const currentExpanded = this.expandedPanel();
+    // Toggle: if same panel is clicked, collapse it; otherwise expand the new one
+    this.expandedPanel.set(currentExpanded === panelName ? null : panelName);
   }
 
-  toggleOpportunitiesListView() {
-    // Toggle the visibility of the Opportunities list view
-    this.showOpportunitiesListView.set(!this.showOpportunitiesListView());
+  collapsePanel() {
+    this.expandedPanel.set(null);
   }
 
-  toggleActionsRequiredView() {
-    // Toggle the visibility of the Actions Required list view
-    this.showActionsRequiredView.set(!this.showActionsRequiredView());
+  isExpanded(panelName: string): boolean {
+    return this.expandedPanel() === panelName;
   }
 
-  toggleOrgUnitUpdates() {
-    // Toggle the visibility of the Org Unit Recent Updates list view
-    this.showOrgUnitUpdatesView.set(!this.showOrgUnitUpdatesView());
+  // Helper methods to get truncated items for normal view (max 3 items per panel)
+  getTruncatedDraftActions(limit: number = 3) {
+    return this.getDisplayedDraftActions().slice(0, limit);
+  }
+
+  getTruncatedOrgUnitUpdates(limit: number = 3) {
+    return this.getDisplayedOrgUnitUpdates().slice(0, limit);
+  }
+
+  getTruncatedPartners(limit: number = 2) {
+    return this.dashboardData()?.myPartners.slice(0, limit) || [];
+  }
+
+  getTruncatedContacts(limit: number = 1) {
+    return this.dashboardData()?.myContacts.slice(0, limit) || [];
+  }
+
+  getTruncatedInteractions(limit: number = 3) {
+    return this.getDisplayedInteractions().slice(0, limit);
+  }
+
+  // Get remaining counts for "View All" links
+  getRemainingDraftActionsCount(): number {
+    return Math.max(0, this.getDisplayedDraftActions().length - 3);
+  }
+
+  getRemainingOrgUnitUpdatesCount(): number {
+    return Math.max(0, this.getDisplayedOrgUnitUpdates().length - 3);
+  }
+
+  getRemainingPartnersCount(): number {
+    return Math.max(0, (this.dashboardData()?.myPartners.length || 0) - 2);
+  }
+
+  getRemainingContactsCount(): number {
+    return Math.max(0, (this.dashboardData()?.myContacts.length || 0) - 1);
+  }
+
+  getRemainingInteractionsCount(): number {
+    return Math.max(0, this.getDisplayedInteractions().length - 3);
   }
 
   navigateToInteractions() {
@@ -913,4 +992,156 @@ export class HomeDashboardComponent implements OnInit {
     
     return dashboardData.orgUnitRecentUpdates.filter(update => update.type === selectedType);
   }
+
+  // UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
+  // toggleDummyData() {
+  //   this.useDummyData.set(!this.useDummyData());
+  //   this.loadDashboardData();
+  // }
+
+  /* UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
+  
+  // Dummy data generators for testing "View All" functionality
+  private generateDummyPartners(count: number = 15): Partner[] {
+    const partners: Partner[] = [];
+    const companyNames = [
+      'Acme Corporation', 'Global Solutions Inc.', 'Tech Innovations Ltd.', 'Future Dynamics',
+      'Strategic Partners LLC', 'International Holdings', 'Prime Ventures', 'Digital Enterprises',
+      'Advanced Systems', 'Elite Consulting', 'Progressive Industries', 'Summit Technologies',
+      'Apex Solutions', 'Pinnacle Group', 'Metropolitan Services', 'Continental Corp.',
+      'Universal Partners', 'Premier Associates', 'Executive Solutions', 'Leading Edge Inc.'
+    ];
+    const statuses = ['Active', 'Pending', 'Unknown'];
+    
+    for (let i = 1; i <= count; i++) {
+      partners.push({
+        id: i.toString(), // Partner ID should be string
+        name: companyNames[i % companyNames.length] + ` ${Math.floor(i / companyNames.length) + 1}`,
+        partnerDescription: companyNames[i % companyNames.length] + ` ${Math.floor(i / companyNames.length) + 1}`,
+        status: statuses[i % statuses.length],
+        lastModifiedDate: new Date(this.generateRandomDate(-30)),
+        createdDate: new Date(this.generateRandomDate(-60)),
+        // Add other Partner properties as needed
+      } as Partner);
+    }
+    return partners;
+  }
+
+  private generateDummyContacts(count: number = 20): Contact[] {
+    const contacts: Contact[] = [];
+    const firstNames = [
+      'John', 'Jane', 'Michael', 'Sarah', 'David', 'Emma', 'Robert', 'Lisa', 'James', 'Mary',
+      'Christopher', 'Jennifer', 'Daniel', 'Patricia', 'Matthew', 'Linda', 'Anthony', 'Elizabeth',
+      'Mark', 'Barbara', 'Paul', 'Susan', 'Steven', 'Jessica', 'Kenneth', 'Dorothy'
+    ];
+    const lastNames = [
+      'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez',
+      'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor',
+      'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez'
+    ];
+    const titles = [
+      'CEO', 'CTO', 'Marketing Director', 'Project Manager', 'Sales Manager', 'Operations Manager',
+      'Business Analyst', 'Senior Developer', 'HR Manager', 'Finance Director', 'Product Manager',
+      'Regional Director', 'Account Manager', 'Technical Lead', 'Consultant'
+    ];
+    const statuses = ['Active', 'Pending', 'Unknown'];
+    
+    for (let i = 1; i <= count; i++) {
+      contacts.push({
+        id: i.toString(), // Contact ID should be string
+        firstName: firstNames[i % firstNames.length],
+        lastName: lastNames[i % lastNames.length],
+        title: titles[i % titles.length],
+        status: statuses[i % statuses.length],
+        lastModifiedDate: new Date(this.generateRandomDate(-30)),
+        createdDate: new Date(this.generateRandomDate(-60)),
+        // Add other Contact properties as needed
+      } as Contact);
+    }
+    return contacts;
+  }
+
+  private generateDummyInteractions(count: number = 25): Interaction[] {
+    const interactions: Interaction[] = [];
+    const types: InteractionType[] = [
+      InteractionType.Email,
+      InteractionType.Call, 
+      InteractionType.VirtualMeeting,
+      InteractionType.InPersonMeeting,
+      InteractionType.Chat
+    ];
+    const subjects = [
+      'Project Status Update', 'Partnership Discussion', 'Contract Review', 'Technical Assessment',
+      'Budget Planning', 'Strategy Meeting', 'Quarterly Review', 'Proposal Discussion',
+      'Implementation Planning', 'Performance Review', 'Client Check-in', 'Solution Demo',
+      'Requirements Gathering', 'Risk Assessment', 'Progress Report', 'Training Session'
+    ];
+    const descriptions = [
+      'Discussed project milestones and deliverables', 'Reviewed contract terms and conditions',
+      'Addressed technical requirements and specifications', 'Evaluated partnership opportunities',
+      'Analyzed budget allocation and resource planning', 'Coordinated implementation timeline',
+      'Assessed project risks and mitigation strategies', 'Demonstrated platform capabilities',
+      'Gathered detailed business requirements', 'Reviewed quarterly performance metrics'
+    ];
+    const statuses = ['Completed', 'Pending', 'Draft'];
+    
+    for (let i = 1; i <= count; i++) {
+      interactions.push({
+        id: i, // Interaction ID should remain number
+        type: types[i % types.length],
+        subject: subjects[i % subjects.length] + ` #${i}`,
+        description: descriptions[i % descriptions.length],
+        status: statuses[i % statuses.length],
+        date: this.generateRandomDate(-30),
+        contactId: 1, // Required field
+        contactIds: [1],
+        partnerIds: [1],
+        emailAddresses: [],
+        phoneNumbers: [],
+        location: 'Virtual',
+        createdBy: 1,
+        createdDate: this.generateRandomDate(-30),
+        lastModifiedDate: this.generateRandomDate(-15),
+        // Add other required Interaction properties
+      } as Interaction);
+    }
+    return interactions;
+  }
+
+  private generateDummyRecentUpdates(count: number = 18): RecentUpdate[] {
+    const updates: RecentUpdate[] = [];
+    const types: ('Partner' | 'Contact' | 'Interaction')[] = ['Partner', 'Contact', 'Interaction'];
+    const names = [
+      'Global Tech Solutions', 'Sarah Johnson', 'Project Kickoff Meeting',
+      'Innovation Partners LLC', 'Michael Chen', 'Client Status Update',
+      'Strategic Ventures Inc.', 'Lisa Anderson', 'Requirements Review',
+      'Digital Dynamics Corp.', 'David Rodriguez', 'Partnership Discussion',
+      'Elite Consulting Group', 'Emma Thompson', 'Technical Assessment',
+      'Premier Solutions Ltd.', 'James Wilson', 'Budget Planning Session'
+    ];
+    const users = [
+      'John Smith', 'Jane Doe', 'Mike Johnson', 'Sarah Wilson', 'David Brown',
+      'Lisa Davis', 'Robert Taylor', 'Emma Anderson', 'James Garcia', 'Mary Martinez'
+    ];
+    
+    for (let i = 1; i <= count; i++) {
+      updates.push({
+        id: i,
+        name: names[i % names.length] + ` ${Math.floor(i / names.length) + 1}`,
+        type: types[i % types.length],
+        lastModifiedDate: this.generateRandomDate(-15),
+        lastModifiedBy: users[i % users.length],
+        status: 'Active'
+      });
+    }
+    return updates;
+  }
+
+  private generateRandomDate(daysAgo: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() + Math.floor(Math.random() * daysAgo));
+    return date.toISOString();
+  }
+  
+  */
 }

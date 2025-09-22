@@ -38,6 +38,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSAiPromptManager aiPromptManager;
     private readonly UNOPSEntityConfigurationManager entityConfigurationManager;
     private readonly UNOPSGmailAddonManager gmailAddonManager;
+    private readonly BaseEngagementManager baseEngagementManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
                                UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService) : base(mapper, context, userManager, httpContextAccessor)
@@ -83,6 +84,9 @@ public class UNOPSManagerWrapper : ManagerWrapper
         // Create GmailAddonManager with required dependencies (no longer needs GmailAddonHelper)
         var gmailAddonManagerLogger = loggerFactory.CreateLogger<UNOPSGmailAddonManager>();
         gmailAddonManager = new UNOPSGmailAddonManager(mapper, opsContext, contactManager, partnerManager, UserDataManager, interactionManager, permissionService, configuration, httpContextAccessor, userInfoService, gmailAddonManagerLogger, notificationManager);
+        
+        // Create BaseEngagementManager
+        baseEngagementManager = new BaseEngagementManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
     }
 
     public override ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -98,4 +102,5 @@ public class UNOPSManagerWrapper : ManagerWrapper
     
     // UNOPS-specific managers
     public IUNOPSEntityConfigurationManager EntityConfigurationManager => entityConfigurationManager;
+    public IBaseEngagementManager BaseEngagementManager => baseEngagementManager;
 }

@@ -77,7 +77,7 @@
       // When AI assistant is active on mobile, it should appear as an overlay
       .splitter-panel[data-panel-id="ai-assistant"] {
         @apply fixed inset-0 z-unops-modal;
-        top: 60px; // Adjust based on your topbar height
+        top: 64px; // Adjust based on your topbar height
         @apply bg-unops-neutral-900/80 backdrop-blur-md;
         
         // Use smooth slide in animation instead of keyframe animation
@@ -137,7 +137,7 @@
     .splitter {
       .splitter-panel[data-panel-id="ai-assistant"] {
         @apply fixed inset-0 z-unops-modal;
-        top: 60px;
+        top: 64px;
         @apply bg-unops-neutral-900/80 backdrop-blur-md;
         
         // Use smooth slide in animation

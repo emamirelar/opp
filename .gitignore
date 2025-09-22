@@ -298,3 +298,7 @@ coverage.xml
 .dmypy.json
 dmypy.json
 .claude/
+
+# Logs folders
+logs/
+**/logs/

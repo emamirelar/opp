@@ -3,8 +3,9 @@
 
 /* Fix topbar height for proper AI layout positioning */
 :host {
-  height: 56px;
-  display: block;
+  height: 64px;
+  display: flex;
+  align-items: center;
   background-color: var(--unops-surface-primary);
   border-bottom: 1px solid var(--unops-neutral-200);
 }
@@ -37,6 +38,7 @@
   font-weight: var(--unops-font-weight-semibold);
   border: 2px solid var(--unops-surface-primary);
   box-shadow: var(--unops-shadow-sm);
+  transform: translateY(4px);
   
   /* Auto-adjust width for larger numbers */
   width: auto;
@@ -499,4 +501,115 @@
   visibility: visible !important;
   max-width: none !important;
   max-height: none !important;
+}
+
+// Fix icon centering in ALL topbar buttons - apply same aggressive styling as AI assistant
+:host ::ng-deep {
+  // Global Filters Button
+  .global-filters-button {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+        transform: translateY(2px) !important;
+      }
+    }
+  }
+  
+  // Notifications Button
+  .notifications-button {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+        transform: translateY(2px) !important;
+      }
+    }
+  }
+  
+  // Profile Menu Button
+  .profile-menu-button {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+        transform: translateY(2px) !important;
+      }
+    }
+  }
+  
+  // Language Selector Button (in child component)
+  app-language-selector {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+        transform: translateY(2px) !important;
+      }
+    }
+  }
+  
+  // Tour Control Button (in child component)
+  app-tour-control {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+        transform: translateY(2px) !important;
+      }
+    }
+  }
+  
+  // Generic fallback for any other p-buttons in topbar
+  p-button {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+        transform: translateY(2px) !important;
+      }
+    }
+  }
 }

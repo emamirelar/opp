@@ -51,6 +51,7 @@ import { AuthService } from '../../../../../essentials/services/auth.service';
 import { EntityTagsComponent } from '../../../../../common/components/entity-tags/entity-tags.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { BaseEngagementListComponent } from '../../base-engagement/base-engagement-list.component';
 
 /**
  * @uiEntity Partner
@@ -98,6 +99,7 @@ import { ConfirmationService } from 'primeng/api';
     RouterModule,
     ConfirmDialogModule,
     EntityTagsComponent,
+    BaseEngagementListComponent,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,
@@ -109,6 +111,16 @@ import { ConfirmationService } from 'primeng/api';
       height: 5rem !important;
       font-size: 2.5rem !important;
     }
+
+    .ai-panel .p-panel {
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+      border-radius: 0.5rem !important;
+    }
+    .ai-panel ::ng-deep .p-panel-content {
+      border-bottom-left-radius: 8px !important;
+      border-bottom-right-radius: 8px !important;
+    }
+
   `]
 })
 export class PartnerViewComponent implements OnInit {
@@ -648,5 +660,13 @@ export class PartnerViewComponent implements OnInit {
   //  * @permissions PARTNER_UPDATE
   //  */
   // existingEditMethod() { ... }
+
+
+  /**
+   * Convert recordId string to number for use with BaseEngagementListComponent
+   */
+  get partnerIdAsNumber(): number | undefined {
+    return this.recordId ? parseInt(this.recordId, 10) : undefined;
+  }
 
 }

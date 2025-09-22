@@ -1,0 +1,237 @@
+# PRODUCTION CONFIGURATION - Partners Sync
+# This file should be deployed separately and kept secure
+metadata:
+  name: "Partners Production Sync"
+  description: "Production synchronization of partner data from external CRM system"
+  version: "1.0"
+  enabled: true
+  schedule_cron: "0 6 * * *"  # Daily at 6 AM UTC
+  max_retry_attempts: 3
+  timeout_minutes: 45
+
+source:
+  type: "bigquery"
+  connection:
+    project_id: "unops-production-crm"
+    dataset_id: "partners_dataset"
+    use_environment_auth: true
+  
+  query: |
+    SELECT 
+      p.partner_external_id,
+      p.partner_name,
+      p.partner_type,
+      p.registration_number,
+      p.country_code,
+      p.region_name,
+      p.contact_email,
+      p.phone_number,
+      p.website_url,
+      p.status,
+      p.tier_level,
+      p.contract_start_date,
+      p.contract_end_date,
+      p.created_date,
+      p.last_modified_date,
+      p.created_by_user
+    FROM `unops-production-crm.partners_dataset.active_partners` p
+    WHERE p.last_modified_date >= @last_sync_date
+      AND p.status IN ('Active', 'Pending', 'Suspended')
+      AND p.data_quality_score >= 0.7
+    ORDER BY p.last_modified_date ASC
+  
+  primary_key_field: "partner_external_id"
+  incremental_field: "last_modified_date"
+  batch_size: 200
+
+destination:
+  table_name: "ExternalPartners"
+  schema: "integration"
+  
+  field_mappings:
+    - source_field: "partner_external_id"
+      destination_field: "ExternalId"
+      data_type: "varchar(100)"
+      is_required: true
+      is_unique: true
+    
+    - source_field: "partner_name"
+      destination_field: "Name"
+      data_type: "varchar(500)"
+      is_required: true
+      transformations:
+        - type: "trim"
+        - type: "normalize_whitespace"
+    
+    - source_field: "partner_type"
+      destination_field: "PartnerType"
+      data_type: "varchar(100)"
+      is_required: true
+      transformations:
+        - type: "status_mapping"
+          parameters:
+            mapping:
+              "NGO": "Non-Governmental Organization"
+              "GOVT": "Government Agency"
+              "PRIVATE": "Private Sector"
+              "INTL": "International Organization"
+              "ACADEMIC": "Academic Institution"
+    
+    - source_field: "registration_number"
+      destination_field: "RegistrationNumber"
+      data_type: "varchar(100)"
+      is_required: false
+      transformations:
+        - type: "trim"
+        - type: "uppercase"
+    
+    - source_field: "contact_email"
+      destination_field: "ContactEmail"
+      data_type: "varchar(255)"
+      is_required: false
+      transformations:
+        - type: "lowercase"
+        - type: "trim"
+        - type: "validate_email"
+    
+    - source_field: "phone_number"
+      destination_field: "PhoneNumber"
+      data_type: "varchar(50)"
+      is_required: false
+      transformations:
+        - type: "format_phone"
+    
+    - source_field: "website_url"
+      destination_field: "WebsiteUrl"
+      data_type: "varchar(500)"
+      is_required: false
+      transformations:
+        - type: "lowercase"
+        - type: "trim"
+    
+    - source_field: "status"
+      destination_field: "Status"
+      data_type: "varchar(50)"
+      is_required: true
+      transformations:
+        - type: "status_mapping"
+          parameters:
+            mapping:
+              "Active": "Active"
+              "Pending": "Pending Approval"
+              "Suspended": "Suspended"
+    
+    - source_field: "tier_level"
+      destination_field: "TierLevel"
+      data_type: "integer"
+      is_required: false
+      default_value: "3"
+      transformations:
+        - type: "clamp"
+          parameters:
+            min: 1
+            max: 5
+    
+    - source_field: "contract_start_date"
+      destination_field: "ContractStartDate"
+      data_type: "date"
+      is_required: false
+    
+    - source_field: "contract_end_date"
+      destination_field: "ContractEndDate"
+      data_type: "date"
+      is_required: false
+    
+    - source_field: "created_date"
+      destination_field: "ExternalCreatedDate"
+      data_type: "timestamp"
+      is_required: false
+    
+    - source_field: "created_by_user"
+      destination_field: "ExternalCreatedBy"
+      data_type: "varchar(255)"
+      is_required: false
+      transformations:
+        - type: "trim"
+
+  foreign_key_mappings:
+    - source_field: "country_code"
+      lookup_table: "Countries"
+      lookup_field: "CountryCode"
+      destination_field: "CountryId"
+      lookup_return_field: "Id"
+      is_required: false
+      on_lookup_fail: LogWarning
+    
+    - source_field: "region_name"
+      lookup_table: "GeoRegions"
+      lookup_field: "RegionName"
+      destination_field: "RegionId"
+      lookup_return_field: "Id"
+      is_required: false
+      on_lookup_fail: SetNull
+
+sync_options:
+  sync_mode: Upsert
+  delete_missing_records: false
+  preserve_destination_fields:
+    - "Id"
+    - "CreatedDate"
+    - "CreatedBy"
+    - "InternalNotes"
+    - "ApprovalStatus"
+    - "ApprovedBy"
+    - "ApprovalDate"
+  conflict_resolution: SourceWins
+  batch_processing: true
+  parallel_processing: true
+  max_parallel_batches: 4
+
+validation:
+  required_source_fields:
+    - "partner_external_id"
+    - "partner_name"
+    - "partner_type"
+    - "status"
+  
+  data_quality_checks:
+    - field: "contact_email"
+      rule: "valid_email_format"
+      action: LogWarning
+    
+    - field: "partner_name"
+      rule: "min_length:2"
+      action: FailRecord
+    
+    - field: "partner_name"
+      rule: "max_length:500"
+      action: FailRecord
+    
+    - field: "tier_level"
+      rule: "range:1,5"
+      action: LogWarning
+  
+  duplicate_handling:
+    check_field: "partner_external_id"
+    action: UpdateLatest
+
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_query_error: FailBatch
+  on_mapping_error: SkipRecord
+  on_fk_lookup_error: LogAndContinue
+  
+  notification:
+    on_failure: true
+    on_success: false
+    on_warning: true
+    email_recipients:
+      - "data-integration@unops.org"
+      - "system-alerts@unops.org"
+    # slack_webhook: "${SLACK_WEBHOOK_URL}"
+
+logging:
+  log_level: "Information"
+  log_sql_queries: false  # Disabled in production for security
+  log_record_details: false
+  retention_days: 90
