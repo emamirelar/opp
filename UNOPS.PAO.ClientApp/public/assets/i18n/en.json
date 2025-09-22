@@ -587,7 +587,8 @@
     "lastNameRequired": "Last Name must be entered.",
     "titleRequired": "Title must be entered.",
     "emailRequired": "Email must be entered.",
-    "reasonRequired": "Reason is required."
+    "reasonRequired": "Reason is required.",
+    "reasonForLevyRequired": "Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'."
   },
   "loading": {
     "contactData": "Loading contact data...",

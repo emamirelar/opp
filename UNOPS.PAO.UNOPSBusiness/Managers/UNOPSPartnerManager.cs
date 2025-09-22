@@ -948,6 +948,15 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         {
             throw new BusinessException("Partner Name is required for creation");
         }
+
+        // Validate Partner Levy business rules
+        if (model.PartnerLevyStatus == "DoesNotApply" || model.PartnerLevyStatus == "PotentiallyNotApplied")
+        {
+            if (string.IsNullOrWhiteSpace(model.ReasonForLevy))
+            {
+                throw new BusinessException("Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'.");
+            }
+        }
         
         // Validate ErpDimValue uniqueness if provided
         if (model.ErpDimValue.HasValue)
@@ -1100,6 +1109,15 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         if (entity == null)
         {
             return null;
+        }
+
+        // Validate Partner Levy business rules
+        if (model.PartnerLevyStatus == "DoesNotApply" || model.PartnerLevyStatus == "PotentiallyNotApplied")
+        {
+            if (string.IsNullOrWhiteSpace(model.ReasonForLevy))
+            {
+                throw new BusinessException("Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'.");
+            }
         }
 
         // Validate ErpDimValue uniqueness if provided and different from current value

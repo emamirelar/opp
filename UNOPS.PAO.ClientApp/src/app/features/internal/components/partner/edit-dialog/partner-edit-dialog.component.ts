@@ -322,6 +322,21 @@ export class PartnerEditDialogComponent implements OnInit {
         reasonControl.updateValueAndValidity();
       }
     });
+
+    // Effect to handle conditional validation for ReasonForLevy field
+    effect(() => {
+      const shouldRequireReasonForLevy = this.shouldShowReasonForLevy() && this.approvalFieldsEnabled();
+      const reasonForLevyControl = this.formGroup?.get('reasonForLevy');
+
+      if (reasonForLevyControl) {
+        if (shouldRequireReasonForLevy) {
+          reasonForLevyControl.setValidators([Validators.required]);
+        } else {
+          reasonForLevyControl.clearValidators();
+        }
+        reasonForLevyControl.updateValueAndValidity();
+      }
+    });
   }
 
   // Helper methods for organization hierarchy FormControl (single select managing array)

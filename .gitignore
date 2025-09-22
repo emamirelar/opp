@@ -298,3 +298,5 @@ coverage.xml
 .dmypy.json
 dmypy.json
 .claude/
+
+UNOPS.PAO.Server/appsettings.Development.json
