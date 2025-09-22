@@ -1934,42 +1934,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         }
     }
 
-    /// <summary>
-    /// Performs comprehensive smart search across Partners and all related entities.
-    /// Searches through partner information, contacts, partner groups, liaison offices, 
-    /// organization units, and applies intelligent ranking based on relevance.
-    /// </summary>
-    /// <param name="user">The user performing the search (for RBAC)</param>
-    /// <param name="searchText">Text to search across all partner and related entity fields</param>
-    /// <param name="includeInactive">Whether to include inactive/deleted partners (default: false)</param>
-    /// <param name="maxResults">Maximum number of results to return (default: 50)</param>
-    /// <param name="request">Pagination request for final result formatting</param>
-    /// <returns>Paginated response with ranked search results and metadata</returns>
-    public async Task<PaginationResponse<PartnerModel>> PerformSmartSearchAsync(
-        ClaimsPrincipal user,
-        string searchText,
-        bool includeInactive = false,
-        int maxResults = 50,
-        PaginationRequest? request = null)
-    {
-        _logger?.LogInformation("Starting smart search for: '{SearchText}' (includeInactive: {IncludeInactive}, maxResults: {MaxResults})", 
-            searchText, includeInactive, maxResults);
-
-        try
-        {
-            // Use the base smart search functionality
-            var smartSearchResult = await PerformSmartSearchAsync<UNOPSPartner>(
-                searchText, 
-                includeInactive, 
-                maxResults);
-
-            // Extract just the Partner entities from the smart search results
-            var partnerEntities = smartSearchResult.Results.Select(r => r.Entity).ToList();
-
-            // Apply RBAC filtering
-            var accessiblePartners = await FilterAccessiblePartners(partnerEntities, user);
-
-            // Map to PartnerModels with full permissions
             var partnerModels = new List<PartnerModel>();
             foreach (var partner in accessiblePartners)
             {
