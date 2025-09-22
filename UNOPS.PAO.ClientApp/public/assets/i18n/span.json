@@ -108,6 +108,11 @@
             "lastModifiedBy": "Última Modificación Por",
             "lastModifiedDate": "Fecha de Última Modificación"
         },
+        "common": {
+            "status": "Estado",
+            "createdDate": "Fecha de Creación",
+            "lastModifiedDate": "Fecha de Última Modificación"
+        },
         "partnerTree": {
             "id": "ID",
             "name": "Nombre",
@@ -152,6 +157,8 @@
         "interaction": {
           "type": "Tipo",
           "date": "Fecha",
+          "fromDate": "Fecha de Inicio",
+          "toDate": "Fecha de Fin",
           "subject": "Asunto",
           "description": "Descripción",
           "status": "Estado del Sistema",
@@ -223,7 +230,9 @@
             "partner": "Socio",
             "name": "Nombre",
             "status": "Estado del Sistema",
+            "shortDescription": "Descripción Corta del Socio",
             "partnerShortDescription": "Descripción Corta del Socio",
+            "longDescription": "Descripción Larga del Socio",
             "partnerLongDescription": "Descripción Larga del Socio",
             "partnerGroup": "Grupo de Socio",
             "partnerCategory": "Categoría de Socio",
@@ -237,6 +246,12 @@
             "organizationUnit": "Unidad de Organización",
             "selectOrganizationUnit": "Seleccionar Unidad de Organización",
             "selectPartnerGroup": "Seleccionar Grupo de Socios"
+        },
+        "partnerGroup": {
+            "name": "Nombre del Grupo de Socio"
+        },
+        "liaisonOffice": {
+            "name": "Nombre de la Oficina de Enlace"
         }
     },
     "message": {
@@ -372,7 +387,9 @@
             "lessThanOrEqual": "menor o igual a",
             "after": "después de",
             "before": "antes de",
-            "between": "entre"
+            "between": "entre",
+            "on": "en",
+            "notOn": "no en"
         },
         "logicalOperators": {
             "and": "Y",
@@ -1191,5 +1208,21 @@
     "createInteractionAnyway": "Crear Interacción de Todos Modos",
     "warningTitle": "Advertencia",
     "warningMessage": "Crear este registro puede resultar en datos duplicados. Por favor revise los detalles de coincidencia arriba antes de continuar."
+  },
+  "entityCards": {
+    "operators": {
+      "eq": "igual a",
+      "neq": "diferente de",
+      "like": "contiene",
+      "gt": "mayor que",
+      "lt": "menor que",
+      "gte": "mayor o igual a",
+      "lte": "menor o igual a",
+      "after": "después de",
+      "before": "antes de",
+      "between": "entre",
+      "on": "en",
+      "notOn": "no en"
+    }
   }
 }

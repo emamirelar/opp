@@ -216,4 +216,9 @@ public class InteractionManager : IInteractionManager
     {
         throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
+    
+    public virtual List<SearchFieldInfo> GetInteractionSearchFields()
+    {
+        throw new NotSupportedException("Search fields functionality is only available in UNOPS implementation. Use UNOPSInteractionManager instead.");
+    }
 }

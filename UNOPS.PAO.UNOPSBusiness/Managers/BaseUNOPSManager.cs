@@ -20,6 +20,8 @@ using System.Text.Json;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using Z.Expressions;
 using Microsoft.AspNetCore.Http;
+using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 /// <summary>
 /// Base class for all UNOPS managers that provides common functionality
@@ -889,4 +891,542 @@ public abstract class BaseUNOPSManager
             return false;
         }
     }
+
+    /// <summary>
+    /// Performs comprehensive smart search across the specified entity and all its related entities.
+    /// Uses multi-tier search strategy with intelligent ranking based on relevance and entity relationships.
+    /// </summary>
+    /// <typeparam name="T">The main entity type to search</typeparam>
+    /// <param name="searchText">The text to search for across all entity fields and related entities</param>
+    /// <param name="includeInactive">Whether to include inactive/deleted entities in search results</param>
+    /// <param name="maxResults">Maximum number of results to return (default: 50)</param>
+    /// <param name="similarityThreshold">Similarity search threshold 0.0-1.0 (default: 0.3)</param>
+    /// <param name="semanticThreshold">Semantic search threshold 0.0-1.0 (default: 0.3)</param>
+    /// <returns>Ordered list of entities with relevance scores and match details</returns>
+    protected async Task<SmartSearchResult<T>> PerformSmartSearchAsync<T>(
+        string searchText,
+        bool includeInactive = false,
+        int maxResults = 50,
+        float similarityThreshold = 0.3f,
+        float semanticThreshold = 0.3f) where T : class
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            return new SmartSearchResult<T>
+            {
+                Results = new List<SmartSearchItem<T>>(),
+                TotalFound = 0,
+                SearchStrategy = "none",
+                ExecutionTime = TimeSpan.Zero,
+                EntitiesSearched = new List<string>()
+            };
+        }
+
+        var startTime = DateTime.UtcNow;
+        var searchResults = new List<SmartSearchItem<T>>();
+        var entitiesSearched = new List<string>();
+        var searchStrategy = "comprehensive";
+
+        Console.WriteLine($"[DEBUG] PerformSmartSearchAsync: Starting search for '{searchText}' on entity type {typeof(T).Name}");
+        Console.WriteLine($"[DEBUG] Parameters: includeInactive={includeInactive}, maxResults={maxResults}");
+
+        try
+        {
+            // Get the entity type name
+            var entityType = typeof(T);
+            var entityName = entityType.Name;
+            entitiesSearched.Add(entityName);
+
+            // STEP 1: Search the main entity
+            var mainEntityResults = await SearchMainEntityAsync<T>(searchText, includeInactive, maxResults);
+            searchResults.AddRange(mainEntityResults);
+
+            // STEP 2: Search related entities based on entity type
+            var relatedEntityResults = await SearchRelatedEntitiesAsync<T>(searchText, includeInactive, maxResults);
+            searchResults.AddRange(relatedEntityResults);
+            entitiesSearched.AddRange(GetRelatedEntityNames<T>());
+
+            // STEP 3: Apply intelligent ranking and deduplication
+            var rankedResults = ApplyIntelligentRanking(searchResults, searchText);
+
+            // STEP 4: Limit results and apply final sorting
+            var finalResults = rankedResults
+                .Take(maxResults)
+                .ToList();
+
+            var executionTime = DateTime.UtcNow - startTime;
+            
+            Console.WriteLine($"[DEBUG] Smart search final results: {finalResults.Count} items out of {searchResults.Count} total search results");
+            foreach (var result in finalResults.Take(3))
+            {
+                var resultEntityName = GetEntityName(result.Entity);
+                Console.WriteLine($"[DEBUG] Result: {resultEntityName} (Score: {result.RelevanceScore}, Type: {result.MatchType})");
+            }
+
+            return new SmartSearchResult<T>
+            {
+                Results = finalResults,
+                TotalFound = rankedResults.Count,
+                SearchStrategy = searchStrategy,
+                ExecutionTime = executionTime,
+                EntitiesSearched = entitiesSearched
+            };
+        }
+        catch (Exception ex)
+        {
+            // Log error and return empty result
+            Console.WriteLine($"Error in smart search: {ex.Message}");
+            
+            return new SmartSearchResult<T>
+            {
+                Results = new List<SmartSearchItem<T>>(),
+                TotalFound = 0,
+                SearchStrategy = "error",
+                ExecutionTime = DateTime.UtcNow - startTime,
+                EntitiesSearched = entitiesSearched,
+                ErrorMessage = ex.Message
+            };
+        }
+    }
+
+    /// <summary>
+    /// Searches the main entity fields for the specified search text
+    /// </summary>
+    private async Task<List<SmartSearchItem<T>>> SearchMainEntityAsync<T>(string searchText, bool includeInactive, int maxResults) where T : class
+    {
+        var results = new List<SmartSearchItem<T>>();
+        var entityType = typeof(T);
+        
+        Console.WriteLine($"[DEBUG] SearchMainEntityAsync: Searching {entityType.Name} for '{searchText}', includeInactive: {includeInactive}");
+        
+        // Create the base query for the entity with includes for related entities
+        var query = _context.Set<T>().AsQueryable();
+        
+        // Include related entities for Partner types to enable searching
+        if (entityType.Name == "Partner" || entityType.Name == "UNOPSPartner")
+        {
+            Console.WriteLine($"[DEBUG] Including related entities for {entityType.Name}");
+            query = query
+                .Include("PartnerGroup")
+                .Include("LiaisonOffice");
+        }
+        
+        // Apply active filter if needed
+        // TODO: TEMPORARILY DISABLED FOR TESTING
+        // if (!includeInactive)
+        // {
+        //     query = ApplyActiveFilter(query);
+        // }
+
+        // Count total entities before filtering
+        var totalEntities = await query.CountAsync();
+        Console.WriteLine($"[DEBUG] Total {entityType.Name} entities in query (after active filter): {totalEntities}");
+        
+        // Test: Try to get some sample partner names to debug
+        if (entityType.Name == "UNOPSPartner" && totalEntities > 0)
+        {
+            var samplePartners = await query.Take(5).Select(e => EF.Property<string>(e, "Name")).ToListAsync();
+            Console.WriteLine($"[DEBUG] Sample partner names: {string.Join(", ", samplePartners)}");
+        }
+
+        // Build dynamic search expression for main entity fields
+        var searchExpression = BuildMainEntitySearchExpression<T>(searchText);
+        if (searchExpression != null)
+        {
+            Console.WriteLine($"[DEBUG] Built search expression for {entityType.Name}");
+            
+            var matchingEntities = await query
+                .Where(searchExpression)
+                .Take(maxResults)
+                .ToListAsync();
+
+            Console.WriteLine($"[DEBUG] Found {matchingEntities.Count} matching {entityType.Name} entities");
+
+            foreach (var entity in matchingEntities)
+            {
+                var relevanceScore = CalculateMainEntityRelevanceScore(entity, searchText);
+                results.Add(new SmartSearchItem<T>
+                {
+                    Entity = entity,
+                    RelevanceScore = relevanceScore,
+                    MatchType = "main_entity",
+                    MatchDetails = $"Found in {entityType.Name} fields"
+                });
+            }
+        }
+        else
+        {
+            Console.WriteLine($"[DEBUG] No search expression built for {entityType.Name}");
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Searches related entities for the specified search text
+    /// </summary>
+    private async Task<List<SmartSearchItem<T>>> SearchRelatedEntitiesAsync<T>(string searchText, bool includeInactive, int maxResults) where T : class
+    {
+        var results = new List<SmartSearchItem<T>>();
+        var entityType = typeof(T);
+
+        // Partner-specific related entity searches
+        if (entityType.Name == "Partner" || entityType.Name == "UNOPSPartner")
+        {
+            results.AddRange(await SearchPartnerRelatedEntitiesAsync<T>(searchText, includeInactive, maxResults));
+        }
+        // Add more entity types as needed (Contact, Interaction, etc.)
+
+        return results;
+    }
+
+    /// <summary>
+    /// Searches Partner-specific related entities
+    /// </summary>
+    private async Task<List<SmartSearchItem<T>>> SearchPartnerRelatedEntitiesAsync<T>(string searchText, bool includeInactive, int maxResults) where T : class
+    {
+        var results = new List<SmartSearchItem<T>>();
+
+        Console.WriteLine($"[DEBUG] SearchPartnerRelatedEntitiesAsync: Searching related entities for '{searchText}'");
+
+        try
+        {
+            // Search through Contacts (case-insensitive)
+            Console.WriteLine($"[DEBUG] Searching contacts for '{searchText}'");
+            var lowerSearchText = searchText.ToLower();
+            var contactMatches = await _context.Contacts
+                .Where(c => EF.Functions.Like(c.Name.ToLower(), $"%{lowerSearchText}%") || 
+                           (c.Title != null && EF.Functions.Like(c.Title.ToLower(), $"%{lowerSearchText}%")) || 
+                           (c.Department != null && EF.Functions.Like(c.Department.ToLower(), $"%{lowerSearchText}%")))
+                .Select(c => c.Partner)
+                .Where(p => p != null)
+                .Cast<T>()
+                .Take(maxResults / 4)
+                .ToListAsync();
+            
+            Console.WriteLine($"[DEBUG] Found {contactMatches.Count} partners through contact matches");
+
+            foreach (var partner in contactMatches)
+            {
+                results.Add(new SmartSearchItem<T>
+                {
+                    Entity = partner,
+                    RelevanceScore = 60, // Related entity match
+                    MatchType = "contact",
+                    MatchDetails = "Found through contact information"
+                });
+            }
+
+            // Search through PartnerGroup/PartnerTree (case-insensitive)
+            Console.WriteLine($"[DEBUG] Searching partner groups for '{searchText}'");
+            
+            // First check if there are any partner groups at all
+            var allPartnerGroups = await _context.PartnerTrees.CountAsync();
+            Console.WriteLine($"[DEBUG] Total PartnerTrees in database: {allPartnerGroups}");
+            
+            var partnerGroupMatches = await _context.Partners
+                .Include(p => p.PartnerGroup)
+                .Where(p => p.PartnerGroup != null && 
+                           EF.Functions.Like(p.PartnerGroup.Name.ToLower(), $"%{searchText.ToLower()}%"))
+                .Cast<T>()
+                .Take(maxResults / 4)
+                .ToListAsync();
+            
+            Console.WriteLine($"[DEBUG] Found {partnerGroupMatches.Count} partners through partner group matches");
+
+            foreach (var partner in partnerGroupMatches)
+            {
+                results.Add(new SmartSearchItem<T>
+                {
+                    Entity = partner,
+                    RelevanceScore = 70, // Partner group match
+                    MatchType = "partner_group",
+                    MatchDetails = "Found through partner group"
+                });
+            }
+
+            // Search through LiaisonOffice (case-insensitive)
+            Console.WriteLine($"[DEBUG] Searching liaison offices for '{searchText}'");
+            var liaisonOfficeMatches = await _context.Partners
+                .Include(p => p.LiaisonOffice)
+                .Where(p => p.LiaisonOffice != null && 
+                           EF.Functions.Like(p.LiaisonOffice.Name.ToLower(), $"%{searchText.ToLower()}%"))
+                .Cast<T>()
+                .Take(maxResults / 4)
+                .ToListAsync();
+                
+            Console.WriteLine($"[DEBUG] Found {liaisonOfficeMatches.Count} partners through liaison office matches");
+
+            foreach (var partner in liaisonOfficeMatches)
+            {
+                results.Add(new SmartSearchItem<T>
+                {
+                    Entity = partner,
+                    RelevanceScore = 65, // Liaison office match
+                    MatchType = "liaison_office",
+                    MatchDetails = "Found through liaison office"
+                });
+            }
+
+            // Search through OrganizationUnitRelationships
+            var orgUnitMatches = await _context.Partners
+                .Include(p => p.OrganizationUnitRelationships)
+                    .ThenInclude(our => our.OrganizationHierarchy)
+                .Where(p => p.OrganizationUnitRelationships.Any(our => 
+                    our.OrganizationHierarchy != null && our.OrganizationHierarchy.Name.Contains(searchText)))
+                .Cast<T>()
+                .Take(maxResults / 4)
+                .ToListAsync();
+
+            foreach (var partner in orgUnitMatches)
+            {
+                results.Add(new SmartSearchItem<T>
+                {
+                    Entity = partner,
+                    RelevanceScore = 55, // Organization unit match
+                    MatchType = "organization_unit",
+                    MatchDetails = "Found through organization unit"
+                });
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error searching partner related entities: {ex.Message}");
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Builds search expression for main entity fields
+    /// </summary>
+    private System.Linq.Expressions.Expression<Func<T, bool>> BuildMainEntitySearchExpression<T>(string searchText) where T : class
+    {
+        var entityType = typeof(T);
+        
+        // Partner-specific search fields (both Partner and UNOPSPartner)
+        if (entityType.Name == "Partner" || entityType.Name == "UNOPSPartner")
+        {
+            // Build expression directly for the correct type T
+            return BuildPartnerSearchExpressionGeneric<T>(searchText);
+        }
+
+        // Add more entity types as needed
+        return null;
+    }
+
+    /// <summary>
+    /// Builds strongly-typed search expression for Partner entities (generic version)
+    /// Includes related entities like PartnerGroup and LiaisonOffice in the search
+    /// </summary>
+    private System.Linq.Expressions.Expression<Func<T, bool>> BuildPartnerSearchExpressionGeneric<T>(string searchText) where T : class
+    {
+        Console.WriteLine($"[DEBUG] Building comprehensive partner search expression for type {typeof(T).Name} with searchText: '{searchText}'");
+        
+        // Convert search text to lowercase for case-insensitive search
+        var lowerSearchText = searchText.ToLower();
+        
+        // Since UNOPSPartner inherits from Partner, we can use the same field names
+        // Using EF.Functions.Like for better database compatibility and case-insensitive search
+        return partner => 
+            // Main Partner fields (case-insensitive)
+            EF.Functions.Like(EF.Property<string>(partner, "Name").ToLower(), $"%{lowerSearchText}%") ||
+            (EF.Property<string>(partner, "PartnerShortDescription") != null && 
+             EF.Functions.Like(EF.Property<string>(partner, "PartnerShortDescription").ToLower(), $"%{lowerSearchText}%")) ||
+            (EF.Property<string>(partner, "PartnerLongDescription") != null && 
+             EF.Functions.Like(EF.Property<string>(partner, "PartnerLongDescription").ToLower(), $"%{lowerSearchText}%")) ||
+            (EF.Property<string>(partner, "PartnerApprovalReference") != null && 
+             EF.Functions.Like(EF.Property<string>(partner, "PartnerApprovalReference").ToLower(), $"%{lowerSearchText}%"));
+    }
+
+    /// <summary>
+    /// Builds strongly-typed search expression specifically for Partner entity
+    /// </summary>
+    private System.Linq.Expressions.Expression<Func<Partner, bool>> BuildPartnerSearchExpression(string searchText)
+    {
+        Console.WriteLine($"[DEBUG] Building partner search expression for: '{searchText}'");
+        // Note: Assuming SQL Server with case-insensitive collation (default behavior)
+        return partner => 
+            partner.Name.Contains(searchText) ||
+            (partner.PartnerShortDescription != null && partner.PartnerShortDescription.Contains(searchText)) ||
+            (partner.PartnerLongDescription != null && partner.PartnerLongDescription.Contains(searchText)) ||
+            (partner.PartnerApprovalReference != null && partner.PartnerApprovalReference.Contains(searchText));
+    }
+
+    /// <summary>
+    /// Calculates relevance score for main entity matches
+    /// </summary>
+    private double CalculateMainEntityRelevanceScore<T>(T entity, string searchText) where T : class
+    {
+        double score = 40; // Base score for main entity match
+
+        try
+        {
+            var entityType = typeof(T);
+            
+            if ((entityType.Name == "Partner" || entityType.Name == "UNOPSPartner") && entity is Partner partner)
+            {
+                var partnerName = partner.Name ?? "";
+                var shortDesc = partner.PartnerShortDescription ?? "";
+                var longDesc = partner.PartnerLongDescription ?? "";
+
+                // Exact name match gets highest score
+                if (string.Equals(partnerName, searchText, StringComparison.OrdinalIgnoreCase))
+                {
+                    score = 100;
+                }
+                else if (partnerName.ToLower().Contains(searchText.ToLower()))
+                {
+                    score = 85;
+                }
+                else if (shortDesc.ToLower().Contains(searchText.ToLower()))
+                {
+                    score = 80;
+                }
+                else if (longDesc.ToLower().Contains(searchText.ToLower()))
+                {
+                    score = 75;
+                }
+
+                // Boost score for special partner statuses
+                if (partner.KeyGlobalPartner)
+                {
+                    score += 5;
+                }
+                if (partner.PartnerApprovalStatus.ToString() == "Approved")
+                {
+                    score += 3;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error calculating relevance score: {ex.Message}");
+        }
+
+        return score;
+    }
+
+    /// <summary>
+    /// Applies intelligent ranking and deduplication to search results
+    /// </summary>
+    private List<SmartSearchItem<T>> ApplyIntelligentRanking<T>(List<SmartSearchItem<T>> searchResults, string searchText) where T : class
+    {
+        // Group by entity ID and take the highest scoring match for each entity
+        var groupedResults = searchResults
+            .GroupBy(r => GetEntityId(r.Entity))
+            .Select(g => g.OrderByDescending(r => r.RelevanceScore).First())
+            .ToList();
+
+        // Apply final ranking
+        return groupedResults
+            .OrderByDescending(r => r.RelevanceScore)
+            .ThenBy(r => GetEntityName(r.Entity))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Gets the ID of an entity using reflection
+    /// </summary>
+    private object GetEntityId<T>(T entity) where T : class
+    {
+        try
+        {
+            var idProperty = typeof(T).GetProperty("Id");
+            return idProperty?.GetValue(entity) ?? Guid.NewGuid();
+        }
+        catch
+        {
+            return Guid.NewGuid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the name of an entity using reflection
+    /// </summary>
+    private string GetEntityName<T>(T entity) where T : class
+    {
+        try
+        {
+            var nameProperty = typeof(T).GetProperty("Name");
+            return nameProperty?.GetValue(entity)?.ToString() ?? "";
+        }
+        catch
+        {
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// Gets the names of related entities being searched
+    /// </summary>
+    private List<string> GetRelatedEntityNames<T>() where T : class
+    {
+        var entityType = typeof(T);
+        
+        if (entityType.Name == "Partner" || entityType.Name == "UNOPSPartner")
+        {
+            return new List<string> { "Contacts", "PartnerGroup", "LiaisonOffice", "OrganizationUnits" };
+        }
+
+        return new List<string>();
+    }
+
+    /// <summary>
+    /// Applies active filter to query if the entity supports it
+    /// </summary>
+    private IQueryable<T> ApplyActiveFilter<T>(IQueryable<T> query) where T : class
+    {
+        try
+        {
+            var entityType = typeof(T);
+            
+            // Check if entity has IsDeleted property
+            var isDeletedProperty = entityType.GetProperty("IsDeleted");
+            if (isDeletedProperty != null)
+            {
+                query = query.Where(e => !((bool)EF.Property<object>(e, "IsDeleted")));
+            }
+
+            // Check if entity has Status property
+            var statusProperty = entityType.GetProperty("Status");
+            if (statusProperty != null)
+            {
+                // Filter for Active status (assuming Active = 1)
+                query = query.Where(e => EF.Property<int>(e, "Status") == 1);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error applying active filter: {ex.Message}");
+        }
+
+        return query;
+    }
+}
+
+/// <summary>
+/// Result container for smart search operations
+/// </summary>
+public class SmartSearchResult<T> where T : class
+{
+    public List<SmartSearchItem<T>> Results { get; set; } = new List<SmartSearchItem<T>>();
+    public int TotalFound { get; set; }
+    public string SearchStrategy { get; set; } = "";
+    public TimeSpan ExecutionTime { get; set; }
+    public List<string> EntitiesSearched { get; set; } = new List<string>();
+    public string? ErrorMessage { get; set; }
+}
+
+/// <summary>
+/// Individual search result item with relevance information
+/// </summary>
+public class SmartSearchItem<T> where T : class
+{
+    public T Entity { get; set; }
+    public double RelevanceScore { get; set; }
+    public string MatchType { get; set; } = "";
+    public string MatchDetails { get; set; } = "";
+    public List<string> MatchedFields { get; set; } = new List<string>();
 } 

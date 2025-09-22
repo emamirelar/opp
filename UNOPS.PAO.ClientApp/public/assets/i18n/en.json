@@ -149,6 +149,11 @@
       "lastModifiedBy": "Last Modified By",
       "lastModifiedDate": "Last Modified Date"
     },
+    "common": {
+      "status": "Status",
+      "createdDate": "Created Date",
+      "lastModifiedDate": "Last Modified Date"
+    },
     "contact": {
       "actions": "Actions",
       "id": "ID",
@@ -249,6 +254,7 @@
       "selectPartnerLiaisonOffice": "Select Partner Liaison Office",
       "selectPartnerFocalPoint": "Select Partner Focal Point",
       "selectPartnerGroup": "Select Partner Group",
+      "shortDescription": "Partner Short Description",
       "longDescription": "Partner Long Description",
       "ddApproval": "DD Approval",
       "levyStatus": "Levy Status",
@@ -366,6 +372,8 @@
     "interaction": {
       "type": "Type",
       "date": "Date",
+      "fromDate": "From Date",
+      "toDate": "To Date",
       "notes": "Notes",
       "status": "System Status",
       "contactId": "Contact ID",
@@ -410,6 +418,15 @@
       "selectCreatedBy": "Select Created By",
       "noPartnersSelected": "No partners selected",
       "aiGeneratedSummary": "AI Generated Summary"
+    },
+    "partnerGroup": {
+      "name": "Partner Group Name"
+    },
+    "liaisonOffice": {
+      "name": "Liaison Office Name"
+    },
+    "user": {
+      "name": "User Name"
     },
     "link": {
       "url": "URL",
@@ -626,13 +643,20 @@
     "enterField": "Enter {{field}}...",
     "operators": {
       "equals": "equals",
+      "eq": "equals",
       "notEquals": "does not equal",
+      "neq": "does not equal",
       "contains": "contains",
+      "like": "contains",
       "notContains": "does not contain",
       "greaterThan": "greater than",
+      "gt": "greater than",
       "lessThan": "less than",
+      "lt": "less than",
       "greaterThanOrEqual": "greater than or equal",
+      "gte": "greater than or equal",
       "lessThanOrEqual": "less than or equal",
+      "lte": "less than or equal",
       "after": "after",
       "before": "before",
       "between": "between",

@@ -12,6 +12,9 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
+using UNOPS.PAO.UNOPSDomain.Entities;
+using Newtonsoft.Json;
+using static UNOPS.PAO.UNOPSBusiness.Services.AdvancedSearchService;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
@@ -24,6 +27,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         private readonly IGeminiManager _geminiManager;
         private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
         private readonly AiContextualService _aiContextualService;
+        private readonly AdvancedSearchService _advancedSearchService;
 
         public InteractionController(
             IManagerWrapper manager, 
@@ -31,7 +35,8 @@ namespace UNOPS.PAO.Presentation.Controllers
             IAuthorizationService authorizationService,
             ISecureSpecificationFactory secureSpecificationFactory,
             ILogger<InteractionController> logger,
-            AiContextualService aiContextualService)
+            AiContextualService aiContextualService,
+            AdvancedSearchService advancedSearchService)
             : base(logger, authorizationService, userResolverService)
         {
             _manager = manager.InteractionManager;
@@ -39,6 +44,7 @@ namespace UNOPS.PAO.Presentation.Controllers
             _geminiManager = manager.GeminiManager;
             _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
             _aiContextualService = aiContextualService;
+            _advancedSearchService = advancedSearchService;
         }
 
         /// <summary>
@@ -163,7 +169,8 @@ namespace UNOPS.PAO.Presentation.Controllers
             [FromQuery] string? orderBy = null,
             [FromQuery] bool ascending = true,
             [FromQuery] int? partnerId = null,
-            [FromQuery] int? contactId = null)
+            [FromQuery] int? contactId = null,
+            [FromQuery] bool export = false)
         {
             // Validate model state first
             var modelValidationResult = ValidateModelState();
@@ -185,7 +192,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                 var request = new InteractionFilterRequest
                 {
                     PageIndex = pageIndex,
-                    PageSize = pageSize,
+                    PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
                     OrderBy = orderBy,
                     Ascending = ascending,
                     PartnerId = partnerId,
@@ -210,7 +217,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         /// Performs simple text search across multiple interaction fields (subject, description, etc.).
         /// </summary>
         /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
-        /// <param name="searchText">Text to search across interaction subject, description, and other basic fields</param>
+        /// <param name="query">Text to search across interaction subject, description, and other basic fields</param>
         /// <example_uses>
         /// Search for interactions about project
         /// Find interactions containing 'meeting notes'
@@ -224,7 +231,8 @@ namespace UNOPS.PAO.Presentation.Controllers
         [AccessControlled(EntityTypes.Interaction, "read")]
         public async Task<ActionResult> SearchInteractions(
             [FromQuery] PaginationRequest request,
-            [FromQuery] string searchText)
+            [FromQuery] string query,
+            [FromQuery] bool export = false)
         {
             // Validate model state first
             var modelValidationResult = ValidateModelState();
@@ -240,47 +248,38 @@ namespace UNOPS.PAO.Presentation.Controllers
                 return paginationValidationResult;
             }
 
-            if (string.IsNullOrWhiteSpace(searchText))
+            if (string.IsNullOrWhiteSpace(query))
             {
                 throw new BusinessException("Search text is required for interaction search");
             }
 
-            return await HandleOperationAsync(async () =>
+            // Use the enhanced search pattern (now includes PostgreSQL similarity search)
+            var paginationRequest = new PaginationRequest
             {
-                // Create an InteractionFilterRequest with pagination/sorting info and search text
-                var interactionFilterRequest = new InteractionFilterRequest
-                {
-                    PageIndex = request.PageIndex,
-                    PageSize = request.PageSize,
-                    OrderBy = request.OrderBy,
-                    Ascending = request.Ascending,
-                    SearchText = searchText
-                };
+                PageIndex = request.PageIndex,
+                PageSize = export ? int.MaxValue : request.PageSize, // Remove pagination limits for export
+                OrderBy = request.OrderBy,
+                Ascending = request.Ascending
+            };
 
-                var result = await SecureSearchControllerHelper.ProcessSecureSimpleTextSearchAsync<Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
-                    searchText, 
-                    request.PageIndex, 
-                    request.PageSize, 
-                    request.OrderBy, 
-                    request.Ascending,
-                    interactionFilterRequest,
-                    "Interaction",
-                    User,
-                    _secureSpecificationFactory.CreateInteractionSpecificationAsync,
-                    async (userId, spec, pagination) => await _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
-                    CurrentUserId, 
-                    _logger);
-                
-                return result;
-            });
+            // Use AdvancedSearchService for unified text search with PostgreSQL similarity
+            var result = await _advancedSearchService.SearchWithQueryAsync<UNOPSInteraction, InteractionModel>(
+                query, 
+                paginationRequest, 
+                User);
+
+            _logger.LogInformation("Interaction search completed: Found {TotalCount} results for query: {Query}, export: {Export}", result.TotalCount, query, export);
+
+            return Ok(result);
         }
 
         /// <summary>
         /// Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters.
+        /// Enhanced with intelligent field value matching for AI agents and typo correction.
         /// </summary>
         /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
         /// <param name="searchCriteria">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
-        /// <param name="searchText">Optional additional text search to combine with criteria</param>
+        /// <param name="enableSmartSearch">Enable intelligent field value matching and typo correction (default: true)</param>
         /// <example_uses>
         /// Find interactions with UNICEF partners
         /// Show meetings with John Smith contact
@@ -297,63 +296,80 @@ namespace UNOPS.PAO.Presentation.Controllers
         /// Logical operators: AND, OR
         /// </searchCriteria_format>
         /// <returns>Paginated list of interactions matching the advanced search criteria</returns>
-        [HttpGet(APIDictionary.Interaction + "/advanced-search")]
-        [AccessControlled(EntityTypes.Interaction, "read")]
-        public async Task<ActionResult> AdvancedSearchInteractions(
-            [FromQuery] PaginationRequest request,
-            [FromQuery] string searchCriteria,
-            [FromQuery] string? searchText = null)
+    [HttpGet(APIDictionary.Interaction + "/advanced-search")]
+    [AccessControlled(EntityTypes.Interaction, "read")]
+    public async Task<ActionResult> AdvancedSearchInteractions(
+        [FromQuery] string filters,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = null,
+        [FromQuery] bool ascending = true,
+        [FromQuery] bool export = false)
+    {
+        try
         {
-            // Validate model state first
-            var modelValidationResult = ValidateModelState();
-            if (modelValidationResult != null)
+            _logger.LogInformation("=== INTERACTION ADVANCED SEARCH ENDPOINT ===");
+            _logger.LogInformation("Filters: {Filters}, Page: {PageIndex}, Size: {PageSize}", filters, pageIndex, pageSize);
+
+            if (string.IsNullOrWhiteSpace(filters))
             {
-                return modelValidationResult;
+                return BadRequest(new { error = "Search filters are required" });
             }
 
-            // Validate pagination parameters
-            var paginationValidationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
-            if (paginationValidationResult != null) 
+            // Parse filters from JSON
+            List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter> searchFilters;
+            try
             {
-                return paginationValidationResult;
+                searchFilters = System.Text.Json.JsonSerializer.Deserialize<List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>>(filters) ?? new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>();
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse search filters: {Filters}", filters);
+                return BadRequest(new { error = "Invalid filter format. Expected JSON array of filter objects." });
             }
 
-            if (string.IsNullOrWhiteSpace(searchCriteria))
+            // Use AdvancedSearchService for structured filters with PostgreSQL similarity on "like" operators
+            var paginationRequest = new PaginationRequest
             {
-                throw new BusinessException("Search criteria is required for advanced interaction search");
+                PageIndex = pageIndex,
+                PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
+                OrderBy = orderBy,
+                Ascending = ascending
+            };
+
+            var result = await _advancedSearchService.SearchWithFiltersAsync<UNOPSInteraction, InteractionModel>(
+                searchFilters,
+                paginationRequest,
+                User);
+            
+            _logger.LogInformation("Advanced interaction search completed: Found {TotalCount} results", result.TotalCount);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in advanced interaction search");
+            return StatusCode(500, new { error = "Internal server error during interaction search", details = ex.Message });
+        }
+    }
+
+        /// <summary>
+        /// Get supported search fields for interactions - helps frontend build dynamic search forms
+        /// </summary>
+        /// <returns>List of all supported search fields with their metadata</returns>
+        [HttpGet(APIDictionary.SingularInteraction + "/search-fields")]
+        [AccessControlled(EntityTypes.Interaction, "read")]
+        public ActionResult<List<SearchFieldInfo>> GetInteractionSearchFields()
+        {
+            try
+            {
+                var fields = _manager.GetInteractionSearchFields();
+                return Ok(fields);
             }
-
-            return await HandleOperationAsync(async () =>
+            catch (Exception ex)
             {
-                // Create an InteractionFilterRequest with pagination/sorting info and search criteria
-                var interactionFilterRequest = new InteractionFilterRequest
-                {
-                    PageIndex = request.PageIndex,
-                    PageSize = request.PageSize,
-                    OrderBy = request.OrderBy,
-                    Ascending = request.Ascending,
-                    SearchCriteria = searchCriteria,
-                    SearchText = searchText,
-                    AdvancedSearch = true // Set this internally since we know this is an advanced search
-                };
-
-                var result = await SecureSearchControllerHelper.ProcessSecureAdvancedSearchAsync<Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
-                    searchCriteria, 
-                    searchText, 
-                    request.PageIndex, 
-                    request.PageSize, 
-                    request.OrderBy, 
-                    request.Ascending,
-                    interactionFilterRequest,
-                    "Interaction",
-                    User,
-                    _secureSpecificationFactory.CreateInteractionSpecificationAsync,
-                    async (userId, spec, pagination) => await _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
-                    CurrentUserId, 
-                    _logger);
-                
-                return result;
-            });
+                _logger.LogError(ex, "Error retrieving interaction search fields");
+                return StatusCode(500, new { error = "An error occurred while retrieving search fields" });
+            }
         }
 
         /// <summary>

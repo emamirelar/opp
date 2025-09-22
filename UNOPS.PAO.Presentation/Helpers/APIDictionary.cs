@@ -43,6 +43,7 @@ public class APIDictionary
 
     // Interaction
     public const string Interaction = APIPrefix + "interactions";
+    public const string SingularInteraction = APIPrefix + "interaction";
 
     // Partner Tree
     
