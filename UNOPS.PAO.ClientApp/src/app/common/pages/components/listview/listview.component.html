@@ -84,7 +84,6 @@
         [entityType]="entityType()"
         [orderBy]="currentSortField()"
         [ascending]="currentSortOrder() === 'asc'"
-        [preselectedSavedFilterId]="preselectedSavedFilterId"
         (search)="onAdvancedSearch($event)"
         (removeCriterion)="onRemoveSearchCriterion($event)"
         (clearSearch)="onClearAdvancedSearch()"

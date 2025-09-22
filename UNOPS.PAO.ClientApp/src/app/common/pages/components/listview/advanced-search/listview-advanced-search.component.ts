@@ -152,7 +152,8 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
           field: field.field,
           label: label,
           type: this.mapFieldTypeToSearchFieldType(field.fieldType),
-          operators: field.allowedOperators || ['like', 'eq', 'neq']
+          operators: field.allowedOperators || ['like', 'eq', 'neq'],
+          dropdownOptions: field.dropdownOptions
         };
       });
     }
@@ -180,19 +181,18 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   /**
    * Check if current field is an enum field with dropdown options
    */
-  isEnumField(): boolean {
-    return this.selectedSearchField && 
-           this.getFieldType(this.selectedSearchField) === 'enum' &&
-           this.selectedSearchField.dropdownOptions &&
-           this.selectedSearchField.dropdownOptions.length > 0;
+  isDropdownField(): boolean {
+    if (!this.selectedSearchField) {
+      return false;
+    }
+    
+    return this.selectedSearchField.dropdownOptions && this.selectedSearchField.dropdownOptions.length > 0;
   }
 
   /**
    * Get dropdown options for the current enum field
    */
-  getEnumOptions(): any[] {
-    if (!this.isEnumField()) return [];
-    
+  getDropdownOptions(): any[] {
     return this.selectedSearchField.dropdownOptions.map((option: DropdownOption) => ({
       label: option.label,
       value: option.value
@@ -340,20 +340,18 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
 
     // Construct the API endpoint based on entity type
     const entityTypeLower = this.entityType.toLowerCase();
-    const endpoint = `/api/${entityTypeLower}/search-fields`;
+    
+    // For interactions, use singular form to match backend endpoint
+    const entityPath = entityTypeLower === 'interactions' ? 'interaction' : entityTypeLower;
+    const endpoint = `/api/${entityPath}/search-fields`;
 
     this.http.get<SearchFieldInfo[]>(endpoint).subscribe({
       next: (searchFields) => {
-        // Debug logging to see API response
-        console.log('🔍 API Response for search fields:', searchFields);
-        
         // Transform API response to include translation keys for displayName
         const transformedFields = searchFields.map(field => ({
           ...field,
           displayName: this.translate.instant(field.displayName) || field.displayName
         }));
-        
-        console.log('🔄 Transformed fields:', transformedFields);
         
         this.searchFieldsFromAPI.set(transformedFields);
         this.isLoadingSearchFields.set(false);
@@ -438,6 +436,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
 
     // Reset operator to appropriate default for field type
     const fieldType = this.getFieldType(field);
+    
     if (fieldType === 'date') {
       this.selectedComparisonOperator = 'after';
     } else if (fieldType === 'number') {
@@ -530,6 +529,14 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       secondValue: secondValue
     };
 
+    if (fieldType === 'enum') {
+      if (criterion.operator === 'like') {
+        criterion.operator = 'eq';
+      } else if (criterion.operator === 'not like') {
+        criterion.operator = 'neq';
+      }
+    }
+
     // Clear saved filter dropdown when criteria are modified
     this.clearSavedFilterSelection();
 
@@ -600,24 +607,22 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   // ===== SavedFilter Event Handlers =====
 
   /**
-   * Handle saved filter applied event
+   * Handle saved filter applied event - CLEAN IMPLEMENTATION
    */
   onSavedFilterApplied(filter: SavedFilter): void {
-    // First, clear current search criteria
-    this.clearSearch.emit();
-
-    // Then emit the filter to parent for complete handling
+    // Simply emit the filter to parent - let parent handle everything
     this.applySavedFilter.emit(filter);
   }
 
   /**
-   * Handle applying criteria from saved filter
+   * Handle applying criteria from saved filter - CLEAN IMPLEMENTATION
+   * This is called AFTER the parent has already updated the state
+   * We just need to trigger a search with the current criteria
    */
   onApplyCriteria(criteria: SearchCriteria[]): void {
-    // Apply each criterion step by step to rebuild the search
-    criteria.forEach(criterion => {
-      this.search.emit(criterion);
-    });
+    // The parent has already updated the searchCriteria state
+    // This method is called after successful filter application
+    // No additional action needed - the API call is triggered by the parent
   }
 
   /**

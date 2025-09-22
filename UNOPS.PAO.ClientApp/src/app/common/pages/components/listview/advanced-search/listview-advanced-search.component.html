@@ -165,10 +165,10 @@
             styleClass="w-48"
           ></p-calendar>
         }
-      } @else if (isEnumField()) {
+      } @else if (isDropdownField()) {
         <!-- Dropdown for enum fields -->
         <p-dropdown
-          [options]="getEnumOptions()"
+          [options]="getDropdownOptions()"
           [(ngModel)]="selectedEnumValue"
           optionLabel="label"
           optionValue="value"

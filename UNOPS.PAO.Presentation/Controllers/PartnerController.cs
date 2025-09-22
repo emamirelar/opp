@@ -373,7 +373,32 @@ public class PartnerController : BaseController
                 new() { Field = "name", DisplayName = "label.partner.name", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "partnerShortDescription", DisplayName = "label.partner.shortDescription", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "partnerLongDescription", DisplayName = "label.partner.longDescription", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
-                new() { Field = "status", DisplayName = "label.common.status", FieldType = "number", AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq", "entityCards.operators.gt", "entityCards.operators.lt", "entityCards.operators.gte", "entityCards.operators.lte" } },
+                new() { 
+                    Field = "status", 
+                    DisplayName = "label.common.status", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Inactive", Label = "enums.entityStatus.inactive" },
+                        new() { Value = "Active", Label = "enums.entityStatus.active" },
+                        new() { Value = "Closed", Label = "enums.entityStatus.closed" },
+                        new() { Value = "Draft", Label = "enums.entityStatus.draft" },
+                        new() { Value = "Archived", Label = "enums.entityStatus.archived" }
+                    }
+                },
+                new() { 
+                    Field = "partnerApprovalStatus", 
+                    DisplayName = "label.partner.approvalStatus", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "NotApproved", Label = "enums.partnerApprovalStatus.notApproved" },
+                        new() { Value = "Approved", Label = "enums.partnerApprovalStatus.approved" }
+                    }
+                },
+                new() { Field = "partnerApprovalDate", DisplayName = "label.partner.approvalDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
                 new() { Field = "keyGlobalPartner", DisplayName = "label.partner.keyGlobalPartner", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },
                 new() { Field = "unSecretariatPartner", DisplayName = "label.partner.unSecretariatPartner", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },
                 new() { Field = "pooledFund", DisplayName = "label.partner.pooledFund", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },
@@ -1467,126 +1492,6 @@ public class PartnerController : BaseController
         }
     }
 
-    /// <summary>
-    /// Performs semantic search on partners using AI embeddings to find similar partners based on natural language queries.
-    /// </summary>
-    /// <param name="query">Natural language search query</param>
-    /// <param name="threshold">Similarity threshold (0.0 to 1.0, default: 0.7)</param>
-    /// <param name="limit">Maximum number of results to return (default: 10)</param>
-    /// <example_uses>
-    /// Find partners similar to UNICEF
-    /// Search for government organizations in Africa
-    /// Find NGOs working on healthcare
-    /// Search for partners in the education sector
-    /// Find organizations similar to Red Cross
-    /// </example_uses>
-    /// <when_to_use>Use this when the user wants to find partners using natural language queries or semantic similarity.</when_to_use>
-    /// <returns>List of similar partners with similarity scores</returns>
-    [HttpGet(APIDictionary.Partner + "/deepSearch")]
-    [AccessControlled(EntityTypes.Partner, "read")]
-    public async Task<ActionResult> DeepSearch(
-        [FromQuery] string query,
-        [FromQuery] float threshold = 0.7f,
-        [FromQuery] int limit = 10)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(query))
-            {
-                return BadRequest(new { error = "Search query is required" });
-            }
-
-            if (threshold < 0.0f || threshold > 1.0f)
-            {
-                return BadRequest(new { error = "Threshold must be between 0.0 and 1.0" });
-            }
-
-            if (limit <= 0 || limit > 100)
-            {
-                return BadRequest(new { error = "Limit must be between 1 and 100" });
-            }
-
-            // Generate embedding for the search query
-            var embedding = await _aiContextualService.CreateEmbeddingForText(query);
-            
-            // Perform semantic search
-            var searchResults = await _aiContextualService.ExecuteEmbeddingSearchMultiple(
-                "Partner", 
-                embedding, 
-                threshold, 
-                limit
-            );
-
-            // Get the actual partner data for the found IDs
-            var partners = new List<object>();
-            foreach (var result in searchResults)
-            {
-                try
-                {
-                    var partner = await _manager.GetPartnerAsync(User, result.EntityId);
-                    if (partner != null)
-                    {
-                        partners.Add(new
-                        {
-                            partner = partner,
-                            similarityScore = result.Score,
-                            searchType = result.SearchType
-                        });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to retrieve partner {PartnerId} from search results", result.EntityId);
-                }
-            }
-
-            return Ok(new
-            {
-                query = query,
-                threshold = threshold,
-                totalResults = searchResults.Count,
-                results = partners
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error performing deep search for partners with query: {Query}", query);
-            return StatusCode(500, new { error = "An error occurred while performing the semantic search" });
-        }
-    }
-    
-    [HttpGet(APIDictionary.Partner + "/search-smart")]
-    [AccessControlled(EntityTypes.Partner, "read")]
-    public async Task<ActionResult<PaginationResponse<PartnerModel>>> SmartSearchPartners(
-        [FromQuery] PaginationRequest request,
-        [FromQuery] string searchText,
-        [FromQuery] bool includeInactive = false,
-        [FromQuery] int maxResults = 50)
-    {
-        // Validate pagination parameters
-        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
-        if (validationResult != null) return validationResult;
-        
-        if (string.IsNullOrWhiteSpace(searchText))
-        {
-            throw new BusinessException("Search text is required for smart partner search");
-        }
-
-        // Limit maxResults to prevent performance issues
-        maxResults = Math.Min(maxResults, 100);
-
-        return await HandleSearchOperationAsync(async () =>
-        {
-            _logger.LogInformation("Performing smart search for: '{SearchText}' (includeInactive: {IncludeInactive}, maxResults: {MaxResults})", 
-                searchText, includeInactive, maxResults);
-
-            var result = await _manager.PerformSmartSearchAsync(User, searchText, includeInactive, maxResults, request);
-
-            _logger.LogInformation("Smart search completed: Found {TotalCount} partners", result.TotalCount);
-
-            return result;
-        }, "partner smart search");
-    }
 
 }
 
