@@ -348,8 +348,11 @@ public class Partner : ModifiableDeletableEntity
         PartnerApprovalDate = DateTime.UtcNow;
         PartnerApprovedBy = $"Approved by {approverName} (ID: {approverId}) on {currentDate}";
         
-        // Auto-assign the next ERP dimension value when approved
-        ErpDimValue = nextErpDimValue;
+        // Auto-assign the ERP dimension value only if not already set
+        if (!ErpDimValue.HasValue)
+        {
+            ErpDimValue = nextErpDimValue;
+        }
     }
     
     /// <summary>
