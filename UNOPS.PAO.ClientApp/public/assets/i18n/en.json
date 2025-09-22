@@ -674,23 +674,27 @@
     "myOfficeOnly": "My Office Only",
     "myOfficeTooltip": "Filter results to show only data from your organizational unit"
   },
-  "enums": {
-    "interactionType": {
-      "email": "Email",
-      "chat": "Chat",
-      "call": "Call",
-      "virtualMeeting": "Virtual Meeting",
-      "inPersonMeeting": "In-Person Meeting",
-      "other": "Other"
-    },
-    "entityStatus": {
-      "inactive": "Inactive",
-      "active": "Active",
-      "closed": "Closed",
-      "draft": "Draft",
-      "archived": "Archived"
-    }
-  },
+        "enums": {
+            "interactionType": {
+                "email": "Email",
+                "chat": "Chat",
+                "call": "Call",
+                "virtualMeeting": "Virtual Meeting",
+                "inPersonMeeting": "In-Person Meeting",
+                "other": "Other"
+            },
+            "entityStatus": {
+                "inactive": "Inactive",
+                "active": "Active",
+                "closed": "Closed",
+                "draft": "Draft",
+                "archived": "Archived"
+            },
+            "partnerApprovalStatus": {
+                "notApproved": "Not Approved",
+                "approved": "Approved"
+            }
+        },
   "savedFilters": {
     "selectFilter": "Select filter",
     "save": "Save",

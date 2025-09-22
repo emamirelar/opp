@@ -356,7 +356,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         /// Get supported search fields for interactions - helps frontend build dynamic search forms
         /// </summary>
         /// <returns>List of all supported search fields with their metadata</returns>
-        [HttpGet(APIDictionary.SingularInteraction + "/search-fields")]
+        [HttpGet(APIDictionary.SingularInteraction  + "/search-fields")]
         [AccessControlled(EntityTypes.Interaction, "read")]
         public ActionResult<List<SearchFieldInfo>> GetInteractionSearchFields()
         {

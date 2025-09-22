@@ -373,7 +373,32 @@ public class PartnerController : BaseController
                 new() { Field = "name", DisplayName = "label.partner.name", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "partnerShortDescription", DisplayName = "label.partner.shortDescription", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "partnerLongDescription", DisplayName = "label.partner.longDescription", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
-                new() { Field = "status", DisplayName = "label.common.status", FieldType = "number", AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq", "entityCards.operators.gt", "entityCards.operators.lt", "entityCards.operators.gte", "entityCards.operators.lte" } },
+                new() { 
+                    Field = "status", 
+                    DisplayName = "label.common.status", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Inactive", Label = "enums.entityStatus.inactive" },
+                        new() { Value = "Active", Label = "enums.entityStatus.active" },
+                        new() { Value = "Closed", Label = "enums.entityStatus.closed" },
+                        new() { Value = "Draft", Label = "enums.entityStatus.draft" },
+                        new() { Value = "Archived", Label = "enums.entityStatus.archived" }
+                    }
+                },
+                new() { 
+                    Field = "partnerApprovalStatus", 
+                    DisplayName = "label.partner.approvalStatus", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "NotApproved", Label = "enums.partnerApprovalStatus.notApproved" },
+                        new() { Value = "Approved", Label = "enums.partnerApprovalStatus.approved" }
+                    }
+                },
+                new() { Field = "partnerApprovalDate", DisplayName = "label.partner.approvalDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
                 new() { Field = "keyGlobalPartner", DisplayName = "label.partner.keyGlobalPartner", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },
                 new() { Field = "unSecretariatPartner", DisplayName = "label.partner.unSecretariatPartner", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },
                 new() { Field = "pooledFund", DisplayName = "label.partner.pooledFund", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },

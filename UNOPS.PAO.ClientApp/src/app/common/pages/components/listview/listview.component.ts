@@ -926,8 +926,9 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   }
 
   onApplySavedFilter(filter: SavedFilter): void {
+    console.log('🔄 Applying saved filter:', filter.name, 'ID:', filter.id);
+    
     const queryParams: any = { ...this.route.snapshot.queryParams };
-
     queryParams.savedFilterId = filter.id;
 
     if (filter.isAdvancedSearch) {
@@ -945,19 +946,22 @@ export class ListviewComponent<T = any> implements AfterViewInit {
             criteria = filter.searchCriteria;
           }
 
-          // Update component state with the saved filter criteria
+          console.log('✅ Parsed criteria:', criteria.length, 'filters');
+
+          // CLEAN IMPLEMENTATION: Clear and replace all criteria at once
           this.state.update(s => ({
             ...s,
             isAdvancedSearchMode: true,
-            searchCriteria: [...criteria],
-            searchText: '',
-            pageIndex: 1
+            searchCriteria: [...criteria], // Replace (not append) all criteria
+            searchText: '', // Clear simple search
+            pageIndex: 1 // Reset to first page
           }));
 
-          // Also update URL with the search criteria
+          // Update URL with the search criteria
           this.syncSearchCriteriaToUrl();
+          
         } catch (error) {
-          console.error('Error parsing saved filter criteria:', error);
+          console.error('❌ Error parsing saved filter criteria:', error);
         }
       }
     } else if (filter.searchText) {
@@ -966,11 +970,12 @@ export class ListviewComponent<T = any> implements AfterViewInit {
         ...s,
         isAdvancedSearchMode: false,
         searchText: filter.searchText || '',
-        searchCriteria: [],
+        searchCriteria: [], // Clear advanced search criteria
         pageIndex: 1
       }));
     }
 
+    // Apply sorting if specified
     if (filter.orderBy) {
       this.state.update(s => ({
         ...s,
@@ -979,10 +984,13 @@ export class ListviewComponent<T = any> implements AfterViewInit {
       }));
     }
 
+    // Update URL and trigger data load
     this.updateUrlParams(queryParams);
-
     this.dataLoader.setPagination(0, this.state().pageSize);
     this.preselectedSavedFilterId = null;
+    
+    // CRITICAL: Execute the search with the applied criteria
+    console.log('🚀 Executing search with applied filter criteria');
     this.loadData();
   }
 
