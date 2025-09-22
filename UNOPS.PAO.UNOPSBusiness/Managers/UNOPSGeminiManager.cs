@@ -834,12 +834,12 @@ public class UNOPSGeminiManager : IGeminiManager
         string entityName = GetEntityNameFromPromptType(req.Type);
         
         // For Partners: Always use batch size 5, but check total rows for async vs sync
-        // For other entities: Use existing logic (batch size 25, async if > 100 rows)
+        // For other entities: Use existing logic (batch size 25, async if > 20 rows)
         bool isPartnerEntity = entityName.Equals("Partners", StringComparison.OrdinalIgnoreCase);
         int totalRows = fileDataArray.Count - 1; // Excluding header row
         
-        // Check if we should process asynchronously (changed threshold to 50)
-        bool shouldProcessAsync = isPartnerEntity ? (totalRows > 50) : (fileDataArray.Count > 50);
+        // Check if we should process asynchronously (changed threshold to 20)
+        bool shouldProcessAsync = isPartnerEntity ? (totalRows > 20) : (fileDataArray.Count > 20);
         
         if (shouldProcessAsync)
         {

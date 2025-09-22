@@ -1,4 +1,5 @@
 using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.Models;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -18,12 +19,17 @@ using UNOPS.PAO.Presentation;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Specifications;
+using UNOPS.PAO.Business.Services;
+using System.Text.Json;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
+using UNOPS.PAO.UNOPSDataAccess.Context;
 using System.Collections.Generic;
 using System.Linq;
+using UNOPS.PAO.UNOPSDomain.Entities;
+using static UNOPS.PAO.UNOPSBusiness.Services.AdvancedSearchService;
 
 [Route("/")]
 [Authorize(AuthenticationSchemes = "IAP")]
@@ -33,19 +39,22 @@ public class PartnerController : BaseController
     private readonly IGeminiManager _geminiManager;
     private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
     private readonly AiContextualService _aiContextualService;
+    private readonly AdvancedSearchService _advancedSearchService;
 
     public PartnerController(
         IManagerWrapper manager, 
         UserResolverService<int> userResolverService, 
         IAuthorizationService authorizationService,
         ILogger<PartnerController> logger,
-        AiContextualService aiContextualService)
+        AiContextualService aiContextualService,
+        AdvancedSearchService advancedSearchService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.PartnerManager;
         _geminiManager = manager.GeminiManager;
         _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
         _aiContextualService = aiContextualService;
+        _advancedSearchService = advancedSearchService;
     }
 
     /// <summary>
@@ -167,10 +176,11 @@ public class PartnerController : BaseController
     [AccessControlled(EntityTypes.Partner, "read")]
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> ListAllPartners(
         [FromQuery] int pageIndex = 1,
-        [FromQuery] int pageSize = 5,
+        [FromQuery] int pageSize = 20,
         [FromQuery] string? orderBy = "CreatedDate",
         [FromQuery] int? partnerGroupId = null,
-        [FromQuery] bool ascending = false)
+        [FromQuery] bool ascending = false,
+        [FromQuery] bool export = false)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
@@ -182,7 +192,7 @@ public class PartnerController : BaseController
             var request = new PartnerFilterRequest
             {
                 PageIndex = pageIndex,
-                PageSize = pageSize,
+                PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
                 OrderBy = orderBy ?? "createdDate",
                 Ascending = ascending,
                 PartnerGroupId = partnerGroupId
@@ -224,47 +234,56 @@ public class PartnerController : BaseController
     [HttpGet(APIDictionary.Partner + "/search")]
     [AccessControlled(EntityTypes.Partner, "read")]
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> SearchPartners(
-        [FromQuery] PaginationRequest request,
-        [FromQuery] string searchText,
-        [FromQuery] bool enableSmartSearch = true,
-        [FromQuery] int basicThreshold = 1,
-        [FromQuery] float similarityThreshold = 0.3f,
-        [FromQuery] float semanticThreshold = 0.3f)
+        [FromQuery] string query,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = "CreatedDate", 
+        [FromQuery] bool ascending = false,
+        [FromQuery] bool export = false)
     {
-        // Validate pagination parameters
-        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
-        if (validationResult != null) return validationResult;
-        
-        if (string.IsNullOrWhiteSpace(searchText))
+        try
         {
-            throw new BusinessException("Search text is required for partner search");
-        }
+            _logger.LogInformation("=== SIMPLE SEARCH ENDPOINT (Using Smart Search) ===");
+            _logger.LogInformation("Query: '{Query}', Page: {PageIndex}, Size: {PageSize}, Export: {Export}", query, pageIndex, pageSize, export);
 
-        return await HandleSearchOperationAsync(async () =>
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return BadRequest(new { error = "Search query is required" });
+            }
+
+            // Use the enhanced specification pattern (now includes PostgreSQL similarity search)
+            var paginationRequest = new PaginationRequest
+            {
+                PageIndex = pageIndex,
+                PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
+                OrderBy = orderBy,
+                Ascending = ascending
+            };
+
+            // Use AdvancedSearchService for unified text search with PostgreSQL similarity
+            var result = await _advancedSearchService.SearchWithQueryAsync<UNOPSPartner, PartnerModel>(
+                query, 
+                paginationRequest, 
+                User);
+
+            _logger.LogInformation("Smart search completed: Found {TotalCount} results", result.TotalCount);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
         {
-            if (enableSmartSearch)
-            {
-                _logger.LogInformation("Performing intelligent multi-tier search for: {SearchText}", searchText);
-                return await PerformIntelligentSearch(searchText, request, basicThreshold, similarityThreshold, semanticThreshold);
-            }
-            else
-            {
-                _logger.LogInformation("Performing basic search for: {SearchText}", searchText);
-                return await PerformBasicSearch(searchText, request);
-            }
-        }, "partner intelligent search");
+            _logger.LogError(ex, "Error in simple partner search");
+            return StatusCode(500, new { error = "An error occurred during search" });
+        }
     }
 
     /// <summary>
     /// Performs advanced search with structured criteria including status, dates, relationships, and complex filters.
-    /// Enhanced with intelligent text search for better results when searchText is provided.
+    /// Enhanced with intelligent field value matching for AI agents and typo correction.
     /// </summary>
     /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
     /// <param name="searchCriteria">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
-    /// <param name="searchText">Optional additional text search to combine with criteria. Uses intelligent search when enabled.</param>
-    /// <param name="enableSmartTextSearch">Enable intelligent text search for searchText parameter (default: true)</param>
-    /// <param name="similarityThreshold">Similarity search threshold when smart search is enabled (default: 0.3)</param>
-    /// <param name="semanticThreshold">Semantic search threshold when smart search is enabled (default: 0.3)</param>
+    /// <param name="enableSmartSearch">Enable intelligent field value matching and typo correction (default: true)</param>
     /// <example_uses>
     /// Find active government partners
     /// Show partners with global key account status
@@ -278,55 +297,106 @@ public class PartnerController : BaseController
     /// <searchCriteria_format>
     /// JSON array format: [{"field": "status", "operator": "is", "value": "Active", "logicalOperator": "AND"}]
     /// Available operators: is, is not, like, not like, greater than, less than, greater than or equal, less than or equal, this week, this month, this year
-    /// Available fields: name, status, partnerShortDescription, partnerLongDescription, partnerCategoryId, liaisonOfficeId, partnerGroupCode, keyGlobalPartner, unSecretariatPartner, partnerApprovalStatus, partnerLevyStatus, pooledFund, canCreateNewOpportunities, createdDate, lastModifiedDate
+    /// Available fields: name, status, partnerShortDescription, partnerLongDescription, partnerCategoryId, partnerGroupId, liaisonOfficeId, partnerFocalPointUserId, partnerGroupCode, erpDimValue, unAndStateEntity, keyGlobalPartner, unSecretariatPartner, dueDiligenceRequired, dueDiligenceApproval, dueDiligenceApprovalDate, dueDiligenceExpiryDate, partnerApprovalStatus, partnerApprovalDate, partnerApprovalReference, partnerApprovedBy, partnerLevyStatus, reasonForLevy, levyTreatment, pooledFund, canCreateNewOpportunities, reasonForNoNewOpportunity, partnerGroup.name, partnerGroup.code, liaisonOffice.name, contacts.firstName, contacts.lastName, contacts.email, contacts.title, contacts.department, contacts.phone, contacts.mobile, contacts.description, contacts.assistant, contacts.assistantEmail, contacts.assistantPhone, contacts.mailingCity, contacts.mailingStateProvince, contacts.mailingCountry, organizationUnitRelationships.organizationHierarchy.name, createdDate, lastModifiedDate, createdBy, lastModifiedBy, isDeleted
     /// Logical operators: AND, OR
     /// </searchCriteria_format>
     /// <returns>Paginated list of partners matching the advanced search criteria</returns>
     [HttpGet(APIDictionary.Partner + "/advanced-search")]
     [AccessControlled(EntityTypes.Partner, "read")]
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> AdvancedSearchPartners(
-        [FromQuery] PaginationRequest request,
-        [FromQuery] string searchCriteria,
-        [FromQuery] string? searchText = null,
-        [FromQuery] bool enableSmartTextSearch = true,
-        [FromQuery] float similarityThreshold = 0.3f,
-        [FromQuery] float semanticThreshold = 0.3f)
+        [FromQuery] string filters,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = "CreatedDate",
+        [FromQuery] bool ascending = false,
+        [FromQuery] bool export = false)
     {
-        // Validate pagination parameters
-        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
-        if (validationResult != null) return validationResult;
-        
-        if (string.IsNullOrWhiteSpace(searchCriteria))
+        try
         {
-            throw new BusinessException("Search criteria is required for advanced partner search");
-        }
+            _logger.LogInformation("=== ADVANCED SEARCH ENDPOINT ===");
+            _logger.LogInformation("Filters: {Filters}, Page: {PageIndex}, Size: {PageSize}, Export: {Export}", filters, pageIndex, pageSize, export);
 
-        return await HandleSearchOperationAsync(async () =>
-        {
-            // Create a PartnerFilterRequest with pagination/sorting info and search criteria
-            var partnerFilterRequest = new PartnerFilterRequest
+            if (string.IsNullOrWhiteSpace(filters))
             {
-                PageIndex = request.PageIndex,
-                PageSize = request.PageSize,
-                OrderBy = request.OrderBy ?? "createdDate",
-                Ascending = request.Ascending,
-                SearchCriteria = searchCriteria,
-                SearchText = searchText,
-                AdvancedSearch = true // Set this internally since we know this is an advanced search
+                return BadRequest(new { error = "Search filters are required" });
+            }
+
+            // Parse filters from JSON
+            List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter> searchFilters;
+            try
+            {
+                searchFilters = JsonSerializer.Deserialize<List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>>(filters) ?? new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>();
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse search filters: {Filters}", filters);
+                return BadRequest(new { error = "Invalid filter format. Expected JSON array of filter objects." });
+            }
+
+            // Use AdvancedSearchService for structured filters with PostgreSQL similarity on "like" operators
+            var paginationRequest = new PaginationRequest
+            {
+                PageIndex = pageIndex,
+                PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
+                OrderBy = orderBy,
+                Ascending = ascending
             };
 
-            // If we have text search and smart search is enabled, try enhanced approach
-            if (!string.IsNullOrWhiteSpace(searchText) && enableSmartTextSearch)
+            var result = await _advancedSearchService.SearchWithFiltersAsync<UNOPSPartner, PartnerModel>(
+                searchFilters,
+                paginationRequest,
+                User);
+            
+            _logger.LogInformation("Advanced search completed: Found {TotalCount} results", result.TotalCount);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in advanced partner search");
+            return StatusCode(500, new { error = "An error occurred during advanced search" });
+        }
+    }
+
+    /// <summary>
+    /// Get supported search fields for partners - helps frontend build dynamic search forms
+    /// </summary>
+    /// <returns>List of all supported search fields with their metadata</returns>
+    [HttpGet(APIDictionary.Partner + "/search-fields")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public ActionResult<List<SearchFieldInfo>> GetPartnerSearchFields()
+    {
+        try
+        {
+            var fields = new List<SearchFieldInfo>
             {
-                _logger.LogInformation("Performing enhanced advanced search with smart text search for: {SearchText}", searchText);
-                return await PerformEnhancedAdvancedSearch(partnerFilterRequest, similarityThreshold, semanticThreshold);
-            }
-            else
-            {
-                _logger.LogInformation("Performing standard advanced search");
-                return await PerformStandardAdvancedSearch(partnerFilterRequest);
-            }
-        }, "partner advanced search");
+                // Direct Partner fields - using translation keys
+                new() { Field = "name", DisplayName = "label.partner.name", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partnerShortDescription", DisplayName = "label.partner.shortDescription", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partnerLongDescription", DisplayName = "label.partner.longDescription", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "status", DisplayName = "label.common.status", FieldType = "number", AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq", "entityCards.operators.gt", "entityCards.operators.lt", "entityCards.operators.gte", "entityCards.operators.lte" } },
+                new() { Field = "keyGlobalPartner", DisplayName = "label.partner.keyGlobalPartner", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },
+                new() { Field = "unSecretariatPartner", DisplayName = "label.partner.unSecretariatPartner", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },
+                new() { Field = "pooledFund", DisplayName = "label.partner.pooledFund", FieldType = "bool", AllowedOperators = new List<string> { "entityCards.operators.eq" } },
+                new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+
+                // Navigation properties - using translation keys
+                new() { Field = "partnerGroup.name", DisplayName = "label.partnerGroup.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "liaisonOffice.name", DisplayName = "label.liaisonOffice.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+
+                // Contact properties - using translation keys
+                new() { Field = "contacts.fullName", DisplayName = "label.contact.fullName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "contacts.firstName", DisplayName = "label.contact.firstName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "contacts.lastName", DisplayName = "label.contact.lastName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "contacts.email", DisplayName = "label.contact.email", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+            };
+            
+            return Ok(fields);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving search fields");
+            return StatusCode(500, new { error = "An error occurred while retrieving search fields" });
+        }
     }
 
     /// <summary>
@@ -1484,4 +1554,40 @@ public class PartnerController : BaseController
             return StatusCode(500, new { error = "An error occurred while performing the semantic search" });
         }
     }
+    
+    [HttpGet(APIDictionary.Partner + "/search-smart")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> SmartSearchPartners(
+        [FromQuery] PaginationRequest request,
+        [FromQuery] string searchText,
+        [FromQuery] bool includeInactive = false,
+        [FromQuery] int maxResults = 50)
+    {
+        // Validate pagination parameters
+        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
+        if (validationResult != null) return validationResult;
+        
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            throw new BusinessException("Search text is required for smart partner search");
+        }
+
+        // Limit maxResults to prevent performance issues
+        maxResults = Math.Min(maxResults, 100);
+
+        return await HandleSearchOperationAsync(async () =>
+        {
+            _logger.LogInformation("Performing smart search for: '{SearchText}' (includeInactive: {IncludeInactive}, maxResults: {MaxResults})", 
+                searchText, includeInactive, maxResults);
+
+            var result = await _manager.PerformSmartSearchAsync(User, searchText, includeInactive, maxResults, request);
+
+            _logger.LogInformation("Smart search completed: Found {TotalCount} partners", result.TotalCount);
+
+            return result;
+        }, "partner smart search");
+    }
+
 }
+
+// SearchFieldInfo class removed - now using UNOPS.PAO.Models.SearchFieldInfo

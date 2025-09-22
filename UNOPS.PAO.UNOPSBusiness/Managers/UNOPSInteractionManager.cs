@@ -1396,4 +1396,74 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         // If no ApplyOrgUnitFilter method found, return original query
         return query;
     }
+    
+    /// <summary>
+    /// Get supported search fields for interactions - helps frontend build dynamic search forms
+    /// </summary>
+    /// <returns>List of all supported search fields with their metadata</returns>
+    public List<SearchFieldInfo> GetInteractionSearchFields()
+    {
+        try
+        {
+            var fields = new List<SearchFieldInfo>
+            {
+                // Direct Interaction fields - using translation keys
+                new() { 
+                    Field = "type", 
+                    DisplayName = "label.interaction.type", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Email", Label = "enums.interactionType.email" },
+                        new() { Value = "Chat", Label = "enums.interactionType.chat" },
+                        new() { Value = "Call", Label = "enums.interactionType.call" },
+                        new() { Value = "VirtualMeeting", Label = "enums.interactionType.virtualMeeting" },
+                        new() { Value = "InPersonMeeting", Label = "enums.interactionType.inPersonMeeting" },
+                        new() { Value = "Other", Label = "enums.interactionType.other" }
+                    }
+                },
+                new() { 
+                    Field = "status", 
+                    DisplayName = "label.common.status", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Inactive", Label = "enums.entityStatus.inactive" },
+                        new() { Value = "Active", Label = "enums.entityStatus.active" },
+                        new() { Value = "Closed", Label = "enums.entityStatus.closed" },
+                        new() { Value = "Draft", Label = "enums.entityStatus.draft" },
+                        new() { Value = "Archived", Label = "enums.entityStatus.archived" }
+                    }
+                },
+                new() { Field = "subject", DisplayName = "label.interaction.subject", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "description", DisplayName = "label.interaction.description", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "date", DisplayName = "label.interaction.date", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "fromDate", DisplayName = "label.interaction.fromDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "toDate", DisplayName = "label.interaction.toDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+
+                // Contact relationship fields through InteractionContacts junction table - using translation keys
+                new() { Field = "interactioncontacts.contact.fullName", DisplayName = "label.contact.fullName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "interactioncontacts.contact.firstName", DisplayName = "label.contact.firstName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "interactioncontacts.contact.lastName", DisplayName = "label.contact.lastName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "interactioncontacts.contact.email", DisplayName = "label.contact.email", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+
+                // Partner relationship fields through InteractionPartners junction table - using translation keys  
+                new() { Field = "interactionpartners.partner.name", DisplayName = "label.partner.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                
+                // User relationship fields through InteractionUsers junction table - using translation keys
+                new() { Field = "interactionusers.user.name", DisplayName = "label.user.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+            };
+            
+            return fields;
+        }
+        catch (Exception ex)
+        {
+            // Log error - no logger available in this manager
+            Console.WriteLine($"Error retrieving interaction search fields: {ex.Message}");
+            return new List<SearchFieldInfo>();
+        }
+    }
 }

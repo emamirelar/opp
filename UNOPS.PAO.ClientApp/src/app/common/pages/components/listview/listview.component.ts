@@ -728,7 +728,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
       this.exportService.exportToGoogleSheet(
         entityName,
-        this._dataUrl,
+        this.getApiEndpoint(),
         searchParams,
         sortField || this.config.defaultSortField,
         sortOrder || this.config.defaultSortOrder,
@@ -775,11 +775,11 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     }
 
     if (isAdvancedSearchMode && searchCriteria.length > 0) {
-      // For advanced search, only add searchCriteria (no advancedSearch flag)
-      params = params.set('searchCriteria', JSON.stringify(searchCriteria));
+      // For advanced search, pass filters as JSON
+      params = params.set('filters', JSON.stringify(searchCriteria));
     } else if (searchText?.trim()) {
-      // For simple search, only add searchText
-      params = params.set('searchText', searchText.trim());
+      // For simple search, pass query parameter
+      params = params.set('query', searchText.trim());
     }
 
     // Removed automatic orgUnitId parameter addition
@@ -932,6 +932,43 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
     if (filter.isAdvancedSearch) {
       queryParams.advancedSearch = 'true';
+      
+      // Apply the search criteria from the saved filter
+      if (filter.searchCriteria) {
+        try {
+          let criteria: SearchCriteria[] = [];
+          
+          // Handle both string and array formats
+          if (typeof filter.searchCriteria === 'string') {
+            criteria = JSON.parse(filter.searchCriteria);
+          } else {
+            criteria = filter.searchCriteria;
+          }
+
+          // Update component state with the saved filter criteria
+          this.state.update(s => ({
+            ...s,
+            isAdvancedSearchMode: true,
+            searchCriteria: [...criteria],
+            searchText: '',
+            pageIndex: 1
+          }));
+
+          // Also update URL with the search criteria
+          this.syncSearchCriteriaToUrl();
+        } catch (error) {
+          console.error('Error parsing saved filter criteria:', error);
+        }
+      }
+    } else if (filter.searchText) {
+      // Apply simple search text
+      this.state.update(s => ({
+        ...s,
+        isAdvancedSearchMode: false,
+        searchText: filter.searchText || '',
+        searchCriteria: [],
+        pageIndex: 1
+      }));
     }
 
     if (filter.orderBy) {

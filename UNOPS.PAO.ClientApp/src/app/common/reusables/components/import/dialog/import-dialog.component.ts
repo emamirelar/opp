@@ -12,7 +12,7 @@ import { MessageModule } from 'primeng/message';
 import { BlockUIModule } from 'primeng/blockui';
 import { StepperModule } from 'primeng/stepper';
 import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
-import { NgClass, JsonPipe, TitleCasePipe } from '@angular/common';
+import { NgClass, JsonPipe, TitleCasePipe, DatePipe } from '@angular/common';
 import { ImportDialogService } from './import-dialog.service';
 import { PaginatorModule } from 'primeng/paginator';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -57,6 +57,7 @@ interface ImportColumn extends ListViewColumn {
     CheckboxModule,
     ChipModule,
     TitleCasePipe,
+    DatePipe,
     DuplicateIndicatorComponent,
     DuplicateSummaryComponent
   ],
@@ -119,6 +120,16 @@ interface ImportColumn extends ListViewColumn {
     .p-error:not(.import-error) td {
       background-color: #fef3cd !important;
     }
+    
+    /* Style for internal duplicate badge in banner only */
+    .internal-duplicate-badge {
+      background-color: #f97316;
+      color: white;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
   `]
 })
 export class ImportDialogComponent implements OnInit {
@@ -146,6 +157,11 @@ export class ImportDialogComponent implements OnInit {
   showDuplicateWarning = signal<boolean>(false);
   duplicateWarningMessage = signal<string>('');
 
+  // Internal duplicate warning properties
+  internalDuplicateRows = signal<any[]>([]);
+  showInternalDuplicateWarning = signal<boolean>(false);
+  internalDuplicateWarningMessage = signal<string>('');
+
   // Pagination properties
   first = signal(0);
   rows = signal(10);
@@ -167,7 +183,7 @@ export class ImportDialogComponent implements OnInit {
     { field: 'title', header: 'contact.title', required: true, label: 'Title', type: 'text', sortable: false },
     { field: 'pronouns', header: 'contact.pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
     { field: 'birthDate', header: 'contact.birthDate', required: false, label: 'Birth Date', type: 'text', sortable: false },
-    { field: 'partnerId', header: 'contact.partnerId', required: true, label: 'Partner Id', type: 'text', sortable: false },
+    { field: 'partnerName', header: 'contact.partner', required: true, label: 'Partner', type: 'text', sortable: false },
     { field: 'email', header: 'contact.email', required: true, label: 'Email', type: 'text', sortable: false },
     { field: 'phone', header: 'contact.phone', required: false, label: 'Phone', type: 'text', sortable: false },
     { field: 'mobile', header: 'contact.mobile', required: false, label: 'Mobile', type: 'text', sortable: false },
@@ -197,10 +213,10 @@ export class ImportDialogComponent implements OnInit {
     { field: 'partnerLongDescription', header: 'partner.longDescription', required: false, label: 'Partner Long Description', type: 'text', sortable: false },
     
     // Classification & Organization
-    { field: 'partnerGroupId', header: 'partner.partnerGroupId', required: false, label: 'Partner Group Id', type: 'number', sortable: false },
-    { field: 'liaisonOfficeId', header: 'partner.partnerLiaisonOfficeId', required: false, label: 'Partner Liaison Office Id', type: 'text', sortable: false },
-    { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPointUserId', required: false, label: 'Focal Point User Id', type: 'text', sortable: false },
-    { field: 'organizationUnitRelationshipsName', header: 'partner.partnerOrgUnit', required: false, label: 'Partner Org Unit', type: 'text', sortable: false },
+    { field: 'partnerGroupName', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'text', sortable: false },
+    { field: 'liaisonOfficeName', header: 'partner.partnerLiaisonOffice', required: false, label: 'Partner Liaison Office', type: 'text', sortable: false },
+    { field: 'partnerFocalPointUserName', header: 'partner.partnerFocalPointUser', required: false, label: 'Focal Point User', type: 'text', sortable: false },
+    { field: 'organizationHierarchyNames', header: 'partner.partnerOrgUnit', required: false, label: 'Partner Org Unit', type: 'text', sortable: false },
     // Status & Operational
     { field: 'status', header: 'partner.status', required: false, label: 'Status', type: 'text', sortable: false },
   ];
@@ -216,12 +232,12 @@ export class ImportDialogComponent implements OnInit {
     { field: 'subject', header: 'interaction.subject', required: true, label: 'Subject', type: 'text', sortable: false },
     { field: 'description', header: 'interaction.description', required: false, label: 'Description', type: 'text', sortable: false },
     { field: 'location', header: 'interaction.location', required: false, label: 'Location', type: 'text', sortable: false },
-    { field: 'contactIds', header: 'interaction.contactIds', required: false, label: 'Contact IDs', type: 'text', sortable: false },
-    { field: 'partnerIds', header: 'interaction.partnerIds', required: false, label: 'Partner IDs', type: 'text', sortable: false },
-    { field: 'userIds', header: 'interaction.userIds', required: false, label: 'User IDs', type: 'text', sortable: false },
+    { field: 'contactNames', header: 'interaction.contacts', required: false, label: 'Contacts', type: 'text', sortable: false },
+    { field: 'partnerNames', header: 'interaction.partners', required: false, label: 'Partners', type: 'text', sortable: false },
+    { field: 'userNames', header: 'interaction.users', required: false, label: 'Users', type: 'text', sortable: false },
     { field: 'emailAddresses', header: 'interaction.emailAddresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
     { field: 'phoneNumbers', header: 'interaction.phoneNumbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
-    { field: 'organizationHierarchyIdsName', header: 'interaction.organizationUnitIdsName', required: false, label: 'Organization Unit', type: 'text', sortable: false }
+    { field: 'organizationHierarchyNames', header: 'interaction.organizationUnit', required: false, label: 'Organization Unit', type: 'text', sortable: false }
   ];
 
   // User Role-specific columns
@@ -537,6 +553,35 @@ export class ImportDialogComponent implements OnInit {
     return this.rowsWithMissingRequired().length > 0;
   }
 
+
+  /**
+   * Get display row number for a record (1-based, accounting for header)
+   */
+  getDisplayRowNumber(record: any): number {
+    const data = this.importDialogService.data();
+    const index = data.findIndex(r => r._importRowId === record._importRowId);
+    return index + 2; // +1 for 0-based index, +1 for header row
+  }
+
+  /**
+   * Get display name for a record (name or first few chars of key field)
+   */
+  getRecordDisplayName(record: any): string {
+    // Try to get the most descriptive field based on entity type
+    const entityType = this.currentImportType().toLowerCase();
+    
+    switch (entityType) {
+      case 'partner':
+        return record.name || record.partnerName || record.shortName || `Partner #${this.getDisplayRowNumber(record)}`;
+      case 'contact':
+        return record.name || `${record.firstName || ''} ${record.lastName || ''}`.trim() || record.email || `Contact #${this.getDisplayRowNumber(record)}`;
+      case 'interaction':
+        return record.subject || record.type || `Interaction #${this.getDisplayRowNumber(record)}`;
+      default:
+        return record.name || record.title || record.description || `Record #${this.getDisplayRowNumber(record)}`;
+    }
+  }
+
   /**
    * Process duplicate detection and add duplicateInfo to each record
    */
@@ -544,8 +589,32 @@ export class ImportDialogComponent implements OnInit {
     const processedData = [...data];
     const duplicateRows: any[] = [];
     const nonDuplicateRows: any[] = [];
+    const internalDuplicateRows: any[] = [];
 
     processedData.forEach((record, index) => {
+      
+      // Check for internal duplicate warnings first
+      if (record.internalDuplicateWarning) {
+        const internalWarning = record.internalDuplicateWarning;
+        
+        record.internalDuplicateInfo = {
+          hasInternalDuplicate: true,
+          isMaster: internalWarning.isMaster,
+          duplicateCount: internalWarning.duplicateCount,
+          duplicateRows: internalWarning.duplicateRows,
+          masterRow: internalWarning.masterRow,
+          matchReasons: internalWarning.matchReasons,
+          message: internalWarning.message,
+          tooltip: internalWarning.message
+        };
+        
+        internalDuplicateRows.push(record);
+      } else {
+        record.internalDuplicateInfo = {
+          hasInternalDuplicate: false,
+          tooltip: 'No internal duplicates'
+        };
+      }
       
       // Check if record has duplicateDetection from the new AI service
       const duplicateDetection = record.duplicateDetection;
@@ -606,6 +675,7 @@ export class ImportDialogComponent implements OnInit {
     // Update signals
     this.duplicateRows.set(duplicateRows);
     this.nonDuplicateRows.set(nonDuplicateRows);
+    this.internalDuplicateRows.set(internalDuplicateRows);
     
     // Show warning if duplicates found
     if (duplicateRows.length > 0) {
@@ -615,6 +685,16 @@ export class ImportDialogComponent implements OnInit {
       );
     } else {
       this.showDuplicateWarning.set(false);
+    }
+
+    // Show warning if internal duplicates found
+    if (internalDuplicateRows.length > 0) {
+      this.showInternalDuplicateWarning.set(true);
+      this.internalDuplicateWarningMessage.set(
+        `${internalDuplicateRows.length} record(s) have internal duplicates within the file. Please review and fix duplicates in your source file.`
+      );
+    } else {
+      this.showInternalDuplicateWarning.set(false);
     }
 
     return processedData;
@@ -1226,6 +1306,38 @@ export class ImportDialogComponent implements OnInit {
       'email'
     ];
     return shortTextFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
+  }
+
+  /**
+   * Check if field is a date field that should be formatted
+   */
+  isDateField(fieldName: string): boolean {
+    const dateFields = ['date', 'createdDate', 'modifiedDate', 'lastModifiedDate', 'approvalDate', 'expiryDate'];
+    return dateFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
+  }
+
+  /**
+   * Format date value for display
+   */
+  formatDateValue(value: any): string {
+    if (!value) return '';
+    
+    try {
+      // Try to parse the date if it's a string
+      const date = typeof value === 'string' ? new Date(value) : value;
+      
+      // Check if it's a valid date
+      if (date instanceof Date && !isNaN(date.getTime())) {
+        // Use Angular DatePipe for consistent formatting
+        const datePipe = new DatePipe('en-US');
+        return datePipe.transform(date, 'medium') || value;
+      }
+      
+      return value;
+    } catch (error) {
+      // If parsing fails, return original value
+      return value;
+    }
   }
 
 

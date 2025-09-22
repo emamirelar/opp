@@ -11,6 +11,9 @@ using UNOPS.PAO.UNOPSBusiness.Specifications;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
+using UNOPS.PAO.UNOPSDomain.Entities;
+using Newtonsoft.Json;
+using static UNOPS.PAO.UNOPSBusiness.Services.AdvancedSearchService;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -36,19 +39,22 @@ public class ContactController : BaseController
     private readonly IGeminiManager _geminiManager;
     private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
     private readonly AiContextualService _aiContextualService;
+    private readonly AdvancedSearchService _advancedSearchService;
 
     public ContactController(
         IManagerWrapper manager, 
         UserResolverService<int> userResolverService, 
         ILogger<ContactController> logger,
         IAuthorizationService authorizationService,
-        AiContextualService aiContextualService)
+        AiContextualService aiContextualService,
+        AdvancedSearchService advancedSearchService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.ContactManager;
         _geminiManager = manager.GeminiManager;
         _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
         _aiContextualService = aiContextualService;
+        _advancedSearchService = advancedSearchService;
     }
 
     /// <summary>
@@ -206,7 +212,8 @@ public class ContactController : BaseController
         [FromQuery] int pageSize = 20,
         [FromQuery] string? orderBy = null,
         [FromQuery] bool ascending = true,
-        [FromQuery] int? partnerId = null)
+        [FromQuery] int? partnerId = null,
+        [FromQuery] bool export = false)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
@@ -218,7 +225,7 @@ public class ContactController : BaseController
             var request = new ContactFilterRequest
             {
                 PageIndex = pageIndex,
-                PageSize = pageSize,
+                PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
                 OrderBy = orderBy,
                 Ascending = ascending,
                 PartnerId = partnerId
@@ -252,48 +259,45 @@ public class ContactController : BaseController
     [AccessControlled(EntityTypes.Contact, "read")]
     public async Task<ActionResult> SearchContacts(
         [FromQuery] PaginationRequest request,
-        [FromQuery] string searchText)
+        [FromQuery] string query,
+        [FromQuery] bool export = false)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
         if (validationResult != null) return validationResult;
         
-        if (string.IsNullOrWhiteSpace(searchText))
+        if (string.IsNullOrWhiteSpace(query))
         {
             throw new BusinessException("Search text is required for contact search");
         }
 
-        return await HandleSearchOperationAsync(async () =>
+        // Use the enhanced search pattern (now includes PostgreSQL similarity search)
+        var paginationRequest = new PaginationRequest
         {
-            // Create a ContactFilterRequest with pagination/sorting info and search text
-            var contactFilterRequest = new ContactFilterRequest
-            {
-                PageIndex = request.PageIndex,
-                PageSize = request.PageSize,
-                OrderBy = request.OrderBy,
-                Ascending = request.Ascending,
-                SearchText = searchText
-            };
+            PageIndex = request.PageIndex,
+            PageSize = export ? int.MaxValue : request.PageSize, // Remove pagination limits for export
+            OrderBy = request.OrderBy,
+            Ascending = request.Ascending
+        };
 
-            return await SearchControllerHelper.ProcessSimpleTextSearch<ContactFilterRequest, ContactCompositeSpecification, PaginationResponse<ContactModel>>(
-                searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
-                contactFilterRequest,
-                "Contact",
-                filterRequest => new ContactCompositeSpecification(filterRequest),
-                async (userId, spec, pagination) => {
-                    // Use regular specification - global filters handled automatically by BaseRepository
-                    return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
-                },
-                CurrentUserId, _logger);
-        }, "contact simple search");
+        // Use AdvancedSearchService for unified text search with PostgreSQL similarity
+        var result = await _advancedSearchService.SearchWithQueryAsync<UNOPSContact, ContactModel>(
+            query, 
+            paginationRequest, 
+            User);
+
+        _logger.LogInformation("Contact search completed: Found {TotalCount} results for query: {Query}, export: {Export}", result.TotalCount, query, export);
+
+        return Ok(result);
     }
 
     /// <summary>
     /// Performs advanced search with structured criteria including relationships with partners, departments, and complex filters.
+    /// Enhanced with intelligent field value matching for AI agents and typo correction.
     /// </summary>
     /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
     /// <param name="searchCriteria">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
-    /// <param name="searchText">Optional additional text search to combine with criteria</param>
+    /// <param name="enableSmartSearch">Enable intelligent field value matching and typo correction (default: true)</param>
     /// <example_uses>
     /// Find contacts from UNICEF partner organization
     /// Show contacts in Finance department created this month
@@ -313,44 +317,76 @@ public class ContactController : BaseController
     [HttpGet(APIDictionary.Contact + "/advanced-search")]
     [AccessControlled(EntityTypes.Contact, "read")]
     public async Task<ActionResult> AdvancedSearchContacts(
-        [FromQuery] PaginationRequest request,
-        [FromQuery] string searchCriteria,
-        [FromQuery] string? searchText = null)
+        [FromQuery] string filters,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = null,
+        [FromQuery] bool ascending = true)
     {
-        // Validate pagination parameters
-        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
-        if (validationResult != null) return validationResult;
-        
-        if (string.IsNullOrWhiteSpace(searchCriteria))
+        try
         {
-            throw new BusinessException("Search criteria is required for advanced contact search");
-        }
+            _logger.LogInformation("=== CONTACT ADVANCED SEARCH ENDPOINT ===");
+            _logger.LogInformation("Filters: {Filters}, Page: {PageIndex}, Size: {PageSize}", filters, pageIndex, pageSize);
 
-        return await HandleSearchOperationAsync(async () =>
-        {
-            // Create a ContactFilterRequest with pagination/sorting info and search criteria
-            var contactFilterRequest = new ContactFilterRequest
+            if (string.IsNullOrWhiteSpace(filters))
             {
-                PageIndex = request.PageIndex,
-                PageSize = request.PageSize,
-                OrderBy = request.OrderBy,
-                Ascending = request.Ascending,
-                SearchCriteria = searchCriteria,
-                SearchText = searchText,
-                AdvancedSearch = true // Set this internally since we know this is an advanced search
+                return BadRequest(new { error = "Search filters are required" });
+            }
+
+            // Parse filters from JSON
+            List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter> searchFilters;
+            try
+            {
+                searchFilters = System.Text.Json.JsonSerializer.Deserialize<List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>>(filters) ?? new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>();
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse search filters: {Filters}", filters);
+                return BadRequest(new { error = "Invalid filter format. Expected JSON array of filter objects." });
+            }
+
+            // Use AdvancedSearchService for structured filters with PostgreSQL similarity on "like" operators
+            var paginationRequest = new PaginationRequest
+            {
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                OrderBy = orderBy,
+                Ascending = ascending
             };
 
-            return await SearchControllerHelper.ProcessAdvancedSearch<ContactFilterRequest, ContactCompositeSpecification, PaginationResponse<ContactModel>>(
-                searchCriteria, searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending, 
-                contactFilterRequest,
-                "Contact",
-                filterRequest => new ContactCompositeSpecification(filterRequest),
-                async (userId, spec, pagination) => {
-                    // Use regular specification - global filters handled automatically by BaseRepository
-                    return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
-                },
-                CurrentUserId, _logger);
-        }, "contact advanced search");
+            var result = await _advancedSearchService.SearchWithFiltersAsync<UNOPSContact, ContactModel>(
+                searchFilters,
+                paginationRequest,
+                User);
+            
+            _logger.LogInformation("Advanced contact search completed: Found {TotalCount} results", result.TotalCount);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in advanced contact search");
+            return StatusCode(500, new { error = "Internal server error during contact search", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get supported search fields for contacts - helps frontend build dynamic search forms
+    /// </summary>
+    /// <returns>List of all supported search fields with their metadata</returns>
+    [HttpGet(APIDictionary.Contact + "/search-fields")]
+    [AccessControlled(EntityTypes.Contact, "read")]
+    public ActionResult<List<SearchFieldInfo>> GetContactSearchFields()
+    {
+        try
+        {
+            var fields = _manager.GetContactSearchFields();
+            return Ok(fields);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving contact search fields");
+            return StatusCode(500, new { error = "An error occurred while retrieving search fields" });
+        }
     }
 
     /// <summary>

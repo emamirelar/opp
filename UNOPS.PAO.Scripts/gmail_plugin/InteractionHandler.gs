@@ -70,13 +70,14 @@ function getMappedInteractionData(messageData, relatedRecords = null) {
       Subject: messageData.subject,
       Description: messageData.currentMessageBody,
       EmailAddresses: uniqueEmails,
-      ContactId: contactIds.length > 0 ? contactIds[0] : 0, // Use first contact as primary contact
+      //ContactId: contactIds.length > 0 ? contactIds[0] : 0, // Use first contact as primary contact
       ContactIds: contactIds,
       PartnerIds: partnerIds,
       UserIds: userIds,
       Location: 'Email',
       GmailThreadId: threadId,
-      GmailMessageId: messageId
+      GmailMessageId: messageId,
+      ConfirmDuplicateCreation: false
     };
     Logger.log('Final interaction data: ' + JSON.stringify(interactionData));
     return interactionData;

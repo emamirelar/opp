@@ -9,6 +9,19 @@
 -- 2. Text Similarity - Uses pg_trgm for fuzzy text matching
 -- 3. Configurable Thresholds - Allows fine-tuning for different entity types
 --
+-- SIMILARITY SCORE EXPLANATION:
+-- - Uses PostgreSQL's similarity() function which measures text likeness using trigrams
+-- - Trigrams are 3-character sequences (e.g., "John" → "  j", " jo", "joh", "ohn", "hn ")
+-- - Score of 1.0 (100%) = Identical text
+-- - Score of 0.9 (90%) = Very similar (minor differences like "Corp" vs "Corporation")
+-- - Score of 0.7 (70%) = Moderately similar (some differences but clearly related)
+-- - Score of 0.5 (50%) = Weakly similar (may share some common words)
+--
+-- CONFIDENCE LEVELS:
+-- - High (80-100%): Very likely duplicates - immediate review recommended
+-- - Medium (60-79%): Possible duplicates - investigation suggested
+-- - Low (threshold-59%): Weak matches - manual review if resources permit
+--
 -- ENTITY-SPECIFIC LOGIC:
 -- Contact Duplicates: Email (exact), Name similarity, Phone/Mobile, Same Partner
 -- Partner Duplicates: Name similarity, Short Description, ERP Dimension Value
@@ -148,6 +161,16 @@ BEGIN
                         -- Exact phone/mobile match within same partner
                         WHEN $4 IS NOT NULL AND $4 != '''' AND "PartnerId" = $3 
                              AND ($4 IN ("Phone", "Mobile")) THEN 0.8
+                        -- Exact name match across different partners (same person moved organizations)
+                        WHEN $2 IS NOT NULL AND $2 != '''' AND "PartnerId" != $3
+                             AND (
+                                 -- Clean both names by removing common titles/prefixes for true exact match
+                                 LOWER(REGEXP_REPLACE(TRIM("Name"), ''^(mr\.?|mrs\.?|ms\.?|dr\.?|prof\.?)\s+'', '''', ''gi'')) = 
+                                 LOWER(REGEXP_REPLACE(TRIM($2), ''^(mr\.?|mrs\.?|ms\.?|dr\.?|prof\.?)\s+'', '''', ''gi''))
+                                 OR 
+                                 LOWER(REGEXP_REPLACE(TRIM("FirstName" || '' '' || "LastName"), ''^(mr\.?|mrs\.?|ms\.?|dr\.?|prof\.?)\s+'', '''', ''gi'')) = 
+                                 LOWER(REGEXP_REPLACE(TRIM($2), ''^(mr\.?|mrs\.?|ms\.?|dr\.?|prof\.?)\s+'', '''', ''gi''))
+                             ) THEN 0.75
                         -- High name similarity (70%%+) across different partners
                         WHEN $2 IS NOT NULL AND $2 != ''''
                              AND (similarity("Name", $2) > 0.7 OR 
@@ -158,20 +181,49 @@ BEGIN
                         ELSE 0
                     END as match_score,
                     CASE 
-                        WHEN $1 IS NOT NULL AND $1 != '''' AND LOWER("Email") = LOWER($1) THEN ''Exact Email Match''
+                        WHEN $1 IS NOT NULL AND $1 != '''' AND LOWER("Email") = LOWER($1) THEN 
+                            ''Exact Email Match - Same email address found ('' || COALESCE("Email", ''N/A'') || ''). Score: 100% - Emails are identical, indicating very likely duplicate person.''
                         WHEN $2 IS NOT NULL AND $2 != '''' AND "PartnerId" = $3 
                              AND (LOWER("Name") = LOWER($2) OR 
-                                  LOWER(TRIM("FirstName" || '' '' || "LastName")) = LOWER($2)) THEN ''Exact Name + Same Partner''
+                                  LOWER(TRIM("FirstName" || '' '' || "LastName")) = LOWER($2)) THEN 
+                            ''Exact Name + Same Partner - Identical name within same organization ('' || COALESCE("Name", ''N/A'') || ''). Score: 95% - Same person name in same partner organization, very high confidence duplicate.''
                         WHEN $2 IS NOT NULL AND $2 != '''' AND "PartnerId" = $3
                              AND (similarity("Name", $2) > 0.9 OR 
-                                  similarity(TRIM("FirstName" || '' '' || "LastName"), $2) > 0.9) THEN ''High Name Similarity + Same Partner''
+                                  similarity(TRIM("FirstName" || '' '' || "LastName"), $2) > 0.9) THEN 
+                            ''High Name Similarity + Same Partner - Very similar name within same organization ('' || COALESCE("Name", ''N/A'') || '' vs '' || $2 || ''). Score: 85% - Names are '' || 
+                            CASE 
+                                WHEN similarity("Name", $2) > similarity(TRIM("FirstName" || '' '' || "LastName"), $2) 
+                                THEN round((similarity("Name", $2) * 100)::numeric, 0) || ''% similar''
+                                ELSE round((similarity(TRIM("FirstName" || '' '' || "LastName"), $2) * 100)::numeric, 0) || ''% similar''
+                            END || '', likely same person with minor spelling differences.''
                         WHEN $4 IS NOT NULL AND $4 != '''' AND "PartnerId" = $3 
-                             AND ($4 IN ("Phone", "Mobile")) THEN ''Phone Match + Same Partner''
+                             AND ($4 IN ("Phone", "Mobile")) THEN 
+                            ''Phone Match + Same Partner - Same phone number within same organization ('' || 
+                            CASE WHEN "Phone" = $4 THEN ''Phone: '' || COALESCE("Phone", ''N/A'') 
+                                 ELSE ''Mobile: '' || COALESCE("Mobile", ''N/A'') END || 
+                            ''). Score: 80% - Identical phone number in same partner, strong indication of duplicate.''
+                        WHEN $2 IS NOT NULL AND $2 != '''' AND "PartnerId" != $3
+                             AND (
+                                 -- Clean both names by removing common titles/prefixes for true exact match
+                                 LOWER(REGEXP_REPLACE(TRIM("Name"), ''^(mr\.?|mrs\.?|ms\.?|dr\.?|prof\.?)\s+'', '''', ''gi'')) = 
+                                 LOWER(REGEXP_REPLACE(TRIM($2), ''^(mr\.?|mrs\.?|ms\.?|dr\.?|prof\.?)\s+'', '''', ''gi''))
+                                 OR 
+                                 LOWER(REGEXP_REPLACE(TRIM("FirstName" || '' '' || "LastName"), ''^(mr\.?|mrs\.?|ms\.?|dr\.?|prof\.?)\s+'', '''', ''gi'')) = 
+                                 LOWER(REGEXP_REPLACE(TRIM($2), ''^(mr\.?|mrs\.?|ms\.?|dr\.?|prof\.?)\s+'', '''', ''gi''))
+                             ) THEN 
+                            ''Exact Name Match Across Organizations - Same core name in different organizations ('' || COALESCE("Name", ''N/A'') || '' vs '' || $2 || '', titles/prefixes ignored). Score: 75% - Same person likely moved between organizations, review recommended.''
                         WHEN $2 IS NOT NULL AND $2 != ''''
                              AND (similarity("Name", $2) > 0.7 OR 
-                                  similarity(TRIM("FirstName" || '' '' || "LastName"), $2) > 0.7) THEN ''High Name Similarity''
+                                  similarity(TRIM("FirstName" || '' '' || "LastName"), $2) > 0.7) THEN 
+                            ''High Name Similarity - Similar name across organizations ('' || COALESCE("Name", ''N/A'') || '' vs '' || $2 || ''). Score: 60% - Names are '' ||
+                            CASE 
+                                WHEN similarity("Name", $2) > similarity(TRIM("FirstName" || '' '' || "LastName"), $2) 
+                                THEN round((similarity("Name", $2) * 100)::numeric, 0) || ''% similar''
+                                ELSE round((similarity(TRIM("FirstName" || '' '' || "LastName"), $2) * 100)::numeric, 0) || ''% similar''
+                            END || '', could be same person in different organization or relative.''
                         WHEN ($1 IS NOT NULL AND $1 != '''' AND LOWER("Email") = LOWER($1))
-                             OR ($4 IS NOT NULL AND $4 != '''' AND $4 IN ("Phone", "Mobile")) THEN ''Contact Info Match''
+                             OR ($4 IS NOT NULL AND $4 != '''' AND $4 IN ("Phone", "Mobile")) THEN 
+                            ''Contact Info Match - Same contact details across organizations. Score: 70% - Identical email or phone suggests same person moved between organizations.''
                         ELSE ''No Match''
                     END as match_reason
                 FROM public."Contacts"
@@ -243,12 +295,21 @@ BEGIN
                         ELSE 0
                     END as match_score,
                     CASE 
-                        WHEN $1 IS NOT NULL AND "ErpDimValue" = $1 THEN ''Exact ERP Dimension Value''
-                        WHEN $2 IS NOT NULL AND $2 != '''' AND LOWER("Name") = LOWER($2) THEN ''Exact Name Match''
-                        WHEN $2 IS NOT NULL AND $2 != '''' AND similarity("Name", $2) > 0.85 THEN ''High Name Similarity''
-                        WHEN $3 IS NOT NULL AND $3 != '''' AND LOWER("PartnerShortDescription") = LOWER($3) THEN ''Exact Short Description''
-                        WHEN $3 IS NOT NULL AND $3 != '''' AND similarity("PartnerShortDescription", $3) > 0.8 THEN ''Short Description Similarity''
-                        WHEN $2 IS NOT NULL AND $2 != '''' AND similarity("Name", $2) > 0.7 THEN ''Moderate Name Similarity''
+                        WHEN $1 IS NOT NULL AND "ErpDimValue" = $1 THEN 
+                            ''Exact ERP Dimension Value - Same ERP system identifier ('' || COALESCE("ErpDimValue"::text, ''N/A'') || ''). Score: 100% - Identical ERP code means this is definitely the same organization.''
+                        WHEN $2 IS NOT NULL AND $2 != '''' AND LOWER("Name") = LOWER($2) THEN 
+                            ''Exact Name Match - Identical organization name ('' || COALESCE("Name", ''N/A'') || ''). Score: 95% - Same name indicates very likely duplicate organization.''
+                        WHEN $2 IS NOT NULL AND $2 != '''' AND similarity("Name", $2) > 0.85 THEN 
+                            ''High Name Similarity - Very similar organization names ('' || COALESCE("Name", ''N/A'') || '' vs '' || $2 || ''). Score: 80% - Names are '' || 
+                            round((similarity("Name", $2) * 100)::numeric, 0) || ''% similar, likely same organization with minor variations (abbreviations, legal suffixes).''
+                        WHEN $3 IS NOT NULL AND $3 != '''' AND LOWER("PartnerShortDescription") = LOWER($3) THEN 
+                            ''Exact Short Description - Identical partner description ('' || COALESCE("PartnerShortDescription", ''N/A'') || ''). Score: 90% - Same description suggests duplicate organization entry.''
+                        WHEN $3 IS NOT NULL AND $3 != '''' AND similarity("PartnerShortDescription", $3) > 0.8 THEN 
+                            ''Short Description Similarity - Similar partner descriptions ('' || COALESCE("PartnerShortDescription", ''N/A'') || '' vs '' || $3 || ''). Score: 75% - Descriptions are '' ||
+                            round((similarity("PartnerShortDescription", $3) * 100)::numeric, 0) || ''% similar, could be same organization described differently.''
+                        WHEN $2 IS NOT NULL AND $2 != '''' AND similarity("Name", $2) > 0.7 THEN 
+                            ''Moderate Name Similarity - Similar organization names ('' || COALESCE("Name", ''N/A'') || '' vs '' || $2 || ''). Score: 60% - Names are '' ||
+                            round((similarity("Name", $2) * 100)::numeric, 0) || ''% similar, could be related organizations or same organization with different naming.''
                         ELSE ''No Match''
                     END as match_reason
                 FROM public."Partners"
@@ -337,14 +398,26 @@ BEGIN
                     END as match_score,
                     CASE 
                         WHEN $1 IS NOT NULL AND $1 != '''' AND LOWER(i."Subject") = LOWER($1)
-                             AND $2 IS NOT NULL AND DATE(i."Date") = DATE($2) THEN ''Exact Subject + Same Day''
+                             AND $2 IS NOT NULL AND DATE(i."Date") = DATE($2) THEN 
+                            ''Exact Subject + Same Day - Identical meeting/interaction topic on same date ('' || COALESCE(i."Subject", ''N/A'') || '' on '' || 
+                            TO_CHAR(i."Date", ''YYYY-MM-DD'') || ''). Score: 95% - Same subject and date strongly indicates duplicate interaction record.''
                         WHEN $1 IS NOT NULL AND $1 != '''' AND similarity(i."Subject", $1) > 0.85
-                             AND $2 IS NOT NULL AND DATE(i."Date") = DATE($2) THEN ''High Subject Similarity + Same Day''
+                             AND $2 IS NOT NULL AND DATE(i."Date") = DATE($2) THEN 
+                            ''High Subject Similarity + Same Day - Very similar interaction topics on same date ('' || COALESCE(i."Subject", ''N/A'') || '' vs '' || $1 || '' on '' ||
+                            TO_CHAR(i."Date", ''YYYY-MM-DD'') || ''). Score: 85% - Subjects are '' || 
+                            round((similarity(i."Subject", $1) * 100)::numeric, 0) || ''% similar, likely same meeting with minor description differences.''
                         WHEN $1 IS NOT NULL AND $1 != '''' AND LOWER(i."Subject") = LOWER($1)
-                             AND $2 IS NOT NULL AND ABS(EXTRACT(EPOCH FROM (i."Date" - $2))/86400) <= 7 THEN ''Exact Subject + Within Week''
-                        WHEN $1 IS NOT NULL AND $1 != '''' AND similarity(i."Subject", $1) > 0.8 THEN ''High Subject Similarity''
+                             AND $2 IS NOT NULL AND ABS(EXTRACT(EPOCH FROM (i."Date" - $2))/86400) <= 7 THEN 
+                            ''Exact Subject + Within Week - Same interaction topic within 7 days ('' || COALESCE(i."Subject", ''N/A'') || '', '' ||
+                            ABS(EXTRACT(EPOCH FROM (i."Date" - $2))/86400)::INTEGER || '' days apart). Score: 80% - Same subject close in time, could be follow-up or duplicate entry.''
+                        WHEN $1 IS NOT NULL AND $1 != '''' AND similarity(i."Subject", $1) > 0.8 THEN 
+                            ''High Subject Similarity - Very similar interaction topics ('' || COALESCE(i."Subject", ''N/A'') || '' vs '' || $1 || ''). Score: 75% - Subjects are '' ||
+                            round((similarity(i."Subject", $1) * 100)::numeric, 0) || ''% similar, could be related interactions or duplicate with modified description.''
                         WHEN $1 IS NOT NULL AND $1 != '''' AND similarity(i."Subject", $1) > 0.7
-                             AND $2 IS NOT NULL AND DATE(i."Date") = DATE($2) THEN ''Moderate Subject Similarity + Same Day''
+                             AND $2 IS NOT NULL AND DATE(i."Date") = DATE($2) THEN 
+                            ''Moderate Subject Similarity + Same Day - Similar interaction topics on same date ('' || COALESCE(i."Subject", ''N/A'') || '' vs '' || $1 || '' on '' ||
+                            TO_CHAR(i."Date", ''YYYY-MM-DD'') || ''). Score: 65% - Subjects are '' ||
+                            round((similarity(i."Subject", $1) * 100)::numeric, 0) || ''% similar, could be same meeting described differently.''
                         ELSE ''No Match''
                     END as match_reason
                 FROM public."Interactions" i
@@ -401,6 +474,42 @@ BEGIN
                     'inputData', parsed_entity_data,
                     'thresholds', json_build_object(
                         'fieldMatchThreshold', field_match_threshold
+                    ),
+                    'scoringExplanation', json_build_object(
+                        'methodology', 'PostgreSQL similarity() function + field-specific logic',
+                        'similarityCalculation', 'Based on trigram matching - compares 3-character sequences between text strings',
+                        'scoreRanges', json_build_object(
+                            'highConfidence', '80-100% - Very likely duplicates, review recommended',
+                            'mediumConfidence', '60-79% - Possible duplicates, investigation suggested', 
+                            'lowConfidence', field_match_threshold || '-59% - Weak matches, manual review if time permits'
+                        ),
+                        'fieldWeights', CASE 
+                            WHEN UPPER(entity_type) = 'CONTACT' THEN json_build_object(
+                                'email', '100% - Exact email match (highest priority)',
+                                'nameWithPartner', '95% - Exact name within same organization',
+                                'nameSimilarityWithPartner', '85% - High name similarity (90%+) within same organization',
+                                'phoneWithPartner', '80% - Phone match within same organization',
+                                'exactNameAcrossPartners', '75% - Exact name match across different organizations',
+                                'nameSimilarityAcrossPartners', '60% - Name similarity (70%+) across different organizations',
+                                'contactInfoAcrossPartners', '70% - Email/phone match across organizations'
+                            )
+                            WHEN UPPER(entity_type) = 'PARTNER' THEN json_build_object(
+                                'erpDimValue', '100% - Exact ERP identifier match (highest priority)',
+                                'exactName', '95% - Identical organization name',
+                                'nameSimilarity', '80% - High name similarity (85%+)',
+                                'exactDescription', '90% - Identical short description',
+                                'descriptionSimilarity', '75% - Description similarity (80%+)',
+                                'moderateNameSimilarity', '60% - Moderate name similarity (70%+)'
+                            )
+                            WHEN UPPER(entity_type) = 'INTERACTION' THEN json_build_object(
+                                'exactSubjectSameDay', '95% - Identical subject on same date',
+                                'similarSubjectSameDay', '85% - Similar subject (85%+) on same date',
+                                'exactSubjectWeek', '80% - Identical subject within 7 days',
+                                'similarSubject', '75% - High subject similarity (80%+)',
+                                'moderateSubjectSameDay', '65% - Moderate similarity (70%+) on same date'
+                            )
+                            ELSE json_build_object()
+                        END
                     ),
                     'duplicates', COALESCE(json_agg(duplicate_item ORDER BY (duplicate_item->>'score')::REAL DESC), '[]'::json),
                     'summary', json_build_object(

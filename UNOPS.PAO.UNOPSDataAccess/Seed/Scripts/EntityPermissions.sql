@@ -78,8 +78,8 @@ INSERT INTO public."EntityPermissions" (
     'Partner',
     'ORG_UNIT_ADMIN',
     true,
-    false,
-    false,
+    true,
+    true,
     false,
     null,
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'

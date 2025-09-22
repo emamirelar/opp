@@ -49,6 +49,49 @@
     </div>
   }
 
+  <!-- Internal Duplicate Warning Banner -->
+  @if (showInternalDuplicateWarning()) {
+    <div class="mb-3 p-4 border-1 border-orange-200 rounded bg-orange-50 text-orange-700">
+      <div class="flex items-start justify-between">
+        <div class="flex items-start">
+          <i class="pi pi-exclamation-triangle mr-3 mt-1 text-lg"></i>
+          <div>
+            <p class="m-0 font-medium text-base">⚠️ Internal Duplicate Records Found</p>
+            <p class="mt-2 mb-2 text-sm">
+              {{ internalDuplicateWarningMessage() }}
+            </p>
+            <div class="mt-3 text-sm">
+              <p class="font-medium mb-2">Affected Records:</p>
+              <div class="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                @for (record of internalDuplicateRows(); track record._importRowId) {
+                  <div class="flex items-center gap-2 text-xs bg-orange-100 p-2 rounded">
+                    <span class="internal-duplicate-badge">
+                      {{ record.internalDuplicateInfo?.isMaster ? 'MASTER' : 'DUP' }}
+                    </span>
+                    <span class="font-medium">
+                      Row {{ getDisplayRowNumber(record) }}:
+                    </span>
+                    <span class="truncate">
+                      {{ getRecordDisplayName(record) }}
+                    </span>
+                    @if (!record.internalDuplicateInfo?.isMaster) {
+                      <span class="text-orange-600">
+                        → Row {{ record.internalDuplicateInfo?.masterRow }}
+                      </span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="text-orange-600 font-semibold text-lg">
+          {{ internalDuplicateRows().length }}
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- File Analysis In Progress -->
   @if (importService.isProcessingFile()) {
     <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center bg-white z-10">
@@ -99,6 +142,11 @@
             @if (duplicateRows().length > 0) {
               <span class="ml-3">
                 Duplicates: <span class="font-semibold text-orange-600">{{ duplicateRows().length }}</span>
+              </span>
+            }
+            @if (internalDuplicateRows().length > 0) {
+              <span class="ml-3">
+                Internal Duplicates: <span class="font-semibold text-yellow-600">{{ internalDuplicateRows().length }}</span>
               </span>
             }
             @if (getFailedImportCount() > 0) {
@@ -179,7 +227,10 @@
         </ng-template>
 
         <ng-template pTemplate="body" let-rowData let-columns="columns" let-rowIndex="rowIndex">
-          <tr [ngClass]="{'p-error': hasErrors(rowIndex), 'import-error': hasImportErrors(rowIndex)}">
+          <tr [ngClass]="{
+            'p-error': hasErrors(rowIndex), 
+            'import-error': hasImportErrors(rowIndex)
+          }">
             <td>
               <p-tableCheckbox [value]="rowData"></p-tableCheckbox>
             </td>
@@ -229,8 +280,8 @@
                       'truncate-text': isLongTextField(col.field),
                       'truncate-short': isShortTextField(col.field)
                     }"
-                    [title]="rowData[col.field]">
-                    {{ rowData[col.field] }}
+                    [title]="isDateField(col.field) ? formatDateValue(rowData[col.field]) : rowData[col.field]">
+                    {{ isDateField(col.field) ? formatDateValue(rowData[col.field]) : rowData[col.field] }}
                   </div>
                 } @else {
                   <i class="text-red-100 pi pi-warning"></i>

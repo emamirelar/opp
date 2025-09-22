@@ -104,6 +104,11 @@
             "lastModifiedBy": "Última Modificação Por",
             "lastModifiedDate": "Data da Última Modificação"
         },
+        "common": {
+            "status": "Status",
+            "createdDate": "Data de Criação",
+            "lastModifiedDate": "Data da Última Modificação"
+        },
         "partnerTree": {
             "id": "ID",
             "name": "Nome",
@@ -148,6 +153,8 @@
         "interaction": {
           "type": "Tipo",
           "date": "Data",
+          "fromDate": "Data de Início",
+          "toDate": "Data de Fim",
           "subject": "Assunto",
           "status": "Status do Sistema",
           "description": "Descrição",
@@ -219,7 +226,9 @@
             "partner": "Parceiro",
             "name": "Nome",
             "status": "Status do Sistema",
+            "shortDescription": "Descrição Curta do Parceiro",
             "partnerShortDescription": "Descrição Curta do Parceiro",
+            "longDescription": "Descrição Longa do Parceiro",
             "partnerLongDescription": "Descrição Longa do Parceiro",
             "partnerGroup": "Grupo de Parceiro",
             "partnerCategory": "Categoria de Parceiro",
@@ -233,6 +242,12 @@
             "organizationUnit": "Unidade de Organização",
             "selectOrganizationUnit": "Selecionar Unidade de Organização",
             "selectPartnerGroup": "Selecionar Grupo de Parceiros"
+        },
+        "partnerGroup": {
+            "name": "Nome do Grupo de Parceiro"
+        },
+        "liaisonOffice": {
+            "name": "Nome do Escritório de Ligação"
         }
     },
     "message": {
@@ -370,7 +385,9 @@
             "lessThanOrEqual": "menor ou igual a",
             "after": "depois de",
             "before": "antes de",
-            "between": "entre"
+            "between": "entre",
+            "on": "em",
+            "notOn": "não em"
         },
         "logicalOperators": {
             "and": "E",
@@ -1196,5 +1213,21 @@
     "createInteractionAnyway": "Criar Interação Mesmo Assim",
     "warningTitle": "Aviso",
     "warningMessage": "Criar este registro pode resultar em dados duplicados. Por favor, revise os detalhes de correspondência acima antes de prosseguir."
+  },
+  "entityCards": {
+    "operators": {
+      "eq": "igual a",
+      "neq": "diferente de",
+      "like": "contém",
+      "gt": "maior que",
+      "lt": "menor que",
+      "gte": "maior ou igual a",
+      "lte": "menor ou igual a",
+      "after": "depois de",
+      "before": "antes de",
+      "between": "entre",
+      "on": "em",
+      "notOn": "não em"
+    }
   }
 }
