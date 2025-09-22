@@ -583,5 +583,260 @@ namespace UNOPS.PAO.Presentation.Controllers
             return true;
         }
 
+        /// <summary>
+        /// Applies intelligent field value matching to handle typos and similar values for AI agents
+        /// </summary>
+        /// <param name="searchCriteria">JSON search criteria to process</param>
+        /// <param name="entityType">Entity type (Partner, Contact, Interaction)</param>
+        /// <returns>Processed search criteria with corrected field values</returns>
+        protected async Task<string> ApplySmartFieldMatching(string searchCriteria, string entityType)
+        {
+            try
+            {
+                const float defaultSimilarityThreshold = 0.7f;
+                _logger.LogInformation("Applying smart field matching for {EntityType} with threshold {Threshold}", entityType, defaultSimilarityThreshold);
+
+                // Parse the search criteria
+                var criteriaList = JsonSerializer.Deserialize<JsonElement[]>(searchCriteria);
+                var processedCriteria = new List<object>();
+
+                foreach (var criterion in criteriaList)
+                {
+                    var processedCriterion = await ProcessSingleCriterion(criterion, entityType, defaultSimilarityThreshold);
+                    processedCriteria.Add(processedCriterion);
+                }
+
+                // Serialize back to JSON
+                var result = JsonSerializer.Serialize(processedCriteria, new JsonSerializerOptions 
+                { 
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
+                });
+
+                _logger.LogInformation("Smart field matching completed. Original: {Original}, Processed: {Processed}", 
+                    searchCriteria, result);
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Smart field matching failed, returning original criteria");
+                return searchCriteria; // Return original if processing fails
+            }
+        }
+
+        /// <summary>
+        /// Processes a single search criterion to apply smart field value matching
+        /// </summary>
+        private async Task<object> ProcessSingleCriterion(JsonElement criterion, string entityType, float similarityThreshold)
+        {
+            try
+            {
+                var field = criterion.GetProperty("field").GetString();
+                var value = criterion.GetProperty("value").GetString();
+                var operatorValue = criterion.GetProperty("operator").GetString();
+
+                // Only apply smart matching for text-based "like" operations
+                if (string.IsNullOrWhiteSpace(value) || operatorValue != "like")
+                {
+                    return ConvertJsonElementToObject(criterion);
+                }
+
+                // Apply field-specific smart matching
+                var correctedValue = await ApplyFieldSpecificMatching(field, value, entityType, similarityThreshold);
+
+                // Create new criterion with corrected value
+                var result = new
+                {
+                    field = field,
+                    value = correctedValue,
+                    label = criterion.TryGetProperty("label", out var labelProp) ? labelProp.GetString() : "",
+                    @operator = operatorValue,
+                    logicalOperator = criterion.TryGetProperty("logicalOperator", out var logicalProp) ? logicalProp.GetString() : "AND",
+                    fieldType = criterion.TryGetProperty("fieldType", out var typeProp) ? typeProp.GetString() : "text"
+                };
+
+                if (correctedValue != value)
+                {
+                    _logger.LogInformation("Smart field matching: '{Original}' -> '{Corrected}' for field '{Field}'", 
+                        value, correctedValue, field);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to process single criterion, returning original");
+                return ConvertJsonElementToObject(criterion);
+            }
+        }
+
+        /// <summary>
+        /// Applies field-specific smart matching based on field type and entity
+        /// </summary>
+        private async Task<string> ApplyFieldSpecificMatching(string field, string value, string entityType, float similarityThreshold)
+        {
+            try
+            {
+                // For partner group, liaison office, organization unit fields - use fuzzy matching
+                if (IsEntityLookupField(field))
+                {
+                    return await FindSimilarEntityValue(field, value, entityType, similarityThreshold);
+                }
+
+                // For name fields - apply typo correction
+                if (IsNameField(field))
+                {
+                    return ApplyTypoCorrection(value);
+                }
+
+                // For other text fields - apply basic normalization
+                return NormalizeTextValue(value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Field-specific matching failed for {Field}, returning original value", field);
+                return value;
+            }
+        }
+
+        /// <summary>
+        /// Determines if a field is an entity lookup field that should use fuzzy matching
+        /// </summary>
+        private bool IsEntityLookupField(string field)
+        {
+            var lookupFields = new[]
+            {
+                "partnerGroup.name", "partnerGroup.code",
+                "liaisonOffice.name", "liaisonOffice.code",
+                "organizationUnitRelationships.organizationHierarchy.name",
+                "partner.partnerGroup.name", "partner.liaisonOffice.name",
+                "contact.partner.partnerGroup.name"
+            };
+
+            return lookupFields.Any(f => field.Equals(f, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// Determines if a field is a name field that should use typo correction
+        /// </summary>
+        private bool IsNameField(string field)
+        {
+            var nameFields = new[]
+            {
+                "name", "firstName", "lastName", "title", "subject", "description",
+                "contacts.firstName", "contacts.lastName", "contact.firstName", "contact.lastName",
+                "partner.name", "contact.partner.name"
+            };
+
+            return nameFields.Any(f => field.Equals(f, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// Finds similar entity values using database lookup with fuzzy matching
+        /// </summary>
+        private async Task<string> FindSimilarEntityValue(string field, string value, string entityType, float similarityThreshold)
+        {
+            try
+            {
+                // This is a simplified implementation - in a real scenario, you'd query the database
+                // for similar values based on the field type (PartnerGroup, LiaisonOffice, etc.)
+                
+                // For now, apply basic typo correction
+                return ApplyTypoCorrection(value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Entity value lookup failed for {Field}", field);
+                return value;
+            }
+        }
+
+        /// <summary>
+        /// Applies basic typo correction to text values
+        /// </summary>
+        private string ApplyTypoCorrection(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return value;
+
+            // Common typo corrections for AI agents
+            var corrections = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Common misspellings
+                {"privat", "private"},
+                {"goverment", "government"},
+                {"publick", "public"},
+                {"internatinal", "international"},
+                {"organizaton", "organization"},
+                {"infrastucture", "infrastructure"},
+                {"devlopment", "development"},
+                {"parner", "partner"},
+                {"contac", "contact"},
+                {"meetng", "meeting"},
+                {"discusion", "discussion"},
+                {"presentaton", "presentation"},
+                
+                // AI common mistakes
+                {"NGO", "NGO"},
+                {"UN", "UN"},
+                {"WHO", "WHO"},
+                {"UNICEF", "UNICEF"},
+                {"UNDP", "UNDP"}
+            };
+
+            // Check for exact matches first
+            foreach (var correction in corrections)
+            {
+                if (value.Equals(correction.Key, StringComparison.OrdinalIgnoreCase))
+                {
+                    return correction.Value;
+                }
+            }
+
+            // Check for partial matches
+            foreach (var correction in corrections)
+            {
+                if (value.Contains(correction.Key, StringComparison.OrdinalIgnoreCase))
+                {
+                    return value.Replace(correction.Key, correction.Value, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Normalizes text values for better matching
+        /// </summary>
+        private string NormalizeTextValue(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return value;
+
+            // Trim whitespace and normalize spacing
+            return value.Trim().Replace("  ", " ");
+        }
+
+        /// <summary>
+        /// Converts JsonElement to object for serialization
+        /// </summary>
+        private object ConvertJsonElementToObject(JsonElement element)
+        {
+            try
+            {
+                return new
+                {
+                    field = element.GetProperty("field").GetString(),
+                    value = element.GetProperty("value").GetString(),
+                    label = element.TryGetProperty("label", out var labelProp) ? labelProp.GetString() : "",
+                    @operator = element.GetProperty("operator").GetString(),
+                    logicalOperator = element.TryGetProperty("logicalOperator", out var logicalProp) ? logicalProp.GetString() : "AND",
+                    fieldType = element.TryGetProperty("fieldType", out var typeProp) ? typeProp.GetString() : "text"
+                };
+            }
+            catch
+            {
+                return element;
+            }
+        }
+
     }
 } 

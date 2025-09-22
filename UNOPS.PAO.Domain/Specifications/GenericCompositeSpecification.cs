@@ -719,6 +719,24 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             return searchableProperties;
         }
 
+        // Define core searchable properties for Interaction - exclude NotMapped computed properties
+        if (type.Name == "Interaction" || type.Name == "UNOPSInteraction")
+        {
+            searchableProperties.AddRange(new[]
+            {
+                "Description",
+                "Location", 
+                "Subject",
+                "GmailThreadId",
+                "GmailMessageId",
+                "Name"
+                // Explicitly exclude: InteractionContactsList, InteractionPartnersList, 
+                // InteractionUsersList, InteractionOrgUnits (these are [NotMapped] computed properties)
+            });
+
+            return searchableProperties;
+        }
+
         // For other types, use reflection to find string properties - but don't traverse navigation properties
         foreach (var property in type.GetProperties())
         {

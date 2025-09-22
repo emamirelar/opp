@@ -1195,4 +1195,40 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         // This is normal for specifications that don't support org unit filtering
         return query;
     }
+    
+    /// <summary>
+    /// Get supported search fields for contacts - helps frontend build dynamic search forms
+    /// </summary>
+    /// <returns>List of all supported search fields with their metadata</returns>
+    public List<SearchFieldInfo> GetContactSearchFields()
+    {
+        try
+        {
+            var fields = new List<SearchFieldInfo>
+            {
+                // Direct Contact fields - using translation keys
+                new() { Field = "fullName", DisplayName = "label.contact.fullName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "firstName", DisplayName = "label.contact.firstName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "lastName", DisplayName = "label.contact.lastName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "email", DisplayName = "label.contact.email", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "title", DisplayName = "label.contact.title", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "department", DisplayName = "label.contact.department", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "phone", DisplayName = "label.contact.phone", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "mobile", DisplayName = "label.contact.mobile", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+
+                // Partner relationship fields - using translation keys
+                new() { Field = "partner.name", DisplayName = "label.partner.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partner.partnerGroup.name", DisplayName = "label.partnerGroup.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partner.liaisonOffice.name", DisplayName = "label.liaisonOffice.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+            };
+            
+            return fields;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error retrieving contact search fields");
+            return new List<SearchFieldInfo>();
+        }
+    }
 }

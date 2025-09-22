@@ -50,17 +50,16 @@ export class ListviewExportService {
     if (typeof searchTextOrParams === 'string') {
       // Handle simple string search (backward compatibility)
       if (searchTextOrParams) {
-        queryParams.searchText = searchTextOrParams;
+        queryParams.query = searchTextOrParams;
       }
     } else if (searchTextOrParams) {
       // Handle advanced search with SearchParams object
       if (searchTextOrParams.generalSearch) {
-        queryParams.searchText = searchTextOrParams.generalSearch;
+        queryParams.query = searchTextOrParams.generalSearch;
       }
       
       if (searchTextOrParams.fieldSearches && searchTextOrParams.fieldSearches.length > 0) {
-        queryParams.advancedSearch = 'true';
-        queryParams.searchCriteria = JSON.stringify(searchTextOrParams.fieldSearches);
+        queryParams.filters = JSON.stringify(searchTextOrParams.fieldSearches);
       }
     }
     

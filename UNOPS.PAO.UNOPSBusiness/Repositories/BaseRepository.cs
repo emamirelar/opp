@@ -39,6 +39,7 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     protected readonly IConfiguration _configuration;
     protected readonly AiContextualService _aiService;
     private readonly IServiceProvider _serviceProvider;
+    private readonly GlobalFilterService _globalFilterService;
 
     private IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> set, string[] includes)
     {
@@ -52,6 +53,12 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
         _configuration = configuration;
         _serviceProvider = serviceProvider;
         _aiService = new AiContextualService(configuration, context, null);
+        
+        // Initialize GlobalFilterService if service provider is available
+        if (_serviceProvider != null)
+        {
+            _globalFilterService = _serviceProvider.GetService<GlobalFilterService>();
+        }
     }
 
     /// <summary>
@@ -814,225 +821,18 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     }
 
     /// <summary>
-    /// Applies global filters to a queryable based on user preferences
+    /// Applies global filters to a queryable using the centralized GlobalFilterService
     /// </summary>
     protected async Task<IQueryable<TEntity>> ApplyGlobalFiltersAsync(IQueryable<TEntity> queryable)
     {
-        var currentUserId = GetCurrentUserId();
-        if (string.IsNullOrEmpty(currentUserId))
-            return queryable;
-
-        // Check if service provider is available before attempting to resolve services
-        if (_serviceProvider == null)
-            return queryable;
-
-        var userPreferenceService = _serviceProvider.GetService<IUserPreferenceService>();
-        if (userPreferenceService == null)
-            return queryable;
-
-        var globalFilters = await userPreferenceService.GetGlobalFiltersAsync(currentUserId);
-        if (globalFilters == null)
-            return queryable;
-
-        var entityType = typeof(TEntity);
-
-        // Apply organization unit filter
-        if (globalFilters.OrgUnitId.HasValue)
+        // Use centralized GlobalFilterService if available
+        if (_globalFilterService != null)
         {
-            queryable = await ApplySmartOrgUnitFilterAsync(queryable, globalFilters.OrgUnitId.Value, entityType);
+            var user = GetCurrentClaimsPrincipal();
+            return await _globalFilterService.ApplyGlobalFiltersAsync(queryable, user);
         }
-
-        // Apply user-based filters
-        var currentUserIdAsInt = GetCurrentUserIdAsInt();
-        if (currentUserIdAsInt.HasValue && globalFilters.RelatedToMe)
-        {
-            // RelatedToMe filter: check both CreatedBy AND LastModifiedBy
-            var createdByProperty = entityType.GetProperty("CreatedBy");
-            var lastModifiedByProperty = entityType.GetProperty("LastModifiedBy");
-            
-            Expression? combinedUserExpression = null;
-            var parameter = Expression.Parameter(entityType, "x");
-            
-            // Check CreatedBy
-            if (createdByProperty != null && (createdByProperty.PropertyType == typeof(int) || createdByProperty.PropertyType == typeof(int?)))
-            {
-                var createdByPropertyAccess = Expression.Property(parameter, createdByProperty);
-                var createdByConstant = Expression.Constant(currentUserIdAsInt.Value, createdByProperty.PropertyType);
-                var createdByEquals = Expression.Equal(createdByPropertyAccess, createdByConstant);
-                combinedUserExpression = createdByEquals;
-            }
-            
-            // Check LastModifiedBy
-            if (lastModifiedByProperty != null && (lastModifiedByProperty.PropertyType == typeof(int) || lastModifiedByProperty.PropertyType == typeof(int?)))
-            {
-                var lastModifiedByPropertyAccess = Expression.Property(parameter, lastModifiedByProperty);
-                var lastModifiedByConstant = Expression.Constant(currentUserIdAsInt.Value, lastModifiedByProperty.PropertyType);
-                var lastModifiedByEquals = Expression.Equal(lastModifiedByPropertyAccess, lastModifiedByConstant);
-                
-                if (combinedUserExpression != null)
-                {
-                    // Combine with OR: (CreatedBy == userId) OR (LastModifiedBy == userId)
-                    combinedUserExpression = Expression.OrElse(combinedUserExpression, lastModifiedByEquals);
-                }
-                else
-                {
-                    combinedUserExpression = lastModifiedByEquals;
-                }
-            }
-            
-            // Apply the combined user filter
-            if (combinedUserExpression != null)
-            {
-                var userLambda = Expression.Lambda<Func<TEntity, bool>>(combinedUserExpression, parameter);
-                queryable = queryable.Where(userLambda);
-            }
-        }
-
-        // Apply date filters (applies to both CreatedDate AND LastModifiedDate)
-        // Single date mode - prioritize single date over range
-        if (globalFilters.DateOn.HasValue)
-        {
-            // Single date mode - filter for this specific date on both CreatedDate and LastModified
-            var startOfDay = globalFilters.DateOn.Value.Date;
-            var endOfDay = startOfDay.AddDays(1);
-            
-            var parameter = Expression.Parameter(entityType, "x");
-            Expression? combinedDateExpression = null;
-            
-            // Check CreatedDate
-            var createdDateProperty = entityType.GetProperty("CreatedDate");
-            if (createdDateProperty != null && createdDateProperty.PropertyType == typeof(DateTime))
-            {
-                var createdDatePropertyAccess = Expression.Property(parameter, createdDateProperty);
-                var startConstant = Expression.Constant(startOfDay);
-                var endConstant = Expression.Constant(endOfDay);
-                
-                var createdGreaterThanOrEqual = Expression.GreaterThanOrEqual(createdDatePropertyAccess, startConstant);
-                var createdLessThan = Expression.LessThan(createdDatePropertyAccess, endConstant);
-                var createdDateCondition = Expression.AndAlso(createdGreaterThanOrEqual, createdLessThan);
-                
-                combinedDateExpression = createdDateCondition;
-            }
-            
-            // Check LastModifiedDate
-            var lastModifiedDateProperty = entityType.GetProperty("LastModifiedDate");
-            if (lastModifiedDateProperty != null && lastModifiedDateProperty.PropertyType == typeof(DateTime?))
-            {
-                var lastModifiedDatePropertyAccess = Expression.Property(parameter, lastModifiedDateProperty);
-                var startConstant = Expression.Constant(startOfDay, typeof(DateTime?));
-                var endConstant = Expression.Constant(endOfDay, typeof(DateTime?));
-                
-                var lastModifiedGreaterThanOrEqual = Expression.GreaterThanOrEqual(lastModifiedDatePropertyAccess, startConstant);
-                var lastModifiedLessThan = Expression.LessThan(lastModifiedDatePropertyAccess, endConstant);
-                var lastModifiedDateCondition = Expression.AndAlso(lastModifiedGreaterThanOrEqual, lastModifiedLessThan);
-                
-                if (combinedDateExpression != null)
-                {
-                    // Combine with OR: (CreatedDate in range) OR (LastModified in range)
-                    combinedDateExpression = Expression.OrElse(combinedDateExpression, lastModifiedDateCondition);
-                }
-                else
-                {
-                    combinedDateExpression = lastModifiedDateCondition;
-                }
-            }
-            
-            // Apply the combined date filter
-            if (combinedDateExpression != null)
-            {
-                var dateLambda = Expression.Lambda<Func<TEntity, bool>>(combinedDateExpression, parameter);
-                queryable = queryable.Where(dateLambda);
-            }
-        }
-        else
-        {
-            // Range mode - use DateFrom and DateTo if available (applies to both CreatedDate and LastModified)
-            var parameter = Expression.Parameter(entityType, "x");
-            Expression? combinedRangeExpression = null;
-            
-            if (globalFilters.DateFrom.HasValue || globalFilters.DateTo.HasValue)
-            {
-                // Check CreatedDate
-                var createdDateProperty = entityType.GetProperty("CreatedDate");
-                if (createdDateProperty != null && createdDateProperty.PropertyType == typeof(DateTime))
-                {
-                    var createdDatePropertyAccess = Expression.Property(parameter, createdDateProperty);
-                    Expression? createdDateRangeExpression = null;
-                    
-                    if (globalFilters.DateFrom.HasValue)
-                    {
-                        var fromConstant = Expression.Constant(globalFilters.DateFrom.Value);
-                        var createdFromCondition = Expression.GreaterThanOrEqual(createdDatePropertyAccess, fromConstant);
-                        createdDateRangeExpression = createdFromCondition;
-                    }
-                    
-                    if (globalFilters.DateTo.HasValue)
-                    {
-                        var toConstant = Expression.Constant(globalFilters.DateTo.Value.AddDays(1)); // Include the entire day
-                        var createdToCondition = Expression.LessThan(createdDatePropertyAccess, toConstant);
-                        
-                        if (createdDateRangeExpression != null)
-                        {
-                            createdDateRangeExpression = Expression.AndAlso(createdDateRangeExpression, createdToCondition);
-                        }
-                        else
-                        {
-                            createdDateRangeExpression = createdToCondition;
-                        }
-                    }
-                    
-                    combinedRangeExpression = createdDateRangeExpression;
-                }
-                
-                // Check LastModified
-                var lastModifiedDateProperty = entityType.GetProperty("LastModified");
-                if (lastModifiedDateProperty != null && lastModifiedDateProperty.PropertyType == typeof(DateTime?))
-                {
-                    var lastModifiedDatePropertyAccess = Expression.Property(parameter, lastModifiedDateProperty);
-                    Expression? lastModifiedDateRangeExpression = null;
-                    
-                    if (globalFilters.DateFrom.HasValue)
-                    {
-                        var fromConstant = Expression.Constant(globalFilters.DateFrom.Value, typeof(DateTime?));
-                        var lastModifiedFromCondition = Expression.GreaterThanOrEqual(lastModifiedDatePropertyAccess, fromConstant);
-                        lastModifiedDateRangeExpression = lastModifiedFromCondition;
-                    }
-                    
-                    if (globalFilters.DateTo.HasValue)
-                    {
-                        var toConstant = Expression.Constant(globalFilters.DateTo.Value.AddDays(1), typeof(DateTime?)); // Include the entire day
-                        var lastModifiedToCondition = Expression.LessThan(lastModifiedDatePropertyAccess, toConstant);
-                        
-                        if (lastModifiedDateRangeExpression != null)
-                        {
-                            lastModifiedDateRangeExpression = Expression.AndAlso(lastModifiedDateRangeExpression, lastModifiedToCondition);
-                        }
-                        else
-                        {
-                            lastModifiedDateRangeExpression = lastModifiedToCondition;
-                        }
-                    }
-                    
-                    if (combinedRangeExpression != null && lastModifiedDateRangeExpression != null)
-                    {
-                        // Combine with OR: (CreatedDate in range) OR (LastModified in range)
-                        combinedRangeExpression = Expression.OrElse(combinedRangeExpression, lastModifiedDateRangeExpression);
-                    }
-                    else if (lastModifiedDateRangeExpression != null)
-                    {
-                        combinedRangeExpression = lastModifiedDateRangeExpression;
-                    }
-                }
-                
-                // Apply the combined range filter
-                if (combinedRangeExpression != null)
-                {
-                    var rangeLambda = Expression.Lambda<Func<TEntity, bool>>(combinedRangeExpression, parameter);
-                    queryable = queryable.Where(rangeLambda);
-                }
-            }
-        }
-
+        
+        // Fallback: return queryable unchanged if service is not available
         return queryable;
     }
 
@@ -1444,5 +1244,18 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
         };
 
         await _aiService.PublishMessageToPubSub(message);
+    }
+
+    /// <summary>
+    /// Get the current user's ClaimsPrincipal for global filter application
+    /// </summary>
+    private ClaimsPrincipal GetCurrentClaimsPrincipal()
+    {
+        if (_serviceProvider == null)
+            return null;
+
+        var httpContextAccessor = _serviceProvider.GetService<IHttpContextAccessor>();
+        var context = httpContextAccessor?.HttpContext;
+        return context?.User;
     }
 }

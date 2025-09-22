@@ -407,6 +407,12 @@ public class Startup
         // Register AI Contextual Service for similarity search and embeddings
         services.AddScoped<AiContextualService>();
         
+        // Register Advanced Search Service for enhanced search capabilities
+        services.AddScoped<AdvancedSearchService>();
+        
+        // Register Global Filter Service for centralized global filter logic
+        services.AddScoped<GlobalFilterService>();
+        
         // Add data seeding services
         services.AddDataSeeding();
 

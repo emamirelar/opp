@@ -40,6 +40,11 @@ public interface IContactManager
     Task DeleteContactAsync(ClaimsPrincipal user, int id);
 
     Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user);
+    
+    /// <summary>
+    /// Get supported search fields for contacts
+    /// </summary>
+    List<SearchFieldInfo> GetContactSearchFields();
     Task<object> GetContactsWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Contact> specification, PaginationRequest pagination);
     Task<List<UnmatchedEmailModel>> GetUnmatchedEmailsWithPartnerSuggestionsAsync(List<string> emailAddresses, ClaimsPrincipal user = null);
     

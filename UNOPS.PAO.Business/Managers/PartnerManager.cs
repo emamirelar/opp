@@ -801,4 +801,43 @@ public class PartnerManager : IPartnerManager
     {
         throw new NotImplementedException("Use UNOPSPartnerManager for UNOPS-specific implementation");
     }
+
+    /// <summary>
+    /// Performs comprehensive smart search across Partners and all related entities.
+    /// This base implementation redirects to UNOPSPartnerManager for full functionality.
+    /// </summary>
+    /// <param name="user">The user performing the search (for RBAC)</param>
+    /// <param name="searchText">Text to search across all partner and related entity fields</param>
+    /// <param name="includeInactive">Whether to include inactive/deleted partners (default: false)</param>
+    /// <param name="maxResults">Maximum number of results to return (default: 50)</param>
+    /// <param name="request">Pagination request for final result formatting</param>
+    /// <returns>Paginated response with ranked search results and metadata</returns>
+    public async Task<PaginationResponse<PartnerModel>> PerformSmartSearchAsync(
+        ClaimsPrincipal user,
+        string searchText,
+        bool includeInactive = false,
+        int maxResults = 50,
+        PaginationRequest? request = null)
+    {
+        // This base implementation doesn't support advanced smart search
+        // Smart search with related entities and intelligent ranking is managed by UNOPSPartnerManager
+        throw new NotSupportedException("Smart search is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation for comprehensive search across all related entities.");
+    }
+
+    public virtual async Task<int> GetTotalPartnerCountAsync(ClaimsPrincipal user)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerManager for debug functionality");
+    }
+
+    public virtual async Task<List<string>> GetSamplePartnerNamesAsync(ClaimsPrincipal user, int count = 5)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerManager for debug functionality");
+    }
+
+    public virtual async Task<PaginationResponse<PartnerModel>> NewAdvancedSearchPartnersAsync(ClaimsPrincipal user, string searchCriteria, PaginationRequest request)
+    {
+        throw new NotSupportedException("NEW Advanced search functionality is only available in UNOPS implementation. Use UNOPSPartnerManager instead.");
+    }
+
+    // GetPartnerSearchFields removed - now handled directly in PartnerController for dynamic translation support
 }
