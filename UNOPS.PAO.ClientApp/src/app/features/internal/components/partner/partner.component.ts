@@ -91,9 +91,11 @@ export class PartnerComponent implements OnDestroy, OnInit {
     scrollable: true,
     scrollHeight: 'flex',
     entityName: 'Partner',
+    defaultSortField: 'lastModifiedDate',
+    defaultSortOrder: 'desc',
     sortableFields: [
-      { field: 'createdBy', label: 'Created By' },
-      { field: 'lastModifiedBy', label: 'Last Updated By' }
+      { field: 'createdDate', label: 'Created Date' },
+      { field: 'lastModifiedDate', label: 'Last Updated Date' }
     ],
     searchConfig: {
       useAdvancedSearch: true,
