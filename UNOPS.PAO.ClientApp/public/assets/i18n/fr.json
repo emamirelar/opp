@@ -320,7 +320,8 @@
         "permissionDenied": "Autorisation refusée",
         "recordDeletedSuccessfully": "Enregistrement supprimé avec succès !",
         "failedToDeleteRecord": "Échec de la suppression de l'enregistrement",
-        "anErrorOccurred": "Une erreur s'est produite"
+        "anErrorOccurred": "Une erreur s'est produite",
+        "invalidPhoneNumberFormat": "L'entrée ne correspond pas à un numéro de téléphone (format: +33123456789)"
     },
     "errors": {
         "failedToLoad": "Erreur lors du chargement",

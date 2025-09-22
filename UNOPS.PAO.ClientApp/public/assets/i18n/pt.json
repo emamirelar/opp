@@ -268,7 +268,8 @@
         "permissionDenied": "Permissão negada",
         "recordDeletedSuccessfully": "Registro excluído com sucesso!",
         "failedToDeleteRecord": "Falha ao excluir registro",
-        "anErrorOccurred": "Ocorreu um erro"
+        "anErrorOccurred": "Ocorreu um erro",
+        "invalidPhoneNumberFormat": "A entrada não corresponde a um formato de número de telefone (+33123456789)"
     },
     "label.interaction.contact": "Contato",
     "errors": {
