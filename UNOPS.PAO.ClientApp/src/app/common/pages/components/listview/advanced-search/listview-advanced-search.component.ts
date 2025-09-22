@@ -125,6 +125,10 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       { label: 'entityCards.operators.lessThan', value: '<' },
       { label: 'entityCards.operators.greaterThanOrEqual', value: '>=' },
       { label: 'entityCards.operators.lessThanOrEqual', value: '<=' }
+    ],
+    enum: [
+      { label: 'entityCards.operators.equals', value: 'eq' },
+      { label: 'entityCards.operators.notEquals', value: 'neq' }
     ]
   };
 
@@ -171,6 +175,28 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
    */
   isDateField(): boolean {
     return this.selectedSearchField && this.getFieldType(this.selectedSearchField) === 'date';
+  }
+
+  /**
+   * Check if current field is an enum field with dropdown options
+   */
+  isEnumField(): boolean {
+    return this.selectedSearchField && 
+           this.getFieldType(this.selectedSearchField) === 'enum' &&
+           this.selectedSearchField.dropdownOptions &&
+           this.selectedSearchField.dropdownOptions.length > 0;
+  }
+
+  /**
+   * Get dropdown options for the current enum field
+   */
+  getEnumOptions(): any[] {
+    if (!this.isEnumField()) return [];
+    
+    return this.selectedSearchField.dropdownOptions.map((option: DropdownOption) => ({
+      label: option.label,
+      value: option.value
+    }));
   }
 
   /**
@@ -252,7 +278,8 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
         const allOpsFlat = [
           ...this.allOperators.text,
           ...this.allOperators.date, 
-          ...this.allOperators.number
+          ...this.allOperators.number,
+          ...this.allOperators.enum
         ];
         
         const found = allOpsFlat.find(opDef => opDef.value === op);
@@ -317,11 +344,16 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
 
     this.http.get<SearchFieldInfo[]>(endpoint).subscribe({
       next: (searchFields) => {
+        // Debug logging to see API response
+        console.log('🔍 API Response for search fields:', searchFields);
+        
         // Transform API response to include translation keys for displayName
         const transformedFields = searchFields.map(field => ({
           ...field,
           displayName: this.translate.instant(field.displayName) || field.displayName
         }));
+        
+        console.log('🔄 Transformed fields:', transformedFields);
         
         this.searchFieldsFromAPI.set(transformedFields);
         this.isLoadingSearchFields.set(false);
@@ -402,6 +434,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.advancedSearchText = '';
     this.selectedDate = null;
     this.selectedSecondDate = null;
+    this.selectedEnumValue = '';
 
     // Reset operator to appropriate default for field type
     const fieldType = this.getFieldType(field);
@@ -409,6 +442,8 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       this.selectedComparisonOperator = 'after';
     } else if (fieldType === 'number') {
       this.selectedComparisonOperator = 'is';
+    } else if (fieldType === 'enum') {
+      this.selectedComparisonOperator = 'eq';
     } else {
       this.selectedComparisonOperator = 'like';
     }
@@ -418,6 +453,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.advancedSearchText = '';
     this.selectedDate = null;
     this.selectedSecondDate = null;
+    this.selectedEnumValue = '';
   }
 
   /**
@@ -433,11 +469,17 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
    * Check if we can add a criterion (simplified for template use)
    */
   canAddCriterion(): boolean {
-    if (this.getFieldType(this.selectedSearchField) === 'date') {
+    const fieldType = this.getFieldType(this.selectedSearchField);
+    
+    if (fieldType === 'date') {
       if (this.isBetweenOperator()) {
         return this.selectedDate != null && this.selectedSecondDate != null;
       }
       return this.selectedDate != null;
+    }
+
+    if (fieldType === 'enum') {
+      return !!(this.selectedEnumValue && this.selectedEnumValue.trim().length > 0);
     }
 
     return !!(this.advancedSearchText && this.advancedSearchText.trim().length > 0);
@@ -472,6 +514,8 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       } else {
         value = this.formatDateValue(this.selectedDate!);
       }
+    } else if (fieldType === 'enum') {
+      value = this.selectedEnumValue.trim();
     } else {
       value = this.advancedSearchText.trim();
     }
@@ -496,6 +540,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.advancedSearchText = '';
     this.selectedDate = null;
     this.selectedSecondDate = null;
+    this.selectedEnumValue = '';
     this.selectedComparisonOperator = fieldType === 'date' ? 'after' : (fieldType === 'number' ? 'is' : 'like');
 
     // Automatically select the first search field again for convenience

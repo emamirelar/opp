@@ -165,8 +165,25 @@
             styleClass="w-48"
           ></p-calendar>
         }
+      } @else if (isEnumField()) {
+        <!-- Dropdown for enum fields -->
+        <p-dropdown
+          [options]="getEnumOptions()"
+          [(ngModel)]="selectedEnumValue"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'entityCards.selectValue' | translate"
+          styleClass="w-48"
+        >
+          <ng-template pTemplate="selectedItem" let-selectedOption>
+            {{ selectedOption.label | translate }}
+          </ng-template>
+          <ng-template pTemplate="item" let-option>
+            {{ option.label | translate }}
+          </ng-template>
+        </p-dropdown>
       } @else {
-        <!-- Text input for non-date fields -->
+        <!-- Text input for non-date, non-enum fields -->
         <p-iconfield iconPosition="left" class="grow">
           <input pInputText type="text"
           [placeholder]="'search.placeholder' | translate"

@@ -640,6 +640,7 @@
     "operator": "Operator",
     "logic": "Logic",
     "addFilter": "Add Filter",
+    "selectValue": "Select value",
     "enterField": "Enter {{field}}...",
     "operators": {
       "equals": "equals",
@@ -672,6 +673,23 @@
     "and": "and",
     "myOfficeOnly": "My Office Only",
     "myOfficeTooltip": "Filter results to show only data from your organizational unit"
+  },
+  "enums": {
+    "interactionType": {
+      "email": "Email",
+      "chat": "Chat",
+      "call": "Call",
+      "virtualMeeting": "Virtual Meeting",
+      "inPersonMeeting": "In-Person Meeting",
+      "other": "Other"
+    },
+    "entityStatus": {
+      "inactive": "Inactive",
+      "active": "Active",
+      "closed": "Closed",
+      "draft": "Draft",
+      "archived": "Archived"
+    }
   },
   "savedFilters": {
     "selectFilter": "Select filter",
