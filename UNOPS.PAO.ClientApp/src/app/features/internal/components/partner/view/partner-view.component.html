@@ -9,7 +9,7 @@
 <!--</div>-->
 <div class="flex flex-col gap-8">
   <div class="flex flex-col xl:flex-row gap-8 xl:items-stretch">
-    <div class="flex flex-col gap-8 h-full" [ngClass]="showAiPanel ? 'xl:w-[60%]' : 'w-full'">
+    <div class="flex flex-col gap-8 h-full sticky top-0" [ngClass]="showAiPanel ? 'xl:w-[60%]' : 'w-full'">
       <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} unops-card unops-surface-elevated unops-rounded-lg unops-shadow-lg">
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
