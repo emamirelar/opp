@@ -937,7 +937,9 @@ export class ImportDialogComponent implements OnInit {
         // Make sure id is present and formatted appropriately
         if (dialogRecord.id !== undefined && dialogRecord.id !== null) {
           // Ensure id is a string since the component expects a string recordId
-          dialogRecord.recordId = String(dialogRecord.id); 
+          dialogRecord.recordId = String(dialogRecord.id);
+          // Also set it in the dialog config data for proper initialization
+          dialogRecord.id = dialogRecord.id;
         }
       }
       
@@ -967,7 +969,8 @@ export class ImportDialogComponent implements OnInit {
         data: {
           mode: 'edit',
           record: dialogRecord,
-          requestingSaveSignal: signal<boolean>(false)
+          requestingSaveSignal: signal<boolean>(false),
+          isImportEdit: true
         }
       });
       

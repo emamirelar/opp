@@ -47,7 +47,8 @@ CREATE OR REPLACE FUNCTION public.detect_duplicate_records(
     entity_type TEXT,
     entity_data TEXT,
     field_match_threshold REAL DEFAULT 0.5,
-    debug_mode BOOLEAN DEFAULT FALSE
+    debug_mode BOOLEAN DEFAULT FALSE,
+    exclude_record_id INTEGER DEFAULT NULL
 )
 RETURNS JSON
 LANGUAGE plpgsql
@@ -229,6 +230,7 @@ BEGIN
                 FROM public."Contacts"
                 WHERE "Status"::INTEGER = 1  -- FIX: Cast Status to INTEGER for comparison
                 AND "IsDeleted" = false
+                AND ($6 IS NULL OR "Id" != $6)
             )
             SELECT json_agg(
                 json_build_object(
@@ -251,7 +253,7 @@ BEGIN
             WHERE match_score >= $5
             LIMIT 10';
         
-        EXECUTE field_search_sql INTO field_duplicates USING input_email, input_name, input_partner_id, COALESCE(input_phone, input_mobile), field_match_threshold;
+        EXECUTE field_search_sql INTO field_duplicates USING input_email, input_name, input_partner_id, COALESCE(input_phone, input_mobile), field_match_threshold, exclude_record_id;
         
     -- ============================================================================
     -- PARTNER DUPLICATE DETECTION  
@@ -314,6 +316,7 @@ BEGIN
                     END as match_reason
                 FROM public."Partners"
                 WHERE "IsDeleted" = false
+                AND ($5 IS NULL OR "Id" != $5)
             )
             SELECT json_agg(
                 json_build_object(
@@ -334,7 +337,7 @@ BEGIN
             WHERE match_score >= $4
             LIMIT 10';
         
-        EXECUTE field_search_sql INTO field_duplicates USING input_erp_dim_value, input_partner_name, input_partner_short_desc, field_match_threshold;
+        EXECUTE field_search_sql INTO field_duplicates USING input_erp_dim_value, input_partner_name, input_partner_short_desc, field_match_threshold, exclude_record_id;
         
     -- ============================================================================
     -- INTERACTION DUPLICATE DETECTION
@@ -424,6 +427,7 @@ BEGIN
                 LEFT JOIN public."InteractionContacts" ic ON i."Id" = ic."InteractionId"
                 LEFT JOIN public."InteractionPartners" ip ON i."Id" = ip."InteractionId"
                 WHERE i."IsDeleted" = false
+                AND ($4 IS NULL OR i."Id" != $4)
                 GROUP BY i."Id", i."Subject", i."Date", i."Location"
             )
             SELECT json_agg(
@@ -447,7 +451,7 @@ BEGIN
             WHERE match_score >= $3
             LIMIT 10';
         
-        EXECUTE field_search_sql INTO field_duplicates USING input_subject, input_date, field_match_threshold;
+        EXECUTE field_search_sql INTO field_duplicates USING input_subject, input_date, field_match_threshold, exclude_record_id;
         
     ELSE
         -- Unsupported entity type

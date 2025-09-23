@@ -1934,6 +1934,21 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         }
     }
 
+    /// <summary>
+    /// Performs smart search for partners using AI-powered search capabilities
+    /// </summary>
+    public async Task<PaginationResponse<PartnerModel>> SmartSearchPartnersAsync(
+        ClaimsPrincipal user, 
+        string searchText, 
+        int maxResults = 50,
+        PaginationRequest request = null)
+    {
+        try
+        {
+            // Perform smart search to get accessible partners
+            var smartSearchResult = await PerformSmartSearchAsync<UNOPSPartner>(searchText, false, maxResults);
+            var accessiblePartners = await FilterAccessiblePartners(smartSearchResult.Results.Select(r => r.Entity).ToList(), user);
+
             var partnerModels = new List<PartnerModel>();
             foreach (var partner in accessiblePartners)
             {
@@ -1979,6 +1994,19 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
                 TotalPages = 0
             };
         }
+    }
+
+    /// <summary>
+    /// Performs smart search for partners using AI-powered search capabilities
+    /// </summary>
+    public async Task<PaginationResponse<PartnerModel>> PerformSmartSearchAsync(
+        ClaimsPrincipal user, 
+        string searchText, 
+        bool includeInactive = false,
+        int maxResults = 50,
+        PaginationRequest request = null)
+    {
+        return await SmartSearchPartnersAsync(user, searchText, maxResults, request);
     }
 
     /// <summary>
