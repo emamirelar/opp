@@ -1,0 +1,100 @@
+metadata:
+  name: "Engagement Partners Sync"
+  description: "Engagement partners data sync"
+  version: "1.0"
+  enabled: true
+  max_retry_attempts: 1
+  timeout_minutes: 5
+
+source:
+  type: "bigquery"
+  connection:
+    project_id: "unops-partneropportunity"
+    use_environment_auth: true
+  
+  query: |
+    SELECT 
+      * 
+      , CURRENT_TIMESTAMP() as last_modified
+    FROM
+      `unops-partneropportunity.integration.Table_EngagementPartners`
+  
+  primary_key_field: "Key"
+  batch_size: 1000
+
+destination:
+  table_name: "BaseEngagementPartners"
+  schema: "public"
+  
+  field_mappings:
+    - source_field: "Partner_Description"
+      destination_field: "Name"  # Needed to implement BaseBusinessEntity
+      data_type: "varchar(255)"
+      is_required: false
+
+    - source_field: "Status"
+      destination_field: "Status"  # Needed to implement BaseBusinessEntity
+      data_type: "integer"         # Must be integer (BaseBusinessEntity requirement)
+      is_required: false
+
+    - source_field: "Key"
+      destination_field: "Key"
+      data_type: "varchar(200)"
+      is_required: true
+      is_unique: true
+
+    - source_field: "Base_Engagement"
+      destination_field: "BaseEngagement"
+      data_type: "varchar(50)"
+      is_required: true
+      is_unique: false
+    
+    - source_field: "Partner_Type"
+      destination_field: "PartnerType"
+      data_type: "varchar(50)"
+      is_required: false
+    
+    - source_field: "Partner"
+      destination_field: "Partner"
+      data_type: "varchar(50)"
+      is_required: false
+    
+    - source_field: "Partner_Description"
+      destination_field: "PartnerDescription"
+      data_type: "varchar(255)"
+      is_required: false
+    
+  foreign_key_mappings:
+    - source_field: "Partner"
+      lookup_table: "Partners"
+      lookup_field: "ErpDimValue"
+      destination_field: "PartnerId"
+      lookup_return_field: "Id"
+      is_required: false
+      on_lookup_fail: LogWarning  # Don't fail in development
+
+    - source_field: "Base_Engagement"
+      lookup_table: "BaseEngagements"
+      lookup_field: "BaseEngagement"
+      destination_field: "BaseEngagementId"
+      lookup_return_field: "Id"
+      is_required: false
+      on_lookup_fail: LogWarning  # Don't fail in development
+
+sync_options:
+  sync_mode: Upsert
+  batch_processing: true
+
+validation:
+  required_source_fields:
+    - "Key"
+    - "Partner"
+  
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+
+logging:
+  log_level: "Debug"
+  log_sql_queries: true
+  log_record_details: true

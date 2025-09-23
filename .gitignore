@@ -302,3 +302,7 @@ dmypy.json
 # Logs folders
 logs/
 **/logs/
+
+# External Data Service local configuration
+ExternalDataService/appsettings.Local.json
+ExternalDataService/logs/
