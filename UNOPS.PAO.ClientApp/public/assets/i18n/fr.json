@@ -483,7 +483,9 @@
         "partnerRequired": "Le partenaire doit être saisi.",
         "lastNameRequired": "Le nom de famille doit être saisi.",
         "titleRequired": "Le titre doit être saisi.",
-        "emailRequired": "L'email doit être saisi."
+        "emailRequired": "L'email doit être saisi.",
+        "reasonRequired": "La raison est requise.",
+        "reasonForLevyRequired": "La raison du prélèvement est requise lorsque le statut du prélèvement partenaire est 'Ne s'applique pas' ou 'Potentiellement non applicable'."
     },
     "loading": {
         "contactData": "Chargement des données de contact...",

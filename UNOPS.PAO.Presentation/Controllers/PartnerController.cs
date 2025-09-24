@@ -96,6 +96,15 @@ public class PartnerController : BaseController
         {
             return BadRequest(new { error = "Partner Name is required for creation" });
         }
+
+        // Validate Partner Levy business rules
+        if (req.PartnerLevyStatus == "DoesNotApply" || req.PartnerLevyStatus == "PotentiallyNotApplied")
+        {
+            if (string.IsNullOrWhiteSpace(req.ReasonForLevy))
+            {
+                return BadRequest(new { error = "Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'." });
+            }
+        }
         
         // Check for duplicates ONLY if user hasn't confirmed duplicate creation
         if (!req.ConfirmDuplicateCreation)
@@ -479,6 +488,15 @@ public class PartnerController : BaseController
     [AccessControlled(EntityTypes.Partner, "update")]
     public async Task<IActionResult> Update([FromBody] UpdatePartnerRequest req)
     {
+        // Validate Partner Levy business rules
+        if (req.PartnerLevyStatus == "DoesNotApply" || req.PartnerLevyStatus == "PotentiallyNotApplied")
+        {
+            if (string.IsNullOrWhiteSpace(req.ReasonForLevy))
+            {
+                return BadRequest(new { error = "Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'." });
+            }
+        }
+
         var result = await _manager.UpdatePartnerAsync(User, req);
         if (result == null)
         {

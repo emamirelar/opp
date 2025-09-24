@@ -241,10 +241,13 @@
       <!-- Reason for Levy - Only show when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied" -->
         @if (shouldShowReasonForLevy()) {
         <div class="flex flex-col gap-2">
-          <label for="reasonForLevy">{{ 'label.partner.reasonForLevy' | translate }}</label>
+          <label for="reasonForLevy">{{ 'label.partner.reasonForLevy' | translate }} *</label>
           <input pInputText formControlName="reasonForLevy"
                  [disabled]="!approvalFieldsEnabled()"
                  fluid="true" id="reasonForLevy" />
+          @if( formGroup.get("reasonForLevy")?.invalid && showValidationFailedError() && shouldShowReasonForLevy() && approvalFieldsEnabled() ) {
+          <p-message severity="error" variant="simple">{{ 'validation.reasonForLevyRequired' | translate }}</p-message>
+          }
         </div>
         }
 
