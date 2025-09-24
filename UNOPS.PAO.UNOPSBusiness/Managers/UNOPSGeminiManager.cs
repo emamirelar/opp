@@ -115,7 +115,16 @@ public class UNOPSGeminiManager : IGeminiManager
     // Map AiPromptModel to AiPrompt entity
     private AiPrompt MapModelToEntity(AiPromptModel model)
     {
-        var entity = _mapper.Map(model, new AiPrompt());
+        var entity = _mapper.Map(model, new AiPrompt
+        {
+            Type = model.Type ?? "default",
+            PromptFunction = model.PromptFunction ?? "default",
+            GenerationConfig = model.GenerationConfig ?? "{}",
+            ContentConfig = model.ContentConfig ?? "{}",
+            Project = model.Project ?? "default",
+            Location = model.Location ?? "default",
+            Model = model.Model ?? "default"
+        });
         return entity;
     }
 

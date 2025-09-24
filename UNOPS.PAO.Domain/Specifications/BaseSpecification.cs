@@ -39,10 +39,10 @@ public abstract class BaseSpecification<T> : ISpecification<T>
     public List<Func<IQueryable<T>, IIncludableQueryable<T, object>>> IncludeExpressions { get; } = new();
     
     /// <inheritdoc />
-    public Expression<Func<T, object>> OrderBy { get; private set; }
+    public Expression<Func<T, object>>? OrderBy { get; private set; }
     
     /// <inheritdoc />
-    public Expression<Func<T, object>> OrderByDescending { get; private set; }
+    public Expression<Func<T, object>>? OrderByDescending { get; private set; }
     
     /// <inheritdoc />
     public List<(Expression<Func<T, object>> KeySelector, bool Ascending)> OrderByExpressions { get; } = new();

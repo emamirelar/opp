@@ -8,16 +8,16 @@ namespace UNOPS.PAO.Domain.Entities;
 
 public class Contact : ModifiableDeletableEntity
 {
-    public int Id { get; set; }
+    public new int Id { get; set; }
     public string? Salutation { get; set; }
     public string? FirstName { get; set; }
     public string? MiddleName { get; set; }
-    public string LastName { get; set; }
+    public required string LastName { get; set; }
     public string? Suffix { get; set; }
-    public string Title { get; set; }
+    public required string Title { get; set; }
     public string? Department { get; set; }
     public string? Description { get; set; }
-    public string Email { get; set; }
+    public required string Email { get; set; }
     public string? Phone { get; set; }
     public string? Mobile { get; set; }
     public string? Assistant { get; set; }
@@ -39,7 +39,7 @@ public class Contact : ModifiableDeletableEntity
     }
     
     [JsonIgnore]  // Prevents circular reference in serialization
-    public Partner Partner { get; set; }
+    public virtual Partner? Partner { get; set; }
     public int PartnerId { get; set; }
     public List<Document>? Documents { get; set; }
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,7 @@ using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
+using AutoMapper;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -18,18 +20,115 @@ namespace UNOPS.PAO.Presentation.Controllers;
 public class OrganizationHierarchyController : BaseController
 {
     private readonly IOrganizationHierarchyManager _organizationHierarchyManager;
+    private readonly OrganizationHierarchyService _organizationHierarchyService;
     private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
+    private readonly IMapper _mapper;
 
     public OrganizationHierarchyController(
         IOrganizationHierarchyManager organizationHierarchyManager,
+        OrganizationHierarchyService organizationHierarchyService,
         IManagerWrapper manager,
+        IMapper mapper,
         UserResolverService<int> userResolverService,
         IAuthorizationService authorizationService,
         ILogger<OrganizationHierarchyController> logger)
         : base(logger, authorizationService, userResolverService)
     {
         _organizationHierarchyManager = organizationHierarchyManager;
+        _organizationHierarchyService = organizationHierarchyService;
         _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
+        _mapper = mapper;
+    }
+
+    /// <summary>
+    /// Gets all organization hierarchies with optional filtering and pagination.
+    /// </summary>
+    /// <example_uses>
+    /// Get all organization units with pagination
+    /// Filter organization units by type or parent
+    /// Get organization units with their children counts
+    /// Sort organization units by children count
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to list, view, or filter organization hierarchies.</when_to_use>
+    /// <returns>Paginated list of organization hierarchies</returns>
+    [HttpGet("api/organizationhierarchy")]
+    [AccessControlled(EntityTypes.OrganizationHierarchy, "read")]
+    public async Task<ActionResult<PaginationResponse<OrganizationHierarchyModel>>> GetOrganizationHierarchies([FromQuery] OrganizationHierarchyFilterRequest request)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _organizationHierarchyService.GetOrganizationHierarchiesAsync(request);
+            
+            var models = result.Records.Select(hierarchy => _mapper.Map<OrganizationHierarchyModel>(hierarchy)).ToList();
+            
+            return new PaginationResponse<OrganizationHierarchyModel>
+            {
+                Records = models,
+                TotalCount = result.TotalCount,
+                PageIndex = result.PageIndex,
+                PageSize = result.PageSize,
+                TotalPages = result.TotalPages
+            };
+        });
+    }
+
+    /// <summary>
+    /// Searches organization hierarchies based on search criteria.
+    /// </summary>
+    /// <example_uses>
+    /// Search organization units by name or code
+    /// Find organization units with specific children count ranges
+    /// Search for organization units containing specific terms
+    /// Filter by type or parent organization
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to search or find organization hierarchies with specific criteria.</when_to_use>
+    /// <returns>Paginated search results of organization hierarchies</returns>
+    [HttpPost("api/organizationhierarchy/search")]
+    [AccessControlled(EntityTypes.OrganizationHierarchy, "read")]
+    public async Task<ActionResult<PaginationResponse<OrganizationHierarchyModel>>> SearchOrganizationHierarchies([FromBody] OrganizationHierarchySearchRequest request)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _organizationHierarchyService.SearchOrganizationHierarchiesAsync(request);
+            
+            var models = result.Records.Select(hierarchy => _mapper.Map<OrganizationHierarchyModel>(hierarchy)).ToList();
+            
+            return new PaginationResponse<OrganizationHierarchyModel>
+            {
+                Records = models,
+                TotalCount = result.TotalCount,
+                PageIndex = result.PageIndex,
+                PageSize = result.PageSize,
+                TotalPages = result.TotalPages
+            };
+        });
+    }
+
+    /// <summary>
+    /// Gets a specific organization hierarchy by ID with full details.
+    /// </summary>
+    /// <example_uses>
+    /// Show detailed organization unit information
+    /// Get organization unit with children and entity relationship counts
+    /// Display organization unit details in a form or modal
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to view details of a specific organization hierarchy.</when_to_use>
+    /// <returns>Organization hierarchy details with computed counts</returns>
+    [HttpGet("api/organizationhierarchy/{id}")]
+    [AccessControlled(EntityTypes.OrganizationHierarchy, "read")]
+    public async Task<ActionResult<OrganizationHierarchyModel>> GetOrganizationHierarchyByIdWithDetails(int id)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var hierarchy = await _organizationHierarchyService.GetOrganizationHierarchyByIdAsync(id);
+            
+            if (hierarchy == null)
+            {
+                throw new BusinessException($"Organization hierarchy with ID {id} not found.");
+            }
+            
+            return _mapper.Map<OrganizationHierarchyModel>(hierarchy);
+        });
     }
 
     [HttpGet(APIDictionary.OrganizationHierarchy)]

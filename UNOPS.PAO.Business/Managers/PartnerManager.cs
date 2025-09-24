@@ -82,6 +82,7 @@ public class PartnerManager : IPartnerManager
                     var newRelationship = new OrganizationUnitRelationship
                     {
                         OrganizationHierarchyId = orgUnit.Id,
+                        OrganizationHierarchy = orgUnit,
                         EntityId = partnerId,
                         EntityType = "Partner",
                         Name = $"Partner-{partnerId}-{orgUnit.Code}",
@@ -123,6 +124,7 @@ public class PartnerManager : IPartnerManager
                 var newRelationship = new OrganizationUnitRelationship
                 {
                     OrganizationHierarchyId = orgUnit.Id,
+                    OrganizationHierarchy = orgUnit,
                     EntityId = entity.Id, // Now entity.Id has the actual saved ID
                     EntityType = nameof(Partner),
                     Name = $"Partner-{entity.Id}-{orgUnit.Code}",

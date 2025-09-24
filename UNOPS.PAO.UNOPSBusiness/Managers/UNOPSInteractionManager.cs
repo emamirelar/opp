@@ -159,7 +159,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var contactId = model.ContactIds?.FirstOrDefault() ?? 0;
         
         return MapModelToEntity(model, new UNOPSInteraction() { 
-            Name = contactId + " - " + model.Date
+            Name = contactId + " - " + model.Date,
+            Subject = model.Subject ?? "No Subject"
         });
     }
 

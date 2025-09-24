@@ -379,7 +379,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                                         break;
                                 }
                             }
-                            catch (Exception conversionEx)
+                            catch (Exception)
                             {
                                 continue;
                             }
@@ -418,7 +418,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                             criteriaWithOperators.Add((comparisonExpr, logicalOperator));
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         continue;
                     }
@@ -547,7 +547,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                         propertyExpressions.Add(finalExpression);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                 }
             }
@@ -566,7 +566,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
 
             return Expression.Lambda<Func<TEntity, bool>>(combinedExpression, parameter);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return null;
         }
@@ -606,7 +606,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             
             return expression;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return null;
         }
@@ -884,7 +884,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
 
             return Expression.Lambda<Func<TEntity, bool>>(comparison, parameter);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return null;
         }
@@ -938,7 +938,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                     return criteriaList.Cast<dynamic>();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
@@ -999,9 +999,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             Debug.WriteLine("Successfully created PartnerId expression using Any()");
             return Expression.Lambda<Func<TEntity, bool>>(anyCall, parameter);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Debug.WriteLine($"Error creating PartnerId expression: {ex.Message}");
+            Debug.WriteLine("Error creating PartnerId expression");
             return null;
         }
     }
@@ -1059,9 +1059,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             Debug.WriteLine("Successfully created ContactId expression using Any()");
             return Expression.Lambda<Func<TEntity, bool>>(anyCall, parameter);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Debug.WriteLine($"Error creating ContactId expression: {ex.Message}");
+            Debug.WriteLine("Error creating ContactId expression");
             return null;
         }
     }

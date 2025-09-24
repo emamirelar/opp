@@ -221,6 +221,7 @@ public class DocumentController : BaseController
             var aiPrompt = new AiPrompt
             {
                 Type = "summarization",
+                PromptFunction = "summarizeDocument",
                 Prompt = "You are a summarizer. You will be provided with data that you need to summarize and return in a PURE markdown format. {data}",
                 GenerationConfig = "{\"temperature\": 0.7, \"maxOutputTokens\": 2048}",
                 ContentConfig = "{\"role\": \"user\", \"parts\": [{\"text\": \"{promptData}\"}]}",

@@ -1,0 +1,2202 @@
+{
+  "metadata": {
+    "version": "1.1",
+    "generatedDate": "2024-09-24T00:00:00Z",
+    "description": "Comprehensive entity metadata for UNOPS PAO system including data models and API endpoints with deconstructed parameter structures",
+    "excludedEntities": ["UserManagement", "AiPromptManagement", "EntityManager"]
+  },
+  "requestModels": {
+    "PaginationRequest": {
+      "description": "Base pagination request model",
+      "fields": [
+        {
+          "name": "OrderBy",
+          "dataType": "string",
+          "required": false,
+          "description": "Field name for sorting"
+        },
+        {
+          "name": "Ascending",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Sort direction (true for ascending, false for descending)"
+        },
+        {
+          "name": "Direction",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Alternative sort direction property"
+        },
+        {
+          "name": "PageIndex",
+          "dataType": "int",
+          "required": false,
+          "description": "1-based page number (default: 1)"
+        },
+        {
+          "name": "PageSize",
+          "dataType": "int",
+          "required": false,
+          "description": "Items per page (default: 10)"
+        }
+      ]
+    },
+    "ExtensibleModel": {
+      "description": "Base model with extension data support",
+      "fields": [
+        {
+          "name": "Extensions",
+          "dataType": "IDictionary<string, object>",
+          "required": false,
+          "description": "Extension data for additional properties"
+        }
+      ]
+    },
+    "ContactRequest": {
+      "description": "Request model for creating/updating contacts",
+      "inheritsFrom": "ExtensibleModel",
+      "fields": [
+        {
+          "name": "Salutation",
+          "dataType": "string",
+          "required": false,
+          "description": "Contact salutation (Mr., Ms., Dr., etc.)"
+        },
+        {
+          "name": "FirstName",
+          "dataType": "string",
+          "required": false,
+          "description": "Contact's first name"
+        },
+        {
+          "name": "MiddleName",
+          "dataType": "string",
+          "required": false,
+          "description": "Contact's middle name"
+        },
+        {
+          "name": "LastName",
+          "dataType": "string",
+          "required": true,
+          "description": "Contact's last name"
+        },
+        {
+          "name": "Suffix",
+          "dataType": "string",
+          "required": false,
+          "description": "Contact name suffix (Jr., Sr., III, etc.)"
+        },
+        {
+          "name": "Title",
+          "dataType": "string",
+          "required": true,
+          "description": "Contact's job title or position"
+        },
+        {
+          "name": "Department",
+          "dataType": "string",
+          "required": false,
+          "description": "Department or division within the organization"
+        },
+        {
+          "name": "Description",
+          "dataType": "string",
+          "required": false,
+          "description": "Additional description or notes about the contact"
+        },
+        {
+          "name": "Email",
+          "dataType": "string",
+          "required": true,
+          "description": "Primary email address"
+        },
+        {
+          "name": "Phone",
+          "dataType": "string",
+          "required": false,
+          "description": "Primary phone number"
+        },
+        {
+          "name": "Mobile",
+          "dataType": "string",
+          "required": false,
+          "description": "Mobile phone number"
+        },
+        {
+          "name": "Assistant",
+          "dataType": "string",
+          "required": false,
+          "description": "Assistant's name"
+        },
+        {
+          "name": "AssistantPhone",
+          "dataType": "string",
+          "required": false,
+          "description": "Assistant's phone number"
+        },
+        {
+          "name": "AssistantEmail",
+          "dataType": "string",
+          "required": false,
+          "description": "Assistant's email address"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Contact status (default: Active)"
+        },
+        {
+          "name": "MailingStreet",
+          "dataType": "string",
+          "required": false,
+          "description": "Mailing address street"
+        },
+        {
+          "name": "MailingStreet2",
+          "dataType": "string",
+          "required": false,
+          "description": "Mailing address street line 2"
+        },
+        {
+          "name": "MailingCity",
+          "dataType": "string",
+          "required": false,
+          "description": "Mailing address city"
+        },
+        {
+          "name": "MailingStateProvince",
+          "dataType": "string",
+          "required": false,
+          "description": "Mailing address state or province"
+        },
+        {
+          "name": "MailingPostalCode",
+          "dataType": "string",
+          "required": false,
+          "description": "Mailing address postal code"
+        },
+        {
+          "name": "MailingCountry",
+          "dataType": "string",
+          "required": false,
+          "description": "Mailing address country"
+        },
+        {
+          "name": "PartnerId",
+          "dataType": "int",
+          "required": true,
+          "description": "Foreign key to the partner organization"
+        },
+        {
+          "name": "ConfirmDuplicateCreation",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Flag to bypass duplicate detection when user confirms creation despite duplicates"
+        }
+      ]
+    },
+    "ContactFilterRequest": {
+      "description": "Filter request for contact searches",
+      "inheritsFrom": "PaginationRequest",
+      "fields": [
+        {
+          "name": "SearchText",
+          "dataType": "string",
+          "required": false,
+          "description": "General search text to search across all contact fields"
+        },
+        {
+          "name": "Id",
+          "dataType": "int",
+          "required": false,
+          "description": "Contact ID for filtering"
+        },
+        {
+          "name": "FirstName",
+          "dataType": "string",
+          "required": false,
+          "description": "First name filter"
+        },
+        {
+          "name": "LastName",
+          "dataType": "string",
+          "required": false,
+          "description": "Last name filter"
+        },
+        {
+          "name": "Email",
+          "dataType": "string",
+          "required": false,
+          "description": "Email filter"
+        },
+        {
+          "name": "Title",
+          "dataType": "string",
+          "required": false,
+          "description": "Title filter"
+        },
+        {
+          "name": "Department",
+          "dataType": "string",
+          "required": false,
+          "description": "Department filter"
+        },
+        {
+          "name": "Phone",
+          "dataType": "string",
+          "required": false,
+          "description": "Phone filter"
+        },
+        {
+          "name": "Mobile",
+          "dataType": "string",
+          "required": false,
+          "description": "Mobile filter"
+        },
+        {
+          "name": "PartnerId",
+          "dataType": "int",
+          "required": false,
+          "description": "Partner ID filter"
+        },
+        {
+          "name": "PartnerName",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner name filter"
+        },
+        {
+          "name": "OrgUnitId",
+          "dataType": "int",
+          "required": false,
+          "description": "Organization Unit filter - filters results by organizational unit (includes hierarchy)"
+        },
+        {
+          "name": "AdvancedSearch",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Indicates if advanced search is enabled"
+        },
+        {
+          "name": "SearchCriteria",
+          "dataType": "string",
+          "required": false,
+          "description": "JSON string containing the search criteria"
+        }
+      ]
+    },
+    "PartnerRequest": {
+      "description": "Request model for creating/updating partners",
+      "inheritsFrom": "ExtensibleModel",
+      "fields": [
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner name - primary identifier"
+        },
+        {
+          "name": "PartnerShortDescription",
+          "dataType": "string",
+          "required": false,
+          "description": "Short name/acronym"
+        },
+        {
+          "name": "PartnerLongDescription",
+          "dataType": "string",
+          "required": false,
+          "description": "Optional long description"
+        },
+        {
+          "name": "PartnerCategoryId",
+          "dataType": "int",
+          "required": false,
+          "description": "Foreign key to Partner Category"
+        },
+        {
+          "name": "LiaisonOfficeId",
+          "dataType": "int",
+          "required": false,
+          "description": "Foreign key to LiaisonOffice"
+        },
+        {
+          "name": "PartnerFocalPointUserId",
+          "dataType": "int",
+          "required": false,
+          "description": "Business Developer User ID"
+        },
+        {
+          "name": "ErpDimValue",
+          "dataType": "int",
+          "required": false,
+          "description": "ERP dimension value"
+        }
+      ]
+    },
+    "PartnerFilterRequest": {
+      "description": "Filter request for partner searches",
+      "inheritsFrom": "PaginationRequest",
+      "fields": [
+        {
+          "name": "Id",
+          "dataType": "int",
+          "required": false,
+          "description": "Partner ID filter"
+        },
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner name filter"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner status filter"
+        },
+        {
+          "name": "ShortName",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner short name filter"
+        },
+        {
+          "name": "OrganizationHierarchyId",
+          "dataType": "int",
+          "required": false,
+          "description": "Organization hierarchy ID filter"
+        },
+        {
+          "name": "PartnerCategoryId",
+          "dataType": "int",
+          "required": false,
+          "description": "Partner category ID filter"
+        },
+        {
+          "name": "PartnerGroupId",
+          "dataType": "int",
+          "required": false,
+          "description": "Partner group ID filter"
+        },
+        {
+          "name": "SearchText",
+          "dataType": "string",
+          "required": false,
+          "description": "General search text"
+        },
+        {
+          "name": "OrgUnitId",
+          "dataType": "int",
+          "required": false,
+          "description": "Organization Unit filter - filters results by organizational unit (includes hierarchy)"
+        },
+        {
+          "name": "AdvancedSearch",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Advanced search flag"
+        },
+        {
+          "name": "SearchCriteria",
+          "dataType": "string",
+          "required": false,
+          "description": "JSON string containing the search criteria"
+        }
+      ]
+    },
+    "InteractionRequest": {
+      "description": "Request model for creating/updating interactions",
+      "inheritsFrom": "ExtensibleModel",
+      "fields": [
+        {
+          "name": "Type",
+          "dataType": "InteractionType",
+          "required": true,
+          "description": "Type of interaction (Email, Meeting, Call, etc.)"
+        },
+        {
+          "name": "Date",
+          "dataType": "datetime",
+          "required": true,
+          "description": "Date and time of the interaction"
+        },
+        {
+          "name": "Description",
+          "dataType": "string",
+          "required": false,
+          "description": "Detailed description of the interaction"
+        },
+        {
+          "name": "EmailAddresses",
+          "dataType": "string[]",
+          "required": false,
+          "description": "List of email addresses involved"
+        },
+        {
+          "name": "PhoneNumbers",
+          "dataType": "string[]",
+          "required": false,
+          "description": "List of phone numbers involved"
+        },
+        {
+          "name": "ContactIds",
+          "dataType": "int[]",
+          "required": false,
+          "description": "List of contact IDs associated with interaction"
+        },
+        {
+          "name": "PartnerIds",
+          "dataType": "int[]",
+          "required": false,
+          "description": "List of partner IDs associated with interaction"
+        },
+        {
+          "name": "UserIds",
+          "dataType": "int[]",
+          "required": false,
+          "description": "List of user IDs associated with interaction"
+        },
+        {
+          "name": "Location",
+          "dataType": "string",
+          "required": false,
+          "description": "Location where interaction took place"
+        },
+        {
+          "name": "Subject",
+          "dataType": "string",
+          "required": true,
+          "description": "Subject or title of the interaction"
+        },
+        {
+          "name": "OrganizationHierarchyIds",
+          "dataType": "int[]",
+          "required": false,
+          "description": "Organization unit hierarchy IDs - managed automatically by the interaction manager"
+        },
+        {
+          "name": "GmailThreadId",
+          "dataType": "string",
+          "required": false,
+          "description": "Gmail thread ID for email integrations"
+        },
+        {
+          "name": "GmailMessageId",
+          "dataType": "string",
+          "required": false,
+          "description": "Gmail message ID for email integrations"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Interaction status (default: Active)"
+        },
+        {
+          "name": "ConfirmDuplicateCreation",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Flag to bypass duplicate detection when user confirms creation despite duplicates"
+        },
+        {
+          "name": "CreatedBy",
+          "dataType": "int",
+          "required": false,
+          "description": "User ID of the creator"
+        }
+      ]
+    },
+    "InteractionFilterRequest": {
+      "description": "Filter request for interaction searches",
+      "inheritsFrom": "PaginationRequest",
+      "fields": [
+        {
+          "name": "Id",
+          "dataType": "int",
+          "required": false,
+          "description": "Interaction ID filter"
+        },
+        {
+          "name": "ContactId",
+          "dataType": "int",
+          "required": false,
+          "description": "Contact ID filter"
+        },
+        {
+          "name": "ContactName",
+          "dataType": "string",
+          "required": false,
+          "description": "Contact name filter"
+        },
+        {
+          "name": "PartnerId",
+          "dataType": "int",
+          "required": false,
+          "description": "Partner ID filter"
+        },
+        {
+          "name": "Type",
+          "dataType": "InteractionType",
+          "required": false,
+          "description": "Interaction type filter"
+        },
+        {
+          "name": "FromDate",
+          "dataType": "DateOnly",
+          "required": false,
+          "description": "Start date filter"
+        },
+        {
+          "name": "ToDate",
+          "dataType": "DateOnly",
+          "required": false,
+          "description": "End date filter"
+        },
+        {
+          "name": "Date",
+          "dataType": "DateOnly",
+          "required": false,
+          "description": "Specific date filter"
+        },
+        {
+          "name": "Description",
+          "dataType": "string",
+          "required": false,
+          "description": "Description filter"
+        },
+        {
+          "name": "Subject",
+          "dataType": "string",
+          "required": false,
+          "description": "Subject filter"
+        },
+        {
+          "name": "SearchText",
+          "dataType": "string",
+          "required": false,
+          "description": "General search text"
+        },
+        {
+          "name": "OrgUnitId",
+          "dataType": "int",
+          "required": false,
+          "description": "Organization Unit filter - filters results by organizational unit (includes hierarchy)"
+        },
+        {
+          "name": "AdvancedSearch",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Advanced search flag"
+        },
+        {
+          "name": "SearchCriteria",
+          "dataType": "string",
+          "required": false,
+          "description": "JSON string containing the search criteria"
+        }
+      ]
+    },
+    "CountryFilterRequest": {
+      "description": "Filter request for country searches",
+      "inheritsFrom": "PaginationRequest",
+      "fields": [
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": false,
+          "description": "Country name filter"
+        },
+        {
+          "name": "Iso2Code",
+          "dataType": "string",
+          "required": false,
+          "description": "ISO 2-letter country code filter"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Country status filter"
+        },
+        {
+          "name": "IncludeCounts",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether to include partner and liaison office counts (default: true)"
+        }
+      ]
+    },
+    "CountrySearchRequest": {
+      "description": "Search request for countries",
+      "fields": [
+        {
+          "name": "SearchTerm",
+          "dataType": "string",
+          "required": false,
+          "description": "General search term"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Country status filter"
+        },
+        {
+          "name": "MinPartnerCount",
+          "dataType": "int",
+          "required": false,
+          "description": "Minimum partner count filter"
+        },
+        {
+          "name": "MaxPartnerCount",
+          "dataType": "int",
+          "required": false,
+          "description": "Maximum partner count filter"
+        },
+        {
+          "name": "PageSize",
+          "dataType": "int",
+          "required": false,
+          "description": "Items per page (default: 20)"
+        },
+        {
+          "name": "PageIndex",
+          "dataType": "int",
+          "required": false,
+          "description": "1-based page number (default: 1)"
+        },
+        {
+          "name": "OrderBy",
+          "dataType": "string",
+          "required": false,
+          "description": "Field name for sorting (default: Name)"
+        },
+        {
+          "name": "Ascending",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Sort direction (default: true)"
+        }
+      ]
+    },
+    "LiaisonOfficeFilterRequest": {
+      "description": "Filter request for liaison office searches",
+      "inheritsFrom": "PaginationRequest",
+      "fields": [
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": false,
+          "description": "Liaison office name filter"
+        },
+        {
+          "name": "Code",
+          "dataType": "string",
+          "required": false,
+          "description": "Liaison office code filter"
+        },
+        {
+          "name": "Region",
+          "dataType": "string",
+          "required": false,
+          "description": "Region filter"
+        },
+        {
+          "name": "Country",
+          "dataType": "string",
+          "required": false,
+          "description": "Country filter"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Status filter"
+        },
+        {
+          "name": "IsActive",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Active status filter"
+        },
+        {
+          "name": "IncludeCounts",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether to include partner counts (default: true)"
+        }
+      ]
+    },
+    "LiaisonOfficeSearchRequest": {
+      "description": "Search request for liaison offices",
+      "fields": [
+        {
+          "name": "SearchTerm",
+          "dataType": "string",
+          "required": false,
+          "description": "General search term"
+        },
+        {
+          "name": "Region",
+          "dataType": "string",
+          "required": false,
+          "description": "Region filter"
+        },
+        {
+          "name": "Country",
+          "dataType": "string",
+          "required": false,
+          "description": "Country filter"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Status filter"
+        },
+        {
+          "name": "IsActive",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Active status filter"
+        },
+        {
+          "name": "MinPartnerCount",
+          "dataType": "int",
+          "required": false,
+          "description": "Minimum partner count filter"
+        },
+        {
+          "name": "MaxPartnerCount",
+          "dataType": "int",
+          "required": false,
+          "description": "Maximum partner count filter"
+        },
+        {
+          "name": "PageSize",
+          "dataType": "int",
+          "required": false,
+          "description": "Items per page (default: 20)"
+        },
+        {
+          "name": "PageIndex",
+          "dataType": "int",
+          "required": false,
+          "description": "1-based page number (default: 1)"
+        },
+        {
+          "name": "OrderBy",
+          "dataType": "string",
+          "required": false,
+          "description": "Field name for sorting (default: Name)"
+        },
+        {
+          "name": "Ascending",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Sort direction (default: true)"
+        }
+      ]
+    }
+  },
+  "entities": {
+    "Contact": {
+      "description": "Manages individual contacts and their personal/professional information within partner organizations",
+      "dataModel": {
+        "fields": [
+          {
+            "name": "Id",
+            "dataType": "int",
+            "required": true,
+            "description": "Unique identifier for the contact"
+          },
+          {
+            "name": "Salutation",
+            "dataType": "string",
+            "required": false,
+            "description": "Contact salutation (Mr., Ms., Dr., etc.)"
+          },
+          {
+            "name": "FirstName",
+            "dataType": "string",
+            "required": false,
+            "description": "Contact's first name"
+          },
+          {
+            "name": "MiddleName",
+            "dataType": "string",
+            "required": false,
+            "description": "Contact's middle name"
+          },
+          {
+            "name": "LastName",
+            "dataType": "string",
+            "required": true,
+            "description": "Contact's last name"
+          },
+          {
+            "name": "Suffix",
+            "dataType": "string",
+            "required": false,
+            "description": "Contact name suffix (Jr., Sr., III, etc.)"
+          },
+          {
+            "name": "Title",
+            "dataType": "string",
+            "required": true,
+            "description": "Contact's job title or position"
+          },
+          {
+            "name": "Department",
+            "dataType": "string",
+            "required": false,
+            "description": "Department or division within the organization"
+          },
+          {
+            "name": "Description",
+            "dataType": "string",
+            "required": false,
+            "description": "Additional description or notes about the contact"
+          },
+          {
+            "name": "Email",
+            "dataType": "string",
+            "required": true,
+            "description": "Primary email address"
+          },
+          {
+            "name": "Phone",
+            "dataType": "string",
+            "required": false,
+            "description": "Primary phone number"
+          },
+          {
+            "name": "Mobile",
+            "dataType": "string",
+            "required": false,
+            "description": "Mobile phone number"
+          },
+          {
+            "name": "Assistant",
+            "dataType": "string",
+            "required": false,
+            "description": "Assistant's name"
+          },
+          {
+            "name": "AssistantPhone",
+            "dataType": "string",
+            "required": false,
+            "description": "Assistant's phone number"
+          },
+          {
+            "name": "AssistantEmail",
+            "dataType": "string",
+            "required": false,
+            "description": "Assistant's email address"
+          },
+          {
+            "name": "MailingStreet",
+            "dataType": "string",
+            "required": false,
+            "description": "Mailing address street"
+          },
+          {
+            "name": "MailingStreet2",
+            "dataType": "string",
+            "required": false,
+            "description": "Mailing address street line 2"
+          },
+          {
+            "name": "MailingCity",
+            "dataType": "string",
+            "required": false,
+            "description": "Mailing address city"
+          },
+          {
+            "name": "MailingStateProvince",
+            "dataType": "string",
+            "required": false,
+            "description": "Mailing address state or province"
+          },
+          {
+            "name": "MailingPostalCode",
+            "dataType": "string",
+            "required": false,
+            "description": "Mailing address postal code"
+          },
+          {
+            "name": "MailingCountry",
+            "dataType": "string",
+            "required": false,
+            "description": "Mailing address country"
+          },
+          {
+            "name": "ProfilePictureUrl",
+            "dataType": "string",
+            "required": false,
+            "description": "URL to contact's profile picture"
+          },
+          {
+            "name": "PartnerId",
+            "dataType": "int",
+            "required": true,
+            "description": "Foreign key to the partner organization"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "required": false,
+            "description": "Contact status (Active, Inactive, etc.)"
+          }
+        ]
+      },
+      "apiEndpoints": [
+        {
+          "endpoint": "/api/contact",
+          "method": "POST",
+          "description": "Creates a new contact with comprehensive personal and professional details",
+          "parameters": [
+            {
+              "name": "req",
+              "dataType": "ContactRequest",
+              "required": true,
+              "description": "Contact creation request with required fields",
+              "structure": "See ContactRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/contact",
+          "method": "GET",
+          "description": "Lists all contacts with pagination, sorting, and optional partner filtering",
+          "parameters": [
+            {
+              "name": "pageIndex",
+              "dataType": "int",
+              "required": false,
+              "description": "1-based page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "int",
+              "required": false,
+              "description": "Items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
+              "dataType": "string",
+              "required": false,
+              "description": "Field name for sorting"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction"
+            },
+            {
+              "name": "partnerId",
+              "dataType": "int",
+              "required": false,
+              "description": "Filter by partner ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/contact/search",
+          "method": "GET",
+          "description": "Performs simple text search across multiple contact fields",
+          "parameters": [
+            {
+              "name": "searchText",
+              "dataType": "string",
+              "required": true,
+              "description": "Text to search for"
+            },
+            {
+              "name": "pageIndex",
+              "dataType": "int",
+              "required": false,
+              "description": "1-based page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "int",
+              "required": false,
+              "description": "Items per page (default: 20)"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/contact/advanced-search",
+          "method": "GET",
+          "description": "Performs advanced search with structured criteria including relationships",
+          "parameters": [
+            {
+              "name": "searchCriteria",
+              "dataType": "string",
+              "required": false,
+              "description": "JSON array of search criteria objects"
+            },
+            {
+              "name": "searchText",
+              "dataType": "string",
+              "required": false,
+              "description": "Additional text search"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/contact/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific contact by ID with complete details",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Contact ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/contact",
+          "method": "PUT",
+          "description": "Updates an existing contact's information",
+          "parameters": [
+            {
+              "name": "req",
+              "dataType": "ContactRequest",
+              "required": true,
+              "description": "Contact update request containing modified fields",
+              "structure": "See ContactRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/contact/{id}",
+          "method": "DELETE",
+          "description": "Soft deletes a contact from the system",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Contact ID to delete"
+            }
+          ]
+        }
+      ]
+    },
+    "Partner": {
+      "description": "Manages partner organizations, their details, relationships, and business information",
+      "dataModel": {
+        "fields": [
+          {
+            "name": "Id",
+            "dataType": "int",
+            "required": true,
+            "description": "Unique identifier for the partner"
+          },
+          {
+            "name": "Name",
+            "dataType": "string",
+            "required": true,
+            "description": "Partner organization name"
+          },
+          {
+            "name": "PartnerShortDescription",
+            "dataType": "string",
+            "required": false,
+            "description": "Short name or abbreviation"
+          },
+          {
+            "name": "PartnerLongDescription",
+            "dataType": "string",
+            "required": false,
+            "description": "Optional long description"
+          },
+          {
+            "name": "PartnerCategoryId",
+            "dataType": "int",
+            "required": false,
+            "description": "Foreign key to Partner Category"
+          },
+          {
+            "name": "LiaisonOfficeId",
+            "dataType": "int",
+            "required": false,
+            "description": "Foreign key to LiaisonOffice"
+          },
+          {
+            "name": "PartnerFocalPointUserId",
+            "dataType": "int",
+            "required": false,
+            "description": "Business Developer User ID"
+          },
+          {
+            "name": "ErpDimValue",
+            "dataType": "int",
+            "required": false,
+            "description": "ERP dimension value"
+          },
+          {
+            "name": "UNAndStateEntity",
+            "dataType": "boolean",
+            "required": true,
+            "description": "Whether this is a UN and State entity"
+          },
+          {
+            "name": "KeyGlobalPartner",
+            "dataType": "boolean",
+            "required": true,
+            "description": "Whether this is a key global partner"
+          },
+          {
+            "name": "UNSecretariatPartner",
+            "dataType": "boolean",
+            "required": true,
+            "description": "Whether this is a UN Secretariat partner"
+          },
+          {
+            "name": "DueDiligenceRequired",
+            "dataType": "string",
+            "required": false,
+            "description": "Due diligence requirement status"
+          },
+          {
+            "name": "DueDiligenceApproval",
+            "dataType": "string",
+            "required": false,
+            "description": "Due diligence approval status"
+          },
+          {
+            "name": "DueDiligenceApprovalDate",
+            "dataType": "datetime",
+            "required": false,
+            "description": "Date of due diligence approval"
+          },
+          {
+            "name": "DueDiligenceExpiryDate",
+            "dataType": "datetime",
+            "required": false,
+            "description": "Due diligence expiry date"
+          },
+          {
+            "name": "PartnerApprovalStatus",
+            "dataType": "string",
+            "required": false,
+            "description": "Partner approval status"
+          },
+          {
+            "name": "PartnerApprovalDate",
+            "dataType": "datetime",
+            "required": false,
+            "description": "Partner approval date"
+          },
+          {
+            "name": "PartnerLevyStatus",
+            "dataType": "string",
+            "required": false,
+            "description": "Partner levy status"
+          },
+          {
+            "name": "PooledFund",
+            "dataType": "boolean",
+            "required": true,
+            "description": "Whether this partner uses pooled funds"
+          },
+          {
+            "name": "CanCreateNewOpportunities",
+            "dataType": "boolean",
+            "required": true,
+            "description": "Whether partner can create new opportunities"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "required": false,
+            "description": "Partner status (Draft, Active, Closed, Archived)"
+          },
+          {
+            "name": "PartnerGroupCode",
+            "dataType": "string",
+            "required": false,
+            "description": "Partner group classification code"
+          }
+        ]
+      },
+      "apiEndpoints": [
+        {
+          "endpoint": "/api/partner",
+          "method": "POST",
+          "description": "Creates a new partner organization with complete details",
+          "parameters": [
+            {
+              "name": "req",
+              "dataType": "PartnerRequest",
+              "required": true,
+              "description": "Partner creation request with required fields",
+              "structure": "See PartnerRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/partner",
+          "method": "GET",
+          "description": "Retrieves all partners with basic pagination and ordering",
+          "parameters": [
+            {
+              "name": "pageIndex",
+              "dataType": "int",
+              "required": false,
+              "description": "1-based page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "int",
+              "required": false,
+              "description": "Items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
+              "dataType": "string",
+              "required": false,
+              "description": "Field name for sorting"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/partner/search",
+          "method": "GET",
+          "description": "Performs simple text search across multiple partner fields",
+          "parameters": [
+            {
+              "name": "searchText",
+              "dataType": "string",
+              "required": true,
+              "description": "Text to search for"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/partner/advanced-search",
+          "method": "GET",
+          "description": "Performs advanced search with structured criteria",
+          "parameters": [
+            {
+              "name": "searchCriteria",
+              "dataType": "string",
+              "required": false,
+              "description": "JSON array of search criteria objects"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/partner/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific partner by ID with complete details",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Partner ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/partner",
+          "method": "PUT",
+          "description": "Updates an existing partner's information",
+          "parameters": [
+            {
+              "name": "req",
+              "dataType": "PartnerRequest",
+              "required": true,
+              "description": "Partner update request containing modified fields",
+              "structure": "See PartnerRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/partner/{id}",
+          "method": "DELETE",
+          "description": "Soft deletes a partner from the system",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Partner ID to delete"
+            }
+          ]
+        }
+      ]
+    },
+    "Interaction": {
+      "description": "Manages records of interactions, meetings, calls, and communications with partners and contacts",
+      "dataModel": {
+        "fields": [
+          {
+            "name": "Id",
+            "dataType": "int",
+            "required": true,
+            "description": "Unique identifier for the interaction"
+          },
+          {
+            "name": "Type",
+            "dataType": "enum",
+            "required": true,
+            "description": "Type of interaction (Meeting, Email, Call, etc.)"
+          },
+          {
+            "name": "Date",
+            "dataType": "datetime",
+            "required": true,
+            "description": "Date and time of the interaction"
+          },
+          {
+            "name": "Description",
+            "dataType": "string",
+            "required": false,
+            "description": "Detailed description of the interaction"
+          },
+          {
+            "name": "Subject",
+            "dataType": "string",
+            "required": true,
+            "description": "Subject or title of the interaction"
+          },
+          {
+            "name": "Location",
+            "dataType": "string",
+            "required": false,
+            "description": "Location where interaction took place"
+          },
+          {
+            "name": "EmailAddresses",
+            "dataType": "string[]",
+            "required": false,
+            "description": "List of email addresses involved"
+          },
+          {
+            "name": "PhoneNumbers",
+            "dataType": "string[]",
+            "required": false,
+            "description": "List of phone numbers involved"
+          },
+          {
+            "name": "ContactIds",
+            "dataType": "int[]",
+            "required": false,
+            "description": "List of contact IDs associated with interaction"
+          },
+          {
+            "name": "PartnerIds",
+            "dataType": "int[]",
+            "required": false,
+            "description": "List of partner IDs associated with interaction"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "required": false,
+            "description": "Interaction status"
+          },
+          {
+            "name": "GmailThreadId",
+            "dataType": "string",
+            "required": false,
+            "description": "Gmail thread ID for email integrations"
+          },
+          {
+            "name": "GmailMessageId",
+            "dataType": "string",
+            "required": false,
+            "description": "Gmail message ID for email integrations"
+          }
+        ]
+      },
+      "apiEndpoints": [
+        {
+          "endpoint": "/api/interactions",
+          "method": "POST",
+          "description": "Creates a new interaction record with complete details",
+          "parameters": [
+            {
+              "name": "req",
+              "dataType": "InteractionRequest",
+              "required": true,
+              "description": "Interaction creation request with all required details",
+              "structure": "See InteractionRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/interactions",
+          "method": "GET",
+          "description": "Lists all interactions with optional pagination and filtering",
+          "parameters": [
+            {
+              "name": "pageIndex",
+              "dataType": "int",
+              "required": false,
+              "description": "1-based page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "int",
+              "required": false,
+              "description": "Items per page (default: 20)"
+            },
+            {
+              "name": "partnerId",
+              "dataType": "int",
+              "required": false,
+              "description": "Filter by partner ID"
+            },
+            {
+              "name": "contactId",
+              "dataType": "int",
+              "required": false,
+              "description": "Filter by contact ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/interactions/search",
+          "method": "GET",
+          "description": "Performs simple text search across interaction fields",
+          "parameters": [
+            {
+              "name": "searchText",
+              "dataType": "string",
+              "required": true,
+              "description": "Text to search for"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/interactions/advanced-search",
+          "method": "GET",
+          "description": "Performs advanced search with structured criteria",
+          "parameters": [
+            {
+              "name": "searchCriteria",
+              "dataType": "string",
+              "required": false,
+              "description": "JSON array of search criteria objects"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/interactions/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific interaction by ID with complete details",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Interaction ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/interactions",
+          "method": "PUT",
+          "description": "Updates an existing interaction's information",
+          "parameters": [
+            {
+              "name": "req",
+              "dataType": "InteractionRequest",
+              "required": true,
+              "description": "Interaction update request containing modified fields",
+              "structure": "See InteractionRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/interactions/{id}",
+          "method": "DELETE",
+          "description": "Soft deletes an interaction from the system",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Interaction ID to delete"
+            }
+          ]
+        }
+      ]
+    },
+    "Country": {
+      "description": "Manages country information and geographic data for partner and liaison office relationships",
+      "dataModel": {
+        "fields": [
+          {
+            "name": "Id",
+            "dataType": "int",
+            "required": true,
+            "description": "Unique identifier for the country"
+          },
+          {
+            "name": "Name",
+            "dataType": "string",
+            "required": true,
+            "description": "Country name"
+          },
+          {
+            "name": "Iso2Code",
+            "dataType": "string",
+            "required": true,
+            "description": "ISO 3166-1 alpha-2 country code"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "required": false,
+            "description": "Country status (Active, Inactive)"
+          },
+          {
+            "name": "PartnerCount",
+            "dataType": "int",
+            "required": false,
+            "description": "Computed count of partners in this country"
+          },
+          {
+            "name": "LiaisonOfficeCount",
+            "dataType": "int",
+            "required": false,
+            "description": "Computed count of liaison offices in this country"
+          }
+        ]
+      },
+      "apiEndpoints": [
+        {
+          "endpoint": "/api/country",
+          "method": "GET",
+          "description": "Gets all countries with optional filtering and pagination",
+          "parameters": [
+            {
+              "name": "request",
+              "dataType": "CountryFilterRequest",
+              "required": false,
+              "description": "Filter and pagination parameters",
+              "structure": "See CountryFilterRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/country/search",
+          "method": "POST",
+          "description": "Searches countries based on search criteria",
+          "parameters": [
+            {
+              "name": "request",
+              "dataType": "CountrySearchRequest",
+              "required": true,
+              "description": "Search criteria and parameters",
+              "structure": "See CountrySearchRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/country/{id}",
+          "method": "GET",
+          "description": "Gets a specific country by ID with full details",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Country ID"
+            }
+          ]
+        }
+      ]
+    },
+    "LiaisonOffice": {
+      "description": "Manages UNOPS liaison offices and their regional information for partner relationships",
+      "dataModel": {
+        "fields": [
+          {
+            "name": "Id",
+            "dataType": "int",
+            "required": true,
+            "description": "Unique identifier for the liaison office"
+          },
+          {
+            "name": "Code",
+            "dataType": "string",
+            "required": true,
+            "description": "Unique code identifier for the liaison office"
+          },
+          {
+            "name": "Name",
+            "dataType": "string",
+            "required": true,
+            "description": "Liaison office name"
+          },
+          {
+            "name": "Description",
+            "dataType": "string",
+            "required": false,
+            "description": "Description of the liaison office"
+          },
+          {
+            "name": "Region",
+            "dataType": "string",
+            "required": false,
+            "description": "Geographic region"
+          },
+          {
+            "name": "Country",
+            "dataType": "string",
+            "required": false,
+            "description": "Country where the liaison office is located"
+          },
+          {
+            "name": "IsActive",
+            "dataType": "boolean",
+            "required": false,
+            "description": "Whether the liaison office is active"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "required": false,
+            "description": "Liaison office status"
+          },
+          {
+            "name": "PartnerCount",
+            "dataType": "int",
+            "required": false,
+            "description": "Computed count of partners associated with this liaison office"
+          }
+        ]
+      },
+      "apiEndpoints": [
+        {
+          "endpoint": "/api/liaisonoffice",
+          "method": "GET",
+          "description": "Gets all liaison offices with optional filtering and pagination",
+          "parameters": [
+            {
+              "name": "request",
+              "dataType": "LiaisonOfficeFilterRequest",
+              "required": false,
+              "description": "Filter and pagination parameters",
+              "structure": "See LiaisonOfficeFilterRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/liaisonoffice/search",
+          "method": "POST",
+          "description": "Searches liaison offices based on search criteria",
+          "parameters": [
+            {
+              "name": "request",
+              "dataType": "LiaisonOfficeSearchRequest",
+              "required": true,
+              "description": "Search criteria and parameters",
+              "structure": "See LiaisonOfficeSearchRequest in requestModels section"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/liaisonoffice/{id}",
+          "method": "GET",
+          "description": "Gets a specific liaison office by ID with full details",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Liaison office ID"
+            }
+          ]
+        }
+      ]
+    },
+    "OrganizationHierarchy": {
+      "description": "Manages the organizational hierarchy and organizational units structure within UNOPS",
+      "dataModel": {
+        "fields": [
+          {
+            "name": "Id",
+            "dataType": "int",
+            "required": true,
+            "description": "Unique identifier for the organizational unit"
+          },
+          {
+            "name": "Code",
+            "dataType": "string",
+            "required": true,
+            "description": "Unique code identifier for the organizational unit"
+          },
+          {
+            "name": "Name",
+            "dataType": "string",
+            "required": true,
+            "description": "Organizational unit name"
+          },
+          {
+            "name": "Type",
+            "dataType": "enum",
+            "required": true,
+            "description": "Type of organizational unit"
+          },
+          {
+            "name": "Description",
+            "dataType": "string",
+            "required": true,
+            "description": "Description of the organizational unit"
+          },
+          {
+            "name": "ParentId",
+            "dataType": "int",
+            "required": false,
+            "description": "Parent organizational unit ID"
+          },
+          {
+            "name": "IsSelfManagementEnabled",
+            "dataType": "boolean",
+            "required": false,
+            "description": "Whether self-management is enabled for this unit"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "required": false,
+            "description": "Organizational unit status"
+          },
+          {
+            "name": "ParentName",
+            "dataType": "string",
+            "required": false,
+            "description": "Computed parent unit name"
+          },
+          {
+            "name": "ParentCode",
+            "dataType": "string",
+            "required": false,
+            "description": "Computed parent unit code"
+          },
+          {
+            "name": "ChildrenCount",
+            "dataType": "int",
+            "required": false,
+            "description": "Computed count of child units"
+          },
+          {
+            "name": "EntityRelationshipCount",
+            "dataType": "int",
+            "required": false,
+            "description": "Computed count of entity relationships"
+          }
+        ]
+      },
+      "apiEndpoints": [
+        {
+          "endpoint": "/api/organization-hierarchy",
+          "method": "GET",
+          "description": "Retrieves the complete organization hierarchy",
+          "parameters": []
+        },
+        {
+          "endpoint": "/api/organization-hierarchy/legacy",
+          "method": "GET",
+          "description": "Retrieves the organization hierarchy in a legacy format",
+          "parameters": []
+        },
+        {
+          "endpoint": "/api/organization-hierarchy/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific organizational unit by ID with complete details",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Organizational unit ID"
+            }
+          ]
+        }
+      ]
+    },
+    "PartnerGroup": {
+      "description": "Manages partner groups derived from PartnerTree for organizational classification of partners",
+      "dataModel": {
+        "fields": [
+          {
+            "name": "Id",
+            "dataType": "int",
+            "required": true,
+            "description": "Unique identifier for the partner group"
+          },
+          {
+            "name": "Name",
+            "dataType": "string",
+            "required": true,
+            "description": "Partner group name"
+          },
+          {
+            "name": "Description",
+            "dataType": "string",
+            "required": true,
+            "description": "Description of the partner group"
+          },
+          {
+            "name": "Code",
+            "dataType": "string",
+            "required": true,
+            "description": "Unique code identifier for the partner group"
+          },
+          {
+            "name": "Type",
+            "dataType": "string",
+            "required": true,
+            "description": "Type of partner group"
+          },
+          {
+            "name": "Parent",
+            "dataType": "string",
+            "required": false,
+            "description": "Parent group identifier"
+          },
+          {
+            "name": "PartnerGroupCode",
+            "dataType": "string",
+            "required": true,
+            "description": "Partner group classification code"
+          },
+          {
+            "name": "PartnerCategoryId",
+            "dataType": "int",
+            "required": false,
+            "description": "Associated partner category ID"
+          },
+          {
+            "name": "PartnerCategoryCode",
+            "dataType": "string",
+            "required": false,
+            "description": "Associated partner category code"
+          },
+          {
+            "name": "PartnerCategoryName",
+            "dataType": "string",
+            "required": false,
+            "description": "Associated partner category name"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "required": false,
+            "description": "Partner group status"
+          },
+          {
+            "name": "PartnerCount",
+            "dataType": "int",
+            "required": false,
+            "description": "Computed count of partners in this group"
+          },
+          {
+            "name": "TotalPartnerCount",
+            "dataType": "int",
+            "required": false,
+            "description": "Computed total count including sub-groups"
+          }
+        ]
+      },
+      "apiEndpoints": []
+    },
+    "PartnerCategory": {
+      "description": "Manages partner categories derived from PartnerTree for high-level classification of partners",
+      "dataModel": {
+        "fields": [
+          {
+            "name": "Id",
+            "dataType": "int",
+            "required": true,
+            "description": "Unique identifier for the partner category"
+          },
+          {
+            "name": "Name",
+            "dataType": "string",
+            "required": true,
+            "description": "Partner category name"
+          },
+          {
+            "name": "Description",
+            "dataType": "string",
+            "required": true,
+            "description": "Description of the partner category"
+          },
+          {
+            "name": "Code",
+            "dataType": "string",
+            "required": true,
+            "description": "Unique code identifier for the partner category"
+          },
+          {
+            "name": "Type",
+            "dataType": "string",
+            "required": true,
+            "description": "Type of partner category"
+          },
+          {
+            "name": "Parent",
+            "dataType": "string",
+            "required": false,
+            "description": "Parent category identifier"
+          },
+          {
+            "name": "PartnerCategoryCode",
+            "dataType": "string",
+            "required": true,
+            "description": "Partner category classification code"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "required": false,
+            "description": "Partner category status"
+          },
+          {
+            "name": "PartnerGroupCount",
+            "dataType": "int",
+            "required": false,
+            "description": "Computed count of partner groups in this category"
+          },
+          {
+            "name": "TotalPartnerCount",
+            "dataType": "int",
+            "required": false,
+            "description": "Computed total count of partners in this category"
+          }
+        ]
+      },
+      "apiEndpoints": []
+    },
+    "PartnerTree": {
+      "description": "Manages the hierarchical partner tree structure for organizing partner categories and groups",
+      "dataModel": {
+        "fields": [
+          {
+            "name": "Id",
+            "dataType": "int",
+            "required": true,
+            "description": "Unique identifier for the partner tree node"
+          },
+          {
+            "name": "Name",
+            "dataType": "string",
+            "required": true,
+            "description": "Name of the partner tree node"
+          },
+          {
+            "name": "Description",
+            "dataType": "string",
+            "required": true,
+            "description": "Description of the partner tree node"
+          },
+          {
+            "name": "Code",
+            "dataType": "string",
+            "required": true,
+            "description": "Unique code identifier for the partner tree node"
+          },
+          {
+            "name": "Type",
+            "dataType": "string",
+            "required": true,
+            "description": "Type/Level of partner tree node (Level_1, Level_2, Level_3)"
+          },
+          {
+            "name": "Parent",
+            "dataType": "string",
+            "required": false,
+            "description": "Parent node identifier"
+          },
+          {
+            "name": "PartnerCategoryCode",
+            "dataType": "string",
+            "required": false,
+            "description": "Associated partner category code"
+          },
+          {
+            "name": "PartnerGroupCode",
+            "dataType": "string",
+            "required": false,
+            "description": "Associated partner group code"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "required": false,
+            "description": "Partner tree node status"
+          },
+          {
+            "name": "PartnerCategoryEditable",
+            "dataType": "boolean",
+            "required": false,
+            "description": "Whether the partner category is editable"
+          },
+          {
+            "name": "PartnerGroupEditable",
+            "dataType": "boolean",
+            "required": false,
+            "description": "Whether the partner group is editable"
+          }
+        ]
+      },
+      "apiEndpoints": []
+    },
+    "BaseEngagement": {
+      "description": "Manages base engagement information from external data sources for project and engagement tracking",
+      "dataModel": {
+        "fields": [
+          {
+            "name": "Id",
+            "dataType": "int",
+            "required": true,
+            "description": "Unique identifier for the engagement"
+          },
+          {
+            "name": "EngagementNumber",
+            "dataType": "string",
+            "required": true,
+            "description": "Primary engagement identifier"
+          },
+          {
+            "name": "EngagementImplementationStartDate",
+            "dataType": "datetime",
+            "required": false,
+            "description": "Implementation start date"
+          },
+          {
+            "name": "EngagementImplementationEndDate",
+            "dataType": "datetime",
+            "required": false,
+            "description": "Implementation end date"
+          },
+          {
+            "name": "EngagementSignedDate",
+            "dataType": "datetime",
+            "required": false,
+            "description": "Date when engagement was signed"
+          },
+          {
+            "name": "EngagementAmount",
+            "dataType": "decimal",
+            "required": false,
+            "description": "Financial amount of the engagement"
+          },
+          {
+            "name": "EngagementStage",
+            "dataType": "string",
+            "required": false,
+            "description": "Current stage of the engagement"
+          },
+          {
+            "name": "EngagementStageDescription",
+            "dataType": "string",
+            "required": false,
+            "description": "Description of the engagement stage"
+          },
+          {
+            "name": "BusinessDeveloper",
+            "dataType": "string",
+            "required": false,
+            "description": "Business developer identifier"
+          },
+          {
+            "name": "BusinessDeveloperName",
+            "dataType": "string",
+            "required": false,
+            "description": "Business developer name"
+          },
+          {
+            "name": "BusinessDeveloperEmailAddress",
+            "dataType": "string",
+            "required": false,
+            "description": "Business developer email"
+          },
+          {
+            "name": "EngagementProjectExecutive",
+            "dataType": "string",
+            "required": false,
+            "description": "Project executive identifier"
+          },
+          {
+            "name": "EngagementProjectExecutiveName",
+            "dataType": "string",
+            "required": false,
+            "description": "Project executive name"
+          },
+          {
+            "name": "ImplementationCountriesList",
+            "dataType": "string",
+            "required": false,
+            "description": "List of implementation countries"
+          },
+          {
+            "name": "OutputsList",
+            "dataType": "string",
+            "required": false,
+            "description": "List of engagement outputs"
+          },
+          {
+            "name": "SDGList",
+            "dataType": "string",
+            "required": false,
+            "description": "List of Sustainable Development Goals"
+          },
+          {
+            "name": "EngagementDescription",
+            "dataType": "string",
+            "required": false,
+            "description": "Engagement description"
+          },
+          {
+            "name": "EngagementLongDescription",
+            "dataType": "string",
+            "required": false,
+            "description": "Detailed engagement description"
+          },
+          {
+            "name": "Name",
+            "dataType": "string",
+            "required": false,
+            "description": "Engagement name (derived from description or number)"
+          },
+          {
+            "name": "Status",
+            "dataType": "string",
+            "required": false,
+            "description": "Engagement status"
+          },
+          {
+            "name": "IsDeleted",
+            "dataType": "boolean",
+            "required": false,
+            "description": "Whether the engagement is deleted"
+          }
+        ]
+      },
+      "apiEndpoints": []
+    }
+  }
+}

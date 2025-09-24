@@ -13,8 +13,8 @@ namespace UNOPS.PAO.Domain.Entities
         public int ContactId { get; set; }
 
         [JsonIgnore]
-        public virtual Interaction Interaction { get; set; }
+        public virtual Interaction? Interaction { get; set; }
         [JsonIgnore]
-        public virtual Contact Contact { get; set; }
+        public virtual Contact? Contact { get; set; }
     }
 }

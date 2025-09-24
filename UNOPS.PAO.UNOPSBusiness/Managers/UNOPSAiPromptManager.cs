@@ -100,6 +100,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
             var promptModel = new AiPrompt
             {
                 Type = promptConfig.Type,
+                PromptFunction = promptConfig.PromptFunction,
                 Prompt = request.Prompt ?? promptConfig.Prompt,
                 Model = request.Model ?? promptConfig.Model,
                 Project = request.Project ?? promptConfig.Project,

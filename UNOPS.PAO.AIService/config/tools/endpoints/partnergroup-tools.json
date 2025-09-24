@@ -1,0 +1,240 @@
+{
+  "entity": "PartnerGroup",
+  "description": "Manages partner groups derived from PartnerTree, used for organizing partners within categories.",
+  "synonyms": [
+    "Group",
+    "Subgroup",
+    "Division",
+    "Subdivision",
+    "Partner Group"
+  ],
+  "mandatoryFields": [
+    "Name",
+    "PartnerGroupCode"
+  ],
+  "baseUrl": "/api/partnergroup",
+  "endpoints": [
+    {
+      "name": "GetAll",
+      "url": "/api/partnergroup?pageIndex={pageIndex}&pageSize={pageSize}&name={name}&code={code}&type={type}&partnerCategoryId={partnerCategoryId}&partnerCategoryCode={partnerCategoryCode}&status={status}&includePartnerCategory={includePartnerCategory}&includePartners={includePartners}&includePartnerCounts={includePartnerCounts}&orderBy={orderBy}&ascending={ascending}",
+      "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
+      "description": "Retrieves all partner groups with optional filtering, pagination, and sorting capabilities.",
+      "searchCapability": {
+        "type": "simple",
+        "searchFields": [
+          "name",
+          "code",
+          "type",
+          "status",
+          "description",
+          "partnerCategoryCode",
+          "partnerCategoryName"
+        ],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partnergroup?pageIndex=1&pageSize=20&includePartnerCategory=true&includePartnerCounts=true&orderBy=Name&ascending=true",
+      "requiredFields": [],
+      "example_uses": [
+        "Show all partner groups",
+        "List groups with partner counts",
+        "Get groups filtered by category",
+        "Browse partner group hierarchy"
+      ],
+      "when_to_use": "Use this when the user wants to see or browse partner groups, or when they ask about partner group organization.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetById",
+      "url": "/api/partnergroup/{id}?includePartnerCategory={includePartnerCategory}&includePartners={includePartners}&includePartnerCounts={includePartnerCounts}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "show",
+        "details",
+        "view"
+      ],
+      "description": "Retrieves a specific partner group by its unique identifier with optional related data.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "id": {
+          "type": "int",
+          "required": true,
+          "description": "Partner group ID"
+        }
+      },
+      "exampleBody": {},
+      "exampleUrl": "/api/partnergroup/1?includePartnerCategory=true&includePartners=true&includePartnerCounts=true",
+      "requiredFields": [
+        "id"
+      ],
+      "example_uses": [
+        "Show details for group ID 1",
+        "Get specific group with its category",
+        "View group information with partners"
+      ],
+      "when_to_use": "Use this when the user asks for details about a specific partner group or wants to see information for a particular group ID.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "GetByCategory",
+      "url": "/api/partnergroup/by-category/{categoryId}?includePartnerCategory={includePartnerCategory}&includePartners={includePartners}&includePartnerCounts={includePartnerCounts}",
+      "method": "GET",
+      "intent": [
+        "get",
+        "list",
+        "filter",
+        "category"
+      ],
+      "description": "Retrieves all partner groups within a specific partner category.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {
+        "categoryId": {
+          "type": "int",
+          "required": true,
+          "description": "Partner category ID"
+        }
+      },
+      "exampleBody": {},
+      "exampleUrl": "/api/partnergroup/by-category/1?includePartnerCounts=true",
+      "requiredFields": [
+        "categoryId"
+      ],
+      "example_uses": [
+        "Show all groups in category 1",
+        "Get groups under a specific category",
+        "List groups for category management"
+      ],
+      "when_to_use": "Use this when the user asks for partner groups within a specific category or wants to see the category hierarchy.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 85,
+        "complexity": "simple"
+      }
+    },
+    {
+      "name": "Search",
+      "url": "/api/partnergroup/search?searchTerm={searchTerm}&type={type}&status={status}&partnerCategoryId={partnerCategoryId}&minPartnerCount={minPartnerCount}&maxPartnerCount={maxPartnerCount}&includePartnerCategory={includePartnerCategory}&includePartners={includePartners}&pageSize={pageSize}&pageIndex={pageIndex}&orderBy={orderBy}&ascending={ascending}",
+      "method": "GET",
+      "intent": [
+        "search",
+        "find",
+        "lookup",
+        "query"
+      ],
+      "description": "Searches partner groups using text-based queries with advanced filtering options.",
+      "searchCapability": {
+        "type": "advanced",
+        "searchFields": [
+          "name",
+          "description",
+          "code",
+          "type",
+          "status",
+          "partnerCategoryCode",
+          "partnerCategoryName"
+        ],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partnergroup/search?searchTerm=development&partnerCategoryId=1&status=Active&includePartnerCounts=true",
+      "requiredFields": [],
+      "example_uses": [
+        "Search for development groups",
+        "Find groups with specific partner counts",
+        "Look up groups by name or description",
+        "Search groups within a category"
+      ],
+      "when_to_use": "Use this when the user wants to search for partner groups using keywords or specific criteria.",
+      "scoring": {
+        "searchBonus": 50,
+        "intentMatch": 85,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "GetSummary",
+      "url": "/api/partnergroup/summary",
+      "method": "GET",
+      "intent": [
+        "summary",
+        "statistics",
+        "overview",
+        "stats"
+      ],
+      "description": "Gets summary statistics for all partner groups including counts and distribution.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partnergroup/summary",
+      "requiredFields": [],
+      "example_uses": [
+        "Get partner group statistics",
+        "Show group distribution summary",
+        "View group overview data"
+      ],
+      "when_to_use": "Use this when the user asks for summary information or statistics about partner groups.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
+    }
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "int",
+      "pageSize": "int"
+    },
+    "sorting": {
+      "orderBy": "string",
+      "ascending": "bool"
+    },
+    "filtering": {
+      "name": "string",
+      "code": "string",
+      "type": "string",
+      "status": "string",
+      "partnerCategoryId": "int",
+      "partnerCategoryCode": "string"
+    },
+    "includes": {
+      "includePartnerCategory": "bool",
+      "includePartners": "bool",
+      "includePartnerCounts": "bool"
+    }
+  }
+}

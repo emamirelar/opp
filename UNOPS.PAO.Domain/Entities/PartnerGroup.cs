@@ -20,24 +20,24 @@ public class PartnerGroup : IBaseBusinessEntity<int>
     public int Id { get; set; }
     
     [MaxLength(255)]
-    public string Name { get; set; }
+    public required string Name { get; set; }
     
     public EntityStatus Status { get; set; }
     
     [MaxLength(500)]
-    public string Description { get; set; }
+    public required string Description { get; set; }
     
     [MaxLength(50)]
-    public string Code { get; set; }
+    public required string Code { get; set; }
     
     [MaxLength(20)]
-    public string Type { get; set; }
+    public required string Type { get; set; }
     
     [MaxLength(50)]
     public string? Parent { get; set; }
     
     [MaxLength(50)]
-    public string PartnerGroupCode { get; set; }
+    public required string PartnerGroupCode { get; set; }
     
     // Category relationship
     public int? PartnerCategoryId { get; set; }

@@ -11,4 +11,7 @@ public class EntityTypes
     public const string AiPromptManagement = "AiPromptManagement";
     public const string EntityConfiguration = "EntityManager";
     public const string BaseEngagement = "BaseEngagement";
+    public const string Country = "Country";
+    public const string LiaisonOffice = "LiaisonOffice";
+    public const string OrganizationHierarchy = "OrganizationHierarchy";
 }

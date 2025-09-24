@@ -58,7 +58,7 @@ public class UserPreference : ModifiableDeletableEntity
     /// <summary>
     /// Auto-incrementing primary key
     /// </summary>
-    public int Id { get; set; }
+    public new int Id { get; set; }
 
     /// <summary>
     /// Foreign key to UserProfile.UserId

@@ -132,7 +132,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     private UNOPSContact MapModelToEntity(ContactRequest model)
     {
-        return MapModelToEntity(model, new UNOPSContact());
+        return MapModelToEntity(model, new UNOPSContact
+        {
+            LastName = model.LastName ?? "Unknown",
+            Title = model.Title ?? "Unknown",
+            Email = model.Email ?? "unknown@example.com"
+        });
     }
 
     public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService, IHttpContextAccessor httpContextAccessor = null, ILogger<UNOPSContactManager> logger = null, IServiceProvider serviceProvider = null)

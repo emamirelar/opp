@@ -57,6 +57,12 @@ public class APIDictionary
     public const string Partner = APIPrefix + "partner";
     public const string PartnerContacts = Partner + "/{partnerId}/contacts";
     
+    // Partner Category
+    public const string PartnerCategory = APIPrefix + "partnercategory";
+    
+    // Partner Group
+    public const string PartnerGroup = APIPrefix + "partnergroup";
+    
     // Partner Analytics
     public const string PartnerAnalyticsMostActive = Partner + "/analytics/mostActive";
     public const string PartnerAnalyticsByUser = Partner + "/analytics/byUser";
