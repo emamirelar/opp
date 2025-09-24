@@ -40,7 +40,7 @@ public class EntityPermissionHandler : AuthorizationHandler<EntityPermissionRequ
             requirement.EntityName, 
             requirement.Action, 
             context.User, 
-            entity))
+            entity ?? new object()))
         {
             context.Succeed(requirement);
         }

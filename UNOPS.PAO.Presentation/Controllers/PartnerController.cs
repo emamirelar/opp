@@ -459,96 +459,7 @@ public class PartnerController : BaseController
         return Ok(result);
     }
 
-    /// <summary>
-    /// Retrieves all engagements for a specific partner with complete details and pagination.
-    /// </summary>
-    /// <param name="partnerId">Partner ID to get engagements for</param>
-    /// <param name="pageIndex">Page number (1-based, default: 1)</param>
-    /// <param name="pageSize">Number of items per page (default: 20)</param>
-    /// <param name="orderBy">Field to order results by (default: 'createdDate')</param>
-    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: false for newest first)</param>
-    /// <example_uses>
-    /// Show all engagements for partner 123
-    /// List partner's project engagements
-    /// Get engagement history for this partner
-    /// Display partner collaboration records
-    /// Show partner's active engagements
-    /// </example_uses>
-    /// <when_to_use>Use this when the user wants to see all engagements associated with a specific partner from the partner's perspective.</when_to_use>
-    /// <returns>Paginated list of engagements for the specified partner</returns>
-    [HttpGet(APIDictionary.Partner + "/{partnerId}/engagements")]
-    [AccessControlled(EntityTypes.Partner, "read")]
-    public async Task<ActionResult<PaginationResponse<Engagement>>> GetPartnerEngagements(
-        int partnerId,
-        [FromQuery] int pageIndex = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = "CreatedDate",
-        [FromQuery] bool ascending = false)
-    {
-        try
-        {
-            var result = await _manager.GetPartnerEngagementsAsync(User, partnerId, pageIndex, pageSize, orderBy ?? "createdDate", ascending);
-            return Ok(result);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting partner engagements for partner {PartnerId}", partnerId);
-            return StatusCode(500, new { error = "An error occurred while retrieving partner engagements" });
-        }
-    }
 
-    /// <summary>
-    /// Retrieves all projects associated with a specific partner with complete details and pagination.
-    /// </summary>
-    /// <param name="partnerId">Partner ID to get projects for</param>
-    /// <param name="pageIndex">Page number (1-based, default: 1)</param>
-    /// <param name="pageSize">Number of items per page (default: 20)</param>
-    /// <param name="orderBy">Field to order results by (default: 'createdDate')</param>
-    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: false for newest first)</param>
-    /// <example_uses>
-    /// Show all projects for partner 123
-    /// List partner's project portfolio
-    /// Get project history for this partner
-    /// Display partner's active projects
-    /// Show partner collaboration projects
-    /// </example_uses>
-    /// <when_to_use>Use this when the user wants to see all projects associated with a specific partner.</when_to_use>
-    /// <returns>Paginated list of projects for the specified partner</returns>
-    [HttpGet(APIDictionary.Partner + "/{partnerId}/projects")]
-    public async Task<ActionResult<PaginationResponse<object>>> GetPartnerProjects(
-        int partnerId,
-        [FromQuery] int pageIndex = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = "CreatedDate",
-        [FromQuery] bool ascending = false)
-    {
-        try
-        {
-            var result = await _manager.GetPartnerProjectsAsync(User, partnerId, pageIndex, pageSize, orderBy ?? "createdDate", ascending);
-            return Ok(result);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting partner projects for partner {PartnerId}", partnerId);
-            return StatusCode(500, new { error = "An error occurred while retrieving partner projects" });
-        }
-    }
 
     /// <summary>
     /// Soft deletes a partner from the system (marks as deleted rather than permanent removal).
@@ -1254,7 +1165,7 @@ public class PartnerController : BaseController
         PartnerFilterRequest partnerFilterRequest)
     {
         return await SearchControllerHelper.ProcessAdvancedSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
-            partnerFilterRequest.SearchCriteria, partnerFilterRequest.SearchText, 
+            partnerFilterRequest.SearchCriteria ?? "", partnerFilterRequest.SearchText, 
             partnerFilterRequest.PageIndex, partnerFilterRequest.PageSize, 
             partnerFilterRequest.OrderBy ?? "createdDate", partnerFilterRequest.Ascending, 
             partnerFilterRequest,
@@ -1359,7 +1270,17 @@ public class PartnerController : BaseController
                 throw new BusinessException("No valid file detected.");
             }
 
-            string fileType = _geminiManager.FindFileType(req.File);
+            if (_geminiManager == null)
+            {
+                throw new BusinessException("Gemini manager not available");
+            }
+
+            if (req == null)
+            {
+                throw new BusinessException("Request cannot be null");
+            }
+
+            string fileType = _geminiManager.FindFileType(req.File) ?? "";
 
             if (string.IsNullOrEmpty(fileType)) 
             {

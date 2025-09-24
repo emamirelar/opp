@@ -80,10 +80,6 @@ public class PartnerModel
     // Organization Unit Relationships
     public List<OrganizationUnitRelationshipModel>? OrganizationUnitRelationships { get; set; }
     
-    /// <summary>
-    /// Projects associated with this partner through the many-to-many relationship
-    /// </summary>
-    public List<ProjectSummaryModel>? Projects { get; set; }
     
     // ========== CONDITIONAL TAGS ==========
     public List<EntityTagModel>? Tags => CalculateConditionalTags(); // Dynamic conditional tags
@@ -175,21 +171,4 @@ public class PartnerModel
         
         return tags;
     }
-}
-
-/// <summary>
-/// Simplified project model to avoid circular references
-/// </summary>
-public class ProjectSummaryModel
-{
-    public int Id { get; set; }
-    public string ProjectNumber { get; set; }
-    public string Name { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    public string Stage { get; set; }
-    public string BudgetCheckingLevel { get; set; }
-    public string BudgetDuration { get; set; }
-    public Double? BudgetAmount { get; set; }
-    public Double? ExpenditureAmount { get; set; }
 }

@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.UNOPSDomain.Entities;
-using UNOPS.PAO.UNOPSDomain.Entities.Common;
 using Microsoft.Extensions.Hosting;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSDomain.Authorization;
@@ -45,10 +44,7 @@ public class UNOPSAppDbContext : AppDbContext
         //.HasPrincipalKey(x => x.ContactNumber);
 
         modelBuilder
-            .Entity<UNOPSPartner>()
-            .HasMany(x => x.Projects)
-            .WithMany(x => x.Partners)
-            .UsingEntity("PartnerProjects");
+            .Entity<UNOPSPartner>();
         //need to make PartnerCode unique but can not autogenerate as this can conflict with existing data from ERP
         //making PartnerCode optional for now
         //.HasIndex(x => x.PartnerCode) 
@@ -252,11 +248,6 @@ public class UNOPSAppDbContext : AppDbContext
         });
     }
 
-    public DbSet<Project> Projects { get; set; }
-    public DbSet<WorkPackage> WorkPackages { get; set; }
-    public DbSet<Budget> Budgets { get; set; }
-    public DbSet<BudgetLine> BudgetLines { get; set; }
-    public DbSet<Donor> Donors { get; set; }
     public new DbSet<UNOPSContact> Contacts { get; set; }
     public new DbSet<UNOPSInteraction> Interactions { get; set; }
 

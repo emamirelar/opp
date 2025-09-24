@@ -345,7 +345,7 @@ public class GlobalController : BaseController
             // Determine if we need semantic search using enhanced heuristics
             bool needsSemanticSearch = ShouldUseSemanticSearch(cleanedQuery);
             
-            string embedding = null;
+            string? embedding = null;
             if (needsSemanticSearch)
             {
                 try
@@ -463,7 +463,7 @@ public class GlobalController : BaseController
     /// <summary>
     /// Calls the PostgreSQL hybrid search function and returns the results
     /// </summary>
-    private async Task<object> CallSearchFunction(string query, string embedding = null, bool debug = false)
+    private async Task<object> CallSearchFunction(string query, string? embedding = null, bool debug = false)
     {
         try
         {
@@ -515,6 +515,10 @@ public class GlobalController : BaseController
             try
             {
                 // Parse the JSON response from the hybrid search function
+                if (string.IsNullOrEmpty(jsonResult))
+                {
+                    throw new InvalidOperationException("Search result is null or empty");
+                }
                 var searchResults = JObject.Parse(jsonResult);
                 
                 // Log summary information
@@ -720,7 +724,7 @@ public class GlobalController : BaseController
                             try
                             {
                                 var value = property.GetValue(entity);
-                                flattened[property.Name] = value;
+                                flattened[property.Name] = value ?? string.Empty;
                             }
                             catch (Exception propEx)
                             {
@@ -755,7 +759,7 @@ public class GlobalController : BaseController
     /// <summary>
     /// Uses reflection to access manager from UNOPSManagerWrapper and get entity data by IDs
     /// </summary>
-    private async Task<object> GetEntityDataByIds(string entityType, int[] entityIds, ClaimsPrincipal user)
+    private async Task<object?> GetEntityDataByIds(string entityType, int[] entityIds, ClaimsPrincipal user)
     {
         try
         {
@@ -792,31 +796,35 @@ public class GlobalController : BaseController
             }
 
             // Call the method with parameters
-            var task = (Task)method.Invoke(manager, new object[] { entityIds, user });
-            await task;
-
-            // Get the result from the completed task
-            var resultProperty = task.GetType().GetProperty("Result");
-            var result = resultProperty?.GetValue(task);
-
-            if (result is IEnumerable<object> resultList)
+            var task = (Task?)method.Invoke(manager, new object[] { entityIds, user });
+            if (task != null)
             {
-                var count = resultList.Count();
-                _logger.LogInformation("Successfully retrieved {ActualCount} out of {RequestedCount} {EntityType} entities using {ManagerFieldName}", 
-                    count, entityIds.Length, entityType, managerFieldName);
+                await task;
+
+                // Get the result from the completed task
+                var resultProperty = task.GetType().GetProperty("Result");
+                var result = resultProperty?.GetValue(task);
                 
-                if (count == 0)
+                if (result is IEnumerable<object> resultList)
                 {
-                    _logger.LogWarning("No {EntityType} entities returned after RBAC filtering for IDs: [{EntityIds}]", 
-                        entityType, string.Join(", ", entityIds));
+                    var count = resultList.Count();
+                    _logger.LogInformation("Successfully retrieved {ActualCount} out of {RequestedCount} {EntityType} entities using {ManagerFieldName}", 
+                        count, entityIds.Length, entityType, managerFieldName);
+                    
+                    if (count == 0)
+                    {
+                        _logger.LogWarning("No {EntityType} entities returned after RBAC filtering for IDs: [{EntityIds}]", 
+                            entityType, string.Join(", ", entityIds));
+                    }
                 }
-            }
-            else
-            {
-                _logger.LogWarning("Unexpected result type from GetByIdsAsync: {ResultType}", result?.GetType().Name ?? "null");
-            }
+                else
+                {
+                    _logger.LogWarning("Unexpected result type from GetByIdsAsync: {ResultType}", result?.GetType().Name ?? "null");
+                }
 
-            return result;
+                return result;
+            }
+            return (object?)null;
         }
         catch (Exception ex)
         {

@@ -13,7 +13,6 @@ using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.UNOPSDomain.Entities;
-using UNOPS.PAO.UNOPSDomain.Entities.Common;
 using UNOPS.PAO.Utilities.Helpers;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;

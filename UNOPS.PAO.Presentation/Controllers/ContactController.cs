@@ -60,22 +60,7 @@ public class ContactController : BaseController
     /// <summary>
     /// Creates a new contact with comprehensive personal and professional details.
     /// </summary>
-    /// <param name="req">Contact creation request with required fields</param>
-    /// <param name="req.firstName">Contact's first name (optional)</param>
-    /// <param name="req.lastName">Contact's last name (required) - validation enforced</param>
-    /// <param name="req.email">Primary email address (required) - validation enforced for format and presence</param>
-    /// <param name="req.partnerId">Associated partner organization ID (required) - must be valid existing partner</param>
-    /// <param name="req.title">Job title/position (required) - validation enforced</param>
-    /// <param name="req.salutation">Title/salutation (Mr., Ms., Dr., etc.)</param>
-    /// <param name="req.middleName">Middle name or initial</param>
-    /// <param name="req.suffix">Name suffix (Jr., Sr., III, etc.)</param>
-    /// <param name="req.department">Department or division</param>
-    /// <param name="req.phone">Primary phone number</param>
-    /// <param name="req.mobile">Mobile phone number</param>
-    /// <param name="req.status">Contact status (defaults to 'Active')</param>
-    /// <param name="req.mailingStreet">Mailing address street</param>
-    /// <param name="req.mailingCity">Mailing address city</param>
-    /// <param name="req.mailingCountry">Mailing address country</param>
+    /// <param name="req">Contact creation request with required fields including firstName, lastName, email, partnerId, title, salutation, middleName, suffix, department, phone, mobile, status, mailingStreet, mailingCity, mailingCountry</param>
     /// <example_uses>
     /// Create a contact named John Doe with email john@unicef.org
     /// Add a new program manager contact for partner 123
@@ -194,6 +179,7 @@ public class ContactController : BaseController
     /// <param name="orderBy">Field to order results by (optional)</param>
     /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
     /// <param name="partnerId">Optional partner ID to filter contacts by specific partner</param>
+    /// <param name="export">Whether to export results as file instead of returning JSON (default: false)</param>
     /// <example_uses>
     /// Show me all contacts
     /// List all contacts in the system
@@ -245,7 +231,8 @@ public class ContactController : BaseController
     /// Performs simple text search across multiple contact fields (name, email, title, etc.).
     /// </summary>
     /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
-    /// <param name="searchText">Text to search across contact name, email, title, and other basic fields</param>
+    /// <param name="query">Text to search across contact name, email, title, and other basic fields</param>
+    /// <param name="export">Whether to export all results without pagination</param>
     /// <example_uses>
     /// Search for contacts named John
     /// Find contacts with @unicef.org email
@@ -295,9 +282,11 @@ public class ContactController : BaseController
     /// Performs advanced search with structured criteria including relationships with partners, departments, and complex filters.
     /// Enhanced with intelligent field value matching for AI agents and typo correction.
     /// </summary>
-    /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
-    /// <param name="searchCriteria">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
-    /// <param name="enableSmartSearch">Enable intelligent field value matching and typo correction (default: true)</param>
+    /// <param name="filters">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
+    /// <param name="pageIndex">Page number for pagination (default: 1)</param>
+    /// <param name="pageSize">Number of items per page (default: 20)</param>
+    /// <param name="orderBy">Field to order by (optional)</param>
+    /// <param name="ascending">Sort direction (default: true)</param>
     /// <example_uses>
     /// Find contacts from UNICEF partner organization
     /// Show contacts in Finance department created this month
@@ -418,16 +407,7 @@ public class ContactController : BaseController
     /// <summary>
     /// Updates an existing contact's information including personal details, contact methods, and professional information.
     /// </summary>
-    /// <param name="req">Contact update request containing modified fields</param>
-    /// <param name="req.id">Contact ID to update (required)</param>
-    /// <param name="req.firstName">Updated first name</param>
-    /// <param name="req.lastName">Updated last name</param>
-    /// <param name="req.email">Updated email address</param>
-    /// <param name="req.title">Updated job title</param>
-    /// <param name="req.phone">Updated phone number</param>
-    /// <param name="req.mobile">Updated mobile number</param>
-    /// <param name="req.department">Updated department</param>
-    /// <param name="req.status">Updated status</param>
+    /// <param name="req">Contact update request containing modified fields including id, firstName, lastName, email, title, phone, mobile, department, status</param>
     /// <example_uses>
     /// Update contact 123's email to newemail@unicef.org
     /// Change contact 456's title to Senior Manager
@@ -483,9 +463,9 @@ public class ContactController : BaseController
     /// <returns>List of contacts belonging to the specified partner organization</returns>
     [HttpGet(APIDictionary.PartnerContacts)]
     [AccessControlled(EntityTypes.Contact, "read")]
-    public async Task<ActionResult> PartnerContacts(int partnerId)
+    public Task<ActionResult> PartnerContacts(int partnerId)
     {
-        return Ok(_manager.GetPartnerContacts(partnerId));
+        return Task.FromResult<ActionResult>(Ok(_manager.GetPartnerContacts(partnerId)));
     }
 
     /// <summary>
@@ -563,7 +543,6 @@ public class ContactController : BaseController
     /// Scans and processes uploaded files for contact data extraction using AI-powered analysis.
     /// </summary>
     /// <param name="req">File scan request containing the file to be processed</param>
-    /// <param name="req.File">File to scan for contact data (required)</param>
     /// <example_uses>
     /// Scan business cards for contact information
     /// Upload contact forms for processing
@@ -584,7 +563,17 @@ public class ContactController : BaseController
                 throw new BusinessException("No valid file detected.");
             }
 
-            string fileType = _geminiManager.FindFileType(req.File);
+            if (_geminiManager == null)
+            {
+                throw new BusinessException("Gemini manager not available");
+            }
+
+            if (req == null)
+            {
+                throw new BusinessException("Request cannot be null");
+            }
+
+            string fileType = _geminiManager.FindFileType(req.File) ?? "";
 
             if (string.IsNullOrEmpty(fileType)) 
             {
@@ -606,8 +595,6 @@ public class ContactController : BaseController
     /// Analyzes uploaded files and extracts structured contact data using AI-powered data analysis.
     /// </summary>
     /// <param name="request">Analysis request containing file and analysis parameters</param>
-    /// <param name="request.entityType">Should be set to 'Contact' for contact data analysis</param>
-    /// <param name="request.analysisType">Type of analysis to perform on contact data</param>
     /// <example_uses>
     /// Analyze contact directories for structured data extraction
     /// Extract contact information from uploaded forms
@@ -636,9 +623,6 @@ public class ContactController : BaseController
     /// Bulk uploads multiple contact records using AI-assisted data processing and validation.
     /// </summary>
     /// <param name="req">Bulk upload request containing contact data</param>
-    /// <param name="req.Type">Should be set to 'Contact' for contact bulk upload</param>
-    /// <param name="req.Data">Array of contact data objects to upload</param>
-    /// <param name="req.Options">Upload options and validation settings</param>
     /// <example_uses>
     /// Bulk upload 500 contacts from Excel
     /// Import multiple contacts from CSV file

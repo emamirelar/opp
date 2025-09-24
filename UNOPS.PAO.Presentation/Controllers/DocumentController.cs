@@ -28,7 +28,7 @@ public class DocumentController : BaseController
     private readonly IDocumentManager _manager;
     private readonly IManagerWrapper _managerWrapper;
     private readonly IConfiguration _configuration;
-    private readonly ILogger<DocumentController> _logger;
+    private new readonly ILogger<DocumentController> _logger;
 
     public DocumentController(
         IManagerWrapper managerWrapper, 
@@ -62,9 +62,10 @@ public class DocumentController : BaseController
     [HttpGet(APIDictionary.Document + "/{entityName}/{entityId}")]
     public async Task<ActionResult> GetAll(string entityName, int entityId)
     {
-        return await HandleOperationAsync(async () => 
+        return await HandleOperationAsync(() => 
         {
-            return _manager.ListDocumentsAsync(EntityNames.ByName(entityName), entityId);
+            var result = _manager.ListDocumentsAsync(EntityNames.ByName(entityName), entityId);
+            return Task.FromResult(result);
         });
     }
 
@@ -102,12 +103,6 @@ public class DocumentController : BaseController
     /// Updates an existing document's metadata, description, and properties with permission validation.
     /// </summary>
     /// <param name="req">Document update request containing modified fields</param>
-    /// <param name="req.id">Document ID to update (required)</param>
-    /// <param name="req.title">Updated document title</param>
-    /// <param name="req.description">Updated document description</param>
-    /// <param name="req.documentType">Updated document type/category</param>
-    /// <param name="req.tags">Updated document tags for categorization</param>
-    /// <param name="req.isPublic">Updated public/private visibility setting</param>
     /// <example_uses>
     /// Update document 123's title to "New Contract"
     /// Change document 456's description
@@ -242,21 +237,21 @@ public class DocumentController : BaseController
             
             // Step 4: Convert markdown to Google Doc
             var filename = !string.IsNullOrEmpty(request.Filename) ? request.Filename : "AI_Generated_Summary";
-            var googleDocResult = await ConvertMarkdownToGoogleDoc(markdownContent, filename);
+            var googleDocResult = await ConvertMarkdownToGoogleDoc(markdownContent ?? "", filename);
             
             return googleDocResult;
         });
     }
 
-    private string ExtractMarkdownFromGeminiResponse(string geminiResponse)
+    private string? ExtractMarkdownFromGeminiResponse(string geminiResponse)
     {
         try
         {
             var jsonResponse = JsonConvert.DeserializeObject<dynamic>(geminiResponse);
-            var candidates = jsonResponse["candidates"];
-            if (candidates != null && candidates.Count > 0)
+            var candidates = jsonResponse?["candidates"];
+            if (candidates != null && candidates.Count > 0 && candidates[0] != null)
             {
-                var content = candidates[0]["content"]["parts"][0]["text"];
+                var content = candidates[0]?["content"]?["parts"]?[0]?["text"];
                 var markdownText = content?.ToString() ?? "";
                 
                 // Clean up the markdown - remove code block markers if present
@@ -274,7 +269,7 @@ public class DocumentController : BaseController
         return geminiResponse;
     }
 
-    private async Task<object> ConvertMarkdownToGoogleDoc(string markdownContent, string filename)
+    private async Task<object?> ConvertMarkdownToGoogleDoc(string markdownContent, string filename)
     {
         try
         {
@@ -442,7 +437,7 @@ public class DocumentController : BaseController
         }
     }
 
-    private async Task<string> GetOidcTokenAsync(string targetAudience)
+    private async Task<string?> GetOidcTokenAsync(string targetAudience)
     {
         try
         {

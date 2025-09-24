@@ -132,7 +132,7 @@ namespace UNOPS.PAO.Presentation.Security
         /// Gets the current user's ID from claims
         /// </summary>
         /// <returns>User ID or null if not found</returns>
-        public string GetCurrentUserId()
+        public string? GetCurrentUserId()
         {
             var user = _httpContextAccessor.HttpContext?.User;
             if (user == null)

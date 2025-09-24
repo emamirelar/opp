@@ -3,6 +3,8 @@ public class EntityTypes
 {
     public const string Contact = "Contact";
     public const string Partner = "Partner";
+    public const string PartnerGroup = "PartnerGroup";
+    public const string PartnerCategory = "PartnerCategory";
     public const string Interaction = "Interaction";
     public const string PartnerTree = "PartnerTree";
     public const string UserManagement = "UserManagement";

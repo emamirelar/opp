@@ -478,56 +478,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return await MapEntityToModelAsync(partner, _mapper, null);
     }
 
-    /// <summary>
-    /// Gets a partner with its associated projects through the many-to-many relationship
-    /// </summary>
-    public async Task<PartnerModel?> GetPartnerWithProjectsAsync(int id)
-    {
-        // Include the projects through the many-to-many relationship
-        string[] includes = ["Documents", "PartnerGroup", "Projects"];
-
-        var partner = await PartnerRepository.GetByIdAsync(id, includes);
-
-        if (partner == null)
-        {
-            return default;
-        }
-
-        // Load organization unit relationships for single partner
-        await partner.LoadOrganizationUnitRelationshipsAsync(_context);
-
-        // OrganizationUnitRelationships are now loaded via includes
-
-        var result = await MapEntityToModelAsync(partner, _mapper, null);
-
-        // Map the projects to ProjectSummaryModel
-        if (partner.Projects != null && partner.Projects.Any())
-        {
-            result.Projects = partner.Projects.Select(project => new ProjectSummaryModel
-            {
-                Id = project.Id,
-                ProjectNumber = project.ProjectNumber,
-                Name = project.Name,
-                StartDate = project.StartDate,
-                EndDate = project.EndDate,
-                Stage = project.Stage,
-                BudgetCheckingLevel = project.BudgetCheckingLevel,
-                BudgetDuration = project.BudgetDuration,
-                BudgetAmount = project.BudgetAmount,
-                ExpenditureAmount = project.ExpenditureAmount
-            }).ToList();
-        }
-
-        return result;
-    }
 
     /// <summary>
-    /// Gets partner risk profile with comprehensive details including projects - designed for risk analysis and AI prompts
+    /// Gets partner risk profile with comprehensive details - designed for risk analysis and AI prompts
     /// </summary>
     public async Task<PartnerModel?> GetPartnerRiskProfileAsync(int id)
     {
-        // Include all relevant data for risk assessment: documents, organization units, group, contacts, interactions, and projects
-        string[] includes = ["Documents", "PartnerGroup", "Contacts", "Contacts.Interactions", "Projects"];
+        // Include all relevant data for risk assessment: documents, organization units, group, contacts, interactions
+        string[] includes = ["Documents", "PartnerGroup", "Contacts", "Contacts.Interactions"];
 
         var partner = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -540,24 +498,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         await partner.LoadOrganizationUnitRelationshipsAsync(_context);
 
         var result = await MapEntityToModelAsync(partner, _mapper, null);
-
-        // Map the projects to ProjectSummaryModel
-        if (partner.Projects != null && partner.Projects.Any())
-        {
-            result.Projects = partner.Projects.Select(project => new ProjectSummaryModel
-            {
-                Id = project.Id,
-                ProjectNumber = project.ProjectNumber,
-                Name = project.Name,
-                StartDate = project.StartDate,
-                EndDate = project.EndDate,
-                Stage = project.Stage,
-                BudgetCheckingLevel = project.BudgetCheckingLevel,
-                BudgetDuration = project.BudgetDuration,
-                BudgetAmount = project.BudgetAmount,
-                ExpenditureAmount = project.ExpenditureAmount
-            }).ToList();
-        }
 
         return result;
     }
@@ -1741,138 +1681,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     #region Partner Related Data Methods
 
-    /// <summary>
-    /// Gets all engagements for a specific partner with pagination
-    /// </summary>
-    public async Task<PaginationResponse<Engagement>> GetPartnerEngagementsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending)
-    {
-        // Validate pagination parameters
-        if (pageIndex < 1) pageIndex = 1;
-        if (pageSize < 1 || pageSize > 100) pageSize = 20;
 
-        // First get the partner's ErpDimValue since Engagement.PartnerId references Partner.ErpDimValue, not Partner.Id
-        var partner = await _context.Partners
-            .Where(p => p.Id == partnerId && !p.IsDeleted)
-            .FirstOrDefaultAsync();
-
-        if (partner == null || !partner.ErpDimValue.HasValue)
-        {
-            return new PaginationResponse<Engagement>
-            {
-                Records = new List<Engagement>(),
-                TotalCount = 0,
-                PageIndex = pageIndex,
-                PageSize = pageSize,
-                TotalPages = 0
-            };
-        }
-
-        var baseQuery = _context.Engagements
-            .Where(e => e.PartnerId == partner.ErpDimValue.Value && !e.IsDeleted)
-            .Include(e => e.Partner);
-
-        IQueryable<Engagement> query;
-        
-        // Apply ordering
-        if (!string.IsNullOrEmpty(orderBy))
-        {
-            query = ascending 
-                ? baseQuery.OrderBy(e => EF.Property<object>(e, orderBy))
-                : baseQuery.OrderByDescending(e => EF.Property<object>(e, orderBy));
-        }
-        else
-        {
-            // Default ordering by creation date (newest first)
-            query = baseQuery.OrderByDescending(e => e.CreatedDate);
-        }
-
-        // Get total count
-        var totalCount = await query.CountAsync();
-
-        // Apply pagination
-        var engagements = await query
-            .Skip((pageIndex - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-
-        return new PaginationResponse<Engagement>
-        {
-            Records = engagements,
-            TotalCount = totalCount,
-            PageIndex = pageIndex,
-            PageSize = pageSize,
-            TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
-        };
-    }
-
-    /// <summary>
-    /// Gets all projects for a specific partner with pagination
-    /// </summary>
-    public async Task<PaginationResponse<object>> GetPartnerProjectsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending)
-    {
-        // Validate pagination parameters
-        if (pageIndex < 1) pageIndex = 1;
-        if (pageSize < 1 || pageSize > 100) pageSize = 20;
-
-        // Get the partner first to access the projects through the many-to-many relationship
-        var partner = await _context.Partners
-            .Include(p => p.Projects)
-            .ThenInclude(proj => proj.Partners) // Include partners for each project
-            .FirstOrDefaultAsync(p => p.Id == partnerId && !p.IsDeleted);
-
-        if (partner == null)
-        {
-            throw new ArgumentException("Partner not found or access denied.");
-        }
-
-        // Get the projects associated with this partner
-        var projectsQuery = partner.Projects.AsQueryable()
-            .Where(p => p.Status == EntityStatus.Active);
-
-        // Apply ordering
-        if (!string.IsNullOrEmpty(orderBy))
-        {
-            projectsQuery = ascending 
-                ? projectsQuery.OrderBy(p => EF.Property<object>(p, orderBy))
-                : projectsQuery.OrderByDescending(p => EF.Property<object>(p, orderBy));
-        }
-        else
-        {
-            // Default ordering by start date (newest first)
-            projectsQuery = projectsQuery.OrderByDescending(p => p.StartDate);
-        }
-
-        var totalCount = projectsQuery.Count();
-
-        // Apply pagination
-        var projects = projectsQuery
-            .Skip((pageIndex - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-
-        // Map to anonymous objects to avoid ProjectModel dependency
-        var projectModels = projects.Select(p => (object)new {
-            p.Id,
-            p.ProjectNumber,
-            p.Name,
-            p.StartDate,
-            p.EndDate,
-            p.Stage,
-            p.BudgetCheckingLevel,
-            p.BudgetDuration,
-            p.BudgetAmount,
-            p.ExpenditureAmount
-        }).ToList();
-
-        return new PaginationResponse<object>
-        {
-            Records = projectModels,
-            TotalCount = totalCount,
-            PageIndex = pageIndex,
-            PageSize = pageSize,
-            TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
-        };
-    }
 
     #endregion
 

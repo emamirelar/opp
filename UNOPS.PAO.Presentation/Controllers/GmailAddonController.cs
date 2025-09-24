@@ -29,7 +29,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         private readonly IInteractionManager _interactionManager;
         private readonly IGmailAddonManager _gmailAddonManager;
 
-        protected int CurrentUserId => _userResolverService.GetCurrentUserId();
+        protected new int CurrentUserId => _userResolverService.GetCurrentUserId();
 
         public GmailAddonController(IManagerWrapper manager,
         UserResolverService<int> userResolverService,
