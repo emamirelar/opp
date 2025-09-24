@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using UNOPS.PAO.Domain.Entities;
+
 namespace UNOPS.PAO.Models;
 
 public class OrganizationUnitRelationshipModel
@@ -6,4 +9,8 @@ public class OrganizationUnitRelationshipModel
     public OrganizationHierarchyModel? OrganizationHierarchy { get; set; }
     public int EntityId { get; set; }
     public string EntityType { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public EntityStatus Status { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool IsDeleted { get; set; }
 } 
