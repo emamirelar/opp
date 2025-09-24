@@ -303,6 +303,7 @@
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Répondre aux entités éligibles' requis",
         "entityMeetEligibleCriteriaRequired": "'Répondre aux critères d'éligibilité' requis",
+        "activationValidationRequired": "Les champs avec une astérisque (*) doivent être renseignés pour pouvoir activer le partenaire.",
         "noRecordsFound": "Aucun enregistrement trouvé.",
         "noPartnerGroups": "Aucun groupe de partenaire trouvé",
         "welcomeTitle": "Bienvenue sur Opportunity+",

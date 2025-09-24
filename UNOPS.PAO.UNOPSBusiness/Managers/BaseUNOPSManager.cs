@@ -688,12 +688,8 @@ public abstract class BaseUNOPSManager
 
         var resultType = result.GetType();
         var statusProperty = resultType.GetProperty("Status");
-        var nameProperty = resultType.GetProperty("Name");
-        var shortDescriptionProperty = resultType.GetProperty("PartnerShortDescription") ?? resultType.GetProperty("ShortDescription");
-        var categoryProperty = resultType.GetProperty("PartnerCategoryId") ?? resultType.GetProperty("CategoryId");
-        var liaisonOfficeProperty = resultType.GetProperty("PartnerLiaisonOfficeId") ?? resultType.GetProperty("LiaisonOfficeId");
 
-        if (statusProperty == null || nameProperty == null)
+        if (statusProperty == null)
             return null;
 
         try
@@ -705,23 +701,9 @@ public abstract class BaseUNOPSManager
             if (!isDraft)
                 return false; // Can only activate Draft partners
 
-            // Check if all mandatory fields are filled
-            var name = nameProperty.GetValue(result) as string;
-            var hasName = !string.IsNullOrWhiteSpace(name);
-            
-            var shortDescription = shortDescriptionProperty?.GetValue(result) as string;
-            var hasShortDescription = !string.IsNullOrWhiteSpace(shortDescription);
-            
-            var categoryId = categoryProperty?.GetValue(result);
-            var hasCategory = categoryId != null && !categoryId.Equals(0) && !string.IsNullOrWhiteSpace(categoryId.ToString());
-            
-            var liaisonOfficeId = liaisonOfficeProperty?.GetValue(result);
-            var hasLiaisonOffice = liaisonOfficeId != null && !liaisonOfficeId.Equals(0) && !string.IsNullOrWhiteSpace(liaisonOfficeId.ToString());
-            
-            // All mandatory fields must be filled for activation
-            var hasMandatoryFields = hasName && hasShortDescription && hasCategory && hasLiaisonOffice;
-            
-            return hasMandatoryFields;
+            // User can activate if they have permissions and partner is in Draft status
+            // Field validation is handled on the frontend for UX and on the backend for security
+            return true;
         }
         catch
         {

@@ -449,6 +449,7 @@
   "message": {
     "entityMeetEligibleEntitiesRequired": "'Meet eligible entities' required",
     "entityMeetEligibleCriteriaRequired": "'Meet eligible criteria' required",
+    "activationValidationRequired": "Fields marked with an asterisk (*) must be completed to activate the partner.",
     "noRecordsFound": "No records found.",
     "noPartnerGroups": "No partner groups found",
     "proposalRequirements": "The proposal cannot be submitted until all required fields are completed.",
