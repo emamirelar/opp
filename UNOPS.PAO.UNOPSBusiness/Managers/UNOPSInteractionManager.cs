@@ -1077,7 +1077,43 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             await context.Interactions.AddAsync(entity);
             await context.SaveChangesAsync();
 
+            // Get current user and their organization unit
+            var currentUser = GetCurrentUserOrSystemContext();
+            if (currentUser != null)
+            {
+                // Get user email from claims
+                var emailClaim = currentUser.FindFirst(ClaimTypes.Email) ?? currentUser.FindFirst("email");
+                if (emailClaim != null && !string.IsNullOrEmpty(emailClaim.Value))
+                {
+                    // Get user profile by email to find their org unit
+                    var userProfile = await context.UserProfile
+                        .FirstOrDefaultAsync(up => up.UserEmail.ToLower() == emailClaim.Value.ToLower());
 
+                    if (userProfile?.OrgUnit != null)
+                    {
+                        // Find the organization hierarchy by org unit code
+                        var orgHierarchy = await context.OrganizationHierarchies
+                            .FirstOrDefaultAsync(oh => oh.Code == userProfile.OrgUnit && 
+                                                      oh.Type == Domain.Enums.OrganizationUnitType.OrgUnit);
+
+                        if (orgHierarchy != null)
+                        {
+                            // Create organization unit relationship for the interaction
+                            var newRelationship = new OrganizationUnitRelationship
+                            {
+                                OrganizationHierarchyId = orgHierarchy.Id,
+                                EntityId = entity.Id,
+                                EntityType = nameof(Interaction),
+                                Name = $"Interaction-{entity.Id}-{orgHierarchy.Code}",
+                                Status = EntityStatus.Active
+                            };
+                            
+                            context.OrganizationUnitRelationships.Add(newRelationship);
+                            await context.SaveChangesAsync();
+                        }
+                    }
+                }
+            }
 
             await transaction.CommitAsync();
         }
@@ -1088,54 +1124,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         }
 
         await ProcessGmailInteractionJunctionTables(entity, model);
-        return mapper.Map<InteractionModel>(entity);
-    }
-
-    public virtual async Task<InteractionModel?> UpdateGmailInteractionAsync(UpdateInteractionRequest model)
-    {
-        var includes = new[]
-        {
-            "InteractionContacts",
-            "InteractionContacts.Contact",
-            "InteractionContacts.Contact.Partner",
-            "InteractionPartners.Partner",
-            "InteractionUsers.User",
-            "Documents"
-        };
-
-        var query = context.Interactions.AsQueryable();
-        foreach (var include in includes)
-        {
-            query = query.Include(include);
-        }
-
-        var entity = await query.FirstOrDefaultAsync(i => i.Id == model.Id);
-
-        if (entity == null)
-        {
-            throw new BusinessException($"Interaction {model.Id} does not exist.");
-        }
-
-        // Load organization unit relationships for single interaction
-        await entity.LoadOrganizationUnitRelationshipsAsync(context);
-
-        if (model.EmailAddresses != null && model.EmailAddresses.Count > 0)
-        {
-            model.EmailAddresses = model.EmailAddresses.Distinct().ToList();
-        }
-
-        entity = MapModelToEntity(model, entity);
-
-        // Update emails/phones
-        entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
-        entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
-
-        // Update junction tables
-        await ProcessGmailInteractionJunctionTables(entity, model);
-
-        context.Interactions.Update(entity);
-        await context.SaveChangesAsync();
-
         return mapper.Map<InteractionModel>(entity);
     }
 
@@ -1160,21 +1148,14 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 .Select(ip => ip.PartnerId)
                 .ToListAsync();
 
-            var existingOrgUnitRelationships = await context.OrganizationUnitRelationships
-                .Where(r => r.EntityId == interaction.Id && r.EntityType == "Interaction")
-                .Select(r => r.OrganizationHierarchyId)
-                .ToListAsync();
-
             var existingContactIds = existingContacts.ToHashSet();
             var existingUserIds = existingUsers.ToHashSet();
             var existingPartnerIds = existingPartners.ToHashSet();
-            var existingOrgUnitIds = existingOrgUnitRelationships.ToHashSet();
 
             // Prepare bulk insert lists
             var contactsToAdd = new List<InteractionContact>();
             var partnersToAdd = new List<InteractionPartner>();
             var usersToAdd = new List<InteractionUser>();
-            var orgUnitRelationshipsToAdd = new List<OrganizationUnitRelationship>();
 
             // Process ContactIds - bulk prepare
             if (model.ContactIds?.Any() == true)
@@ -1239,44 +1220,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 }
             }
 
-            // Process OrganizationUnitRelationships from related partners - bulk prepare
-            if (model.PartnerIds?.Any() == true)
-            {
-                // Get organization unit relationships for all related partners
-                var partnerOrgUnitRelationships = await context.OrganizationUnitRelationships
-                    .Where(r => model.PartnerIds.Contains(r.EntityId) && r.EntityType == "Partner")
-                    .ToListAsync();
-
-                if (partnerOrgUnitRelationships.Any())
-                {
-                    var uniqueOrgUnitIds = partnerOrgUnitRelationships
-                        .Select(r => r.OrganizationHierarchyId)
-                        .Distinct()
-                        .Where(id => !existingOrgUnitIds.Contains(id))
-                        .ToList();
-
-                    if (uniqueOrgUnitIds.Any())
-                    {
-                        // Load organization units into context to ensure EF can track them
-                        var orgUnits = await context.OrganizationHierarchies
-                            .Where(ou => uniqueOrgUnitIds.Contains(ou.Id) && ou.Type == Domain.Enums.OrganizationUnitType.OrgUnit)
-                            .ToListAsync();
-
-                        foreach (var orgUnit in orgUnits)
-                        {
-                            orgUnitRelationshipsToAdd.Add(new OrganizationUnitRelationship
-                            {
-                                OrganizationHierarchyId = orgUnit.Id,
-                                EntityId = interaction.Id,
-                                EntityType = nameof(Interaction),
-                                Name = $"Interaction-{interaction.Id}-{orgUnit.Code}",
-                                Status = EntityStatus.Active
-                            });
-                        }
-                    }
-                }
-            }
-
             // Bulk insert all relationships
             if (contactsToAdd.Any())
             {
@@ -1291,11 +1234,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             if (usersToAdd.Any())
             {
                 await context.InteractionUsers.AddRangeAsync(usersToAdd);
-            }
-
-            if (orgUnitRelationshipsToAdd.Any())
-            {
-                await context.OrganizationUnitRelationships.AddRangeAsync(orgUnitRelationshipsToAdd);
             }
 
             await context.SaveChangesAsync();
