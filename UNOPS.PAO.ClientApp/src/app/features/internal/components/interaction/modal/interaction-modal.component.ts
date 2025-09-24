@@ -593,8 +593,16 @@ export class InteractionModalComponent {
           Object.assign(this.record, formValue);
           this.record._updated = true;
 
-          // Trigger duplicate detection for import edits to update duplicate indicators
-          this.triggerDuplicateDetectionAfterSave(formValue);
+          // Preserve existing duplicate info if available
+          if (this.dialogConfig.data.record?.duplicateInfo) {
+            (this.record as any).duplicateInfo = this.dialogConfig.data.record.duplicateInfo;
+          }
+          
+          // Trigger duplicate detection after closing to update duplicate indicators
+          // This will update the record in the import dialog asynchronously
+          setTimeout(() => {
+            this.triggerDuplicateDetectionAfterSave(formValue, this.record);
+          }, 100);
 
           // Close the dialog with the updated record
           this.dialogRef.close(this.record);
@@ -1366,7 +1374,7 @@ export class InteractionModalComponent {
   /**
    * Triggers duplicate detection for a saved record to update duplicate information
    */
-  private triggerDuplicateDetectionAfterSave(payload: any): void {
+  private triggerDuplicateDetectionAfterSave(payload: any, updatedRecord?: any): void {
     // Skip if no payload
     if (!payload) {
       console.log('Skipping duplicate detection - no payload provided');
@@ -1399,7 +1407,7 @@ export class InteractionModalComponent {
         
         // If this is an import edit, update the duplicate information
         if (this.dialogConfig.data.isImportEdit) {
-          this.updateDuplicateInfoAfterDetection(response, payload);
+          this.updateDuplicateInfoAfterDetection(response, payload, updatedRecord);
         }
       },
       error: (error: any) => {
@@ -1413,8 +1421,8 @@ export class InteractionModalComponent {
   /**
    * Update the duplicate information in the record for import dialog refresh
    */
-  private updateDuplicateInfoAfterDetection(response: any, payload: any): void {
-    if (!response || !this.dialogConfig.data.record) {
+  private updateDuplicateInfoAfterDetection(response: any, payload: any, updatedRecord?: any): void {
+    if (!response) {
       return;
     }
 
@@ -1422,6 +1430,35 @@ export class InteractionModalComponent {
     const duplicateInfo = response.duplicateInfo;
     
     if (duplicateInfo) {
+      // Parse the stringified JSON fields
+      let parsedTopDuplicate = null;
+      if (duplicateInfo.topDuplicate) {
+        parsedTopDuplicate = { ...duplicateInfo.topDuplicate };
+        
+        // Parse matchedData if it's a string
+        if (typeof duplicateInfo.topDuplicate.matchedData === 'string') {
+          try {
+            parsedTopDuplicate.matchedData = JSON.parse(duplicateInfo.topDuplicate.matchedData);
+          } catch (e) {
+            console.warn('Failed to parse matchedData:', e);
+            parsedTopDuplicate.matchedData = duplicateInfo.topDuplicate.matchedData;
+          }
+        }
+      }
+
+      // Parse duplicates if it's a string
+      let parsedDuplicates = null;
+      if (typeof duplicateInfo.duplicates === 'string') {
+        try {
+          parsedDuplicates = JSON.parse(duplicateInfo.duplicates);
+        } catch (e) {
+          console.warn('Failed to parse duplicates:', e);
+          parsedDuplicates = duplicateInfo.duplicates;
+        }
+      } else {
+        parsedDuplicates = duplicateInfo.duplicates;
+      }
+
       // Update the record with new duplicate information
       const updatedDuplicateInfo = {
         isDuplicate: duplicateInfo.totalDuplicates > 0,
@@ -1430,19 +1467,20 @@ export class InteractionModalComponent {
         highConfidence: duplicateInfo.highConfidence || 0,
         mediumConfidence: duplicateInfo.mediumConfidence || 0,
         lowConfidence: duplicateInfo.lowConfidence || 0,
-        topDuplicate: duplicateInfo.topDuplicate || null,
+        topDuplicate: parsedTopDuplicate,
+        duplicates: parsedDuplicates,
         tooltip: duplicateInfo.totalDuplicates > 0 
           ? `${duplicateInfo.totalDuplicates} duplicate(s) found` 
           : 'Unique record'
       };
 
       // Update the record's duplicate info
-      this.dialogConfig.data.record.duplicateInfo = updatedDuplicateInfo;
+      this.updateRecordInImportDialog(updatedDuplicateInfo, updatedRecord);
       
       console.log('Updated duplicate info for import record:', updatedDuplicateInfo);
     } else {
       // No duplicates found
-      this.dialogConfig.data.record.duplicateInfo = {
+      const noDuplicateInfo = {
         isDuplicate: false,
         hasDuplicates: false,
         totalDuplicates: 0,
@@ -1450,10 +1488,40 @@ export class InteractionModalComponent {
         mediumConfidence: 0,
         lowConfidence: 0,
         topDuplicate: null,
+        duplicates: null,
         tooltip: 'Unique record'
       };
       
+      this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);
+      
       console.log('No duplicates found - marked as unique record');
+    }
+  }
+
+  /**
+   * Update the record in the import dialog with new duplicate information
+   */
+  private updateRecordInImportDialog(duplicateInfo: any, updatedRecord?: any): void {
+    // Try to find the import dialog service in the global scope
+    try {
+      // Use a custom event to communicate with the import dialog
+      const importRowId = updatedRecord?._importRowId || this.dialogConfig.data.record?._importRowId;
+      
+      if (importRowId) {
+        const updateEvent = new CustomEvent('update-duplicate-info', {
+          detail: {
+            importRowId: importRowId,
+            duplicateInfo: duplicateInfo
+          }
+        });
+        
+        window.dispatchEvent(updateEvent);
+        console.log('Dispatched duplicate info update event for row:', importRowId);
+      } else {
+        console.warn('No importRowId found to update duplicate info');
+      }
+    } catch (error) {
+      console.error('Error updating duplicate info in import dialog:', error);
     }
   }
 }

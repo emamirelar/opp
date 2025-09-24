@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal, computed, Type } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, OnInit, OnDestroy, signal, computed, Type } from '@angular/core';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -132,7 +132,7 @@ interface ImportColumn extends ListViewColumn {
     }
   `]
 })
-export class ImportDialogComponent implements OnInit {
+export class ImportDialogComponent implements OnInit, OnDestroy {
   feedbackDialogService = inject(FeedbackDialogService);
   importDialogService = inject(ImportDialogService);
   componentResolverService = inject(ComponentResolverService);
@@ -288,6 +288,9 @@ export class ImportDialogComponent implements OnInit {
     
     // Immediately check data on init
     this.checkAndProcessData();
+    
+    // Listen for duplicate info updates from edit dialogs
+    this.setupDuplicateInfoEventListener();
     
     // Listen for data changes (e.g., after filtering failed records)
     effect(() => {
@@ -1343,6 +1346,59 @@ export class ImportDialogComponent implements OnInit {
     }
   }
 
+  /**
+   * Set up event listener for duplicate info updates from edit dialogs
+   */
+  private setupDuplicateInfoEventListener(): void {
+    this.duplicateInfoUpdateListener = this.handleDuplicateInfoUpdate.bind(this);
+    window.addEventListener('update-duplicate-info', this.duplicateInfoUpdateListener as EventListener);
+  }
 
+  /**
+   * Handle duplicate info update event from edit dialogs
+   */
+  private handleDuplicateInfoUpdate(event: Event): void {
+    const customEvent = event as CustomEvent;
+    const { importRowId, duplicateInfo } = customEvent.detail;
+    
+    console.log('Received duplicate info update for row:', importRowId, duplicateInfo);
+    
+    // Find and update the record in the import data
+    const allData = this.importDialogService.data();
+    const recordIndex = allData.findIndex(item => item._importRowId === importRowId);
+    
+    if (recordIndex !== -1) {
+      // Create a new array with the updated record
+      const updatedData = [...allData];
+      updatedData[recordIndex] = {
+        ...updatedData[recordIndex],
+        duplicateInfo: duplicateInfo
+      };
+      
+      // Update the service data
+      this.importDialogService.data.set(updatedData);
+      
+      // Update paginated data to refresh the UI
+      this.updatePaginatedData();
+      
+      console.log('✅ Updated duplicate info for import record:', importRowId);
+    } else {
+      console.warn('Could not find record with importRowId:', importRowId);
+    }
+  }
 
+  /**
+   * Store reference to the event listener for cleanup
+   */
+  private duplicateInfoUpdateListener: ((event: Event) => void) | null = null;
+
+  /**
+   * Clean up event listeners when component is destroyed
+   */
+  ngOnDestroy(): void {
+    if (this.duplicateInfoUpdateListener) {
+      window.removeEventListener('update-duplicate-info', this.duplicateInfoUpdateListener as EventListener);
+      this.duplicateInfoUpdateListener = null;
+    }
+  }
 }

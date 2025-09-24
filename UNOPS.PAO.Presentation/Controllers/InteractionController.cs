@@ -786,10 +786,10 @@ namespace UNOPS.PAO.Presentation.Controllers
                             matchReason = duplicateResult.TopDuplicate.MatchReason,
                             searchType = duplicateResult.TopDuplicate.SearchType,
                             matchedData = duplicateResult.TopDuplicate.MatchedData != null ? 
-                                JToken.FromObject(duplicateResult.TopDuplicate.MatchedData) : null
+                                JsonConvert.SerializeObject(duplicateResult.TopDuplicate.MatchedData) : null
                         } : null,
                         duplicates = duplicateResult.AllDuplicates != null ? 
-                            JToken.FromObject(duplicateResult.AllDuplicates) : null
+                            JsonConvert.SerializeObject(duplicateResult.AllDuplicates) : null
                     } : null
                 });
             }
