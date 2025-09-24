@@ -486,6 +486,7 @@
     "recordDeletedSuccessfully": "Record deleted successfully!",
     "failedToDeleteRecord": "Failed to delete record",
     "anErrorOccurred": "An error occurred",
+    "invalidPhoneNumberFormat": "The entry does not match a phone number format (+33123456789)",
     "partnerActivatedSuccessfully": "Partner \"{{partnerName}}\" has been activated successfully.",
     "failedToActivatePartner": "Failed to activate partner. Please try again.",
     "confirmPartnerActivation": "Are you sure you want to activate the partner \"{{partnerName}}\"?",

@@ -272,7 +272,8 @@
         "permissionDenied": "Permiso denegado",
         "recordDeletedSuccessfully": "¡Registro eliminado exitosamente!",
         "failedToDeleteRecord": "Error al eliminar el registro",
-        "anErrorOccurred": "Ocurrió un error"
+        "anErrorOccurred": "Ocurrió un error",
+        "invalidPhoneNumberFormat": "La entrada no coincide con un formato de número de teléfono (+33123456789)"
     },
     "errors": {
         "failedToLoad": "Error al cargar",
