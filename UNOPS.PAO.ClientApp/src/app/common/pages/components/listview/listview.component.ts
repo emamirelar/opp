@@ -240,7 +240,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   searchableFields: SearchField[] = [];
   searchValue: any = '';
   currentSortConfig: string = '';
-  preselectedSavedFilterId: number | null = null;
   operators = [
     { label: 'AND', value: 'AND' },
     { label: 'OR', value: 'OR' }
@@ -395,18 +394,8 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   private loadSearchCriteriaFromUrl(): void {
     const queryParams = this.route.snapshot.queryParams;
 
-    if (queryParams['savedFilterId']) {
-      const filterId = parseInt(queryParams['savedFilterId'], 10);
-      if (!isNaN(filterId)) {
-        this.preselectedSavedFilterId = filterId;
-        if (queryParams['advancedSearch'] === 'true') {
-          this.state.update(s => ({ ...s, isAdvancedSearchMode: true }));
-        }
-      }
-      return;
-    }
-
-    if (queryParams['advancedSearch'] === 'true' && queryParams['searchCriteria']) {
+    // Handle search criteria - automatically enable advanced search if present
+    if (queryParams['searchCriteria']) {
       try {
         const criteria = JSON.parse(queryParams['searchCriteria']) as SearchCriteria[];
         if (Array.isArray(criteria) && criteria.length > 0) {
@@ -425,6 +414,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
         this.clearSearchCriteriaFromUrl();
       }
     } else {
+      // No search criteria - default to simple search mode
       this.state.update(s => ({ ...s, isAdvancedSearchMode: false }));
     }
   }
@@ -435,7 +425,10 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
     if (searchCriteria.length > 0) {
       queryParams.searchCriteria = JSON.stringify(searchCriteria);
-      queryParams.advancedSearch = 'true';
+      // Remove savedFilterId when using direct search criteria
+      delete queryParams.savedFilterId;
+      // Remove advancedSearch as it's inferred from searchCriteria presence
+      delete queryParams.advancedSearch;
     } else {
       delete queryParams.searchCriteria;
       delete queryParams.advancedSearch;
@@ -926,13 +919,9 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   }
 
   onApplySavedFilter(filter: SavedFilter): void {
-    const queryParams: any = { ...this.route.snapshot.queryParams };
-
-    queryParams.savedFilterId = filter.id;
+    console.log('🔄 Applying saved filter:', filter.name, 'ID:', filter.id);
 
     if (filter.isAdvancedSearch) {
-      queryParams.advancedSearch = 'true';
-      
       // Apply the search criteria from the saved filter
       if (filter.searchCriteria) {
         try {
@@ -945,19 +934,22 @@ export class ListviewComponent<T = any> implements AfterViewInit {
             criteria = filter.searchCriteria;
           }
 
-          // Update component state with the saved filter criteria
+          console.log('✅ Parsed criteria:', criteria.length, 'filters');
+
+          // CLEAN IMPLEMENTATION: Clear and replace all criteria at once
           this.state.update(s => ({
             ...s,
             isAdvancedSearchMode: true,
-            searchCriteria: [...criteria],
-            searchText: '',
-            pageIndex: 1
+            searchCriteria: [...criteria], // Replace (not append) all criteria
+            searchText: '', // Clear simple search
+            pageIndex: 1 // Reset to first page
           }));
 
-          // Also update URL with the search criteria
+          // Use the same URL structure as manual advanced search
           this.syncSearchCriteriaToUrl();
+          
         } catch (error) {
-          console.error('Error parsing saved filter criteria:', error);
+          console.error('❌ Error parsing saved filter criteria:', error);
         }
       }
     } else if (filter.searchText) {
@@ -966,11 +958,19 @@ export class ListviewComponent<T = any> implements AfterViewInit {
         ...s,
         isAdvancedSearchMode: false,
         searchText: filter.searchText || '',
-        searchCriteria: [],
+        searchCriteria: [], // Clear advanced search criteria
         pageIndex: 1
       }));
+      
+      // Clear URL parameters for simple search
+      const queryParams: any = { ...this.route.snapshot.queryParams };
+      delete queryParams.searchCriteria;
+      delete queryParams.advancedSearch;
+      delete queryParams.savedFilterId;
+      this.updateUrlParams(queryParams);
     }
 
+    // Apply sorting if specified
     if (filter.orderBy) {
       this.state.update(s => ({
         ...s,
@@ -979,10 +979,11 @@ export class ListviewComponent<T = any> implements AfterViewInit {
       }));
     }
 
-    this.updateUrlParams(queryParams);
-
+    // Reset pagination and trigger data load
     this.dataLoader.setPagination(0, this.state().pageSize);
-    this.preselectedSavedFilterId = null;
+    
+    // CRITICAL: Execute the search with the applied criteria
+    console.log('🚀 Executing search with applied filter criteria');
     this.loadData();
   }
 

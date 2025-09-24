@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect, computed } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect, computed, ViewChild } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
@@ -27,7 +27,7 @@ import { CalendarModule } from 'primeng/calendar';
 import { InteractionModalFooterComponent } from './footer/interaction-modal-footer.component';
 import { NgIf } from '@angular/common';
 import { ChipModule, Chip } from 'primeng/chip';
-import { AutoCompleteModule } from 'primeng/autocomplete';
+import { AutoCompleteModule, AutoComplete } from 'primeng/autocomplete';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 import { HttpClientModule } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
@@ -109,6 +109,9 @@ export class InteractionModalComponent {
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
   private cdr = inject(ChangeDetectorRef);
+
+  // ViewChild for phone autocomplete field
+  @ViewChild('phoneAutocomplete') phoneAutocomplete!: AutoComplete;
 
   // Custom validator for contactIds - requires at least one contact to be selected
   private static atLeastOneContactValidator(control: AbstractControl): ValidationErrors | null {
@@ -249,7 +252,7 @@ export class InteractionModalComponent {
     effect(() => {
       const orgUnits = this.allOrgUnits();
       const isLoadingData = this.isLoadingExistingData();
-      
+
       // Only prepopulate for new records (no ID) and when org units are available and not loading data
       if (orgUnits && orgUnits.length > 0 && !this.recordId && !isLoadingData && !this.isImportEdit) {
         // Add timeout to allow any async form population to complete first
@@ -412,10 +415,10 @@ export class InteractionModalComponent {
   private populateForm(record: Interaction) {
     console.log('🔧 populateForm called with record:', record);
     console.log('🔧 isImportEdit:', this.isImportEdit);
-    
+
     // Handle organization unit relationships - extract all IDs for array support
     const organizationHierarchyIds: number[] = [];
-    
+
     // Check if this is an imported record (has organizationHierarchyIds directly)
     const recordWithOrgIds = record as any; // Cast to any to access potential import fields
     if (recordWithOrgIds.organizationHierarchyIds && Array.isArray(recordWithOrgIds.organizationHierarchyIds)) {
@@ -431,13 +434,13 @@ export class InteractionModalComponent {
     } else {
       console.log('🔧 No organization unit data found in record');
     }
-    
+
     console.log('🔧 Final organizationHierarchyIds:', organizationHierarchyIds);
 
     // User IDs for form population - handle both import and regular record formats
     let userIds: number[] = [];
     const recordWithUserIds = record as any; // Cast to access potential import fields
-    
+
     if (recordWithUserIds.userIds && Array.isArray(recordWithUserIds.userIds)) {
       // Import record format - userIds is already an array
       console.log('🔧 Found import record userIds:', recordWithUserIds.userIds);
@@ -450,7 +453,7 @@ export class InteractionModalComponent {
       console.log('🔧 No user data found in record');
       userIds = [];
     }
-    
+
     console.log('🔧 Final userIds for population:', userIds);
 
     // Convert email addresses to lowercase for case-insensitive handling
@@ -488,14 +491,14 @@ export class InteractionModalComponent {
     // Ensure Users multi-select field has selected users available
     if (userIds.length > 0) {
       console.log('🔧 Loading selected users for userIds:', userIds);
-      
+
       // Use setTimeout to ensure form is fully initialized before triggering user search
       setTimeout(() => {
         this.userSearchService.searchUsers('', 50, userIds).subscribe({
           next: (users) => {
             console.log('🔧 Successfully loaded users for dropdown:', users);
             this.userSearchResults.set(users);
-            
+
             // Trigger change detection to ensure UI updates
             if (this.cdr) {
               this.cdr.detectChanges();
@@ -593,6 +596,17 @@ export class InteractionModalComponent {
           Object.assign(this.record, formValue);
           this.record._updated = true;
 
+          // Preserve existing duplicate info if available
+          if (this.dialogConfig.data.record?.duplicateInfo) {
+            (this.record as any).duplicateInfo = this.dialogConfig.data.record.duplicateInfo;
+          }
+          
+          // Trigger duplicate detection after closing to update duplicate indicators
+          // This will update the record in the import dialog asynchronously
+          setTimeout(() => {
+            this.triggerDuplicateDetectionAfterSave(formValue, this.record);
+          }, 100);
+
           // Close the dialog with the updated record
           this.dialogRef.close(this.record);
           return;
@@ -629,6 +643,10 @@ export class InteractionModalComponent {
         this.interactionService.update(formValue).subscribe({
           next: () => {
             this.showSuccessMessage('message.interactionUpdated');
+            
+            // Trigger duplicate detection for the updated record
+            this.triggerDuplicateDetectionAfterSave(formValue);
+            
             this.dialogRef.close('saved');
           },
           error: (error) => {
@@ -699,9 +717,19 @@ export class InteractionModalComponent {
   }
 
   isValidPhone(phone: string): boolean {
-    // Basic international phone validation pattern
-    const phonePattern = /^\+?[\d\s\-\(\)]{8,}$/;
-    return phonePattern.test(phone);
+    // E164 international phone number format validation
+    // Format: +[country code 1-9][up to 14 digits total]
+    // Examples: +1234567890, +33123456789, +861234567890
+    const regexE164 = /^\+[1-9]\d{1,14}$/;
+    return regexE164.test(phone);
+  }
+
+  /**
+   * Extracts only digits from a phone number string
+   * Used to clean user input before validation
+   */
+  private extractDigitsOnly(phone: string): string {
+    return phone.replace(/\D/g, ''); // Keep only digits
   }
 
   validatePhone(phone: string) {
@@ -713,6 +741,24 @@ export class InteractionModalComponent {
         detail: `"${phone}" is not a valid phone number`,
         life: 3000
       });
+    }
+  }
+
+  /**
+   * Validates phone input on blur and maintains focus if invalid
+   * This allows users to easily correct invalid phone numbers
+   */
+  validatePhoneInput(): void {
+    const phoneControl = this.formGroup.get('phoneNumbers');
+    if (phoneControl?.invalid && phoneControl.errors?.['invalidPhone']) {
+      // Keep focus on the field to allow immediate correction
+      setTimeout(() => {
+        if (this.phoneAutocomplete && this.phoneAutocomplete.inputEL?.nativeElement) {
+          this.phoneAutocomplete.inputEL.nativeElement.focus();
+          // Optionally select the text to make correction easier
+          this.phoneAutocomplete.inputEL.nativeElement.select();
+        }
+      }, 100);
     }
   }
 
@@ -759,7 +805,7 @@ export class InteractionModalComponent {
    */
   private prepopulateFromCurrentUserProfileIfEmpty(): void {
     console.log('🔄 prepopulateFromCurrentUserProfileIfEmpty called - recordId:', this.recordId, 'isImportEdit:', this.isImportEdit, 'isLoadingExistingData:', this.isLoadingExistingData());
-    
+
     // Skip if this is an edit (has recordId) - server data should take precedence
     if (this.recordId && this.recordId !== '') {
       console.log('⏭️ Skipping prepopulation - existing record detected');
@@ -786,7 +832,7 @@ export class InteractionModalComponent {
         // Only if no org unit is currently set in either the UI control or the array
         const currentOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
         const currentOrgUnitArray = this.formGroup.get('organizationHierarchyIds')?.value || [];
-        
+
         if (userProfile?.orgUnit && !currentOrgUnitId && currentOrgUnitArray.length === 0) {
           // Find matching organization unit by code
           const orgUnits = this.allOrgUnits() || [];
@@ -807,7 +853,7 @@ export class InteractionModalComponent {
         // Prepopulate Created By with current user ID
         // Only if no created by is currently set
         const currentCreatedBy = this.formGroup.get('createdBy')?.value;
-        
+
         if (userProfile?.userId && !currentCreatedBy) {
           console.log('✅ Prepopulating created by with current user:', userProfile.userId);
           this.formGroup.patchValue({ createdBy: userProfile.userId });
@@ -895,10 +941,10 @@ export class InteractionModalComponent {
       )
       .subscribe((newContactIds: number[]) => {
         this.updatePartnerIdsBasedOnContacts();
-        
+
         // Update contact names
         this.updateContactNames(newContactIds);
-        
+
         const currentEmails = this.formGroup.get('emailAddresses')?.value as string[];
         const validEmailsForNewContactIds = this.getEmailsForContactIds(newContactIds);
 
@@ -1056,13 +1102,23 @@ export class InteractionModalComponent {
         const invalidAddedPhones = addedPhones.filter(phone => !this.isValidPhone(phone));
 
         if (invalidAddedPhones.length > 0) {
-          // Handle invalid phones
-          this.invalidPhones.forEach(phone => this.validatePhone(phone));
+          // Handle invalid phones - show validation message but keep the number visible
+          invalidAddedPhones.forEach(phone => this.validatePhone(phone));
 
-          // Revert to previous valid state
-          this.formGroup.get('phoneNumbers')?.setValue(previousPhones, { emitEvent: false });
+          // Mark the form control as invalid to show error message
+          this.formGroup.get('phoneNumbers')?.setErrors({ 'invalidPhone': true });
 
-          return;
+          // Keep all phone numbers (valid and invalid) in the field
+          // This allows the user to see what they typed and correct it
+          // The validation message will guide them to correct the format
+        } else {
+          // Clear any previous phone validation errors
+          const currentErrors = this.formGroup.get('phoneNumbers')?.errors;
+          if (currentErrors && currentErrors['invalidPhone']) {
+            delete currentErrors['invalidPhone'];
+            const hasOtherErrors = Object.keys(currentErrors).length > 0;
+            this.formGroup.get('phoneNumbers')?.setErrors(hasOtherErrors ? currentErrors : null);
+          }
         }
         this.formGroup.get('previousPhones')?.setValue(newPhones);
       });
@@ -1288,7 +1344,7 @@ export class InteractionModalComponent {
 
     // If some partners are missing from cache, load them individually
     console.log('🔧 Missing partners from cache, loading:', missingPartnerIds);
-    const loadObservables = missingPartnerIds.map(id => 
+    const loadObservables = missingPartnerIds.map(id =>
       this.partnerService.getPartnerById(id.toString()).pipe(
         map(partner => partner ? partner.name : null),
         catchError(error => {
@@ -1303,10 +1359,10 @@ export class InteractionModalComponent {
         // Combine found partners with loaded partners
         const validLoadedNames = loadedPartnerNames.filter(name => name !== null) as string[];
         const allPartnerNames = [...foundPartners, ...validLoadedNames];
-        
+
         console.log('🔧 Final partner names:', allPartnerNames);
         this.formGroup.get('partnerNames')?.setValue(allPartnerNames.join(', '));
-        
+
         // Trigger change detection
         this.cdr.detectChanges();
       },
@@ -1354,5 +1410,159 @@ export class InteractionModalComponent {
       .join(', ');
 
     this.formGroup.get('organizationHierarchyNames')?.setValue(orgUnitNames);
+  }
+
+  /**
+   * Triggers duplicate detection for a saved record to update duplicate information
+   */
+  private triggerDuplicateDetectionAfterSave(payload: any, updatedRecord?: any): void {
+    // Skip if no payload
+    if (!payload) {
+      console.log('Skipping duplicate detection - no payload provided');
+      return;
+    }
+
+    // Create a copy of payload for duplicate detection
+    const duplicateCheckPayload = { ...payload };
+    
+    // If there's an ID (edit scenario), ensure it's properly formatted as a number
+    // The backend SQL will use this ID to exclude the record from duplicate detection
+    if (payload.id) {
+      const numericId = parseInt(payload.id.toString(), 10);
+      if (isNaN(numericId)) {
+        console.warn('Invalid ID format, proceeding without ID exclusion:', payload.id);
+        delete duplicateCheckPayload.id;
+      } else {
+        duplicateCheckPayload.id = numericId;
+        console.log('Triggering duplicate detection for Interaction edit (excluding ID:', numericId, ')');
+      }
+    } else {
+      console.log('Triggering duplicate detection for new Interaction (no ID exclusion)');
+    }
+    
+    // Call the interaction service to detect duplicates (uses the updated SQL with ID exclusion)
+    this.interactionService.detectDuplicates(duplicateCheckPayload).subscribe({
+      next: (response: any) => {
+        const recordType = payload.id ? `existing Interaction ID ${payload.id}` : 'new Interaction';
+        console.log('Post-save duplicate detection results for', recordType, ':', response);
+        
+        // If this is an import edit, update the duplicate information
+        if (this.dialogConfig.data.isImportEdit) {
+          this.updateDuplicateInfoAfterDetection(response, payload, updatedRecord);
+        }
+      },
+      error: (error: any) => {
+        // Silent failure - don't interrupt the user's workflow
+        const recordType = payload.id ? `Interaction ID ${payload.id}` : 'new Interaction';
+        console.warn('Post-save duplicate detection failed for', recordType, ':', error);
+      }
+    });
+  }
+
+  /**
+   * Update the duplicate information in the record for import dialog refresh
+   */
+  private updateDuplicateInfoAfterDetection(response: any, payload: any, updatedRecord?: any): void {
+    if (!response) {
+      return;
+    }
+
+    // Extract duplicate information from the response
+    const duplicateInfo = response.duplicateInfo;
+    
+    if (duplicateInfo) {
+      // Parse the stringified JSON fields
+      let parsedTopDuplicate = null;
+      if (duplicateInfo.topDuplicate) {
+        parsedTopDuplicate = { ...duplicateInfo.topDuplicate };
+        
+        // Parse matchedData if it's a string
+        if (typeof duplicateInfo.topDuplicate.matchedData === 'string') {
+          try {
+            parsedTopDuplicate.matchedData = JSON.parse(duplicateInfo.topDuplicate.matchedData);
+          } catch (e) {
+            console.warn('Failed to parse matchedData:', e);
+            parsedTopDuplicate.matchedData = duplicateInfo.topDuplicate.matchedData;
+          }
+        }
+      }
+
+      // Parse duplicates if it's a string
+      let parsedDuplicates = null;
+      if (typeof duplicateInfo.duplicates === 'string') {
+        try {
+          parsedDuplicates = JSON.parse(duplicateInfo.duplicates);
+        } catch (e) {
+          console.warn('Failed to parse duplicates:', e);
+          parsedDuplicates = duplicateInfo.duplicates;
+        }
+      } else {
+        parsedDuplicates = duplicateInfo.duplicates;
+      }
+
+      // Update the record with new duplicate information
+      const updatedDuplicateInfo = {
+        isDuplicate: duplicateInfo.totalDuplicates > 0,
+        hasDuplicates: duplicateInfo.totalDuplicates > 0,
+        totalDuplicates: duplicateInfo.totalDuplicates || 0,
+        highConfidence: duplicateInfo.highConfidence || 0,
+        mediumConfidence: duplicateInfo.mediumConfidence || 0,
+        lowConfidence: duplicateInfo.lowConfidence || 0,
+        topDuplicate: parsedTopDuplicate,
+        duplicates: parsedDuplicates,
+        tooltip: duplicateInfo.totalDuplicates > 0 
+          ? `${duplicateInfo.totalDuplicates} duplicate(s) found` 
+          : 'Unique record'
+      };
+
+      // Update the record's duplicate info
+      this.updateRecordInImportDialog(updatedDuplicateInfo, updatedRecord);
+      
+      console.log('Updated duplicate info for import record:', updatedDuplicateInfo);
+    } else {
+      // No duplicates found
+      const noDuplicateInfo = {
+        isDuplicate: false,
+        hasDuplicates: false,
+        totalDuplicates: 0,
+        highConfidence: 0,
+        mediumConfidence: 0,
+        lowConfidence: 0,
+        topDuplicate: null,
+        duplicates: null,
+        tooltip: 'Unique record'
+      };
+      
+      this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);
+      
+      console.log('No duplicates found - marked as unique record');
+    }
+  }
+
+  /**
+   * Update the record in the import dialog with new duplicate information
+   */
+  private updateRecordInImportDialog(duplicateInfo: any, updatedRecord?: any): void {
+    // Try to find the import dialog service in the global scope
+    try {
+      // Use a custom event to communicate with the import dialog
+      const importRowId = updatedRecord?._importRowId || this.dialogConfig.data.record?._importRowId;
+      
+      if (importRowId) {
+        const updateEvent = new CustomEvent('update-duplicate-info', {
+          detail: {
+            importRowId: importRowId,
+            duplicateInfo: duplicateInfo
+          }
+        });
+        
+        window.dispatchEvent(updateEvent);
+        console.log('Dispatched duplicate info update event for row:', importRowId);
+      } else {
+        console.warn('No importRowId found to update duplicate info');
+      }
+    } catch (error) {
+      console.error('Error updating duplicate info in import dialog:', error);
+    }
   }
 }

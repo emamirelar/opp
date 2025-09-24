@@ -167,30 +167,29 @@ export class AdvancedSearchSavedFilterComponent implements OnInit {
     this.savedFilterService.applySavedFilter(filter.id)
       .subscribe({
         next: (response) => {
-          // First emit the filter for general handling (sorting, pagination, etc.)
-          this.filterApplied.emit(filter);
+          const filterWithCriteria = { 
+            ...filter, 
+            searchCriteria: response.searchCriteria 
+          };
+          this.filterApplied.emit(filterWithCriteria);
 
-          // Then emit criteria if it's an advanced search for step-by-step application
+          // Store the original criteria for modification tracking
           if (response.isAdvancedSearch && response.searchCriteria) {
             try {
               let criteria: SearchCriteria[] = [];
 
               // Handle both string and array formats
               if (typeof response.searchCriteria === 'string') {
-                // Parse JSON string
                 criteria = JSON.parse(response.searchCriteria);
               } else if (Array.isArray(response.searchCriteria)) {
-                // Direct array
                 criteria = response.searchCriteria;
               } else {
                 console.warn('Unexpected searchCriteria format:', response.searchCriteria);
                 return;
               }
 
-              // Emit criteria for the parent to apply one by one
+              // Store for modification tracking only
               if (criteria && criteria.length > 0) {
-                this.applyCriteria.emit(criteria);
-                // Store the original criteria to track modifications
                 this.storeOriginalCriteria(criteria);
               }
             } catch (error) {

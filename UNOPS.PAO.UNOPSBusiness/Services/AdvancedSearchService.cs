@@ -282,6 +282,17 @@ public class AdvancedSearchService
                     (EF.Property<string>(p, "PartnerApprovalReference") != null && EF.Property<string>(p, "PartnerApprovalReference").ToLower().Contains(searchLower)) ||
                     (EF.Property<string>(p, "ReasonForLevy") != null && EF.Property<string>(p, "ReasonForLevy").ToLower().Contains(searchLower)) ||
                     
+                    // Enum fields - search by string representation and human-readable text
+                    EF.Property<object>(p, "Status").ToString().ToLower().Contains(searchLower) ||
+                    EF.Property<object>(p, "PartnerApprovalStatus").ToString().ToLower().Contains(searchLower) ||
+                    (searchLower.Contains("active") && EF.Property<object>(p, "Status").ToString() == "Active") ||
+                    (searchLower.Contains("inactive") && EF.Property<object>(p, "Status").ToString() == "Inactive") ||
+                    (searchLower.Contains("draft") && EF.Property<object>(p, "Status").ToString() == "Draft") ||
+                    (searchLower.Contains("closed") && EF.Property<object>(p, "Status").ToString() == "Closed") ||
+                    (searchLower.Contains("archived") && EF.Property<object>(p, "Status").ToString() == "Archived") ||
+                    (searchLower.Contains("approved") && EF.Property<object>(p, "PartnerApprovalStatus").ToString() == "Approved") ||
+                    (searchLower.Contains("not approved") && EF.Property<object>(p, "PartnerApprovalStatus").ToString() == "NotApproved") ||
+                    
                     // Navigation properties
                     (EF.Property<object>(p, "PartnerGroup") != null && 
                      EF.Property<string>(EF.Property<object>(p, "PartnerGroup"), "Name") != null && 
@@ -311,6 +322,14 @@ public class AdvancedSearchService
                     (EF.Property<string>(c, "Department") != null && EF.Property<string>(c, "Department").ToLower().Contains(searchLower)) ||
                     (EF.Property<string>(c, "Phone") != null && EF.Property<string>(c, "Phone").ToLower().Contains(searchLower)) ||
                     (EF.Property<string>(c, "Mobile") != null && EF.Property<string>(c, "Mobile").ToLower().Contains(searchLower)) ||
+                    
+                    // Enum fields - search by string representation and human-readable text
+                    EF.Property<object>(c, "Status").ToString().ToLower().Contains(searchLower) ||
+                    (searchLower.Contains("active") && EF.Property<object>(c, "Status").ToString() == "Active") ||
+                    (searchLower.Contains("inactive") && EF.Property<object>(c, "Status").ToString() == "Inactive") ||
+                    (searchLower.Contains("draft") && EF.Property<object>(c, "Status").ToString() == "Draft") ||
+                    (searchLower.Contains("closed") && EF.Property<object>(c, "Status").ToString() == "Closed") ||
+                    (searchLower.Contains("archived") && EF.Property<object>(c, "Status").ToString() == "Archived") ||
                     
                     // Partner fields
                     (EF.Property<object>(c, "Partner") != null && 
@@ -1342,12 +1361,12 @@ public class AdvancedSearchService
     }
 
     /// <summary>
-    /// Convert to PascalCase
+    /// Convert to PascalCase (capitalize first letter only, preserve the rest)
     /// </summary>
     private string ConvertToPascalCase(string input)
     {
         if (string.IsNullOrEmpty(input)) return input;
-        return char.ToUpper(input[0]) + input.Substring(1).ToLower();
+        return char.ToUpper(input[0]) + input.Substring(1);
     }
 
     /// <summary>

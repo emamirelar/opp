@@ -261,7 +261,33 @@ public class Partner : ModifiableDeletableEntity
     /// </summary>
     public bool HasMandatoryFieldsForActivation()
     {
-        return !string.IsNullOrWhiteSpace(Name);
+        return !string.IsNullOrWhiteSpace(Name) &&
+               !string.IsNullOrWhiteSpace(PartnerShortDescription) &&
+               PartnerCategoryId.HasValue && PartnerCategoryId.Value > 0 &&
+               PartnerGroupId.HasValue && PartnerGroupId.Value > 0 &&
+               LiaisonOfficeId.HasValue && LiaisonOfficeId.Value > 0;
+    }
+
+    /// <summary>
+    /// Gets a list of missing mandatory fields for activation
+    /// </summary>
+    public List<string> GetMissingMandatoryFieldsForActivation()
+    {
+        var missingFields = new List<string>();
+        
+        if (string.IsNullOrWhiteSpace(Name))
+            missingFields.Add("Name");
+            
+        if (string.IsNullOrWhiteSpace(PartnerShortDescription))
+            missingFields.Add("Partner Short Description");
+            
+        if (!PartnerGroupId.HasValue || PartnerGroupId.Value <= 0)
+            missingFields.Add("Partner Group");
+            
+        if (!LiaisonOfficeId.HasValue || LiaisonOfficeId.Value <= 0)
+            missingFields.Add("Liaison Office");
+            
+        return missingFields;
     }
     
     /// <summary>
@@ -319,15 +345,19 @@ public class Partner : ModifiableDeletableEntity
     /// </summary>
     public void ActivatePartner()
     {
-        if (HasMandatoryFieldsForActivation() && Status == EntityStatus.Draft)
+        if (Status != EntityStatus.Draft)
         {
-            Status = EntityStatus.Active;
-            // Partner uses consistent ID regardless of status
+            throw new InvalidOperationException("Partner cannot be activated. Only Draft partners can be activated.");
         }
-        else
+        
+        var missingFields = GetMissingMandatoryFieldsForActivation();
+        if (missingFields.Any())
         {
-            throw new InvalidOperationException("Partner cannot be activated. Check mandatory fields and status.");
+            throw new InvalidOperationException($"Partner cannot be activated. The following mandatory fields are missing: {string.Join(", ", missingFields)}.");
         }
+        
+        Status = EntityStatus.Active;
+        // Partner uses consistent ID regardless of status
     }
     
     /// <summary>

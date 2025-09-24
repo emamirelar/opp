@@ -303,6 +303,7 @@
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Répondre aux entités éligibles' requis",
         "entityMeetEligibleCriteriaRequired": "'Répondre aux critères d'éligibilité' requis",
+        "activationValidationRequired": "Les champs avec une astérisque (*) doivent être renseignés pour pouvoir activer le partenaire.",
         "noRecordsFound": "Aucun enregistrement trouvé.",
         "noPartnerGroups": "Aucun groupe de partenaire trouvé",
         "welcomeTitle": "Bienvenue sur Opportunity+",
@@ -320,7 +321,8 @@
         "permissionDenied": "Autorisation refusée",
         "recordDeletedSuccessfully": "Enregistrement supprimé avec succès !",
         "failedToDeleteRecord": "Échec de la suppression de l'enregistrement",
-        "anErrorOccurred": "Une erreur s'est produite"
+        "anErrorOccurred": "Une erreur s'est produite",
+        "invalidPhoneNumberFormat": "L'entrée ne correspond pas à un numéro de téléphone (format: +33123456789)"
     },
     "errors": {
         "failedToLoad": "Erreur lors du chargement",
@@ -482,7 +484,9 @@
         "partnerRequired": "Le partenaire doit être saisi.",
         "lastNameRequired": "Le nom de famille doit être saisi.",
         "titleRequired": "Le titre doit être saisi.",
-        "emailRequired": "L'email doit être saisi."
+        "emailRequired": "L'email doit être saisi.",
+        "reasonRequired": "La raison est requise.",
+        "reasonForLevyRequired": "La raison du prélèvement est requise lorsque le statut du prélèvement partenaire est 'Ne s'applique pas' ou 'Potentiellement non applicable'."
     },
     "loading": {
         "contactData": "Chargement des données de contact...",

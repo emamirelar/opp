@@ -13,6 +13,8 @@ using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
 using static UNOPS.PAO.UNOPSBusiness.Services.AdvancedSearchService;
 
 namespace UNOPS.PAO.Presentation.Controllers;
@@ -703,90 +705,113 @@ public class ContactController : BaseController
     }
 
     /// <summary>
-    /// Performs semantic search on contacts using AI embeddings to find similar contacts based on natural language queries.
+    /// Detects duplicates for an existing contact record after save operations
     /// </summary>
-    /// <param name="query">Natural language search query</param>
-    /// <param name="threshold">Similarity threshold (0.0 to 1.0, default: 0.7)</param>
-    /// <param name="limit">Maximum number of results to return (default: 10)</param>
-    /// <example_uses>
-    /// Find contacts similar to John Doe
-    /// Search for program managers in healthcare
-    /// Find technical leads in engineering
-    /// Search for contacts in the education sector
-    /// Find executives similar to CEO
-    /// </example_uses>
-    /// <when_to_use>Use this when the user wants to find contacts using natural language queries or semantic similarity.</when_to_use>
-    /// <returns>List of similar contacts with similarity scores</returns>
-    [HttpGet(APIDictionary.Contact + "/deepSearch")]
+    /// <param name="req">Contact data to check for duplicates</param>
+    /// <returns>Duplicate detection results</returns>
+    [HttpPost(APIDictionary.Contact + "/detect-duplicates")]
     [AccessControlled(EntityTypes.Contact, "read")]
-    public async Task<ActionResult> DeepSearch(
-        [FromQuery] string query,
-        [FromQuery] float threshold = 0.7f,
-        [FromQuery] int limit = 10)
+    public async Task<ActionResult> DetectDuplicatesForContact([FromBody] dynamic req)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(query))
+            // Proper null check for dynamic type
+            if (req is null)
             {
-                return BadRequest(new { error = "Search query is required" });
+                return BadRequest("Invalid request.");
             }
 
-            if (threshold < 0.0f || threshold > 1.0f)
+            // Convert the dynamic request to a proper object for duplicate detection
+            object requestData;
+            if (req is JsonElement jsonElement)
             {
-                return BadRequest(new { error = "Threshold must be between 0.0 and 1.0" });
+                // Deserialize JsonElement to JObject for proper handling
+                var jsonString = jsonElement.GetRawText();
+                requestData = JObject.Parse(jsonString);
+            }
+            else if (req is JObject)
+            {
+                requestData = req;
+            }
+            else
+            {
+                // Try to serialize and deserialize to ensure proper format
+                var jsonString = JsonConvert.SerializeObject(req);
+                requestData = JObject.Parse(jsonString);
             }
 
-            if (limit <= 0 || limit > 100)
-            {
-                return BadRequest(new { error = "Limit must be between 1 and 100" });
-            }
-
-            // Generate embedding for the search query
-            var embedding = await _aiContextualService.CreateEmbeddingForText(query);
-            
-            // Perform semantic search
-            var searchResults = await _aiContextualService.ExecuteEmbeddingSearchMultiple(
+            var duplicateResult = await _aiContextualService.DetectDuplicateForSingleRecordAsync(
                 "Contact", 
-                embedding, 
-                threshold, 
-                limit
+                requestData, 
+                0.5 // Standard sensitivity for post-save detection
             );
-
-            // Get the actual contact data for the found IDs
-            var contacts = new List<object>();
-            foreach (var result in searchResults)
+            
+            // Extract ID from the converted request data
+            int? recordId = null;
+            if (requestData is JObject jObj && jObj.ContainsKey("id"))
             {
-                try
-                {
-                    var contact = await _manager.GetContactAsync(User, result.EntityId);
-                    if (contact != null)
-                    {
-                        contacts.Add(new
-                        {
-                            contact = contact,
-                            similarityScore = result.Score,
-                            searchType = result.SearchType
-                        });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to retrieve contact {ContactId} from search results", result.EntityId);
-                }
+                int.TryParse(jObj["id"]?.ToString(), out int id);
+                recordId = id > 0 ? id : null;
             }
 
-            return Ok(new
-            {
-                query = query,
-                threshold = threshold,
-                totalResults = searchResults.Count,
-                results = contacts
+            return Ok(new {
+                success = true,
+                entityType = "Contact",
+                recordId = recordId,
+                duplicateInfo = duplicateResult?.HasDuplicates == true ? new {
+                    totalDuplicates = duplicateResult.TotalDuplicates,
+                    highConfidence = duplicateResult.HighConfidence,
+                    mediumConfidence = duplicateResult.MediumConfidence,
+                    lowConfidence = duplicateResult.LowConfidence,
+                    topDuplicate = duplicateResult.TopDuplicate != null ? new {
+                        entityId = duplicateResult.TopDuplicate.EntityId,
+                        entityType = duplicateResult.TopDuplicate.EntityType,
+                        score = duplicateResult.TopDuplicate.Score,
+                        matchReason = duplicateResult.TopDuplicate.MatchReason,
+                        searchType = duplicateResult.TopDuplicate.SearchType,
+                        matchedData = duplicateResult.TopDuplicate.MatchedData != null ? 
+                            JsonConvert.SerializeObject(duplicateResult.TopDuplicate.MatchedData) : null
+                    } : null,
+                    duplicates = duplicateResult.AllDuplicates != null ? 
+                        JsonConvert.SerializeObject(duplicateResult.AllDuplicates) : null
+                } : null
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error performing deep search for contacts with query: {Query}", query);
-            return StatusCode(500, new { error = "An error occurred while performing the semantic search" });
+            // Extract ID for logging
+            var idForLogging = "unknown";
+            try
+            {
+                if (req is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+                {
+                    var jsonString = jsonElement.GetRawText();
+                    var jObj = JObject.Parse(jsonString);
+                    if (jObj.ContainsKey("id"))
+                    {
+                        idForLogging = jObj["id"]?.ToString() ?? "unknown";
+                    }
+                }
+                else if (req is JObject jObj && jObj.ContainsKey("id"))
+                {
+                    idForLogging = jObj["id"]?.ToString() ?? "unknown";
+                }
+            }
+            catch
+            {
+                // Ignore errors in ID extraction for logging
+            }
+
+            _logger.LogWarning(ex, "Post-save duplicate detection failed for Contact ID {ContactId}", idForLogging);
+            // Return success with no duplicates rather than failing - this is a background operation
+            return Ok(new {
+                success = true,
+                entityType = "Contact",
+                recordId = (object)null,
+                duplicateInfo = (object)null,
+                warning = "Duplicate detection temporarily unavailable"
+            });
         }
     }
+
 }

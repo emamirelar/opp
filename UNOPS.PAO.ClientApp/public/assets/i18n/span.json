@@ -272,7 +272,8 @@
         "permissionDenied": "Permiso denegado",
         "recordDeletedSuccessfully": "¡Registro eliminado exitosamente!",
         "failedToDeleteRecord": "Error al eliminar el registro",
-        "anErrorOccurred": "Ocurrió un error"
+        "anErrorOccurred": "Ocurrió un error",
+        "invalidPhoneNumberFormat": "La entrada no coincide con un formato de número de teléfono (+33123456789)"
     },
     "errors": {
         "failedToLoad": "Error al cargar",
@@ -417,7 +418,9 @@
         "partnerRequired": "El socio debe ser ingresado.",
         "lastNameRequired": "El apellido debe ser ingresado.",
         "titleRequired": "El título debe ser ingresado.",
-        "emailRequired": "El email debe ser ingresado."
+        "emailRequired": "El email debe ser ingresado.",
+        "reasonRequired": "La razón es obligatoria.",
+        "reasonForLevyRequired": "La razón para la tasa es requerida cuando el estado de la tasa del socio es 'No se Aplica' o 'Potencialmente No se Aplica'."
     },
     "loading": {
         "contactData": "Cargando datos del contacto...",

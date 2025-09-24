@@ -890,6 +890,15 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         {
             throw new BusinessException("Partner Name is required for creation");
         }
+
+        // Validate Partner Levy business rules
+        if (model.PartnerLevyStatus == "DoesNotApply" || model.PartnerLevyStatus == "PotentiallyNotApplied")
+        {
+            if (string.IsNullOrWhiteSpace(model.ReasonForLevy))
+            {
+                throw new BusinessException("Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'.");
+            }
+        }
         
         // Validate ErpDimValue uniqueness if provided
         if (model.ErpDimValue.HasValue)
@@ -1042,6 +1051,15 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         if (entity == null)
         {
             return null;
+        }
+
+        // Validate Partner Levy business rules
+        if (model.PartnerLevyStatus == "DoesNotApply" || model.PartnerLevyStatus == "PotentiallyNotApplied")
+        {
+            if (string.IsNullOrWhiteSpace(model.ReasonForLevy))
+            {
+                throw new BusinessException("Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'.");
+            }
         }
 
         // Validate ErpDimValue uniqueness if provided and different from current value
@@ -1748,41 +1766,20 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     }
 
     /// <summary>
-    /// Performs comprehensive smart search across Partners and all related entities.
-    /// Searches through partner information, contacts, partner groups, liaison offices, 
-    /// organization units, and applies intelligent ranking based on relevance.
+    /// Performs smart search for partners using AI-powered search capabilities
     /// </summary>
-    /// <param name="user">The user performing the search (for RBAC)</param>
-    /// <param name="searchText">Text to search across all partner and related entity fields</param>
-    /// <param name="includeInactive">Whether to include inactive/deleted partners (default: false)</param>
-    /// <param name="maxResults">Maximum number of results to return (default: 50)</param>
-    /// <param name="request">Pagination request for final result formatting</param>
-    /// <returns>Paginated response with ranked search results and metadata</returns>
-    public async Task<PaginationResponse<PartnerModel>> PerformSmartSearchAsync(
-        ClaimsPrincipal user,
-        string searchText,
-        bool includeInactive = false,
+    public async Task<PaginationResponse<PartnerModel>> SmartSearchPartnersAsync(
+        ClaimsPrincipal user, 
+        string searchText, 
         int maxResults = 50,
-        PaginationRequest? request = null)
+        PaginationRequest request = null)
     {
-        _logger?.LogInformation("Starting smart search for: '{SearchText}' (includeInactive: {IncludeInactive}, maxResults: {MaxResults})", 
-            searchText, includeInactive, maxResults);
-
         try
         {
-            // Use the base smart search functionality
-            var smartSearchResult = await PerformSmartSearchAsync<UNOPSPartner>(
-                searchText, 
-                includeInactive, 
-                maxResults);
+            // Perform smart search to get accessible partners
+            var smartSearchResult = await PerformSmartSearchAsync<UNOPSPartner>(searchText, false, maxResults);
+            var accessiblePartners = await FilterAccessiblePartners(smartSearchResult.Results.Select(r => r.Entity).ToList(), user);
 
-            // Extract just the Partner entities from the smart search results
-            var partnerEntities = smartSearchResult.Results.Select(r => r.Entity).ToList();
-
-            // Apply RBAC filtering
-            var accessiblePartners = await FilterAccessiblePartners(partnerEntities, user);
-
-            // Map to PartnerModels with full permissions
             var partnerModels = new List<PartnerModel>();
             foreach (var partner in accessiblePartners)
             {
@@ -1828,6 +1825,19 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
                 TotalPages = 0
             };
         }
+    }
+
+    /// <summary>
+    /// Performs smart search for partners using AI-powered search capabilities
+    /// </summary>
+    public async Task<PaginationResponse<PartnerModel>> PerformSmartSearchAsync(
+        ClaimsPrincipal user, 
+        string searchText, 
+        bool includeInactive = false,
+        int maxResults = 50,
+        PaginationRequest request = null)
+    {
+        return await SmartSearchPartnersAsync(user, searchText, maxResults, request);
     }
 
     /// <summary>

@@ -40,7 +40,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "Status != 2 && Status != 4", "CanDelete": ""}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "Status != 2 && Status != 4", "CanDelete": "Status == 3"}'
 );
 
 -- Partnerships User role permissions for Partner
@@ -59,9 +59,9 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     true,
-    false,
+    true,
     '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "Name", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerFocalPointUserId", "PartnerLiasionOfficeId", "PartnerGroupId", "OrganizationHierarchyIds", "OrganizationUnitRelationships"], "CanDelete": []}',
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && (OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)", "CanDelete": ""}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && (OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)", "CanDelete": "Status == 3 && (OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)"}'
 );
 
 -- Org Unit Admin role permissions for Partner (NO ACCESS)
@@ -80,9 +80,9 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     true,
-    false,
-    null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+    true,
+    '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "Name", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerFocalPointUserId", "PartnerLiasionOfficeId", "PartnerGroupId", "OrganizationHierarchyIds", "OrganizationUnitRelationships"], "CanDelete": []}',
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && (OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)", "CanDelete": "Status == 3 && (OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)"}'
 );
 
 -- Contact Entity Permissions
@@ -168,7 +168,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "Partner != null && Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3)", "CanUpdate": "Partner != null && Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3)", "CanDelete": "Partner != null && Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3)"}'
+    '{"CanRead": "", "CanCreate": "Partner != null && (Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)", "CanUpdate": "Partner != null && (Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)", "CanDelete": "Partner != null && (Partner.OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId)"}'
 );
 
 -- PartnerTree Entity Permissions
@@ -186,7 +186,7 @@ INSERT INTO public."EntityPermissions" (
 ) VALUES (
     'PartnerTree',
     'UNOPS_GEN_USER',
-    false,
+    true,
     false,
     false,
     false,
@@ -228,7 +228,7 @@ INSERT INTO public."EntityPermissions" (
 ) VALUES (
     'PartnerTree',
     'PARTNER_USER',
-    true,
+    false,
     false,
     false,
     false,
@@ -249,7 +249,7 @@ INSERT INTO public."EntityPermissions" (
 ) VALUES (
     'PartnerTree',
     'ORG_UNIT_ADMIN',
-    false,
+    true,
     false,
     false,
     false,
@@ -319,7 +319,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "(OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || InteractionUsers.Any(iu => iu.UserId == @currentUserId)) || CreatedBy == @currentUserId", "CanDelete": "OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || CreatedBy == @currentUserId"}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || InteractionUsers.Any(iu => iu.UserId == @currentUserId) || CreatedBy == @currentUserId", "CanDelete": "OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || InteractionUsers.Any(iu => iu.UserId == @currentUserId) || CreatedBy == @currentUserId"}'
 );
 
 -- Org Unit Admin role permissions for Interaction
@@ -340,7 +340,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || InteractionUsers.Any(iu => iu.UserId == @currentUserId)", "CanDelete": "OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3)"}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || InteractionUsers.Any(iu => iu.UserId == @currentUserId) || CreatedBy == @currentUserId", "CanDelete": "OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3) || InteractionUsers.Any(iu => iu.UserId == @currentUserId) || CreatedBy == @currentUserId"}'
 );
 
 -- UserManagement Entity Permissions

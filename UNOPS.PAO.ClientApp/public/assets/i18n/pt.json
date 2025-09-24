@@ -268,7 +268,8 @@
         "permissionDenied": "Permissão negada",
         "recordDeletedSuccessfully": "Registro excluído com sucesso!",
         "failedToDeleteRecord": "Falha ao excluir registro",
-        "anErrorOccurred": "Ocorreu um erro"
+        "anErrorOccurred": "Ocorreu um erro",
+        "invalidPhoneNumberFormat": "A entrada não corresponde a um formato de número de telefone (+33123456789)"
     },
     "label.interaction.contact": "Contato",
     "errors": {
@@ -422,7 +423,9 @@
         "partnerRequired": "O parceiro deve ser inserido.",
         "lastNameRequired": "O sobrenome deve ser inserido.",
         "titleRequired": "O título deve ser inserido.",
-        "emailRequired": "O email deve ser inserido."
+        "emailRequired": "O email deve ser inserido.",
+        "reasonRequired": "Motivo é obrigatório.",
+        "reasonForLevyRequired": "Motivo para Taxa é obrigatório quando o status da Taxa do Parceiro é 'Não se Aplica' ou 'Potencialmente Não se Aplica'."
     },
     "loading": {
         "contactData": "Carregando dados do contato...",

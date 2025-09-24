@@ -447,7 +447,7 @@ export class PartnerViewComponent implements OnInit {
 
   /**
    * Check if current user can edit the partner
-   * Rules: 
+   * Rules:
    * - User must have update permissions
    * - If partner is approved, only admin users can edit
    * - If partner is not approved, regular users with permissions can edit
@@ -455,16 +455,16 @@ export class PartnerViewComponent implements OnInit {
   canEditPartner = computed(() => {
     const hasUpdatePermission = this.recordPermissions().permissions.canUpdate;
     const isApproved = this.recordData().partnerApprovalStatus === 'Approved';
-    
+
     if (!hasUpdatePermission) {
       return false;
     }
-    
+
     // If partner is approved, only admin can edit
     if (isApproved) {
       return this.isAdmin();
     }
-    
+
     // If partner is not approved, any user with update permission can edit
     return true;
   });
@@ -479,7 +479,7 @@ export class PartnerViewComponent implements OnInit {
    */
   handleApprovalClick() {
     console.log('Approval button clicked for partner:', this.recordData().name);
-    
+
     // Show confirmation dialog
     this.confirmationService.confirm({
       message: `Are you sure you want to approve the partner "${this.recordData().name}"? This action cannot be undone.`,
@@ -527,11 +527,21 @@ export class PartnerViewComponent implements OnInit {
    */
   handleActivateClick() {
     console.log('Activate button clicked for partner:', this.recordData().name);
-    
+
+    // Check if required fields are missing before proceeding
+    const partner = this.recordData();
+    const missingFields = this.checkRequiredFieldsForActivation(partner);
+
+    if (missingFields.length > 0) {
+      // Open edit dialog with activation validation mode
+      this.openEditDialogForActivation();
+      return;
+    }
+
     // Show confirmation dialog
     this.confirmationService.confirm({
-      message: this.translateService.instant('message.confirmPartnerActivation', { 
-        partnerName: this.recordData().name 
+      message: this.translateService.instant('message.confirmPartnerActivation', {
+        partnerName: this.recordData().name
       }),
       header: this.translateService.instant('message.confirmActivation'),
       icon: 'pi pi-exclamation-triangle',
@@ -552,9 +562,9 @@ export class PartnerViewComponent implements OnInit {
     this.partnerService.activatePartner(this.recordId).subscribe({
       next: (result) => {
         console.log('Partner activated successfully:', result);
-        this.feedbackDialogService.showSuccessToast({ 
-          detail: this.translateService.instant('message.partnerActivatedSuccessfully', { 
-            partnerName: this.recordData().name 
+        this.feedbackDialogService.showSuccessToast({
+          detail: this.translateService.instant('message.partnerActivatedSuccessfully', {
+            partnerName: this.recordData().name
           })
         });
         // Reload partner details to show updated status and permissions
@@ -562,7 +572,7 @@ export class PartnerViewComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error activating partner:', error);
-        this.feedbackDialogService.showErrorToast({ 
+        this.feedbackDialogService.showErrorToast({
           detail: this.translateService.instant('message.failedToActivatePartner')
         });
       }
@@ -652,7 +662,7 @@ export class PartnerViewComponent implements OnInit {
   // Note: To document buttons/actions, add @uiButton JSDoc comments above existing methods
   // Example for documenting existing methods:
   // /**
-  //  * @uiButton edit_partner  
+  //  * @uiButton edit_partner
   //  * @description Switches to edit mode for partner information
   //  * @label Edit Partner
   //  * @icon pi pi-pencil
@@ -661,7 +671,63 @@ export class PartnerViewComponent implements OnInit {
   //  */
   // existingEditMethod() { ... }
 
+  /**
+   * Check if required fields for activation are missing
+   */
+  private checkRequiredFieldsForActivation(partner: any): string[] {
+    const missingFields: string[] = [];
 
+    if (!partner.name) {
+      missingFields.push('name');
+    }
+    if (!partner.partnerShortDescription) {
+      missingFields.push('partnerShortDescription');
+    }
+    if (!partner.partnerCategoryId) {
+      missingFields.push('partnerCategoryId');
+    }
+    if (!partner.partnerGroupId) {
+      missingFields.push('partnerGroupId');
+    }
+    if (!partner.liaisonOfficeId) {
+      missingFields.push('liaisonOfficeId');
+    }
+
+    return missingFields;
+  }
+
+  /**
+   * Opens the edit dialog in activation validation mode
+   */
+  private openEditDialogForActivation() {
+    const requestingSaveSignal = signal<boolean>(false);
+
+    const ref = this.dialogService.open(PartnerEditDialogComponent, {
+      header: this.translateService.instant('title.partnerTitles.completeRequiredFields'),
+      width: '90vw',
+      style: { maxWidth: '800px' },
+      closable: true,
+      templates: {
+        footer: PartnerEditDialogFooterComponent
+      },
+      data: {
+        mode: 'edit',
+        record: this.recordData(),
+        validationMode: 'activate',
+        requestingSaveSignal
+      }
+    });
+
+    ref.onClose.subscribe((result: any) => {
+      if (result === "saved" || (result && result.id)) {
+        // Partner was updated, refresh the data and try activation again
+        this._loadRecordDetails();
+      }
+    });
+  }
+
+
+  
   /**
    * Convert recordId string to number for use with BaseEngagementListComponent
    */

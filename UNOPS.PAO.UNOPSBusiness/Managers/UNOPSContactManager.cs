@@ -1215,6 +1215,20 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 new() { Field = "department", DisplayName = "label.contact.department", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "phone", DisplayName = "label.contact.phone", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
                 new() { Field = "mobile", DisplayName = "label.contact.mobile", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { 
+                    Field = "status", 
+                    DisplayName = "label.common.status", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Inactive", Label = "enums.entityStatus.inactive" },
+                        new() { Value = "Active", Label = "enums.entityStatus.active" },
+                        new() { Value = "Closed", Label = "enums.entityStatus.closed" },
+                        new() { Value = "Draft", Label = "enums.entityStatus.draft" },
+                        new() { Value = "Archived", Label = "enums.entityStatus.archived" }
+                    }
+                },
                 new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
 
                 // Partner relationship fields - using translation keys

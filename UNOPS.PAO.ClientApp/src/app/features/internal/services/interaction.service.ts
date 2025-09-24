@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {HttpClient, HttpResponse, HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Interaction } from '../models/interaction.model';
+import { ImportDialogService } from '../../../common/reusables/components/import/dialog/import-dialog.service';
 import { PaginationResponse } from '../../../common/models/pagination-response.model';
 import {PaginationParams, toHttpParams} from '../../../common/models/pagination-params.model';
 import { InteractionFilterParams } from '../models/interaction-filter-params.model';
@@ -17,7 +18,7 @@ export class InteractionService {
     return this.apiUrl;
   }
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private importDialogService: ImportDialogService) {}
 
   getAll(queryParams: InteractionFilterParams): Observable<HttpResponse<PaginationResponse<Interaction>>> {
     return this.http.get<PaginationResponse<Interaction>>(`${this.apiUrl}`, {
@@ -44,5 +45,13 @@ export class InteractionService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Detects duplicates for interaction records using the centralized ImportDialogService method
+   */
+  detectDuplicates(interactionData: any): Observable<any> {
+    // Use the centralized duplicate detection method from ImportDialogService
+    return this.importDialogService.detectDuplicatesForEntity(interactionData, 'interaction');
   }
 }

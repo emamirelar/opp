@@ -449,6 +449,7 @@
   "message": {
     "entityMeetEligibleEntitiesRequired": "'Meet eligible entities' required",
     "entityMeetEligibleCriteriaRequired": "'Meet eligible criteria' required",
+    "activationValidationRequired": "Fields marked with an asterisk (*) must be completed to activate the partner.",
     "noRecordsFound": "No records found.",
     "noPartnerGroups": "No partner groups found",
     "proposalRequirements": "The proposal cannot be submitted until all required fields are completed.",
@@ -486,6 +487,7 @@
     "recordDeletedSuccessfully": "Record deleted successfully!",
     "failedToDeleteRecord": "Failed to delete record",
     "anErrorOccurred": "An error occurred",
+    "invalidPhoneNumberFormat": "The entry does not match a phone number format (+33123456789)",
     "partnerActivatedSuccessfully": "Partner \"{{partnerName}}\" has been activated successfully.",
     "failedToActivatePartner": "Failed to activate partner. Please try again.",
     "confirmPartnerActivation": "Are you sure you want to activate the partner \"{{partnerName}}\"?",
@@ -587,7 +589,8 @@
     "lastNameRequired": "Last Name must be entered.",
     "titleRequired": "Title must be entered.",
     "emailRequired": "Email must be entered.",
-    "reasonRequired": "Reason is required."
+    "reasonRequired": "Reason is required.",
+    "reasonForLevyRequired": "Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'."
   },
   "loading": {
     "contactData": "Loading contact data...",
@@ -674,23 +677,27 @@
     "myOfficeOnly": "My Office Only",
     "myOfficeTooltip": "Filter results to show only data from your organizational unit"
   },
-  "enums": {
-    "interactionType": {
-      "email": "Email",
-      "chat": "Chat",
-      "call": "Call",
-      "virtualMeeting": "Virtual Meeting",
-      "inPersonMeeting": "In-Person Meeting",
-      "other": "Other"
-    },
-    "entityStatus": {
-      "inactive": "Inactive",
-      "active": "Active",
-      "closed": "Closed",
-      "draft": "Draft",
-      "archived": "Archived"
-    }
-  },
+        "enums": {
+            "interactionType": {
+                "email": "Email",
+                "chat": "Chat",
+                "call": "Call",
+                "virtualMeeting": "Virtual Meeting",
+                "inPersonMeeting": "In-Person Meeting",
+                "other": "Other"
+            },
+            "entityStatus": {
+                "inactive": "Inactive",
+                "active": "Active",
+                "closed": "Closed",
+                "draft": "Draft",
+                "archived": "Archived"
+            },
+            "partnerApprovalStatus": {
+                "notApproved": "Not Approved",
+                "approved": "Approved"
+            }
+        },
   "savedFilters": {
     "selectFilter": "Select filter",
     "save": "Save",

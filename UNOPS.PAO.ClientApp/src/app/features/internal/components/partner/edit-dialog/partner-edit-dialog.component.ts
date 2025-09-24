@@ -171,6 +171,7 @@ export class PartnerEditDialogComponent implements OnInit {
   showValidationFailedError = signal<boolean>(false);
   isLoading = signal<boolean>(false);
   isAdmin = signal<boolean>(false);
+  validationMode = signal<'save' | 'activate'>('save');
   partnerLevyStatusValue = signal<string>('');
   allPartnerStatusData = this.cachedDataService.allPartnerStatus;
   allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
@@ -182,7 +183,6 @@ export class PartnerEditDialogComponent implements OnInit {
   allPartnerScopesData = this.cachedDataService.allPartnerScope;
   // Backend already filters for active organization units
   allOrganizationUnitsData = this.cachedDataService.allOrganizationUnits;
-  allPartnerCategoriesData = this.cachedDataService.getPartnerCategoriesForSelect;
   allLiaisonOfficesData = this.cachedDataService.allLiaisonOffices;
   allUsersData = this.cachedDataService.allUsers;
   userSearchService = inject(UserSearchService);
@@ -222,6 +222,22 @@ export class PartnerEditDialogComponent implements OnInit {
   // Check if reason field should be required (when approval fields are visible and enabled)
   reasonFieldRequired = computed(() => {
     return this.showApprovalFields() && this.approvalFieldsEnabled();
+  });
+
+  // Check which fields should show asterisks based on validation mode
+  requiredFieldsForActivate = computed(() => {
+    const mode = this.validationMode();
+    return mode === 'activate' ? {
+      name: true,
+      partnerShortDescription: true,
+      partnerGroupId: true,
+      liaisonOfficeId: true
+    } : {
+      name: true,
+      partnerShortDescription: false,
+      partnerGroupId: false,
+      liaisonOfficeId: false
+    };
   });
 
   // Status management constants and computed properties
@@ -308,6 +324,12 @@ export class PartnerEditDialogComponent implements OnInit {
       }
     });
 
+    // Set validation mode based on dialog config
+    effect(() => {
+      const mode = this.dialogConfig.data?.validationMode || 'save';
+      this.validationMode.set(mode);
+    });
+
     // Effect to handle conditional validation for reason field
     effect(() => {
       const shouldRequireReason = this.showApprovalFields() && this.approvalFieldsEnabled();
@@ -320,6 +342,110 @@ export class PartnerEditDialogComponent implements OnInit {
           reasonControl.clearValidators();
         }
         reasonControl.updateValueAndValidity();
+      }
+    });
+
+    // Effect to handle conditional validation for reasonForLevy field
+    effect(() => {
+      const shouldRequireReasonForLevy = this.shouldShowReasonForLevy();
+      const reasonForLevyControl = this.formGroup?.get('reasonForLevy');
+
+      if (reasonForLevyControl) {
+        if (shouldRequireReasonForLevy) {
+          reasonForLevyControl.setValidators([Validators.required]);
+        } else {
+          reasonForLevyControl.clearValidators();
+        }
+        reasonForLevyControl.updateValueAndValidity();
+      }
+    });
+
+
+    // Effect to handle disabled state for all approval fields
+    effect(() => {
+      const shouldEnableFields = this.approvalFieldsEnabled();
+      const approvalFieldNames = [
+        'dueDiligenceRequired',
+        'dueDiligenceApproval',
+        'dueDiligenceApprovalDate',
+        'dueDiligenceExpiryDate',
+        'partnerApprovalDate',
+        'partnerApprovalReference',
+        'partnerLevyStatus',
+        'reasonForLevy',
+        'levyTreatment',
+        'keyGlobalPartner',
+        'unAndStateEntity',
+        'unSecretariatPartner',
+        'pooledFund',
+        'canCreateNewOpportunities',
+        'reasonForNoNewOpportunity'
+      ];
+
+      approvalFieldNames.forEach(fieldName => {
+        const control = this.formGroup?.get(fieldName);
+        if (control) {
+          if (shouldEnableFields) {
+            control.enable({ emitEvent: false });
+          } else {
+            control.disable({ emitEvent: false });
+          }
+        }
+      });
+    });
+
+    // Effect to handle validation mode changes
+    effect(() => {
+      const mode = this.validationMode();
+
+      if (mode === 'activate') {
+        // Set validators for activate mode
+        const shortDescControl = this.formGroup?.get('partnerShortDescription');
+        const groupControl = this.formGroup?.get('partnerGroupId');
+        const liaisonControl = this.formGroup?.get('liaisonOfficeId');
+
+        if (shortDescControl) {
+          shortDescControl.setValidators([Validators.required]);
+          shortDescControl.updateValueAndValidity();
+        }
+        if (groupControl) {
+          groupControl.setValidators([Validators.required]);
+          groupControl.updateValueAndValidity();
+        }
+        if (liaisonControl) {
+          liaisonControl.setValidators([Validators.required]);
+          liaisonControl.updateValueAndValidity();
+        }
+      } else if (mode === 'save') {
+        // Clear validators for save mode (except name which is always required)
+        const shortDescControl = this.formGroup?.get('partnerShortDescription');
+        const groupControl = this.formGroup?.get('partnerGroupId');
+        const liaisonControl = this.formGroup?.get('liaisonOfficeId');
+
+        if (shortDescControl) {
+          shortDescControl.clearValidators();
+          shortDescControl.updateValueAndValidity();
+        }
+        if (groupControl) {
+          groupControl.clearValidators();
+          groupControl.updateValueAndValidity();
+        }
+        if (liaisonControl) {
+          liaisonControl.clearValidators();
+          liaisonControl.updateValueAndValidity();
+        }
+      }
+    });
+
+    // Effect to handle partnerGroupId enable/disable based on admin status
+    effect(() => {
+      const partnerGroupControl = this.formGroup?.get('partnerGroupId');
+      if (partnerGroupControl) {
+        if (this.isAdmin()) {
+          partnerGroupControl.enable();
+        } else {
+          partnerGroupControl.disable();
+        }
       }
     });
   }
@@ -410,6 +536,16 @@ export class PartnerEditDialogComponent implements OnInit {
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';
+
+        // Check if recordId is available from dialog data (import edit scenario)
+        if (!this.recordId && this.dialogConfig.data?.record?.recordId) {
+          this.recordId = this.dialogConfig.data.record.recordId;
+        }
+        // Also check for id field in the record data
+        if (!this.recordId && this.dialogConfig.data?.record?.id) {
+          this.recordId = String(this.dialogConfig.data.record.id);
+        }
+
         if (this.recordId != '') {
           this.isLoading.set(true);
           this._loadRecordDetails();
@@ -569,7 +705,10 @@ export class PartnerEditDialogComponent implements OnInit {
 
 
   handleSave() {
-    if (!this.formGroup.invalid) {
+    // Validate based on current mode
+    const isValid = this.isFormValid();
+
+    if (isValid) {
       const payload = this._getRequestPayload();
 
       // Reset requesting save signal immediately
@@ -593,7 +732,19 @@ export class PartnerEditDialogComponent implements OnInit {
         // For import edits, just return the updated record without saving to server
         // Mark as updated so the import dialog knows to apply the changes
         updatedRecord._updated = true;
+
+        // Preserve existing duplicate info if available
+        if (this.dialogConfig.data.record?.duplicateInfo) {
+          updatedRecord.duplicateInfo = this.dialogConfig.data.record.duplicateInfo;
+        }
+
         this.dialogRef.close(updatedRecord);
+
+        // Trigger duplicate detection after closing to update duplicate indicators
+        // This will update the record in the import dialog asynchronously
+        setTimeout(() => {
+          this.triggerDuplicateDetectionAfterSave(payload, updatedRecord);
+        }, 100);
         return;
       }
 
@@ -618,8 +769,6 @@ export class PartnerEditDialogComponent implements OnInit {
       this.dialogConfig.data.requestingSaveSignal.set(false);
       this.showValidationFailedError.set(true);
 
-      // Debug: Log which fields are invalid
-      console.log('Form validation failed. Invalid fields:');
       Object.keys(this.formGroup.controls).forEach(key => {
         const control = this.formGroup.get(key);
         if (control && control.invalid) {
@@ -627,6 +776,39 @@ export class PartnerEditDialogComponent implements OnInit {
         }
       });
     }
+  }
+
+  /**
+   * Validates form based on current validation mode
+   */
+  private isFormValid(): boolean {
+    const mode = this.validationMode();
+
+    // Always check reasonForLevy if it should be required
+    const reasonForLevyControl = this.formGroup.get('reasonForLevy');
+    const isReasonForLevyValid = this.shouldShowReasonForLevy()
+      ? (reasonForLevyControl && !reasonForLevyControl.invalid)
+      : true;
+
+    if (mode === 'save') {
+      // For save, check name and reasonForLevy (if applicable)
+      const nameControl = this.formGroup.get('name');
+      return Boolean(nameControl && !nameControl.invalid && isReasonForLevyValid);
+    } else if (mode === 'activate') {
+      // For activate, check all required fields including reasonForLevy
+      const nameControl = this.formGroup.get('name');
+      const shortDescControl = this.formGroup.get('partnerShortDescription');
+      const groupControl = this.formGroup.get('partnerGroupId');
+      const liaisonControl = this.formGroup.get('liaisonOfficeId');
+
+      return Boolean(nameControl && !nameControl.invalid &&
+                    shortDescControl && !shortDescControl.invalid &&
+                    groupControl && !groupControl.invalid &&
+                    liaisonControl && !liaisonControl.invalid &&
+                    isReasonForLevyValid);
+    }
+
+    return true;
   }
 
   /*_loadPermissions() {
@@ -901,5 +1083,159 @@ export class PartnerEditDialogComponent implements OnInit {
         });
       }
     });
+  }
+
+  /**
+   * Triggers duplicate detection for a saved record to update duplicate information
+   */
+  private triggerDuplicateDetectionAfterSave(payload: any, updatedRecord?: any): void {
+    // Skip if no payload
+    if (!payload) {
+      console.log('Skipping duplicate detection - no payload provided');
+      return;
+    }
+
+    // Create a copy of payload for duplicate detection
+    const duplicateCheckPayload = { ...payload };
+
+    // If there's an ID (edit scenario), ensure it's properly formatted as a number
+    // The backend SQL will use this ID to exclude the record from duplicate detection
+    if (payload.id) {
+      const numericId = parseInt(payload.id.toString(), 10);
+      if (isNaN(numericId)) {
+        console.warn('Invalid ID format, proceeding without ID exclusion:', payload.id);
+        delete duplicateCheckPayload.id;
+      } else {
+        duplicateCheckPayload.id = numericId;
+        console.log('Triggering duplicate detection for Partner edit (excluding ID:', numericId, ')');
+      }
+    } else {
+      console.log('Triggering duplicate detection for new Partner (no ID exclusion)');
+    }
+
+    // Call the partner service to detect duplicates (uses the updated SQL with ID exclusion)
+    this.partnerService.detectDuplicates(duplicateCheckPayload).subscribe({
+      next: (response: any) => {
+        const recordType = payload.id ? `existing Partner ID ${payload.id}` : 'new Partner';
+        console.log('Post-save duplicate detection results for', recordType, ':', response);
+
+        // If this is an import edit, update the duplicate information
+        if (this.dialogConfig.data.isImportEdit) {
+          this.updateDuplicateInfoAfterDetection(response, payload, updatedRecord);
+        }
+      },
+      error: (error: any) => {
+        // Silent failure - don't interrupt the user's workflow
+        const recordType = payload.id ? `Partner ID ${payload.id}` : 'new Partner';
+        console.warn('Post-save duplicate detection failed for', recordType, ':', error);
+      }
+    });
+  }
+
+  /**
+   * Update the duplicate information in the record for import dialog refresh
+   */
+  private updateDuplicateInfoAfterDetection(response: any, payload: any, updatedRecord?: any): void {
+    if (!response) {
+      return;
+    }
+
+    // Extract duplicate information from the response
+    const duplicateInfo = response.duplicateInfo;
+
+    if (duplicateInfo) {
+      // Parse the stringified JSON fields
+      let parsedTopDuplicate = null;
+      if (duplicateInfo.topDuplicate) {
+        parsedTopDuplicate = { ...duplicateInfo.topDuplicate };
+
+        // Parse matchedData if it's a string
+        if (typeof duplicateInfo.topDuplicate.matchedData === 'string') {
+          try {
+            parsedTopDuplicate.matchedData = JSON.parse(duplicateInfo.topDuplicate.matchedData);
+          } catch (e) {
+            console.warn('Failed to parse matchedData:', e);
+            parsedTopDuplicate.matchedData = duplicateInfo.topDuplicate.matchedData;
+          }
+        }
+      }
+
+      // Parse duplicates if it's a string
+      let parsedDuplicates = null;
+      if (typeof duplicateInfo.duplicates === 'string') {
+        try {
+          parsedDuplicates = JSON.parse(duplicateInfo.duplicates);
+        } catch (e) {
+          console.warn('Failed to parse duplicates:', e);
+          parsedDuplicates = duplicateInfo.duplicates;
+        }
+      } else {
+        parsedDuplicates = duplicateInfo.duplicates;
+      }
+
+      // Update the record with new duplicate information
+      const updatedDuplicateInfo = {
+        isDuplicate: duplicateInfo.totalDuplicates > 0,
+        hasDuplicates: duplicateInfo.totalDuplicates > 0,
+        totalDuplicates: duplicateInfo.totalDuplicates || 0,
+        highConfidence: duplicateInfo.highConfidence || 0,
+        mediumConfidence: duplicateInfo.mediumConfidence || 0,
+        lowConfidence: duplicateInfo.lowConfidence || 0,
+        topDuplicate: parsedTopDuplicate,
+        duplicates: parsedDuplicates,
+        tooltip: duplicateInfo.totalDuplicates > 0
+          ? `${duplicateInfo.totalDuplicates} duplicate(s) found`
+          : 'Unique record'
+      };
+
+      // Update the record's duplicate info
+      this.updateRecordInImportDialog(updatedDuplicateInfo, updatedRecord);
+
+      console.log('Updated duplicate info for import record:', updatedDuplicateInfo);
+    } else {
+      // No duplicates found
+      const noDuplicateInfo = {
+        isDuplicate: false,
+        hasDuplicates: false,
+        totalDuplicates: 0,
+        highConfidence: 0,
+        mediumConfidence: 0,
+        lowConfidence: 0,
+        topDuplicate: null,
+        duplicates: null,
+        tooltip: 'Unique record'
+      };
+
+      this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);
+
+      console.log('No duplicates found - marked as unique record');
+    }
+  }
+
+  /**
+   * Update the record in the import dialog with new duplicate information
+   */
+  private updateRecordInImportDialog(duplicateInfo: any, updatedRecord?: any): void {
+    // Try to find the import dialog service in the global scope
+    try {
+      // Use a custom event to communicate with the import dialog
+      const importRowId = updatedRecord?._importRowId || this.dialogConfig.data.record?._importRowId;
+
+      if (importRowId) {
+        const updateEvent = new CustomEvent('update-duplicate-info', {
+          detail: {
+            importRowId: importRowId,
+            duplicateInfo: duplicateInfo
+          }
+        });
+
+        window.dispatchEvent(updateEvent);
+        console.log('Dispatched duplicate info update event for row:', importRowId);
+      } else {
+        console.warn('No importRowId found to update duplicate info');
+      }
+    } catch (error) {
+      console.error('Error updating duplicate info in import dialog:', error);
+    }
   }
 }
