@@ -3,6 +3,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ImportDialogComponent } from './import-dialog.component';
 import { ImportFooterComponent } from './footer/import-dialog-footer.component';
 import { Observable, Subject, forkJoin, of, timer } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import { WritableSignal } from '@angular/core';
 import { ImportService } from '../import.service';
 import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
@@ -41,6 +42,7 @@ export class ImportDialogService {
   importService = inject(ImportService);
   feedbackDialogService = inject(FeedbackDialogService);
   importGoogleSheetService = inject(ImportGoogleSheetService);
+  http = inject(HttpClient);
 
   // New signal to track selected rows for import
   selectedRows = signal<Array<any>>([]);
@@ -1297,4 +1299,118 @@ export class ImportDialogService {
     
     console.log('🔄 Refreshed selection state:', currentSelection.length, 'records selected out of', currentData.length, 'total');
   }
+
+  /**
+   * Centralized duplicate detection for all entity types
+   * Handles both new records (no ID) and existing records (with ID for exclusion)
+   * @param payload The record data to check for duplicates
+   * @param entityType The type of entity ('partner', 'contact', 'interaction')
+   * @returns Observable of the duplicate detection response
+   */
+  detectDuplicatesForEntity(payload: any, entityType: string): Observable<any> {
+    // Skip if no payload
+    if (!payload) {
+      console.log('Skipping duplicate detection - no payload provided');
+      return of(null);
+    }
+
+    // Create a copy of payload for duplicate detection
+    const duplicateCheckPayload = { ...payload };
+
+    if (duplicateCheckPayload.id == "") {
+      delete duplicateCheckPayload.id;
+    }
+    
+    // If there's an ID (edit scenario), ensure it's properly formatted as a number
+    // The backend SQL will use this ID to exclude the record from duplicate detection
+    if (payload.id) {
+      const numericId = parseInt(payload.id.toString(), 10);
+      if (isNaN(numericId)) {
+        console.warn('Invalid ID format, proceeding without ID exclusion:', payload.id);
+        delete duplicateCheckPayload.id;
+      } else {
+        duplicateCheckPayload.id = numericId;
+        console.log(`Triggering duplicate detection for ${entityType} edit (excluding ID: ${numericId})`);
+      }
+    } else {
+      console.log(`Triggering duplicate detection for new ${entityType} (no ID exclusion)`);
+    }
+
+    // Format the payload properly for the specific entity type
+    const formattedPayload = this.formatPayloadForEntity(duplicateCheckPayload, entityType);
+
+    // Get the appropriate API endpoint and make direct HTTP call
+    const detectDuplicatesEndpoint = `/api/${entityType.toLowerCase()}/detect-duplicates`;
+
+    return this.http.post<any>(detectDuplicatesEndpoint, formattedPayload).pipe(
+      map((response: any) => {
+        const recordType = payload.id ? `existing ${entityType} ID ${payload.id}` : `new ${entityType}`;
+        console.log('Post-save duplicate detection results for', recordType, ':', response);
+        return response;
+      }),
+      catchError((error: any) => {
+        const recordType = payload.id ? `${entityType} ID ${payload.id}` : `new ${entityType}`;
+        console.warn('Post-save duplicate detection failed for', recordType, ':', error);
+        return of(null); // Return null on error to not break the flow
+      })
+    );
+  }
+
+  /**
+   * Format payload data properly for the specific entity type
+   * Ensures numeric fields are properly typed
+   */
+  private formatPayloadForEntity(payload: any, entityType: string): any {
+    const formattedPayload = { ...payload };
+
+    // Common ID formatting
+    if (payload.id) {
+      const numericId = parseInt(payload.id.toString(), 10);
+      if (!isNaN(numericId)) {
+        formattedPayload.id = numericId;
+      }
+    }
+
+    // Entity-specific field formatting
+    switch (entityType.toLowerCase()) {
+      case 'partner':
+        // Format partner-specific numeric fields
+        if (payload.partnerGroupId) {
+          const id = parseInt(payload.partnerGroupId.toString(), 10);
+          formattedPayload.partnerGroupId = !isNaN(id) ? id : null;
+        }
+        if (payload.liaisonOfficeId) {
+          const id = parseInt(payload.liaisonOfficeId.toString(), 10);
+          formattedPayload.liaisonOfficeId = !isNaN(id) ? id : null;
+        }
+        if (payload.partnerFocalPointUserId) {
+          const id = parseInt(payload.partnerFocalPointUserId.toString(), 10);
+          formattedPayload.partnerFocalPointUserId = !isNaN(id) ? id : null;
+        }
+        if (payload.partnerCategoryId) {
+          const id = parseInt(payload.partnerCategoryId.toString(), 10);
+          formattedPayload.partnerCategoryId = !isNaN(id) ? id : null;
+        }
+        break;
+
+      case 'contact':
+        // Format contact-specific numeric fields
+        if (payload.partnerId) {
+          const id = parseInt(payload.partnerId.toString(), 10);
+          formattedPayload.partnerId = !isNaN(id) ? id : null;
+        }
+        break;
+
+      case 'interaction':
+        // Format interaction-specific numeric fields
+        if (payload.contactId) {
+          const id = parseInt(payload.contactId.toString(), 10);
+          formattedPayload.contactId = !isNaN(id) ? id : null;
+        }
+        break;
+    }
+
+    return formattedPayload;
+  }
+
 }

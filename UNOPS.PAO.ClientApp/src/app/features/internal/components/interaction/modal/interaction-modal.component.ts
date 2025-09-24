@@ -593,6 +593,17 @@ export class InteractionModalComponent {
           Object.assign(this.record, formValue);
           this.record._updated = true;
 
+          // Preserve existing duplicate info if available
+          if (this.dialogConfig.data.record?.duplicateInfo) {
+            (this.record as any).duplicateInfo = this.dialogConfig.data.record.duplicateInfo;
+          }
+          
+          // Trigger duplicate detection after closing to update duplicate indicators
+          // This will update the record in the import dialog asynchronously
+          setTimeout(() => {
+            this.triggerDuplicateDetectionAfterSave(formValue, this.record);
+          }, 100);
+
           // Close the dialog with the updated record
           this.dialogRef.close(this.record);
           return;
@@ -629,6 +640,10 @@ export class InteractionModalComponent {
         this.interactionService.update(formValue).subscribe({
           next: () => {
             this.showSuccessMessage('message.interactionUpdated');
+            
+            // Trigger duplicate detection for the updated record
+            this.triggerDuplicateDetectionAfterSave(formValue);
+            
             this.dialogRef.close('saved');
           },
           error: (error) => {
@@ -1354,5 +1369,159 @@ export class InteractionModalComponent {
       .join(', ');
 
     this.formGroup.get('organizationHierarchyNames')?.setValue(orgUnitNames);
+  }
+
+  /**
+   * Triggers duplicate detection for a saved record to update duplicate information
+   */
+  private triggerDuplicateDetectionAfterSave(payload: any, updatedRecord?: any): void {
+    // Skip if no payload
+    if (!payload) {
+      console.log('Skipping duplicate detection - no payload provided');
+      return;
+    }
+
+    // Create a copy of payload for duplicate detection
+    const duplicateCheckPayload = { ...payload };
+    
+    // If there's an ID (edit scenario), ensure it's properly formatted as a number
+    // The backend SQL will use this ID to exclude the record from duplicate detection
+    if (payload.id) {
+      const numericId = parseInt(payload.id.toString(), 10);
+      if (isNaN(numericId)) {
+        console.warn('Invalid ID format, proceeding without ID exclusion:', payload.id);
+        delete duplicateCheckPayload.id;
+      } else {
+        duplicateCheckPayload.id = numericId;
+        console.log('Triggering duplicate detection for Interaction edit (excluding ID:', numericId, ')');
+      }
+    } else {
+      console.log('Triggering duplicate detection for new Interaction (no ID exclusion)');
+    }
+    
+    // Call the interaction service to detect duplicates (uses the updated SQL with ID exclusion)
+    this.interactionService.detectDuplicates(duplicateCheckPayload).subscribe({
+      next: (response: any) => {
+        const recordType = payload.id ? `existing Interaction ID ${payload.id}` : 'new Interaction';
+        console.log('Post-save duplicate detection results for', recordType, ':', response);
+        
+        // If this is an import edit, update the duplicate information
+        if (this.dialogConfig.data.isImportEdit) {
+          this.updateDuplicateInfoAfterDetection(response, payload, updatedRecord);
+        }
+      },
+      error: (error: any) => {
+        // Silent failure - don't interrupt the user's workflow
+        const recordType = payload.id ? `Interaction ID ${payload.id}` : 'new Interaction';
+        console.warn('Post-save duplicate detection failed for', recordType, ':', error);
+      }
+    });
+  }
+
+  /**
+   * Update the duplicate information in the record for import dialog refresh
+   */
+  private updateDuplicateInfoAfterDetection(response: any, payload: any, updatedRecord?: any): void {
+    if (!response) {
+      return;
+    }
+
+    // Extract duplicate information from the response
+    const duplicateInfo = response.duplicateInfo;
+    
+    if (duplicateInfo) {
+      // Parse the stringified JSON fields
+      let parsedTopDuplicate = null;
+      if (duplicateInfo.topDuplicate) {
+        parsedTopDuplicate = { ...duplicateInfo.topDuplicate };
+        
+        // Parse matchedData if it's a string
+        if (typeof duplicateInfo.topDuplicate.matchedData === 'string') {
+          try {
+            parsedTopDuplicate.matchedData = JSON.parse(duplicateInfo.topDuplicate.matchedData);
+          } catch (e) {
+            console.warn('Failed to parse matchedData:', e);
+            parsedTopDuplicate.matchedData = duplicateInfo.topDuplicate.matchedData;
+          }
+        }
+      }
+
+      // Parse duplicates if it's a string
+      let parsedDuplicates = null;
+      if (typeof duplicateInfo.duplicates === 'string') {
+        try {
+          parsedDuplicates = JSON.parse(duplicateInfo.duplicates);
+        } catch (e) {
+          console.warn('Failed to parse duplicates:', e);
+          parsedDuplicates = duplicateInfo.duplicates;
+        }
+      } else {
+        parsedDuplicates = duplicateInfo.duplicates;
+      }
+
+      // Update the record with new duplicate information
+      const updatedDuplicateInfo = {
+        isDuplicate: duplicateInfo.totalDuplicates > 0,
+        hasDuplicates: duplicateInfo.totalDuplicates > 0,
+        totalDuplicates: duplicateInfo.totalDuplicates || 0,
+        highConfidence: duplicateInfo.highConfidence || 0,
+        mediumConfidence: duplicateInfo.mediumConfidence || 0,
+        lowConfidence: duplicateInfo.lowConfidence || 0,
+        topDuplicate: parsedTopDuplicate,
+        duplicates: parsedDuplicates,
+        tooltip: duplicateInfo.totalDuplicates > 0 
+          ? `${duplicateInfo.totalDuplicates} duplicate(s) found` 
+          : 'Unique record'
+      };
+
+      // Update the record's duplicate info
+      this.updateRecordInImportDialog(updatedDuplicateInfo, updatedRecord);
+      
+      console.log('Updated duplicate info for import record:', updatedDuplicateInfo);
+    } else {
+      // No duplicates found
+      const noDuplicateInfo = {
+        isDuplicate: false,
+        hasDuplicates: false,
+        totalDuplicates: 0,
+        highConfidence: 0,
+        mediumConfidence: 0,
+        lowConfidence: 0,
+        topDuplicate: null,
+        duplicates: null,
+        tooltip: 'Unique record'
+      };
+      
+      this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);
+      
+      console.log('No duplicates found - marked as unique record');
+    }
+  }
+
+  /**
+   * Update the record in the import dialog with new duplicate information
+   */
+  private updateRecordInImportDialog(duplicateInfo: any, updatedRecord?: any): void {
+    // Try to find the import dialog service in the global scope
+    try {
+      // Use a custom event to communicate with the import dialog
+      const importRowId = updatedRecord?._importRowId || this.dialogConfig.data.record?._importRowId;
+      
+      if (importRowId) {
+        const updateEvent = new CustomEvent('update-duplicate-info', {
+          detail: {
+            importRowId: importRowId,
+            duplicateInfo: duplicateInfo
+          }
+        });
+        
+        window.dispatchEvent(updateEvent);
+        console.log('Dispatched duplicate info update event for row:', importRowId);
+      } else {
+        console.warn('No importRowId found to update duplicate info');
+      }
+    } catch (error) {
+      console.error('Error updating duplicate info in import dialog:', error);
+    }
   }
 }

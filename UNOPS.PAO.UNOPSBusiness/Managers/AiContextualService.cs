@@ -731,23 +731,32 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         public async Task<dynamic> GetDependentDropdownValues(dynamic dependents, dynamic responseObject, AiPrompt promptData)
         {
             var interactionType = false;
+            if (promptData?.Type?.Contains("interaction", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                interactionType = true;
+            }
+            bool partnerType = false;
+            if (promptData?.Type?.Contains("partner", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                partnerType = true;
+            }
+            // Ensure date is set for interactions if missing or empty
+            if (interactionType)
+            {
+                var dateValue = responseObject["date"];
+                if (dateValue == null || 
+                    string.IsNullOrWhiteSpace(dateValue?.ToString()) ||
+                    (dateValue is JValue jValue && (jValue.Value == null || string.IsNullOrWhiteSpace(jValue.Value?.ToString()))))
+                {
+                    responseObject["date"] = DateTime.UtcNow.ToString("yyyy-MM-dd");
+                }
+            }
             if (!string.IsNullOrWhiteSpace(dependents))
             {
                 var dependentsList = JsonConvert.DeserializeObject<List<string>>(dependents);
 
                 if (dependentsList.Count > 0)
                 {
-                    if (promptData?.Type?.Contains("interaction", StringComparison.OrdinalIgnoreCase) == true)
-                    {
-                        interactionType = true;
-                    }
-                    
-                    bool partnerType = false;
-                    if (promptData?.Type?.Contains("partner", StringComparison.OrdinalIgnoreCase) == true)
-                    {
-                        partnerType = true;
-                    }
-                    
                     foreach (var dependent in dependentsList)
                     {
                         var text = responseObject[dependent];
@@ -1882,11 +1891,46 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 {
                     var record = records[i];
 
+                    // Extract record ID if it exists to exclude from duplicate detection
+                    int? recordId = null;
+                    if (record is JObject recordJObj && recordJObj.ContainsKey("id"))
+                    {
+                        if (int.TryParse(recordJObj["id"]?.ToString(), out int recordId1) && recordId1 > 0)
+                        {
+                            recordId = recordId1;
+                        }
+                    }
+                    else if (record is ExpandoObject expObj)
+                    {
+                        var dict = (IDictionary<string, object>)expObj;
+                        if (dict.ContainsKey("id") && int.TryParse(dict["id"]?.ToString(), out int recordId2) && recordId2 > 0)
+                        {
+                            recordId = recordId2;
+                        }
+                    }
+                    else
+                    {
+                        // Try reflection for strongly typed objects
+                        var idProperty = record.GetType().GetProperty("Id") ?? record.GetType().GetProperty("id");
+                        if (idProperty != null)
+                        {
+                            var idValue = idProperty.GetValue(record);
+                            if (idValue != null)
+                            {
+                                if (int.TryParse(idValue.ToString(), out int recordId3) && recordId3 > 0)
+                                {
+                                    recordId = recordId3;
+                                }
+                            }
+                        }
+                    }
+
                     // Use the simplified detect_duplicate_records function (field-based only)
                     var duplicateResult = await DetectDuplicateForRecordAsync(
                         pluralizedEntityName, 
                         record, 
-                        (float)fieldMatchThreshold
+                        (float)fieldMatchThreshold,
+                        recordId
                     );
                     
                     // Convert record to JObject for safe property assignment
@@ -1968,7 +2012,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         private async Task<ComprehensiveDuplicateResult> DetectDuplicateForRecordAsync(
             string entityName, 
             dynamic recordData, 
-            float fieldMatchThreshold = 0.5f)
+            float fieldMatchThreshold = 0.5f,
+            int? excludeRecordId = null)
          {
              try
              {
@@ -1996,7 +2041,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                      await connection.OpenAsync();
 
                  using var command = connection.CreateCommand();
-                command.CommandText = "SELECT public.detect_duplicate_records(@entityType, @entityData, @fieldMatchThreshold, @debugMode)";
+                command.CommandText = "SELECT public.detect_duplicate_records(@entityType, @entityData, @fieldMatchThreshold, @debugMode, @excludeRecordId)";
 
                 // Create parameters for the simplified function call (entity_data as TEXT)
                  var parameters = new[] 
@@ -2004,7 +2049,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     new NpgsqlParameter("@entityType", NpgsqlTypes.NpgsqlDbType.Text) { Value = singularEntityName },
                     new NpgsqlParameter("@entityData", NpgsqlTypes.NpgsqlDbType.Text) { Value = jsonData },
                     new NpgsqlParameter("@fieldMatchThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = fieldMatchThreshold },
-                    new NpgsqlParameter("@debugMode", NpgsqlTypes.NpgsqlDbType.Boolean) { Value = false }
+                    new NpgsqlParameter("@debugMode", NpgsqlTypes.NpgsqlDbType.Boolean) { Value = false },
+                    new NpgsqlParameter("@excludeRecordId", NpgsqlTypes.NpgsqlDbType.Integer) { Value = excludeRecordId.HasValue ? (object)excludeRecordId.Value : DBNull.Value }
                  };
 
                  command.Parameters.AddRange(parameters);
@@ -2016,15 +2062,31 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     var jsonResult = result.ToString();
                     var parsedResult = JsonConvert.DeserializeObject<dynamic>(jsonResult);
                     
+                    var duplicatesArray = (JArray)parsedResult.duplicates;
+                    DuplicateMatch topDuplicate = null;
+                    
+                    if (duplicatesArray?.Count > 0)
+                    {
+                        var firstDuplicate = duplicatesArray[0];
+                        topDuplicate = new DuplicateMatch
+                        {
+                            EntityId = (int)(firstDuplicate["entityId"] ?? 0),
+                            EntityType = (string)(firstDuplicate["entityType"] ?? ""),
+                            Score = (double)(firstDuplicate["score"] ?? 0.0),
+                            MatchReason = (string)(firstDuplicate["matchReason"] ?? ""),
+                            SearchType = (string)(firstDuplicate["searchType"] ?? ""),
+                            MatchedData = firstDuplicate["matchedData"]
+                        };
+                    }
+                    
                     return new ComprehensiveDuplicateResult
                     {
-                        HasDuplicates = parsedResult.duplicates != null && ((JArray)parsedResult.duplicates).Count > 0,
+                        HasDuplicates = duplicatesArray != null && duplicatesArray.Count > 0,
                         TotalDuplicates = parsedResult.summary?.totalDuplicates ?? 0,
                         HighConfidence = parsedResult.summary?.highConfidence ?? 0,
                         MediumConfidence = parsedResult.summary?.mediumConfidence ?? 0,
                         LowConfidence = parsedResult.summary?.lowConfidence ?? 0,
-                        TopDuplicate = ((JArray)parsedResult.duplicates)?.Count > 0 ? 
-                            JsonConvert.DeserializeObject<DuplicateMatch>(((JArray)parsedResult.duplicates)[0].ToString()) : null,
+                        TopDuplicate = topDuplicate,
                         AllDuplicates = parsedResult.duplicates
                     };
                 }
@@ -2102,10 +2164,37 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 // Convert the request object to the format expected by duplicate detection
                 var convertedData = ConvertRequestObjectForDuplicateDetection(recordData);
                 
+                // Extract record ID if it exists to exclude from duplicate detection
+                int? recordId = null;
+                if (recordData is JObject recordDataJObj && recordDataJObj.ContainsKey("id"))
+                {
+                    if (int.TryParse(recordDataJObj["id"]?.ToString(), out int recordDataId1) && recordDataId1 > 0)
+                    {
+                        recordId = recordDataId1;
+                    }
+                }
+                else
+                {
+                    // Try reflection for strongly typed objects
+                        var idProperty = recordData.GetType().GetProperty("Id") ?? recordData.GetType().GetProperty("id");
+                        if (idProperty != null)
+                        {
+                            var idValue = idProperty.GetValue(recordData);
+                            if (idValue != null)
+                            {
+                                if (int.TryParse(idValue.ToString(), out int recordDataId2) && recordDataId2 > 0)
+                                {
+                                    recordId = recordDataId2;
+                                }
+                            }
+                        }
+                }
+
                 return await DetectDuplicateForRecordAsync(
                     pluralizedEntityName, 
                     convertedData, 
-                    (float)fieldMatchThreshold
+                    (float)fieldMatchThreshold,
+                    recordId
                 );
             }
             catch (Exception ex)

@@ -13,6 +13,8 @@ using UNOPS.PAO.UNOPSBusiness.Attributes;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
 using Newtonsoft.Json;
 using static UNOPS.PAO.UNOPSBusiness.Services.AdvancedSearchService;
 
@@ -715,6 +717,116 @@ namespace UNOPS.PAO.Presentation.Controllers
             {
                 _logger.LogError(ex, "Error performing deep search for interactions with query: {Query}", query);
                 return StatusCode(500, new { error = "An error occurred while performing the semantic search" });
+            }
+        }
+
+        /// <summary>
+        /// Detects duplicates for an existing interaction record after save operations
+        /// </summary>
+        /// <param name="req">Interaction data to check for duplicates</param>
+        /// <returns>Duplicate detection results</returns>
+        [HttpPost(APIDictionary.Interaction + "/detect-duplicates")]
+        [AccessControlled(EntityTypes.Interaction, "read")]
+        public async Task<ActionResult> DetectDuplicatesForInteraction([FromBody] dynamic req)
+        {
+        try
+        {
+            // Proper null check for dynamic type
+            if (req is null)
+            {
+                return BadRequest("Invalid request.");
+            }
+
+            // Convert the dynamic request to a proper object for duplicate detection
+            object requestData;
+            if (req is JsonElement jsonElement)
+            {
+                // Deserialize JsonElement to JObject for proper handling
+                var jsonString = jsonElement.GetRawText();
+                requestData = JObject.Parse(jsonString);
+            }
+            else if (req is JObject)
+            {
+                requestData = req;
+            }
+            else
+            {
+                // Try to serialize and deserialize to ensure proper format
+                var jsonString = JsonConvert.SerializeObject(req);
+                requestData = JObject.Parse(jsonString);
+            }
+
+            var duplicateResult = await _aiContextualService.DetectDuplicateForSingleRecordAsync(
+                "Interaction", 
+                requestData, 
+                0.7 // Standard sensitivity for post-save detection
+            );
+                
+                // Extract ID from the converted request data
+                int? recordId = null;
+                if (requestData is JObject jObj && jObj.ContainsKey("id"))
+                {
+                    int.TryParse(jObj["id"]?.ToString(), out int id);
+                    recordId = id > 0 ? id : null;
+                }
+
+                return Ok(new {
+                    success = true,
+                    entityType = "Interaction",
+                    recordId = recordId,
+                    duplicateInfo = duplicateResult?.HasDuplicates == true ? new {
+                        totalDuplicates = duplicateResult.TotalDuplicates,
+                        highConfidence = duplicateResult.HighConfidence,
+                        mediumConfidence = duplicateResult.MediumConfidence,
+                        lowConfidence = duplicateResult.LowConfidence,
+                        topDuplicate = duplicateResult.TopDuplicate != null ? new {
+                            entityId = duplicateResult.TopDuplicate.EntityId,
+                            entityType = duplicateResult.TopDuplicate.EntityType,
+                            score = duplicateResult.TopDuplicate.Score,
+                            matchReason = duplicateResult.TopDuplicate.MatchReason,
+                            searchType = duplicateResult.TopDuplicate.SearchType,
+                            matchedData = duplicateResult.TopDuplicate.MatchedData != null ? 
+                                JsonConvert.SerializeObject(duplicateResult.TopDuplicate.MatchedData) : null
+                        } : null,
+                        duplicates = duplicateResult.AllDuplicates != null ? 
+                            JsonConvert.SerializeObject(duplicateResult.AllDuplicates) : null
+                    } : null
+                });
+            }
+            catch (Exception ex)
+            {
+            // Extract ID for logging
+            var idForLogging = "unknown";
+            try
+            {
+                if (req is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+                {
+                    var jsonString = jsonElement.GetRawText();
+                    var jObj = JObject.Parse(jsonString);
+                    if (jObj.ContainsKey("id"))
+                    {
+                        idForLogging = jObj["id"]?.ToString() ?? "unknown";
+                    }
+                }
+                else if (req is JObject jObj && jObj.ContainsKey("id"))
+                {
+                    idForLogging = jObj["id"]?.ToString() ?? "unknown";
+                }
+            }
+            catch
+            {
+                // Ignore errors in ID extraction for logging
+            }
+
+                _logger.LogWarning(ex, "Post-save duplicate detection failed for Interaction ID {InteractionId}", idForLogging);
+                // Return success with no duplicates rather than failing - this is a background operation
+                return Ok(new {
+                    success = true,
+                    entityType = "Interaction",
+                    recordId = (object)null,
+                    duplicateInfo = (object)null,
+                    warning = "Duplicate detection temporarily unavailable"
+                });
             }
         }
     }
