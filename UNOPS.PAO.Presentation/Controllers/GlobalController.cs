@@ -33,6 +33,13 @@
 // - Graceful fallback to text search if embedding fails
 // - Efficient database queries with proper indexing
 // - Comprehensive logging for monitoring and optimization
+//
+// GLOBAL FILTER INTEGRATION:
+// - Search results now respect user's global filter preferences
+// - Applies org unit, date range, "related to me", and other global filters
+// - Filters applied at retrieval time for consistency with list views
+// - Graceful fallback if global filtering fails (returns unfiltered results)
+// - Maintains search performance while ensuring data consistency
 // ============================================================================
 
 using Microsoft.AspNetCore.Authorization;
@@ -58,6 +65,7 @@ using UNOPS.PAO.Domain.Enums;
 using System.Reflection;
 using System.Security.Claims;
 using System.Dynamic;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -69,12 +77,14 @@ public class GlobalController : BaseController
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly AiContextualService _aiContextualService;
     private readonly IManagerWrapper _managerWrapper;
+    private readonly GlobalFilterService _globalFilterService;
 
     public GlobalController(
         IUserPreferenceService userPreferenceService,
         UserManager<PAOIdentityUser> userManager,
         AiContextualService aiContextualService,
         IManagerWrapper managerWrapper,
+        GlobalFilterService globalFilterService,
         UserResolverService<int> userResolverService, 
         IAuthorizationService authorizationService,
         ILogger<GlobalController> logger)
@@ -84,6 +94,7 @@ public class GlobalController : BaseController
         _userManager = userManager;
         _aiContextualService = aiContextualService;
         _managerWrapper = managerWrapper;
+        _globalFilterService = globalFilterService;
     }
 
     /// <summary>
@@ -763,6 +774,35 @@ public class GlobalController : BaseController
     {
         try
         {
+            // Apply global filters to entity IDs before retrieving data
+            if (user != null)
+            {
+                var currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(currentUserId))
+                {
+                    try
+                    {
+                        var globalFilters = await _userPreferenceService.GetGlobalFiltersAsync(currentUserId);
+                        if (globalFilters != null)
+                        {
+                            // Filter entity IDs based on global filters
+                            entityIds = await FilterEntityIdsByGlobalFilters(entityIds, entityType, globalFilters, user);
+                            
+                            if (entityIds.Length == 0)
+                            {
+                                _logger.LogInformation("Global filters excluded all {EntityType} entities from search results", entityType);
+                                return new List<object>(); // Return empty list if all entities are filtered out
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Error applying global filters to {EntityType} search results, proceeding without global filters", entityType);
+                        // Continue with original entity IDs if global filtering fails
+                    }
+                }
+            }
+
             // Get manager field name from entity type
             string managerFieldName = GetManagerFieldName(entityType);
             
@@ -832,6 +872,95 @@ public class GlobalController : BaseController
                 entityType, string.Join(", ", entityIds));
             return null;
         }
+    }
+
+    /// <summary>
+    /// Filters entity IDs based on user's global filter preferences
+    /// </summary>
+    private async Task<int[]> FilterEntityIdsByGlobalFilters(int[] entityIds, string entityType, dynamic globalFilters, ClaimsPrincipal user)
+    {
+        try
+        {
+            if (entityIds == null || entityIds.Length == 0)
+                return entityIds;
+
+            _logger.LogInformation("Applying global filters to {Count} {EntityType} entities", entityIds.Length, entityType);
+
+            // Apply global filters based on entity type
+            var filteredIds = await ApplyGlobalFiltersForEntityType(entityIds, entityType, user);
+            var filteredArray = filteredIds.Where(id => entityIds.Contains(id)).ToArray();
+            
+            _logger.LogInformation("Global filters reduced {OriginalCount} {EntityType} entities to {FilteredCount}", 
+                entityIds.Length, entityType, filteredArray.Length);
+            
+            return filteredArray;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying global filters to {EntityType} entities, returning original IDs", entityType);
+            return entityIds; // Return original IDs if filtering fails
+        }
+    }
+
+    /// <summary>
+    /// Builds a queryable for the specified entity type with the given IDs
+    /// </summary>
+    private async Task<List<int>> ApplyGlobalFiltersForEntityType(int[] entityIds, string entityType, ClaimsPrincipal user)
+    {
+        try
+        {
+            var context = _aiContextualService._context;
+            
+            return entityType.ToLower() switch
+            {
+                "partners" => await ApplyGlobalFiltersToPartners(entityIds, user, context),
+                "contacts" => await ApplyGlobalFiltersToContacts(entityIds, user, context),
+                "interactions" => await ApplyGlobalFiltersToInteractions(entityIds, user, context),
+                "baseengagements" => await ApplyGlobalFiltersToBaseEngagements(entityIds, user, context),
+                _ => entityIds.ToList()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying global filters for entity type: {EntityType}", entityType);
+            return entityIds.ToList();
+        }
+    }
+
+    private async Task<List<int>> ApplyGlobalFiltersToPartners(int[] entityIds, ClaimsPrincipal user, UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext context)
+    {
+        var query = context.Set<UNOPS.PAO.UNOPSDomain.Entities.UNOPSPartner>()
+            .Where(p => entityIds.Contains(p.Id) && !p.IsDeleted);
+        
+        var filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(query, user);
+        return await filteredQuery.Select(p => p.Id).ToListAsync();
+    }
+
+    private async Task<List<int>> ApplyGlobalFiltersToContacts(int[] entityIds, ClaimsPrincipal user, UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext context)
+    {
+        var query = context.Set<UNOPS.PAO.UNOPSDomain.Entities.UNOPSContact>()
+            .Where(c => entityIds.Contains(c.Id) && !c.IsDeleted);
+        
+        var filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(query, user);
+        return await filteredQuery.Select(c => c.Id).ToListAsync();
+    }
+
+    private async Task<List<int>> ApplyGlobalFiltersToInteractions(int[] entityIds, ClaimsPrincipal user, UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext context)
+    {
+        var query = context.Set<UNOPS.PAO.Domain.Entities.Interaction>()
+            .Where(i => entityIds.Contains(i.Id) && !i.IsDeleted);
+        
+        var filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(query, user);
+        return await filteredQuery.Select(i => i.Id).ToListAsync();
+    }
+
+    private async Task<List<int>> ApplyGlobalFiltersToBaseEngagements(int[] entityIds, ClaimsPrincipal user, UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext context)
+    {
+        var query = context.Set<UNOPS.PAO.UNOPSDomain.Entities.BaseEngagement>()
+            .Where(e => entityIds.Contains(e.Id) && !e.IsDeleted);
+        
+        var filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(query, user);
+        return await filteredQuery.Select(e => e.Id).ToListAsync();
     }
 
     /// <summary>

@@ -77,8 +77,8 @@ export class BaseEngagementService {
       case 'signed': return 'success';
       case 'implementation': return 'success';
       case 'completed': return 'info';
-      case 'pipeline': return 'warning';
-      case 'development': return 'warning';
+      case 'pipeline': return 'warn';
+      case 'development': return 'warn';
       case 'cancelled': return 'danger';
       case 'on hold': return 'danger';
       default: return 'info';

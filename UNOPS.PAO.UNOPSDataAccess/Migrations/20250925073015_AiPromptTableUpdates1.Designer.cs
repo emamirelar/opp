@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250925073015_AiPromptTableUpdates1")]
+    partial class AiPromptTableUpdates1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,6 +40,21 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         {
                             t.ExcludeFromMigrations();
                         });
+                });
+
+            modelBuilder.Entity("PartnerProjects", b =>
+                {
+                    b.Property<int>("PartnersId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProjectsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("PartnersId", "ProjectsId");
+
+                    b.HasIndex("ProjectsId");
+
+                    b.ToTable("PartnerProjects", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.AiChatSession", b =>
@@ -586,6 +604,77 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("RecipientUserId");
 
                     b.ToTable("EmailNotificationLogs", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Engagement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BaseEngagement")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DeletedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EngagementDescription")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("EngagementImplementationEndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EngagementImplementationStartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EngagementLongDescription")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EngagementStageDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ImplementationCountriesDescriptionConcatenated")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LastModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("PartnerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PartnerId");
+
+                    b.ToTable("Engagements", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.EntityEmbeddings", b =>
@@ -1633,7 +1722,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.ToTable("EntityPermissions", "public");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.BaseEngagement", b =>
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.Budget", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1641,85 +1730,36 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("BusinessDeveloper")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("BusinessDeveloperEmailAddress")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("BusinessDeveloperName")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<decimal?>("EngagementAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("EngagementDescription")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("EngagementImplementationEndDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("EngagementImplementationStartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("EngagementLongDescription")
-                        .HasColumnType("text");
-
-                    b.Property<string>("EngagementNumber")
+                    b.Property<string>("BudgetNumber")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("BaseEngagement");
-
-                    b.Property<string>("EngagementProjectExecutive")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<string>("EngagementProjectExecutiveName")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<DateTime?>("EngagementSignedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("EngagementStage")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("EngagementStageDescription")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("ImplementationCountriesList")
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
+                    b.Property<string>("BudgetVersion")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("OutputsList")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SDGList")
-                        .HasColumnType("text");
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
-                    b.ToTable("BaseEngagements", "public");
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Budgets", "public");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.BaseEngagementPartners", b =>
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.BudgetLine", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1727,54 +1767,159 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("BaseEngagementId")
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("BudgetAccount")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("BudgetId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("EngagementNumber")
+                    b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("BaseEngagement");
+                        .HasColumnType("text");
 
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
+                    b.Property<int>("DonorId")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("Key")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                    b.Property<int>("FiscalYear")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Partner")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                    b.Property<string>("NatureOfCost")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<string>("PartnerDescription")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.Property<int?>("PartnerId")
+                    b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<string>("PartnerType")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                    b.Property<int>("WorkPackageId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BudgetId");
+
+                    b.HasIndex("DonorId");
+
+                    b.HasIndex("WorkPackageId");
+
+                    b.ToTable("BudgetLines", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.Donor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BaseEngagementId");
+                    b.ToTable("Donors", "public");
+                });
 
-                    b.HasIndex("PartnerId");
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.Project", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
 
-                    b.ToTable("BaseEngagementPartners", "public");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BaseEngagement")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("BudgetAmount")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("BudgetCheckingLevel")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BudgetDuration")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("ExpenditureAmount")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProjectNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Stage")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Projects", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.WorkPackage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("WorkPackages", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Entities", b =>
@@ -2113,6 +2258,21 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasDiscriminator().HasValue("UNOPSPartnerTree");
                 });
 
+            modelBuilder.Entity("PartnerProjects", b =>
+                {
+                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.UNOPSPartner", null)
+                        .WithMany()
+                        .HasForeignKey("PartnersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.Project", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Contact", b =>
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.Partner", "Partner")
@@ -2163,6 +2323,16 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasForeignKey("RecipientUserId");
 
                     b.Navigation("RecipientUser");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Engagement", b =>
+                {
+                    b.HasOne("UNOPS.PAO.Domain.Entities.Partner", "Partner")
+                        .WithMany()
+                        .HasForeignKey("PartnerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Partner");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.EntityUserRole", b =>
@@ -2302,21 +2472,53 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasForeignKey("UNOPS.PAO.Domain.Entities.UserProfile", "UserId");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.BaseEngagementPartners", b =>
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.Budget", b =>
                 {
-                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.BaseEngagement", "BaseEngagementEntity")
-                        .WithMany("EngagementPartners")
-                        .HasForeignKey("BaseEngagementId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.UNOPSPartner", "PartnerEntity")
+                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.Project", "Project")
                         .WithMany()
-                        .HasForeignKey("PartnerId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("BaseEngagementEntity");
+                    b.Navigation("Project");
+                });
 
-                    b.Navigation("PartnerEntity");
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.BudgetLine", b =>
+                {
+                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.Budget", "Budget")
+                        .WithMany()
+                        .HasForeignKey("BudgetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.Donor", "Donor")
+                        .WithMany()
+                        .HasForeignKey("DonorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.WorkPackage", "WorkPackage")
+                        .WithMany()
+                        .HasForeignKey("WorkPackageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Budget");
+
+                    b.Navigation("Donor");
+
+                    b.Navigation("WorkPackage");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.WorkPackage", b =>
+                {
+                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.EntityFieldManager", b =>
@@ -2385,11 +2587,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UserProfile", b =>
                 {
                     b.Navigation("UserPreference");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.BaseEngagement", b =>
-                {
-                    b.Navigation("EngagementPartners");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.EntityManager", b =>

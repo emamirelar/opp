@@ -213,6 +213,9 @@ public class Startup
         // Add memory cache for permission caching
         services.AddMemoryCache();
         
+        // Register AI prompt cache service
+        services.AddScoped<IAiPromptCacheService, AiPromptCacheService>();
+        
         // Register EntityPermissionHelper
         services.AddScoped<EntityPermissionHelper>();
         

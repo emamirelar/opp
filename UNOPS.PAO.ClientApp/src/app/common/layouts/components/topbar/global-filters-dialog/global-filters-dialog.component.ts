@@ -84,9 +84,8 @@ export class GlobalFiltersDialogComponent implements OnInit {
       const filters = await this.userPreferenceService.getGlobalFilters(this.currentUserId).toPromise();
       
       if (filters) {
-        // Load org unit - prioritize GlobalFilterService over UserPreferenceService for consistency
-        const activeOrgUnitId = this.globalFilterService.getActiveOrgUnitId();
-        this.selectedOrgUnitId = activeOrgUnitId || filters.orgUnitId || null;
+        // Load org unit - don't default to user's org unit, start with null (show everything)
+        this.selectedOrgUnitId = filters.orgUnitId || null;
         
         // Load toggles
         this.relatedToMe = filters.relatedToMe || false;
@@ -102,16 +101,14 @@ export class GlobalFiltersDialogComponent implements OnInit {
         // Trigger change detection after updating the values
         this.cdr.markForCheck();
       } else {
-        // If no filters from database, load from GlobalFilterService
-        const activeOrgUnitId = this.globalFilterService.getActiveOrgUnitId();
-        this.selectedOrgUnitId = activeOrgUnitId;
+        // If no filters from database, default to showing everything (no org unit filter)
+        this.selectedOrgUnitId = null;
         this.cdr.markForCheck();
       }
     } catch (error) {
       console.error('Error loading filters:', error);
-      // On error, try to load from GlobalFilterService as fallback
-      const activeOrgUnitId = this.globalFilterService.getActiveOrgUnitId();
-      this.selectedOrgUnitId = activeOrgUnitId;
+      // On error, default to showing everything (no org unit filter)
+      this.selectedOrgUnitId = null;
       
       // Reset other filters to defaults on error
       this.relatedToMe = false;
@@ -225,7 +222,7 @@ export class GlobalFiltersDialogComponent implements OnInit {
     this.resetting = true;
     
     try {
-      // Reset filters on the server (backend now sets user's default org unit)
+      // Reset filters on the server (backend now resets to show everything)
       await this.userPreferenceService.resetGlobalFilters(this.currentUserId).toPromise();
       
       // Immediately clear loading state
