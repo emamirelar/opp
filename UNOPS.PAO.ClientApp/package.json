@@ -6,6 +6,7 @@
     "prestart": "node aspnetcore-https",
     "start": "run-script-os",
     "build": "ng build",
+    "build:dev": "ng build --configuration dev",
     "build:test": "ng build --configuration test",
     "build:qa": "ng build --configuration qa",
     "build:prod": "ng build --configuration production",
