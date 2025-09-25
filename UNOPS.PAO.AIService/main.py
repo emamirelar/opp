@@ -2,9 +2,8 @@
 """
 Main FastAPI application for UNOPS AI Agent with ADK
 
-This is the clean entry point that sets up the FastAPI app and includes
-routers for different endpoint groups. Most functionality has been moved
-to organized modules for better maintainability.
+This is the single entry point that sets up the FastAPI app, handles all
+configuration, and starts the server.
 """
 
 import logging
@@ -56,6 +55,7 @@ from ai_assistant.utils.framework_config import get_config, initialize_config
 # Import routers
 from routers.chat import router as chat_router
 from routers.session import router as session_router
+from routers.action_log import router as action_log_router
 from routers.framework import add_framework_endpoints
 
 # Configure logging
@@ -72,53 +72,129 @@ app = None
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
     """Application lifespan manager - load configurations once at startup"""
-    logger.info("🚀 FastAPI server starting up...")
+    logger.info("🚀 UNOPS AI Agent application starting up...")
 
-    # Load configurations once at startup
-    logger.info("📋 Loading configurations...")
-    
-    # First try to load from team's config directory
-    tools_config_path = 'config/tools.json'
-    if not os.path.exists(tools_config_path):
-        # Fallback to default tools config if team hasn't provided one
-        logger.info("ℹ️ Team tools config not found, using default configuration")
-        tools_config_path = 'config/tools/tools.json'
-    
-    config_manager.load_tools_config(tools_config_path)
-
-    # External API tools are initialized automatically through the agent system
-    # No additional tool initialization needed for external APIs
-    logger.info("✅ External API tools will be initialized through agent system")
-
-    # Initialize action logging table if enabled
-    action_logging_config = config.get('action_logging', {})
-    if action_logging_config.get('enabled', False):
-        try:
-            from ai_assistant.utils.database_manager import db_manager
-            table_created = db_manager.create_action_log_table_if_not_exists()
-            if table_created:
-                logger.info("✅ Action logging table initialized successfully")
-            else:
-                logger.warning("⚠️ Action logging table creation failed")
+    try:
+        # Load configurations once at startup
+        logger.info("📋 Loading configurations...")
+        
+        # First try to load from team's config directory
+        tools_config_path = 'config/tools.json'
+        if not os.path.exists(tools_config_path):
+            # Fallback to default tools config if team hasn't provided one
+            logger.info("ℹ️ Team tools config not found, using default configuration")
+            tools_config_path = 'config/tools/tools.json'
+        
+        config_manager.load_tools_config(tools_config_path)
+        logger.info("✅ Entity configurations loaded")
+        
+        # Initialize action logging table if enabled
+        action_logging_config = config.get('action_logging', {})
+        if action_logging_config.get('enabled', False):
+            try:
+                from ai_assistant.utils.database_manager import db_manager
+                table_created = db_manager.create_action_log_table_if_not_exists()
+                if table_created:
+                    logger.info("✅ Action logging table initialized successfully")
+                else:
+                    logger.warning("⚠️ Action logging table creation failed")
+                    logger.info("📝 Application will continue without action logging")
+            except Exception as e:
+                logger.warning(f"⚠️ Action logging initialization failed: {str(e)}")
                 logger.info("📝 Application will continue without action logging")
-        except Exception as e:
-            logger.warning(f"⚠️ Action logging initialization failed: {str(e)}")
-            logger.info("📝 Application will continue without action logging")
+        else:
+            logger.info("📝 Action logging disabled in configuration")
+
+        logger.info("✅ All configurations loaded successfully!")
+
+        yield
+
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize application: {str(e)}")
+        raise
+    finally:
+        # Cleanup
+        logger.info("🔄 Shutting down UNOPS AI Agent application...")
+        logger.info("✅ External API tools cleaned up automatically")
+
+
+def add_routers_and_endpoints(app: FastAPI):
+    """Add all routers and endpoints to the FastAPI app"""
+    # Add chat router with proper API prefix
+    app.include_router(chat_router, prefix="/api/ai-assistant")
+    logger.info("✅ Chat router included at /api/ai-assistant")
+
+    # Add session router with proper API prefix  
+    app.include_router(session_router, prefix="/api/ai-assistant")
+    logger.info("✅ Session router included at /api/ai-assistant")
+
+    # Add action log router with proper API prefix
+    app.include_router(action_log_router, prefix="/api/ai-assistant") 
+    logger.info("✅ Action log router included at /api/ai-assistant")
+
+    # Add framework endpoints (external API tools handled automatically)
+    add_framework_endpoints(None)
+    from routers.framework import router as framework_router
+    
+    # Framework router typically goes at root level for system endpoints
+    app.include_router(framework_router, prefix="/framework")
+    logger.info("✅ Framework router included at /framework")
+
+
+def create_app():
+    """
+    Create and configure the FastAPI application with ADK
+    
+    This function creates the AI service application with all necessary configuration.
+    """
+    config = get_config()
+    database_config = config.get('database', {})
+    server_config = config.get('server', {})
+
+    # Configure artifacts service
+    artifact_service_uri = None
+    artifact_config = config.get('artifacts', {})
+    artifact_service_type = artifact_config.get('service_type', 'InMemoryArtifactService')
+
+    if artifact_service_type == 'GcsArtifactService':
+        gcs_bucket_name = artifact_config.get('gcs_bucket_name')
+        if not gcs_bucket_name:
+            raise ValueError("GCS bucket name must be specified in config for GcsArtifactService.")
+        artifact_service_uri = f"gs://{gcs_bucket_name}"
+        logger.info(f"Using GcsArtifactService with URI: {artifact_service_uri}")
     else:
-        logger.info("📝 Action logging disabled in configuration")
+        logger.info("Using InMemoryArtifactService")
 
-    logger.info("✅ All configurations loaded successfully!")
+    # Get the framework's installed location for agents_dir
+    framework_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Points to the package root
+    
+    # Create the FastAPI app with ADK integration
+    fastapi_app_instance = get_fast_api_app(
+        agents_dir=framework_root,  # Use framework's installed location
+        session_service_uri=database_config.get('url', 'sqlite:///./ai_agent.db'),
+        artifact_service_uri=artifact_service_uri,
+        allow_origins=server_config.get('allow_origins', ["*"]),
+        web=server_config.get('serve_web_interface', True),
+        trace_to_cloud=False,
+        lifespan=lifespan
+    )
 
-    yield
+    # Override the app metadata
+    branding_config = config.get('branding', {})
+    app_title = branding_config.get('application_name', 'AI Service')
+    app_description = branding_config.get('description', 'AI Agent Framework')
+    fastapi_app_instance.title = app_title
+    fastapi_app_instance.description = f"AI Agent Framework for {app_title} with Google ADK integration"
+    fastapi_app_instance.version = "1.0.0"
 
-    # Cleanup
-    logger.info("🛑 FastAPI server shutting down...")
-    logger.info("✅ External API tools cleaned up automatically")
+    # Add routers and endpoints
+    add_routers_and_endpoints(fastapi_app_instance)
+
+    return fastapi_app_instance
 
 
 # Initialize configuration and create the FastAPI app globally
 config = initialize_config()
-from ai_assistant.app import create_app
 app = create_app()
 
 if __name__ == "__main__":

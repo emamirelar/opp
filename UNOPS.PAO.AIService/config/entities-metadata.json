@@ -2,8 +2,7 @@
   "metadata": {
     "version": "1.1",
     "generatedDate": "2024-09-24T00:00:00Z",
-    "description": "Comprehensive entity metadata for UNOPS PAO system including data models and API endpoints with deconstructed parameter structures",
-    "excludedEntities": ["UserManagement", "AiPromptManagement", "EntityManager"]
+    "description": "Comprehensive entity metadata for UNOPS PAO system including data models and API endpoints with deconstructed parameter structures"
   },
   "requestModels": {
     "PaginationRequest": {
@@ -799,6 +798,261 @@
           "description": "Sort direction (default: true)"
         }
       ]
+    },
+    "PartnerGroupFilterRequest": {
+      "description": "Filter request for partner group searches",
+      "inheritsFrom": "PaginationRequest",
+      "fields": [
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner group name filter"
+        },
+        {
+          "name": "Code",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner group code filter"
+        },
+        {
+          "name": "Type",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner group type filter"
+        },
+        {
+          "name": "PartnerCategoryId",
+          "dataType": "int",
+          "required": false,
+          "description": "Partner category ID filter"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner group status filter"
+        },
+        {
+          "name": "IncludePartnerCounts",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether to include partner counts (default: true)"
+        },
+        {
+          "name": "IncludePartnerCategory",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether to include partner category information (default: true)"
+        }
+      ]
+    },
+    "PartnerGroupSearchRequest": {
+      "description": "Search request for partner groups",
+      "fields": [
+        {
+          "name": "SearchTerm",
+          "dataType": "string",
+          "required": false,
+          "description": "General search term"
+        },
+        {
+          "name": "PartnerCategoryId",
+          "dataType": "int",
+          "required": false,
+          "description": "Partner category ID filter"
+        },
+        {
+          "name": "Type",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner group type filter"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner group status filter"
+        },
+        {
+          "name": "MinPartnerCount",
+          "dataType": "int",
+          "required": false,
+          "description": "Minimum partner count filter"
+        },
+        {
+          "name": "MaxPartnerCount",
+          "dataType": "int",
+          "required": false,
+          "description": "Maximum partner count filter"
+        },
+        {
+          "name": "PageSize",
+          "dataType": "int",
+          "required": false,
+          "description": "Items per page (default: 20)"
+        },
+        {
+          "name": "PageIndex",
+          "dataType": "int",
+          "required": false,
+          "description": "1-based page number (default: 1)"
+        },
+        {
+          "name": "OrderBy",
+          "dataType": "string",
+          "required": false,
+          "description": "Field name for sorting (default: Name)"
+        },
+        {
+          "name": "Ascending",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Sort direction (default: true)"
+        }
+      ]
+    },
+    "PartnerCategoryFilterRequest": {
+      "description": "Filter request for partner category searches",
+      "inheritsFrom": "PaginationRequest",
+      "fields": [
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner category name filter"
+        },
+        {
+          "name": "Code",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner category code filter"
+        },
+        {
+          "name": "Type",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner category type filter"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner category status filter"
+        },
+        {
+          "name": "IncludePartnerCounts",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether to include partner counts (default: true)"
+        }
+      ]
+    },
+    "PartnerCategorySearchRequest": {
+      "description": "Search request for partner categories",
+      "fields": [
+        {
+          "name": "SearchTerm",
+          "dataType": "string",
+          "required": false,
+          "description": "General search term"
+        },
+        {
+          "name": "Type",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner category type filter"
+        },
+        {
+          "name": "Status",
+          "dataType": "string",
+          "required": false,
+          "description": "Partner category status filter"
+        },
+        {
+          "name": "MinPartnerCount",
+          "dataType": "int",
+          "required": false,
+          "description": "Minimum partner count filter"
+        },
+        {
+          "name": "MaxPartnerCount",
+          "dataType": "int",
+          "required": false,
+          "description": "Maximum partner count filter"
+        },
+        {
+          "name": "PageSize",
+          "dataType": "int",
+          "required": false,
+          "description": "Items per page (default: 20)"
+        },
+        {
+          "name": "PageIndex",
+          "dataType": "int",
+          "required": false,
+          "description": "1-based page number (default: 1)"
+        },
+        {
+          "name": "OrderBy",
+          "dataType": "string",
+          "required": false,
+          "description": "Field name for sorting (default: Name)"
+        },
+        {
+          "name": "Ascending",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Sort direction (default: true)"
+        }
+      ]
+    },
+    "PartnerTreeDataModel": {
+      "description": "Data model for partner tree operations",
+      "fields": [
+        {
+          "name": "Id",
+          "dataType": "int",
+          "required": false,
+          "description": "Partner tree node ID (for updates)"
+        },
+        {
+          "name": "Name",
+          "dataType": "string",
+          "required": true,
+          "description": "Partner tree node name"
+        },
+        {
+          "name": "Code",
+          "dataType": "string",
+          "required": true,
+          "description": "Unique code for the tree node"
+        },
+        {
+          "name": "Description",
+          "dataType": "string",
+          "required": false,
+          "description": "Description of the partner category/group"
+        },
+        {
+          "name": "ParentCode",
+          "dataType": "string",
+          "required": false,
+          "description": "Parent node code for hierarchy"
+        },
+        {
+          "name": "Level",
+          "dataType": "int",
+          "required": false,
+          "description": "Tree level/depth"
+        },
+        {
+          "name": "IsCategory",
+          "dataType": "boolean",
+          "required": false,
+          "description": "Whether this is a category (true) or group (false)"
+        }
+      ]
     }
   },
   "entities": {
@@ -998,9 +1252,15 @@
             },
             {
               "name": "partnerId",
-              "dataType": "int",
+              "dataType": "integer",
               "required": false,
               "description": "Filter by partner ID"
+            },
+            {
+              "name": "export",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to export all results (default: false)"
             }
           ]
         },
@@ -1010,22 +1270,40 @@
           "description": "Performs simple text search across multiple contact fields",
           "parameters": [
             {
-              "name": "searchText",
+              "name": "query",
               "dataType": "string",
               "required": true,
               "description": "Text to search for"
             },
             {
               "name": "pageIndex",
-              "dataType": "int",
+              "dataType": "integer",
               "required": false,
-              "description": "1-based page number (default: 1)"
+              "description": "Page number (default: 1)"
             },
             {
               "name": "pageSize",
-              "dataType": "int",
+              "dataType": "integer",
               "required": false,
-              "description": "Items per page (default: 20)"
+              "description": "Number of items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
+              "dataType": "string",
+              "required": false,
+              "description": "Field to sort by"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: true)"
+            },
+            {
+              "name": "export",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to export all results (default: false)"
             }
           ]
         },
@@ -1035,16 +1313,34 @@
           "description": "Performs advanced search with structured criteria including relationships",
           "parameters": [
             {
-              "name": "searchCriteria",
+              "name": "filters",
               "dataType": "string",
-              "required": false,
+              "required": true,
               "description": "JSON array of search criteria objects"
             },
             {
-              "name": "searchText",
+              "name": "pageIndex",
+              "dataType": "integer",
+              "required": false,
+              "description": "Page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "integer",
+              "required": false,
+              "description": "Number of items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "Additional text search"
+              "description": "Field to sort by"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: true)"
             }
           ]
         },
@@ -1250,27 +1546,39 @@
           "parameters": [
             {
               "name": "pageIndex",
-              "dataType": "int",
+              "dataType": "integer",
               "required": false,
-              "description": "1-based page number (default: 1)"
+              "description": "Page number (default: 1)"
             },
             {
               "name": "pageSize",
-              "dataType": "int",
+              "dataType": "integer",
               "required": false,
-              "description": "Items per page (default: 20)"
+              "description": "Number of items per page (default: 20)"
             },
             {
               "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "Field name for sorting"
+              "description": "Field to sort by (default: CreatedDate)"
+            },
+            {
+              "name": "partnerGroupId",
+              "dataType": "integer",
+              "required": false,
+              "description": "Filter by partner group ID"
             },
             {
               "name": "ascending",
               "dataType": "boolean",
               "required": false,
-              "description": "Sort direction"
+              "description": "Sort direction (default: false)"
+            },
+            {
+              "name": "export",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to export all results (default: false)"
             }
           ]
         },
@@ -1280,10 +1588,40 @@
           "description": "Performs simple text search across multiple partner fields",
           "parameters": [
             {
-              "name": "searchText",
+              "name": "query",
               "dataType": "string",
               "required": true,
               "description": "Text to search for"
+            },
+            {
+              "name": "pageIndex",
+              "dataType": "integer",
+              "required": false,
+              "description": "Page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "integer",
+              "required": false,
+              "description": "Number of items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
+              "dataType": "string",
+              "required": false,
+              "description": "Field to sort by (default: CreatedDate)"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: false)"
+            },
+            {
+              "name": "export",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to export all results (default: false)"
             }
           ]
         },
@@ -1293,10 +1631,40 @@
           "description": "Performs advanced search with structured criteria",
           "parameters": [
             {
-              "name": "searchCriteria",
+              "name": "filters",
+              "dataType": "string",
+              "required": true,
+              "description": "JSON array of search criteria objects"
+            },
+            {
+              "name": "pageIndex",
+              "dataType": "integer",
+              "required": false,
+              "description": "Page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "integer",
+              "required": false,
+              "description": "Number of items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "JSON array of search criteria objects"
+              "description": "Field to sort by (default: CreatedDate)"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: false)"
+            },
+            {
+              "name": "export",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to export all results (default: false)"
             }
           ]
         },
@@ -1448,27 +1816,45 @@
           "parameters": [
             {
               "name": "pageIndex",
-              "dataType": "int",
+              "dataType": "integer",
               "required": false,
-              "description": "1-based page number (default: 1)"
+              "description": "Page number (default: 1)"
             },
             {
               "name": "pageSize",
-              "dataType": "int",
+              "dataType": "integer",
               "required": false,
-              "description": "Items per page (default: 20)"
+              "description": "Number of items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
+              "dataType": "string",
+              "required": false,
+              "description": "Field to sort by"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: true)"
             },
             {
               "name": "partnerId",
-              "dataType": "int",
+              "dataType": "integer",
               "required": false,
               "description": "Filter by partner ID"
             },
             {
               "name": "contactId",
-              "dataType": "int",
+              "dataType": "integer",
               "required": false,
               "description": "Filter by contact ID"
+            },
+            {
+              "name": "export",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to export all results (default: false)"
             }
           ]
         },
@@ -1478,10 +1864,40 @@
           "description": "Performs simple text search across interaction fields",
           "parameters": [
             {
-              "name": "searchText",
+              "name": "query",
               "dataType": "string",
               "required": true,
               "description": "Text to search for"
+            },
+            {
+              "name": "pageIndex",
+              "dataType": "integer",
+              "required": false,
+              "description": "Page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "integer",
+              "required": false,
+              "description": "Number of items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
+              "dataType": "string",
+              "required": false,
+              "description": "Field to sort by"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: true)"
+            },
+            {
+              "name": "export",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to export all results (default: false)"
             }
           ]
         },
@@ -1491,10 +1907,40 @@
           "description": "Performs advanced search with structured criteria",
           "parameters": [
             {
-              "name": "searchCriteria",
+              "name": "filters",
+              "dataType": "string",
+              "required": true,
+              "description": "JSON array of search criteria objects"
+            },
+            {
+              "name": "pageIndex",
+              "dataType": "integer",
+              "required": false,
+              "description": "Page number (default: 1)"
+            },
+            {
+              "name": "pageSize",
+              "dataType": "integer",
+              "required": false,
+              "description": "Number of items per page (default: 20)"
+            },
+            {
+              "name": "orderBy",
               "dataType": "string",
               "required": false,
-              "description": "JSON array of search criteria objects"
+              "description": "Field to sort by"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: true)"
+            },
+            {
+              "name": "export",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Whether to export all results (default: false)"
             }
           ]
         },
@@ -1920,7 +2366,97 @@
           }
         ]
       },
-      "apiEndpoints": []
+      "apiEndpoints": [
+        {
+          "endpoint": "/api/PartnerGroup",
+          "method": "GET",
+          "description": "Gets all partner groups with optional filtering and pagination",
+          "parameters": [
+            {
+              "name": "request",
+              "dataType": "PartnerGroupFilterRequest",
+              "required": false,
+              "description": "Filter and pagination parameters including name, code, category filters, partner counts, and sorting options"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/PartnerGroup/search",
+          "method": "POST",
+          "description": "Searches partner groups based on search criteria",
+          "parameters": [
+            {
+              "name": "request",
+              "dataType": "PartnerGroupSearchRequest",
+              "required": true,
+              "description": "Search criteria including search terms, category filters, partner count ranges, and pagination"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/PartnerGroup/{id}",
+          "method": "GET",
+          "description": "Gets a specific partner group by ID with full details",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Partner group ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/PartnerGroup/by-code/{code}",
+          "method": "GET",
+          "description": "Gets a specific partner group by code with full details",
+          "parameters": [
+            {
+              "name": "code",
+              "dataType": "string",
+              "required": true,
+              "description": "Partner group code identifier"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/PartnerGroup/by-category/{categoryId}",
+          "method": "GET",
+          "description": "Gets all partner groups within a specific category",
+          "parameters": [
+            {
+              "name": "categoryId",
+              "dataType": "int",
+              "required": true,
+              "description": "Partner category ID to filter groups by"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/PartnerGroup/summary",
+          "method": "GET",
+          "description": "Gets summary statistics for all partner groups including total counts and group distribution",
+          "parameters": []
+        },
+        {
+          "endpoint": "/api/PartnerGroup/by-category-summary",
+          "method": "GET",
+          "description": "Gets partner groups grouped by category with statistics",
+          "parameters": []
+        },
+        {
+          "endpoint": "/api/PartnerGroup/by-type",
+          "method": "GET",
+          "description": "Gets partner groups grouped by type with statistics",
+          "parameters": []
+        },
+        {
+          "endpoint": "/api/PartnerGroup/refresh-cache",
+          "method": "POST",
+          "description": "Refreshes the partner group cache",
+          "parameters": []
+        }
+      ]
     },
     "PartnerCategory": {
       "description": "Manages partner categories derived from PartnerTree for high-level classification of partners",
@@ -1988,7 +2524,78 @@
           }
         ]
       },
-      "apiEndpoints": []
+      "apiEndpoints": [
+        {
+          "endpoint": "/api/PartnerCategory",
+          "method": "GET",
+          "description": "Gets all partner categories with optional filtering and pagination",
+          "parameters": [
+            {
+              "name": "request",
+              "dataType": "PartnerCategoryFilterRequest",
+              "required": false,
+              "description": "Filter and pagination parameters including name, code, type filters, partner counts, and sorting options"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/PartnerCategory/search",
+          "method": "POST",
+          "description": "Searches partner categories based on search criteria",
+          "parameters": [
+            {
+              "name": "request",
+              "dataType": "PartnerCategorySearchRequest",
+              "required": true,
+              "description": "Search criteria including search terms, type filters, partner count ranges, and pagination"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/PartnerCategory/{id}",
+          "method": "GET",
+          "description": "Gets a specific partner category by ID with full details",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Partner category ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/PartnerCategory/by-code/{code}",
+          "method": "GET",
+          "description": "Gets a specific partner category by code with full details",
+          "parameters": [
+            {
+              "name": "code",
+              "dataType": "string",
+              "required": true,
+              "description": "Partner category code identifier"
+            }
+          ]
+        },
+        {
+          "endpoint": "/api/PartnerCategory/summary",
+          "method": "GET",
+          "description": "Gets summary statistics for all partner categories including total counts and category distribution",
+          "parameters": []
+        },
+        {
+          "endpoint": "/api/PartnerCategory/by-type",
+          "method": "GET",
+          "description": "Gets partner categories grouped by type with statistics",
+          "parameters": []
+        },
+        {
+          "endpoint": "/api/PartnerCategory/refresh-cache",
+          "method": "POST",
+          "description": "Refreshes the partner category cache",
+          "parameters": []
+        }
+      ]
     },
     "PartnerTree": {
       "description": "Manages the hierarchical partner tree structure for organizing partner categories and groups",
@@ -2062,7 +2669,160 @@
           }
         ]
       },
-      "apiEndpoints": []
+      "apiEndpoints": [
+        {
+          "endpoint": "/partner-tree",
+          "method": "POST",
+          "description": "Creates a new partner tree node for organizing partner hierarchies and classifications",
+          "parameters": [
+            {
+              "name": "req",
+              "dataType": "PartnerTreeDataModel",
+              "required": true,
+              "description": "Partner tree data model with hierarchy information including name, code, description, parent code, level, and category/group classification"
+            }
+          ]
+        },
+        {
+          "endpoint": "/partner-tree",
+          "method": "GET",
+          "description": "Retrieves all partner tree nodes (categories and groups) with sorting and access control",
+          "parameters": [
+            {
+              "name": "sortBy",
+              "dataType": "string",
+              "required": false,
+              "description": "Field to sort by (default: Name)"
+            },
+            {
+              "name": "ascending",
+              "dataType": "boolean",
+              "required": false,
+              "description": "Sort direction (default: true for ascending)"
+            }
+          ]
+        },
+        {
+          "endpoint": "/partner-tree/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific partner tree node by ID with complete hierarchy details and permissions",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Partner tree node ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/partner-tree",
+          "method": "PUT",
+          "description": "Updates multiple partner tree nodes (categories and groups) with new hierarchy information and properties",
+          "parameters": [
+            {
+              "name": "req",
+              "dataType": "PartnerTreeDataModel[]",
+              "required": true,
+              "description": "Array of partner tree data models to update with ID, name, code, description, parent code, and level information"
+            }
+          ]
+        },
+        {
+          "endpoint": "/partner-tree/{id}",
+          "method": "DELETE",
+          "description": "Soft deletes a partner tree node from the hierarchy (marks as deleted rather than permanent removal)",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Partner tree node ID to delete"
+            }
+          ]
+        },
+        {
+          "endpoint": "/partner-tree/{id}/permissions",
+          "method": "GET",
+          "description": "Retrieves the current user's permissions for a specific partner tree node (read, update, delete)",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Partner tree node ID to check permissions for"
+            }
+          ]
+        },
+        {
+          "endpoint": "/partner-tree-structure",
+          "method": "GET",
+          "description": "Retrieves the complete partner category and group structure as a hierarchical tree for organizational navigation",
+          "parameters": []
+        },
+        {
+          "endpoint": "/partner-tree/by-partner-group-id/{id}",
+          "method": "GET",
+          "description": "Retrieves a paginated list of partners filtered by specific partner group ID with access control and sorting",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Partner group ID to filter by"
+            },
+            {
+              "name": "request",
+              "dataType": "PaginationRequest",
+              "required": false,
+              "description": "Pagination request containing page size, index, order by, and sort direction"
+            }
+          ]
+        },
+        {
+          "endpoint": "/partner-tree/by-partner-category-code/{code}",
+          "method": "GET",
+          "description": "Retrieves a paginated list of partners filtered by specific partner category code with access control and sorting",
+          "parameters": [
+            {
+              "name": "code",
+              "dataType": "string",
+              "required": true,
+              "description": "Partner category code to filter by (e.g., 'NATIONAL', 'INTERNATIONAL', 'BILATERAL')"
+            },
+            {
+              "name": "request",
+              "dataType": "PaginationRequest",
+              "required": false,
+              "description": "Pagination request containing page size, index, order by, and sort direction"
+            }
+          ]
+        },
+        {
+          "endpoint": "/partner-tree/categories-summary",
+          "method": "GET",
+          "description": "Retrieves all partner categories with their partner counts for statistical analysis and diagram generation",
+          "parameters": []
+        },
+        {
+          "endpoint": "/partner-tree/groups-summary",
+          "method": "GET",
+          "description": "Retrieves all partner groups with their partner counts for statistical analysis and diagram generation",
+          "parameters": []
+        },
+        {
+          "endpoint": "/partner-tree/categorization-overview",
+          "method": "GET",
+          "description": "Retrieves complete partner categorization overview with both categories and groups including partner counts for comprehensive analysis",
+          "parameters": []
+        },
+        {
+          "endpoint": "/partner-tree/describe",
+          "method": "GET",
+          "description": "Describes the PartnerTree entity structure including all field configurations",
+          "parameters": []
+        }
+      ]
     },
     "BaseEngagement": {
       "description": "Manages base engagement information from external data sources for project and engagement tracking",
@@ -2196,7 +2956,53 @@
           }
         ]
       },
-      "apiEndpoints": []
+      "apiEndpoints": [
+        {
+          "endpoint": "/base-engagements",
+          "method": "GET",
+          "description": "Retrieves all base engagements that the user has permission to view with engagement and partner information",
+          "parameters": []
+        },
+        {
+          "endpoint": "/base-engagements",
+          "method": "GET",
+          "description": "Retrieves a specific base engagement by ID with full details including partners",
+          "parameters": [
+            {
+              "name": "id",
+              "dataType": "int",
+              "required": true,
+              "description": "Base engagement ID"
+            }
+          ]
+        },
+        {
+          "endpoint": "/partners/[partnerId]/base-engagements",
+          "method": "GET",
+          "description": "Retrieves all base engagements associated with a specific partner",
+          "parameters": [
+            {
+              "name": "partnerId",
+              "dataType": "int",
+              "required": true,
+              "description": "Partner ID to filter engagements by"
+            }
+          ]
+        },
+        {
+          "endpoint": "/base-engagements/[engagementId]/partners",
+          "method": "GET",
+          "description": "Retrieves all partner relationships for a specific engagement",
+          "parameters": [
+            {
+              "name": "engagementId",
+              "dataType": "int",
+              "required": true,
+              "description": "Base engagement ID to get partner relationships for"
+            }
+          ]
+        }
+      ]
     }
   }
 }

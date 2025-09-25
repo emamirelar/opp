@@ -30,7 +30,6 @@ def search_corp_vector_store(tool_context: ToolContext, query: str, applicationI
 
     print(f"🔍 [VECTOR-SEARCH] Searching corporate vector store with query: {query[:50]}...")
     try:
-        from ai_assistant.utils.common_callbacks import invoke_api_tool
         import requests
         
         search_endpoint = "https://api.ai.unops.org/v1/tools/vector-store/search"

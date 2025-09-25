@@ -658,7 +658,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
             }
             
-            var apiUrl = $"/user-sessions?app_name={appName}&user_id={userId}";
+            var apiUrl = $"/api/ai-assistant/get-user-sessions?app_name={appName}&user_id={userId}";
             
             using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
             httpClient.Timeout = TimeSpan.FromSeconds(30);

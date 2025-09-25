@@ -1,5 +1,6 @@
 {
     "environment": "dev",
+    "description": "Development environment configuration for the AI Agent Framework",
     "cache": {
       "rules": {
         "Partner": ["screen_context"],
@@ -119,7 +120,7 @@
       }
     },
     "developer": {
-      "email": "anushas@unops.org"
+      "email": "tushard@unops.org"
     },
     "agent": {
       "enable_google_drive_agent": true,
@@ -171,6 +172,5 @@
       "google_drive_batch_size": 5,
       "default_host": "0.0.0.0",
       "default_port": 8000
-    },
-    "description": "Development environment configuration for the AI Agent Framework"
+    }
   } 
