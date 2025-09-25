@@ -1,5 +1,5 @@
 {
-  "environment": "qa",
+  "environment": "dev",
   "cache": {
     "rules": {
       "Partner": ["screen_context"],
