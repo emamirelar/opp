@@ -78,7 +78,7 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly IGeoTimeCacheService _geoTimeCacheService;
     private IManagerWrapper _managerWrapper;
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService)
     {
         _mapper = mapper;
         _context = context;
@@ -104,7 +104,7 @@ public class UNOPSGeminiManager : IGeminiManager
         _gcsService = new GoogleCloudStorageService(configuration);
 
         _ttsService = new GoogleTextToSpeechService();
-        _aiService = new AiContextualService(configuration, _context, _credentials);
+        _aiService = new AiContextualService(configuration, _context, _credentials, aiPromptCacheService);
     }
 
     public void SetManagerWrapper(IManagerWrapper managerWrapper)
@@ -141,9 +141,9 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Updated FetchResultFromGemini to use CallGeminiApi
-    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string entityId = null)
     {
-        return await _aiService.FetchResultFromGemini((AiPrompt)promptData, relatedJsonData);
+        return await _aiService.FetchResultFromGemini((AiPrompt)promptData, relatedJsonData, entityId, bypassCache: false);
     }
 
     // Updated callGemini to use CallGeminiApi
@@ -399,8 +399,12 @@ public class UNOPSGeminiManager : IGeminiManager
             return "";
         }
 
-        // Check if promptFunction is available (new approach)
-        if (!string.IsNullOrEmpty(promptData.PromptFunction))
+        // Check if DataRetrievalMethod is available (new approach with backward compatibility)
+        var dataRetrievalMethod = !string.IsNullOrEmpty(promptData.DataRetrievalMethod) 
+            ? promptData.DataRetrievalMethod 
+            : null;
+            
+        if (!string.IsNullOrEmpty(dataRetrievalMethod))
         {
             try
             {
@@ -457,7 +461,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 if (callFunctionMethod != null)
                 {
                     // Use the BaseUNOPSManager's CallFunctionByNameAsync method which handles parameter matching
-                    var task = (Task<object>)callFunctionMethod.Invoke(managerInstance, new object[] { promptData.PromptFunction, req.Id, null });
+                    var task = (Task<object>)callFunctionMethod.Invoke(managerInstance, new object[] { dataRetrievalMethod, req.Id, null });
                     var entityData = await task;
                     
                     if (entityData != null)
@@ -483,13 +487,15 @@ public class UNOPSGeminiManager : IGeminiManager
             catch (Exception ex)
             {
                 // Log error and fallback to empty response
-                _logger.LogError(ex, "Error calling function {PromptFunction}: {ErrorMessage}", promptData.PromptFunction, ex.Message);
+                _logger.LogError(ex, "Error calling function {DataRetrievalMethod}: {ErrorMessage}", dataRetrievalMethod, ex.Message);
                 return $"Error retrieving data: {ex.Message}";
             }
         }
 
-        // Fetch result from Gemini
-        return await FetchResultFromGemini(promptData, relatedMessage);
+        // Fetch result from Gemini with caching support
+        // Pass entity ID for caching if available
+        var entityIdForCache = req.Id > 0 ? req.Id.ToString() : null;
+        return await FetchResultFromGemini(promptData, relatedMessage, entityIdForCache);
     }
 
     public async Task<string> ScanFileForGeminiProcessing(GeminiFileRequest req)
@@ -498,39 +504,57 @@ public class UNOPSGeminiManager : IGeminiManager
         string type = req?.Type;
 
         if (!string.IsNullOrEmpty(type)) {
-            // For partner_action type, use the enhanced AiContextualService approach
-            if (type.Equals("partner_action", StringComparison.OrdinalIgnoreCase))
+            var promptData = (await _aiService.GetPromptData(type)).FirstOrDefault();
+            if (promptData == null)
             {
-                var promptData = (await _aiService.GetPromptData("partner_action")).FirstOrDefault();
-                if (promptData == null)
+                return "";
+            }
+            // Send to Gemini with the extracted text
+            var geminiResponse = await _aiService.FetchResultFromGemini(promptData, extractedText, entityId: null, bypassCache: false);
+            var parsedResponse = _aiService.GetDetailsFromGeminiResponse(geminiResponse);
+
+            // Handle the nested structure - check if there's a data array
+            dynamic processedResponse;
+            
+            if (parsedResponse["data"] != null && parsedResponse["data"] is JArray dataArray && dataArray.Count > 0)
+            {
+                // Process each item in the data array
+                var processedDataArray = new JArray();
+                
+                foreach (var dataItem in dataArray)
                 {
-                    return "";
+                    var dependents = dataItem["dependents"]?.ToString();
+                    if (!string.IsNullOrEmpty(dependents))
+                    {
+                        // Process dependents for this specific data item
+                        var processedDataItem = await _aiService.GetDependentDropdownValues(dependents, dataItem, promptData);
+                        processedDataArray.Add(JToken.FromObject(processedDataItem));
+                    }
+                    else
+                    {
+                        // No dependents to process, add as-is
+                        processedDataArray.Add(dataItem);
+                    }
                 }
-
-                // Send to Gemini with the extracted text
-                var geminiResponse = await _aiService.FetchResultFromGemini(promptData, extractedText);
-                var parsedResponse = _aiService.GetDetailsFromGeminiResponse(geminiResponse);
-
-                // Process dependents to convert text to IDs using enhanced logic
-                var dependents = parsedResponse["dependents"]?.ToString();
-                var processedResponse = await _aiService.GetDependentDropdownValues(dependents, parsedResponse, promptData);
-
-                // Return the processed response as JSON string
-                return Newtonsoft.Json.JsonConvert.SerializeObject(processedResponse);
+                
+                // Reconstruct the response with processed data
+                processedResponse = new JObject
+                {
+                    ["Message"] = parsedResponse["Message"],
+                    ["Category"] = parsedResponse["Category"],
+                    ["ResponseType"] = parsedResponse["ResponseType"],
+                    ["data"] = processedDataArray
+                };
             }
             else
             {
-                // For other types, use the existing logic
-                var promptData = (await GetPromptData(type)).FirstOrDefault();
-
-                if (promptData == null)
-                {
-                    return "";
-                }
-
-                // Fetch result from Gemini
-                return await FetchResultFromGemini(promptData, extractedText);
+                // Fallback to original logic for flat structure
+                var dependents = parsedResponse["dependents"]?.ToString();
+                processedResponse = await _aiService.GetDependentDropdownValues(dependents, parsedResponse, promptData);
             }
+
+            // Return the processed response as JSON string
+            return Newtonsoft.Json.JsonConvert.SerializeObject(processedResponse);
         }
 
         return extractedText;

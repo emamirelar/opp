@@ -19,11 +19,13 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.Utilities.Helpers;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
 {
     private readonly DataRepository<AiPrompt> _promptRepository;
     private readonly IManagerWrapper _managerWrapper;
+    private readonly IAiPromptCacheService _aiPromptCacheService;
 
     public UNOPSAiPromptManager(
         IMapper mapper, 
@@ -31,11 +33,13 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         IConfiguration configuration, 
         UserManager<PAOIdentityUser> userManager,
         IManagerWrapper managerWrapper,
-        IPermissionService permissionService)
+        IPermissionService permissionService,
+        IAiPromptCacheService aiPromptCacheService)
         : base(mapper, context, configuration, userManager, "AiPrompt", permissionService)
     {
         _promptRepository = new DataRepository<AiPrompt>(context);
         _managerWrapper = managerWrapper;
+        _aiPromptCacheService = aiPromptCacheService;
     }
 
     /// <summary>
@@ -75,8 +79,14 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                     };
                 }
 
-                // Get entity data using the function name from the database
-                entityData = await GetEntityDataAsync(aiPrompt.Name, aiPrompt.PromptFunction, request.Id.Value, user);
+                // Get entity data using the function name from the request or database
+                // Priority: request.DataRetrievalMethod > aiPrompt.DataRetrievalMethod > null
+                var dataRetrievalMethod = !string.IsNullOrEmpty(request.DataRetrievalMethod) 
+                    ? request.DataRetrievalMethod 
+                    : (!string.IsNullOrEmpty(aiPrompt.DataRetrievalMethod) 
+                        ? aiPrompt.DataRetrievalMethod 
+                        : null);
+                entityData = await GetEntityDataAsync(aiPrompt.Name, dataRetrievalMethod, request.Id.Value, user);
             }
             
             // If no ID provided, use the first available AI prompt for this type (testData mode)
@@ -93,18 +103,21 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                 };
             }
             
-            // Create AiContextualService instance
-            var aiContextualService = new AiContextualService(_configuration, _context, null);
+            // Create AiContextualService instance with cache service but bypass cache for testing
+            var aiContextualService = new AiContextualService(_configuration, _context, null, _aiPromptCacheService);
 
             // Use values from database or request overrides
             var promptModel = new AiPrompt
             {
                 Type = promptConfig.Type,
-                PromptFunction = promptConfig.PromptFunction,
-                Prompt = request.Prompt ?? promptConfig.Prompt,
+                // Priority: request overrides > database values > legacy fallbacks
+                SystemInstructions = request.SystemInstructions ?? request.Prompt ?? promptConfig.SystemInstructions,
+                UserPrompt = request.UserPrompt ?? promptConfig.UserPrompt,
                 Model = request.Model ?? promptConfig.Model,
                 Project = request.Project ?? promptConfig.Project,
                 Location = request.Location ?? promptConfig.Location,
+                UseCache = promptConfig.UseCache,
+                CacheInvalidationMinutes = promptConfig.CacheInvalidationMinutes,
                 GenerationConfig = JsonConvert.SerializeObject(new
                 {
                     temperature = request.Temperature ?? ExtractTemperatureFromConfig(promptConfig.GenerationConfig),
@@ -120,6 +133,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
 
             // Prepare data for AI processing
             string dataForAI;
+            string dataRetrievalResult = null; // Store for response
             
             if (request.Id.HasValue)
             {
@@ -131,20 +145,25 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                     Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
                 };
                 dataForAI = JsonConvert.SerializeObject(entityData, settings);
+                dataRetrievalResult = dataForAI; // Store the JSON result for the Data tab
             }
             else
             {
                 // Test Data mode: Send test data directly
                 dataForAI = request.TestData;
+                dataRetrievalResult = request.TestData; // Store the test data for the Data tab
             }
 
             // Call the Gemini API with the data
-            var result = await aiContextualService.FetchResultFromGemini(promptModel, dataForAI);
+            // Pass entity ID for caching if available, but bypass cache for testing
+            var entityIdForCache = request.Id?.ToString();
+            var result = await aiContextualService.FetchResultFromGemini(promptModel, dataForAI, entityIdForCache, bypassCache: true);
 
             return new TestPromptResponse
             {
                 Success = true,
-                Response = result
+                Response = result,
+                DataRetrievalResult = dataRetrievalResult
             };
         }
         catch (Exception ex)
@@ -175,11 +194,23 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     private BaseUNOPSManager GetManagerByEntityType(string entityType)
     {
         // Create field name pattern: entityType -> partnerManager, contactManager, etc.
-        var fieldName = $"{entityType.ToLower()}Manager";
+        // Handle special cases and ensure proper camelCase formatting
+        string fieldName;
+        switch (entityType.ToLower())
+        {
+            case "partnertree":
+                fieldName = "partnerTreeManager";
+                break;
+            default:
+                // Fallback to original logic for backward compatibility
+                fieldName = $"{entityType.ToLower()}Manager";
+                break;
+        }
+        
         var manager = GetUNOPSManagerByReflection(fieldName);
 
         if (manager == null)
-            throw new ArgumentException($"Manager for entity type '{entityType}' does not implement BaseUNOPSManager");
+            throw new ArgumentException($"Manager for entity type '{entityType}' does not implement BaseUNOPSManager. Field name attempted: {fieldName}");
 
         return manager;
     }
@@ -215,7 +246,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                 p.Model.Contains(request.SearchText) ||
                 p.Project.Contains(request.SearchText) ||
                 p.Location.Contains(request.SearchText) ||
-                (p.Prompt != null && p.Prompt.Contains(request.SearchText)));
+                (p.SystemInstructions != null && p.SystemInstructions.Contains(request.SearchText)));
         }
 
         // Get total count
@@ -297,22 +328,24 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
             entity.Name = "Interaction";
         }
 
-        // Auto-set PromptFunction based on Name if not provided
-        if (string.IsNullOrEmpty(entity.PromptFunction) && !string.IsNullOrEmpty(entity.Name))
+        // Auto-set DataRetrievalMethod based on Name if not provided
+        if (string.IsNullOrEmpty(entity.DataRetrievalMethod) && !string.IsNullOrEmpty(entity.Name))
         {
             switch (entity.Name.ToLower())
             {
                 case "partner":
-                    entity.PromptFunction = "GetBasicPartnerDetailsAsync";
+                    entity.DataRetrievalMethod = "GetBasicPartnerDetailsAsync";
                     break;
                 case "contact":
-                    entity.PromptFunction = "GetContactWithInteractionsAsync";
+                    entity.DataRetrievalMethod = "GetContactWithInteractionsAsync";
                     break;
                 case "interaction":
-                    entity.PromptFunction = "GetInteractionDetailsAsync";
+                    entity.DataRetrievalMethod = "GetInteractionDetailsAsync";
                     break;
             }
         }
+
+        // DataRetrievalMethod is set directly, no need for backward compatibility mapping
 
         // Since the prompt is created via the screen, Admins can edit
         entity.AdminCanChange = true;
@@ -572,12 +605,14 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         {
             sqlBuilder.AppendLine($"    -- Insert {prompt.Type} prompt");
             sqlBuilder.AppendLine("    INSERT INTO public.\"AiPrompt\" (");
-            sqlBuilder.AppendLine("        \"Type\", \"Prompt\", \"CreatedAt\", \"Name\", \"Status\", \"ContentConfig\", ");
+            sqlBuilder.AppendLine("        \"Type\", \"SystemInstructions\", \"UserPrompt\", \"CreatedAt\", \"Name\", \"Status\", \"ContentConfig\", ");
             sqlBuilder.AppendLine("        \"GenerationConfig\", \"Location\", \"Model\", \"Project\", \"SafetySettings\", ");
-            sqlBuilder.AppendLine("        \"ToolsConfig\", \"PromptFunction\", \"Description\", \"AdminCanChange\"");
+            sqlBuilder.AppendLine("        \"ToolsConfig\", \"DataRetrievalMethod\", \"Description\", \"AdminCanChange\", ");
+            sqlBuilder.AppendLine("        \"Feature\", \"UseCache\", \"CacheInvalidationMinutes\"");
             sqlBuilder.AppendLine("    ) VALUES (");
             sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Type)}',");
-            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Prompt ?? "")}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(!string.IsNullOrEmpty(prompt.SystemInstructions) ? prompt.SystemInstructions : "")}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.UserPrompt ?? "")}',");
             sqlBuilder.AppendLine("        NOW(),");
             sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Name)}',");
             sqlBuilder.AppendLine($"        {(int)prompt.Status},");
@@ -585,7 +620,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
             sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.GenerationConfig)}',");
             sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Location)}',");
             sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Model)}',");
-            sqlBuilder.AppendLine("        '{{{{PROJECT_ID}}}}',");
+            sqlBuilder.AppendLine("        '{{PROJECT_ID}}',");
             
             if (prompt.SafetySettings != null)
             {
@@ -605,9 +640,12 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                 sqlBuilder.AppendLine("        '[]',");
             }
             
-            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.PromptFunction)}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(!string.IsNullOrEmpty(prompt.DataRetrievalMethod) ? prompt.DataRetrievalMethod : "")}',");
             sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Description ?? "")}',");
-            sqlBuilder.AppendLine($"        {prompt.AdminCanChange.ToString().ToLower()}");
+            sqlBuilder.AppendLine($"        {prompt.AdminCanChange.ToString().ToLower()},");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Feature ?? "")}',");
+            sqlBuilder.AppendLine($"        {prompt.UseCache.ToString().ToLower()},");
+            sqlBuilder.AppendLine($"        {prompt.CacheInvalidationMinutes}");
             sqlBuilder.AppendLine("    );");
             sqlBuilder.AppendLine();
         }

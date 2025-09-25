@@ -606,33 +606,129 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return await MapEntityToModel(entity, mapper, GetCurrentUserOrSystemContext());
     }
 
-    public async Task<ContactModel?> GetContactWithInteractionsAsync(int id)
+    /// <summary>
+    /// Gets contact with interactions formatted for AI prompt processing
+    /// </summary>
+    public async Task<object> GetContactWithInteractionsAsync(ClaimsPrincipal user, int id)
     {
-        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup", "Interactions"]);
-        if (entity == null) return null;
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup", "Interactions", "Documents"]);
+        if (entity == null) return new { error = "Contact not found" };
 
-        // Load OrganizationUnitRelationships manually
-        /*if (entity.Partner != null)
+        // Create structured JSON for AI prompt placeholders
+        var result = new
         {
-            await entity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-        }*/
-
-        var result = await MapEntityToModel(entity, mapper, GetCurrentUserOrSystemContext());
-        
-        // Map interactions if they exist - commenting out problematic properties
-        if (entity.Interactions?.Any() == true)
-        {
-            result.Interactions = entity.Interactions.Select(i => new InteractionModel
+            id = entity.Id,
+            fullName = $"{entity.FirstName} {entity.LastName}".Trim(),
+            firstName = entity.FirstName,
+            middleName = entity.MiddleName,
+            lastName = entity.LastName,
+            suffix = entity.Suffix,
+            salutation = entity.Salutation,
+            email = entity.Email,
+            title = entity.Title,
+            department = entity.Department,
+            description = entity.Description,
+            phone = entity.Phone,
+            mobile = entity.Mobile,
+            status = entity.Status.ToString(),
+            
+            // Partner information
+            partner = entity.Partner != null ? new
             {
-                Id = i.Id,
-                Subject = i.Subject,
-                Description = i.Description,
-                Date = i.Date,
-                Type = i.Type
-                // ContactId = i.ContactId,  // These properties may not exist
-                // PartnerId = i.PartnerId
-            }).ToList();
-        }
+                id = entity.Partner.Id,
+                name = entity.Partner.Name,
+                status = entity.Partner.Status.ToString(),
+                partnerGroup = entity.Partner.PartnerGroup?.Name,
+                liaisonOffice = entity.Partner.LiaisonOffice?.Name
+            } : null,
+            
+            // Interaction history with full details
+            interactions = entity.Interactions?.Select(i => new
+            {
+                id = i.Id,
+                subject = i.Subject,
+                description = i.Description,
+                date = i.Date.ToString("yyyy-MM-dd HH:mm"),
+                type = i.Type.ToString(),
+                location = i.Location,
+                status = "Active" // Default status for interactions
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Contact details and communication info
+            contactDetails = new
+            {
+                profilePictureUrl = entity.ProfilePictureUrl,
+                hasProfilePicture = !string.IsNullOrEmpty(entity.ProfilePictureUrl)
+            },
+            
+            // Mailing address information
+            mailingAddress = !string.IsNullOrEmpty(entity.MailingStreet) ? new
+            {
+                street = entity.MailingStreet,
+                street2 = entity.MailingStreet2,
+                city = entity.MailingCity,
+                state = entity.MailingStateProvince,
+                postalCode = entity.MailingPostalCode,
+                country = entity.MailingCountry,
+                fullAddress = string.Join(", ", new[] {
+                    entity.MailingStreet,
+                    entity.MailingStreet2,
+                    entity.MailingCity,
+                    entity.MailingStateProvince,
+                    entity.MailingPostalCode,
+                    entity.MailingCountry
+                }.Where(s => !string.IsNullOrEmpty(s)))
+            } : null,
+            
+            // Assistant information
+            assistant = !string.IsNullOrEmpty(entity.Assistant) ? new
+            {
+                name = entity.Assistant,
+                phone = entity.AssistantPhone,
+                email = entity.AssistantEmail
+            } : null,
+            
+            // Documents and attachments
+            documents = entity.Documents?.Select(d => new
+            {
+                id = d.Id,
+                link = d.Link,
+                type = d.Type,
+                documentType = d.DocumentType?.Name,
+                uploadDate = d.CreatedDate.ToString("yyyy-MM-dd"),
+                isCV = d.Link?.ToLower().Contains("cv") == true || 
+                       d.Link?.ToLower().Contains("resume") == true ||
+                       d.Type?.ToLower().Contains("cv") == true ||
+                       d.Type?.ToLower().Contains("resume") == true,
+                downloadUrl = d.Link
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Summary statistics
+            summary = new
+            {
+                totalInteractions = entity.Interactions?.Count ?? 0,
+                totalDocuments = entity.Documents?.Count ?? 0,
+                hasCV = entity.Documents?.Any(d => 
+                    d.Link?.ToLower().Contains("cv") == true || 
+                    d.Link?.ToLower().Contains("resume") == true ||
+                    d.Type?.ToLower().Contains("cv") == true ||
+                    d.Type?.ToLower().Contains("resume") == true) ?? false,
+                lastInteractionDate = entity.Interactions?.OrderByDescending(i => i.Date).FirstOrDefault()?.Date.ToString("yyyy-MM-dd"),
+                recentInteractions = entity.Interactions?.Where(i => i.Date >= DateTime.UtcNow.AddDays(-30)).Count() ?? 0
+            },
+            
+            // Audit information
+            auditInfo = new
+            {
+                createdDate = entity.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
+                lastModifiedDate = entity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not modified",
+                createdBy = entity.CreatedBy,
+                lastModifiedBy = entity.LastModifiedBy
+            },
+            
+            // User profile information for context
+            userProfile = await GetUserProfileForAIAsync(user)
+        };
 
         return result;
     }
@@ -989,6 +1085,9 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return unmatchedEmails;
     }
     
+    /// <summary>
+    /// Gets partner names from domain lookup using AI - original private method for internal use
+    /// </summary>
     private async Task<Dictionary<string, string>> GetPartnerNamesFromGeminiAsync(List<string> domains)
     {
         var result = new Dictionary<string, string>();
@@ -1082,6 +1181,289 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         }
         
         return result;
+    }
+
+    /// <summary>
+    /// Gets comprehensive partner names from domain lookup using AI, with full user context and analytics
+    /// </summary>
+    /// <summary>
+    /// Gets partner names from Gemini processing for AI prompts - reflection-compatible version
+    /// </summary>
+    public async Task<object> GetPartnerNamesFromGeminiAsync(ClaimsPrincipal user, int id)
+    {
+        // Get contact details to extract domain information
+        var contact = await contactRepository.GetByIdAsync(id, ["Partner"]);
+        if (contact == null)
+        {
+            return new
+            {
+                contactId = id,
+                domains = new List<string>(),
+                partnerNames = new Dictionary<string, string>(),
+                searchResults = new List<object>(),
+                summary = new
+                {
+                    total = 0,
+                    resolved = 0,
+                    unresolved = 0,
+                    successRate = "0%"
+                },
+                searchMetadata = new
+                {
+                    searchDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+                    searchMethod = "Gemini AI Processing"
+                },
+                domainAnalysis = new List<object>(),
+                userProfile = await GetUserProfileForAIAsync(user)
+            };
+        }
+
+        // Extract domain from contact's email if available
+        var domains = new List<string>();
+        if (!string.IsNullOrEmpty(contact.Email) && contact.Email.Contains("@"))
+        {
+            var domain = contact.Email.Split('@')[1];
+            domains.Add(domain);
+        }
+
+        // If contact has partner, also try to extract domain from partner name or other info
+        if (contact.Partner != null && !string.IsNullOrEmpty(contact.Partner.Name))
+        {
+            // You could add logic here to derive domains from partner names
+            // For now, we'll work with email domain
+        }
+
+        // Call the existing method with domains
+        return await GetPartnerNamesForAIAsync(user, domains);
+    }
+
+    public async Task<object> GetPartnerNamesForAIAsync(ClaimsPrincipal user, List<string> domains)
+    {
+        var partnerNameResults = new Dictionary<string, string>();
+        
+        // Initialize with fallback values
+        foreach (var domain in domains)
+        {
+            partnerNameResults[domain] = $"Organization for {domain}";
+        }
+        
+        if (!domains.Any())
+        {
+            // Return comprehensive response even with empty domains
+            return new
+            {
+                domains = new List<string>(),
+                partnerNames = partnerNameResults,
+                searchResults = new List<object>(),
+                summary = new
+                {
+                    totalDomains = 0,
+                    resolvedDomains = 0,
+                    unresolvedDomains = 0,
+                    successRate = 0.0
+                },
+                searchMetadata = new
+                {
+                    searchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm"),
+                    searchMethod = "AI Domain Lookup",
+                    promptType = "domain_organization_lookup"
+                },
+                userProfile = await GetUserProfileForAIAsync(user)
+            };
+        }
+        
+        var searchResults = new List<object>();
+        var resolvedCount = 0;
+        
+        try
+        {
+            // Get the prompt configuration from the AiPrompt table
+            var promptConfig = promptRepository.GetAll()
+                .Where(p => p.Type == "domain_organization_lookup" && p.Status == EntityStatus.Active)
+                .FirstOrDefault();
+            
+            if (promptConfig == null)
+            {
+                _logger?.LogWarning("No active AiPrompt found for domain_organization_lookup");
+                
+                // Return comprehensive response with error info
+                return new
+                {
+                    domains = domains,
+                    partnerNames = partnerNameResults,
+                    searchResults = searchResults,
+                    error = "No active AI prompt configuration found for domain organization lookup",
+                    summary = new
+                    {
+                        totalDomains = domains.Count,
+                        resolvedDomains = 0,
+                        unresolvedDomains = domains.Count,
+                        successRate = 0.0
+                    },
+                    searchMetadata = new
+                    {
+                        searchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm"),
+                        searchMethod = "AI Domain Lookup",
+                        promptType = "domain_organization_lookup",
+                        promptFound = false
+                    },
+                    userProfile = await GetUserProfileForAIAsync(user)
+                };
+            }
+            
+            // Create comprehensive prompt data with user context
+            var promptData = new
+            {
+                domains = domains,
+                searchContext = new
+                {
+                    requestedBy = user?.Identity?.Name ?? "System",
+                    searchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm"),
+                    totalDomains = domains.Count
+                },
+                instructions = "Identify the primary organization name for each domain. Return accurate, well-known organization names."
+            };
+            
+            var domainsJson = System.Text.Json.JsonSerializer.Serialize(promptData);
+            
+            // Use the existing AI service to make the call
+            var aiService = new AiContextualService(_configuration, _context, null);
+            var response = await aiService.FetchResultFromGemini(promptConfig, domainsJson);
+            
+            // Parse the response - expecting a JSON array
+            try
+            {
+                var parsedResponse = aiService.GetDetailsFromGeminiResponse(response);
+                var responseText = parsedResponse["Message"]?.ToString() ??
+                                    parsedResponse["text"]?.ToString() ?? 
+                                    parsedResponse["content"]?.ToString() ?? 
+                                    response.Trim();
+                
+                // Clean up the response text
+                responseText = responseText?.Trim()?.Trim('"');
+                
+                // Parse the JSON response
+                if (!string.IsNullOrEmpty(responseText))
+                {
+                    var organizationResults = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, string>>>(responseText);
+                    
+                    if (organizationResults != null)
+                    {
+                        foreach (var orgResult in organizationResults)
+                        {
+                            if (orgResult.TryGetValue("domain", out var domain) && 
+                                orgResult.TryGetValue("organization", out var organization))
+                            {
+                                var searchResult = new
+                                {
+                                    domain = domain,
+                                    organization = organization,
+                                    resolved = !string.IsNullOrEmpty(organization) && 
+                                              organization != "Unknown" && 
+                                              !organization.Contains("cannot") &&
+                                              !organization.Contains("unable"),
+                                    confidence = "AI Generated",
+                                    source = "Gemini AI"
+                                };
+                                
+                                searchResults.Add(searchResult);
+                                
+                                if (searchResult.resolved)
+                                {
+                                    partnerNameResults[domain] = organization;
+                                    resolvedCount++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception parseEx)
+            {
+                _logger?.LogWarning($"Failed to parse Gemini response for domain lookup: {parseEx.Message}. Response: {response}");
+                
+                // Try to extract text directly from response if JSON parsing fails
+                var cleanResponse = response?.Trim()?.Trim('"');
+                if (!string.IsNullOrEmpty(cleanResponse) && cleanResponse != "Unknown")
+                {
+                    // If single domain and simple text response, use it
+                    if (domains.Count == 1)
+                    {
+                        partnerNameResults[domains[0]] = cleanResponse;
+                        resolvedCount = 1;
+                        
+                        searchResults.Add(new
+                        {
+                            domain = domains[0],
+                            organization = cleanResponse,
+                            resolved = true,
+                            confidence = "AI Generated (Fallback)",
+                            source = "Gemini AI (Text Parse)"
+                        });
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning($"Failed to get organization names from Gemini for domains: {ex.Message}");
+            
+            // Add error info to search results
+            foreach (var domain in domains)
+            {
+                searchResults.Add(new
+                {
+                    domain = domain,
+                    organization = partnerNameResults[domain],
+                    resolved = false,
+                    confidence = "Fallback",
+                    source = "System Generated",
+                    error = ex.Message
+                });
+            }
+        }
+        
+        // Return comprehensive response with all context
+        return new
+        {
+            domains = domains,
+            partnerNames = partnerNameResults,
+            searchResults = searchResults,
+            
+            // Summary statistics
+            summary = new
+            {
+                totalDomains = domains.Count,
+                resolvedDomains = resolvedCount,
+                unresolvedDomains = domains.Count - resolvedCount,
+                successRate = domains.Count > 0 ? (double)resolvedCount / domains.Count : 0.0,
+                fallbacksUsed = domains.Count - resolvedCount
+            },
+            
+            // Search metadata
+            searchMetadata = new
+            {
+                searchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm"),
+                searchMethod = "AI Domain Lookup",
+                promptType = "domain_organization_lookup",
+                promptFound = true,
+                aiModel = "Gemini",
+                processingTime = "Real-time"
+            },
+            
+            // Domain analysis
+            domainAnalysis = domains.Select(d => new
+            {
+                domain = d,
+                tld = d.Contains('.') ? d.Substring(d.LastIndexOf('.')) : "unknown",
+                length = d.Length,
+                hasSubdomain = d.Count(c => c == '.') > 1,
+                resolvedName = partnerNameResults.ContainsKey(d) ? partnerNameResults[d] : null
+            }).Cast<dynamic>().ToList(),
+            
+            // User profile information for context
+            userProfile = await GetUserProfileForAIAsync(user)
+        };
     }
 
     /// <summary>

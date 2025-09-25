@@ -17,16 +17,16 @@ public class CloudRunHelper
     {
         _cache = new MemoryCache(new MemoryCacheOptions());
         _logger = logger;
-        _credential = credential ?? GoogleCredential.GetApplicationDefault()
-            .CreateScoped("https://www.googleapis.com/auth/cloud-platform");
+        var defaultCredential = GoogleCredential.GetApplicationDefault();
+        _credential = credential ?? defaultCredential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
     }
 
     // Custom Cloud Run service client that inherits from BaseClientService
     public class CloudRunServiceClient : BaseClientService
     {
         private readonly string _baseUri;
-        private readonly GoogleCredential _credential;
-        private readonly ILogger<CloudRunHelper> _logger;
+        private readonly GoogleCredential? _credential;
+        private readonly ILogger<CloudRunHelper>? _logger;
 
         public CloudRunServiceClient(BaseClientService.Initializer initializer) : base(initializer) {
           _baseUri = initializer.BaseUri;
@@ -68,6 +68,11 @@ public class CloudRunHelper
         {
             try
             {
+                if (_credential == null)
+                {
+                    throw new InvalidOperationException("Google credential is not configured");
+                }
+                
                 // Get OIDC token with the target audience (the service URL)
                 var oidcToken = await _credential.GetOidcTokenAsync(OidcTokenOptions.FromTargetAudience(audience));
                 
@@ -75,7 +80,7 @@ public class CloudRunHelper
                 // actually returns the ID token string, not an access token
                 var idToken = await oidcToken.GetAccessTokenAsync();
                 
-                _logger.LogInformation("Generated ID token for audience {Audience}: {IdToken}", audience, idToken);
+                _logger?.LogInformation("Generated ID token for audience {Audience}: {IdToken}", audience, idToken);
                 
                 return idToken;
             }
@@ -99,7 +104,7 @@ public class CloudRunHelper
         var cacheKey = $"{projectId}:{location}:{serviceName}";
         
         // Check memory cache first
-        if (_cache.TryGetValue(cacheKey, out string cachedUrl))
+        if (_cache.TryGetValue(cacheKey, out string? cachedUrl) && !string.IsNullOrEmpty(cachedUrl))
         {
             _logger.LogInformation("Retrieved Cloud Run service URL from cache for {ServiceName}", serviceName);
             return cachedUrl;
@@ -131,6 +136,11 @@ public class CloudRunHelper
             }
 
             var resolvedServiceUrl = uriElement.GetString();
+            
+            if (string.IsNullOrEmpty(resolvedServiceUrl))
+            {
+                throw new InvalidOperationException($"Cloud Run service URL is empty for {serviceName} in {location}");
+            }
             
             // Cache the URL in both caches
             _cache.Set(cacheKey, resolvedServiceUrl, TimeSpan.FromHours(24));

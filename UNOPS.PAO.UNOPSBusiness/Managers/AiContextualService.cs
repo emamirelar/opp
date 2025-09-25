@@ -55,8 +55,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         private readonly GoogleCredential _credentials;
         protected readonly PubSubPublisher _pubSubPublisher;
         private readonly string _connectionString;
+        private readonly IAiPromptCacheService _aiPromptCacheService;
 
-        public AiContextualService(IConfiguration configuration, UNOPSAppDbContext context, GoogleCredential credentials)
+        public AiContextualService(IConfiguration configuration, UNOPSAppDbContext context, GoogleCredential credentials, IAiPromptCacheService aiPromptCacheService = null)
         {
             _configuration = configuration;
             _context = context;
@@ -64,11 +65,137 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             _credentials = credentials;
             _promptRepository = new DataRepository<AiPrompt>(context);
             _pubSubPublisher = new PubSubPublisher(configuration);
+            _aiPromptCacheService = aiPromptCacheService; // Optional dependency for backward compatibility
             var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
             var location = _configuration.GetValue<string>("AISettings:Location");
             var model = _configuration.GetValue<string>("AISettings:EmbeddingModelName");
             _endpoint = $"projects/{projectId}/locations/{location}/publishers/google/models/{model}";
             _predictionClient = PredictionServiceClient.Create(); // gRPC Client
+        }
+
+        /// <summary>
+        /// Replaces placeholders in text with actual values from JSON data
+        /// </summary>
+        /// <param name="text">Text containing placeholders like {partnerName}, {userInfo}</param>
+        /// <param name="jsonData">JSON data containing the replacement values</param>
+        /// <returns>Text with placeholders replaced</returns>
+        private string ProcessPlaceholders(string text, string jsonData)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(jsonData))
+                return text ?? string.Empty;
+
+            try
+            {
+                var dataObject = JsonConvert.DeserializeObject<JObject>(jsonData);
+                var result = text;
+
+                if (result == "{promptData}")
+                {
+                    return jsonData;
+                }
+                
+                // Debug logging
+                Console.WriteLine($"[DEBUG] Processing placeholders in text: {text.Substring(0, Math.Min(100, text.Length))}...");
+                Console.WriteLine($"[DEBUG] JSON data: {jsonData.Substring(0, Math.Min(500, jsonData.Length))}...");
+                
+                // Find all placeholders in format {propertyName} or {object.property}
+                var placeholderPattern = @"\{([^}]+)\}";
+                var matches = Regex.Matches(text, placeholderPattern);
+                
+                Console.WriteLine($"[DEBUG] Found {matches.Count} placeholders to process");
+                
+                foreach (Match match in matches)
+                {
+                    var placeholder = match.Value; // e.g., "{partner.name}"
+                    var propertyPath = match.Groups[1].Value; // e.g., "partner.name"
+                    
+                    var value = GetNestedPropertyValue(dataObject, propertyPath);
+                    
+                    if (value != null)
+                    {
+                        Console.WriteLine($"[DEBUG] Replacing '{placeholder}' with '{value.Substring(0, Math.Min(50, value.Length))}{(value.Length > 50 ? "..." : "")}'");
+                        result = result.Replace(placeholder, value);
+                    }
+                    else
+                    {
+                        // Log warning for unresolved placeholders but don't fail
+                        Console.WriteLine($"[WARNING] Placeholder '{placeholder}' not found in JSON data");
+                        // Replace with empty string to avoid showing placeholder in output
+                        result = result.Replace(placeholder, "");
+                    }
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing placeholders: {ex.Message}");
+                return text; // Return original text if processing fails
+            }
+        }
+
+        /// <summary>
+        /// Gets nested property value from JObject using dot notation (e.g., "partner.name")
+        /// </summary>
+        private string GetNestedPropertyValue(JObject dataObject, string propertyPath)
+        {
+            try
+            {
+                var pathParts = propertyPath.Split('.');
+                JToken current = dataObject;
+                
+                foreach (var part in pathParts)
+                {
+                    if (current == null) return null;
+                    
+                    // Handle arrays - if current is an array, try to get first element
+                    if (current is JArray array && array.Count > 0)
+                    {
+                        current = array[0];
+                    }
+                    
+                    // Look for property (case-insensitive)
+                    if (current is JObject obj)
+                    {
+                        var property = obj.Properties()
+                            .FirstOrDefault(p => string.Equals(p.Name, part, StringComparison.OrdinalIgnoreCase));
+                        
+                        if (property != null)
+                        {
+                            current = property.Value;
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                
+                // Handle the final value
+                if (current != null)
+                {
+                    // If it's an object or array, serialize it as JSON
+                    if (current is JObject || current is JArray)
+                    {
+                        return current.ToString(Formatting.None);
+                    }
+                    else
+                    {
+                        return current.ToString();
+                    }
+                }
+                
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting nested property '{propertyPath}': {ex.Message}");
+                return null;
+            }
         }
 
         public async Task<string> CreateEmbeddingForText(string text)
@@ -331,7 +458,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         return prompts.Select(entity => new AiPrompt
         {
             Type = entity.Type,
-            Prompt = entity.Prompt ?? string.Empty, // Ensure null safety
+            SystemInstructions = entity.SystemInstructions ?? string.Empty, 
+            UserPrompt = entity.UserPrompt,
             ContentConfig = entity.ContentConfig,
             GenerationConfig = entity.GenerationConfig,
             ToolsConfig = entity.ToolsConfig,
@@ -339,28 +467,84 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             Location = entity.Location,
             Project = entity.Project,
             Model = entity.Model,
-            PromptFunction = entity.PromptFunction,
-            Name = entity.Name
+            DataRetrievalMethod = entity.DataRetrievalMethod, 
+            Name = entity.Name,
+            Feature = entity.Feature,
+            UseCache = entity.UseCache,
+            CacheInvalidationMinutes = entity.CacheInvalidationMinutes
         }).ToList();
     }
 
-    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string entityId = null, bool bypassCache = false)
     {
-        string promptTemplate = promptData.Prompt;
-        string finalPrompt = promptTemplate.Replace("{promptData}", relatedJsonData);
-        var promptList = new
+        try
         {
-            role = "user",
-            parts = new[] { new { text = finalPrompt } }
-        };
-        return await CallGeminiApi(promptList, promptData);
+            // Step 1: Process placeholders to create fully formed instructions/prompts
+            // Use new SystemInstructions field
+            var systemInstructionsTemplate = promptData.SystemInstructions ?? string.Empty;
+                
+            var fullyFormedSystemInstructions = ProcessPlaceholders(systemInstructionsTemplate, relatedJsonData);
+            
+            var fullyFormedUserPrompt = !string.IsNullOrEmpty(promptData.UserPrompt) 
+                ? ProcessPlaceholders(promptData.UserPrompt, relatedJsonData)
+                : relatedJsonData; // Default to raw data if no user prompt specified
+            
+            // Step 2: Check cache if enabled and not bypassed
+            if (!bypassCache && promptData.UseCache && !string.IsNullOrEmpty(entityId) && !string.IsNullOrEmpty(promptData.Type) && _aiPromptCacheService != null)
+            {
+                var cachedEntry = await _aiPromptCacheService.GetCachedEntryAsync(promptData.Type, entityId);
+                if (cachedEntry != null)
+                {
+                    // Check if the current fully formed instructions/prompts match the cached ones
+                    if (cachedEntry.SystemInstructions == fullyFormedSystemInstructions && 
+                        cachedEntry.UserPrompt == fullyFormedUserPrompt)
+                    {
+                        Console.WriteLine($"[CACHE HIT] Returning cached result for prompt {promptData.Type}, entity {entityId}");
+                        return cachedEntry.Result;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[CACHE MISS] Instructions/prompts changed for prompt {promptData.Type}, entity {entityId}");
+                        // Instructions/prompts have changed, invalidate cache entry
+                        await _aiPromptCacheService.InvalidateCache(promptData.Type, entityId);
+                    }
+                }
+            }
+            
+            // Step 3: Call Gemini API with fully formed content
+            var userContent = new
+            {
+                role = "user",
+                parts = new[] { new { text = fullyFormedUserPrompt } }
+            };
+            
+            var result = await CallGeminiApi(userContent, promptData, fullyFormedSystemInstructions);
+            
+            // Step 4: Cache the result if caching is enabled and not bypassed
+            if (!bypassCache && promptData.UseCache && !string.IsNullOrEmpty(entityId) && !string.IsNullOrEmpty(promptData.Type) && _aiPromptCacheService != null)
+            {
+                await _aiPromptCacheService.SetCachedResultAsync(
+                    promptData.Type, 
+                    entityId, 
+                    fullyFormedSystemInstructions,
+                    fullyFormedUserPrompt, 
+                    result, 
+                    promptData.CacheInvalidationMinutes);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error in FetchResultFromGemini: {ex.Message}", ex);
+        }
     }
 
     // Common function to handle Gemini API calls
-    public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData)
+    public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData, string systemInstructions = null)
     {
         string accessToken = await GetAccessTokenAsync();
-        var requestBody = await GetRequestBody(prompt, promptData);
+        var requestBody = await GetRequestBody(prompt, promptData, systemInstructions);
         string url = await GetURL(promptData);
         string jsonRequest = JsonConvert.SerializeObject(requestBody);
         return await CallGeminiApiAsync(url, jsonRequest, accessToken);
@@ -413,7 +597,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             await _pubSubPublisher.PublishMessageAsync(new List<MyPubSubMessage> { message });
         }
 
-        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPrompt promptData)
+        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPrompt promptData, string systemInstructions = null)
         {
             dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
             dynamic generationConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
@@ -450,6 +634,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             dynamic safetySettings = string.IsNullOrEmpty(promptData.SafetySettings)
                             ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.SafetySettings);
 
+            // Handle user content
             if (prompt is string)
             {
                 contentConfig.parts[0].text = prompt.ToString();
@@ -461,7 +646,10 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
             var requestBody = new
             {
-                contents = contentConfig,
+                contents = new[] { contentConfig }, // Wrap in array for proper format
+                system_instruction = !string.IsNullOrEmpty(systemInstructions) 
+                    ? new { parts = new[] { new { text = systemInstructions } } }
+                    : null, // Add system instructions if provided
                 generationConfig = generationConfig,
                 tools = new[] { toolsConfig },
                 safetySettings = new[] { safetySettings }

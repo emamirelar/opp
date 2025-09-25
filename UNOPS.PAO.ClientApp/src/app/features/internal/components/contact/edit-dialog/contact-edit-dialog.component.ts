@@ -270,26 +270,51 @@ export class ContactEditDialogComponent implements OnInit {
   // Handle AI Transcribe completion
   onTranscriptionCompleted(data: any): void {
     if (data) {
+      // Handle both flat structure (legacy) and nested structure (new format)
+      let contactData = data;
+      
+      // Check if data has the new nested structure with data array
+      if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+        // Use the first item from the data array
+        contactData = data.data[0];
+        
+        // Show success message from the response
+        if (data.Message) {
+          this.feedbackDialogService.showSuccessToast({ detail: data.Message });
+        }
+      }
+      
       // Pre-fill the contact form with AI-extracted data
       this.formGroup.patchValue({
-        salutation: data.salutation || this.formGroup.get('salutation')?.value,
-        firstName: data.firstName || this.formGroup.get('firstName')?.value,
-        middleName: data.middleName || this.formGroup.get('middleName')?.value,
-        lastName: data.lastName || this.formGroup.get('lastName')?.value,
-        suffix: data.suffix || this.formGroup.get('suffix')?.value,
-        title: data.title || this.formGroup.get('title')?.value,
-        email: data.email || this.formGroup.get('email')?.value,
-        phone: data.phone || this.formGroup.get('phone')?.value,
-        mobile: data.mobile || this.formGroup.get('mobile')?.value,
-        department: data.department || this.formGroup.get('department')?.value,
-        mailingStreet: data.mailingStreet || this.formGroup.get('mailingStreet')?.value,
-        mailingCity: data.mailingCity || this.formGroup.get('mailingCity')?.value,
-        mailingStateProvince: data.mailingStateProvince || this.formGroup.get('mailingStateProvince')?.value,
-        mailingPostalCode: data.mailingPostalCode || this.formGroup.get('mailingPostalCode')?.value,
-        mailingCountry: data.mailingCountry || this.formGroup.get('mailingCountry')?.value
+        salutation: contactData.salutation || this.formGroup.get('salutation')?.value,
+        firstName: contactData.firstName || this.formGroup.get('firstName')?.value,
+        middleName: contactData.middleName || this.formGroup.get('middleName')?.value,
+        lastName: contactData.lastName || this.formGroup.get('lastName')?.value,
+        suffix: contactData.suffix || this.formGroup.get('suffix')?.value,
+        title: contactData.title || this.formGroup.get('title')?.value,
+        email: contactData.email || this.formGroup.get('email')?.value,
+        phone: contactData.phone || this.formGroup.get('phone')?.value,
+        mobile: contactData.mobile || this.formGroup.get('mobile')?.value,
+        department: contactData.department || this.formGroup.get('department')?.value,
+        mailingStreet: contactData.mailingStreet || this.formGroup.get('mailingStreet')?.value,
+        mailingCity: contactData.mailingCity || this.formGroup.get('mailingCity')?.value,
+        mailingStateProvince: contactData.mailingStateProvince || this.formGroup.get('mailingStateProvince')?.value,
+        mailingPostalCode: contactData.mailingPostalCode || this.formGroup.get('mailingPostalCode')?.value,
+        mailingCountry: contactData.mailingCountry || this.formGroup.get('mailingCountry')?.value
       });
       
-      this.feedbackDialogService.showSuccessToast({ detail: 'Contact data transcribed successfully!' });
+      // Handle partner selection if partnerId was processed correctly
+      if (contactData.partnerId && typeof contactData.partnerId === 'number') {
+        // partnerId is now a proper ID, set it in the form
+        this.formGroup.patchValue({
+          partnerId: contactData.partnerId
+        });
+      }
+      
+      // Show success message for legacy format
+      if (!data.data) {
+        this.feedbackDialogService.showSuccessToast({ detail: 'Contact data transcribed successfully!' });
+      }
     }
   }
 

@@ -35,7 +35,7 @@ public class GeminiManager : IGeminiManager
             .Where(x => x.Type == type));
     }
 
-    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string entityId = null)
     {
         // Implement the logic to fetch result from Gemini
         throw new NotImplementedException();

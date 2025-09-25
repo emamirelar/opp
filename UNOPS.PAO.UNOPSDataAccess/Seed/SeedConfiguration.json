@@ -45,13 +45,6 @@
       "filePath": "Seeders/PartnerTreeSeeder.cs"
     },
     {
-      "order": 6,
-      "name": "AiPrompts",
-      "type": "sql",
-      "path": "AiPrompts.sql",
-      "description": "AI prompts configuration"
-    },
-    {
       "order": 7,
       "name": "EntityPermissions", 
       "type": "sql",
