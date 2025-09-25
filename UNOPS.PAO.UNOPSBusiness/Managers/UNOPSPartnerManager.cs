@@ -797,49 +797,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     }
 
     /// <summary>
-    /// Gets a partner with its associated projects through the many-to-many relationship
-    /// </summary>
-    public async Task<PartnerModel?> GetPartnerWithProjectsAsync(int id)
-    {
-        // Include the projects through the many-to-many relationship
-        string[] includes = ["Documents", "PartnerGroup", "Projects"];
-
-        var partner = await PartnerRepository.GetByIdAsync(id, includes);
-
-        if (partner == null)
-        {
-            return default;
-        }
-
-        // Load organization unit relationships for single partner
-        await partner.LoadOrganizationUnitRelationshipsAsync(_context);
-
-        // OrganizationUnitRelationships are now loaded via includes
-
-        var result = await MapEntityToModelAsync(partner, _mapper, null);
-
-        // Map the projects to ProjectSummaryModel
-        if (partner.Projects != null && partner.Projects.Any())
-        {
-            result.Projects = partner.Projects.Select(project => new ProjectSummaryModel
-            {
-                Id = project.Id,
-                ProjectNumber = project.ProjectNumber,
-                Name = project.Name,
-                StartDate = project.StartDate,
-                EndDate = project.EndDate,
-                Stage = project.Stage,
-                BudgetCheckingLevel = project.BudgetCheckingLevel,
-                BudgetDuration = project.BudgetDuration,
-                BudgetAmount = project.BudgetAmount,
-                ExpenditureAmount = project.ExpenditureAmount
-            }).ToList();
-        }
-
-        return result;
-    }
-
-    /// <summary>
     /// Gets partner risk profile with comprehensive details - designed for risk analysis and AI prompts
     /// </summary>
     public async Task<PartnerModel?> GetPartnerRiskProfileAsync(int id)

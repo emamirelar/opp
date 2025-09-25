@@ -118,7 +118,7 @@ public class UNOPSGeminiManager : IGeminiManager
         var entity = _mapper.Map(model, new AiPrompt
         {
             Type = model.Type ?? "default",
-            PromptFunction = model.PromptFunction ?? "default",
+            DataRetrievalMethod = model.DataRetrievalMethod ?? "default",
             GenerationConfig = model.GenerationConfig ?? "{}",
             ContentConfig = model.ContentConfig ?? "{}",
             Project = model.Project ?? "default",

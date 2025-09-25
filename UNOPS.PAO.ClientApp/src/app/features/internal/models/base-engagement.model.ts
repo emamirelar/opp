@@ -91,8 +91,8 @@ export interface BaseEngagementPartner {
   partnerDisplayName: string;
 }
 
-// Helper interface for engagement stage severity
-export type StageSeverity = 'success' | 'warning' | 'danger' | 'info';
+// Helper interface for engagement stage severity (aligned with PrimeNG p-tag severity values)
+export type StageSeverity = 'success' | 'warn' | 'danger' | 'info';
 
 // Helper interfaces for filtering and search
 export interface BaseEngagementFilterParams {
