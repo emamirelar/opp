@@ -49,14 +49,6 @@ namespace UNOPS.PAO.Presentation.Controllers
             return Ok(result);
         }
 
-        [HttpPut(APIDictionary.GmailAddonInteraction)]
-        [AccessControlled(EntityTypes.Interaction, "update")]
-        public async Task<IActionResult> UpdateInteraction([FromBody] UpdateInteractionRequest model)
-        {
-            var result = await _interactionManager.UpdateGmailInteractionAsync(model);
-            return Ok(result);
-        }
-
         [HttpPost(APIDictionary.GmailAddonFindInteraction)]
         [AccessControlled(EntityTypes.Interaction, "read")]
         public async Task<IActionResult> FindGmailInteraction([FromBody] GmailInteractionRequest model)
