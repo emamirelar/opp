@@ -44,6 +44,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     private readonly UNOPSAppDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<UNOPSPartnerManager> _logger;
+    private readonly GlobalFilterService? _globalFilterService;
 
     private BaseRepository<UNOPSPartner> PartnerRepository;
     private BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
@@ -160,13 +161,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return MapModelToEntity(model, new UNOPSPartner());
     }
 
-    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, ILogger<UNOPSPartnerManager> logger, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null)
+    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, ILogger<UNOPSPartnerManager> logger, IPermissionService permissionService, GlobalFilterService? globalFilterService, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null)
         : base(mapper, context, configuration, null, "Partner", permissionService, httpContextAccessor)
     {
         _mapper = mapper;
         _context = context;
         _configuration = configuration;
         _logger = logger;
+        _globalFilterService = globalFilterService;
        // _securityService = securityService;
         PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
         PartnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration, serviceProvider);
@@ -286,8 +288,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var filteredBaseQuery = baseQuery.ApplySpecification(specification);
         var filteredQuery = filteredBaseQuery.OfType<UNOPSPartner>();
         
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        // Apply global filters using the centralized GlobalFilterService
+        if (_globalFilterService != null)
+        {
+            filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, GetCurrentUserOrSystemContext());
+        }
         
         // Get total count
         var totalCount = filteredQuery.Count();
@@ -339,12 +344,13 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var filteredBaseQuery = baseQuery.ApplySpecification(specification);
         var filteredQuery = filteredBaseQuery.OfType<UNOPSPartner>();
         
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        // Apply global filters using the centralized GlobalFilterService
+        if (_globalFilterService != null)
+        {
+            filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, user);
+        }
         
-        // OrgUnit filtering is now handled by the specification and our manual join method
-        
-        // Apply access control filters (row and column filtering) BEFORE pagination
+        // Apply access control filters (role-based permissions only) BEFORE pagination
         // Cast the query to UNOPSPartner query for access control to maintain type consistency
         var unosPartnerQuery = filteredQuery.Cast<UNOPSPartner>();
         var filteredData = await ApplyAccessControlFilters(unosPartnerQuery, user, "read");
@@ -1809,75 +1815,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return results.Cast<object>().ToList();
     }
     
-    /// <summary>
-    /// Applies org unit filtering if the specification supports it using manual joins
-    /// </summary>
-    private IQueryable<UNOPSPartner> ApplyOrgUnitFilterIfSupported(IQueryable<UNOPSPartner> query, ISpecification<Partner> specification)
-    {
-        // Check if this is a PartnerSpecificationAdapter and get the original specification
-        if (specification is PartnerSpecificationAdapter adapter)
-        {
-            var originalSpec = adapter.GetOriginalSpecification();
-            return ApplyUNOPSPartnerOrgUnitFilterIfSupported(query, originalSpec);
-        }
-        
-        // Check if specification has ApplyOrgUnitFilter method and call it
-        var specType = specification.GetType();
-        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<Partner>), typeof(DbContext) });
-        
-        if (filterMethod != null)
-        {
-            try
-            {
-                // Cast to base type for Partner specifications
-                var baseQuery = query.Cast<Partner>();
-                var result = filterMethod.Invoke(specification, new object[] { baseQuery, _context });
-                if (result is IQueryable<Partner> filteredBaseQuery)
-                {
-                    return filteredBaseQuery.OfType<UNOPSPartner>();
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue without org unit filtering
-                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
-            }
-        }
-        
-        // If no ApplyOrgUnitFilter method found, return original query
-        return query;
-    }
     
-    /// <summary>
-    /// Applies org unit filtering for UNOPS-specific specifications
-    /// </summary>
-    private IQueryable<UNOPSPartner> ApplyUNOPSPartnerOrgUnitFilterIfSupported(IQueryable<UNOPSPartner> query, ISpecification<UNOPSPartner> specification)
-    {
-        // Check if specification has ApplyOrgUnitFilter method and call it
-        var specType = specification.GetType();
-        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<UNOPSPartner>), typeof(DbContext) });
-        
-        if (filterMethod != null)
-        {
-            try
-            {
-                // Direct call for UNOPSPartner specifications
-                var result = filterMethod.Invoke(specification, new object[] { query, _context });
-                if (result is IQueryable<UNOPSPartner> filteredQuery)
-                {
-                    return filteredQuery;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue without org unit filtering
-                Console.WriteLine($"Error applying UNOPS partner org unit filter: {ex.Message}");
-            }
-        }
-        
-        // If no ApplyOrgUnitFilter method found, return original query
-        return query;
-    }
 
     #region Partner Status Management Methods
 

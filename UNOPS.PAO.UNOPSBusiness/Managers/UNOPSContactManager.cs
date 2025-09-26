@@ -50,6 +50,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     private readonly ILogger<UNOPSContactManager>? _logger;
     private readonly DataRepository<AiPrompt> promptRepository;
     private readonly UNOPSAppDbContext _context;
+    private readonly GlobalFilterService _globalFilterService;
 
     private async Task<ContactModel> MapEntityToModel(UNOPSContact entity, IMapper mapper, ClaimsPrincipal user)
     {
@@ -140,11 +141,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         });
     }
 
-    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService, IHttpContextAccessor httpContextAccessor = null, ILogger<UNOPSContactManager> logger = null, IServiceProvider serviceProvider = null)
+    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService, GlobalFilterService globalFilterService, IHttpContextAccessor httpContextAccessor = null, ILogger<UNOPSContactManager> logger = null, IServiceProvider serviceProvider = null)
         : base(mapper, context, configuration, null, "Contact", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
         _context = context;
+        _globalFilterService = globalFilterService;
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
         userInfoRepository = new BaseRepository<UserProfile>(context, configuration, serviceProvider);
@@ -390,8 +392,8 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var filteredBaseQuery = baseQuery.ApplySpecification(specification);
         var filteredQuery = filteredBaseQuery.OfType<UNOPSContact>();
         
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        // Apply global filters using the centralized GlobalFilterService
+        filteredQuery = _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, GetCurrentUserOrSystemContext()).GetAwaiter().GetResult();
 
         // Custom pagination with efficient user lookup
         var totalCount = filteredQuery.Count();
@@ -503,10 +505,10 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
         var filteredQuery = query.ApplySpecification(specification);
         
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyUNOPSContactOrgUnitFilterIfSupported(filteredQuery, specification);
+        // Apply global filters using the centralized GlobalFilterService
+        filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, user);
 
-        // Apply access control filters (row and column filtering) BEFORE pagination
+        // Apply access control filters (role-based permissions only) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
         
         // If filteredData is a list, we need to handle pagination manually
@@ -757,10 +759,10 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var filteredBaseQuery = baseQuery.ApplySpecification(specification);
         var filteredQuery = filteredBaseQuery.OfType<UNOPSContact>();
         
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        // Apply global filters using the centralized GlobalFilterService
+        filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, user);
 
-        // Apply access control filters (row and column filtering) BEFORE pagination
+        // Apply access control filters (role-based permissions only) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
         
         // If filteredData is a list, we need to handle pagination manually
@@ -1517,71 +1519,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return contacts.Select(contact => (object)MapEntityToModelWithUserInfo(contact, mapper, userInfoLookup, orgHierarchyLookup)).ToList();
     }
     
-    /// <summary>
-    /// Applies org unit filtering if the specification supports it using manual joins for Contact specifications
-    /// </summary>
-    private IQueryable<UNOPSContact> ApplyOrgUnitFilterIfSupported(IQueryable<UNOPSContact> query, ISpecification<Contact> specification)
-    {
-        // Check if specification has ApplyOrgUnitFilter method and call it
-        var specType = specification.GetType();
-        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<Contact>), typeof(DbContext) });
-        
-        if (filterMethod != null)
-        {
-            try
-            {
-                // Cast to base type for the ApplyOrgUnitFilter method
-                var baseQuery = query.Cast<Contact>();
-                var result = filterMethod.Invoke(specification, new object[] { baseQuery, _context });
-                if (result is IQueryable<Contact> filteredBaseQuery)
-                {
-                    // Cast back to UNOPSContact using OfType for safety
-                    return filteredBaseQuery.OfType<UNOPSContact>();
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue without org unit filtering
-                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
-            }
-        }
-        
-        // If no ApplyOrgUnitFilter method found, return original query
-        // This is normal for composite specifications that handle filtering internally
-        return query;
-    }
     
-    /// <summary>
-    /// Applies org unit filtering if the specification supports it using manual joins for UNOPSContact specifications
-    /// </summary>
-    private IQueryable<UNOPSContact> ApplyUNOPSContactOrgUnitFilterIfSupported(IQueryable<UNOPSContact> query, ISpecification<UNOPSContact> specification)
-    {
-        // Check if specification has ApplyOrgUnitFilter method and call it
-        var specType = specification.GetType();
-        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<UNOPSContact>), typeof(DbContext) });
-        
-        if (filterMethod != null)
-        {
-            try
-            {
-                // Direct call for UNOPSContact specifications
-                var result = filterMethod.Invoke(specification, new object[] { query, _context });
-                if (result is IQueryable<UNOPSContact> filteredQuery)
-                {
-                    return filteredQuery;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue without org unit filtering
-                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
-            }
-        }
-        
-        // If no ApplyOrgUnitFilter method found, return original query
-        // This is normal for specifications that don't support org unit filtering
-        return query;
-    }
     
     /// <summary>
     /// Get supported search fields for contacts - helps frontend build dynamic search forms

@@ -455,12 +455,18 @@ public class GlobalFilterService
     }
 
     /// <summary>
-    /// Apply organization unit filtering for Interaction entities using both direct and partner-based filtering
+    /// Apply organization unit filtering for Interaction entities using comprehensive relationship-based filtering:
+    /// 1. Direct interaction org unit relationships
+    /// 2. Associated contacts' org unit relationships  
+    /// 3. Associated contacts' underlying partners' org unit relationships
+    /// 4. Direct partner associations (InteractionPartners) org unit relationships
     /// </summary>
     private async Task<Expression?> ApplyInteractionOrgUnitFilterAsync(ParameterExpression parameter, Type entityType, List<int> orgUnitIds, Expression? existingExpression)
     {
-        // Get direct interaction IDs from OrganizationUnitRelationship table
-        var validInteractionIds = await _context.Set<OrganizationUnitRelationship>()
+        var allValidInteractionIds = new HashSet<int>();
+
+        // 1. Get direct interaction IDs from OrganizationUnitRelationship table
+        var directInteractionIds = await _context.Set<OrganizationUnitRelationship>()
             .Where(orgRel => 
                 orgRel.EntityType == "Interaction" && 
                 !orgRel.IsDeleted &&
@@ -469,15 +475,98 @@ public class GlobalFilterService
             .Select(orgRel => orgRel.EntityId)
             .ToListAsync();
 
-        _logger.LogDebug("Interaction filter found {Count} interaction IDs in org units", validInteractionIds.Count);
+        foreach (var id in directInteractionIds)
+            allValidInteractionIds.Add(id);
 
-        if (validInteractionIds.Any())
+        _logger.LogDebug("Interaction filter found {Count} direct interaction IDs in org units", directInteractionIds.Count);
+
+        // 2. Get interaction IDs through associated contacts' org units
+        var contactInteractionIds = await _context.Set<UNOPSInteraction>()
+            .Join(_context.Set<InteractionContact>(), 
+                  i => i.Id, 
+                  ic => ic.InteractionId, 
+                  (i, ic) => new { InteractionId = i.Id, ContactId = ic.ContactId })
+            .Join(_context.Set<OrganizationUnitRelationship>(),
+                  x => x.ContactId,
+                  orgRel => orgRel.EntityId,
+                  (x, orgRel) => new { x.InteractionId, orgRel })
+            .Where(x => 
+                x.orgRel.EntityType == "Contact" &&
+                !x.orgRel.IsDeleted &&
+                x.orgRel.Status == EntityStatus.Active &&
+                orgUnitIds.Contains(x.orgRel.OrganizationHierarchyId))
+            .Select(x => x.InteractionId)
+            .Distinct()
+            .ToListAsync();
+
+        foreach (var id in contactInteractionIds)
+            allValidInteractionIds.Add(id);
+
+        _logger.LogDebug("Interaction filter found {Count} interaction IDs through contact org units", contactInteractionIds.Count);
+
+        // 3. Get interaction IDs through associated contacts' underlying partners' org units
+        var partnerInteractionIds = await _context.Set<UNOPSInteraction>()
+            .Join(_context.Set<InteractionContact>(), 
+                  i => i.Id, 
+                  ic => ic.InteractionId, 
+                  (i, ic) => new { InteractionId = i.Id, ContactId = ic.ContactId })
+            .Join(_context.Set<UNOPSContact>(),
+                  x => x.ContactId,
+                  c => c.Id,
+                  (x, c) => new { x.InteractionId, PartnerId = c.PartnerId })
+            .Where(x => x.PartnerId > 0)
+            .Join(_context.Set<OrganizationUnitRelationship>(),
+                  x => x.PartnerId,
+                  orgRel => orgRel.EntityId,
+                  (x, orgRel) => new { x.InteractionId, orgRel })
+            .Where(x => 
+                x.orgRel.EntityType == "Partner" &&
+                !x.orgRel.IsDeleted &&
+                x.orgRel.Status == EntityStatus.Active &&
+                orgUnitIds.Contains(x.orgRel.OrganizationHierarchyId))
+            .Select(x => x.InteractionId)
+            .Distinct()
+            .ToListAsync();
+
+        foreach (var id in partnerInteractionIds)
+            allValidInteractionIds.Add(id);
+
+        _logger.LogDebug("Interaction filter found {Count} interaction IDs through partner org units", partnerInteractionIds.Count);
+
+        // 4. Also check interactions through direct partner associations (InteractionPartners)
+        var directPartnerInteractionIds = await _context.Set<UNOPSInteraction>()
+            .Join(_context.Set<InteractionPartner>(), 
+                  i => i.Id, 
+                  ip => ip.InteractionId, 
+                  (i, ip) => new { InteractionId = i.Id, PartnerId = ip.PartnerId })
+            .Join(_context.Set<OrganizationUnitRelationship>(),
+                  x => x.PartnerId,
+                  orgRel => orgRel.EntityId,
+                  (x, orgRel) => new { x.InteractionId, orgRel })
+            .Where(x => 
+                x.orgRel.EntityType == "Partner" &&
+                !x.orgRel.IsDeleted &&
+                x.orgRel.Status == EntityStatus.Active &&
+                orgUnitIds.Contains(x.orgRel.OrganizationHierarchyId))
+            .Select(x => x.InteractionId)
+            .Distinct()
+            .ToListAsync();
+
+        foreach (var id in directPartnerInteractionIds)
+            allValidInteractionIds.Add(id);
+
+        _logger.LogDebug("Interaction filter found {Count} interaction IDs through direct partner associations", directPartnerInteractionIds.Count);
+
+        var totalInteractionIds = allValidInteractionIds.ToList();
+        _logger.LogDebug("Interaction filter found {Count} total interaction IDs across all org unit relationships", totalInteractionIds.Count);
+
+        if (totalInteractionIds.Any())
         {
             var idProperty = GetIdProperty(entityType);
             if (idProperty != null)
             {
                 var idAccess = Expression.Property(parameter, idProperty);
-                var interactionIdsConstant = Expression.Constant(validInteractionIds);
+                var interactionIdsConstant = Expression.Constant(totalInteractionIds);
                 var containsMethod = typeof(List<int>).GetMethod("Contains");
                 var containsCall = Expression.Call(interactionIdsConstant, containsMethod, idAccess);
                 
