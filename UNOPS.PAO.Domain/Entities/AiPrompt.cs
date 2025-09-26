@@ -1,7 +1,7 @@
 namespace UNOPS.PAO.Domain.Entities;
 public class AiPrompt : BaseBusinessEntity
 {
-    public int? Id { get; set; }
+    public new int? Id { get; set; }
     public string Type { get; set; }
     
     public string DataRetrievalMethod { get; set; } // Function name to call on the manager
