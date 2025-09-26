@@ -390,7 +390,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
           .setDisabled(!relatedRecords.canCreateInteractions)
           .setOnClickAction(
             CardService.newAction()
-              .setFunctionName('createOrUpdateInteraction')
+              .setFunctionName('createInteractionClicked')
               .setParameters({ 
                 messageData: JSON.stringify(messageData),
                 relatedRecords: JSON.stringify(relatedRecords)
