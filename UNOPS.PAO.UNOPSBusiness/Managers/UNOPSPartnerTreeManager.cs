@@ -13,6 +13,7 @@ using System.Security.Claims;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
 {
@@ -33,7 +34,8 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
                 data.PartnerGroupEditable = true;
             }
             
-            var partnerCategory = await partnerTreeService.GetPartnerCategoryByPartnerGroupCodeAsync(data.PartnerGroupCode);
+            var partnerCategory = data.PartnerGroupId.HasValue ? 
+                await partnerTreeService.GetPartnerCategoryByPartnerGroupCodeAsync(data.PartnerGroupCode) : null;
             if (partnerCategory != null)
             {
                 data.PartnerCategoryName = partnerCategory.Name;
@@ -109,7 +111,8 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         }
 
         // Create a lookup by parent code for hierarchy building
-        var lookup = treeModels.ToLookup(x => x.Data.Parent);
+        // Normalize null and empty string to empty string for consistent hierarchy building
+        var lookup = treeModels.ToLookup(x => string.IsNullOrEmpty(x.Data.Parent) ? string.Empty : x.Data.Parent);
         
         // Return the hierarchical structure
         return BuildHierarchy(lookup, string.Empty).ToList();
@@ -323,5 +326,167 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         }
 
         return await MapEntityToModel(item, mapper);
+    }
+
+    /// <summary>
+    /// Gets partner category details with related partners and their recent interactions for AI analysis
+    /// </summary>
+    public async Task<object> GetBasicPartnerCategoryDetailsAsync(ClaimsPrincipal user, int entityId)
+    {
+        // Get the partner category (PartnerTree) details
+        var partnerCategory = await _context.PartnerTrees
+            .FirstOrDefaultAsync(pt => pt.Id == entityId && !pt.IsDeleted);
+        
+        if (partnerCategory == null)
+        {
+            return new { Error = "Partner category not found" };
+        }
+
+        // Get all PartnerGroups that are descendants of this PartnerCategory (recursive)
+        var partnerGroupIds = await partnerTreeService.GetAllDescendantsAsync(partnerCategory.Code);
+
+        // Get Partners that belong to these PartnerGroups
+        var partnerIds = await _context.Partners
+            .Where(p => partnerGroupIds.Contains(p.PartnerGroupId.Value) && !p.IsDeleted)
+            .Select(p => p.Id)
+            .ToListAsync();
+
+        // Get last 10 interactions for partners in this category
+        var recentInteractions = await _context.Interactions
+            .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && !i.IsDeleted)
+            .Include(i => i.InteractionPartners)
+                .ThenInclude(ip => ip.Partner)
+            .OrderByDescending(i => i.CreatedDate)
+            .Take(10)
+            .ToListAsync();
+
+        // Build simplified response object
+        var result = new
+        {
+            PartnerCategoryName = partnerCategory.Description,
+            RecentInteractions = recentInteractions.Select(i => new
+            {
+                PartnerName = i.InteractionPartners?.FirstOrDefault()?.Partner?.Name,
+                Type = i.Type.ToString(),
+                Subject = i.Subject,
+                Date = i.Date,
+                Description = !string.IsNullOrEmpty(i.Description) && i.Description.Length > 200 
+                    ? i.Description.Substring(0, 200) + "..." 
+                    : i.Description
+            }).ToList()
+        };
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets partner group details with related partners and their recent interactions for AI analysis
+    /// </summary>
+    public async Task<object> GetBasicPartnerGroupDetailsAsync(ClaimsPrincipal user, int entityId)
+    {
+        // Get the partner group (PartnerTree) details
+        var partnerGroup = await _context.PartnerTrees
+            .FirstOrDefaultAsync(pt => pt.Id == entityId && !pt.IsDeleted);
+        
+        if (partnerGroup == null)
+        {
+            return new { Error = "Partner group not found" };
+        }
+
+        // Get partner IDs for interaction queries
+        var partnerIds = await _context.Partners
+            .Where(p => p.PartnerGroupId == entityId && !p.IsDeleted)
+            .Select(p => p.Id)
+            .ToListAsync();
+
+        // Get last 10 interactions for partners in this group
+        var recentInteractions = await _context.Interactions
+            .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && !i.IsDeleted)
+            .Include(i => i.InteractionPartners)
+                .ThenInclude(ip => ip.Partner)
+            .OrderByDescending(i => i.CreatedDate)
+            .Take(10)
+            .ToListAsync();
+
+        // Build simplified response object
+        var result = new
+        {
+            PartnerGroupName = partnerGroup.Description,
+            RecentInteractions = recentInteractions.Select(i => new
+            {
+                PartnerName = i.InteractionPartners?.FirstOrDefault()?.Partner?.Name,
+                Type = i.Type.ToString(),
+                Subject = i.Subject,
+                Date = i.Date,
+                Description = !string.IsNullOrEmpty(i.Description) && i.Description.Length > 200 
+                    ? i.Description.Substring(0, 200) + "..." 
+                    : i.Description
+            }).ToList()
+        };
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets partner category with related partners for news analysis (simplified model without interactions)
+    /// </summary>
+    public async Task<object> GetPartnerCategoryNewsDetailsAsync(ClaimsPrincipal user, int entityId)
+    {
+        // Get the partner category (PartnerTree) details
+        var partnerCategory = await _context.PartnerTrees
+            .FirstOrDefaultAsync(pt => pt.Id == entityId && !pt.IsDeleted);
+        
+        if (partnerCategory == null)
+        {
+            return new { Error = "Partner category not found" };
+        }
+
+        // Get all PartnerGroups that are descendants of this PartnerCategory (recursive)
+        var partnerGroupIds = await partnerTreeService.GetAllDescendantsAsync(partnerCategory.Code);
+
+        // Get Partners that belong to these PartnerGroups
+        var partners = await _context.Partners
+            .Where(p => partnerGroupIds.Contains(p.PartnerGroupId.Value) && !p.IsDeleted)
+            .Select(p => new { p.Id, p.Name })
+            .ToListAsync();
+
+        // Build simplified response object for news analysis
+        var result = new
+        {
+            PartnerCategoryName = partnerCategory.Description,
+            Partners = partners
+        };
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets partner group with related partners for news analysis (simplified model without interactions)
+    /// </summary>
+    public async Task<object> GetPartnerGroupNewsDetailsAsync(ClaimsPrincipal user, int entityId)
+    {
+        // Get the partner group (PartnerTree) details
+        var partnerGroup = await _context.PartnerTrees
+            .FirstOrDefaultAsync(pt => pt.Id == entityId && !pt.IsDeleted);
+        
+        if (partnerGroup == null)
+        {
+            return new { Error = "Partner group not found" };
+        }
+
+        // Get Partners that belong to this PartnerGroup
+        var partners = await _context.Partners
+            .Where(p => p.PartnerGroupId == entityId && !p.IsDeleted)
+            .Select(p => new { p.Id, p.Name })
+            .ToListAsync();
+
+        // Build simplified response object for news analysis
+        var result = new
+        {
+            PartnerGroupName = partnerGroup.Description,
+            Partners = partners
+        };
+
+        return result;
     }
 }

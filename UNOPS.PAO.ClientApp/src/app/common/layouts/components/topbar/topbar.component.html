@@ -111,7 +111,7 @@
                    'notification-read': isNotificationRead(notification),
                    'notification-unread': !isNotificationRead(notification)
                  }"
-                 (click)="notification.category !== 'file_analysis' ? handleNotificationClick(notification) : null">
+                 (click)="notification.category !== 'file_analysis' && notification.status !== 'Progress' ? handleNotificationClick(notification) : null">
               
               <!-- Category icon -->
               <div class="notification-category-icon" 
@@ -316,7 +316,7 @@
            'notification-read': isNotificationRead(notification),
            'notification-unread': !isNotificationRead(notification)
          }"
-         (click)="notification.category !== 'file_analysis' ? handleNotificationClickFromDialog(notification) : null">
+         (click)="notification.category !== 'file_analysis' && notification.status !== 'Progress' ? handleNotificationClickFromDialog(notification) : null">
       
       <!-- Category icon -->
       <div class="notification-category-icon" 

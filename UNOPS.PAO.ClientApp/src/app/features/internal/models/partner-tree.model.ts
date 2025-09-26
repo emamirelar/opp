@@ -7,8 +7,10 @@ export interface PartnerTree {
   code?: string;
   type?: string;
   parent?: string;
+  partnerCategoryId?: number;
   partnerCategoryCode?: string;
   partnerCategoryName?: string;
+  partnerGroupId?: number;
   partnerGroupCode?: string;
   partnerGroupName?: string;
   status?: string;

@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, EventEmitter, inject, Input, OnInit, Output, signal } from '@angular/core';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
@@ -17,6 +19,7 @@ import { AutoFocusModule } from 'primeng/autofocus';
 import { BlockUI } from 'primeng/blockui';
 import { MessageModule } from 'primeng/message';
 import { ContactService } from '../../../services/contact.service';
+import { PartnerService } from '../../../services/partner.service';
 import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -27,6 +30,8 @@ import { FormsModule } from '@angular/forms';
 import { ContactEditDialogFooterComponent } from './footer/contact-edit-dialog-footer.component';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { DialogService } from 'primeng/dynamicdialog';
+import { DuplicateConfirmationDialogComponent, DuplicateDetectionResponse } from '../duplicate-confirmation-dialog/duplicate-confirmation-dialog.component';
 
 @Component({
   selector: 'app-contact-edit-dialog',
@@ -69,7 +74,7 @@ export class ContactEditDialogComponent implements OnInit {
     middleName: [''],
     lastName: ['', [Validators.required]],
     suffix: [''],
-    title: [''],
+    title: ['', [Validators.required]],
 
     // Contact details
     email: ['', [Validators.required, Validators.email]],
@@ -103,15 +108,22 @@ export class ContactEditDialogComponent implements OnInit {
     lastModifiedDate: [new Date()],
     isDeleted: [false],
     deletedBy: [''],
-    deletedDate: [null]
+    deletedDate: [null],
+    partnerName: [''],
+    
+    // Duplicate detection field
+    confirmDuplicateCreation: [false]
   });
 
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
   contactService = inject(ContactService);
+  partnerService = inject(PartnerService);
   languageService = inject(LanguageService);
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
+  private dialogService = inject(DialogService);
+  private cdr = inject(ChangeDetectorRef);
 
   @Input() public record: Contact = {};
   @Output() onRecordCreationSuccess = new EventEmitter<any>();
@@ -133,6 +145,9 @@ export class ContactEditDialogComponent implements OnInit {
     this.dialogConfig.templates = {
       footer: ContactEditDialogFooterComponent
     };
+
+    // Set up partner ID change listener to update partner name
+    this.setupPartnerIdChangeListener();
   }
 
   ngOnInit() {
@@ -150,6 +165,11 @@ export class ContactEditDialogComponent implements OnInit {
       }
       
       this.formGroup.patchValue(formData);
+      
+      // Update partner name if partnerId is set
+      if (formData.partnerId) {
+        this.updatePartnerName(formData.partnerId);
+      }
     }
     
     // Check if any assistant fields have values
@@ -180,6 +200,17 @@ export class ContactEditDialogComponent implements OnInit {
         Object.assign(this.record, payload);
         this.record._updated = true;
         
+        // Preserve existing duplicate info if available
+        if (this.dialogConfig.data.record?.duplicateInfo) {
+          (this.record as any).duplicateInfo = this.dialogConfig.data.record.duplicateInfo;
+        }
+        
+        // Trigger duplicate detection after closing to update duplicate indicators
+        // This will update the record in the import dialog asynchronously
+        setTimeout(() => {
+          this.triggerDuplicateDetectionAfterSave(payload, this.record);
+        }, 100);
+        
         // Close the dialog with the updated record
         this.dialogRef.close(this.record);
         return;
@@ -191,25 +222,20 @@ export class ContactEditDialogComponent implements OnInit {
         this.contactService.updateContactById(payload).subscribe({
           next: (data: any) => {
             this.feedbackDialogService.showSuccessToast({ detail: 'Record updated successfully!' });
+            
+            // Trigger duplicate detection for the updated record
+            this.triggerDuplicateDetectionAfterSave(payload);
+            
             // Ensure we're not closing the dialog until the operation completes
             setTimeout(() => this.dialogRef.close("saved"));
           },
-          error: (error) => {
+          error: (error: any) => {
             this.feedbackDialogService.showErrorToast({ detail: 'Failed to update record' });
           }
         });
       } else {
-        // Create new contact
-        this.contactService.createContact(payload).subscribe({
-          next: (data: any) => {
-            this.feedbackDialogService.showSuccessToast({ detail: 'Record created successfully!' });
-            // Ensure we're not closing the dialog until the operation completes
-            setTimeout(() => this.dialogRef.close(data));
-          },
-          error: (error) => {
-            this.feedbackDialogService.showErrorToast({ detail: 'Failed to create record' });
-          }
-        });
+        // Create new contact with duplicate detection
+        this.createContactWithDuplicateDetection(payload);
       }
     } else {
       this.requestingSaveSignal.set(false);
@@ -264,6 +290,311 @@ export class ContactEditDialogComponent implements OnInit {
       });
       
       this.feedbackDialogService.showSuccessToast({ detail: 'Contact data transcribed successfully!' });
+    }
+  }
+
+  /**
+   * Creates a contact with duplicate detection workflow
+   */
+  private createContactWithDuplicateDetection(payload: any): void {
+    this.contactService.createContact(payload).subscribe({
+      next: (response: any) => {
+        // Check if response indicates duplicate detection
+        if (response.confirmationRequired && response.action === "duplicateConfirmation") {
+          // Show duplicate confirmation dialog
+          this.showDuplicateConfirmationDialog(response, payload);
+        } else if (response.action === 'created' || response.success) {
+          // Contact created successfully
+          this.feedbackDialogService.showSuccessToast({ 
+            detail: response.message || 'Contact created successfully!' 
+          });
+          setTimeout(() => this.dialogRef.close(response.data || response));
+        } else {
+          // Fallback for successful creation (old format)
+          this.feedbackDialogService.showSuccessToast({ 
+            detail: 'Contact created successfully!' 
+          });
+          setTimeout(() => this.dialogRef.close(response));
+        }
+      },
+      error: (error: any) => {
+        this.feedbackDialogService.showErrorToast({ 
+          detail: 'Failed to create contact. Please try again.' 
+        });
+        console.error('Contact creation error:', error);
+      }
+    });
+  }
+
+  /**
+   * Shows the duplicate confirmation dialog
+   */
+  private showDuplicateConfirmationDialog(duplicateResponse: DuplicateDetectionResponse, originalPayload: any): void {
+    const dialogRef = this.dialogService.open(DuplicateConfirmationDialogComponent, {
+      data: duplicateResponse,
+      header: 'Duplicate Contact Detected',
+      width: '500px',
+      modal: true,
+      breakpoints: {
+        '960px': '450px',
+        '640px': '90vw'
+      }
+    });
+
+    dialogRef.onClose.subscribe((confirmed: boolean) => {
+      if (confirmed) {
+        // User confirmed - create contact anyway
+        const confirmedPayload = {
+          ...originalPayload,
+          confirmDuplicateCreation: true
+        };
+        
+        this.contactService.createContact(confirmedPayload).subscribe({
+          next: (response: any) => {
+            if (response.action === 'created') {
+              this.feedbackDialogService.showSuccessToast({ 
+                detail: 'Contact created successfully (duplicate confirmation acknowledged)!' 
+              });
+              setTimeout(() => this.dialogRef.close(response.data));
+            } else {
+              // Fallback for successful creation
+              this.feedbackDialogService.showSuccessToast({ 
+                detail: 'Contact created successfully!' 
+              });
+              setTimeout(() => this.dialogRef.close(response));
+            }
+          },
+          error: (error: any) => {
+            this.feedbackDialogService.showErrorToast({ 
+              detail: 'Failed to create contact. Please try again.' 
+            });
+            console.error('Confirmed contact creation error:', error);
+          }
+        });
+      } else {
+        // User cancelled - do nothing, stay on the form
+        this.feedbackDialogService.showInfoToast({ 
+          detail: 'Contact creation cancelled.' 
+        });
+      }
+    });
+  }
+
+  /**
+   * Sets up the partner ID change listener to automatically update partner name
+   */
+  private setupPartnerIdChangeListener() {
+    this.formGroup.get('partnerId')?.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe((newPartnerId: number) => {
+        console.log('🔧 Partner ID changed to:', newPartnerId);
+        this.updatePartnerName(newPartnerId);
+      });
+  }
+
+  /**
+   * Updates the partner name based on partner ID
+   */
+  private updatePartnerName(partnerId: number) {
+    if (!partnerId) {
+      this.formGroup.get('partnerName')?.setValue('');
+      return;
+    }
+
+    console.log('🔧 updatePartnerName called with partnerId:', partnerId);
+    const allPartners = this.cachedDataService.allPartners();
+    console.log('🔧 allPartners cache contains:', allPartners?.length || 0, 'partners');
+
+    // First, try to find partner in the cache
+    const partner = allPartners.find((p: any) => p.id === partnerId);
+    if (partner) {
+      console.log('🔧 Partner found in cache:', partner.name);
+      this.formGroup.get('partnerName')?.setValue(partner.name);
+      return;
+    }
+
+    // If partner is missing from cache, load it from API
+    console.log('🔧 Partner not found in cache, loading from API:', partnerId);
+    this.partnerService.getPartnerById(partnerId.toString()).pipe(
+      map(partner => partner ? partner.name : null),
+      catchError(error => {
+        console.warn(`🔧 Failed to load partner ${partnerId}:`, error);
+        return of(null);
+      })
+    ).subscribe({
+      next: (partnerName) => {
+        if (partnerName) {
+          console.log('🔧 Partner loaded from API:', partnerName);
+          this.formGroup.get('partnerName')?.setValue(partnerName);
+        } else {
+          console.log('🔧 Partner not found, clearing partner name');
+          this.formGroup.get('partnerName')?.setValue('');
+        }
+        
+        // Trigger change detection
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.warn('🔧 Error loading partner name:', error);
+        this.formGroup.get('partnerName')?.setValue('');
+      }
+    });
+  }
+
+  /**
+   * Triggers duplicate detection for a saved record to update duplicate information
+   */
+  private triggerDuplicateDetectionAfterSave(payload: any, updatedRecord?: any): void {
+    // Skip if no payload
+    if (!payload) {
+      console.log('Skipping duplicate detection - no payload provided');
+      return;
+    }
+
+    // Create a copy of payload for duplicate detection
+    const duplicateCheckPayload = { ...payload };
+    
+    // If there's an ID (edit scenario), ensure it's properly formatted as a number
+    // The backend SQL will use this ID to exclude the record from duplicate detection
+    if (payload.id) {
+      const numericId = parseInt(payload.id.toString(), 10);
+      if (isNaN(numericId)) {
+        console.warn('Invalid ID format, proceeding without ID exclusion:', payload.id);
+        delete duplicateCheckPayload.id;
+      } else {
+        duplicateCheckPayload.id = numericId;
+        console.log('Triggering duplicate detection for Contact edit (excluding ID:', numericId, ')');
+      }
+    } else {
+      console.log('Triggering duplicate detection for new Contact (no ID exclusion)');
+    }
+    
+    // Call the contact service to detect duplicates (uses the updated SQL with ID exclusion)
+    this.contactService.detectDuplicates(duplicateCheckPayload).subscribe({
+      next: (response: any) => {
+        const recordType = payload.id ? `existing Contact ID ${payload.id}` : 'new Contact';
+        console.log('Post-save duplicate detection results for', recordType, ':', response);
+        
+        // If this is an import edit, update the duplicate information
+        if (this.dialogConfig.data.isImportEdit) {
+          this.updateDuplicateInfoAfterDetection(response, payload, updatedRecord);
+        }
+      },
+      error: (error: any) => {
+        // Silent failure - don't interrupt the user's workflow
+        const recordType = payload.id ? `Contact ID ${payload.id}` : 'new Contact';
+        console.warn('Post-save duplicate detection failed for', recordType, ':', error);
+      }
+    });
+  }
+
+  /**
+   * Update the duplicate information in the record for import dialog refresh
+   */
+  private updateDuplicateInfoAfterDetection(response: any, payload: any, updatedRecord?: any): void {
+    if (!response) {
+      return;
+    }
+
+    // Extract duplicate information from the response
+    const duplicateInfo = response.duplicateInfo;
+    
+    if (duplicateInfo) {
+      // Parse the stringified JSON fields
+      let parsedTopDuplicate = null;
+      if (duplicateInfo.topDuplicate) {
+        parsedTopDuplicate = { ...duplicateInfo.topDuplicate };
+        
+        // Parse matchedData if it's a string
+        if (typeof duplicateInfo.topDuplicate.matchedData === 'string') {
+          try {
+            parsedTopDuplicate.matchedData = JSON.parse(duplicateInfo.topDuplicate.matchedData);
+          } catch (e) {
+            console.warn('Failed to parse matchedData:', e);
+            parsedTopDuplicate.matchedData = duplicateInfo.topDuplicate.matchedData;
+          }
+        }
+      }
+
+      // Parse duplicates if it's a string
+      let parsedDuplicates = null;
+      if (typeof duplicateInfo.duplicates === 'string') {
+        try {
+          parsedDuplicates = JSON.parse(duplicateInfo.duplicates);
+        } catch (e) {
+          console.warn('Failed to parse duplicates:', e);
+          parsedDuplicates = duplicateInfo.duplicates;
+        }
+      } else {
+        parsedDuplicates = duplicateInfo.duplicates;
+      }
+
+      // Update the record with new duplicate information
+      const updatedDuplicateInfo = {
+        isDuplicate: duplicateInfo.totalDuplicates > 0,
+        hasDuplicates: duplicateInfo.totalDuplicates > 0,
+        totalDuplicates: duplicateInfo.totalDuplicates || 0,
+        highConfidence: duplicateInfo.highConfidence || 0,
+        mediumConfidence: duplicateInfo.mediumConfidence || 0,
+        lowConfidence: duplicateInfo.lowConfidence || 0,
+        topDuplicate: parsedTopDuplicate,
+        duplicates: parsedDuplicates,
+        tooltip: duplicateInfo.totalDuplicates > 0 
+          ? `${duplicateInfo.totalDuplicates} duplicate(s) found` 
+          : 'Unique record'
+      };
+
+      // Update the record's duplicate info
+      this.updateRecordInImportDialog(updatedDuplicateInfo, updatedRecord);
+      
+      console.log('Updated duplicate info for import record:', updatedDuplicateInfo);
+    } else {
+      // No duplicates found
+      const noDuplicateInfo = {
+        isDuplicate: false,
+        hasDuplicates: false,
+        totalDuplicates: 0,
+        highConfidence: 0,
+        mediumConfidence: 0,
+        lowConfidence: 0,
+        topDuplicate: null,
+        duplicates: null,
+        tooltip: 'Unique record'
+      };
+      
+      this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);
+      
+      console.log('No duplicates found - marked as unique record');
+    }
+  }
+
+  /**
+   * Update the record in the import dialog with new duplicate information
+   */
+  private updateRecordInImportDialog(duplicateInfo: any, updatedRecord?: any): void {
+    // Try to find the import dialog service in the global scope
+    try {
+      // Use a custom event to communicate with the import dialog
+      const importRowId = updatedRecord?._importRowId || this.dialogConfig.data.record?._importRowId;
+      
+      if (importRowId) {
+        const updateEvent = new CustomEvent('update-duplicate-info', {
+          detail: {
+            importRowId: importRowId,
+            duplicateInfo: duplicateInfo
+          }
+        });
+        
+        window.dispatchEvent(updateEvent);
+        console.log('Dispatched duplicate info update event for row:', importRowId);
+      } else {
+        console.warn('No importRowId found to update duplicate info');
+      }
+    } catch (error) {
+      console.error('Error updating duplicate info in import dialog:', error);
     }
   }
 }

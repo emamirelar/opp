@@ -12,6 +12,11 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
+using UNOPS.PAO.UNOPSDomain.Entities;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using Newtonsoft.Json;
+using static UNOPS.PAO.UNOPSBusiness.Services.AdvancedSearchService;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
@@ -24,6 +29,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         private readonly IGeminiManager _geminiManager;
         private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
         private readonly AiContextualService _aiContextualService;
+        private readonly AdvancedSearchService _advancedSearchService;
 
         public InteractionController(
             IManagerWrapper manager, 
@@ -31,7 +37,8 @@ namespace UNOPS.PAO.Presentation.Controllers
             IAuthorizationService authorizationService,
             ISecureSpecificationFactory secureSpecificationFactory,
             ILogger<InteractionController> logger,
-            AiContextualService aiContextualService)
+            AiContextualService aiContextualService,
+            AdvancedSearchService advancedSearchService)
             : base(logger, authorizationService, userResolverService)
         {
             _manager = manager.InteractionManager;
@@ -39,6 +46,7 @@ namespace UNOPS.PAO.Presentation.Controllers
             _geminiManager = manager.GeminiManager;
             _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
             _aiContextualService = aiContextualService;
+            _advancedSearchService = advancedSearchService;
         }
 
         /// <summary>
@@ -74,6 +82,48 @@ namespace UNOPS.PAO.Presentation.Controllers
                 return validationResult;
             }
 
+            // Check for duplicates ONLY if user hasn't confirmed duplicate creation
+            if (!req.ConfirmDuplicateCreation)
+            {
+                try
+                {
+                    var duplicateResult = await _aiContextualService.DetectDuplicateForSingleRecordAsync(
+                        "Interaction", 
+                        req, 
+                        0.7 // Field match threshold
+                    );
+                    
+                    if (duplicateResult != null && duplicateResult.HasDuplicates)
+                    {
+                        return Ok(new {
+                            success = false,
+                            action = "duplicateConfirmation",
+                            message = "Potential duplicate interaction detected. Do you want to create anyway?",
+                            duplicateInfo = new {
+                                totalDuplicates = duplicateResult.TotalDuplicates,
+                                highConfidence = duplicateResult.HighConfidence,
+                                mediumConfidence = duplicateResult.MediumConfidence,
+                                lowConfidence = duplicateResult.LowConfidence,
+                                topDuplicate = duplicateResult.TopDuplicate != null ? new {
+                                    entityId = duplicateResult.TopDuplicate.EntityId,
+                                    score = duplicateResult.TopDuplicate.Score,
+                                    matchReason = duplicateResult.TopDuplicate.MatchReason,
+                                    matchedData = duplicateResult.TopDuplicate.MatchedData
+                                } : null
+                            },
+                            confirmationRequired = true,
+                            originalData = req
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log the error but don't block creation due to duplicate detection failure
+                    _logger.LogWarning($"Duplicate detection failed for interaction creation: {ex.Message}");
+                    // Continue with creation since duplicate detection is not critical
+                }
+            }
+
             return await HandleOperationAsync(async () =>
             {
                 var result = await _manager.CreateInteractionAsync(req);
@@ -81,7 +131,15 @@ namespace UNOPS.PAO.Presentation.Controllers
                 {
                     throw new BusinessException("Failed to create interaction");
                 }
-                return result;
+                
+                return new {
+                    success = true,
+                    action = "created",
+                    message = req.ConfirmDuplicateCreation ? 
+                        "Interaction created successfully (duplicate confirmation acknowledged)" : 
+                        "Interaction created successfully",
+                    data = result
+                };
             }, 201);
         }
 
@@ -92,22 +150,29 @@ namespace UNOPS.PAO.Presentation.Controllers
         /// <param name="pageSize">Number of items per page (default: 20)</param>
         /// <param name="orderBy">Field to order results by (optional)</param>
         /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
+        /// <param name="partnerId">Optional partner ID to filter interactions by specific partner</param>
+        /// <param name="contactId">Optional contact ID to filter interactions by specific contact</param>
         /// <example_uses>
         /// Show me all interactions
         /// List all interactions in the system
         /// Display the interaction history
         /// Get all interaction records
         /// Browse interactions
+        /// Show interactions for partner 123
+        /// Show interactions for contact 456
         /// </example_uses>
-        /// <when_to_use>Use this when the user wants to see ALL interactions without any search criteria or when asking for a general interaction list.</when_to_use>
-        /// <returns>Paginated list of all interactions</returns>
+        /// <when_to_use>Use this when the user wants to see ALL interactions without any search criteria or when asking for a general interaction list. Can be filtered by partner or contact.</when_to_use>
+        /// <returns>Paginated list of all interactions, optionally filtered by partner or contact</returns>
         [HttpGet(APIDictionary.Interaction)]
         [AccessControlled(EntityTypes.Interaction, "read")]
         public async Task<ActionResult> ListAllInteractions(
             [FromQuery] int pageIndex = 1,
             [FromQuery] int pageSize = 20,
             [FromQuery] string? orderBy = null,
-            [FromQuery] bool ascending = true)
+            [FromQuery] bool ascending = true,
+            [FromQuery] int? partnerId = null,
+            [FromQuery] int? contactId = null,
+            [FromQuery] bool export = false)
         {
             // Validate model state first
             var modelValidationResult = ValidateModelState();
@@ -129,9 +194,11 @@ namespace UNOPS.PAO.Presentation.Controllers
                 var request = new InteractionFilterRequest
                 {
                     PageIndex = pageIndex,
-                    PageSize = pageSize,
+                    PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
                     OrderBy = orderBy,
-                    Ascending = ascending
+                    Ascending = ascending,
+                    PartnerId = partnerId,
+                    ContactId = contactId
                 };
                 
                 // Return all interactions with secure pagination
@@ -152,7 +219,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         /// Performs simple text search across multiple interaction fields (subject, description, etc.).
         /// </summary>
         /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
-        /// <param name="searchText">Text to search across interaction subject, description, and other basic fields</param>
+        /// <param name="query">Text to search across interaction subject, description, and other basic fields</param>
         /// <example_uses>
         /// Search for interactions about project
         /// Find interactions containing 'meeting notes'
@@ -166,7 +233,8 @@ namespace UNOPS.PAO.Presentation.Controllers
         [AccessControlled(EntityTypes.Interaction, "read")]
         public async Task<ActionResult> SearchInteractions(
             [FromQuery] PaginationRequest request,
-            [FromQuery] string searchText)
+            [FromQuery] string query,
+            [FromQuery] bool export = false)
         {
             // Validate model state first
             var modelValidationResult = ValidateModelState();
@@ -182,47 +250,38 @@ namespace UNOPS.PAO.Presentation.Controllers
                 return paginationValidationResult;
             }
 
-            if (string.IsNullOrWhiteSpace(searchText))
+            if (string.IsNullOrWhiteSpace(query))
             {
                 throw new BusinessException("Search text is required for interaction search");
             }
 
-            return await HandleOperationAsync(async () =>
+            // Use the enhanced search pattern (now includes PostgreSQL similarity search)
+            var paginationRequest = new PaginationRequest
             {
-                // Create an InteractionFilterRequest with pagination/sorting info and search text
-                var interactionFilterRequest = new InteractionFilterRequest
-                {
-                    PageIndex = request.PageIndex,
-                    PageSize = request.PageSize,
-                    OrderBy = request.OrderBy,
-                    Ascending = request.Ascending,
-                    SearchText = searchText
-                };
+                PageIndex = request.PageIndex,
+                PageSize = export ? int.MaxValue : request.PageSize, // Remove pagination limits for export
+                OrderBy = request.OrderBy,
+                Ascending = request.Ascending
+            };
 
-                var result = await SecureSearchControllerHelper.ProcessSecureSimpleTextSearchAsync<Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
-                    searchText, 
-                    request.PageIndex, 
-                    request.PageSize, 
-                    request.OrderBy, 
-                    request.Ascending,
-                    interactionFilterRequest,
-                    "Interaction",
-                    User,
-                    _secureSpecificationFactory.CreateInteractionSpecificationAsync,
-                    async (userId, spec, pagination) => await _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
-                    CurrentUserId, 
-                    _logger);
-                
-                return result;
-            });
+            // Use AdvancedSearchService for unified text search with PostgreSQL similarity
+            var result = await _advancedSearchService.SearchWithQueryAsync<UNOPSInteraction, InteractionModel>(
+                query, 
+                paginationRequest, 
+                User);
+
+            _logger.LogInformation("Interaction search completed: Found {TotalCount} results for query: {Query}, export: {Export}", result.TotalCount, query, export);
+
+            return Ok(result);
         }
 
         /// <summary>
         /// Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters.
+        /// Enhanced with intelligent field value matching for AI agents and typo correction.
         /// </summary>
         /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
         /// <param name="searchCriteria">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
-        /// <param name="searchText">Optional additional text search to combine with criteria</param>
+        /// <param name="enableSmartSearch">Enable intelligent field value matching and typo correction (default: true)</param>
         /// <example_uses>
         /// Find interactions with UNICEF partners
         /// Show meetings with John Smith contact
@@ -239,63 +298,80 @@ namespace UNOPS.PAO.Presentation.Controllers
         /// Logical operators: AND, OR
         /// </searchCriteria_format>
         /// <returns>Paginated list of interactions matching the advanced search criteria</returns>
-        [HttpGet(APIDictionary.Interaction + "/advanced-search")]
-        [AccessControlled(EntityTypes.Interaction, "read")]
-        public async Task<ActionResult> AdvancedSearchInteractions(
-            [FromQuery] PaginationRequest request,
-            [FromQuery] string searchCriteria,
-            [FromQuery] string? searchText = null)
+    [HttpGet(APIDictionary.Interaction + "/advanced-search")]
+    [AccessControlled(EntityTypes.Interaction, "read")]
+    public async Task<ActionResult> AdvancedSearchInteractions(
+        [FromQuery] string filters,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = null,
+        [FromQuery] bool ascending = true,
+        [FromQuery] bool export = false)
+    {
+        try
         {
-            // Validate model state first
-            var modelValidationResult = ValidateModelState();
-            if (modelValidationResult != null)
+            _logger.LogInformation("=== INTERACTION ADVANCED SEARCH ENDPOINT ===");
+            _logger.LogInformation("Filters: {Filters}, Page: {PageIndex}, Size: {PageSize}", filters, pageIndex, pageSize);
+
+            if (string.IsNullOrWhiteSpace(filters))
             {
-                return modelValidationResult;
+                return BadRequest(new { error = "Search filters are required" });
             }
 
-            // Validate pagination parameters
-            var paginationValidationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
-            if (paginationValidationResult != null) 
+            // Parse filters from JSON
+            List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter> searchFilters;
+            try
             {
-                return paginationValidationResult;
+                searchFilters = System.Text.Json.JsonSerializer.Deserialize<List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>>(filters) ?? new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>();
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse search filters: {Filters}", filters);
+                return BadRequest(new { error = "Invalid filter format. Expected JSON array of filter objects." });
             }
 
-            if (string.IsNullOrWhiteSpace(searchCriteria))
+            // Use AdvancedSearchService for structured filters with PostgreSQL similarity on "like" operators
+            var paginationRequest = new PaginationRequest
             {
-                throw new BusinessException("Search criteria is required for advanced interaction search");
+                PageIndex = pageIndex,
+                PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
+                OrderBy = orderBy,
+                Ascending = ascending
+            };
+
+            var result = await _advancedSearchService.SearchWithFiltersAsync<UNOPSInteraction, InteractionModel>(
+                searchFilters,
+                paginationRequest,
+                User);
+            
+            _logger.LogInformation("Advanced interaction search completed: Found {TotalCount} results", result.TotalCount);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in advanced interaction search");
+            return StatusCode(500, new { error = "Internal server error during interaction search", details = ex.Message });
+        }
+    }
+
+        /// <summary>
+        /// Get supported search fields for interactions - helps frontend build dynamic search forms
+        /// </summary>
+        /// <returns>List of all supported search fields with their metadata</returns>
+        [HttpGet(APIDictionary.SingularInteraction  + "/search-fields")]
+        [AccessControlled(EntityTypes.Interaction, "read")]
+        public ActionResult<List<SearchFieldInfo>> GetInteractionSearchFields()
+        {
+            try
+            {
+                var fields = _manager.GetInteractionSearchFields();
+                return Ok(fields);
             }
-
-            return await HandleOperationAsync(async () =>
+            catch (Exception ex)
             {
-                // Create an InteractionFilterRequest with pagination/sorting info and search criteria
-                var interactionFilterRequest = new InteractionFilterRequest
-                {
-                    PageIndex = request.PageIndex,
-                    PageSize = request.PageSize,
-                    OrderBy = request.OrderBy,
-                    Ascending = request.Ascending,
-                    SearchCriteria = searchCriteria,
-                    SearchText = searchText,
-                    AdvancedSearch = true // Set this internally since we know this is an advanced search
-                };
-
-                var result = await SecureSearchControllerHelper.ProcessSecureAdvancedSearchAsync<Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
-                    searchCriteria, 
-                    searchText, 
-                    request.PageIndex, 
-                    request.PageSize, 
-                    request.OrderBy, 
-                    request.Ascending,
-                    interactionFilterRequest,
-                    "Interaction",
-                    User,
-                    _secureSpecificationFactory.CreateInteractionSpecificationAsync,
-                    async (userId, spec, pagination) => await _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
-                    CurrentUserId, 
-                    _logger);
-                
-                return result;
-            });
+                _logger.LogError(ex, "Error retrieving interaction search fields");
+                return StatusCode(500, new { error = "An error occurred while retrieving search fields" });
+            }
         }
 
         /// <summary>
@@ -641,6 +717,116 @@ namespace UNOPS.PAO.Presentation.Controllers
             {
                 _logger.LogError(ex, "Error performing deep search for interactions with query: {Query}", query);
                 return StatusCode(500, new { error = "An error occurred while performing the semantic search" });
+            }
+        }
+
+        /// <summary>
+        /// Detects duplicates for an existing interaction record after save operations
+        /// </summary>
+        /// <param name="req">Interaction data to check for duplicates</param>
+        /// <returns>Duplicate detection results</returns>
+        [HttpPost(APIDictionary.Interaction + "/detect-duplicates")]
+        [AccessControlled(EntityTypes.Interaction, "read")]
+        public async Task<ActionResult> DetectDuplicatesForInteraction([FromBody] dynamic req)
+        {
+        try
+        {
+            // Proper null check for dynamic type
+            if (req is null)
+            {
+                return BadRequest("Invalid request.");
+            }
+
+            // Convert the dynamic request to a proper object for duplicate detection
+            object requestData;
+            if (req is JsonElement jsonElement)
+            {
+                // Deserialize JsonElement to JObject for proper handling
+                var jsonString = jsonElement.GetRawText();
+                requestData = JObject.Parse(jsonString);
+            }
+            else if (req is JObject)
+            {
+                requestData = req;
+            }
+            else
+            {
+                // Try to serialize and deserialize to ensure proper format
+                var jsonString = JsonConvert.SerializeObject(req);
+                requestData = JObject.Parse(jsonString);
+            }
+
+            var duplicateResult = await _aiContextualService.DetectDuplicateForSingleRecordAsync(
+                "Interaction", 
+                requestData, 
+                0.7 // Standard sensitivity for post-save detection
+            );
+                
+                // Extract ID from the converted request data
+                int? recordId = null;
+                if (requestData is JObject jObj && jObj.ContainsKey("id"))
+                {
+                    int.TryParse(jObj["id"]?.ToString(), out int id);
+                    recordId = id > 0 ? id : null;
+                }
+
+                return Ok(new {
+                    success = true,
+                    entityType = "Interaction",
+                    recordId = recordId,
+                    duplicateInfo = duplicateResult?.HasDuplicates == true ? new {
+                        totalDuplicates = duplicateResult.TotalDuplicates,
+                        highConfidence = duplicateResult.HighConfidence,
+                        mediumConfidence = duplicateResult.MediumConfidence,
+                        lowConfidence = duplicateResult.LowConfidence,
+                        topDuplicate = duplicateResult.TopDuplicate != null ? new {
+                            entityId = duplicateResult.TopDuplicate.EntityId,
+                            entityType = duplicateResult.TopDuplicate.EntityType,
+                            score = duplicateResult.TopDuplicate.Score,
+                            matchReason = duplicateResult.TopDuplicate.MatchReason,
+                            searchType = duplicateResult.TopDuplicate.SearchType,
+                            matchedData = duplicateResult.TopDuplicate.MatchedData != null ? 
+                                JsonConvert.SerializeObject(duplicateResult.TopDuplicate.MatchedData) : null
+                        } : null,
+                        duplicates = duplicateResult.AllDuplicates != null ? 
+                            JsonConvert.SerializeObject(duplicateResult.AllDuplicates) : null
+                    } : null
+                });
+            }
+            catch (Exception ex)
+            {
+            // Extract ID for logging
+            var idForLogging = "unknown";
+            try
+            {
+                if (req is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+                {
+                    var jsonString = jsonElement.GetRawText();
+                    var jObj = JObject.Parse(jsonString);
+                    if (jObj.ContainsKey("id"))
+                    {
+                        idForLogging = jObj["id"]?.ToString() ?? "unknown";
+                    }
+                }
+                else if (req is JObject jObj && jObj.ContainsKey("id"))
+                {
+                    idForLogging = jObj["id"]?.ToString() ?? "unknown";
+                }
+            }
+            catch
+            {
+                // Ignore errors in ID extraction for logging
+            }
+
+                _logger.LogWarning(ex, "Post-save duplicate detection failed for Interaction ID {InteractionId}", idForLogging);
+                // Return success with no duplicates rather than failing - this is a background operation
+                return Ok(new {
+                    success = true,
+                    entityType = "Interaction",
+                    recordId = (object)null,
+                    duplicateInfo = (object)null,
+                    warning = "Duplicate detection temporarily unavailable"
+                });
             }
         }
     }

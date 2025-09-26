@@ -19,6 +19,8 @@ import { InteractionIconService } from '../../../../../common/services/interacti
 import { InteractionPreviewComponent } from '../preview/interaction-preview.component';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { OverlayPanel } from 'primeng/overlaypanel';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 
 /**
  * @uiEntity InteractionList
@@ -46,6 +48,7 @@ import { OverlayPanel } from 'primeng/overlaypanel';
     ListviewComponent,
     InteractionPreviewComponent,
     OverlayPanelModule,
+    MenuModule,
   ],
   providers: [
     DialogService
@@ -95,39 +98,57 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     entityName: 'Interaction',
     scrollable: true,
     scrollHeight: 'flex',
+    defaultSortField: 'lastModifiedDate',
+    defaultSortOrder: 'desc',
+    sortableFields: [
+      { field: 'createdDate', label: 'Created Date' },
+      { field: 'lastModifiedDate', label: 'Last Updated Date' }
+    ],
     searchConfig: {
       useAdvancedSearch: true,
       placeholder: 'Search interactions...',
       searchableFields: [
         {
           field: 'subject',
-          label: 'Subject',
+          label: 'label.interaction.subject',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'description',
-          label: 'Description',
+          label: 'label.interaction.description',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'date',
-          label: 'Date',
+          label: 'label.interaction.date',
           type: 'date',
           operators: ['is', 'is not', 'after', 'before', 'between', '>', '<', '>=', '<=']
         },
         {
           field: 'contactName',
-          label: 'Contact Name',
+          label: 'label.interaction.contactName',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'partner.name',
-          label: 'Partner',
+          label: 'label.partner.name',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
+        },
+        {
+          field: 'createdDate',
+          label: 'label.audit.createdDate',
+          type: 'date',
+          operators: ['after', 'before', 'between']
+        },
+        {
+          field: 'lastModifiedDate',
+          label: 'label.audit.lastModifiedDate',
+          type: 'date',
+          operators: ['after', 'before', 'between']
         }
       ] as SearchField[]
     }
@@ -428,6 +449,22 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     this.currentSearchText = searchParams.generalSearch || '';
   }
 
+  // Import menu items
+  importMenuItems = signal<MenuItem[]>([
+    {
+      label: 'Select from Google Drive',
+      icon: 'pi pi-google',
+      command: () => this.openGooglePickerImport(),
+      title: 'Select a Google Sheet from your Drive. Make sure to set the sheet to "Anyone with the link can view" for public access.'
+    },
+    {
+      label: 'Manual Entry',
+      icon: 'pi pi-link',
+      command: () => this.openManualEntryImport(),
+      title: 'Paste a Google Sheet URL directly and specify the sheet name'
+    }
+  ]);
+
   /**
    * @uiButton import_interactions
    * @description Opens the import dialog to bulk import interaction records from Google Sheets or CSV files
@@ -437,6 +474,14 @@ export class InteractionListComponent implements OnInit, OnDestroy {
    * @permissions INTERACTION_CREATE
    */
   openImportDialog() {
+    // This method now shows the import menu instead of directly opening the picker
+    // The actual menu is handled in the template via p-menu
+  }
+
+  /**
+   * Open Google Picker for import (original flow)
+   */
+  openGooglePickerImport() {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
@@ -448,6 +493,36 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('interaction');
+  }
+
+  /**
+   * Open manual entry dialog for import
+   */
+  openManualEntryImport() {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to import interactions',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+
+    this.importDialogService.openManualEntryDialog('interaction');
+  }
+
+  /**
+   * @uiButton export_interactions
+   * @description Exports interaction data to Google Sheets respecting current search and filter criteria
+   * @label Export Interactions
+   * @icon pi pi-file-export
+   * @when_to_use When you need to export interaction data with current filters applied for external analysis or reporting
+   * @permissions PARTNER_GLOB_ADMIN
+   */
+  exportData() {
+    if (this.listviewComponent) {
+      this.listviewComponent.exportData();
+    }
   }
 
   showInteractionPreview(event: MouseEvent, interaction: Interaction) {

@@ -14,7 +14,7 @@
         <app-advanced-search-saved-filter
         class=" ml-auto"
         [entityType]="entityType"
-        [searchCriteria]="searchCriteria"
+        [searchCriteria]="filters"
         [isLoading]="isLoading"
         [orderBy]="orderBy"
         [ascending]="ascending"
@@ -26,16 +26,6 @@
         (applyCriteria)="onApplyCriteria($event)"
         #savedFilterRef
       ></app-advanced-search-saved-filter>
-    }
-    @if (config.enableExport && (config.exportOptions?.showButton ?? true)) {
-      <p-button
-        [label]="config.exportOptions?.buttonLabel ?? 'Export'"
-        icon="pi pi-file-export"
-        outlined
-        (onClick)="onExportData()"
-        [disabled]="isLoading"
-        class="text-gray-700 hover:bg-gray-100"
-      ></p-button>
     }
     </div>
   </div>
@@ -61,14 +51,14 @@
 
     <!-- Search chips display -->
     <div class="flex flex-wrap items-center">
-      @for (criterion of searchCriteria; track criterion.field; let i = $index) {
+      @for (criterion of filters; track criterion.field; let i = $index) {
         @if (i > 0) {
           <span class="flex items-center px-4 text-gray-600">{{ criterion.logicalOperator || 'AND' }}</span>
         }
         <p-chip className="w-64">
           <div class="flex items-center gap-2 px-4">
-            <span class="font-semibold">{{ criterion.label }}</span>
-            <span class="text-blue-600 font-medium">{{ getOperatorLabel(criterion.operator) }}</span>
+            <span class="font-semibold">{{ criterion.label | translate}}</span>
+            <span class="text-blue-600 font-medium">{{ getOperatorLabel(criterion.operator) | translate }}</span>
             @if (isDateValue(criterion.value)) {
               <span>{{ criterion.value | date:'dd/MM/yyyy' }}</span>
             } @else {
@@ -90,7 +80,7 @@
           <span class="text-gray-600 p-2">{{ 'search.noFilters' | translate }}</span>
         </div>
       }
-      @if (searchCriteria.length > 0) {
+      @if (filters.length > 0) {
         <p-button
           icon="pi pi-times"
           class="ml-auto"
@@ -105,7 +95,7 @@
 
     <!-- Search input and field dropdown -->
     <div class="flex gap-2 flex-wrap items-center w-full">
-      @if (searchCriteria.length > 0) {
+      @if (filters.length > 0) {
         <p-dropdown
           [options]="logicalOperators"
           [(ngModel)]="selectedLogicalOperator"
@@ -129,14 +119,21 @@
         [placeholder]="'search.selectField' | translate"
         (onChange)="onSearchFieldSelect($event.value)"
         styleClass="w-64"
-      ></p-dropdown>
+      >
+        <ng-template pTemplate="item" let-option>
+          {{ option.label | translate }}
+        </ng-template>
+        <ng-template pTemplate="selectedItem" let-option>
+          {{ option.label | translate }}
+        </ng-template>
+      </p-dropdown>
 
       <p-dropdown
         [options]="getComparisonOperators()"
         [(ngModel)]="selectedComparisonOperator"
         optionLabel="label"
         optionValue="value"
-        [placeholder]="'search.operator' | translate"
+        [placeholder]="'entityCards.operator' | translate"
         styleClass="w-48"
       >
         <ng-template pTemplate="selectedItem" let-selectedOption>
@@ -151,7 +148,7 @@
       @if (isDateField()) {
         <p-calendar
           [(ngModel)]="selectedDate"
-          [placeholder]="'search.selectDate' | translate"
+          [placeholder]="'entityCards.selectDate' | translate"
           dateFormat="dd/mm/yy"
           [showIcon]="true"
           styleClass="w-48 z-10"
@@ -159,17 +156,34 @@
 
         <!-- Second date for "between" operator -->
         @if (isBetweenOperator()) {
-          <span class="text-gray-600 px-2">{{ 'search.and' | translate }}</span>
+          <span class="text-gray-600 px-2">{{ 'entityCards.and' | translate }}</span>
           <p-calendar
             [(ngModel)]="selectedSecondDate"
-            [placeholder]="'search.selectEndDate' | translate"
+            [placeholder]="'entityCards.selectEndDate' | translate"
             dateFormat="dd/mm/yy"
             [showIcon]="true"
             styleClass="w-48"
           ></p-calendar>
         }
+      } @else if (isDropdownField()) {
+        <!-- Dropdown for enum fields -->
+        <p-dropdown
+          [options]="getDropdownOptions()"
+          [(ngModel)]="selectedEnumValue"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'entityCards.selectValue' | translate"
+          styleClass="w-48"
+        >
+          <ng-template pTemplate="selectedItem" let-selectedOption>
+            {{ selectedOption.label | translate }}
+          </ng-template>
+          <ng-template pTemplate="item" let-option>
+            {{ option.label | translate }}
+          </ng-template>
+        </p-dropdown>
       } @else {
-        <!-- Text input for non-date fields -->
+        <!-- Text input for non-date, non-enum fields -->
         <p-iconfield iconPosition="left" class="grow">
           <input pInputText type="text"
           [placeholder]="'search.placeholder' | translate"
@@ -186,10 +200,10 @@
       <p-button
         icon="pi pi-plus"
         class="ml-auto"
-        [label]="'search.addFilter' | translate"
+        [label]="'entityCards.addFilter' | translate"
         (onClick)="addSearchCriterion()"
         [disabled]="!canAddCriterion()"
-        [pTooltip]="'search.addFilter' | translate"
+        [pTooltip]="'entityCards.addFilter' | translate"
       ></p-button>
     </div>
   </div>

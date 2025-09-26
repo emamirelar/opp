@@ -30,4 +30,7 @@ public interface IUNOPSEntityConfigurationManager
     Task<IEnumerable<RelatedFieldOptionDto>> GetRelatedEntityFieldsAsync(ClaimsPrincipal user, string entityType);
     Task<IEnumerable<RelatedFieldOptionDto>> GetFieldOptionsForDataTypeAsync(ClaimsPrincipal user, string dataType, string contextEntityName);
     Task<IEnumerable<ListViewColumnDto>> GetEntityListViewConfigurationAsync(ClaimsPrincipal user, string entityName);
+    
+    // SQL Export functionality
+    Task<string> ExportEntityConfigurationAsSqlAsync(ClaimsPrincipal user);
 } 

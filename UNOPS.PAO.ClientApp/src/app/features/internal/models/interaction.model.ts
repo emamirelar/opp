@@ -3,6 +3,7 @@ import { EntityPermissionSet } from './shared-types';
 import { OrganizationUnitRelationshipModel } from './organization-unit-relationship.model';
 import { Contact } from './contact.model';
 import { Partner } from './partner.model';
+import { UserValueModel } from './user.model';
 
 export interface DocumentModel {
   id: number;
@@ -22,7 +23,6 @@ export interface Interaction {
   status: string;
   contactIds: number[];
   partnerIds: number[];
-  userIds: number[];
   emailAddresses: string[];
   phoneNumbers: string[];
   location: string;
@@ -38,7 +38,7 @@ export interface Interaction {
   // Full related entities (from backend)
   contacts?: Contact[];
   partners?: Partner[];
-  users?: any[];
+  users?: UserValueModel[];
   
   // Gmail integration
   gmailThreadId?: string;
@@ -48,6 +48,10 @@ export interface Interaction {
   createdDate?: string;
   lastModifiedDate?: string;
   lastModifiedBy?: number;
+  
+  // Resolved user names for audit fields
+  createdByName?: string;
+  lastModifiedByName?: string;
   
   // Import-specific properties
   isImportEdit?: boolean;

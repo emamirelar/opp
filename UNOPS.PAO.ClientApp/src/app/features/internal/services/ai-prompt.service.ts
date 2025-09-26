@@ -195,4 +195,13 @@ export class AiPromptService {
       observe: 'response'
     });
   }
+
+  /**
+   * Exports all AI prompts as a SQL script file for seeding
+   */
+  exportAiPromptsAsSql(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/export-sql`, {
+      responseType: 'blob'
+    });
+  }
 } 

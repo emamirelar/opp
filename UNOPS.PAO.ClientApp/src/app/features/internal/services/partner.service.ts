@@ -2,12 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import {Partner} from '../models/partner.model';
+import { ImportDialogService } from '../../../common/reusables/components/import/dialog/import-dialog.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PartnerService {
   http = inject(HttpClient);
+  private importDialogService = inject(ImportDialogService);
 
   private partnerData = signal([]);
   allPartners = this.partnerData.asReadonly();
@@ -47,10 +49,13 @@ export class PartnerService {
       }));
   }
 
-  createPartner( requestJson: object ){
-
+  /**
+   * Creates a partner with duplicate detection handling
+   * Returns either the created partner or duplicate detection response
+   */
+  createPartner( requestJson: object ): Observable<any> {
     this.isLoading.set( true );
-    return this.http.post(this.apiUrl, requestJson).pipe(tap(
+    return this.http.post<any>(this.apiUrl, requestJson).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -129,6 +134,14 @@ export class PartnerService {
           this.isLoading.set(false);
         }
       }));
+  }
+
+  /**
+   * Detects duplicates for partner records using the centralized ImportDialogService method
+   */
+  detectDuplicates(partnerData: any): Observable<any> {
+    // Use the centralized duplicate detection method from ImportDialogService
+    return this.importDialogService.detectDuplicatesForEntity(partnerData, 'partner');
   }
   
 }

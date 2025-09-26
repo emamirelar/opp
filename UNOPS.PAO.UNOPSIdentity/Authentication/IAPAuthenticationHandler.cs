@@ -204,7 +204,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                 
                 // Assign UNOPS_GEN_USER role
                 await _userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
-                
+                                
                 // Assign default role if needed
                 if (!string.IsNullOrEmpty(Options.DefaultRole))
                 {

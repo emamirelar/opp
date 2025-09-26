@@ -1,104 +1,189 @@
 {
   "entity": "Link",
-  "description": "Manages external links associated with various business entities like Partners, Projects, or Contacts.",
+  "description": "Manages links associated with different entities.",
   "synonyms": [
+    "Hyperlink",
     "URL",
-    "web link",
-    "external reference",
-    "hyperlink",
-    "associated link"
+    "Web Link",
+    "Reference Link",
+    "Resource Link"
   ],
   "mandatoryFields": [
     "Entity",
     "EntityId"
   ],
-  "searchMetadata": null,
+  "baseUrl": "/api/links",
   "endpoints": [
     {
       "name": "GetLinks",
-      "url": "/api/links",
+      "url": "/api/links?entity={entity}&entityId={entityId}&pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
-      "description": "Retrieves a paginated list of links associated with a specific entity.",
-      "parameters": {
-        "entity": {
-          "type": "string",
-          "required": true,
-          "description": "The type of entity the links are associated with (e.g., Partner, Project, Contact)."
-        },
-        "entityId": {
-          "type": "integer",
-          "required": true,
-          "description": "The ID of the entity the links are associated with."
-        },
-        "parameters": {
-          "type": "object",
-          "required": false,
-          "description": "Pagination and sorting parameters. Contains 'PageIndex' (integer, required), 'PageSize' (integer, required), 'OrderBy' (string), 'Ascending' (boolean), 'Direction' (boolean)."
-        }
-      },
-      "example_uses": [
-        "Get all links related to Partner with ID 123.",
-        "List links for Project 456, showing 10 links per page.",
-        "Retrieve links for Contact 789, ordered by name ascending."
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
       ],
-      "when_to_use": "When you need to retrieve a list of external links associated with a specific business entity (e.g., Partner, Project, Contact)."
+      "description": "Retrieves a list of links for a specific entity and entity ID with pagination and sorting.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/links?entity=Project&entityId=123&pageIndex=1&pageSize=20&orderBy=Name&ascending=true",
+      "requiredFields": [],
+      "example_uses": [
+        "Get all links for project with ID 123.",
+        "Show me the links related to document 456."
+      ],
+      "when_to_use": "When you need to retrieve a list of links associated with a specific entity and entity ID, with optional pagination and sorting.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "medium"
+      }
     },
     {
       "name": "Create",
       "url": "/api/links",
       "method": "POST",
-      "description": "Creates a new link and associates it with a specified entity.",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates a new link.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "req": {
           "type": "object",
-          "required": false,
-          "description": "The request body containing link details. Requires 'Entity' (string) and 'EntityId' (integer). Can also include 'Url' (string) and 'Name' (string)."
+          "required": true,
+          "description": "The link request object.",
+          "default": null
         }
       },
-      "example_uses": [
-        "Create a new link for Partner 123 with URL 'https://example.com/partner-info' and name 'Partner Website'.",
-        "Add a link 'Project Docs' pointing to 'https://docs.project.org' for Project 456.",
-        "Register a new external reference for Contact 789."
+      "exampleBody": {
+        "Entity": "Project",
+        "EntityId": 123,
+        "Url": "https://example.com/project123",
+        "Name": "Project Details"
+      },
+      "exampleUrl": "/api/links",
+      "requiredFields": [
+        "Entity",
+        "EntityId"
       ],
-      "when_to_use": "When you need to add a new external link to an existing business entity."
+      "example_uses": [
+        "Create a new link for project 123.",
+        "Add a link to the document."
+      ],
+      "when_to_use": "When you need to create a new link associated with an entity.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "Update",
       "url": "/api/links",
       "method": "PUT",
-      "description": "Updates an existing link's details.",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing link.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "req": {
           "type": "object",
-          "required": false,
-          "description": "The request body containing updated link details. Requires 'Id' (integer), 'Entity' (string), and 'EntityId' (integer). Can also include 'Url' (string) and 'Name' (string)."
+          "required": true,
+          "description": "The update link request object.",
+          "default": null
         }
       },
-      "example_uses": [
-        "Update the link with ID 1 for Partner 123, changing its URL to 'https://new-example.com'.",
-        "Modify the name of link ID 5 for Project 456 to 'Updated Project Docs'.",
-        "Change the URL and name of link ID 10 associated with Contact 789."
+      "exampleBody": {
+        "Id": 1,
+        "Entity": "Project",
+        "EntityId": 123,
+        "Url": "https://example.com/updated_project123",
+        "Name": "Updated Project Details"
+      },
+      "exampleUrl": "/api/links",
+      "requiredFields": [
+        "Id",
+        "Entity",
+        "EntityId"
       ],
-      "when_to_use": "When you need to modify the details (URL, name) of an existing external link."
+      "example_uses": [
+        "Update the link for project 123.",
+        "Modify the URL of the document link."
+      ],
+      "when_to_use": "When you need to update an existing link.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "Delete",
-      "url": "/api/links",
+      "url": "/api/links?id={id}",
       "method": "DELETE",
-      "description": "Deletes a link by its ID.",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "The unique identifier of the link to delete."
-        }
-      },
-      "example_uses": [
-        "Delete the link with ID 123.",
-        "Remove the external reference identified by ID 45.",
-        "Can you delete link 789?"
+      "intent": [
+        "delete",
+        "remove",
+        "destroy"
       ],
-      "when_to_use": "When you need to remove an existing external link."
+      "description": "Deletes a link by its ID.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/links?id=1",
+      "requiredFields": [],
+      "example_uses": [
+        "Delete link with ID 1.",
+        "Remove the link from the system."
+      ],
+      "when_to_use": "When you need to delete a link by its ID.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use GetLinks with entity and entityId parameters",
+      "advanced": "N/A"
+    }
+  }
 }

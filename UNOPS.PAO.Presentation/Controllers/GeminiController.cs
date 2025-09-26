@@ -205,6 +205,31 @@ public class GeminiController : BaseController
     }
 
     /// <summary>
+    /// Exports all AI prompts as a SQL script file for seeding
+    /// </summary>
+    /// <returns>SQL script file content for seeding AI prompts</returns>
+    /// <example_uses>
+    /// Export AI prompts as SQL script
+    /// Download SQL file for AI prompts
+    /// Generate SQL version of prompts for seeding
+    /// Export prompts as SQL with PROJECT_ID placeholder
+    /// </example_uses>
+    /// <when_to_use>Use this when you need to export AI prompts as SQL scripts for database seeding with configurable PROJECT_ID.</when_to_use>
+    [HttpGet(APIDictionary.AiPrompts + "/export-sql")]
+    [AccessControlled(EntityTypes.AiPromptManagement, "read")]
+    public async Task<ActionResult> ExportAiPromptsAsSqlAsync()
+    {
+        // RBAC interceptor handles permission checking
+        var sqlScript = await _managerWrapper.AiPromptManager.ExportAiPromptsAsSqlAsync(User);
+        
+        var fileName = $"05_AiPrompts_{DateTime.UtcNow:yyyyMMddHHmmss}.sql";
+        var contentType = "text/plain";
+        var fileBytes = System.Text.Encoding.UTF8.GetBytes(sqlScript);
+        
+        return File(fileBytes, contentType, fileName);
+    }
+
+    /// <summary>
     /// Soft deletes an AI prompt from the system (marks as deleted rather than permanent removal).
     /// </summary>
     /// <param name="id">AI prompt ID to delete</param>

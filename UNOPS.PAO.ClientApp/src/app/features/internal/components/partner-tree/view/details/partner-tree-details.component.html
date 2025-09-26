@@ -41,7 +41,7 @@
           </div>
         </p-panel>
 
-        @if (!partnerTree()?.partnerGroupCode) {
+        @if (!partnerTree()?.partnerGroupId) {
           <p-panel
             [toggleable]="true"
           >
@@ -50,7 +50,7 @@
             </ng-template>
 
             <div class="flex flex-col gap-2 max-h-[150px] overflow-y-auto">
-              @for (partnerGroup of childrenPartnerGroups() || []; track partnerGroup.partnerGroupCode) {
+              @for (partnerGroup of childrenPartnerGroups() || []; track partnerGroup.partnerGroupId) {
                 <a class="text-primary hover:underline cursor-pointer"
                    [routerLink]="['/admin/partner-tree', partnerGroup.partnerGroupId!]">
                   <div class="text-base font-medium">{{partnerGroup.partnerGroupName}}</div>
@@ -85,17 +85,19 @@
                          [disabled]="!recordPermissions().permissions.canUpdate" />
         </p-panel>
 
-        @if (partnerTree()?.partnerGroupCode) {
+        @if (partnerTree()?.partnerGroupId) {
           <p-panel>
             <ng-template pTemplate="header">
               <div class="font-semibold">{{ 'title.partners' | translate }}</div>
             </ng-template>
+            <div class="bg-gray-50 p-6 rounded-xl">
             <app-listview
-              [dataUrl]="'api/partner/by-partner-category-code/' + this.partnerTree()?.partnerCategoryCode"
+              [dataUrl]="'api/partner?partnerGroupId=' + this.partnerTree()?.partnerGroupId"
               [columns]="partnerColumns()"
               (rowClick)="navigateToPartner($event)"
             >
             </app-listview>
+            </div>
           </p-panel>
         }
 
@@ -105,46 +107,23 @@
 
                     <!-- AI Summary of interactions -->
                     <app-ai-panel
+                    #interactionsSummaryPanel
                     [title]="'label.partner.summaryOfInteractions'"
                     [entityId]="entityId()"
-                    [promptType]="'summary-interactions'"
-                    [aiService]="mockAiService"
-                    [loadOnInit]="true">
+                    [promptType]="!partnerTree()?.partnerGroupId ? 'partner_category_interactions_summary' : 'partner_group_interactions_summary'"
+                    [aiService]="geminiService"
+                    [loadOnInit]="false">
                   </app-ai-panel>
 
                   <!-- AI summary of partner News -->
                   <app-ai-panel
+                  #newsPanel
                   [title]="'label.partner.partnerNews'"
                   [entityId]="entityId()"
-                  [promptType]="'partner-news'"
-                  [aiService]="mockAiService"
-                  [loadOnInit]="true">
+                  [promptType]="!partnerTree()?.partnerGroupId ? 'partner_category_news' : 'partner_group_news'"
+                  [aiService]="geminiService"
+                  [loadOnInit]="false">
                 </app-ai-panel>
-
-
-
-          @if (!partnerTree()?.partnerGroupCode) {
-          <!-- AI summary of partner category -->
-            <app-ai-panel
-              [title]="'label.partner.categorySummary'"
-              [entityId]="entityId()"
-              [promptType]="'category-summary'"
-              [aiService]="mockAiService"
-              [loadOnInit]="true">
-            </app-ai-panel>
-          } @else {
-            <!-- AI summary of partner group -->
-            <app-ai-panel
-              [title]="'label.partner.groupSummary'"
-              [entityId]="entityId()"
-              [promptType]="'group-summary'"
-              [aiService]="mockAiService"
-              [loadOnInit]="true">
-            </app-ai-panel>
-          }
-
-
-
         </div>
 
     </div>

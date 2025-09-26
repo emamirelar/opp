@@ -1,80 +1,181 @@
 {
   "entity": "UserProfile",
-  "description": "Manages the profile and personal information for users within the system, including basic details, organizational context, and user preferences.",
+  "description": "Manages user profile information and preferences.",
   "synonyms": [
-    "user account",
-    "personal info",
-    "user settings",
-    "my profile",
-    "user details"
+    "User Account",
+    "Profile Settings",
+    "User Info",
+    "Account Details",
+    "My Profile"
   ],
   "mandatoryFields": [
     "UserId",
-    "Id",
-    "Status",
-    "CreatedBy",
-    "CreatedDate",
-    "LastModifiedBy",
-    "IsDeleted",
-    "DeletedBy"
+    "Email"
   ],
+  "baseUrl": "/api",
   "endpoints": [
     {
       "name": "UpdateProfile",
       "url": "/api/profile",
       "method": "POST",
-      "description": "Updates the current user's basic profile information such as email, first name, and last name. This endpoint is used for self-service profile updates.",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates the current user's profile information.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "profile": {
           "type": "object",
-          "required": false,
-          "description": "Updated profile model containing new information. Fields include Email (string), FirstName (string), and LastName (string)."
+          "required": true,
+          "description": "Updated profile model containing new information",
+          "default": null
         }
       },
+      "exampleBody": {
+        "Email": "test@example.com",
+        "FirstName": "John",
+        "LastName": "Doe"
+      },
+      "exampleUrl": "/api/profile",
+      "requiredFields": [],
       "example_uses": [
-        "Update my email address to new.email@example.com.",
-        "Change my first name to John and last name to Doe.",
-        "I need to update my profile details."
+        "Update my profile with new contact information.",
+        "Change my email address in my profile."
       ],
-      "when_to_use": "Use this endpoint when the current authenticated user needs to update their own basic profile details like email or name."
+      "when_to_use": "When a user needs to update their personal profile details.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     },
     {
       "name": "UpdateUserInfo",
       "url": "/api/user-info/update",
       "method": "PUT",
-      "description": "Updates comprehensive user information and profile settings, including organizational unit, supervisor, duty station, position, and user preferences. This endpoint requires specific mandatory fields for the UserProfile object: UserId, Id, Status, CreatedBy, CreatedDate, LastModifiedBy, IsDeleted, and DeletedBy.",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates current user's information and profile settings.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "userProfile": {
           "type": "object",
-          "required": false,
-          "description": "The UserProfile object containing updated user information and preferences. Key fields include UserId (integer, required), FirstName (string), LastName (string), UserEmail (string), OrgUnit (string), SupervisorId (integer), DutyStation (string), Position (string), Name (string), and UserPreference (object)."
+          "required": true,
+          "description": "",
+          "default": null
         }
       },
-      "example_uses": [
-        "Update John Doe's organizational unit to 'Finance Department'.",
-        "Change my supervisor ID to 12345 and duty station to 'New York'.",
-        "Set my user preferences for global filters."
+      "exampleBody": {
+        "UserId": 123,
+        "FirstName": "UpdatedFirstName",
+        "LastName": "UpdatedLastName",
+        "UserEmail": "updated@example.com",
+        "OrgUnit": "UpdatedOrgUnit",
+        "SupervisorId": 456,
+        "DutyStation": "UpdatedDutyStation",
+        "Position": "UpdatedPosition",
+        "Name": "UpdatedName",
+        "UserPreference": {
+          "Id": 789,
+          "UserId": 123,
+          "GlobalFilterJson": "{}",
+          "GlobalFilters": {
+            "RelatedToMe": true
+          },
+          "AdditionalSettingsJson": "{}"
+        },
+        "Id": 123,
+        "Status": 1,
+        "CreatedBy": 1,
+        "CreatedDate": "2024-01-01T00:00:00",
+        "LastModifiedBy": 1,
+        "LastModifiedDate": "2024-01-02T00:00:00",
+        "IsDeleted": false,
+        "DeletedBy": 0,
+        "DeletedDate": null
+      },
+      "exampleUrl": "/api/user-info/update",
+      "requiredFields": [
+        "UserId",
+        "Id",
+        "Status",
+        "CreatedBy",
+        "CreatedDate",
+        "LastModifiedBy",
+        "IsDeleted",
+        "DeletedBy"
       ],
-      "when_to_use": "Use this endpoint when a user's comprehensive information, including organizational details and preferences, needs to be updated. Note that several fields within the UserProfile object are mandatory for a successful update."
+      "example_uses": [
+        "Update my user information.",
+        "Modify my profile settings."
+      ],
+      "when_to_use": "When a user needs to update their user information and profile settings.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "complex"
+      }
     },
     {
       "name": "GetUserProfileDetails",
-      "url": "/api/user-info/current",
+      "url": "/api/user-info/current?email={email}",
       "method": "GET",
-      "description": "Retrieves comprehensive current user information, including their profile, assigned roles, permissions, organizational settings, and user preferences. This endpoint can also be used by administrators to fetch details for a specific user by providing their email address.",
-      "parameters": {
-        "email": {
-          "type": "string",
-          "required": false,
-          "description": "Optional email address of the user whose profile details are to be retrieved. If not provided, the details of the current authenticated user will be returned."
-        }
-      },
-      "example_uses": [
-        "Get my current user profile details.",
-        "Retrieve the profile information for user 'jane.doe@example.com'.",
-        "Show me all my user settings and preferences."
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
       ],
-      "when_to_use": "Use this endpoint to fetch the complete profile and settings for the current authenticated user, or for an administrator to look up another user's details by email."
+      "description": "Retrieves comprehensive current user information including profile, roles, permissions, organizational settings, and user preferences. Supports both authenticated user lookup and explicit email parameter for administrative purposes.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/user-info/current?email=test@example.com",
+      "requiredFields": [],
+      "example_uses": [
+        "Show my profile details.",
+        "Get user information for a specific email."
+      ],
+      "when_to_use": "When a user or administrator needs to retrieve detailed user profile information.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
 }

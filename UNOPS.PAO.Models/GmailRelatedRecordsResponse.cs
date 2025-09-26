@@ -11,6 +11,8 @@ public class GmailRelatedRecordsResponse
     public List<GmailRelatedUser> Users { get; set; }
     public List<UnmatchedEmailModel> UnmatchedEmails { get; set; }
     public bool CanCreateContacts { get; set; }
+    public bool CanCreatePartners { get; set; }
+    public bool CanCreateInteractions { get; set; }
 
     public GmailRelatedRecordsResponse()
     {
@@ -39,7 +41,6 @@ public class  GmailRelatedPartner
 {
     public int Id { get; set; }
     public string Name { get; set; }
-    public string PartnerCode { get; set; }
     public string Phone { get; set; }
     public string LogoUrl { get; set; }
     public string Location { get; set; }

@@ -1,147 +1,258 @@
 {
   "entity": "Dashboard",
-  "description": "Manages personalized and organizational summaries of key entities like Partners, Contacts, and Interactions, providing quick access to relevant data and recent activities.",
+  "description": "Manages dashboard views and data for the current user.",
   "synonyms": [
-    "Summary",
-    "Overview",
-    "My Data",
-    "Recent Activity",
-    "User Dashboard"
+    "My Dashboard",
+    "User Dashboard",
+    "Personal View",
+    "Dashboard Data",
+    "Activity Summary"
   ],
   "mandatoryFields": [],
+  "baseUrl": "/api/dashboard",
   "endpoints": [
     {
       "name": "GetMyPartners",
-      "url": "api/dashboard/my-partners",
+      "url": "/api/dashboard/my-partners?pageSize={pageSize}",
       "method": "GET",
-      "description": "Retrieves partners associated with the current user's dashboard, including those created or modified by the user, excluding drafts.",
-      "parameters": {
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of records to return (default: 1000)"
-        }
-      },
-      "example_uses": [
-        "Show me the partners I'm involved with on my dashboard.",
-        "List all partners I've recently worked on.",
-        "Get my dashboard's list of active partners."
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
       ],
-      "when_to_use": "Use this to quickly view a list of partners relevant to the current user's activity, excluding draft records."
+      "description": "Retrieves partners created or modified by the current user, excluding drafts.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-partners?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my partners",
+        "Get my partners",
+        "List my partners"
+      ],
+      "when_to_use": "To retrieve a list of partners associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetMyContacts",
-      "url": "api/dashboard/my-contacts",
+      "url": "/api/dashboard/my-contacts?pageSize={pageSize}",
       "method": "GET",
-      "description": "Retrieves contacts associated with the current user's dashboard, including those created or modified by the user, excluding drafts.",
-      "parameters": {
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of records to return (default: 1000)"
-        }
-      },
-      "example_uses": [
-        "Show me the contacts I'm involved with on my dashboard.",
-        "List all contacts I've recently worked on.",
-        "Get my dashboard's list of active contacts."
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
       ],
-      "when_to_use": "Use this to quickly view a list of contacts relevant to the current user's activity, excluding draft records."
+      "description": "Retrieves contacts created or modified by the current user, excluding drafts.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-contacts?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my contacts",
+        "Get my contacts",
+        "List my contacts"
+      ],
+      "when_to_use": "To retrieve a list of contacts associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetMyDraftPartners",
-      "url": "api/dashboard/my-draft-partners",
+      "url": "/api/dashboard/my-draft-partners?pageSize={pageSize}",
       "method": "GET",
-      "description": "Retrieves draft partners associated with the current user's dashboard, specifically those created or modified by the user that are still in draft status.",
-      "parameters": {
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of records to return (default: 1000)"
-        }
-      },
-      "example_uses": [
-        "Show me the draft partners I'm working on.",
-        "List all partners I've started but not finalized.",
-        "Get my dashboard's list of pending partner records."
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
       ],
-      "when_to_use": "Use this to view partners that the current user has started creating or modifying but have not yet been published or finalized."
+      "description": "Retrieves draft partners created or modified by the current user.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-draft-partners?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my draft partners",
+        "Get my draft partners",
+        "List my draft partners"
+      ],
+      "when_to_use": "To retrieve a list of draft partners associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetMyDraftContacts",
-      "url": "api/dashboard/my-draft-contacts",
+      "url": "/api/dashboard/my-draft-contacts?pageSize={pageSize}",
       "method": "GET",
-      "description": "Retrieves draft contacts associated with the current user's dashboard, specifically those created or modified by the user that are still in draft status.",
-      "parameters": {
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of records to return (default: 1000)"
-        }
-      },
-      "example_uses": [
-        "Show me the draft contacts I'm working on.",
-        "List all contacts I've started but not finalized.",
-        "Get my dashboard's list of pending contact records."
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
       ],
-      "when_to_use": "Use this to view contacts that the current user has started creating or modifying but have not yet been published or finalized."
+      "description": "Retrieves draft contacts created or modified by the current user.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-draft-contacts?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my draft contacts",
+        "Get my draft contacts",
+        "List my draft contacts"
+      ],
+      "when_to_use": "To retrieve a list of draft contacts associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetMyInteractions",
-      "url": "api/dashboard/my-interactions",
+      "url": "/api/dashboard/my-interactions?pageSize={pageSize}",
       "method": "GET",
-      "description": "Retrieves interactions associated with the current user's dashboard, including those created or modified by the user, excluding drafts.",
-      "parameters": {
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of records to return (default: 1000)"
-        }
-      },
-      "example_uses": [
-        "Show me the interactions I'm involved with on my dashboard.",
-        "List all interactions I've recently worked on.",
-        "Get my dashboard's list of active interactions."
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
       ],
-      "when_to_use": "Use this to quickly view a list of interactions relevant to the current user's activity, excluding draft records."
+      "description": "Retrieves interactions created or modified by the current user, excluding drafts.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-interactions?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my interactions",
+        "Get my interactions",
+        "List my interactions"
+      ],
+      "when_to_use": "To retrieve a list of interactions associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetMyDraftInteractions",
-      "url": "api/dashboard/my-draft-interactions",
+      "url": "/api/dashboard/my-draft-interactions?pageSize={pageSize}",
       "method": "GET",
-      "description": "Retrieves draft interactions associated with the current user's dashboard, specifically those created or modified by the user that are still in draft status.",
-      "parameters": {
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of records to return (default: 1000)"
-        }
-      },
-      "example_uses": [
-        "Show me the draft interactions I'm working on.",
-        "List all interactions I've started but not finalized.",
-        "Get my dashboard's list of pending interaction records."
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
       ],
-      "when_to_use": "Use this to view interactions that the current user has started creating or modifying but have not yet been published or finalized."
+      "description": "Retrieves draft interactions created or modified by the current user.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/my-draft-interactions?pageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me my draft interactions",
+        "Get my draft interactions",
+        "List my draft interactions"
+      ],
+      "when_to_use": "To retrieve a list of draft interactions associated with the current user.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetOrgUnitRecentUpdates",
-      "url": "api/dashboard/org-unit-recent-updates",
+      "url": "/api/dashboard/org-unit-recent-updates?pageSize={pageSize}",
       "method": "GET",
-      "description": "Retrieves recent updates across all entity types (Partners, Contacts, Interactions) within the current user's organizational unit.",
-      "parameters": {
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of records to return (default: 10)"
-        }
-      },
-      "example_uses": [
-        "Show me the latest activities in my organization.",
-        "What are the most recent changes across all records in my unit?",
-        "Get a summary of recent updates for my organizational dashboard."
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
       ],
-      "when_to_use": "Use this to get a consolidated view of the most recent activities and updates across all relevant entities within the user's organizational unit."
+      "description": "Retrieves recent updates from all entity types (Partners, Contacts, Interactions) in the org unit.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/dashboard/org-unit-recent-updates?pageSize=10",
+      "requiredFields": [],
+      "example_uses": [
+        "Show me recent updates",
+        "Get recent updates",
+        "List recent updates"
+      ],
+      "when_to_use": "To retrieve a list of recent updates across all entity types in the org unit.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
 }

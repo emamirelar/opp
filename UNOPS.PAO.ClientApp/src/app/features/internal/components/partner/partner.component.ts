@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed, ViewChild } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -18,6 +18,9 @@ import { SearchField } from '../../../../common/services/search-parser.service';
 import { PermissionUtilityService } from '../../../../essentials/services/permission-utility.service';
 import { EntityPermissions } from '../../../../essentials/services/permission.service';
 import { EntityConfigurationService } from '../../services/entity-configuration.service';
+import { CachedDataService } from '../../../../common/services/cached-data.service';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 
 
 /**
@@ -47,6 +50,7 @@ import { EntityConfigurationService } from '../../services/entity-configuration.
     PartnerNewComponent,
     TranslateModule,
     ListviewComponent,
+    MenuModule,
   ],
   providers: [DialogService]
 })
@@ -60,6 +64,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
   importDialogService = inject(ImportDialogService);
   permissionUtilityService = inject(PermissionUtilityService);
   entityConfigurationService = inject(EntityConfigurationService);
+  cachedDataService = inject(CachedDataService);
 
   newPartnerData = signal<Partner|null>(null);
 
@@ -67,6 +72,9 @@ export class PartnerComponent implements OnDestroy, OnInit {
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Partner');
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
+
+  // Reference to listview component for export functionality
+  @ViewChild(ListviewComponent) listviewComponent!: ListviewComponent;
 
   // Dynamic partner columns loaded from API
   columns = signal<ListViewColumn[]>([]);
@@ -83,51 +91,99 @@ export class PartnerComponent implements OnDestroy, OnInit {
     scrollable: true,
     scrollHeight: 'flex',
     entityName: 'Partner',
+    defaultSortField: 'lastModifiedDate',
+    defaultSortOrder: 'desc',
+    sortableFields: [
+      { field: 'createdDate', label: 'Created Date' },
+      { field: 'lastModifiedDate', label: 'Last Updated Date' }
+    ],
     searchConfig: {
       useAdvancedSearch: true,
       placeholder: 'Search partners...',
       searchableFields: [
         { 
           field: 'name', 
-          label: 'Name', 
+          label: 'label.partner.name', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
-          field: 'shortName', 
-          label: 'Short Name', 
+          field: 'partnerShortDescription', 
+          label: 'label.partner.partnerShortDescription', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'partnerLongDescription', 
+          label: 'label.partner.partnerLongDescription', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
           field: 'status', 
-          label: 'Status', 
+          label: 'label.partner.status', 
           type: 'string',
           operators: ['is', 'is not']
         },
         { 
-          field: 'website', 
-          label: 'Website', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
+          field: 'partnerGroupId', 
+          label: 'label.partner.partnerGroup', 
+          type: 'number',
+          operators: ['is', 'is not']
         },
         { 
-          field: 'street', 
-          label: 'Street', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
+          field: 'partnerCategoryId', 
+          label: 'label.partner.partnerCategory', 
+          type: 'number',
+          operators: ['is', 'is not', '>', '<', '>=', '<=']
         },
         { 
-          field: 'city', 
-          label: 'City', 
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
+          field: 'liaisonOfficeId', 
+          label: 'label.partner.liaisonOffice', 
+          type: 'number',
+          operators: ['is', 'is not', '>', '<', '>=', '<=']
         },
         { 
-          field: 'country', 
-          label: 'Country', 
+          field: 'keyGlobalPartner', 
+          label: 'label.partner.keyGlobalPartner', 
           type: 'string',
           operators: ['is', 'is not']
+        },
+        { 
+          field: 'unSecretariatPartner', 
+          label: 'label.partner.unSecretariatPartner', 
+          type: 'string',
+          operators: ['is', 'is not']
+        },
+        { 
+          field: 'partnerApprovalStatus', 
+          label: 'label.partner.partnerApprovalStatus', 
+          type: 'string',
+          operators: ['is', 'is not']
+        },
+        { 
+          field: 'pooledFund', 
+          label: 'label.partner.pooledFund', 
+          type: 'string',
+          operators: ['is', 'is not']
+        },
+        { 
+          field: 'canCreateNewOpportunities', 
+          label: 'label.partner.canCreateNewOpportunities', 
+          type: 'string',
+          operators: ['is', 'is not']
+        },
+        { 
+          field: 'createdDate', 
+          label: 'label.audit.createdDate', 
+          type: 'date',
+          operators: ['after', 'before', 'between']
+        },
+        { 
+          field: 'lastModifiedDate', 
+          label: 'label.audit.lastModifiedDate', 
+          type: 'date',
+          operators: ['after', 'before', 'between']
         }
       ] as SearchField[]
     }
@@ -148,6 +204,9 @@ export class PartnerComponent implements OnDestroy, OnInit {
     
     // Load dynamic columns from API
     this.loadPartnerColumns();
+    
+    // Listen for refresh events (e.g., from imports) to refresh partner cache
+    window.addEventListener('refresh-listview', this.refreshPartnerCacheHandler);
     
     this.activatedRoute.queryParams
       .subscribe(params => {
@@ -200,12 +259,24 @@ export class PartnerComponent implements OnDestroy, OnInit {
     });
   }
 
+  // Handler for refresh-listview events to refresh partner cache
+  private refreshPartnerCacheHandler = () => {
+    this.cachedDataService.refreshPartners();
+  };
+
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
+    // Clean up event listener
+    window.removeEventListener('refresh-listview', this.refreshPartnerCacheHandler);
   }
 
   _handleOnRecordCreation(newRecordData: any) {
     if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
+      // Refresh partner cache to include the newly created partner
+      this.cachedDataService.refreshPartners();
+      
+      // Trigger refresh of the list view to show the new partner
+      window.dispatchEvent(new CustomEvent('refresh-listview'));
       
       this.router.navigate(['partnerships/partners', newRecordData.id.toString()]);
     } else {
@@ -245,6 +316,22 @@ export class PartnerComponent implements OnDestroy, OnInit {
     });
   }
 
+  // Import menu items
+  importMenuItems = signal<MenuItem[]>([
+    {
+      label: 'Select from Google Drive',
+      icon: 'pi pi-google',
+      command: () => this.openGooglePickerImport(),
+      title: 'Select a Google Sheet from your Drive. Make sure to set the sheet to "Anyone with the link can view" for public access.'
+    },
+    {
+      label: 'Manual Entry',
+      icon: 'pi pi-link',
+      command: () => this.openManualEntryImport(),
+      title: 'Paste a Google Sheet URL directly and specify the sheet name'
+    }
+  ]);
+
   /**
    * @uiButton import_partners
    * @description Opens the import dialog to bulk import partner organizations from Google Sheets or CSV files
@@ -254,8 +341,37 @@ export class PartnerComponent implements OnDestroy, OnInit {
    * @permissions PARTNER_CREATE
    */
   openImportDialog() {
+    // This method now shows the import menu instead of directly opening the picker
+    // The actual menu is handled in the template via p-menu
+  }
+
+  /**
+   * Open Google Picker for import (original flow)
+   */
+  openGooglePickerImport() {
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('partner');
+  }
+
+  /**
+   * Open manual entry dialog for import
+   */
+  openManualEntryImport() {
+    this.importDialogService.openManualEntryDialog('partner');
+  }
+
+  /**
+   * @uiButton export_partners
+   * @description Exports partner data to Google Sheets respecting current search and filter criteria
+   * @label Export Partners
+   * @icon pi pi-file-export
+   * @when_to_use When you need to export partner data with current filters applied for external analysis or reporting
+   * @permissions PARTNER_GLOB_ADMIN
+   */
+  exportData() {
+    if (this.listviewComponent) {
+      this.listviewComponent.exportData();
+    }
   }
 
   onSearchChange(searchParams: SearchParams) {

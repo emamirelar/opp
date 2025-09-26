@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -19,10 +19,12 @@ import { ChipModule } from 'primeng/chip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { MessageService, ConfirmationService } from 'primeng/api';
+import { MessageService, ConfirmationService, MenuItem } from 'primeng/api';
 import { UserManagementService } from './user-management.service';
 import { PermissionService, EntityPermissions } from '../../../../essentials/services/permission.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
+import { ImportDialogService } from '../../../../common/reusables/components/import/dialog/import-dialog.service';
+import { MenuModule } from 'primeng/menu';
 
 interface UserManagementModel {
   userId: number;
@@ -30,6 +32,7 @@ interface UserManagementModel {
   email: string;
   orgUnit: string;
   orgUnitCode?: string;
+  orgUnitDescription?: string;
   roles: string[];
   rolesDisplay: string;
   lastModifiedDate?: Date;
@@ -46,9 +49,9 @@ interface UserManagementRequest {
   pageIndex: number;
   pageSize: number;
   searchTerm?: string;
-  roleFilter?: string;
+  roleFilter?: string[];
   showMyOrgUnitOnly: boolean;
-  orgUnitFilter?: string;
+  orgUnitFilter?: number[];
   sortBy?: string;
   sortDirection?: string;
 }
@@ -96,13 +99,14 @@ interface PaginationResponse<T> {
     CheckboxModule,
     ChipModule,
     ProgressSpinnerModule,
-    TooltipModule
+    TooltipModule,
+    MenuModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './user-management.component.html',
   styleUrls: ['./user-management.component.scss']
 })
-export class UserManagementComponent implements OnInit {
+export class UserManagementComponent implements OnInit, OnDestroy {
   private userManagementService = inject(UserManagementService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
@@ -110,6 +114,7 @@ export class UserManagementComponent implements OnInit {
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService);
+  private importDialogService = inject(ImportDialogService);
 
   // Permission signals
   entityPermissions = signal<EntityPermissions>({
@@ -119,7 +124,9 @@ export class UserManagementComponent implements OnInit {
       canRead: false,
       canCreate: false,
       canUpdate: false,
-      canDelete: false
+      canDelete: false,
+      canExport: false,
+      canImport: false
     }
   });
   permissionsLoading = signal<boolean>(true);
@@ -128,6 +135,7 @@ export class UserManagementComponent implements OnInit {
   users = signal<UserManagementModel[]>([]);
   totalRecords = signal<number>(0);
   loading = signal<boolean>(false);
+  importing = signal<boolean>(false);
   availableRoles = signal<RoleModel[]>([]);
   
   // Dialog state
@@ -138,9 +146,12 @@ export class UserManagementComponent implements OnInit {
 
   // Filter and pagination state
   searchTerm = signal<string>('');
-  roleFilter = signal<string>('');
+  roleFilter = signal<string[]>([]);
   showMyOrgUnitOnly = signal<boolean>(false);
-  orgUnitFilter = signal<string>('');
+  orgUnitFilter = signal<number[]>([]);
+  
+  // Org unit options for multi-select
+  orgUnitOptions = signal<{label: string, value: number}[]>([]);
   
   first = signal<number>(0);
   rows = signal<number>(50);
@@ -158,6 +169,9 @@ export class UserManagementComponent implements OnInit {
     if (!user) return [];
     return user.roles.filter(role => role !== 'PARTNER_USER');
   });
+
+  // Store reference to the refresh event listener for cleanup
+  private refreshEventListener?: () => void;
 
   // Permission computed values
   canRead = computed(() => this.entityPermissions().permissions.canRead);
@@ -177,6 +191,19 @@ export class UserManagementComponent implements OnInit {
 
   ngOnInit() {
     this.loadPermissions();
+    
+    // Listen for refresh events from import operations
+    this.refreshEventListener = () => {
+      this.loadUsers();
+    };
+    window.addEventListener('refresh-listview', this.refreshEventListener);
+  }
+
+  ngOnDestroy() {
+    // Clean up event listener
+    if (this.refreshEventListener) {
+      window.removeEventListener('refresh-listview', this.refreshEventListener);
+    }
   }
 
   private loadPermissions() {
@@ -206,8 +233,10 @@ export class UserManagementComponent implements OnInit {
           if (permissions.hasAccess) {
             // Load current user roles first, then load other data
             this.loadCurrentUserRoles().then(() => {
-              // After roles are loaded, load the rest of the data
+              // After roles are loaded, load the rest of the data (but NOT users yet)
               this.loadAvailableRoles();
+              this.loadOrgUnits();
+              // Load users LAST to ensure all role-based settings are properly applied
               this.loadUsers(); // This will now use the correct showMyOrgUnitOnly setting
             });
           }
@@ -236,7 +265,6 @@ export class UserManagementComponent implements OnInit {
           // If user is ORG_UNIT_ADMIN (but not PARTNER_GLOB_ADMIN), automatically enable org unit filtering
           if (this.isOrgUnitAdmin()) {
             this.showMyOrgUnitOnly.set(true);
-            
           }
           
           this.cdr.detectChanges();
@@ -257,9 +285,9 @@ export class UserManagementComponent implements OnInit {
         pageIndex: Math.floor(this.first() / this.rows()),
         pageSize: this.rows(),
         searchTerm: this.searchTerm() || undefined,
-        roleFilter: this.roleFilter() || undefined,
+        roleFilter: this.roleFilter().length > 0 ? this.roleFilter() : undefined,
         showMyOrgUnitOnly: this.showMyOrgUnitOnly(),
-        orgUnitFilter: this.orgUnitFilter() || undefined,
+        orgUnitFilter: this.orgUnitFilter().length > 0 ? this.orgUnitFilter() : undefined,
         sortBy: this.sortBy(),
         sortDirection: this.sortDirection()
       };
@@ -293,6 +321,23 @@ export class UserManagementComponent implements OnInit {
     }
   }
 
+  async loadOrgUnits() {
+    try {
+      const orgUnits = await this.userManagementService.getAvailableOrgUnits();
+      this.orgUnitOptions.set(orgUnits.map((ou: any) => ({ 
+        label: ou.name, 
+        value: ou.id 
+      })));
+    } catch (error) {
+      console.error('Error loading org units:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load organization units'
+      });
+    }
+  }
+
   onPageChange(event: any) {
     this.first.set(event.first);
     this.rows.set(event.rows);
@@ -317,14 +362,14 @@ export class UserManagementComponent implements OnInit {
 
   clearFilters() {
     this.searchTerm.set('');
-    this.roleFilter.set('');
+    this.roleFilter.set([]);
     
     // Only reset org unit filter if user is not ORG_UNIT_ADMIN
     if (!this.isOrgUnitAdmin()) {
       this.showMyOrgUnitOnly.set(false);
     }
     
-    this.orgUnitFilter.set('');
+    this.orgUnitFilter.set([]);
     this.first.set(0);
     this.loadUsers();
   }
@@ -437,5 +482,65 @@ export class UserManagementComponent implements OnInit {
 
   getStatusText(isActive: boolean): string {
     return isActive ? 'Active' : 'Inactive';
+  }
+
+  // Import menu items
+  importMenuItems = signal<MenuItem[]>([
+    {
+      label: 'Select from Google Drive',
+      icon: 'pi pi-google',
+      command: () => this.openGooglePickerImport(),
+      title: 'Select a Google Sheet from your Drive. Make sure to set the sheet to "Anyone with the link can view" for public access.'
+    },
+    {
+      label: 'Manual Entry',
+      icon: 'pi pi-link',
+      command: () => this.openManualEntryImport(),
+      title: 'Paste a Google Sheet URL directly and specify the sheet name'
+    }
+  ]);
+
+  /**
+   * Opens the import dialog for user role assignments
+   */
+  openImportDialog(): void {
+    // This method now shows the import menu instead of directly opening the picker
+    // The actual menu is handled in the template via p-menu
+  }
+
+  /**
+   * Open Google Picker for import (original flow)
+   */
+  openGooglePickerImport(): void {
+    // Check if user has update permissions
+    if (!this.canUpdate()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Permission Denied',
+        detail: 'You do not have permission to import user roles'
+      });
+      return;
+    }
+
+    // Use Google Picker to select and import user role data
+    // This will automatically open the import dialog after file selection and analysis
+    this.importDialogService.openGoogleSheetPicker('user_role_import');
+  }
+
+  /**
+   * Open manual entry dialog for import
+   */
+  openManualEntryImport(): void {
+    // Check if user has update permissions
+    if (!this.canUpdate()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Permission Denied',
+        detail: 'You do not have permission to import user roles'
+      });
+      return;
+    }
+
+    this.importDialogService.openManualEntryDialog('user_role_import');
   }
 } 

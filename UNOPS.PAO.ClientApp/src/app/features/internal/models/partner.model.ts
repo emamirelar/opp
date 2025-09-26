@@ -7,7 +7,7 @@ import { EntityTag, TaggedEntity } from '../../../common/models/entity-tag.model
 export interface Partner extends TaggedEntity {
   id?: string | null;
   partnerCode?: string | null;
-  
+
   // ========== GENERAL FIELDS ==========
   partnerDescription?: string | null; // Full name (required) - was "name"
   partnerShortDescription?: string | null; // Short name/acronym (required) - was "shortName"
@@ -16,19 +16,19 @@ export interface Partner extends TaggedEntity {
   liaisonOfficeId?: number | null; // FK to LiaisonOffice (required)
   partnerFocalPointUserId?: number | null; // FK to User (Partner Focal Point)
   partnerFocalPointUserName?: string | null; // Partner Focal Point User Name
-  
+
   // Backward compatibility
   name?: string | null; // Maps to partnerDescription for backward compatibility
   shortName?: string | null; // Maps to partnerShortDescription for backward compatibility
-  
+
   status?: string | null;
   pooledFund?: boolean | null;
-  
+
   // ========== APPROVAL FIELDS ==========
   keyGlobalPartner?: boolean | null; // was "globalKeyAccount"
   unAndStateEntity?: boolean | null; // New field
   unSecretariatPartner?: boolean | null; // was "unSecretariatEntity"
-  dueDiligenceRequired?: string | null; // was "ddRequired" 
+  dueDiligenceRequired?: string | null; // was "ddRequired"
   dueDiligenceApproval?: string | null; // was "ddeacDone"
   dueDiligenceApprovalDate?: Date | null; // New field
   dueDiligenceExpiryDate?: Date | null; // New field
@@ -40,7 +40,7 @@ export interface Partner extends TaggedEntity {
   levyTreatment?: string | null;
   canCreateNewOpportunities?: boolean | null; // New field
   reasonForNoNewOpportunity?: string | null; // New field (Reason)
-  
+
   address1Street?: string | null;
   address1Street2?: string | null;
   address1City?: string | null;
@@ -63,11 +63,10 @@ export interface Partner extends TaggedEntity {
   _importRowId?: string;
   partnerTree?: PartnerTree | null;
   partnerGroupId?: number | null;
-  partnerGroupCode?: string | null;
   partnerGroupName?: string | null;
   partnerCategoryCode?: string | null;
   partnerCategoryName?: string | null;
-  
+  erpDimValue?: string | null;
   // RBAC permissions
   permissions?: EntityPermissionSet;
 }

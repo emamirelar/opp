@@ -28,10 +28,6 @@ public class MappingProfile : Profile
         CreateMap<UNOPSInteraction, InteractionModel>()
             .PreserveReferences()
             .MaxDepth(2)
-            .ForMember(dest => dest.ContactId, opt => opt.MapFrom(src => 
-                src.InteractionContacts != null && src.InteractionContacts.Any() 
-                    ? src.InteractionContacts.First().ContactId 
-                    : 0))
             .ForMember(dest => dest.ContactName, opt => opt.MapFrom(src => 
                 src.InteractionContacts != null && src.InteractionContacts.Any() 
                     ? $"{src.InteractionContacts.First().Contact.FirstName} {src.InteractionContacts.First().Contact.LastName}".Trim()
@@ -69,8 +65,7 @@ public class MappingProfile : Profile
                 src.InteractionContacts != null ? src.InteractionContacts.Select(ic => ic.ContactId).ToList() : new List<int>()))
             .ForMember(dest => dest.PartnerIds, opt => opt.MapFrom(src => 
                 src.InteractionPartners != null ? src.InteractionPartners.Select(ip => ip.PartnerId).ToList() : new List<int>()))
-            .ForMember(dest => dest.UserIds, opt => opt.MapFrom(src => 
-                src.InteractionUsers != null ? src.InteractionUsers.Select(iu => iu.UserId).ToList() : new List<int>()));
+;
         CreateMap<InteractionModel, UNOPSInteraction>()
             .ForMember(dest => dest.InteractionContacts, opt => opt.Ignore()); // Handle via junction table processing
         CreateMap<PartnerTreeRequest, UNOPSPartnerTree>();
@@ -85,7 +80,6 @@ public class MappingProfile : Profile
                 Description = src.Description,
                 Type = src.Type,
                 PartnerCategoryCode = src.PartnerCategoryCode,
-                PartnerGroupCode = src.PartnerGroupCode,
             }));
             
         CreateMap<PartnerTreeModel, UNOPSPartnerTree>()
@@ -97,6 +91,10 @@ public class MappingProfile : Profile
         CreateMap<DocumentUploadModel, UNOPSDocument>();
         CreateMap<DocumentLinkModel, UNOPSDocument>();
         CreateMap<UpdateDocumentRequest, UNOPSDocument>();
+        
+        // User mappings for interaction user resolution
+        CreateMap<PAOUser, UserValueModel>();
+        CreateMap<UserProfile, UserProfileValueModel>();
         
         CreateMap<PartnerRequest, UNOPSPartner>()
             .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager

@@ -312,7 +312,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     this.suggestionsLoading.set(true);
     this.suggestionsError.set(false);
 
-    this.aiAssistantService.getSuggestions().subscribe({
+    /*this.aiAssistantService.getSuggestions().subscribe({
       next: (response: SuggestionsResponse) => {
         if (response.suggestions && response.suggestions.length > 0) {
           const suggestions: SuggestionItem[] = response.suggestions.map((suggestion, index) => ({
@@ -330,7 +330,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
         this.suggestionsLoading.set(false);
         this.suggestionsError.set(true);
       }
-    });
+    });*/
   }
 
 

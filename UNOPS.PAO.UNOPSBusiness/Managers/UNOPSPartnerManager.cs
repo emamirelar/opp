@@ -68,13 +68,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             result.LogoUrl = await GoogleCloudStorageService.GenerateSignedUrlFromStorageUrl(result.LogoUrl);
         }
 
-        if (result.PartnerGroupCode != null && PartnerTreeService != null)
+        if (result.PartnerGroupId != null && PartnerTreeService != null)
         {
-            var partnerTreeGroup = await PartnerTreeService.GetPartnerTreeByCodeAsync(result.PartnerGroupCode);
+            var partnerTreeGroup = await PartnerTreeService.GetPartnerTreeByIdAsync(result.PartnerGroupId.Value);
             var partnerTreeCategory = await PartnerTreeService.GetPartnerCategoryByPartnerGroupCodeAsync(result.PartnerGroupCode);
             if (partnerTreeGroup != null) {
                 result.PartnerGroupName = partnerTreeGroup.Name;
-                result.PartnerGroupCode = partnerTreeGroup.Code;
                 result.PartnerGroupId = partnerTreeGroup.Id;
             }
 
@@ -138,7 +137,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Use AutoMapper with the updated configuration
         var result = mapper.Map<UNOPSPartner, PartnerModel>(entity);
 
-        if (result.PartnerGroupCode != null && PartnerTreeService != null)
+        if (result.PartnerGroupId != null && PartnerTreeService != null)
         {
             // Note: This is a synchronous version, so we can't await async calls
             // For full functionality, use MapEntityToModelAsync instead
@@ -321,10 +320,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         };
     }
 
+    
+
     public async Task<object> GetPartnersWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Partner> specification, PaginationRequest pagination)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerGroup"])
+            .GetAll(["PartnerGroup", "Contacts", "LiaisonOffice"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
 
@@ -559,19 +560,19 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return result;
     }
     
-    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, string partnerGroupCode, PaginationRequest request)
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, int partnerGroupId, PaginationRequest request)
     {
         // Add logging
-        Console.WriteLine($"GetPartnersByPartnerGroup called with partnerGroupCode: {partnerGroupCode}");
+        Console.WriteLine($"GetPartnersByPartnerGroup called with partnerGroupId: {partnerGroupId}");
         var partnerTree = PartnerTreeRepository.GetAll()
-            .FirstOrDefault(pt => pt.PartnerGroupCode == partnerGroupCode);
+            .FirstOrDefault(pt => pt.Id == partnerGroupId);
         
         try
         {
             // First get the partner tree by ID
             if (partnerTree == null)
             {
-                Console.WriteLine($"No partner tree found with PartnerGroupCode: {partnerGroupCode}");
+                Console.WriteLine($"No partner tree found with PartnerGroupId: {partnerGroupId}");
                 // If no partner tree found, return empty result
                 return new PaginationResponse<PartnerModel>
                 {
@@ -580,14 +581,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
                 };
             }
             
-            // Get the code from the partner tree
-            var code = partnerTree.Code;
-            Console.WriteLine($"Found partner tree with Code: {code}");
+            // Get the id from the partner tree
+            var id = partnerTree.Id;
+            Console.WriteLine($"Found partner tree with Id: {id}");
             
-            // Get all partners with the matching code
+            // Get all partners with the matching id
             var query = PartnerRepository
                 .GetAll()
-                .Where(x => !x.IsDeleted && x.PartnerGroupCode == code)
+                .Where(x => !x.IsDeleted && x.PartnerGroupId == id)
                 .AsQueryable();
 
             // Get total count
@@ -622,7 +623,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
                 Records = mappedEntities
             };
             
-            Console.WriteLine($"Found {result.TotalCount} partners matching PartnerGroupCode: {code}");
+            Console.WriteLine($"Found {result.TotalCount} partners matching PartnerGroupId: {id}");
             return result;
         }
         catch (Exception ex)
@@ -663,12 +664,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Get all the codes from the partner trees
         var partnerTreesByCategoryCodes = partnerTreesByCategory.Select(pt => pt.Code).ToList();
         
-        var partnerTreesByGroupInCategoryCode = GetAllDescendantPartnerTrees(partnerTreesByCategoryCodes).Select(pt => pt.Code).ToList();
+        var partnerTreesByGroupInCategoryIds = GetAllDescendantPartnerTrees(partnerTreesByCategoryCodes).Select(pt => pt.Id).ToList();
         
-        // Get all partners with the matching codes
+        // Get all partners with the matching ids
         var query = PartnerRepository
             .GetAll(["PartnerGroup"])
-            .Where(x => !x.IsDeleted && partnerTreesByGroupInCategoryCode.Contains(x.PartnerGroupCode))
+            .Where(x => !x.IsDeleted && x.PartnerGroupId.HasValue && partnerTreesByGroupInCategoryIds.Contains(x.PartnerGroupId.Value))
             .AsQueryable();
 
         // Load organization unit relationships
@@ -947,6 +948,28 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         {
             throw new BusinessException("Partner Name is required for creation");
         }
+
+        // Validate Partner Levy business rules
+        if (model.PartnerLevyStatus == "DoesNotApply" || model.PartnerLevyStatus == "PotentiallyNotApplied")
+        {
+            if (string.IsNullOrWhiteSpace(model.ReasonForLevy))
+            {
+                throw new BusinessException("Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'.");
+            }
+        }
+        
+        // Validate ErpDimValue uniqueness if provided
+        if (model.ErpDimValue.HasValue)
+        {
+            var existingPartner = await _context.Partners
+                .Where(p => p.ErpDimValue == model.ErpDimValue.Value && !p.IsDeleted)
+                .FirstOrDefaultAsync();
+            
+            if (existingPartner != null)
+            {
+                throw new BusinessException($"A partner with ERP Dimension Value '{model.ErpDimValue.Value}' already exists. ERP Dimension Values must be unique.");
+            }
+        }
         
         // Ensure partner is created in Draft status
         model.Status = "Draft";
@@ -1088,6 +1111,28 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return null;
         }
 
+        // Validate Partner Levy business rules
+        if (model.PartnerLevyStatus == "DoesNotApply" || model.PartnerLevyStatus == "PotentiallyNotApplied")
+        {
+            if (string.IsNullOrWhiteSpace(model.ReasonForLevy))
+            {
+                throw new BusinessException("Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'.");
+            }
+        }
+
+        // Validate ErpDimValue uniqueness if provided and different from current value
+        if (model.ErpDimValue.HasValue && model.ErpDimValue.Value != entity.ErpDimValue)
+        {
+            var existingPartner = await _context.Partners
+                .Where(p => p.ErpDimValue == model.ErpDimValue.Value && !p.IsDeleted && p.Id != model.Id)
+                .FirstOrDefaultAsync();
+            
+            if (existingPartner != null)
+            {
+                throw new BusinessException($"A partner with ERP Dimension Value '{model.ErpDimValue.Value}' already exists. ERP Dimension Values must be unique.");
+            }
+        }
+
         // Handle organization unit hierarchy ID updates using differential approach
         if (model.OrganizationHierarchyIds != null)
         {
@@ -1130,12 +1175,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// <summary>
     /// Gets partners by partner group with security applied
     /// </summary>
-    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, string partnerGroupCode, PaginationRequest request)
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, int partnerGroupId, PaginationRequest request)
     {
         // RBAC interceptor handles security enforcement
-        // First get all partner trees with this group code
+        // First get all partner trees with this group id
         var partnerTreesByGroup = PartnerTreeRepository.GetAll()
-            .Where(pt => pt.Code == partnerGroupCode)
+            .Where(pt => pt.Id == partnerGroupId)
             .Distinct()
             .ToList();
             
@@ -1149,11 +1194,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         }
         
         var partnerTreesByGroupCodes = partnerTreesByGroup.Select(pt => pt.Code).ToList();
-        var partnerTreesByGroupWithChildrenCodes = GetAllDescendantPartnerTrees(partnerTreesByGroupCodes).Select(pt => pt.Code).ToList();
+        var partnerTreesByGroupWithChildrenIds = GetAllDescendantPartnerTrees(partnerTreesByGroupCodes).Select(pt => pt.Id).ToList();
         
         var query = PartnerRepository
             .GetAll(["PartnerGroup"])
-            .Where(x => !x.IsDeleted && partnerTreesByGroupWithChildrenCodes.Contains(x.PartnerGroupCode))
+            .Where(x => !x.IsDeleted && x.PartnerGroupId.HasValue && partnerTreesByGroupWithChildrenIds.Contains(x.PartnerGroupId.Value))
             .AsQueryable();
         
         // Load organization unit relationships
@@ -1202,11 +1247,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         }
         
         var partnerTreesByCategoryCodes = partnerTreesByCategory.Select(pt => pt.Code).ToList();
-        var partnerTreesByGroupInCategoryCode = GetAllDescendantPartnerTrees(partnerTreesByCategoryCodes).Select(pt => pt.Code).ToList();
+        var partnerTreesByGroupInCategoryIds = GetAllDescendantPartnerTrees(partnerTreesByCategoryCodes).Select(pt => pt.Id).ToList();
         
         var query = PartnerRepository
             .GetAll(["PartnerGroup"])
-            .Where(x => !x.IsDeleted && partnerTreesByGroupInCategoryCode.Contains(x.PartnerGroupCode))
+            .Where(x => !x.IsDeleted && x.PartnerGroupId.HasValue && partnerTreesByGroupInCategoryIds.Contains(x.PartnerGroupId.Value))
             .AsQueryable();
 
         // Load organization unit relationships
@@ -1285,6 +1330,19 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             throw new BusinessException($"Partner {model.Id} does not exist.");
         }
 
+        // Validate ErpDimValue uniqueness if provided and different from current value
+        if (model.ErpDimValue.HasValue && model.ErpDimValue.Value != entity.ErpDimValue)
+        {
+            var existingPartner = await _context.Partners
+                .Where(p => p.ErpDimValue == model.ErpDimValue.Value && !p.IsDeleted && p.Id != model.Id)
+                .FirstOrDefaultAsync();
+            
+            if (existingPartner != null)
+            {
+                throw new BusinessException($"A partner with ERP Dimension Value '{model.ErpDimValue.Value}' already exists. ERP Dimension Values must be unique.");
+            }
+        }
+
         // Handle organization unit hierarchy ID updates using differential approach
         if (model.OrganizationHierarchyIds != null)
         {
@@ -1318,12 +1376,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     public async Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
     {
-        var partners = PartnerRepository
-            .GetAll(["PartnerGroup"])
-            .AsQueryable()
+        var partners = await _context.Partners
             .Where(p => input.partnerIds.Contains(p.Id))
-            .Cast<UNOPSPartner>()
-            .ToList();
+            .Include(p => p.PartnerGroup)
+            .ToListAsync();
 
         // Load organization unit relationships manually
         await partners.LoadOrganizationUnitRelationshipsAsync(_context);
@@ -1357,12 +1413,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var interactionsByPartner = interactionPartners
             .GroupBy(ip => ip.PartnerId)
             .ToDictionary(g => g.Key, g => g.Select(ip => ip.Interaction).ToList());
-
-        // Batch permission lookup once for all partners
-        var userContactPermissions = await GetEntityPermissionsAsync(user, "Contact");
-        var userInteractionPermissions = await GetEntityPermissionsAsync(user, "Interaction");
-        // Batch permission lookup once for all contacts
-        //var userContactPermissions = await GetEntityPermissionsAsync(user, "Contact");
 
         var mappedPartners = new List<PartnerModel>();
         foreach (var partner in partners)
@@ -1420,8 +1470,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
             mappedPartners.Add(model);
         }
-
-
         return mappedPartners;
     }
 
@@ -1440,7 +1488,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public override async Task<object> GetBasicEntityDataAsync(int id)
     {
-        var partner = await PartnerRepository.GetByIdAsync(id);
+        var partner = await _context.Partners
+            .Include(p => p.PartnerGroup)
+            .Include(p => p.LiaisonOffice)
+            .FirstOrDefaultAsync(e => e.Id == id);
         if (partner != null)
         {
             return _mapper.Map<UNOPSPartner, PartnerModel>(partner);
@@ -1653,6 +1704,18 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     }
 
     /// <summary>
+    /// Gets the next available ErpDimValue based on the highest existing value
+    /// </summary>
+    private async Task<int> GetNextErpDimValueAsync()
+    {
+        var highestErpDimValue = await _context.Partners
+            .Where(p => p.ErpDimValue.HasValue && !p.IsDeleted)
+            .MaxAsync(p => (int?)p.ErpDimValue) ?? 0;
+        
+        return highestErpDimValue + 1;
+    }
+
+    /// <summary>
     /// Approves an active partner (Admin only) - locks data fields and records approval audit trail
     /// </summary>
     public async Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, UpdatePartnerRequest request)
@@ -1677,8 +1740,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
         var userName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown Admin";
 
-        // Now approve the partner (this sets the approval status and audit trail)
-        entity.ApprovePartner(int.Parse(userId), userName);
+        // Get the next ErpDimValue for this partner (only if not already assigned)
+        var nextErpDimValue = entity.ErpDimValue ?? await GetNextErpDimValueAsync();
+
+        // Now approve the partner (this sets the approval status, audit trail, and ErpDimValue if not already set)
+        entity.ApprovePartner(int.Parse(userId), userName, nextErpDimValue);
         await PartnerRepository.UpdateAsync(entity);
         
         // Load relationships and return updated model
@@ -1700,8 +1766,25 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         if (pageIndex < 1) pageIndex = 1;
         if (pageSize < 1 || pageSize > 100) pageSize = 20;
 
+        // First get the partner's ErpDimValue since Engagement.PartnerId references Partner.ErpDimValue, not Partner.Id
+        var partner = await _context.Partners
+            .Where(p => p.Id == partnerId && !p.IsDeleted)
+            .FirstOrDefaultAsync();
+
+        if (partner == null || !partner.ErpDimValue.HasValue)
+        {
+            return new PaginationResponse<Engagement>
+            {
+                Records = new List<Engagement>(),
+                TotalCount = 0,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalPages = 0
+            };
+        }
+
         var baseQuery = _context.Engagements
-            .Where(e => e.PartnerId == partnerId && !e.IsDeleted)
+            .Where(e => e.PartnerId == partner.ErpDimValue.Value && !e.IsDeleted)
             .Include(e => e.Partner);
 
         IQueryable<Engagement> query;
@@ -1808,5 +1891,205 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     }
 
     #endregion
+
+    /// <summary>
+    /// Gets a partner by name (case-insensitive search)
+    /// </summary>
+    /// <param name="user">The current user's claims principal</param>
+    /// <param name="name">The partner name to search for</param>
+    /// <returns>The partner model if found and user has access, null otherwise</returns>
+    public async Task<PartnerModel?> GetPartnerByNameAsync(ClaimsPrincipal user, string name)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return null;
+            }
+
+            // Query for partner with the specified name (case-insensitive)
+            var partner = await _context.Partners
+                .Where(p => p.Name.ToLower() == name.ToLower() && !p.IsDeleted)
+                .Include(p => p.PartnerGroup)
+                .AsQueryable()
+                .FirstOrDefaultAsync();
+
+            if (partner == null)
+            {
+                return null;
+            }
+
+            // Load organization unit relationships
+            await partner.LoadOrganizationUnitRelationshipsAsync(_context);
+
+            // Apply access control filters to ensure user has permission to access this partner
+            var query = _context.Partners
+                .Where(p => p.Id == partner.Id)
+                .Include(p => p.PartnerGroup)
+                .AsQueryable();
+
+            var filteredData = await ApplyAccessControlFilters(query, user, "read");
+            
+            if (filteredData is IEnumerable<UNOPSPartner> partnerList)
+            {
+                var accessiblePartner = partnerList.FirstOrDefault();
+                if (accessiblePartner != null)
+                {
+                    // Load relationships again for the filtered partner
+                    await accessiblePartner.LoadOrganizationUnitRelationshipsAsync(_context);
+                    var model = await MapEntityToModelAsync(accessiblePartner, _mapper, user);
+                    return await MapEntityToModelWithPermissionsAsync(model, user, accessiblePartner);
+                }
+            }
+
+            // User doesn't have access to this partner
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error getting partner by name: {Name}", name);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Performs smart search for partners using AI-powered search capabilities
+    /// </summary>
+    public async Task<PaginationResponse<PartnerModel>> SmartSearchPartnersAsync(
+        ClaimsPrincipal user, 
+        string searchText, 
+        int maxResults = 50,
+        PaginationRequest request = null)
+    {
+        try
+        {
+            // Perform smart search to get accessible partners
+            var smartSearchResult = await PerformSmartSearchAsync<UNOPSPartner>(searchText, false, maxResults);
+            var accessiblePartners = await FilterAccessiblePartners(smartSearchResult.Results.Select(r => r.Entity).ToList(), user);
+
+            var partnerModels = new List<PartnerModel>();
+            foreach (var partner in accessiblePartners)
+            {
+                var model = await MapEntityToModelAsync(partner, _mapper, user);
+                var modelWithPermissions = await MapEntityToModelWithPermissionsAsync(model, user, partner);
+                partnerModels.Add(modelWithPermissions);
+            }
+
+            // Create pagination response
+            var paginationRequest = request ?? new PaginationRequest { PageIndex = 0, PageSize = maxResults };
+            var totalCount = partnerModels.Count;
+            var pageIndex = Math.Max(0, paginationRequest.PageIndex);
+            var pageSize = Math.Max(1, Math.Min(paginationRequest.PageSize, maxResults));
+            
+            var pagedResults = partnerModels
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            _logger?.LogInformation("Smart search completed: Found {TotalResults} partners in {ExecutionTime}ms. Strategy: {Strategy}", 
+                totalCount, smartSearchResult.ExecutionTime.TotalMilliseconds, smartSearchResult.SearchStrategy);
+
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = pagedResults,
+                TotalCount = totalCount,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error performing smart search for: '{SearchText}'", searchText);
+            
+            // Return empty result on error
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = new List<PartnerModel>(),
+                TotalCount = 0,
+                PageIndex = 0,
+                PageSize = maxResults,
+                TotalPages = 0
+            };
+        }
+    }
+
+    /// <summary>
+    /// Performs smart search for partners using AI-powered search capabilities
+    /// </summary>
+    public async Task<PaginationResponse<PartnerModel>> PerformSmartSearchAsync(
+        ClaimsPrincipal user, 
+        string searchText, 
+        bool includeInactive = false,
+        int maxResults = 50,
+        PaginationRequest request = null)
+    {
+        return await SmartSearchPartnersAsync(user, searchText, maxResults, request);
+    }
+
+    /// <summary>
+    /// Debug method to get total partner count
+    /// </summary>
+    public async Task<int> GetTotalPartnerCountAsync(ClaimsPrincipal user)
+    {
+        return await _context.Partners.CountAsync();
+    }
+
+    /// <summary>
+    /// Debug method to get sample partner names
+    /// </summary>
+    public async Task<List<string>> GetSamplePartnerNamesAsync(ClaimsPrincipal user, int count = 5)
+    {
+        try
+        {
+            return await _context.Partners
+                .Take(count)
+                .Select(p => p.Name)
+                .ToListAsync();
+        }
+        catch
+        {
+            return new List<string> { "Error retrieving sample names" };
+        }
+    }
+
+
+    // GetPartnerSearchFields removed - now handled directly in PartnerController with translation keys for multilingual support
+
+    /// <summary>
+    /// Filters the list of partners based on user's RBAC permissions
+    /// </summary>
+    private async Task<List<UNOPSPartner>> FilterAccessiblePartners(List<UNOPSPartner> partners, ClaimsPrincipal user)
+    {
+        try
+        {
+            var accessiblePartners = new List<UNOPSPartner>();
+            
+            foreach (var partner in partners)
+            {
+                // Apply access control filters to ensure user has permission to access this partner
+                var query = _context.Partners
+                    .Where(p => p.Id == partner.Id)
+                    .Include(p => p.PartnerGroup)
+                    .AsQueryable();
+
+                var filteredData = await ApplyAccessControlFilters(query, user, "read");
+                
+                if (filteredData is IEnumerable<UNOPSPartner> partnerList && partnerList.Any())
+                {
+                    // Load relationships for accessible partners
+                    await partner.LoadOrganizationUnitRelationshipsAsync(_context);
+                    accessiblePartners.Add(partner);
+                }
+            }
+            
+            return accessiblePartners;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Error filtering accessible partners, returning empty list");
+            return new List<UNOPSPartner>();
+        }
+    }
 
 }

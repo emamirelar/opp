@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {HttpClient, HttpResponse, HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Interaction } from '../models/interaction.model';
+import { ImportDialogService } from '../../../common/reusables/components/import/dialog/import-dialog.service';
 import { PaginationResponse } from '../../../common/models/pagination-response.model';
 import {PaginationParams, toHttpParams} from '../../../common/models/pagination-params.model';
 import { InteractionFilterParams } from '../models/interaction-filter-params.model';
@@ -17,7 +18,7 @@ export class InteractionService {
     return this.apiUrl;
   }
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private importDialogService: ImportDialogService) {}
 
   getAll(queryParams: InteractionFilterParams): Observable<HttpResponse<PaginationResponse<Interaction>>> {
     return this.http.get<PaginationResponse<Interaction>>(`${this.apiUrl}`, {
@@ -30,8 +31,12 @@ export class InteractionService {
     return this.http.get<Interaction>(`${this.apiUrl}/${id}`, { observe: 'response' });
   }
 
-  create(interaction: Interaction): Observable<HttpResponse<Interaction>> {
-    return this.http.post<Interaction>(this.apiUrl, interaction, { observe: 'response' });
+  /**
+   * Creates an interaction with duplicate detection handling
+   * Returns either the created interaction or duplicate detection response
+   */
+  create(interaction: Interaction): Observable<HttpResponse<any>> {
+    return this.http.post<any>(this.apiUrl, interaction, { observe: 'response' });
   }
 
   update(interaction: Interaction): Observable<HttpResponse<Interaction>> {
@@ -40,5 +45,13 @@ export class InteractionService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Detects duplicates for interaction records using the centralized ImportDialogService method
+   */
+  detectDuplicates(interactionData: any): Observable<any> {
+    // Use the centralized duplicate detection method from ImportDialogService
+    return this.importDialogService.detectDuplicatesForEntity(interactionData, 'interaction');
   }
 }

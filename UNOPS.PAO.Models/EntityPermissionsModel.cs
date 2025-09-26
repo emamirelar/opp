@@ -56,6 +56,16 @@ public class EntityPermissionsModel
     public bool? CanApprove { get; set; }
 
     /// <summary>
+    /// Whether the user can export data (PARTNER_GLOB_ADMIN only)
+    /// </summary>
+    public bool CanExport { get; set; }
+
+    /// <summary>
+    /// Whether the user can import data (PARTNER_GLOB_ADMIN only)
+    /// </summary>
+    public bool CanImport { get; set; }
+
+    /// <summary>
     /// Additional metadata about permissions (optional)
     /// </summary>
     public string? PermissionSource { get; set; }

@@ -1,714 +1,578 @@
 {
   "entity": "EntityConfiguration",
-  "description": "Manages the definition and configuration of entities and their fields within the system, including their properties, data types, and display settings.",
+  "description": "Manages entity configurations and their fields.",
   "synonyms": [
-    "Entity Definition",
+    "Entity Setup",
+    "Configuration Management",
+    "Data Model Definition",
     "Schema Configuration",
-    "Data Model Setup",
-    "Object Configuration",
-    "Type Configuration"
+    "Metadata Management"
   ],
   "mandatoryFields": [
     "EntityName",
-    "TableName",
-    "IsActive",
-    "EnableChangeLog"
+    "TableName"
   ],
-  "searchMetadata": null,
+  "baseUrl": "/api/entity-configuration",
   "endpoints": [
     {
       "name": "GetEntities",
       "url": "/api/entities",
       "method": "GET",
-      "description": "Get all available entities for dropdown selection.",
-      "parameters": {},
-      "example_uses": [
-        "How do I get a list of all available entities?",
-        "Show me the entities I can select from.",
-        "What are the configured entities in the system?"
+      "intent": [
+        "list",
+        "get",
+        "browse"
       ],
-      "when_to_use": "To retrieve a list of all defined entities in the system, typically for populating dropdowns or selection lists."
+      "description": "Retrieves a list of available entities.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entities",
+      "requiredFields": [],
+      "example_uses": [
+        "Get available entities for dropdown selection."
+      ],
+      "when_to_use": "When a list of available entities is needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetEntityConfiguration",
       "url": "/api/entity-configuration/{entityName}",
       "method": "GET",
-      "description": "Get entity configuration details by entity name for the frontend screen.",
-      "parameters": {
-        "entityName": {
-          "type": "string",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Retrieve the configuration for the 'Partner' entity.",
-        "Show me the details for the 'Contact' entity configuration.",
-        "Can I see the setup for the 'Interaction' entity?"
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
       ],
-      "when_to_use": "To fetch the detailed configuration, including description and field settings, for a specific entity by its name."
+      "description": "Retrieves the configuration details for a specific entity.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/Partner",
+      "requiredFields": [],
+      "example_uses": [
+        "Get entity configuration details by entity name."
+      ],
+      "when_to_use": "When the configuration details for a specific entity are needed.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "SaveEntityConfiguration",
       "url": "/api/entity-configuration/{entityName}/save",
       "method": "POST",
-      "description": "Save entity configuration (entity description and field configurations).",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Saves the configuration for a specific entity.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
-        "entityName": {
-          "type": "string",
-          "required": false,
-          "description": ""
-        },
         "request": {
           "type": "object",
-          "required": false,
-          "description": "",
-          "properties": {
-            "EntityName": {
-              "type": "string",
-              "required": true,
-              "description": "Property of type string"
-            },
-            "Description": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Fields": {
-              "type": "array",
-              "required": false,
-              "description": "Property of type List<EntityFieldConfigurationDto>",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "Id": {
-                    "type": "integer",
-                    "required": false,
-                    "description": "Property of type Nullable<int>"
-                  },
-                  "FieldName": {
-                    "type": "string",
-                    "required": true,
-                    "description": "Property of type string"
-                  },
-                  "DataType": {
-                    "type": "string",
-                    "required": true,
-                    "description": "Property of type string"
-                  },
-                  "Description": {
-                    "type": "string",
-                    "required": false,
-                    "description": "Property of type string"
-                  },
-                  "IsRequired": {
-                    "type": "boolean",
-                    "required": true,
-                    "description": "Property of type bool"
-                  },
-                  "IsActive": {
-                    "type": "boolean",
-                    "required": true,
-                    "description": "Property of type bool"
-                  },
-                  "EnableChangeLog": {
-                    "type": "boolean",
-                    "required": true,
-                    "description": "Property of type bool"
-                  },
-                  "DefaultValue": {
-                    "type": "string",
-                    "required": false,
-                    "description": "Property of type string"
-                  },
-                  "MaxLength": {
-                    "type": "integer",
-                    "required": false,
-                    "description": "Property of type Nullable<int>"
-                  },
-                  "DisplayOrder": {
-                    "type": "integer",
-                    "required": true,
-                    "description": "Property of type int"
-                  },
-                  "ShowInListView": {
-                    "type": "boolean",
-                    "required": true,
-                    "description": "Property of type bool"
-                  },
-                  "ListViewOrder": {
-                    "type": "integer",
-                    "required": false,
-                    "description": "Property of type Nullable<int>"
-                  },
-                  "RelatedDisplayProperty": {
-                    "type": "string",
-                    "required": false,
-                    "description": "Property of type string"
-                  },
-                  "DisplayFieldPath": {
-                    "type": "string",
-                    "required": false,
-                    "description": "Property of type string"
-                  },
-                  "DisplayTemplate": {
-                    "type": "string",
-                    "required": false,
-                    "description": "Property of type string"
-                  },
-                  "ListViewLabel": {
-                    "type": "string",
-                    "required": false,
-                    "description": "Property of type string"
-                  },
-                  "ListViewType": {
-                    "type": "string",
-                    "required": false,
-                    "description": "Property of type string"
-                  },
-                  "ListViewWidth": {
-                    "type": "string",
-                    "required": false,
-                    "description": "Property of type string"
-                  },
-                  "ListViewEllipsis": {
-                    "type": "boolean",
-                    "required": false,
-                    "description": "Property of type Nullable<bool>"
-                  },
-                  "ListViewSortable": {
-                    "type": "boolean",
-                    "required": false,
-                    "description": "Property of type Nullable<bool>"
-                  },
-                  "FirstLetterFallbackField": {
-                    "type": "string",
-                    "required": false,
-                    "description": "Property of type string"
-                  },
-                  "HelperText": {
-                    "type": "string",
-                    "required": false,
-                    "description": "Property of type string"
-                  }
-                }
-              }
-            }
-          }
+          "required": true,
+          "description": "The request object containing the entity configuration to save.",
+          "default": null
         }
       },
-      "example_uses": [
-        "Update the description and fields for the 'Project' entity.",
-        "How do I save changes to an existing entity's configuration?",
-        "Configure the 'Task' entity with new fields and a description."
+      "exampleBody": {
+        "EntityName": "Partner",
+        "Description": "A partner entity.",
+        "Fields": [
+          {
+            "FieldName": "Name",
+            "DataType": "string",
+            "IsRequired": true,
+            "IsActive": true,
+            "EnableChangeLog": true,
+            "DisplayOrder": 1,
+            "ShowInListView": true
+          },
+          {
+            "FieldName": "Address",
+            "DataType": "string",
+            "IsRequired": false,
+            "IsActive": true,
+            "EnableChangeLog": false,
+            "DisplayOrder": 2,
+            "ShowInListView": false
+          }
+        ]
+      },
+      "exampleUrl": "/api/entity-configuration/Partner/save",
+      "requiredFields": [
+        "EntityName"
       ],
-      "when_to_use": "To update or save the entire configuration for an entity, including its general description and the detailed settings for all its fields."
+      "example_uses": [
+        "Save entity configuration details."
+      ],
+      "when_to_use": "When saving or updating the configuration of an entity.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
     },
     {
       "name": "GetAllEntityConfigurations",
       "url": "/api/entity-configuration",
       "method": "GET",
-      "description": "Get all entity configurations (for admin purposes).",
-      "parameters": {},
-      "example_uses": [
-        "List all configured entities and their settings.",
-        "Show me a complete overview of all entity configurations.",
-        "What are all the entity configurations currently defined?"
+      "intent": [
+        "list",
+        "get",
+        "browse"
       ],
-      "when_to_use": "To retrieve a comprehensive list of all entity configurations, typically for administrative review or management."
+      "description": "Retrieves all entity configurations.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration",
+      "requiredFields": [],
+      "example_uses": [
+        "Get all entity configurations for admin purposes."
+      ],
+      "when_to_use": "When a list of all entity configurations is needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
     },
     {
       "name": "CreateEntityConfiguration",
       "url": "/api/entity-configuration/create",
       "method": "POST",
-      "description": "Create a new entity configuration.",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates a new entity configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "request": {
           "type": "object",
-          "required": false,
-          "description": "",
-          "properties": {
-            "EntityName": {
-              "type": "string",
-              "required": true,
-              "description": "Property of type string"
-            },
-            "TableName": {
-              "type": "string",
-              "required": true,
-              "description": "Property of type string"
-            },
-            "Description": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "IsActive": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            },
-            "EnableChangeLog": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            }
-          }
+          "required": true,
+          "description": "The request object containing the entity configuration to create.",
+          "default": null
         }
       },
-      "example_uses": [
-        "Create a new entity called 'Campaign' with change logging enabled.",
-        "How can I define a new entity configuration for 'Budget'?",
-        "Add a new entity 'Report' and set it as active."
+      "exampleBody": {
+        "EntityName": "Contact",
+        "TableName": "Contacts",
+        "Description": "A contact entity.",
+        "IsActive": true,
+        "EnableChangeLog": true
+      },
+      "exampleUrl": "/api/entity-configuration/create",
+      "requiredFields": [
+        "EntityName",
+        "TableName",
+        "IsActive",
+        "EnableChangeLog"
       ],
-      "when_to_use": "To define and register a brand new entity type within the system, specifying its name, database table, and initial settings."
+      "example_uses": [
+        "Create a new entity configuration."
+      ],
+      "when_to_use": "When creating a new entity configuration.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
     },
     {
       "name": "UpdateEntityConfiguration",
       "url": "/api/entity-configuration/{id}",
       "method": "PUT",
-      "description": "Update an entity configuration.",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing entity configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": ""
-        },
         "request": {
           "type": "object",
-          "required": false,
-          "description": "",
-          "properties": {
-            "Id": {
-              "type": "integer",
-              "required": true,
-              "description": "Property of type int"
-            },
-            "EntityName": {
-              "type": "string",
-              "required": true,
-              "description": "Property of type string"
-            },
-            "TableName": {
-              "type": "string",
-              "required": true,
-              "description": "Property of type string"
-            },
-            "Description": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "IsActive": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            },
-            "EnableChangeLog": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            }
-          }
+          "required": true,
+          "description": "The request object containing the entity configuration to update.",
+          "default": null
         }
       },
-      "example_uses": [
-        "Update the entity configuration with ID 123.",
-        "Change the table name for the 'Project' entity configuration.",
-        "Deactivate the 'OldEntity' configuration."
+      "exampleBody": {
+        "Id": 1,
+        "EntityName": "Contact",
+        "TableName": "Contacts",
+        "Description": "A contact entity.",
+        "IsActive": true,
+        "EnableChangeLog": true
+      },
+      "exampleUrl": "/api/entity-configuration/1",
+      "requiredFields": [
+        "Id",
+        "EntityName",
+        "TableName",
+        "IsActive",
+        "EnableChangeLog"
       ],
-      "when_to_use": "To modify the core properties of an existing entity configuration, such as its name, associated table, or active status."
+      "example_uses": [
+        "Update an entity configuration."
+      ],
+      "when_to_use": "When updating an existing entity configuration.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
     },
     {
       "name": "DeleteEntityConfiguration",
       "url": "/api/entity-configuration/{id}",
       "method": "DELETE",
-      "description": "Delete an entity configuration.",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Delete the entity configuration with ID 456.",
-        "Remove the 'TemporaryEntity' configuration.",
-        "Can I delete entity configuration 789?"
+      "intent": [
+        "delete",
+        "remove",
+        "destroy"
       ],
-      "when_to_use": "To permanently remove an existing entity configuration from the system."
+      "description": "Deletes an entity configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/1",
+      "requiredFields": [],
+      "example_uses": [
+        "Delete an entity configuration."
+      ],
+      "when_to_use": "When deleting an entity configuration.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetEntityFields",
       "url": "/api/entity-configuration/{entityManagerId}/fields",
       "method": "GET",
-      "description": "Get fields for a specific entity configuration.",
-      "parameters": {
-        "entityManagerId": {
-          "type": "integer",
-          "required": true,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "List all fields for the entity configuration with ID 1.",
-        "Show me the field definitions for the 'User' entity.",
-        "What are the fields configured for entity manager 10?"
+      "intent": [
+        "list",
+        "get",
+        "browse"
       ],
-      "when_to_use": "To retrieve the detailed field definitions (e.g., data type, required status, display properties) for a specific entity configuration."
+      "description": "Retrieves the fields for a specific entity configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/1/fields",
+      "requiredFields": [],
+      "example_uses": [
+        "Get fields for a specific entity configuration."
+      ],
+      "when_to_use": "When the fields for a specific entity configuration are needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
     },
     {
       "name": "CreateEntityField",
       "url": "/api/entity-field/create",
       "method": "POST",
-      "description": "Create a new entity field.",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates a new entity field.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "request": {
           "type": "object",
-          "required": false,
-          "description": "",
-          "properties": {
-            "EntityManagerId": {
-              "type": "integer",
-              "required": true,
-              "description": "Property of type int"
-            },
-            "FieldName": {
-              "type": "string",
-              "required": true,
-              "description": "Property of type string"
-            },
-            "DataType": {
-              "type": "string",
-              "required": true,
-              "description": "Property of type string"
-            },
-            "Description": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "IsRequired": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            },
-            "IsActive": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            },
-            "EnableChangeLog": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            },
-            "DefaultValue": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "MaxLength": {
-              "type": "integer",
-              "required": false,
-              "description": "Property of type Nullable<int>"
-            },
-            "DisplayOrder": {
-              "type": "integer",
-              "required": true,
-              "description": "Property of type int"
-            },
-            "ShowInListView": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            },
-            "ListViewOrder": {
-              "type": "integer",
-              "required": false,
-              "description": "Property of type Nullable<int>"
-            },
-            "RelatedDisplayProperty": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "DisplayFieldPath": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "DisplayTemplate": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ListViewLabel": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ListViewType": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ListViewWidth": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ListViewEllipsis": {
-              "type": "boolean",
-              "required": false,
-              "description": "Property of type Nullable<bool>"
-            },
-            "ListViewSortable": {
-              "type": "boolean",
-              "required": false,
-              "description": "Property of type Nullable<bool>"
-            },
-            "FirstLetterFallbackField": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "HelperText": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            }
-          }
+          "required": true,
+          "description": "The request object containing the entity field to create.",
+          "default": null
         }
       },
-      "example_uses": [
-        "Add a new 'Email' field to the 'Contact' entity, making it required.",
-        "Create a boolean field named 'IsApproved' for entity manager 5.",
-        "Define a new text field 'Notes' with a max length of 500 for the 'Task' entity."
+      "exampleBody": {
+        "EntityManagerId": 1,
+        "FieldName": "Email",
+        "DataType": "string",
+        "IsRequired": true,
+        "IsActive": true,
+        "EnableChangeLog": true,
+        "DisplayOrder": 3,
+        "ShowInListView": true
+      },
+      "exampleUrl": "/api/entity-field/create",
+      "requiredFields": [
+        "EntityManagerId",
+        "FieldName",
+        "DataType",
+        "IsRequired",
+        "IsActive",
+        "EnableChangeLog",
+        "DisplayOrder",
+        "ShowInListView"
       ],
-      "when_to_use": "To add a new custom field definition to an existing entity configuration, specifying its properties like data type, validation rules, and display options."
+      "example_uses": [
+        "Create a new entity field."
+      ],
+      "when_to_use": "When creating a new entity field.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
     },
     {
       "name": "UpdateEntityField",
       "url": "/api/entity-field/{id}",
       "method": "PUT",
-      "description": "Update an entity field.",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing entity field.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": ""
-        },
         "request": {
           "type": "object",
-          "required": false,
-          "description": "",
-          "properties": {
-            "Id": {
-              "type": "integer",
-              "required": true,
-              "description": "Property of type int"
-            },
-            "EntityManagerId": {
-              "type": "integer",
-              "required": true,
-              "description": "Property of type int"
-            },
-            "FieldName": {
-              "type": "string",
-              "required": true,
-              "description": "Property of type string"
-            },
-            "DataType": {
-              "type": "string",
-              "required": true,
-              "description": "Property of type string"
-            },
-            "Description": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "IsRequired": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            },
-            "IsActive": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            },
-            "EnableChangeLog": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            },
-            "DefaultValue": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "MaxLength": {
-              "type": "integer",
-              "required": false,
-              "description": "Property of type Nullable<int>"
-            },
-            "DisplayOrder": {
-              "type": "integer",
-              "required": true,
-              "description": "Property of type int"
-            },
-            "ShowInListView": {
-              "type": "boolean",
-              "required": true,
-              "description": "Property of type bool"
-            },
-            "ListViewOrder": {
-              "type": "integer",
-              "required": false,
-              "description": "Property of type Nullable<int>"
-            },
-            "RelatedDisplayProperty": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "DisplayFieldPath": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "DisplayTemplate": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ListViewLabel": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ListViewType": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ListViewWidth": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ListViewEllipsis": {
-              "type": "boolean",
-              "required": false,
-              "description": "Property of type Nullable<bool>"
-            },
-            "ListViewSortable": {
-              "type": "boolean",
-              "required": false,
-              "description": "Property of type Nullable<bool>"
-            },
-            "FirstLetterFallbackField": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "HelperText": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            }
-          }
+          "required": true,
+          "description": "The request object containing the entity field to update.",
+          "default": null
         }
       },
-      "example_uses": [
-        "Update the field with ID 10 for entity manager 2.",
-        "Change the data type of the 'Status' field to string.",
-        "Mark the 'DueDate' field as not required for the 'Project' entity."
+      "exampleBody": {
+        "Id": 1,
+        "EntityManagerId": 1,
+        "FieldName": "Email",
+        "DataType": "string",
+        "IsRequired": true,
+        "IsActive": true,
+        "EnableChangeLog": true,
+        "DisplayOrder": 3,
+        "ShowInListView": true
+      },
+      "exampleUrl": "/api/entity-field/1",
+      "requiredFields": [
+        "Id",
+        "EntityManagerId",
+        "FieldName",
+        "DataType",
+        "IsRequired",
+        "IsActive",
+        "EnableChangeLog",
+        "DisplayOrder",
+        "ShowInListView"
       ],
-      "when_to_use": "To modify the properties of an existing custom field within an entity configuration."
+      "example_uses": [
+        "Update an entity field."
+      ],
+      "when_to_use": "When updating an existing entity field.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
     },
     {
       "name": "DeleteEntityField",
       "url": "/api/entity-field/{id}",
       "method": "DELETE",
-      "description": "Delete an entity field.",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Delete the field with ID 20.",
-        "Remove the 'TemporaryField' from the 'Task' entity.",
-        "Can I delete field 30?"
+      "intent": [
+        "delete",
+        "remove",
+        "destroy"
       ],
-      "when_to_use": "To permanently remove a custom field definition from an entity configuration."
+      "description": "Deletes an entity field.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-field/1",
+      "requiredFields": [],
+      "example_uses": [
+        "Delete an entity field."
+      ],
+      "when_to_use": "When deleting an entity field.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetRelatedEntityFields",
       "url": "/api/entity-configuration/related-fields/{entityType}",
       "method": "GET",
-      "description": "Get available fields for a related entity type (for relationship field configuration).",
-      "parameters": {
-        "entityType": {
-          "type": "string",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "List fields available for related 'User' entities.",
-        "What fields can I link to from the 'Project' entity?",
-        "Show me the fields for related entity type 'Organization'."
+      "intent": [
+        "list",
+        "get",
+        "browse"
       ],
-      "when_to_use": "To retrieve a list of fields from a specified related entity type, useful when configuring relationship fields between entities."
+      "description": "Retrieves available fields for a related entity type.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/related-fields/Contact",
+      "requiredFields": [],
+      "example_uses": [
+        "Get available fields for a related entity type."
+      ],
+      "when_to_use": "When the available fields for a related entity type are needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetFieldOptionsForDataType",
       "url": "/api/entity-configuration/field-options/{dataType}/{contextEntityName}",
       "method": "GET",
-      "description": "Get field options for a specific data type in the context of an entity.",
-      "parameters": {
-        "dataType": {
-          "type": "string",
-          "required": false,
-          "description": ""
-        },
-        "contextEntityName": {
-          "type": "string",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "What are the field options for a 'string' data type in the 'Contact' entity?",
-        "Show me options for 'integer' fields in the 'Product' context.",
-        "Get field options for 'boolean' data types related to 'Task'."
+      "intent": [
+        "list",
+        "get",
+        "browse"
       ],
-      "when_to_use": "To retrieve specific configuration options or constraints applicable to fields of a certain data type within the context of a particular entity."
+      "description": "Retrieves field options for a specific data type in the context of an entity.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/field-options/string/Contact",
+      "requiredFields": [],
+      "example_uses": [
+        "Get field options for a specific data type in the context of an entity."
+      ],
+      "when_to_use": "When the field options for a specific data type in the context of an entity are needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetEntityListViewConfiguration",
       "url": "/api/entity-configuration/{entityName}/list-view",
       "method": "GET",
-      "description": "Get list view configuration for an entity (for dynamic column generation).",
-      "parameters": {
-        "entityName": {
-          "type": "string",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Retrieve the list view settings for the 'Partner' entity.",
-        "How is the 'Contact' entity's list view configured?",
-        "Show me the columns for the 'Interaction' entity's list view."
+      "intent": [
+        "list",
+        "get",
+        "browse"
       ],
-      "when_to_use": "To fetch the configuration details that dictate how an entity's data should be displayed in a list view, including column order, visibility, and display properties."
+      "description": "Retrieves list view configuration for an entity.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/entity-configuration/Contact/list-view",
+      "requiredFields": [],
+      "example_uses": [
+        "Get list view configuration for an entity."
+      ],
+      "when_to_use": "When the list view configuration for an entity is needed.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
 }

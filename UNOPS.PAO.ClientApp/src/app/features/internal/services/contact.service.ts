@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap, map } from 'rxjs';
 import { Contact } from '../models/contact.model';
+import { ImportDialogService } from '../../../common/reusables/components/import/dialog/import-dialog.service';
 
 export interface ContactsParams {
   page: number;
@@ -16,6 +17,7 @@ export interface ContactsParams {
 })
 export class ContactService {
   http = inject(HttpClient);
+  private importDialogService = inject(ImportDialogService);
 
   public readonly apiUrl = `/api/contact`;
   private contactData = signal<any[]>([]);
@@ -108,10 +110,13 @@ export class ContactService {
       );
   }
 
-  createContact( contact: Contact ): Observable<Contact> {
-
+  /**
+   * Creates a contact with duplicate detection handling
+   * Returns either the created contact or duplicate detection response
+   */
+  createContact( contact: Contact ): Observable<any> {
     this.isLoading.set( true );
-    return this.http.post<Contact>(this.apiUrl, contact).pipe(tap(
+    return this.http.post<any>(this.apiUrl, contact).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -147,5 +152,13 @@ export class ContactService {
           this.isLoading.set(false);
         }
       }));
+  }
+
+  /**
+   * Detects duplicates for contact records using the centralized ImportDialogService method
+   */
+  detectDuplicates(contactData: any): Observable<any> {
+    // Use the centralized duplicate detection method from ImportDialogService
+    return this.importDialogService.detectDuplicatesForEntity(contactData, 'contact');
   }
 }

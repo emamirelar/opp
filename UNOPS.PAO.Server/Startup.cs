@@ -367,6 +367,15 @@ public class Startup
         services.AddScoped<IOrgUnitHierarchyService, OrgUnitHierarchyService>();
         services.AddScoped<IOrgUnitFilterService, OrgUnitFilterService>();
         
+        // Register User Profile Cache service for optimizing ChatWithGemini performance
+        services.AddScoped<IUserProfileCacheService, UserProfileCacheService>();
+        
+        // Register Screen Context Cache service for optimizing ChatWithGemini performance
+        services.AddScoped<IScreenContextCacheService, ScreenContextCacheService>();
+        
+        // Register Geo Time Cache service for optimizing ChatWithGemini performance
+        services.AddScoped<IGeoTimeCacheService, GeoTimeCacheService>();
+        
         // Register Dashboard service for user-specific filtering
         services.AddScoped<IDashboardService, DashboardService>();
 
@@ -398,14 +407,18 @@ public class Startup
         // Register AI Contextual Service for similarity search and embeddings
         services.AddScoped<AiContextualService>();
         
+        // Register Advanced Search Service for enhanced search capabilities
+        services.AddScoped<AdvancedSearchService>();
+        
+        // Register Global Filter Service for centralized global filter logic
+        services.AddScoped<GlobalFilterService>();
+        
         // Add data seeding services
         services.AddDataSeeding();
 
         // Register HttpContextAccessor for accessing request context in managers
         services.AddHttpContextAccessor();
         
-        // Register GmailAddonHelper for Gmail addon functionality
-        services.AddScoped<UNOPS.PAO.Presentation.Helpers.GmailAddonHelper>();
         
         //services.AddScoped<IManagerWrapper, ManagerWrapper>();
         services.AddScoped<IManagerWrapper, UNOPSManagerWrapper>();

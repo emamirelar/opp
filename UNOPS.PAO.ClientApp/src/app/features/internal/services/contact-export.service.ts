@@ -93,7 +93,7 @@ export class ContactExportService {
         
         // Show success confirmation dialog instead of toast
         this.confirmationService.confirm({
-          message: `Contacts exported successfully! <a href="${result.url}" target="_blank" style="text-decoration: underline; color: blue;">Click here</a> to open the spreadsheet.`,
+          message: `Contacts exported successfully!<br><br><a href="${result.url}" target="_blank" style="text-decoration: underline; color: #007bff; font-weight: bold; padding: 4px 8px; border: 1px solid #007bff; border-radius: 4px; background-color: #f8f9fa;">📊 Open Spreadsheet</a>`,
           header: 'Export Complete',
           icon: 'pi pi-check-circle',
           acceptVisible: true,

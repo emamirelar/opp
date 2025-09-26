@@ -1,903 +1,1041 @@
 {
   "entity": "Partner",
-  "description": "Manages partner data and operations",
+  "description": "Manages partner organizations, their details, and relationships.",
   "synonyms": [
-    "partner",
-    "partners",
-    "partnerData"
+    "Organization",
+    "Collaborator",
+    "Affiliate",
+    "Institution",
+    "Alliance"
   ],
   "mandatoryFields": [
-    "id"
+    "name",
+    "UNAndStateEntity"
   ],
+  "baseUrl": "/api/partner",
   "endpoints": [
     {
       "name": "Create",
-      "url": "api/partner",
+      "url": "/api/partner",
       "method": "POST",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
       "description": "Creates a new partner organization with complete details including address, contact info, and organizational metadata.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
-        "Name": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerShortDescription": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerLongDescription": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerCategoryId": {
-          "type": "integer",
-          "required": false,
-          "description": "Property of type Nullable<int>"
-        },
-        "LiaisonOfficeId": {
-          "type": "integer",
-          "required": false,
-          "description": "Property of type Nullable<int>"
-        },
-        "PartnerFocalPointUserId": {
-          "type": "integer",
-          "required": false,
-          "description": "Property of type Nullable<int>"
-        },
-        "ErpDimValue": {
-          "type": "integer",
-          "required": false,
-          "description": "Property of type Nullable<int>"
-        },
-        "UNAndStateEntity": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "KeyGlobalPartner": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "UNSecretariatPartner": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "DueDiligenceRequired": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "DueDiligenceApproval": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "DueDiligenceApprovalDate": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type Nullable<DateTime>"
-        },
-        "DueDiligenceExpiryDate": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type Nullable<DateTime>"
-        },
-        "PartnerApprovalStatus": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerApprovalDate": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type Nullable<DateTime>"
-        },
-        "PartnerApprovalReference": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerLevyStatus": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "ReasonForLevy": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "LevyTreatment": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PooledFund": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "CanCreateNewOpportunities": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "ReasonForNoNewOpportunity": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "Status": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerGroupCode": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "OrganizationHierarchyIds": {
-          "type": "array",
-          "required": false,
-          "description": "Property of type List<int>"
-        },
-        "Extensions": {
+        "req": {
           "type": "object",
-          "required": false,
-          "description": "Property of type IDictionary<string, Object>"
+          "required": true,
+          "description": "Partner creation request with required fields"
         }
       },
+      "exampleBody": {
+        "Name": "UNICEF",
+        "PartnerShortDescription": "Children's Fund",
+        "PartnerLongDescription": "United Nations Children's Fund",
+        "PartnerCategoryId": 1,
+        "LiaisonOfficeId": 1,
+        "PartnerFocalPointUserId": 1,
+        "ErpDimValue": 123,
+        "UNAndStateEntity": true,
+        "KeyGlobalPartner": true,
+        "UNSecretariatPartner": true,
+        "DueDiligenceRequired": "Required",
+        "DueDiligenceApproval": "Approved",
+        "DueDiligenceApprovalDate": "2024-01-01T00:00:00",
+        "DueDiligenceExpiryDate": "2025-01-01T00:00:00",
+        "PartnerApprovalStatus": "Approved",
+        "PartnerApprovalDate": "2024-01-05T00:00:00",
+        "PartnerApprovalReference": "REF123",
+        "PartnerLevyStatus": "Exempt",
+        "ReasonForLevy": "N/A",
+        "LevyTreatment": "N/A",
+        "PooledFund": true,
+        "CanCreateNewOpportunities": true,
+        "ReasonForNoNewOpportunity": "N/A",
+        "Status": "Active",
+        "PartnerGroupCode": "UN",
+        "OrganizationHierarchyIds": [
+          1,
+          2
+        ],
+        "ConfirmDuplicateCreation": false,
+        "Extensions": {}
+      },
+      "exampleUrl": "/api/partner",
+      "requiredFields": [
+        "UNAndStateEntity",
+        "KeyGlobalPartner",
+        "UNSecretariatPartner",
+        "PooledFund",
+        "CanCreateNewOpportunities",
+        "ConfirmDuplicateCreation"
+      ],
       "example_uses": [
         "Create a new partner called UNICEF",
-        "Add a new organization with website www.redcross.org",
-        "Register a new government partner from Bangladesh",
-        "Set up a partner organization with contact details",
-        "Create a global key account partner"
+        "Add a new organization with website www.redcross.org"
       ],
-      "when_to_use": "Use this when the user asks to add, create, register, or set up a new partner."
+      "when_to_use": "Use this when the user asks to add, create, register, or set up a new partner.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "complex"
+      }
     },
     {
       "name": "ListAllPartners",
-      "url": "api/partner",
+      "url": "/api/partner?pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
       "description": "Retrieves all partners with basic pagination and ordering (no search criteria).",
-      "parameters": {
-        "pageIndex": {
-          "type": "integer",
-          "required": false,
-          "description": "Page number (1-based, default: 1)"
-        },
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of items per page (default: 20)"
-        },
-        "orderBy": {
-          "type": "string",
-          "required": false,
-          "description": "Field to order results by (optional)"
-        },
-        "ascending": {
-          "type": "boolean",
-          "required": false,
-          "description": "Sort direction - true for ascending, false for descending (default: true)"
-        }
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": true,
+        "supportsSort": true
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner?pageIndex=1&pageSize=20&orderBy=name&ascending=true",
+      "requiredFields": [],
       "example_uses": [
         "Show me all partners",
-        "List all partners in the system",
-        "Display the partner directory",
-        "Get all partner records",
-        "Browse partners"
+        "List all partners in the system"
       ],
-      "when_to_use": "Use this when the user wants to see ALL partners without any search criteria or when asking for a general partner list."
+      "when_to_use": "Use this when the user wants to see ALL partners without any search criteria or when asking for a general partner list.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "SearchPartners",
-      "url": "api/partner/search",
+      "url": "/api/partner/search?searchText={searchText}&pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
-      "description": "Performs simple text search across multiple partner fields (name, description, etc.). This endpoint supports basic text search via the `searchText` parameter. For more complex, structured searches, use the `AdvancedSearchPartners` endpoint.",
-      "parameters": {
-        "OrderBy": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "Ascending": {
-          "type": "boolean",
-          "required": false,
-          "description": "Property of type Nullable<bool>"
-        },
-        "Direction": {
-          "type": "boolean",
-          "required": false,
-          "description": "Property of type Nullable<bool>"
-        },
-        "PageIndex": {
-          "type": "integer",
-          "required": true,
-          "description": "Property of type int"
-        },
-        "PageSize": {
-          "type": "integer",
-          "required": true,
-          "description": "Property of type int"
-        },
-        "searchText": {
-          "type": "string",
-          "required": false,
-          "description": "Text to search across partner name, description, and other basic fields"
-        }
+      "intent": [
+        "search",
+        "find",
+        "lookup",
+        "query"
+      ],
+      "description": "Performs simple text search across multiple partner fields (name, description, etc.).",
+      "searchCapability": {
+        "type": "simple",
+        "searchFields": [
+          "name",
+          "partnerShortDescription",
+          "partnerLongDescription"
+        ],
+        "supportsPagination": true,
+        "supportsSort": true
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/search?searchText=UNICEF&pageIndex=1&pageSize=20&orderBy=name&ascending=true",
+      "requiredFields": [],
       "example_uses": [
         "Search for partners named UNICEF",
-        "Find partners containing 'Government'",
-        "Search for partners with 'Development' in description",
-        "Look for partners with specific keywords",
-        "Find partner by short name or acronym"
+        "Find partners containing 'Government'"
       ],
-      "when_to_use": "Use this for simple name, description, or basic field searches. NOT for complex criteria or relationship searches."
+      "when_to_use": "Use this for simple name, description, or basic field searches. NOT for complex criteria or relationship searches.",
+      "scoring": {
+        "searchBonus": 100,
+        "intentMatch": 95,
+        "complexity": "simple"
+      }
     },
     {
       "name": "AdvancedSearchPartners",
-      "url": "api/partner/advanced-search",
+      "url": "/api/partner/advanced-search?searchCriteria={searchCriteria}&searchText={searchText}&pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
-      "description": "Performs advanced search with structured criteria including status, dates, relationships, and complex filters. Use the `searchCriteria` parameter as a JSON array of objects, where each object has `field`, `operator`, and `value`. Supported fields for search are: `id`, `name`, `status`, `partnerShortDescription`, `partnerLongDescription`, `partnerCategoryId`, `liaisonOfficeId`, `partnerFocalPointUserId`, `unAndStateEntity`, `keyGlobalPartner`, `unSecretariatPartner`, `dueDiligenceRequired`, `dueDiligenceApproval`, `dueDiligenceApprovalDate`, `dueDiligenceExpiryDate`, `partnerApprovalStatus`, `partnerApprovalDate`, `partnerApprovalReference`, `partnerApprovedBy`, `partnerLevyStatus`, `reasonForLevy`, `levyTreatment`, `pooledFund`, `canCreateNewOpportunities`, `reasonForNoNewOpportunity`, `createdDate`, `lastModifiedDate`, `createdBy`, `lastModifiedBy`, `isDeleted`, `shortName`, `description`, `phone`, `website`, `email`, `modifiedDate`. Date fields are: `createdDate`, `modifiedDate`. Operators include: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Example criteria: `[{\"field\":\"name\",\"operator\":\"like\",\"value\":\"Foundation\"},{\"field\":\"status\",\"operator\":\"is\",\"value\":\"Active\"}]`.",
-      "parameters": {
-        "OrderBy": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "Ascending": {
-          "type": "boolean",
-          "required": false,
-          "description": "Property of type Nullable<bool>"
-        },
-        "Direction": {
-          "type": "boolean",
-          "required": false,
-          "description": "Property of type Nullable<bool>"
-        },
-        "PageIndex": {
-          "type": "integer",
-          "required": true,
-          "description": "Property of type int"
-        },
-        "PageSize": {
-          "type": "integer",
-          "required": true,
-          "description": "Property of type int"
-        },
-        "searchCriteria": {
-          "type": "string",
-          "required": false,
-          "description": "JSON array of search criteria objects with field, operator, value, and logicalOperator"
-        },
-        "searchText": {
-          "type": "string",
-          "required": false,
-          "description": "Optional additional text search to combine with criteria"
-        }
-      },
-      "example_uses": [
-        "Find active partners",
-        "Show partners with global key account status",
-        "Get partners created this month",
-        "Find partners by approval status",
-        "List partners with due diligence requirements",
-        "Search for partners by complex criteria combinations"
+      "intent": [
+        "search",
+        "find",
+        "lookup",
+        "query"
       ],
-      "when_to_use": "Use this for searches involving partner status, dates, approval status, or multiple field combinations."
+      "description": "Performs advanced search with structured criteria including status, dates, relationships, and complex filters.",
+      "searchCapability": {
+        "type": "advanced",
+        "searchFields": [
+          "id",
+          "name",
+          "status",
+          "partnerShortDescription",
+          "partnerLongDescription",
+          "partnerCategoryId",
+          "liaisonOfficeId",
+          "partnerFocalPointUserId",
+          "partnerGroupCode",
+          "erpDimValue",
+          "unAndStateEntity",
+          "keyGlobalPartner",
+          "unSecretariatPartner",
+          "dueDiligenceRequired",
+          "dueDiligenceApproval",
+          "dueDiligenceApprovalDate",
+          "dueDiligenceExpiryDate",
+          "partnerApprovalStatus",
+          "partnerApprovalDate",
+          "partnerApprovalReference",
+          "partnerApprovedBy",
+          "partnerLevyStatus",
+          "reasonForLevy",
+          "levyTreatment",
+          "pooledFund",
+          "canCreateNewOpportunities",
+          "reasonForNoNewOpportunity",
+          "createdDate",
+          "lastModifiedDate",
+          "createdBy",
+          "lastModifiedBy",
+          "isDeleted"
+        ],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/advanced-search?searchCriteria=[{\"Field\":\"status\",\"Operator\":\"is\",\"Value\":\"Active\"}]&searchText=UNICEF&pageIndex=1&pageSize=20&orderBy=name&ascending=true",
+      "requiredFields": [],
+      "example_uses": [
+        "Find active government partners",
+        "Show partners with global key account status"
+      ],
+      "when_to_use": "Use this for searches involving partner status, dates, types, complex criteria, or multiple field combinations.",
+      "scoring": {
+        "searchBonus": 80,
+        "intentMatch": 95,
+        "complexity": "medium"
+      }
     },
     {
       "name": "Get",
-      "url": "api/partner/{id}",
+      "url": "/api/partner/{id}",
       "method": "GET",
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
       "description": "Retrieves a specific partner by ID with complete details including documents, contacts, and office information.",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "Partner ID"
-        }
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/123",
+      "requiredFields": [],
       "example_uses": [
         "Show me details for partner ID 123",
-        "Get full information about partner 456",
-        "Display partner record 789",
-        "Get complete partner profile",
-        "Show partner with all related data"
+        "Get full information about partner 456"
       ],
-      "when_to_use": "Use this when the user asks for specific partner details by ID or when you need complete partner information."
+      "when_to_use": "Use this when the user asks for specific partner details by ID or when you need complete partner information.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "Update",
-      "url": "api/partner",
+      "url": "/api/partner",
       "method": "PUT",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
       "description": "Updates an existing partner's information including contact details, status, and organizational metadata.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
-        "Id": {
-          "type": "integer",
-          "required": true,
-          "description": "Property of type int"
-        },
-        "Name": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerShortDescription": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerLongDescription": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerCategoryId": {
-          "type": "integer",
-          "required": false,
-          "description": "Property of type Nullable<int>"
-        },
-        "LiaisonOfficeId": {
-          "type": "integer",
-          "required": false,
-          "description": "Property of type Nullable<int>"
-        },
-        "PartnerFocalPointUserId": {
-          "type": "integer",
-          "required": false,
-          "description": "Property of type Nullable<int>"
-        },
-        "ErpDimValue": {
-          "type": "integer",
-          "required": false,
-          "description": "Property of type Nullable<int>"
-        },
-        "UNAndStateEntity": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "KeyGlobalPartner": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "UNSecretariatPartner": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "DueDiligenceRequired": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "DueDiligenceApproval": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "DueDiligenceApprovalDate": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type Nullable<DateTime>"
-        },
-        "DueDiligenceExpiryDate": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type Nullable<DateTime>"
-        },
-        "PartnerApprovalStatus": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerApprovalDate": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type Nullable<DateTime>"
-        },
-        "PartnerApprovalReference": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerLevyStatus": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "ReasonForLevy": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "LevyTreatment": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PooledFund": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "CanCreateNewOpportunities": {
-          "type": "boolean",
-          "required": true,
-          "description": "Property of type bool"
-        },
-        "ReasonForNoNewOpportunity": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "Status": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "PartnerGroupCode": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
-        },
-        "OrganizationHierarchyIds": {
-          "type": "array",
-          "required": false,
-          "description": "Property of type List<int>"
-        },
-        "Extensions": {
+        "req": {
           "type": "object",
-          "required": false,
-          "description": "Property of type IDictionary<string, Object>"
+          "required": true,
+          "description": "Partner update request containing modified fields"
         }
       },
+      "exampleBody": {
+        "Id": 123,
+        "Name": "New UNICEF",
+        "PartnerShortDescription": "Updated Children's Fund",
+        "PartnerLongDescription": "Updated United Nations Children's Fund",
+        "PartnerCategoryId": 2,
+        "LiaisonOfficeId": 2,
+        "PartnerFocalPointUserId": 2,
+        "ErpDimValue": 456,
+        "UNAndStateEntity": false,
+        "KeyGlobalPartner": false,
+        "UNSecretariatPartner": false,
+        "DueDiligenceRequired": "Not Required",
+        "DueDiligenceApproval": "Pending",
+        "DueDiligenceApprovalDate": "2024-02-01T00:00:00",
+        "DueDiligenceExpiryDate": "2025-02-01T00:00:00",
+        "PartnerApprovalStatus": "Pending",
+        "PartnerApprovalDate": "2024-02-05T00:00:00",
+        "PartnerApprovalReference": "REF456",
+        "PartnerLevyStatus": "Taxable",
+        "ReasonForLevy": "Tax",
+        "LevyTreatment": "Taxed",
+        "PooledFund": false,
+        "CanCreateNewOpportunities": false,
+        "ReasonForNoNewOpportunity": "Restricted",
+        "Status": "Inactive",
+        "PartnerGroupCode": "NGO",
+        "OrganizationHierarchyIds": [
+          3,
+          4
+        ],
+        "ConfirmDuplicateCreation": true,
+        "Extensions": {}
+      },
+      "exampleUrl": "/api/partner",
+      "requiredFields": [
+        "Id",
+        "UNAndStateEntity",
+        "KeyGlobalPartner",
+        "UNSecretariatPartner",
+        "PooledFund",
+        "CanCreateNewOpportunities",
+        "ConfirmDuplicateCreation"
+      ],
       "example_uses": [
         "Update partner 123's name to New UNICEF",
-        "Change partner 456's status to Inactive",
-        "Update the website for partner 789",
-        "Modify partner contact information",
-        "Change partner office assignment"
+        "Change partner 456's status to Inactive"
       ],
-      "when_to_use": "Use this when the user asks to update, modify, edit, or change partner information."
+      "when_to_use": "Use this when the user asks to update, modify, edit, or change partner information.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "complex"
+      }
     },
     {
       "name": "GetPartnerEngagements",
-      "url": "api/partner/{partnerId}/engagements",
+      "url": "/api/partner/{partnerId}/engagements?pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
       "description": "Retrieves all engagements for a specific partner with complete details and pagination.",
-      "parameters": {
-        "partnerId": {
-          "type": "integer",
-          "required": true,
-          "description": "Partner ID to get engagements for"
-        },
-        "pageIndex": {
-          "type": "integer",
-          "required": false,
-          "description": "Page number (1-based, default: 1)"
-        },
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of items per page (default: 20)"
-        },
-        "orderBy": {
-          "type": "string",
-          "required": false,
-          "description": "Field to order results by (optional)"
-        },
-        "ascending": {
-          "type": "boolean",
-          "required": false,
-          "description": "Sort direction - true for ascending, false for descending (default: true)"
-        }
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": true,
+        "supportsSort": true
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/123/engagements?pageIndex=1&pageSize=20&orderBy=createdDate&ascending=false",
+      "requiredFields": [],
       "example_uses": [
         "Show all engagements for partner 123",
-        "List partner's project engagements",
-        "Get engagement history for this partner",
-        "Display partner collaboration records",
-        "Show partner's active engagements"
+        "List partner's project engagements"
       ],
-      "when_to_use": "Use this when the user wants to see all engagements associated with a specific partner from the partner's perspective."
+      "when_to_use": "Use this when the user wants to see all engagements associated with a specific partner from the partner's perspective.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
     },
     {
       "name": "GetPartnerProjects",
-      "url": "api/partner/{partnerId}/projects",
+      "url": "/api/partner/{partnerId}/projects?pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
+      ],
       "description": "Retrieves all projects associated with a specific partner with complete details and pagination.",
-      "parameters": {
-        "partnerId": {
-          "type": "integer",
-          "required": true,
-          "description": "Partner ID to get projects for"
-        },
-        "pageIndex": {
-          "type": "integer",
-          "required": false,
-          "description": "Page number (1-based, default: 1)"
-        },
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of items per page (default: 20)"
-        },
-        "orderBy": {
-          "type": "string",
-          "required": false,
-          "description": "Field to order results by (optional)"
-        },
-        "ascending": {
-          "type": "boolean",
-          "required": false,
-          "description": "Sort direction - true for ascending, false for descending (default: true)"
-        }
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": true,
+        "supportsSort": true
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/123/projects?pageIndex=1&pageSize=20&orderBy=createdDate&ascending=false",
+      "requiredFields": [],
       "example_uses": [
         "Show all projects for partner 123",
-        "List partner's project portfolio",
-        "Get project history for this partner",
-        "Display partner's active projects",
-        "Show partner collaboration projects"
+        "List partner's project portfolio"
       ],
-      "when_to_use": "Use this when the user wants to see all projects associated with a specific partner."
+      "when_to_use": "Use this when the user wants to see all projects associated with a specific partner.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
     },
     {
       "name": "Delete",
-      "url": "api/partner/{id}",
+      "url": "/api/partner/{id}",
       "method": "DELETE",
+      "intent": [
+        "delete",
+        "remove",
+        "destroy"
+      ],
       "description": "Soft deletes a partner from the system (marks as deleted rather than permanent removal).",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "Partner ID to delete"
-        }
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/123",
+      "requiredFields": [],
       "example_uses": [
         "Delete partner ID 123",
-        "Remove partner 456 from the system",
-        "Deactivate partner organization",
-        "Soft delete partner record"
+        "Remove partner 456 from the system"
       ],
-      "when_to_use": "Use this when the user asks to delete, remove, or eliminate a partner."
+      "when_to_use": "Use this when the user asks to delete, remove, or eliminate a partner.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     },
     {
       "name": "ActivatePartner",
-      "url": "api/partner/{id}/activate",
+      "url": "/api/partner/{id}/activate",
       "method": "POST",
+      "intent": [
+        "activate"
+      ],
       "description": "Activates a draft partner after validating mandatory fields",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
-        "id": {
-          "type": "integer",
+        "request": {
+          "type": "object",
           "required": true,
-          "description": "Partner ID"
-        },
-        "Notes": {
-          "type": "string",
-          "required": false,
-          "description": "Property of type string"
+          "description": "Activation request with optional notes"
         }
       },
+      "exampleBody": {
+        "Notes": "Activated by admin"
+      },
+      "exampleUrl": "/api/partner/123/activate",
+      "requiredFields": [],
       "example_uses": [],
-      "when_to_use": ""
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "ClosePartner",
       "url": "/api/partner/{id}/close",
       "method": "POST",
-      "description": "Closes an active partner (only for NotApproved partners). Returns updated partner with closed status.",
+      "intent": [
+        "close"
+      ],
+      "description": "Closes an active partner (only for NotApproved partners)",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "Partner ID"
-        },
         "request": {
           "type": "object",
-          "required": false,
+          "required": true,
           "description": "Close request with optional notes"
         }
       },
-      "example_uses": [
-        "Close partner 123",
-        "Mark partner 456 as closed",
-        "Change status of partner 789 to closed"
-      ],
-      "when_to_use": "Use this when an active partner needs to be formally closed, typically for partners that are not yet approved."
+      "exampleBody": {
+        "Status": "Closed",
+        "Notes": "Closed by admin"
+      },
+      "exampleUrl": "/api/partner/123/close",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "ArchivePartner",
       "url": "/api/partner/{id}/archive",
       "method": "POST",
-      "description": "Archives an active or closed partner (only for NotApproved partners). Returns updated partner with archived status.",
+      "intent": [
+        "archive"
+      ],
+      "description": "Archives an active or closed partner (only for NotApproved partners)",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "Partner ID"
-        },
         "request": {
           "type": "object",
-          "required": false,
+          "required": true,
           "description": "Archive request with optional notes"
         }
       },
-      "example_uses": [
-        "Archive partner 123",
-        "Move partner 456 to archive",
-        "Set partner 789 as archived"
-      ],
-      "when_to_use": "Use this when an active or closed partner needs to be moved to an archived status, typically for partners that are not yet approved."
+      "exampleBody": {
+        "Status": "Archived",
+        "Notes": "Archived by admin"
+      },
+      "exampleUrl": "/api/partner/123/archive",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "ApprovePartner",
       "url": "/api/partner/{id}/approve",
       "method": "POST",
-      "description": "Approves an active partner (Admin only) - locks data fields and records approval audit trail. Returns updated partner with approved status.",
+      "intent": [
+        "approve"
+      ],
+      "description": "Approves an active partner (Admin only) - locks data fields and records approval audit trail",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "Partner ID"
-        },
         "request": {
           "type": "object",
-          "required": false,
+          "required": true,
           "description": "Approval request with optional notes"
         }
       },
-      "example_uses": [
-        "Approve partner 123",
-        "Finalize partner 456 approval",
-        "Set partner 789 as approved"
+      "exampleBody": {
+        "Id": 123,
+        "Name": "Approved UNICEF",
+        "PartnerShortDescription": "Approved Children's Fund",
+        "PartnerLongDescription": "Approved United Nations Children's Fund",
+        "PartnerCategoryId": 2,
+        "LiaisonOfficeId": 2,
+        "PartnerFocalPointUserId": 2,
+        "ErpDimValue": 456,
+        "UNAndStateEntity": false,
+        "KeyGlobalPartner": false,
+        "UNSecretariatPartner": false,
+        "DueDiligenceRequired": "Not Required",
+        "DueDiligenceApproval": "Pending",
+        "DueDiligenceApprovalDate": "2024-02-01T00:00:00",
+        "DueDiligenceExpiryDate": "2025-02-01T00:00:00",
+        "PartnerApprovalStatus": "Approved",
+        "PartnerApprovalDate": "2024-02-05T00:00:00",
+        "PartnerApprovalReference": "REF456",
+        "PartnerLevyStatus": "Taxable",
+        "ReasonForLevy": "Tax",
+        "LevyTreatment": "Taxed",
+        "PooledFund": false,
+        "CanCreateNewOpportunities": false,
+        "ReasonForNoNewOpportunity": "Restricted",
+        "Status": "Approved",
+        "PartnerGroupCode": "NGO",
+        "OrganizationHierarchyIds": [
+          3,
+          4
+        ],
+        "ConfirmDuplicateCreation": true,
+        "Extensions": {}
+      },
+      "exampleUrl": "/api/partner/123/approve",
+      "requiredFields": [
+        "Id",
+        "UNAndStateEntity",
+        "KeyGlobalPartner",
+        "UNSecretariatPartner",
+        "PooledFund",
+        "CanCreateNewOpportunities",
+        "ConfirmDuplicateCreation"
       ],
-      "when_to_use": "Use this when an active partner needs to be formally approved by an administrator, which locks certain data fields and creates an audit trail."
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "complex"
+      }
     },
     {
       "name": "PermissionsGet",
       "url": "/api/partner/{id}/permissions",
       "method": "GET",
-      "description": "Retrieves the current user's permissions for a specific partner (read, update, delete). Returns Permission object with CanRead, CanUpdate, CanDelete flags.",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "Partner ID"
-        }
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details",
+        "permissions"
+      ],
+      "description": "Retrieves the current user's permissions for a specific partner (read, update, delete).",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/123/permissions",
+      "requiredFields": [],
       "example_uses": [
         "Check my permissions for partner 123",
-        "What can I do with partner 456?",
-        "Get access rights for this partner"
+        "What can I do with partner 456?"
       ],
-      "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements."
+      "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 95,
+        "complexity": "simple"
+      }
     },
     {
       "name": "UploadLogo",
       "url": "/api/partner/{id}/logo",
       "method": "POST",
-      "description": "Uploads and associates a logo image with a partner (max 1MB, JPEG/PNG/WEBP only). Returns success confirmation or error details.",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "Partner ID"
-        },
-        "file": {
-          "type": "object",
-          "required": false,
-          "description": "Image file (max 1MB)"
-        }
+      "intent": [
+        "upload",
+        "add",
+        "update",
+        "logo",
+        "image"
+      ],
+      "description": "Uploads and associates a logo image with a partner (max 1MB, JPEG/PNG/WEBP only).",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/123/logo",
+      "requiredFields": [],
       "example_uses": [
         "Upload a logo for partner 123",
-        "Add organization logo to partner record",
-        "Set partner brand image"
+        "Add organization logo to partner record"
       ],
-      "when_to_use": "Use this when the user wants to add or update a partner's logo/image."
+      "when_to_use": "Use this when the user wants to add or update a partner's logo/image.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 95,
+        "complexity": "medium"
+      }
     },
     {
       "name": "GetPartnersByPartnerGroup",
-      "url": "/api/partner/by-partner-group-code/{code}",
+      "url": "/api/partner/by-partner-group-code/{code}?pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
-      "description": "Retrieves a paginated list of partners filtered by specific partner group code with access control and sorting. This endpoint supports advanced filtering using the `advancedSearch` query parameter. Provide a JSON array of search criteria, where each criterion is an object with `field`, `operator`, and `value`. Available fields: `id`, `name`, `status`, `partnerShortDescription`, `partnerLongDescription`, `partnerCategoryId`, `liaisonOfficeId`, `partnerFocalPointUserId`, `unAndStateEntity`, `keyGlobalPartner`, `unSecretariatPartner`, `dueDiligenceRequired`, `dueDiligenceApproval`, `dueDiligenceApprovalDate`, `dueDiligenceExpiryDate`, `partnerApprovalStatus`, `partnerApprovalDate`, `partnerApprovalReference`, `partnerApprovedBy`, `partnerLevyStatus`, `reasonForLevy`, `levyTreatment`, `pooledFund`, `canCreateNewOpportunities`, `reasonForNoNewOpportunity`, `createdDate`, `lastModifiedDate`, `createdBy`, `lastModifiedBy`, `isDeleted`, `shortName`, `description`, `phone`, `website`, `email`, `modifiedDate`. Available operators: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Example: `[{\"field\":\"name\",\"operator\":\"like\",\"value\":\"Foundation\"},{\"field\":\"status\",\"operator\":\"is\",\"value\":\"Active\"}]`. Returns paginated list of partners belonging to the specified partner group.",
-      "parameters": {
-        "code": {
-          "type": "string",
-          "required": false,
-          "description": "Partner group code to filter by (e.g., 'GOV', 'NGO', 'UNAGENCY')"
-        },
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Pagination request containing page size and index"
-        }
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show",
+        "filter"
+      ],
+      "description": "Retrieves a paginated list of partners filtered by specific partner group code with access control and sorting.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": true,
+        "supportsSort": true
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/by-partner-group-code/GOV?pageIndex=1&pageSize=20&orderBy=name&ascending=true",
+      "requiredFields": [],
       "example_uses": [
         "Show all government partners (GOV group)",
-        "List all NGO partners with pagination",
-        "Get UN agency partners sorted by name"
+        "List all NGO partners with pagination"
       ],
-      "when_to_use": "Use this when the user asks to filter or search partners by partner group, organization type, or institutional classification."
+      "when_to_use": "Use this when the user asks to filter or search partners by partner group, organization type, or institutional classification.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 95,
+        "complexity": "medium"
+      }
     },
     {
       "name": "GetPartnersByPartnerCategory",
-      "url": "/api/partner/by-partner-category-code/{code}",
+      "url": "/api/partner/by-partner-category-code/{code}?pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
       "method": "GET",
-      "description": "Retrieves a paginated list of partners filtered by specific partner category code with access control and sorting. This endpoint supports advanced filtering using the `advancedSearch` query parameter. Provide a JSON array of search criteria, where each criterion is an object with `field`, `operator`, and `value`. Available fields: `id`, `name`, `status`, `partnerShortDescription`, `partnerLongDescription`, `partnerCategoryId`, `liaisonOfficeId`, `partnerFocalPointUserId`, `unAndStateEntity`, `keyGlobalPartner`, `unSecretariatPartner`, `dueDiligenceRequired`, `dueDiligenceApproval`, `dueDiligenceApprovalDate`, `dueDiligenceExpiryDate`, `partnerApprovalStatus`, `partnerApprovalDate`, `partnerApprovalReference`, `partnerApprovedBy`, `partnerLevyStatus`, `reasonForLevy`, `levyTreatment`, `pooledFund`, `canCreateNewOpportunities`, `reasonForNoNewOpportunity`, `createdDate`, `lastModifiedDate`, `createdBy`, `lastModifiedBy`, `isDeleted`, `shortName`, `description`, `phone`, `website`, `email`, `modifiedDate`. Available operators: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Example: `[{\"field\":\"name\",\"operator\":\"like\",\"value\":\"Foundation\"},{\"field\":\"status\",\"operator\":\"is\",\"value\":\"Active\"}]`. Returns paginated list of partners belonging to the specified partner category.",
-      "parameters": {
-        "code": {
-          "type": "string",
-          "required": false,
-          "description": "Partner category code to filter by (e.g., 'NATIONAL', 'INTERNATIONAL', 'BILATERAL')"
-        },
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Pagination request containing page size and index"
-        }
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show",
+        "filter"
+      ],
+      "description": "Retrieves a paginated list of partners filtered by specific partner category code with access control and sorting.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": true,
+        "supportsSort": true
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/by-partner-category-code/NATIONAL?pageIndex=1&pageSize=20&orderBy=name&ascending=true",
+      "requiredFields": [],
       "example_uses": [
         "Show all national partners in this category",
-        "List international partners with pagination",
-        "Get bilateral partners sorted by name"
+        "List international partners with pagination"
       ],
-      "when_to_use": "Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification."
+      "when_to_use": "Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 95,
+        "complexity": "medium"
+      }
     },
     {
       "name": "GetAllPartnerCategories",
       "url": "/api/partner/categories-summary",
       "method": "GET",
-      "description": "Retrieves all partner categories with their partner counts for statistical analysis and diagram generation. Returns list of partner categories with their respective partner counts.",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show",
+        "statistics"
+      ],
+      "description": "Retrieves all partner categories with their partner counts for statistical analysis and diagram generation.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/categories-summary",
+      "requiredFields": [],
       "example_uses": [
         "Get all partner categories with counts",
-        "Show partner distribution by category",
-        "Generate partner category statistics"
+        "Show partner distribution by category"
       ],
-      "when_to_use": "Use this when the user wants to see partner distribution across categories, generate statistics, or create visual diagrams of partner categorization."
+      "when_to_use": "Use this when the user wants to see partner distribution across categories, generate statistics, or create visual diagrams of partner categorization.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetAllPartnerGroups",
       "url": "/api/partner/groups-summary",
       "method": "GET",
-      "description": "Retrieves all partner groups with their partner counts for statistical analysis and diagram generation. Returns list of partner groups with their respective partner counts.",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show",
+        "statistics"
+      ],
+      "description": "Retrieves all partner groups with their partner counts for statistical analysis and diagram generation.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/groups-summary",
+      "requiredFields": [],
       "example_uses": [
         "Get all partner groups with counts",
-        "Show partner distribution by group",
-        "Generate partner group statistics"
+        "Show partner distribution by group"
       ],
-      "when_to_use": "Use this when the user wants to see partner distribution across groups, generate statistics, or create visual diagrams of partner grouping."
+      "when_to_use": "Use this when the user wants to see partner distribution across groups, generate statistics, or create visual diagrams of partner grouping.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetPartnerCategorizationOverview",
       "url": "/api/partner/categorization-overview",
       "method": "GET",
-      "description": "Retrieves complete partner categorization overview with both categories and groups including partner counts for comprehensive analysis and diagram generation. Returns complete partner categorization data with categories, groups, and their respective partner counts.",
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show",
+        "statistics",
+        "overview"
+      ],
+      "description": "Retrieves complete partner categorization overview with both categories and groups including partner counts for comprehensive analysis and diagram generation.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/categorization-overview",
+      "requiredFields": [],
       "example_uses": [
         "Get complete partner categorization overview",
-        "Show partner distribution across categories and groups",
-        "Generate comprehensive partner statistics"
+        "Show partner distribution across categories and groups"
       ],
-      "when_to_use": "Use this when the user wants a complete overview of partner organization, comprehensive statistics, or to create detailed diagrams showing both categories and groups."
+      "when_to_use": "Use this when the user wants a complete overview of partner organization, comprehensive statistics, or to create detailed diagrams showing both categories and groups.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "ScanPartnerData",
-      "url": "api/partner/scan-data",
+      "url": "/api/partner/scan-data",
       "method": "POST",
+      "intent": [
+        "scan",
+        "process",
+        "extract",
+        "analyze"
+      ],
       "description": "Scans and processes uploaded files for partner data extraction using AI-powered analysis.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": "File scan request containing the file to be processed. The request object includes 'File' (IFormFile) and 'Type' (string). The 'File' property itself has a required 'Length' property."
-        }
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/scan-data",
+      "requiredFields": [],
       "example_uses": [
         "Scan partner contract document for data extraction",
-        "Upload partner registration form for processing",
-        "Analyze partner profile document with AI",
-        "Extract data from partner onboarding files",
-        "Process partner information from uploaded documents"
+        "Upload partner registration form for processing"
       ],
-      "when_to_use": "Use this when the user wants to upload and scan documents for partner data extraction using AI."
+      "when_to_use": "Use this when the user wants to upload and scan documents for partner data extraction using AI.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 95,
+        "complexity": "medium"
+      }
     },
     {
       "name": "AnalysePartnerData",
-      "url": "api/partner/analyse-file",
+      "url": "/api/partner/analyse-file",
       "method": "POST",
+      "intent": [
+        "analyze",
+        "extract",
+        "process",
+        "convert"
+      ],
       "description": "Analyzes uploaded files and extracts structured partner data using AI-powered data analysis.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "request": {
           "type": "object",
-          "required": false,
-          "description": "Analysis request containing file and analysis parameters. The request object requires 'CurrentUserId' (integer) and 'IsUpdate' (boolean) properties."
+          "required": true,
+          "description": "Analysis request containing file and analysis parameters"
         }
       },
+      "exampleBody": {
+        "Type": "Contract",
+        "FileId": "123",
+        "CurrentUserId": 1,
+        "IsUpdate": false
+      },
+      "exampleUrl": "/api/partner/analyse-file",
+      "requiredFields": [
+        "CurrentUserId",
+        "IsUpdate"
+      ],
       "example_uses": [
         "Analyze partner documents for structured data extraction",
-        "Extract partner information from uploaded forms",
-        "Process partner onboarding documents with AI",
-        "Convert partner files into structured database entries",
-        "Analyze partner contract data for key information"
+        "Extract partner information from uploaded forms"
       ],
-      "when_to_use": "Use this when the user wants to analyze files and extract structured partner data for database import."
+      "when_to_use": "Use this when the user wants to analyze files and extract structured partner data for database import.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 95,
+        "complexity": "medium"
+      }
     },
     {
       "name": "BulkUploadPartners",
-      "url": "api/partner/bulk-upload",
+      "url": "/api/partner/bulk-upload",
       "method": "POST",
+      "intent": [
+        "upload",
+        "import",
+        "bulk",
+        "mass"
+      ],
       "description": "Bulk uploads multiple partner records using AI-assisted data processing and validation.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "req": {
           "type": "object",
-          "required": false,
-          "description": "Bulk upload request containing partner data. The request object requires an 'IsUpdate' (boolean) property and a 'Records' (array of objects) property."
+          "required": true,
+          "description": "Bulk upload request containing partner data"
         }
       },
+      "exampleBody": {
+        "Type": "Excel",
+        "Records": [],
+        "IsUpdate": false
+      },
+      "exampleUrl": "/api/partner/bulk-upload",
+      "requiredFields": [
+        "IsUpdate"
+      ],
       "example_uses": [
         "Bulk upload 100 partner organizations from Excel",
-        "Import multiple partners from CSV file",
-        "Mass upload partner data with AI validation",
-        "Bulk import partner records with duplicate detection",
-        "Upload large partner dataset with automated processing"
+        "Import multiple partners from CSV file"
       ],
-      "when_to_use": "Use this when the user wants to upload multiple partner records at once with AI-assisted processing."
+      "when_to_use": "Use this when the user wants to upload multiple partner records at once with AI-assisted processing.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 95,
+        "complexity": "medium"
+      }
     },
     {
       "name": "GetMetadataInfo",
-      "url": "api/partner/metadata-info",
+      "url": "/api/partner/metadata-info",
       "method": "GET",
-      "description": "Describes the Partner entity structure including all field configurations.",
+      "intent": [
+        "metadata",
+        "info",
+        "describe"
+      ],
+      "description": "Describes the Partner entity structure including all field configurations",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/metadata-info",
+      "requiredFields": [],
       "example_uses": [],
-      "when_to_use": ""
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "DeepSearch",
-      "url": "api/partner/deepSearch",
+      "url": "/api/partner/deepSearch?query={query}&threshold={threshold}&limit={limit}",
       "method": "GET",
-      "description": "Performs semantic search on partners using AI embeddings to find relevant matches based on natural language queries. Returns multiple partners with similarity scores.",
-      "parameters": {
-        "query": {
-          "type": "string",
-          "required": true,
-          "description": "Natural language search query (e.g., 'partners working on climate change', 'organizations in Africa')"
-        },
-        "threshold": {
-          "type": "float",
-          "required": false,
-          "description": "Similarity threshold for results (0.0 to 1.0, default: 0.7)"
-        },
-        "limit": {
-          "type": "integer",
-          "required": false,
-          "description": "Maximum number of results to return (default: 10)"
-        }
-      },
-      "example_uses": [
-        "Find partners working on climate change projects",
-        "Search for organizations in developing countries",
-        "Find partners with expertise in healthcare",
-        "Look for partners in the education sector",
-        "Search for international development organizations"
+      "intent": [
+        "search",
+        "find",
+        "similar",
+        "semantic"
       ],
-      "when_to_use": "Use this when the user wants to find partners using natural language descriptions, semantic concepts, or contextual search rather than exact text matching."
+      "description": "Performs semantic search on partners using AI embeddings to find similar partners based on natural language queries.",
+      "searchCapability": {
+        "type": "simple",
+        "searchFields": [
+          "name",
+          "partnerShortDescription",
+          "partnerLongDescription"
+        ],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/partner/deepSearch?query=UNICEF&threshold=0.8&limit=5",
+      "requiredFields": [],
+      "example_uses": [
+        "Find partners similar to UNICEF",
+        "Search for government organizations in Africa"
+      ],
+      "when_to_use": "Use this when the user wants to find partners using natural language queries or semantic similarity.",
+      "scoring": {
+        "searchBonus": 100,
+        "intentMatch": 95,
+        "complexity": "medium"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
 }

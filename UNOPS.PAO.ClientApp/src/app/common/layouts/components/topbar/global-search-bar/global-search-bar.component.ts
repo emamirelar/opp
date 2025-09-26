@@ -17,7 +17,8 @@ interface SearchMetadata {
 }
 
 interface EnhancedSearchResult {
-  id: number;
+  id?: number;
+  Id?: number; // Sometimes the property might be capitalized
   _searchMetadata?: SearchMetadata;
   [key: string]: any; // Allow all original entity properties to flow through
 }
@@ -114,7 +115,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   // Enhanced search state
   searchResponse: SearchResponse | null = null;
   entityTabs: EntityTab[] = [];
-  activeTabKey: string = 'all';
+  activeTabKey: string = '';
   showMobileDropdown = signal(false);
   
   // Entity columns loaded from configuration service
@@ -258,7 +259,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   private clearResults(): void {
     this.searchResponse = null;
     this.entityTabs = [];
-    this.activeTabKey = 'all';
+    this.activeTabKey = '';
     this.showResults = false;
   }
 
@@ -268,6 +269,17 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   }
 
   selectResult(result: EnhancedSearchResult): void {
+    // Get the ID from either property (camelCase or PascalCase)
+    const entityId = result.id || result.Id || result['Id'];
+    
+    if (!entityId) {
+      console.error('No ID found for result:', result);
+      return;
+    }
+    
+    // IMPORTANT: Capture activeTabKey BEFORE clearing results
+    const currentActiveTabKey = this.activeTabKey;
+    
     // Use the entity's title for recent searches
     const entityName = this.getEntityTitle(result);
     this.addToRecentSearches(entityName);
@@ -278,13 +290,13 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       this.searchExpanded.emit(false);
     }
 
-    // Navigate based on the active tab (entity type) instead of result.type
-    if (this.activeTabKey === 'contacts') {
-      this.router.navigate(['/partnerships/contacts', result.id]);
-    } else if (this.activeTabKey === 'partners') {
-      this.router.navigate(['/partner', result.id]);
-    } else if (this.activeTabKey === 'interactions') {
-      this.router.navigate(['/interactions', result.id]);
+    // Navigate based on the captured active tab key
+    if (currentActiveTabKey === 'contacts') {
+      this.router.navigate(['/partnerships/contacts', entityId]);
+    } else if (currentActiveTabKey === 'partners') {
+      this.router.navigate(['/partnerships/partners', entityId]);
+    } else if (currentActiveTabKey === 'interactions') {
+      this.router.navigate(['/partnerships/interactions', entityId]);
     }
   }
 

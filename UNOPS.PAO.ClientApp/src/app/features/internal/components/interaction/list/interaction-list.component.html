@@ -5,14 +5,34 @@
       <p class="text-3xl font-bold">{{ 'title.interactions' | translate }}</p>
     </div>
     <div class="ml-auto flex gap-2">
-      @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
+      @if(!permissionsLoading() && entityPermissions().permissions.canExport) {
         <p-button
-          icon="pi pi-file-import"
-          [label]="'button.import' | translate"
-          (click)="openImportDialog()"
+          icon="pi pi-file-export"
+          [label]="'button.export' | translate"
+          (click)="exportData()"
           text rounded
-          class="interaction-import-button"
+          class="interaction-export-button"
         />
+      }
+      @if(!permissionsLoading() && entityPermissions().permissions.canImport) {
+        <div class="relative">
+          <p-button
+            #importBtn
+            icon="pi pi-file-import"
+            [label]="'button.import' | translate"
+            (click)="importMenu.toggle($event)"
+            text rounded
+            class="interaction-import-button"
+          />
+          <p-menu 
+            #importMenu 
+            [model]="importMenuItems()" 
+            [popup]="true"
+            appendTo="body">
+          </p-menu>
+        </div>
+      }
+      @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
         <p-button
           [label]="'title.newInteraction' | translate"
           icon="pi pi-plus"

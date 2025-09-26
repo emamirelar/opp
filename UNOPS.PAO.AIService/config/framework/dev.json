@@ -29,42 +29,38 @@
   },
   "google_cloud": {
     "use_vertex_ai": true,
-    "project": "unops-partneropportunity",
+    "project": "unops-opportunityplus-dev",
     "location": "europe-west4",
     "oauth": {
       "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
-      "client_id": "1069310298210-ubl2naqi5bjeqlqrroiqb4qdm482aans.apps.googleusercontent.com",
-      "target_principal": "pno-ai-service@unops-partneropportunity.iam.gserviceaccount.com"
+      "client_id": "11994381361-9n974ebjfsjsb3rc5ejaidgm7jgdoqbt.apps.googleusercontent.com",
+      "target_principal": "pno-ai-service@unops-opportunityplus-dev.iam.gserviceaccount.com"
     }
   },
   "database": {
-    "url": "postgresql://postgres:0Y%2FX3YNxHLL0fL4T@localhost:5433/anusha"
+        "url": "sqlite:///./ai_agent.db",
+        "secret_name": "Dev_DB_Connection_String"
   },
   "artifacts": {
     "service_type": "GcsArtifactService",
-    "gcs_bucket_name": "pno-file-storage"
+    "gcs_bucket_name": "pno-file-storage-dev"
   },
   "server": {
     "serve_web_interface": true,
-    "api_base_url": "https://localhost:44426/",
+    "api_base_url": "https://opportunityplus-dev.unops.org",
     "is_development": true,
     "host": "0.0.0.0",
     "port": 8000,
     "allow_origins": [
-      "http://localhost:3000",
-      "http://localhost:8000",
-      "http://localhost:8080",
-      "http://127.0.0.1:3000",
-      "http://127.0.0.1:8000",
-      "http://127.0.0.1:8080",
+      "https://opportunityplus-dev.unops.org",
       "https://localhost:44426/"
     ]
   },
   "google_drive": {
     "enabled": true,
-    "project_id": "unops-partneropportunity",
+    "project_id": "unops-opportunityplus-dev",
     "secret_name": "GoogleDriveAI",
-    "service_account_email": "google-drive-ai@unops-partneropportunity.iam.gserviceaccount.com",
+    "service_account_email": "google-drive-ai@unops-opportunityplus-dev.iam.gserviceaccount.com",
     "scopes": [
       "https://www.googleapis.com/auth/drive.readonly",
       "https://www.googleapis.com/auth/drive.file"
@@ -141,7 +137,7 @@
     "response_time": "24-48 hours"
   },
   "branding": {
-    "application_name": "Opportunity+",
+    "application_name": "Opportunity+ AI Agent",
     "project_name": "Opportunity+",
     "organization": "UNOPS",
     "organization_full": "United Nations Office for Project Services",

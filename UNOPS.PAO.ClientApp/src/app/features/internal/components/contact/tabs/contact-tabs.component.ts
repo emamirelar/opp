@@ -177,8 +177,15 @@ export class ContactTabsComponent implements OnInit, OnDestroy {
   private updateActiveTab(): void {
     const currentUrl = this.router.url;
 
-    // Find the matching tab based on the current URL
-    const matchingTab = this.tabs.find(tab => currentUrl === tab.route || currentUrl.startsWith(tab.route + '/'));
+    // First try exact match
+    let matchingTab = this.tabs.find(tab => currentUrl === tab.route);
+    
+    if (!matchingTab) {
+      // If no exact match, find the longest route that matches
+      // Sort by length descending to prioritize more specific matches
+      const sortedTabs = [...this.tabs].sort((a, b) => b.route.length - a.route.length);
+      matchingTab = sortedTabs.find(tab => currentUrl.startsWith(tab.route + '/'));
+    }
 
     // Use the matching tab's route, or default to the first tab
     this.activeRoute = matchingTab ? matchingTab.route : this.tabs[0].route;

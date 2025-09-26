@@ -40,6 +40,8 @@ export interface EntityPermissions {
     canActivate?: boolean;
     canClose?: boolean;
     canArchive?: boolean;
+    canExport: boolean;
+    canImport: boolean;
   };
 }
 
@@ -141,6 +143,8 @@ export class PermissionService {
       }
     }
     
+    console.log('[PERMISSION-SERVICE] Final permission URL:', permissionUrl);
+    
     // Check cache first
     const cached = this.entityPermissionsCache.get(permissionUrl);
     if (cached) {
@@ -157,6 +161,12 @@ export class PermissionService {
         canCreate: boolean;
         canUpdate: boolean;
         canDelete: boolean;
+        canApprove?: boolean;
+        canActivate?: boolean;
+        canClose?: boolean;
+        canArchive?: boolean;
+        canExport: boolean;
+        canImport: boolean;
       };
     }>(permissionUrl).pipe(
       map(response => {
@@ -176,7 +186,9 @@ export class PermissionService {
             canRead: false,
             canCreate: false,
             canUpdate: false,
-            canDelete: false
+            canDelete: false,
+            canExport: false,
+            canImport: false
           }
         });
       }),
@@ -213,7 +225,9 @@ export class PermissionService {
           canRead: false,
           canCreate: false,
           canUpdate: false,
-          canDelete: false
+          canDelete: false,
+          canExport: false,
+          canImport: false
         }
       });
     }
@@ -224,8 +238,16 @@ export class PermissionService {
    * Check if the user has access to a specific route
    */
   canAccessRoute(route: string): Observable<boolean> {
+    console.log('[PERMISSION-SERVICE] Checking access for route:', route);
     return this.getPermissionsResponse(route).pipe(
-      map(response => response.hasAccess)
+      map(response => {
+        console.log('[PERMISSION-SERVICE] Route access result:', response);
+        return response.hasAccess;
+      }),
+      catchError(error => {
+        console.error('[PERMISSION-SERVICE] Route access error:', error);
+        return of(false);
+      })
     );
   }
 
@@ -264,6 +286,7 @@ export class PermissionService {
    * @private
    */
   private normalizeRoutePath(route: string): { path: string, entityId?: string } {
+    console.log('[PERMISSION-SERVICE] Original route:', route);
     if (!route) {
       return { path: '' };
     }
@@ -287,14 +310,36 @@ export class PermissionService {
     const segments = route.split('/');
     let entityId: string | undefined;
     
-    // Only extract ID if it's a valid number and not undefined
-    const lastSegment = segments[segments.length - 1];
-    if (segments.length > 2 && !isNaN(Number(lastSegment)) && lastSegment !== 'undefined') {
-      entityId = segments.pop(); // Remove the ID from segments
-      route = segments.join('/'); // Rejoin without the ID
+    // Known child route patterns that should be ignored for permission checks
+    const childRoutes = ['data', 'contacts', 'interactions', 'details'];
+    
+    // Check if we have a pattern like partnerships/partners/123/data
+    if (segments.length >= 4) {
+      const lastSegment = segments[segments.length - 1];
+      const secondLastSegment = segments[segments.length - 2];
+      
+      // If last segment is a child route and second-to-last is numeric
+      if (childRoutes.includes(lastSegment) && !isNaN(Number(secondLastSegment)) && secondLastSegment !== 'undefined') {
+        entityId = secondLastSegment;
+        // Remove both the child route and the ID
+        segments.pop(); // Remove child route (e.g., 'data')
+        segments.pop(); // Remove ID (e.g., '8101')
+        route = segments.join('/'); // Result: 'partnerships/partners'
+      }
     }
     
-    return { path: route, entityId };
+    // Fallback to original logic if no child route pattern detected
+    if (!entityId) {
+      const lastSegment = segments[segments.length - 1];
+      if (segments.length > 2 && !isNaN(Number(lastSegment)) && lastSegment !== 'undefined') {
+        entityId = segments.pop(); // Remove the ID from segments
+        route = segments.join('/'); // Rejoin without the ID
+      }
+    }
+    
+    const result = { path: route, entityId };
+    console.log('[PERMISSION-SERVICE] Normalized route:', result);
+    return result;
   }
 
   /**

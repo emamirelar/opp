@@ -6,12 +6,17 @@ using System.Threading.Tasks;
 namespace UNOPS.PAO.Models;
 public class GmailCreateRecordsRequest
 {
-    public List<GmailSelectedContact> SelectedContacts { get; set; } = new List<GmailSelectedContact>();
+    public List<GmailSelectedEmailModel> SelectedContacts { get; set; } = new List<GmailSelectedEmailModel>();
+    public string? GmailThreadId { get; set; }
+    public string? GmailMessageId { get; set; }
 }
 
-public class GmailSelectedContact
+public class GmailSelectedEmailModel
 {
-    public string EmailAddress { get; set; }
-    public string PartnerName { get; set; }
+    public string EmailAddress { get; set; } = string.Empty;
+    public string? PartnerName { get; set; }
     public int? PartnerId { get; set; }
+    public string? FirstName { get; set; }
+    public string? MiddleName { get; set; }
+    public string? LastName { get; set; }
 }

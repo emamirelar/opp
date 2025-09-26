@@ -22,139 +22,15 @@ LlmResponse = types.GenerateContentResponse
 from .auth_helpers import get_service_account_oidc_token
 from .api_config_manager import config_manager
 
-# Global timing storage for agents and models
-_agent_timings = {}
-_model_timings = {}
-
-# Optional cache import with graceful fallback
+# Cache system availability check
 try:
-    from ai_assistant.utils.cache import entity_cache
+    from .entity_cache import entity_cache
     CACHE_AVAILABLE = True
+    print("✅ Cache system available")
 except ImportError:
+    entity_cache = None
     CACHE_AVAILABLE = False
     print("ℹ️ Cache system not available - cache operations will be skipped")
-
-
-def before_agent_callback(ctx: CallbackContext) -> None:
-    """Callback to log agent start time"""
-    agent_name = ctx.agent_name if hasattr(ctx, 'agent_name') else 'unknown_agent'
-    session_id = ctx.session_id if hasattr(ctx, 'session_id') else 'unknown_session'
-    
-    start_time = time.time()
-    _agent_timings[f"{session_id}_{agent_name}"] = start_time
-    
-    print(f"⏱️ [AGENT-TIMING] Starting agent: {agent_name} (session: {session_id})")
-
-def after_agent_callback(ctx: CallbackContext) -> None:
-    """Callback to log agent completion time"""
-    agent_name = ctx.agent_name if hasattr(ctx, 'agent_name') else 'unknown_agent'
-    session_id = ctx.session_id if hasattr(ctx, 'session_id') else 'unknown_session'
-    
-    timing_key = f"{session_id}_{agent_name}"
-    if timing_key in _agent_timings:
-        start_time = _agent_timings[timing_key]
-        elapsed_time = time.time() - start_time
-        del _agent_timings[timing_key]  # Clean up
-        
-        print(f"⏱️ [AGENT-TIMING] Agent completed: {agent_name} in {elapsed_time:.2f}s (session: {session_id})")
-    else:
-        print(f"⚠️ [AGENT-TIMING] No start time found for agent: {agent_name}")
-
-def before_model_callback(ctx: CallbackContext) -> None:
-    """Callback to log model start time"""
-    model_name = getattr(ctx, 'model_name', 'unknown_model')
-    session_id = getattr(ctx, 'session_id', 'unknown_session')
-    
-    start_time = time.time()
-    _model_timings[f"{session_id}_{model_name}"] = start_time
-    
-    print(f"⏱️ [MODEL-TIMING] Starting model: {model_name} (session: {session_id})")
-
-def after_model_callback(ctx: CallbackContext) -> None:
-    """Callback to log model completion time"""
-    model_name = getattr(ctx, 'model_name', 'unknown_model')
-    session_id = getattr(ctx, 'session_id', 'unknown_session')
-    
-    timing_key = f"{session_id}_{model_name}"
-    if timing_key in _model_timings:
-        start_time = _model_timings[timing_key]
-        elapsed_time = time.time() - start_time
-        del _model_timings[timing_key]  # Clean up
-        
-        print(f"⏱️ [MODEL-TIMING] Model completed: {model_name} in {elapsed_time:.2f}s (session: {session_id})")
-    else:
-        print(f"⚠️ [MODEL-TIMING] No start time found for model: {model_name}")
-
-def before_tool_callback(ctx: CallbackContext) -> None:
-    """Callback to log tool start time"""
-    tool_name = getattr(ctx, 'tool_name', 'unknown_tool')
-    session_id = getattr(ctx, 'session_id', 'unknown_session')
-    
-    start_time = time.time()
-    _agent_timings[f"{session_id}_tool_{tool_name}"] = start_time
-    
-    print(f"⏱️ [TOOL-TIMING] Starting tool: {tool_name} (session: {session_id})")
-
-def after_tool_callback(ctx: CallbackContext) -> None:
-    """Callback to log tool completion time"""
-    tool_name = getattr(ctx, 'tool_name', 'unknown_tool')
-    session_id = getattr(ctx, 'session_id', 'unknown_session')
-    
-    timing_key = f"{session_id}_tool_{tool_name}"
-    if timing_key in _agent_timings:
-        start_time = _agent_timings[timing_key]
-        elapsed_time = time.time() - start_time
-        del _agent_timings[timing_key]  # Clean up
-        
-        print(f"⏱️ [TOOL-TIMING] Tool completed: {tool_name} in {elapsed_time:.2f}s (session: {session_id})")
-    else:
-        print(f"⚠️ [TOOL-TIMING] No start time found for tool: {tool_name}")
-
-
-def generate_image_with_gemini(prompt: str, style: str = "realistic", size: str = "1024x1024") -> Dict[str, Any]:
-    """
-    Generate an image using Google's Gemini Pro Vision model.
-    
-    Args:
-        prompt: Text description of the image to generate
-        style: Image style (realistic, artistic, cartoon, sketch, etc.)
-        size: Image dimensions (1024x1024, 1792x1024, 1024x1792)
-        
-    Returns:
-        Dict containing the generated image data or error information
-    """
-    try:
-        print(f"🎨 [IMAGE-GEN] Generating image with prompt: '{prompt}' (style: {style}, size: {size})")
-        
-        # For now, we'll return a placeholder since Gemini Pro doesn't support image generation yet
-        # This is a placeholder for future implementation when Gemini supports image generation
-        # or when we integrate with other image generation services like DALL-E or Stable Diffusion
-        
-        # Placeholder response structure
-        placeholder_response = {
-            "success": False,
-            "message": "Image generation is not yet available with the current Gemini model. This feature will be enabled when Gemini supports image generation or when we integrate with other image generation services.",
-            "suggestion": "For now, I can create visual representations using charts, diagrams, and other visualization tools. Would you like me to create a diagram or chart instead?",
-            "available_alternatives": [
-                "Mermaid diagrams for process flows and relationships",
-                "Chart.js charts for data visualization", 
-                "Text-based visual representations",
-                "Structured data displays"
-            ]
-        }
-        
-        print(f"⚠️ [IMAGE-GEN] Image generation not yet available: {placeholder_response['message']}")
-        return placeholder_response
-        
-    except Exception as e:
-        error_msg = f"Failed to generate image: {str(e)}"
-        print(f"❌ [IMAGE-GEN] {error_msg}")
-        return {
-            "success": False,
-            "message": error_msg,
-            "error": str(e)
-        }
-
 
 def create_visual_representation(content_type: str, data: Any, style: str = "professional") -> Dict[str, Any]:
     """
@@ -836,13 +712,14 @@ When forming advanced search queries (advancedSearch=true):
 """
     
     # Build enhanced instruction with API information
-    from .api_config_manager import API_BASE_URL
+    from .api_config_manager import get_api_base_url
+    api_base_url = get_api_base_url()
     enhanced_instruction = f"""
 🛠️ **API CALLER AGENT - ENHANCED WITH DYNAMIC CONFIGURATION**
 
 You are responsible for executing real HTTP API calls based on detected entities and intents.
 
-**BASE URL:** {API_BASE_URL}
+**BASE URL:** {api_base_url}
 
 {api_summary}{search_section}
 
@@ -877,56 +754,6 @@ Remember: You are making REAL HTTP requests to actual endpoints. The configurati
     
     # Don't return content - just modify the request
     return None
-
-
-def screen_context_after_model_callback(callback_context: CallbackContext, llm_response: LlmResponse) -> Optional[LlmResponse]:
-    """
-    After model callback for screen_context_agent.
-    
-    This callback runs AFTER the model responds and caches the screen context result.
-    
-    Args:
-        callback_context: The callback context from Google ADK
-        llm_response: The actual response from the LLM model
-        
-    Returns:
-        Optional[LlmResponse]: Modified response or None to use original
-    """
-    
-    print("💾 [SCREEN] Caching screen context result...")
-    
-    try:
-        # Check if we have screen context data in state to cache
-        screen_context = callback_context.state.get('screen_context')
-        
-        # Extract entity and ID from structured state data to build cache key
-        screen_url_obj = callback_context.state.get('screen_url', {})
-        user_viewing_panel = callback_context.state.get('user_viewing_panel', {})
-        
-        # First priority: screen_url object
-        entity = screen_url_obj.get('entity', '')
-        entity_id = screen_url_obj.get('id', None)
-            
-        # Second priority: user_viewing_panel if screen_url is empty
-        if not entity and user_viewing_panel:
-            entity = user_viewing_panel.get('entity', '')
-            entity_id = user_viewing_panel.get('entity_id', None)
-            # Convert string ID to int if needed
-            if entity_id and isinstance(entity_id, str) and entity_id.isdigit():
-                entity_id = int(entity_id)
-        
-        if screen_context and isinstance(screen_context, dict) and entity and CACHE_AVAILABLE:
-            # Cache screen context using entity+id key
-            cache_key = f"{entity}:{entity_id}" if entity_id else f"{entity}:list"
-            entity_cache.set_screen_context(cache_key, screen_context)
-                
-            print(f"✅ [SCREEN] Cached screen context successfully for {cache_key}")
-        
-        return None  # Use original response
-        
-    except Exception as e:
-        print(f"❌ [SCREEN] Error caching screen context: {e}")
-        return None  # Use original response
 
 
 def response_formatter_after_model_callback(callback_context: CallbackContext, llm_response: LlmResponse) -> Optional[LlmResponse]:

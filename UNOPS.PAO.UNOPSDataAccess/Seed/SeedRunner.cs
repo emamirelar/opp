@@ -36,30 +36,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 null, 
                 dbContextSchema);
 
-            // Seed data in proper order
-            Console.WriteLine("Seeding entities...");
-            await EntitiesSeeder.SeedEntitiesAsync(context);
-            Console.WriteLine("Entities seeded successfully.");
-
-            Console.WriteLine("Seeding entity managers...");
-            await EntityManagerSeeder.SeedEntityManagersAsync(context);
-            Console.WriteLine("Entity managers seeded successfully.");
-
-            Console.WriteLine("Seeding entity field managers...");
-            await EntityManagerSeeder.SeedEntityFieldManagersAsync(context);
-            Console.WriteLine("Entity field managers seeded successfully.");
-
-            Console.WriteLine("Seeding document types...");
-            await DocumentTypeSeeder.SeedDocumentTypesAsync(context);
-            Console.WriteLine("Document types seeded successfully.");
-
-            Console.WriteLine("Seeding AI prompts...");
-            await AiPromptSeeder.SeedAiPromptsAsync(context);
-            Console.WriteLine("AI prompts seeded successfully.");
-
-            Console.WriteLine("Seeding entity permissions...");
-            await EntityPermissionSeeder.SeedEntityPermissionsAsync(context);
-            Console.WriteLine("Entity permissions seeded successfully.");
+            // Seed data using new generic configuration-driven system
+            Console.WriteLine("Running all configured seed steps...");
+            await GenericSeedRunner.ExecuteConfiguredSeedsAsync(context);
+            Console.WriteLine("All seed steps completed successfully.");
 
             Console.WriteLine("All configuration data seeding complete!");
         }

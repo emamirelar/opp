@@ -27,6 +27,7 @@ public class ManagerWrapper : IManagerWrapper
     private IUserDataManager userDataManager;
     private IUserManagementManager userManagementManager;
     private IAiPromptManager aiPromptManager;
+    private IGmailAddonManager gmailAddonManager;
     
     public ManagerWrapper(IMapper mapper, AppDbContext context,
                           UserManager<PAOIdentityUser> userManager, 
@@ -48,6 +49,8 @@ public class ManagerWrapper : IManagerWrapper
 
         linkManager = new LinkManager(mapper, context);
         userDataManager = new UserDataManager(mapper, context, httpContextAccessor);
+        
+        gmailAddonManager = new GmailAddonManager(mapper, context);
         
         // Default implementation - will be overridden in UNOPSManagerWrapper
         userManagementManager = null;
@@ -74,4 +77,5 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IUserDataManager UserDataManager => userDataManager;
     public virtual IUserManagementManager UserManagementManager => userManagementManager;
     public virtual IAiPromptManager AiPromptManager => aiPromptManager;
+    public virtual IGmailAddonManager GmailAddonManager => gmailAddonManager;
 }

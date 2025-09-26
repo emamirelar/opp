@@ -112,7 +112,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                     Id = source.Id,
                     Name = source.Name,
                     Status = source.Status.ToString(),
-                    PartnerGroupCode = source.PartnerGroupCode
+                    PartnerGroupId = source.PartnerGroupId
                 });
 
             // Create manager instance using reflection to access private constructor
@@ -149,8 +149,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             };
             
             // Add contacts and interactions to create indirect relations
-            var contact1 = new UNOPSContact { Id = 1, PartnerId = 4, Name = "John Doe", ContactNumber = "C001", FirstName = "John", LastName = "Doe", Title = "Manager", Email = "john@example.com", Status = "Active" };
-            var contact2 = new UNOPSContact { Id = 2, PartnerId = 5, Name = "Jane Smith", ContactNumber = "C002", FirstName = "Jane", LastName = "Smith", Title = "Director", Email = "jane@example.com", Status = "Active" };
+            var contact1 = new UNOPSContact { Id = 1, PartnerId = 4, Name = "John Doe", ContactNumber = "C001", FirstName = "John", LastName = "Doe", Title = "Manager", Email = "john@example.com", Status = EntityStatus.Active };
+            var contact2 = new UNOPSContact { Id = 2, PartnerId = 5, Name = "Jane Smith", ContactNumber = "C002", FirstName = "Jane", LastName = "Smith", Title = "Director", Email = "jane@example.com", Status = EntityStatus.Active };
             partners[3].Contacts = new List<Contact> { contact1 };
             partners[4].Contacts = new List<Contact> { contact2 };
             
@@ -279,7 +279,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             };
             
             // Add a contact to partner 4 to simulate indirect relation
-            var contact = new UNOPSContact { Id = 1, PartnerId = 4, Name = "Contact Four", ContactNumber = "C003", FirstName = "Contact", LastName = "Four", Title = "Manager", Email = "contact4@example.com", Status = "Active" };
+            var contact = new UNOPSContact { Id = 1, PartnerId = 4, Name = "Contact Four", ContactNumber = "C003", FirstName = "Contact", LastName = "Four", Title = "Manager", Email = "contact4@example.com", Status = EntityStatus.Active };
             partners[3].Contacts = new List<Contact> { contact };
             
             await _dbContext.Partners.AddRangeAsync(partners);
@@ -337,7 +337,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             };
             
             // Add a contact to partner 2 to simulate potential indirect relation
-            var contact = new UNOPSContact { Id = 1, PartnerId = 2, Name = "Contact Two", ContactNumber = "C004", FirstName = "Contact", LastName = "Two", Title = "Manager", Email = "contact2@example.com", Status = "Active" };
+            var contact = new UNOPSContact { Id = 1, PartnerId = 2, Name = "Contact Two", ContactNumber = "C004", FirstName = "Contact", LastName = "Two", Title = "Manager", Email = "contact2@example.com", Status = EntityStatus.Active };
             partners[1].Contacts = new List<Contact> { contact };
             
             await _dbContext.Partners.AddRangeAsync(partners);

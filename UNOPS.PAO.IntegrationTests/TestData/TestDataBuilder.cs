@@ -11,7 +11,6 @@ public static class TestDataBuilder
     public static Faker<UNOPSPartner> GetPartnerFaker()
     {
         return new Faker<UNOPSPartner>()
-            .RuleFor(p => p.PartnerCode, f => $"P{f.Random.Number(1000, 9999)}")
             // Enhanced Partner structure
             .RuleFor(p => p.Name, f => f.Company.CompanyName())
             .RuleFor(p => p.PartnerShortDescription, f => f.Company.CompanySuffix())
@@ -33,7 +32,7 @@ public static class TestDataBuilder
             .RuleFor(p => p.PooledFund, f => f.Random.Bool(0.15f))
             .RuleFor(p => p.CanCreateNewOpportunities, f => f.Random.Bool(0.8f))
             .RuleFor(p => p.ReasonForNoNewOpportunity, (f, p) => !p.CanCreateNewOpportunities ? f.Lorem.Sentence() : null)
-            .RuleFor(p => p.PartnerGroupCode, f => f.PickRandom(new[] { "NGO", "GOV", "PRI", "UN" }))
+            .RuleFor(p => p.PartnerGroupId, f => f.Random.Int(1, 10))
             .RuleFor(p => p.CreatedDate, f => f.Date.Past(2))
             .RuleFor(p => p.LastModifiedDate, f => f.Date.Recent());
     }

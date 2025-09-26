@@ -24,7 +24,7 @@ public class ValuesRepository
 
     public IQueryable<Partner> GetPartners()
         => context.Partners
-            .Where(x => x.Status == EntityStatus.Active && !x.IsDeleted);
+            .Where(x => !x.IsDeleted);
     
     // Get flat list of organization units by type
     public IEnumerable<OrganizationHierarchy> GetOrganizationsByType(OrganizationUnitType type)
@@ -106,6 +106,128 @@ public class ValuesRepository
 
     public IEnumerable<PAOUser> GetUsers()
         => context.PAOUsers;
+
+    // Optimized user loading with pagination and search
+    public async Task<(IEnumerable<PAOUser> Users, int TotalCount)> GetUsersPagedAsync(
+        int pageIndex = 0, 
+        int pageSize = 50, 
+        string? searchTerm = null,
+        bool activeOnly = true,
+        int[]? selectedUserIds = null)
+    {
+        var allUsers = new List<PAOUser>();
+        
+        // First, get selected users if any are provided
+        if (selectedUserIds != null && selectedUserIds.Length > 0)
+        {
+            var selectedUsers = await context.PAOUsers
+                .Include(u => u.UserProfile)
+                .Where(u => selectedUserIds.Contains(u.Id) && 
+                           (!activeOnly || u.UserProfile == null || !u.UserProfile.IsDeleted))
+                .ToListAsync();
+            
+            allUsers.AddRange(selectedUsers);
+        }
+
+        var query = context.PAOUsers
+            .Include(u => u.UserProfile)
+            .Where(u => !activeOnly || !u.UserProfile!.IsDeleted); // Filter active users if requested
+
+        // Exclude already selected users from the main query
+        if (selectedUserIds != null && selectedUserIds.Length > 0)
+        {
+            query = query.Where(u => !selectedUserIds.Contains(u.Id));
+        }
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            var searchLower = searchTerm.ToLower();
+            query = query.Where(u => 
+                u.Email.ToLower().Contains(searchLower) ||
+                (u.UserProfile != null && (
+                    (u.UserProfile.FirstName != null && u.UserProfile.FirstName.ToLower().Contains(searchLower)) ||
+                    (u.UserProfile.LastName != null && u.UserProfile.LastName.ToLower().Contains(searchLower)) ||
+                    (u.UserProfile.Position != null && u.UserProfile.Position.ToLower().Contains(searchLower)) ||
+                    (u.UserProfile.OrgUnit != null && u.UserProfile.OrgUnit.ToLower().Contains(searchLower))
+                ))
+            );
+        }
+
+        // Order by name for consistent results
+        query = query.OrderBy(u => u.UserProfile != null ? u.UserProfile.FirstName ?? "" : "")
+                    .ThenBy(u => u.UserProfile != null ? u.UserProfile.LastName ?? "" : "")
+                    .ThenBy(u => u.Email);
+
+        var totalCount = await query.CountAsync();
+        var pagedUsers = await query
+            .Skip(pageIndex * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        allUsers.AddRange(pagedUsers);
+
+        // Sort final result: selected users first, then paged results
+        var selectedIds = selectedUserIds ?? Array.Empty<int>();
+        var finalUsers = allUsers
+            .OrderBy(u => selectedIds.Contains(u.Id) ? 0 : 1) // Selected users first
+            .ThenBy(u => u.UserProfile?.FirstName ?? "")
+            .ThenBy(u => u.UserProfile?.LastName ?? "")
+            .ThenBy(u => u.Email);
+
+        // Total count includes selected users plus the count of searchable users
+        var finalTotalCount = (selectedUserIds?.Length ?? 0) + totalCount;
+
+        return (finalUsers, finalTotalCount);
+    }
+
+    // Quick search for autocomplete - returns first 20 matches plus any selected users
+    public async Task<IEnumerable<PAOUser>> SearchUsersAsync(string? searchTerm, int maxResults = 20, int[]? selectedUserIds = null)
+    {
+        var allUsers = new List<PAOUser>();
+
+        // First, get selected users if any are provided
+        if (selectedUserIds != null && selectedUserIds.Length > 0)
+        {
+            var selectedUsers = await context.PAOUsers
+                .Include(u => u.UserProfile)
+                .Where(u => selectedUserIds.Contains(u.Id) && u.UserProfile != null && !u.UserProfile.IsDeleted)
+                .ToListAsync();
+            
+            allUsers.AddRange(selectedUsers);
+        }
+
+        // Then get search results if search term is provided
+        if (!string.IsNullOrEmpty(searchTerm) && searchTerm.Length >= 2)
+        {
+            var searchLower = searchTerm.ToLower();
+            
+            // Exclude already selected users from search results to avoid duplicates
+            var excludeIds = selectedUserIds ?? Array.Empty<int>();
+            
+            var searchUsers = await context.PAOUsers
+                .Include(u => u.UserProfile)
+                .Where(u => u.UserProfile != null && !u.UserProfile.IsDeleted &&
+                    !excludeIds.Contains(u.Id) &&
+                    (u.Email.ToLower().Contains(searchLower) ||
+                    (u.UserProfile.FirstName != null && u.UserProfile.FirstName.ToLower().Contains(searchLower)) ||
+                    (u.UserProfile.LastName != null && u.UserProfile.LastName.ToLower().Contains(searchLower)) ||
+                    (u.UserProfile.Position != null && u.UserProfile.Position.ToLower().Contains(searchLower))))
+                .OrderBy(u => u.UserProfile.FirstName ?? "")
+                .ThenBy(u => u.UserProfile.LastName ?? "")
+                .Take(maxResults)
+                .ToListAsync();
+
+            allUsers.AddRange(searchUsers);
+        }
+
+        // Sort the final result: selected users first, then search results
+        var selectedIds = selectedUserIds ?? Array.Empty<int>();
+        return allUsers
+            .OrderBy(u => selectedIds.Contains(u.Id) ? 0 : 1) // Selected users first
+            .ThenBy(u => u.UserProfile?.FirstName ?? "")
+            .ThenBy(u => u.UserProfile?.LastName ?? "");
+    }
 
     public IEnumerable<LiaisonOffice> GetLiaisonOffices() 
         => context.LiaisonOffices.Where(x => x.IsActive && !x.IsDeleted);

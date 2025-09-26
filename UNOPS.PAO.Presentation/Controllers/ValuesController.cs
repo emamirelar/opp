@@ -110,6 +110,18 @@ public class ValuesController : BaseController
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUsers()));
     }
 
+    [HttpPost(APIDictionary.Users + "/paged")]
+    public async Task<ActionResult> GetUsersPaged([FromBody] UsersPagedRequest request)
+    {
+        return await HandleOperationAsync(async () => await _manager.GetUsersPagedAsync(request));
+    }
+
+    [HttpGet(APIDictionary.Users + "/search")]
+    public async Task<ActionResult> SearchUsers([FromQuery] string? searchTerm = null, [FromQuery] int maxResults = 20, [FromQuery] int[]? selectedUserIds = null)
+    {
+        return await HandleOperationAsync(async () => await _manager.SearchUsersAsync(searchTerm, maxResults, selectedUserIds));
+    }
+
     [HttpGet(APIDictionary.GeminiModels)]
     public async Task<ActionResult> GetGeminiModels()
     {
@@ -134,6 +146,7 @@ public class ValuesController : BaseController
         return model switch
         {
             GeminiModel.Gemini_2_5_Flash_001 => "gemini-2.5-flash",
+            GeminiModel.Gemini_2_5_Flash_Lite => "gemini-2.5-flash-lite",
             _ => model.ToString().ToLowerInvariant()
         };
     }
@@ -143,6 +156,7 @@ public class ValuesController : BaseController
         return model switch
         {
             GeminiModel.Gemini_2_5_Flash_001 => "Gemini 2.5 Flash",
+            GeminiModel.Gemini_2_5_Flash_Lite => "Gemini 2.5 Flash Lite",
             _ => model.ToString()
         };
     }
@@ -152,6 +166,7 @@ public class ValuesController : BaseController
         return model switch
         {
             GeminiModel.Gemini_2_5_Flash_001 => "europe-west4",
+            GeminiModel.Gemini_2_5_Flash_Lite => "europe-west4",
             _ => "europe-west4"
         };
     }
@@ -161,6 +176,7 @@ public class ValuesController : BaseController
         return model switch
         {
             GeminiModel.Gemini_2_5_Flash_001 => 65535,
+            GeminiModel.Gemini_2_5_Flash_Lite => 65535,
             _ => 8192
         };
     }
@@ -168,5 +184,6 @@ public class ValuesController : BaseController
 
 public enum GeminiModel
 {
-    Gemini_2_5_Flash_001
+    Gemini_2_5_Flash_001,
+    Gemini_2_5_Flash_Lite
 }

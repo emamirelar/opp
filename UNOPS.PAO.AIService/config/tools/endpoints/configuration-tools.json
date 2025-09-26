@@ -1,41 +1,58 @@
 {
   "entity": "Configuration",
-  "description": "Manages system-wide configuration settings and application parameters.",
+  "description": "Manages application configurations.",
   "synonyms": [
-    "settings",
-    "app settings",
-    "system parameters",
-    "preferences",
-    "config"
+    "Settings",
+    "Preferences",
+    "Options",
+    "Setup"
   ],
   "mandatoryFields": [],
-  "searchMetadata": {
-    "directFields": [],
-    "nestedFields": {},
-    "operators": [
-      "like",
-      "is",
-      "not",
-      "contains",
-      "startsWith",
-      "between"
-    ],
-    "dateFields": [],
-    "exampleCriteria": []
-  },
+  "baseUrl": "/api/configuration",
   "endpoints": [
     {
       "name": "Get",
       "url": "/api/configuration",
       "method": "GET",
-      "description": "Retrieves the current system-wide configuration settings. This endpoint provides read-only access to various application parameters and environmental configurations.",
-      "parameters": {},
-      "example_uses": [
-        "How do I get the current application configuration?",
-        "Show me all the system settings.",
-        "Retrieve the configuration details for the application."
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
       ],
-      "when_to_use": "Use this endpoint when you need to fetch the global configuration settings of the application, such as API keys, feature flags, or environmental variables. This is typically used for read-only access to system parameters."
+      "description": "Retrieves the application configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/configuration",
+      "requiredFields": [],
+      "example_uses": [
+        "Get the current configuration settings.",
+        "Retrieve application preferences."
+      ],
+      "when_to_use": "When you need to access the application's configuration settings.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
 }

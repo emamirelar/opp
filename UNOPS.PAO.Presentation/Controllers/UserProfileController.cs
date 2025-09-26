@@ -14,6 +14,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -37,6 +38,7 @@ public class UserProfileController : BaseController
     private readonly UserResolverService<int> _userResolverService;
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly IUserPreferenceService _userPreferenceService;
+    private readonly IUserProfileCacheService _userProfileCacheService;
 
     public UserProfileController(
         // ProfileController dependencies
@@ -48,6 +50,7 @@ public class UserProfileController : BaseController
         UserResolverService<int> userResolverService,
         UserManager<PAOIdentityUser> userManager,
         IUserPreferenceService userPreferenceService,
+        IUserProfileCacheService userProfileCacheService,
         // BaseController dependencies
         IAuthorizationService authorizationService,
         ILogger<UserProfileController> logger)
@@ -59,6 +62,7 @@ public class UserProfileController : BaseController
         _userResolverService = userResolverService;
         _userManager = userManager;
         _userPreferenceService = userPreferenceService;
+        _userProfileCacheService = userProfileCacheService;
     }
 
     #region ProfileController Endpoints
@@ -127,6 +131,32 @@ public class UserProfileController : BaseController
 
     #endregion
 
+    #region Helper Methods
+
+    /// <summary>
+    /// Finds a user by email using case-insensitive lookup
+    /// </summary>
+    /// <param name="email">Email address to search for</param>
+    /// <returns>PAOIdentityUser if found, null otherwise</returns>
+    private async Task<PAOIdentityUser?> FindUserByEmailCaseInsensitiveAsync(string email)
+    {
+        // First try the direct lookup (this will work if emails match exactly)
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user != null)
+        {
+            return user;
+        }
+
+        // If not found, try case-insensitive lookup
+        // Get all users and find by case-insensitive email comparison
+        var normalizedEmail = email.ToLower();
+        user = _userManager.Users.FirstOrDefault(u => u.Email != null && u.Email.ToLower() == normalizedEmail);
+        
+        return user;
+    }
+
+    #endregion
+
     #region UserInfoController Endpoints
 
     /// <summary>
@@ -180,15 +210,28 @@ public class UserProfileController : BaseController
         // Use provided email parameter if available, otherwise fall back to claims
         if (!string.IsNullOrEmpty(email))
         {
-            currentEmail = email;
+            currentEmail = email.ToLower(); // Normalize to lowercase for case-insensitive lookups
         }
         else
         {
             // Try multiple ways to get the current user's email from claims as fallback
-            currentEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? 
-                          User.FindFirst("email")?.Value ?? 
-                          User.Identity?.Name ?? 
-                          _userResolverService.GetUserEmail();
+            var claimEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? 
+                            User.FindFirst("email")?.Value ?? 
+                            User.Identity?.Name ?? 
+                            _userResolverService.GetUserEmail();
+            
+            // Extract email from identity provider format if needed
+            // Format: "securetoken.google.com/unops-partneropportunity:email@domain.com"
+            if (!string.IsNullOrEmpty(claimEmail) && claimEmail.Contains(':'))
+            {
+                var emailParts = claimEmail.Split(':');
+                if (emailParts.Length > 1)
+                {
+                    claimEmail = emailParts[emailParts.Length - 1]; // Take the last part after colon
+                }
+            }
+            
+            currentEmail = claimEmail?.ToLower(); // Normalize to lowercase for case-insensitive lookups
         }
         
         if (string.IsNullOrEmpty(currentEmail))
@@ -207,7 +250,7 @@ public class UserProfileController : BaseController
         {
             try
             {
-                var aspNetUser = await _userManager.FindByEmailAsync(currentEmail);
+                var aspNetUser = await FindUserByEmailCaseInsensitiveAsync(currentEmail);
                 if (aspNetUser != null)
                 {
                     userRoles = (await _userManager.GetRolesAsync(aspNetUser)).ToList();
@@ -236,7 +279,7 @@ public class UserProfileController : BaseController
         UserPreference? userPreferences = null;
         try
         {
-            var aspNetUser = await _userManager.FindByEmailAsync(currentEmail);
+            var aspNetUser = await FindUserByEmailCaseInsensitiveAsync(currentEmail);
             if (aspNetUser != null)
             {
                 userPreferences = await _userPreferenceService.GetUserPreferencesAsync(aspNetUser.Id.ToString());
@@ -258,6 +301,16 @@ public class UserProfileController : BaseController
                              (userInfoWithOrgSettings.GetType().GetProperty("IsSelfManagementEnabled")?.GetValue(userInfoWithOrgSettings) as bool? ?? false),
             UserPreferences = userPreferences
         };
+
+        // Cache the response for the ChatWithGemini to use
+        // Use the user ID from userInfoWithOrgSettings if available, otherwise use email
+        var userId = userInfoWithOrgSettings?.GetType().GetProperty("UserId")?.GetValue(userInfoWithOrgSettings)?.ToString() 
+                    ?? currentEmail;
+        
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await _userProfileCacheService.SetCachedUserProfileAsync(userId, response);
+        }
 
         return Ok(response);
     }

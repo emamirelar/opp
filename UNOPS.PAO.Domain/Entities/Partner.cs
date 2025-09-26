@@ -17,10 +17,10 @@ public class Partner : ModifiableDeletableEntity
     // Navigation property for organization unit relationships
     public virtual ICollection<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; } = new HashSet<OrganizationUnitRelationship>();
     
-    [ForeignKey("PartnerGroupCode")]
-    public PartnerTree? PartnerGroup { get; set; }
+    public int? PartnerGroupId { get; set; }
     
-    public string? PartnerGroupCode { get; set; }
+    // Navigation property to PartnerTree/PartnerGroup
+    public virtual PartnerTree? PartnerGroup { get; set; }
 
     // ========== SYSTEM GENERATED KEYS ==========
     
@@ -107,6 +107,14 @@ public class Partner : ModifiableDeletableEntity
                  .OrderByDescending(c => c.CreatedDate == DateTime.MinValue ? DateTime.MinValue : c.CreatedDate)
                  .ThenByDescending(c => c.Id) // Fallback ordering by Id when CreatedDate is default
                  .Take(5) ?? Enumerable.Empty<Contact>();
+
+    // Computed property to get partner organization units as comma-separated string
+    [NotMapped]
+    public string PartnerOrgUnit => 
+        string.Join(", ", OrganizationUnitRelationships?
+            .Where(r => r?.OrganizationHierarchy != null && r.Status == EntityStatus.Active && !r.IsDeleted)
+            .Select(r => r.OrganizationHierarchy.Name)
+            .OrderBy(name => name) ?? Enumerable.Empty<string>());
 
     /// <summary>
     /// Gets all interactions related to this partner through its contacts
@@ -253,7 +261,33 @@ public class Partner : ModifiableDeletableEntity
     /// </summary>
     public bool HasMandatoryFieldsForActivation()
     {
-        return !string.IsNullOrWhiteSpace(Name);
+        return !string.IsNullOrWhiteSpace(Name) &&
+               !string.IsNullOrWhiteSpace(PartnerShortDescription) &&
+               PartnerCategoryId.HasValue && PartnerCategoryId.Value > 0 &&
+               PartnerGroupId.HasValue && PartnerGroupId.Value > 0 &&
+               LiaisonOfficeId.HasValue && LiaisonOfficeId.Value > 0;
+    }
+
+    /// <summary>
+    /// Gets a list of missing mandatory fields for activation
+    /// </summary>
+    public List<string> GetMissingMandatoryFieldsForActivation()
+    {
+        var missingFields = new List<string>();
+        
+        if (string.IsNullOrWhiteSpace(Name))
+            missingFields.Add("Name");
+            
+        if (string.IsNullOrWhiteSpace(PartnerShortDescription))
+            missingFields.Add("Partner Short Description");
+            
+        if (!PartnerGroupId.HasValue || PartnerGroupId.Value <= 0)
+            missingFields.Add("Partner Group");
+            
+        if (!LiaisonOfficeId.HasValue || LiaisonOfficeId.Value <= 0)
+            missingFields.Add("Liaison Office");
+            
+        return missingFields;
     }
     
     /// <summary>
@@ -311,15 +345,19 @@ public class Partner : ModifiableDeletableEntity
     /// </summary>
     public void ActivatePartner()
     {
-        if (HasMandatoryFieldsForActivation() && Status == EntityStatus.Draft)
+        if (Status != EntityStatus.Draft)
         {
-            Status = EntityStatus.Active;
-            // Partner uses consistent ID regardless of status
+            throw new InvalidOperationException("Partner cannot be activated. Only Draft partners can be activated.");
         }
-        else
+        
+        var missingFields = GetMissingMandatoryFieldsForActivation();
+        if (missingFields.Any())
         {
-            throw new InvalidOperationException("Partner cannot be activated. Check mandatory fields and status.");
+            throw new InvalidOperationException($"Partner cannot be activated. The following mandatory fields are missing: {string.Join(", ", missingFields)}.");
         }
+        
+        Status = EntityStatus.Active;
+        // Partner uses consistent ID regardless of status
     }
     
     /// <summary>
@@ -327,15 +365,24 @@ public class Partner : ModifiableDeletableEntity
     /// </summary>
     /// <param name="approverId">ID of the admin user performing the approval</param>
     /// <param name="approverName">Name of the admin user performing the approval</param>
-    public void ApprovePartner(int approverId, string approverName)
+    /// <param name="nextErpDimValue">The next available ERP dimension value (calculated by business layer)</param>
+    public void ApprovePartner(int approverId, string approverName, int nextErpDimValue)
     {
         if (Status != EntityStatus.Active)
         {
             throw new InvalidOperationException("Only Active partners can be approved.");
         }
+        
         string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
         PartnerApprovalStatus = PartnerApprovalStatus.Approved;
+        PartnerApprovalDate = DateTime.UtcNow;
         PartnerApprovedBy = $"Approved by {approverName} (ID: {approverId}) on {currentDate}";
+        
+        // Auto-assign the ERP dimension value only if not already set
+        if (!ErpDimValue.HasValue)
+        {
+            ErpDimValue = nextErpDimValue;
+        }
     }
     
     /// <summary>

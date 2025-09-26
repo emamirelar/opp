@@ -124,6 +124,11 @@ public class AppDbContext : AuditableDbContext<int, int>
                     .HasForeignKey(c => c.PartnerId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                // Configure ErpDimValue as a unique index (allows nulls, unlike alternate keys)
+                p.HasIndex(x => x.ErpDimValue)
+                    .IsUnique()
+                    .HasFilter("\"ErpDimValue\" IS NOT NULL");
+
                 p.Ignore(x => x.OrganizationUnitRelationships);
             });
 
@@ -320,6 +325,17 @@ public class AppDbContext : AuditableDbContext<int, int>
             
             entity.Property(e => e.AdditionalSettingsJson)
                 .HasColumnType("text");
+        });
+
+        // Configure Engagement entity
+        modelBuilder.Entity<Engagement>(entity =>
+        {
+            // Configure relationship where Engagement.PartnerId references Partner.Id (not ErpDimValue)
+            // Note: If you need to reference ErpDimValue, you'll need to handle nullable values differently
+            entity.HasOne(e => e.Partner)
+                .WithMany()
+                .HasForeignKey(e => e.PartnerId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // Ignore GlobalFilters class - it's not an entity, just a plain class for JSON serialization

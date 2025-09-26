@@ -1,614 +1,861 @@
 {
   "entity": "Gemini",
-  "description": "Manages gemini data and operations",
+  "description": "Manages AI prompts and AI assistant functionalities.",
   "synonyms": [
-    "gemini",
-    "geminis",
-    "geminiData"
+    "AI Prompts",
+    "Prompt Templates",
+    "AI Assistant",
+    "Gemini Assistant",
+    "AI Chatbot"
   ],
   "mandatoryFields": [
-    "id"
+    "Name",
+    "Prompt"
   ],
+  "baseUrl": "/api/ai-prompt-management",
   "endpoints": [
     {
       "name": "GetPromptsAsync",
       "url": "/api/ai-prompt-management/list",
       "method": "POST",
-      "description": "Retrieves all AI prompts with advanced filtering, pagination, search capabilities, and access control for prompt management. This endpoint supports advanced search criteria. To use advanced search, provide a JSON array of `searchCriteria` objects in the request body. Each object should have `field`, `operator`, and `value` properties. Supported fields for search include: `Name`, `Description`, `Prompt`, `Type`, `PromptFunction`, `Project`, `Location`, `Model`, `CreatedAt`. Supported operators are: `like`, `is`, `not`, `contains`, `startsWith`, `between`. For date fields like `CreatedAt`, use `between` with a comma-separated date range (e.g., '2023-01-01,2023-12-31').",
+      "intent": [
+        "search",
+        "list",
+        "filter",
+        "browse",
+        "query"
+      ],
+      "description": "Retrieves all AI prompts with advanced filtering, pagination, and search capabilities.",
+      "searchCapability": {
+        "type": "simple",
+        "searchFields": [
+          "Name",
+          "Description",
+          "Prompt"
+        ],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
       "parameters": {
         "request": {
           "type": "object",
-          "required": false,
+          "required": true,
           "description": "AI prompt filter request containing search and pagination parameters",
-          "properties": {
-            "SearchText": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "OrderBy": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Ascending": {
-              "type": "boolean",
-              "required": false,
-              "description": "Property of type Nullable<bool>"
-            },
-            "Direction": {
-              "type": "boolean",
-              "required": false,
-              "description": "Property of type Nullable<bool>"
-            },
-            "PageIndex": {
-              "type": "integer",
-              "required": true,
-              "description": "Property of type int"
-            },
-            "PageSize": {
-              "type": "integer",
-              "required": true,
-              "description": "Property of type int"
-            }
-          }
+          "default": null
         }
       },
+      "exampleBody": {
+        "SearchText": "email",
+        "PageIndex": 1,
+        "PageSize": 20,
+        "OrderBy": "Name",
+        "Ascending": true
+      },
+      "exampleUrl": "/api/ai-prompt-management/list",
+      "requiredFields": [
+        "PageIndex",
+        "PageSize"
+      ],
       "example_uses": [
         "Show me all AI prompts",
         "List prompts for GPT-4 model",
-        "Find prompts containing 'email' in the name",
-        "Get prompts for specific project",
-        "Show active prompts with pagination",
-        "Search for customer service prompts"
+        "Find prompts containing 'email' in the name"
       ],
-      "when_to_use": "Use this when the user asks to search, list, filter, or browse AI prompts and prompt templates."
+      "when_to_use": "Use this when the user asks to search, list, filter, or browse AI prompts and prompt templates.",
+      "scoring": {
+        "searchBonus": 100,
+        "intentMatch": 90,
+        "complexity": "medium"
+      }
     },
     {
       "name": "GetPromptByIdAsync",
       "url": "/api/ai-prompt-management/{id}",
       "method": "GET",
-      "description": "Retrieves a specific AI prompt by ID with complete details including prompt content, parameters, and configuration.",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "AI prompt ID"
-        }
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Retrieves a specific AI prompt by ID with complete details.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/123",
+      "requiredFields": [],
       "example_uses": [
         "Show me details for AI prompt ID 123",
-        "Get full information about prompt 456",
-        "Display prompt record 789",
-        "Get complete prompt configuration",
-        "Show prompt with all parameters and content"
+        "Get full information about prompt 456"
       ],
-      "when_to_use": "Use this when the user asks for specific AI prompt details by ID or when you need complete prompt information for editing or testing."
+      "when_to_use": "Use this when the user asks for specific AI prompt details by ID.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     },
     {
       "name": "CreatePromptAsync",
       "url": "/api/ai-prompt-management",
       "method": "POST",
-      "description": "Creates a new AI prompt with complete configuration including content, parameters, model settings, and metadata.",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates a new AI prompt with complete configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "model": {
           "type": "object",
-          "required": false,
+          "required": true,
           "description": "AI prompt creation request with all configuration details",
-          "properties": {
-            "Id": {
-              "type": "integer",
-              "required": false,
-              "description": "Property of type Nullable<int>"
-            },
-            "Type": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "PromptFunction": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Prompt": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Description": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Name": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "CreatedAt": {
-              "type": "string",
-              "required": true,
-              "description": "Property of type DateTime"
-            },
-            "GenerationConfig": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ContentConfig": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ToolsConfig": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "SafetySettings": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Project": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Location": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Model": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            }
-          }
+          "default": null
         }
       },
+      "exampleBody": {
+        "Name": "Email Generator",
+        "Prompt": "Generate an email to {recipient} about {subject}",
+        "Description": "Generates emails based on a template.",
+        "CreatedAt": "2024-01-01T00:00:00"
+      },
+      "exampleUrl": "/api/ai-prompt-management",
+      "requiredFields": [
+        "CreatedAt"
+      ],
       "example_uses": [
         "Create a new email generation prompt",
-        "Add a customer service response template",
-        "Set up a new data analysis prompt",
-        "Create prompt for document summarization",
-        "Add meeting notes generation template"
+        "Add a customer service response template"
       ],
-      "when_to_use": "Use this when the user asks to create, add, or set up a new AI prompt template."
+      "when_to_use": "Use this when the user asks to create, add, or set up a new AI prompt template.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
     },
     {
       "name": "UpdatePromptAsync",
       "url": "/api/ai-prompt-management/{id}",
       "method": "PUT",
-      "description": "Updates an existing AI prompt's configuration including content, parameters, model settings, and metadata.",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing AI prompt's configuration.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "AI prompt ID to update (required)"
-        },
         "model": {
           "type": "object",
-          "required": false,
+          "required": true,
           "description": "Updated AI prompt data",
-          "properties": {
-            "Id": {
-              "type": "integer",
-              "required": false,
-              "description": "Property of type Nullable<int>"
-            },
-            "Type": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "PromptFunction": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Prompt": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Description": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Name": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "CreatedAt": {
-              "type": "string",
-              "required": true,
-              "description": "Property of type DateTime"
-            },
-            "GenerationConfig": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ContentConfig": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "ToolsConfig": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "SafetySettings": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Project": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Location": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            },
-            "Model": {
-              "type": "string",
-              "required": false,
-              "description": "Property of type string"
-            }
-          }
+          "default": null
         }
       },
+      "exampleBody": {
+        "Name": "Updated Email Generator",
+        "Prompt": "Generate an updated email to {recipient} about {subject}",
+        "Description": "Generates updated emails based on a template.",
+        "CreatedAt": "2024-01-01T00:00:00"
+      },
+      "exampleUrl": "/api/ai-prompt-management/123",
+      "requiredFields": [
+        "CreatedAt"
+      ],
       "example_uses": [
         "Update prompt 123's content with new template",
-        "Change prompt 456's model from GPT-3.5 to GPT-4",
-        "Modify prompt temperature settings",
-        "Update prompt description and metadata",
-        "Change prompt type classification"
+        "Change prompt 456's model from GPT-3.5 to GPT-4"
       ],
-      "when_to_use": "Use this when the user asks to update, modify, edit, or change AI prompt configuration or content."
+      "when_to_use": "Use this when the user asks to update, modify, edit, or change AI prompt configuration or content.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
+    },
+    {
+      "name": "ExportAiPromptsAsync",
+      "url": "/api/ai-prompt-management/export-developer",
+      "method": "GET",
+      "intent": [
+        "export",
+        "download",
+        "generate"
+      ],
+      "description": "Exports all AI prompts as a C# seeder file for developers.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/export-developer",
+      "requiredFields": [],
+      "example_uses": [
+        "Export AI prompts for development",
+        "Download seeder file for AI prompts"
+      ],
+      "when_to_use": "Use this when developers need to export AI prompts as C# code for seeding or backup purposes.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
     },
     {
       "name": "DeletePromptAsync",
       "url": "/api/ai-prompt-management/{id}",
       "method": "DELETE",
-      "description": "Soft deletes an AI prompt from the system (marks as deleted rather than permanent removal).",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "AI prompt ID to delete"
-        }
+      "intent": [
+        "delete",
+        "remove",
+        "destroy"
+      ],
+      "description": "Soft deletes an AI prompt from the system.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/123",
+      "requiredFields": [],
       "example_uses": [
         "Delete AI prompt ID 123",
-        "Remove prompt 456 from the system",
-        "Deactivate email template prompt",
-        "Delete outdated prompt template",
-        "Remove unused AI prompt"
+        "Remove prompt 456 from the system"
       ],
-      "when_to_use": "Use this when the user asks to delete, remove, or eliminate an AI prompt."
+      "when_to_use": "Use this when the user asks to delete, remove, or eliminate an AI prompt.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetPromptsByTypeAsync",
       "url": "/api/ai-prompt-management/type/{type}",
       "method": "GET",
-      "description": "Retrieves all AI prompts filtered by specific prompt type with access control.",
-      "parameters": {
-        "type": {
-          "type": "string",
-          "required": false,
-          "description": "Prompt type to filter by (e.g., 'email', 'summary', 'analysis', 'translation')"
-        }
+      "intent": [
+        "list",
+        "get",
+        "filter"
+      ],
+      "description": "Retrieves all AI prompts filtered by specific prompt type.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/type/email",
+      "requiredFields": [],
       "example_uses": [
         "Show all email generation prompts",
-        "List prompts for document summarization",
-        "Get data analysis prompt templates",
-        "Find translation prompts",
-        "Show customer service prompts",
-        "Get meeting notes prompts"
+        "List prompts for document summarization"
       ],
-      "when_to_use": "Use this when the user asks to filter prompts by specific type, category, or functional purpose."
+      "when_to_use": "Use this when the user asks to filter prompts by specific type, category, or functional purpose.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetPromptTypesAsync",
       "url": "/api/ai-prompt-management/types",
       "method": "GET",
-      "description": "Retrieves all unique prompt types available in the system for dropdown menus and filtering operations.",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves all unique prompt types available in the system.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/types",
+      "requiredFields": [],
       "example_uses": [
         "Get prompt types for dropdown menu",
-        "What types of prompts are available?",
-        "Show all prompt categories",
-        "Get filter options for prompt types",
-        "List available prompt classifications"
+        "What types of prompts are available?"
       ],
-      "when_to_use": "Use this when the user needs to see available prompt types for filtering or when building UI dropdown menus."
+      "when_to_use": "Use this when the user needs to see available prompt types for filtering or when building UI dropdown menus.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetModelsAsync",
       "url": "/api/ai-prompt-management/models",
       "method": "GET",
-      "description": "Retrieves all unique AI models available in the system for dropdown menus and filtering operations.",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves all unique AI models available in the system.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/models",
+      "requiredFields": [],
       "example_uses": [
         "Get AI models for dropdown menu",
-        "What AI models are available?",
-        "Show all supported models",
-        "Get filter options for AI models",
-        "List GPT and other model options"
+        "What AI models are available?"
       ],
-      "when_to_use": "Use this when the user needs to see available AI models for filtering or when configuring prompt model settings."
+      "when_to_use": "Use this when the user needs to see available AI models for filtering or when configuring prompt model settings.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetProjectsAsync",
       "url": "/api/ai-prompt-management/projects",
       "method": "GET",
-      "description": "Retrieves all unique projects associated with AI prompts for dropdown menus and filtering operations.",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves all unique projects associated with AI prompts.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/projects",
+      "requiredFields": [],
       "example_uses": [
         "Get projects for dropdown menu",
-        "What projects have AI prompts?",
-        "Show all project assignments",
-        "Get filter options for projects",
-        "List projects using AI prompts"
+        "What projects have AI prompts?"
       ],
-      "when_to_use": "Use this when the user needs to see available projects for filtering prompts or when assigning prompts to projects."
+      "when_to_use": "Use this when the user needs to see available projects for filtering prompts or when assigning prompts to projects.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetLocationsAsync",
       "url": "/api/ai-prompt-management/locations",
       "method": "GET",
-      "description": "Retrieves all unique locations/regions associated with AI prompts for dropdown menus and filtering operations.",
+      "intent": [
+        "list",
+        "get",
+        "browse"
+      ],
+      "description": "Retrieves all unique locations/regions associated with AI prompts.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/locations",
+      "requiredFields": [],
       "example_uses": [
         "Get locations for dropdown menu",
-        "What locations have AI prompts?",
-        "Show all regional assignments",
-        "Get filter options for locations",
-        "List regions using AI prompts"
+        "What locations have AI prompts?"
       ],
-      "when_to_use": "Use this when the user needs to see available locations for filtering prompts or when assigning prompts to regions."
+      "when_to_use": "Use this when the user needs to see available locations for filtering prompts or when assigning prompts to regions.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 80,
+        "complexity": "simple"
+      }
     },
     {
       "name": "TestPromptAsync",
-      "url": "api/ai-prompt-management/test",
+      "url": "/api/ai-prompt-management/test",
       "method": "POST",
-      "description": "Tests an AI prompt with provided test data to validate prompt effectiveness and output quality before deployment.",
+      "intent": [
+        "test",
+        "validate",
+        "preview"
+      ],
+      "description": "Tests an AI prompt with provided test data.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "request": {
           "type": "object",
-          "required": false,
-          "description": "Test request containing prompt data and test parameters"
+          "required": true,
+          "description": "Test request containing prompt data and test parameters",
+          "default": null
         }
       },
+      "exampleBody": {
+        "Type": "email",
+        "Id": 123,
+        "TestData": "Sample data for testing",
+        "Model": "GPT-4"
+      },
+      "exampleUrl": "/api/ai-prompt-management/test",
+      "requiredFields": [],
       "example_uses": [
         "Test email prompt with sample data",
-        "Validate prompt 123 with test input",
-        "Check prompt performance before deployment",
-        "Test prompt output quality",
-        "Verify prompt generates expected results"
+        "Validate prompt 123 with test input"
       ],
-      "when_to_use": "Use this when the user wants to test, validate, or preview AI prompt output before using it in production."
+      "when_to_use": "Use this when the user wants to test, validate, or preview AI prompt output before using it in production.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
     },
     {
       "name": "UpgradeGeminiModel",
-      "url": "api/ai-prompt-management/upgrade-model",
+      "url": "/api/ai-prompt-management/upgrade-model",
       "method": "POST",
-      "description": "Upgrades all AI prompts to use the latest available Gemini model.",
-      "parameters": {},
-      "example_uses": [
-        "Upgrade all AI prompts to the newest Gemini model.",
-        "Initiate a system-wide Gemini model upgrade.",
-        "Update the AI models used by all prompts."
+      "intent": [
+        "upgrade",
+        "update"
       ],
-      "when_to_use": "Use this when you need to update all existing AI prompts to utilize the latest version of the Gemini model."
+      "description": "Upgrades all AI prompts to use the latest available Gemini model",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-prompt-management/upgrade-model",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetUserSessions",
-      "url": "api/ai-assistant/get-user-sessions",
+      "url": "/api/ai-assistant/get-user-sessions",
       "method": "POST",
-      "description": "Retrieves a list of all active and past AI assistant chat sessions for the current user.",
-      "parameters": {},
-      "example_uses": [
-        "Get my AI assistant chat history.",
-        "List all my Gemini sessions.",
-        "Show me my past conversations with the AI assistant."
+      "intent": [
+        "list",
+        "get"
       ],
-      "when_to_use": "Use this when you want to view a list of all chat sessions you've had with the AI assistant."
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-assistant/get-user-sessions",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetSessionDetails",
-      "url": "api/ai-assistant/get-session",
+      "url": "/api/ai-assistant/get-session",
       "method": "POST",
-      "description": "Retrieves detailed information and chat history for a specific AI assistant session.",
+      "intent": [
+        "get",
+        "details"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "req": {
           "type": "object",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "",
+          "default": null
         }
       },
-      "example_uses": [
-        "Get details for AI session 123.",
-        "Retrieve the chat log for session 'abc-def'.",
-        "Show me the conversation from my last AI assistant session."
-      ],
-      "when_to_use": "Use this when you need to access the full conversation history and details of a particular AI assistant session."
+      "exampleBody": {
+        "sessionId": "123"
+      },
+      "exampleUrl": "/api/ai-assistant/get-session",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
     },
     {
       "name": "ChatWithGemini",
-      "url": "api/ai-assistant/chat",
+      "url": "/api/ai-assistant/chat",
       "method": "POST",
-      "description": "Initiates or continues a conversational chat with the Gemini AI assistant, optionally including file attachments or extracted text.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": ""
-        }
-      },
-      "example_uses": [
-        "Ask the AI assistant 'What is the capital of France?'",
-        "Upload a document and ask the AI to summarize it.",
-        "Continue my chat session 456 with a new message."
+      "intent": [
+        "chat",
+        "interact"
       ],
-      "when_to_use": "Use this to send messages, files, or extracted text to the Gemini AI assistant and receive a response, either starting a new session or continuing an existing one."
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {
+        "Message": "Hello",
+        "sessionId": "123"
+      },
+      "exampleUrl": "/api/ai-assistant/chat",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
     },
     {
       "name": "ProcessDataRelatedSummaryDetails",
-      "url": "api/process-data",
+      "url": "/api/process-data",
       "method": "POST",
-      "description": "Processes specific data to generate summary details, requiring an ID and optionally a type and message.",
+      "intent": [
+        "process",
+        "summarize"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "req": {
           "type": "object",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "",
+          "default": null
         }
       },
-      "example_uses": [
-        "Process data with ID 123 for summary.",
-        "Generate a summary for data type 'report' with ID 456.",
-        "Process data with ID 789 and include a custom message."
+      "exampleBody": {
+        "Id": 1,
+        "Type": "email",
+        "Message": "Sample message"
+      },
+      "exampleUrl": "/api/process-data",
+      "requiredFields": [
+        "Id"
       ],
-      "when_to_use": "Use this to trigger the processing of specific data identified by an ID, to obtain summary details."
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
     },
     {
       "name": "UpdateAiAssistantAccessibility",
-      "url": "api/ai-assistant/accessibility",
+      "url": "/api/ai-assistant/accessibility",
       "method": "POST",
-      "description": "Updates accessibility settings for an AI assistant session, such as enabling or disabling text-to-speech.",
+      "intent": [
+        "update",
+        "configure"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "req": {
           "type": "object",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "",
+          "default": null
         }
       },
-      "example_uses": [
-        "Enable text-to-speech for my current AI session.",
-        "Disable accessibility features for session 'xyz'.",
-        "Update text-to-speech setting for AI assistant."
-      ],
-      "when_to_use": "Use this to modify accessibility options for an AI assistant session, like turning text-to-speech on or off."
+      "exampleBody": {
+        "SessionId": "123",
+        "TextToSpeech": true
+      },
+      "exampleUrl": "/api/ai-assistant/accessibility",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
     },
     {
       "name": "UpdateSessionStar",
-      "url": "api/ai-assistant/update-star",
+      "url": "/api/ai-assistant/update-star",
       "method": "POST",
-      "description": "Marks or unmarks an AI assistant session as starred for easy identification.",
+      "intent": [
+        "update",
+        "favorite"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "req": {
           "type": "object",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "",
+          "default": null
         }
       },
-      "example_uses": [
-        "Star my current AI assistant session.",
-        "Unstar session 'abc-123'.",
-        "Mark session 789 as important."
+      "exampleBody": {
+        "Starred": true,
+        "SessionId": "123"
+      },
+      "exampleUrl": "/api/ai-assistant/update-star",
+      "requiredFields": [
+        "Starred"
       ],
-      "when_to_use": "Use this to toggle the 'starred' status of an AI assistant session, typically for bookmarking or prioritizing."
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
     },
     {
       "name": "UpdateSessionArchive",
-      "url": "api/ai-assistant/update-archive",
+      "url": "/api/ai-assistant/update-archive",
       "method": "POST",
-      "description": "Archives or unarchives an AI assistant session, moving it to or from an archived state.",
+      "intent": [
+        "update",
+        "archive"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "req": {
           "type": "object",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "",
+          "default": null
         }
       },
-      "example_uses": [
-        "Archive my current AI assistant session.",
-        "Unarchive session 'def-456'.",
-        "Move session 101 to the archives."
+      "exampleBody": {
+        "Archived": true,
+        "SessionId": "123"
+      },
+      "exampleUrl": "/api/ai-assistant/update-archive",
+      "requiredFields": [
+        "Archived"
       ],
-      "when_to_use": "Use this to change the archived status of an AI assistant session, useful for managing session visibility."
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
     },
     {
       "name": "UpdateSessionTitle",
-      "url": "api/ai-assistant/update-title",
+      "url": "/api/ai-assistant/update-title",
       "method": "POST",
-      "description": "Updates the title of an AI assistant session for better organization and identification.",
+      "intent": [
+        "update",
+        "rename"
+      ],
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "req": {
           "type": "object",
-          "required": false,
-          "description": ""
+          "required": true,
+          "description": "",
+          "default": null
         }
       },
-      "example_uses": [
-        "Change the title of my current AI session to 'Project X Discussion'.",
-        "Rename session 'ghi-789' to 'Meeting Notes'.",
-        "Update the title of AI assistant session."
-      ],
-      "when_to_use": "Use this to assign or modify a descriptive title for an AI assistant session."
+      "exampleBody": {
+        "Title": "New Title",
+        "SessionId": "123"
+      },
+      "exampleUrl": "/api/ai-assistant/update-title",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GenerateAndStoreEmbeddings",
-      "url": "api/generate-embeddings",
+      "url": "/api/generate-embeddings",
       "method": "GET",
-      "description": "Generates and stores AI embeddings for specified entities or content.",
-      "parameters": {
-        "entityName": {
-          "type": "string",
-          "required": false,
-          "description": "The name of the entity for which to generate embeddings (e.g., 'Partner', 'Contact')."
-        }
-      },
-      "example_uses": [
-        "Generate embeddings for all partner data.",
-        "I need to create AI embeddings for the 'Contact' entity.",
-        "Can you trigger the embedding generation process for the system?"
+      "intent": [
+        "generate",
+        "store"
       ],
-      "when_to_use": "Use this endpoint to initiate the process of generating and storing AI embeddings for various data entities, which can then be used for AI search or similarity tasks."
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/generate-embeddings",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GenerateTitle",
-      "url": "api/ai-assistant/generate-title",
+      "url": "/api/ai-assistant/generate-title?sessionId={sessionId}",
       "method": "GET",
-      "description": "Generates a concise title using AI based on a given session context.",
-      "parameters": {
-        "sessionId": {
-          "type": "string",
-          "required": false,
-          "description": "The ID of the AI assistant session to generate a title for."
-        }
-      },
-      "example_uses": [
-        "Generate a title for the current AI chat session.",
-        "I need a summary title for session 'abc-123'.",
-        "Can the AI suggest a title for my ongoing conversation?"
+      "intent": [
+        "generate",
+        "title"
       ],
-      "when_to_use": "Use this endpoint to leverage AI to automatically generate a suitable title for an ongoing or completed AI assistant session, useful for organizing conversations."
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-assistant/generate-title?sessionId=123",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GenerateSuggestions",
-      "url": "api/ai-assistant/generate-suggestions",
+      "url": "/api/ai-assistant/generate-suggestions",
       "method": "GET",
-      "description": "Generates AI-powered suggestions, such as follow-up questions or related topics, for the AI assistant.",
-      "parameters": {},
-      "example_uses": [
-        "Provide me with some AI-generated suggestions for my next steps.",
-        "What are some related topics the AI can suggest?",
-        "Can the AI assistant give me some follow-up questions?"
+      "intent": [
+        "generate",
+        "suggest"
       ],
-      "when_to_use": "Use this endpoint to get AI-driven suggestions, like potential next questions or related discussion points, to enhance user interaction with the AI assistant."
+      "description": "",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/ai-assistant/generate-suggestions",
+      "requiredFields": [],
+      "example_uses": [],
+      "when_to_use": "",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 0,
+        "complexity": "simple"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
 }

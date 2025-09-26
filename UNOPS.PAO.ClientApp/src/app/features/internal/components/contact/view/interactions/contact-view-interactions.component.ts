@@ -41,7 +41,7 @@ import {InteractionIconService} from '@common/services/interaction-icon.service'
           [columns]="columns()"
           [entityType]="'Interaction'"
           [config]="listviewConfig()"
-          (rowClick)="openEditInteractionModal($event)"
+          (rowClick)="navigateToInteractionDetail($event)"
           (searchChange)="onSearchChange($event)"
         >
         </app-listview>
@@ -277,7 +277,8 @@ export class ContactViewInteractionsComponent implements OnInit {
       closable: true,
       data: {
         initialData: {
-          contactId: this.contactIdSignal() // Pre-fill contact ID
+          contactId: this.contactIdSignal(), // Pre-fill contact ID
+          contactIds: [parseInt(this.contactIdSignal())] // Pre-fill contact IDs array for "Related To" field
         }
       }
     });
@@ -286,46 +287,30 @@ export class ContactViewInteractionsComponent implements OnInit {
       if (result) {
         console.log('Interaction created:', result);
         // Refresh the listview
-        const listviewElement = document.querySelector('app-listview');
-        if (listviewElement) {
-          listviewElement.dispatchEvent(new CustomEvent('refresh-listview'));
-        }
+        window.dispatchEvent(new CustomEvent('refresh-listview'));
       }
     });
   }
 
-  openEditInteractionModal(item: any): void {
-    // Check if user has update permission
-    if (!this.permissionUtilityService.canUpdate(this.entityPermissions())) {
+  navigateToInteractionDetail(item: any): void {
+    // Check if user has read permission
+    if (!this.permissionUtilityService.canRead(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit interactions',
+        detail: 'You do not have permission to view interactions',
         summary: 'Permission Denied'
       });
       return;
     }
 
-    const ref = this.dialogService.open(InteractionModalComponent, {
-      header: 'Edit Interaction',
-      width: '90%',
-      height: '90%',
-      closable: true,
-      modal: true,
-      data: {
-        id: item.id,
-        initialData: item
-      }
-    });
-
-    ref.onClose.subscribe((result) => {
-      if (result) {
-        console.log('Interaction updated:', result);
-        // Refresh the listview
-        const listviewElement = document.querySelector('app-listview');
-        if (listviewElement) {
-          listviewElement.dispatchEvent(new CustomEvent('refresh-listview'));
-        }
-      }
-    });
+    // Navigate to the interaction detail page
+    if (item && item.id) {
+      this.router.navigate(['/partnerships/interactions', item.id]);
+    } else {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'Invalid interaction data',
+        summary: 'Navigation Error'
+      });
+    }
   }
 
   onSearchChange(searchParams: SearchParams) {

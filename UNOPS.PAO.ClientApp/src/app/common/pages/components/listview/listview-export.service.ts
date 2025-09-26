@@ -50,17 +50,16 @@ export class ListviewExportService {
     if (typeof searchTextOrParams === 'string') {
       // Handle simple string search (backward compatibility)
       if (searchTextOrParams) {
-        queryParams.searchText = searchTextOrParams;
+        queryParams.query = searchTextOrParams;
       }
     } else if (searchTextOrParams) {
       // Handle advanced search with SearchParams object
       if (searchTextOrParams.generalSearch) {
-        queryParams.searchText = searchTextOrParams.generalSearch;
+        queryParams.query = searchTextOrParams.generalSearch;
       }
       
       if (searchTextOrParams.fieldSearches && searchTextOrParams.fieldSearches.length > 0) {
-        queryParams.advancedSearch = 'true';
-        queryParams.searchCriteria = JSON.stringify(searchTextOrParams.fieldSearches);
+        queryParams.filters = JSON.stringify(searchTextOrParams.fieldSearches);
       }
     }
     
@@ -121,7 +120,7 @@ export class ListviewExportService {
       tap(result => {
         // Show success confirmation dialog
         this.confirmationService.confirm({
-          message: `${entityName}s exported successfully! <a href="${result.url}" target="_blank" style="text-decoration: underline; color: blue;">Click here</a> to open the spreadsheet.`,
+          message: `${entityName}s exported successfully!<br><br><a href="${result.url}" target="_blank" style="text-decoration: underline; color: #007bff; font-weight: bold; padding: 4px 8px; border: 1px solid #007bff; border-radius: 4px; background-color: #f8f9fa;">📊 Open Spreadsheet</a>`,
           header: 'Export Complete',
           icon: 'pi pi-check-circle',
           acceptVisible: true,
@@ -180,33 +179,42 @@ export class ListviewExportService {
 
   /**
    * Special transform function for Partner entities
-   * Formats partner data with specific field names and order
+   * Formats partner data with current Partner entity fields
    */
   private partnerTransform(partners: any[]): Record<string, any>[] {
     return partners.map(partner => {
       return {
         ID: partner.id || '',
         Name: partner.name || '',
-        ShortName: partner.shortName || '',
+        ShortDescription: partner.partnerShortDescription || '',
+        LongDescription: partner.partnerLongDescription || '',
         Status: partner.status || '',
-        NewEngagement: partner.newEngagement || '',
-        Phone: partner.phone || '',
-        Website: partner.website || '',
-        PooledFund: partner.pooledFund || '',
-        DDRequired: partner.ddRequired || '',
-        DDEACDone: partner.ddeacDone || '',
-        EACReference: partner.eacReference || '',
-        GlobalKeyAccount: partner.globalKeyAccount || '',
-        UNSecretariatEntity: partner.unSecretariatEntity || '',
-        LevyPotentiallyApplies: partner.levyPotentiallyApplies || '',
-        ReasonForLevyNotApplying: partner.reasonForLevyNotApplying || '',
-        LevyTreatment: partner.levyTreatment || '',
-        Street: partner.address1Street || '',
-        Street2: partner.address1Street2 || '',
-        City: partner.address1City || '',
-        StateProvince: partner.address1StateProvince || '',
-        PostalCode: partner.address1PostalCode || '',
-        Country: partner.address1Country || ''
+        PartnerGroupId: partner.partnerGroupId || '',
+        PartnerGroupName: partner.partnerGroupName || '',
+        PartnerCategoryId: partner.partnerCategoryId || '',
+        PartnerCategoryName: partner.partnerCategoryName || '',
+        LiaisonOfficeId: partner.liaisonOfficeId || '',
+        PartnerFocalPointUserId: partner.partnerFocalPointUserId || '',
+        KeyGlobalPartner: partner.keyGlobalPartner || false,
+        UNSecretariatPartner: partner.unSecretariatPartner || false,
+        UNAndStateEntity: partner.unAndStateEntity || false,
+        PartnerApprovalStatus: partner.partnerApprovalStatus || '',
+        PartnerApprovalDate: partner.partnerApprovalDate || '',
+        PartnerApprovalReference: partner.partnerApprovalReference || '',
+        PartnerApprovedBy: partner.partnerApprovedBy || '',
+        PartnerLevyStatus: partner.partnerLevyStatus || '',
+        PooledFund: partner.pooledFund || false,
+        CanCreateNewOpportunities: partner.canCreateNewOpportunities || false,
+        ReasonForNoNewOpportunity: partner.reasonForNoNewOpportunity || '',
+        DueDiligenceRequired: partner.dueDiligenceRequired || false,
+        DueDiligenceApproval: partner.dueDiligenceApproval || '',
+        DueDiligenceApprovalDate: partner.dueDiligenceApprovalDate || '',
+        DueDiligenceExpiryDate: partner.dueDiligenceExpiryDate || '',
+        ErpDimValue: partner.erpDimValue || '',
+        CreatedDate: partner.createdDate || '',
+        LastModifiedDate: partner.lastModifiedDate || '',
+        CreatedBy: partner.createdBy || '',
+        LastModifiedBy: partner.lastModifiedBy || ''
       };
     });
   }

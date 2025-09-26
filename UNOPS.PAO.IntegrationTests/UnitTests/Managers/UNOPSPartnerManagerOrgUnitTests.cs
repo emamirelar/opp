@@ -121,7 +121,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                     Id = p.Id, 
                     Name = p.Name,
                     Status = p.Status.ToString(),
-                    PartnerGroupCode = p.PartnerGroupCode,
+                    PartnerGroupId = p.PartnerGroupId,
                     LogoUrl = null // Explicitly set to null to avoid issues
                 });
             
@@ -183,8 +183,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // Default "false" equivalent
                 DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // Default "false" equivalent
                 PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply, // Default "false" equivalent
-                PartnerCode = $"P{id:D4}",
-                PartnerGroupCode = "NGO",
+                PartnerGroupId = 1,
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow
             };

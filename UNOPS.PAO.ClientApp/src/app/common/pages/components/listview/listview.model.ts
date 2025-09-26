@@ -194,6 +194,15 @@ export interface ListViewConfig {
      */
     placeholder?: string;
   };
+  
+  /**
+   * Custom sortable fields to override the default column-based sorting
+   * If provided, only these fields will be available in the sort dropdown
+   */
+  sortableFields?: Array<{
+    field: string;
+    label: string;
+  }>;
   exportOptions?: {
     /**
      * Whether to show the export button (defaults to true if enableExport is true)
@@ -232,7 +241,7 @@ export interface SearchCriteria {
   logicalOperator?: 'AND' | 'OR';  // The logical operator connecting this criterion with the next one
   // Support for date range filters (like "between")
   secondValue?: string;  // For "between" operator, this holds the end date
-  fieldType?: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars' | 'template' | 'interactionIcon';  // Field type to determine input type
+  fieldType?: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars' | 'template' | 'interactionIcon' | 'enum';  // Field type to determine input type
 }
 
 export interface SearchParams {

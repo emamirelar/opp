@@ -13,4 +13,5 @@ public class MyPubSubMessage
     public string Content { get; set; }
     public string? BatchData { get; set; }
     public int UserId { get; set; } // User who initiated the bulk import
+    public string? FileId { get; set; } // Google Sheet ID for bulk import operations
 }

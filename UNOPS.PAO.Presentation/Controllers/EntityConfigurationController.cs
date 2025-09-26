@@ -363,4 +363,47 @@ public class EntityConfigurationController : BaseController
             return StatusCode(500, new { error = "Failed to retrieve list view configuration" });
         }
     }
+
+
+    /// <summary>
+    /// Exports all entity configurations as a single SQL script
+    /// </summary>
+    /// <returns>SQL file containing both EntityManagers and EntityFieldManagers data</returns>
+    /// <example_uses>
+    /// Export entity configurations as SQL script
+    /// Download SQL file for entity management
+    /// Generate SQL version of entity configurations for seeding
+    /// Export entity field configurations as SQL with proper schema
+    /// </example_uses>
+    /// <when_to_use>Use this when you need to export entity configurations as SQL script for database seeding or backup purposes.</when_to_use>
+    [HttpGet(APIDictionary.EntityConfiguration + "/export-sql")]
+    public async Task<ActionResult> ExportEntityConfigurationAsSqlAsync()
+    {
+        try
+        {
+            // RBAC interceptor handles permission checking
+            var sqlScript = await _manager.ExportEntityConfigurationAsSqlAsync(User);
+
+            if (string.IsNullOrEmpty(sqlScript))
+            {
+                return BadRequest(new { error = "No data found to export or SQL generation failed" });
+            }
+
+            var fileName = $"EntityConfiguration_{DateTime.UtcNow:yyyyMMddHHmmss}.sql";
+            var contentType = "text/plain";
+            var fileBytes = System.Text.Encoding.UTF8.GetBytes(sqlScript);
+
+            return File(fileBytes, contentType, fileName);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Access denied for entity configuration SQL export");
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error exporting entity configurations as SQL");
+            return StatusCode(500, new { error = "Failed to export entity configurations as SQL" });
+        }
+    }
 } 

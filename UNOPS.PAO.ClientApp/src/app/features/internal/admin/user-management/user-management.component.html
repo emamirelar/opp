@@ -25,14 +25,6 @@
     <!-- Header -->
     <div class="flex justify-content-between align-items-center user-management-header mb-4">
       <div class="text-3xl font-bold">{{ 'title.userManagement' | translate }}</div>
-      @if (canRead()) {
-        <p-button
-          icon="pi pi-refresh"
-          [label]="'button.refresh' | translate"
-          (onClick)="loadUsers()"
-          [loading]="loading()">
-        </p-button>
-      }
     </div>
 
     <!-- Filters Section -->
@@ -61,15 +53,16 @@
             <label for="roleFilter" class="block text-sm font-medium mb-2">
               {{ 'label.filterByRole' | translate }}
             </label>
-            <p-dropdown
+            <p-multiSelect
               id="roleFilter"
               [(ngModel)]="roleFilter"
               [options]="roleOptions()"
-              [placeholder]="'placeholder.selectRole' | translate"
+              [placeholder]="'placeholder.selectRoles' | translate"
               [showClear]="true"
+              [showToggleAll]="true"
               (onChange)="onFilterChange()"
               class="w-full">
-            </p-dropdown>
+            </p-multiSelect>
           </div>
 
           <!-- Org Unit Filter -->
@@ -78,13 +71,17 @@
               <label for="orgUnitFilter" class="block text-sm font-medium mb-2">
                 {{ 'label.orgUnit' | translate }}
               </label>
-              <input
-                pInputText
+              <p-multiSelect
                 id="orgUnitFilter"
                 [(ngModel)]="orgUnitFilter"
-                (ngModelChange)="onFilterChange()"
-                [placeholder]="'placeholder.filterByOrgUnit' | translate"
+                [options]="orgUnitOptions()"
+                [placeholder]="'placeholder.selectOrgUnits' | translate"
+                [showClear]="true"
+                [showToggleAll]="true"
+                (onChange)="onFilterChange()"
+                [disabled]="showMyOrgUnitOnly()"
                 class="w-full">
+              </p-multiSelect>
             </div>
           }
 
@@ -113,14 +110,36 @@
           </div>
         </div>
 
-        <!-- Clear Filters Button -->
-        <div class="flex justify-content-end mt-3">
+        <!-- Clear Filters Button and Action Buttons -->
+        <div class="flex justify-content-end mt-3 gap-2">
           <p-button
             icon="pi pi-filter-slash"
             [label]="'button.clearFilters' | translate"
-            severity="secondary"
-            [outlined]="true"
+            severity="info"
+            [outlined]="false"
             (onClick)="clearFilters()">
+          </p-button>
+          <div class="relative">
+            <p-button
+              #importBtn
+              icon="pi pi-upload"
+              [label]="'button.import' | translate"
+              severity="secondary"
+              (onClick)="importMenu.toggle($event)"
+              [loading]="importing()">
+            </p-button>
+            <p-menu 
+              #importMenu 
+              [model]="importMenuItems()" 
+              [popup]="true"
+              appendTo="body">
+            </p-menu>
+          </div>
+          <p-button
+            icon="pi pi-refresh"
+            [label]="'button.refresh' | translate"
+            (onClick)="loadUsers()"
+            [loading]="loading()">
           </p-button>
         </div>
       </div>
@@ -176,7 +195,7 @@
                 <div class="text-sm text-gray-600">{{ user.email }}</div>
               </td>
               <td>
-                <div class="text-sm">{{ user.orgUnit }}</div>
+                <div class="text-sm">{{ user.orgUnitDescription || user.orgUnit }}</div>
               </td>
               <td>
                 <div class="flex flex-wrap gap-1">

@@ -108,7 +108,7 @@ export class CachedDataService {
     value: category.partnerCategoryCode,
     items: category.children.map(group => ({
       name: group.partnerGroupName,
-      value: group.partnerGroupCode
+      value: group.partnerGroupId
     }))
   })) || []);
 
@@ -121,7 +121,7 @@ export class CachedDataService {
   allContacts = this.allContactsData.asReadonly();
 
   private allUsersData = signal<any[]>([]);
-  allUsers = this.allUsersData.asReadonly();
+  allUsers  = this.allUsersData.asReadonly();
 
   private currentUserData = signal<any>({});
   currentUser = this.currentUserData.asReadonly();
@@ -176,9 +176,10 @@ export class CachedDataService {
     this.allPartnerLevyTreatmentData.set([]);
     this.allPartnerScopesData.set([]);
     this.allPartnersData.set([]);
+    this.allContactsData.set([]);
     this.allOrganizationUnitsData.set([]);
     this.allPartnerCategoriesData.set([]);
-    this.partnerCategoryGroupData.set([]); // Clear category and group structure    
+    this.partnerCategoryGroupData.set([]); // Clear category and group structure
     this.allLiaisonOfficesData.set([]);
   }
 
@@ -521,6 +522,26 @@ export class CachedDataService {
     }
   }
 
+  /**
+   * Forces a refresh of the partners cache by clearing current data and reloading
+   */
+  refreshPartners(){
+    // Clear current cache
+    this.allPartnersData.set([]);
+    // Reload from API
+    this.loadPartners();
+  }
+
+  /**
+   * Forces a refresh of the contacts cache by clearing current data and reloading
+   */
+  refreshContacts(){
+    // Clear current cache
+    this.allContactsData.set([]);
+    // Reload from API
+    this.loadContacts();
+  }
+
   loadOrganizationUnits() {
     if ((this.allOrganizationUnitsData() == undefined) || (this.allOrganizationUnitsData().length <= 0)) {
       this.isLoading.set(true);
@@ -575,20 +596,30 @@ export class CachedDataService {
   }
 
   loadUsers() {
-    // Initialize with empty array
+    // OPTIMIZED: Load only initial subset of users instead of all 13,000+
+    // This prevents UI freezing when there are many users
     if (this.allUsersData() === undefined || this.allUsersData().length <= 0) {
       // Default to empty array before API response
       this.allUsersData.set([]);
 
       this.isLoading.set(true);
-      this.http.get('/api/values/users').subscribe({
-        next: (data: any) => {
-          // Ensure data is an array
-          this.allUsersData.set(Array.isArray(data) ? data : []);
+
+      // Use the new paginated endpoint to load only the first 100 users
+      const initialRequest = {
+        pageIndex: 0,
+        pageSize: 100,
+        activeOnly: true
+      };
+
+      this.http.post('/api/values/users/paged', initialRequest).subscribe({
+        next: (response: any) => {
+          // Set only the records from the paginated response
+          this.allUsersData.set(response.records || []);
           this.isLoading.set(false);
         },
         error: (err) => {
-          // Keep empty array on error
+          console.warn('Failed to load initial users, falling back to search-only mode:', err);
+          // Keep empty array on error - components should use UserSearchService for dynamic loading
           this.allUsersData.set([]);
           this.isLoading.set(false);
         }

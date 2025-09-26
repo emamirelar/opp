@@ -2,12 +2,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using UNOPS.PAO.Domain.Entities;
 
+[PartnerLevyValidation]
 public class PartnerRequest : ExtensibleModel
 {
     // ========== ENHANCED PARTNER FIELDS ==========
@@ -61,12 +63,17 @@ public class PartnerRequest : ExtensibleModel
     public string? Status { get; set; } // "Draft" / "Active" / "Closed" / "Archived"
     
     // Partner Group
-    public string? PartnerGroupCode { get; set; }
+    public int? PartnerGroupId { get; set; }
     
     /// <summary>
     /// Organization unit hierarchy IDs - managed automatically by the partner manager
     /// </summary>
     public List<int>? OrganizationHierarchyIds { get; set; }
+    
+    /// <summary>
+    /// Flag to bypass duplicate detection when user confirms creation despite duplicates
+    /// </summary>
+    public bool ConfirmDuplicateCreation { get; set; } = false;
 }
 
 
@@ -88,4 +95,29 @@ public class PartnerValidationResult
     public List<string> MissingFields { get; set; } = new();
     public bool CanBeActivated { get; set; }
     public string? ValidationMessage { get; set; }
+}
+
+/// <summary>
+/// Custom validation attribute to ensure ReasonForLevy is provided when PartnerLevyStatus requires it
+/// </summary>
+public class PartnerLevyValidationAttribute : ValidationAttribute
+{
+    public override bool IsValid(object? value)
+    {
+        if (value is not PartnerRequest partner)
+            return true;
+
+        // If PartnerLevyStatus is DoesNotApply or PotentiallyNotApplied, ReasonForLevy is required
+        if (partner.PartnerLevyStatus == "DoesNotApply" || partner.PartnerLevyStatus == "PotentiallyNotApplied")
+        {
+            return !string.IsNullOrWhiteSpace(partner.ReasonForLevy);
+        }
+
+        return true;
+    }
+
+    public override string FormatErrorMessage(string name)
+    {
+        return "Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'.";
+    }
 }

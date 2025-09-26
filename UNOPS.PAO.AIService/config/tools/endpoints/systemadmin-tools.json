@@ -1,27 +1,59 @@
 {
   "entity": "SystemAdmin",
-  "description": "Manages system-level administrative tasks, including database migrations and other core system operations.",
+  "description": "Manages system-level administrative tasks and configurations.",
   "synonyms": [
-    "System Administration",
-    "Admin",
-    "System Management",
-    "Backend Operations",
-    "System Ops"
+    "AdminTasks",
+    "SystemManagement",
+    "AdminControls",
+    "SystemConfiguration",
+    "Maintenance"
   ],
   "mandatoryFields": [],
+  "baseUrl": "/api/system-admin",
   "endpoints": [
     {
       "name": "RunMigrations",
       "url": "/api/system-admin/migrations/run",
       "method": "GET",
-      "description": "Initiates the process to run pending database migrations. This operation updates the database schema to the latest version. It is typically used during deployment or maintenance.",
-      "parameters": {},
-      "example_uses": [
-        "Run the system database migrations.",
-        "Update the application's database schema.",
-        "Execute pending database changes for the system."
+      "intent": [
+        "execute",
+        "run",
+        "update",
+        "migrate"
       ],
-      "when_to_use": "Use this endpoint when the system's database schema needs to be updated to the latest version, typically after a new deployment or during a maintenance window. This operation should be performed with caution as it modifies the database structure."
+      "description": "Executes database migrations to update the system schema.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/system-admin/migrations/run",
+      "requiredFields": [],
+      "example_uses": [
+        "Run the latest database migrations.",
+        "Execute system updates."
+      ],
+      "when_to_use": "When database schema updates are required.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 90,
+        "complexity": "simple"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use SearchPartners with searchText parameter",
+      "advanced": "use AdvancedSearchPartners with searchCriteria JSON array"
+    }
+  }
 }

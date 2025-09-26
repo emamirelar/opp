@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Claims;
+using System.Text;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -267,6 +268,60 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         entity.CreatedAt = DateTime.UtcNow;
         entity.Id = null; // Ensure new entity
 
+        // Validate that Type is unique
+        if (!string.IsNullOrEmpty(entity.Type))
+        {
+            var existingPrompt = await _promptRepository.GetAll()
+                .Where(p => p.Type == entity.Type)
+                .FirstOrDefaultAsync();
+                
+            if (existingPrompt != null)
+            {
+                throw new InvalidOperationException($"An AI prompt with type '{entity.Type}' already exists. Type must be unique.");
+            }
+        }
+
+        // Auto-deduce Name from Type if not provided
+        var typeLower = entity.Type.ToLower();
+        if (typeLower.Contains("partner"))
+        {
+            entity.Name = "Partner";
+        }
+        else if (typeLower.Contains("contact"))
+        {
+            entity.Name = "Contact";
+        }
+        else if (typeLower.Contains("interaction"))
+        {
+            entity.Name = "Interaction";
+        }
+
+        // Auto-set PromptFunction based on Name if not provided
+        if (string.IsNullOrEmpty(entity.PromptFunction) && !string.IsNullOrEmpty(entity.Name))
+        {
+            switch (entity.Name.ToLower())
+            {
+                case "partner":
+                    entity.PromptFunction = "GetBasicPartnerDetailsAsync";
+                    break;
+                case "contact":
+                    entity.PromptFunction = "GetContactWithInteractionsAsync";
+                    break;
+                case "interaction":
+                    entity.PromptFunction = "GetInteractionDetailsAsync";
+                    break;
+            }
+        }
+
+        // Since the prompt is created via the screen, Admins can edit
+        entity.AdminCanChange = true;
+
+        // Set Description to Type if not provided
+        if (string.IsNullOrEmpty(entity.Description) && !string.IsNullOrEmpty(entity.Type))
+        {
+            entity.Description = entity.Type;
+        }
+
         await _promptRepository.AddAsync(entity);
 
         return _mapper.Map<AiPromptModel>(entity);
@@ -444,8 +499,8 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         try
         {
             // Use the latest available model value - hardcoded as the newest in system
-            var latestModelValue = "gemini-2.5-flash";
-            var latestModelDisplay = "Gemini 2.5 Flash";
+            var latestModelValue = "gemini-2.5-flash-lite";
+            var latestModelDisplay = "Gemini 2.5 Flash Lite";
 
             // Get all prompts using the repository's existing methods
             var allPrompts = _promptRepository.GetAll().ToList();
@@ -457,7 +512,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                 {
                     Success = true,
                     UpdatedCount = 0,
-                    Message = "All AI prompts are already using the latest available model configured in the system.",
+                    Message = "All AI prompts are already using the latest available model (Gemini 2.5 Flash Lite) configured in the system.",
                     LatestModel = latestModelDisplay,
                     AlreadyLatest = true
                 };
@@ -490,5 +545,102 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                 AlreadyLatest = false
             };
         }
+    }
+
+    /// <summary>
+    /// Exports all AI prompts as a SQL script file for seeding
+    /// </summary>
+    public async Task<string> ExportAiPromptsAsSqlAsync(ClaimsPrincipal user)
+    {
+        // RBAC interceptor handles security enforcement
+        var allPrompts = await _promptRepository.GetAll().ToListAsync();
+        
+        var sqlBuilder = new StringBuilder();
+        sqlBuilder.AppendLine("-- AI Prompts configuration");
+        sqlBuilder.AppendLine("-- This script manages AI prompt definitions with environment variable substitution");
+        sqlBuilder.AppendLine("-- Parameter: {{PROJECT_ID}} will be replaced by ScriptRunner");
+        sqlBuilder.AppendLine();
+        sqlBuilder.AppendLine("DO $$");
+        sqlBuilder.AppendLine("BEGIN");
+        sqlBuilder.AppendLine("    -- Clear existing data and reset");
+        sqlBuilder.AppendLine("    TRUNCATE TABLE public.\"AiPrompt\" RESTART IDENTITY CASCADE;");
+        sqlBuilder.AppendLine("    RAISE NOTICE 'AI prompts table cleared, inserting fresh data';");
+        sqlBuilder.AppendLine();
+
+        foreach (var prompt in allPrompts)
+        {
+            sqlBuilder.AppendLine($"    -- Insert {prompt.Type} prompt");
+            sqlBuilder.AppendLine("    INSERT INTO public.\"AiPrompt\" (");
+            sqlBuilder.AppendLine("        \"Type\", \"Prompt\", \"CreatedAt\", \"Name\", \"Status\", \"ContentConfig\", ");
+            sqlBuilder.AppendLine("        \"GenerationConfig\", \"Location\", \"Model\", \"Project\", \"SafetySettings\", ");
+            sqlBuilder.AppendLine("        \"ToolsConfig\", \"PromptFunction\", \"Description\", \"AdminCanChange\"");
+            sqlBuilder.AppendLine("    ) VALUES (");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Type)}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Prompt ?? "")}',");
+            sqlBuilder.AppendLine("        NOW(),");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Name)}',");
+            sqlBuilder.AppendLine($"        {(int)prompt.Status},");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.ContentConfig)}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.GenerationConfig)}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Location)}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Model)}',");
+            sqlBuilder.AppendLine("        '{{{{PROJECT_ID}}}}',");
+            
+            if (prompt.SafetySettings != null)
+            {
+                sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.SafetySettings)}',");
+            }
+            else
+            {
+                sqlBuilder.AppendLine("        NULL,");
+            }
+            
+            if (prompt.ToolsConfig != null)
+            {
+                sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.ToolsConfig)}',");
+            }
+            else
+            {
+                sqlBuilder.AppendLine("        '[]',");
+            }
+            
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.PromptFunction)}',");
+            sqlBuilder.AppendLine($"        '{EscapeSqlString(prompt.Description ?? "")}',");
+            sqlBuilder.AppendLine($"        {prompt.AdminCanChange.ToString().ToLower()}");
+            sqlBuilder.AppendLine("    );");
+            sqlBuilder.AppendLine();
+        }
+
+        sqlBuilder.AppendLine("    RAISE NOTICE 'AI prompts inserted successfully: " + allPrompts.Count + " records';");
+        sqlBuilder.AppendLine("END $$;");
+
+        return sqlBuilder.ToString();
+    }
+
+    /// <summary>
+    /// Escapes strings for C# code generation
+    /// </summary>
+    private string EscapeString(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return "";
+            
+        return input.Replace("\\", "\\\\")
+                   .Replace("\"", "\\\"")
+                   .Replace("\n", "\\n")
+                   .Replace("\r", "\\r")
+                   .Replace("\t", "\\t");
+    }
+
+    /// <summary>
+    /// Escapes strings for SQL script generation
+    /// </summary>
+    private string EscapeSqlString(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return "";
+            
+        return input.Replace("'", "''")  // Escape single quotes for SQL
+                   .Replace("\\", "\\\\"); // Escape backslashes
     }
 } 

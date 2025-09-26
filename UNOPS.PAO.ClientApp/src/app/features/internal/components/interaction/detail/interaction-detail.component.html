@@ -211,9 +211,9 @@
           <div class="flex flex-col gap-4">
             @if (interaction()!.description) {
               @if (showFullDescription() || isDescriptionShort()) {
-                <p class="text-gray-800 leading-relaxed whitespace-pre-line">{{ interaction()!.description }}</p>
+                <div class="text-gray-800 leading-relaxed whitespace-pre-line interaction-description" [innerHTML]="interaction()!.description"></div>
               } @else {
-                <p class="text-gray-800 leading-relaxed whitespace-pre-line">{{ getTruncatedDescription(interaction()!.description!) }}</p>
+                <div class="text-gray-800 leading-relaxed whitespace-pre-line interaction-description" [innerHTML]="getTruncatedDescription(interaction()!.description!)"></div>
               }
 
               <!-- See More Button -->
@@ -396,16 +396,16 @@
 
         <!-- UNOPS Personnel Panel -->
         <p-panel header="UNOPS Personnel" [toggleable]="false" class="shadow-sm border border-solid border-gray-50 rounded-xl">
-          @if (interaction()!.userIds && interaction()!.userIds!.length > 0) {
+          @if (interaction()!.users && interaction()!.users!.length > 0) {
             <div class="space-y-4">
-              @for (userId of interaction()!.userIds!; track userId) {
+              @for (user of interaction()!.users!; track user.id) {
                 <div class="flex items-center gap-4 rounded-lg">
                   <div class="p-3 bg-purple-100 rounded-lg">
                     <i class="pi pi-users text-purple-600"></i>
                   </div>
                   <div>
                     <p class="text-xs font-semibold text-gray-500 mb-1">Personnel</p>
-                    <p class="text-sm text-gray-900">{{ getUserName(userId) }}</p>
+                    <p class="text-sm text-gray-900">{{ user.name }}</p>
                   </div>
                 </div>
               }
@@ -455,7 +455,7 @@
               </div>
               <div>
                 <p class="text-xs font-semibold text-gray-500 mb-1">Created By</p>
-                <p class="text-sm text-gray-900">{{ getUserName(interaction()!.createdBy) }}</p>
+                <p class="text-sm text-gray-900">{{ interaction()!.createdByName || 'Unknown User' }}</p>
               </div>
             </div>
             <div class="flex items-center gap-4 rounded-lg">
@@ -473,7 +473,7 @@
               </div>
               <div>
                 <p class="text-xs font-semibold text-gray-500 mb-1">Last Modified By</p>
-                <p class="text-sm text-gray-900">{{ getUserName(interaction()!.lastModifiedBy) }}</p>
+                <p class="text-sm text-gray-900">{{ interaction()!.lastModifiedByName || 'Unknown User' }}</p>
               </div>
             </div>
             <div class="flex items-center gap-4 rounded-lg">

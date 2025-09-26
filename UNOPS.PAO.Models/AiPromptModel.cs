@@ -4,10 +4,10 @@ public class AiPromptModel
 {
     public int? Id { get; set; }
     public string Type { get; set; } = string.Empty;
-    public string PromptFunction { get; set; } = string.Empty;
+    public string? PromptFunction { get; set; } = string.Empty;
     public string? Prompt { get; set; }
     public string? Description { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string? Name { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public string GenerationConfig { get; set; } = string.Empty;
     public string ContentConfig { get; set; } = string.Empty;

@@ -1,0 +1,359 @@
+/* Compact Duplicate Summary Component Styles */
+
+.duplicate-summary-compact {
+  background: linear-gradient(135deg, #fef7ff, #f9fafb);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Compact Statistics */
+.summary-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-separator {
+  color: #d1d5db;
+  font-weight: 300;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Confidence Summary */
+.confidence-summary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.confidence-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  
+  &.high {
+    background: #fff7ed;
+    color: #ea580c;
+    border: 1px solid #fed7aa;
+  }
+  
+  &.medium {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fed7aa;
+  }
+  
+  &.low {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+  }
+}
+
+/* Compact Recommendation */
+.recommendation-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  
+  &.high-risk {
+    background: #fff7ed;
+    color: #ea580c;
+    border: 1px solid #fed7aa;
+  }
+  
+  &.medium-risk {
+    background: #fffbeb;
+    color: #d97706;
+    border: 1px solid #fed7aa;
+  }
+  
+  &.low-risk {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+  
+  i {
+    font-size: 14px;
+  }
+}
+
+/* Confidence Section */
+.confidence-section {
+  margin-bottom: 24px;
+}
+
+.confidence-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.confidence-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.confidence-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.confidence-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 150px;
+}
+
+.confidence-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.confidence-count {
+  font-size: 14px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  
+  .confidence-bar-item.high & {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+  
+  .confidence-bar-item.medium & {
+    background: #fffbeb;
+    color: #d97706;
+  }
+  
+  .confidence-bar-item.low & {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+}
+
+.progress-container {
+  flex: 1;
+  
+  ::ng-deep .confidence-progress {
+    height: 8px;
+    border-radius: 4px;
+    
+    .p-progressbar-value {
+      border-radius: 4px;
+    }
+    
+    &.high .p-progressbar-value {
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+    
+    &.medium .p-progressbar-value {
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+    
+    &.low .p-progressbar-value {
+      background: linear-gradient(90deg, #3b82f6, #2563eb);
+    }
+  }
+}
+
+/* Recommendation Section */
+.recommendation-section {
+  margin-top: 20px;
+}
+
+.recommendation-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid;
+  
+  &.high-risk {
+    background: #fef2f2;
+    border-left-color: #ef4444;
+    
+    .recommendation-icon i {
+      color: #ef4444;
+    }
+  }
+  
+  &.medium-risk {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+    
+    .recommendation-icon i {
+      color: #f59e0b;
+    }
+  }
+  
+  &.low-risk {
+    background: #ecfdf5;
+    border-left-color: #10b981;
+    
+    .recommendation-icon i {
+      color: #10b981;
+    }
+  }
+}
+
+.recommendation-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+  i {
+    font-size: 16px;
+  }
+}
+
+.recommendation-content {
+  flex: 1;
+}
+
+.recommendation-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.recommendation-message {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .stat-value {
+    font-size: 20px;
+  }
+  
+  .confidence-bar-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .confidence-info {
+    min-width: auto;
+  }
+  
+  .recommendation-card {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .duplicate-summary-card {
+    padding: 16px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-header {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+}
+
+/* Animation for when component appears */
+.duplicate-summary-card {
+  animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .duplicate-summary-card {
+    background: linear-gradient(135deg, #1f2937, #111827);
+    border-color: #374151;
+  }
+  
+  .stat-item, .confidence-bar-item {
+    background: #fff7ed;
+    border-color: #374151;
+  }
+  
+  .confidence-title, .recommendation-title {
+    color: #f3f4f6;
+  }
+  
+  .stat-label, .confidence-label, .recommendation-message {
+    color: #9ca3af;
+  }
+  
+  .recommendation-icon {
+    background: #374151;
+  }
+}

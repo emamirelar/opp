@@ -58,25 +58,29 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
         return orderByField?.ToLowerInvariant() switch
         {
             "name" => p => p.Name ?? "",
-            "partnerdescription" => p => p.Name ?? "",
-            "shortname" => p => p.PartnerShortDescription ?? "",
             "partnershortdescription" => p => p.PartnerShortDescription ?? "",
+            "partnerlongdescription" => p => p.PartnerLongDescription ?? "",
             "status" => p => p.Status,
-            "systemstatus" => p => p.Status,
-            "partnerstatus" => p => p.Status,
-            "phone" => p => p.Name ?? "", // Phone field deprecated, fallback to description
-            "website" => p => p.Name ?? "", // Website field deprecated, fallback to description
             "createddate" => p => p.CreatedDate,
-            "address1city" => p => p.Name ?? "", // Address fields deprecated, fallback to description
-            "addresscity" => p => p.Name ?? "",
-            "address1country" => p => p.Name ?? "",
-            "addresscountry" => p => p.Name ?? "",
-            "address1street" => p => p.Name ?? "",
-            "addressstreet" => p => p.Name ?? "",
+            "lastmodifieddate" => p => p.LastModifiedDate,
             "partnercategoryid" => p => p.PartnerCategoryId,
-            "partnergroupcode" => p => p.PartnerGroupCode ?? "",
-            "approvalstatus" => p => p.PartnerApprovalStatus,
-            _ => p => p.Name ?? "" // Default to PartnerDescription if no field specified or unknown field
+            "partnergroupid" => p => p.PartnerGroupId ?? 0,
+            "partnerApprovalstatus" => p => p.PartnerApprovalStatus,
+            "keyglobalpartner" => p => p.KeyGlobalPartner,
+            "unsecretariatpartner" => p => p.UNSecretariatPartner,
+            "unandstateentity" => p => p.UNAndStateEntity,
+            "pooledFund" => p => p.PooledFund,
+            "cancreatenewopportunities" => p => p.CanCreateNewOpportunities,
+            "liaisonOfficeid" => p => p.LiaisonOfficeId,
+            "partnerFocalPointuserid" => p => p.PartnerFocalPointUserId,
+            "erpdimValue" => p => p.ErpDimValue,
+            "partnerlevystatus" => p => p.PartnerLevyStatus,
+            "duediligencerequired" => p => p.DueDiligenceRequired,
+            "duediligenceapproval" => p => p.DueDiligenceApproval,
+            "duediligenceapprovaldate" => p => p.DueDiligenceApprovalDate,
+            "duediligenceexpirydate" => p => p.DueDiligenceExpiryDate,
+            "partnerapprovaldate" => p => p.PartnerApprovalDate,
+            _ => p => p.Name ?? "" // Default to Name if no field specified or unknown field
         };
     }
 } 

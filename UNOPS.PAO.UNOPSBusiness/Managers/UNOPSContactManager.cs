@@ -1,41 +1,42 @@
-using UNOPS.PAO.Domain.Specifications;
 using System.Linq;
-using UNOPS.PAO.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using UNOPS.PAO.UNOPSBusiness.Specifications;
+using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.UNOPSBusiness.Extensions;
+using UNOPS.PAO.UNOPSBusiness.Specifications;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
+using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
-using UNOPS.PAO.UNOPSBusiness.Interfaces;
-using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Utilities.Helpers;
-using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
-using UNOPS.PAO.UNOPSBusiness.Services;
-using UNOPS.PAO.Business.Managers;
-using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
-using UNOPS.PAO.UNOPSBusiness.Interfaces;
-using System.Reflection;
 
 public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 {
@@ -747,7 +748,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
     {
-        var contact = await contactRepository.GetByIdAsync(entityId);
+        var contact = await _context.Contacts.FirstOrDefaultAsync(e => e.Id == entityId);
         if (contact != null)
         {
             return mapper.Map<UNOPSContact, ContactModel>(contact);
@@ -760,7 +761,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     /// </summary>
     public override async Task<object> GetBasicEntityDataAsync(int id)
     {
-        var contact = await contactRepository.GetByIdAsync(id);
+        var contact = await _context.Contacts.FirstOrDefaultAsync(e => e.Id == id);
         if (contact != null)
         {
             return mapper.Map<UNOPSContact, ContactModel>(contact);
@@ -773,18 +774,10 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         // Convert input email addresses to lowercase for case-insensitive comparison
         var lowercaseEmailAddresses = input.EmailAddresses.Select(e => e.ToLower()).ToList();
         
-        var contacts = contactRepository
-                        .GetAll(["Partner"])
-                        .AsQueryable()
-                        .Where(c => (c.Email != null && lowercaseEmailAddresses.Contains(c.Email.ToLower())))
-                        .Cast<UNOPSContact>()
-                        .ToList();
-
-        // Load OrganizationUnitRelationships manually for all contacts
-        /*foreach (var contact in contacts.Where(c => c.Partner != null))
-        {
-            await contact.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-        }*/
+        var contacts = await _context.Contacts
+                                    .Where(c => (c.Email != null && lowercaseEmailAddresses.Contains(c.Email.ToLower())))
+                                    .Include(c => c.Partner)
+                                    .ToListAsync();
 
         // Get all contact IDs to load interactions
         var allContactIds = contacts.Select(c => c.Id).ToList();
@@ -806,19 +799,19 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             .ToDictionary(g => g.Key, g => g.Select(ic => ic.Interaction).ToList());
 
         // Batch permission lookup once for all contacts
-        var userPermissions = await GetEntityPermissionsAsync(user, "Contact");
+        //var userPermissions = await GetEntityPermissionsAsync(user, "Contact");
 
         var mappedContacts = new List<ContactModel>();
         foreach (var contact in contacts)
         {
             var model = await MapEntityToModel(contact, mapper, user);
-            /*model.Permissions = new EntityPermissionsModel
+            model.Permissions = new EntityPermissionsModel
             {
-                CanRead = userPermissions.CanRead,
-                CanCreate = userPermissions.CanCreate,
-                CanUpdate = userPermissions.CanUpdate && await CanUserAccessEntityAsync(contact, user, "update"),
-                CanDelete = userPermissions.CanDelete && await CanUserAccessEntityAsync(contact, user, "delete")
-            };*/
+                CanRead = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "read"),
+                CanCreate = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "create"),
+                CanUpdate = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "update"),
+                CanDelete = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "delete")
+            };
 
             // Add interactions directly to the contact with Id, Type, Description, Date, and Permissions
             if (interactionsByContact.TryGetValue(contact.Id, out var contactInteractions))
@@ -851,6 +844,56 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return mappedContacts;
     }
 
+    public async Task<ContactModel?> GetContactByEmailAsync(ClaimsPrincipal user, string email)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return null;
+            }
+
+            // Query for contact with the specified email (case-insensitive)
+            var contact = await _context.Contacts
+                                .Where(c => c.Email.ToLower() == email.ToLower() && !c.IsDeleted)
+                                .Include(c => c.Partner)
+                                    .ThenInclude(cp => cp.PartnerGroup)
+                                .AsQueryable()
+                                .FirstOrDefaultAsync();
+
+            if (contact == null)
+            {
+                return null;
+            }
+
+            // Apply access control filters to ensure user has permission to access this contact
+            var query = _context.Contacts
+                                .Where(c => c.Id == contact.Id)
+                                .Include(c => c.Partner)
+                                    .ThenInclude(cp => cp.PartnerGroup)
+                                .AsQueryable();
+
+            var filteredData = await ApplyAccessControlFilters(query, user, "read");
+            
+            if (filteredData is IEnumerable<UNOPSContact> contactList)
+            {
+                var accessibleContact = contactList.FirstOrDefault();
+                if (accessibleContact != null)
+                {
+                    return await MapEntityToModel(accessibleContact, mapper, user);
+                }
+            }
+
+            // User doesn't have access to this contact
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error getting contact by email: {Email}", email);
+            return null;
+        }
+    }
+
     public async Task<List<UnmatchedEmailModel>> GetUnmatchedEmailsWithPartnerSuggestionsAsync(List<string> emailAddresses, ClaimsPrincipal user = null)
     {
         var unmatchedEmails = new List<UnmatchedEmailModel>();
@@ -876,11 +919,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             emailDomainMapping[email] = emailDomain;
             
             // Look up contacts with the same domain
-            var contactsWithSameDomain = await contactRepository.GetAll(["Partner"])
-                .AsQueryable()
-                .Where(c => !string.IsNullOrEmpty(c.Email) && c.Email.Contains($"@{emailDomain}"))
-                .ToListAsync();
-            
+            var contactsWithSameDomain = await _context.Contacts
+                                                        .Where(c => !string.IsNullOrEmpty(c.Email) && c.Email.Contains($"@{emailDomain}"))
+                                                        .Include(c => c.Partner)
+                                                        .AsQueryable()
+                                                        .ToListAsync();
+
             if (contactsWithSameDomain.Any())
             {
                 // Find the most occurring PartnerId
@@ -1150,5 +1194,55 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         // If no ApplyOrgUnitFilter method found, return original query
         // This is normal for specifications that don't support org unit filtering
         return query;
+    }
+    
+    /// <summary>
+    /// Get supported search fields for contacts - helps frontend build dynamic search forms
+    /// </summary>
+    /// <returns>List of all supported search fields with their metadata</returns>
+    public List<SearchFieldInfo> GetContactSearchFields()
+    {
+        try
+        {
+            var fields = new List<SearchFieldInfo>
+            {
+                // Direct Contact fields - using translation keys
+                new() { Field = "fullName", DisplayName = "label.contact.fullName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "firstName", DisplayName = "label.contact.firstName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "lastName", DisplayName = "label.contact.lastName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "email", DisplayName = "label.contact.email", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "title", DisplayName = "label.contact.title", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "department", DisplayName = "label.contact.department", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "phone", DisplayName = "label.contact.phone", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "mobile", DisplayName = "label.contact.mobile", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { 
+                    Field = "status", 
+                    DisplayName = "label.common.status", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Inactive", Label = "enums.entityStatus.inactive" },
+                        new() { Value = "Active", Label = "enums.entityStatus.active" },
+                        new() { Value = "Closed", Label = "enums.entityStatus.closed" },
+                        new() { Value = "Draft", Label = "enums.entityStatus.draft" },
+                        new() { Value = "Archived", Label = "enums.entityStatus.archived" }
+                    }
+                },
+                new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+
+                // Partner relationship fields - using translation keys
+                new() { Field = "partner.name", DisplayName = "label.partner.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partner.partnerGroup.name", DisplayName = "label.partnerGroup.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partner.liaisonOffice.name", DisplayName = "label.liaisonOffice.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+            };
+            
+            return fields;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error retrieving contact search fields");
+            return new List<SearchFieldInfo>();
+        }
     }
 }

@@ -124,56 +124,122 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             return manager ?? throw new ArgumentException($"Manager not found or doesn't inherit from BaseUNOPSManager: {fieldName}");
         }
 
-        private string ConvertEntityDataToReadableString(object entityData)
+        private async Task<string> ConvertEntityDataToReadableStringAsync(object entityData, UNOPSAppDbContext dbContext)
         {
             if (entityData == null) return string.Empty;
 
-            var properties = entityData.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            var readableLines = new List<string>();
-
-            foreach (var property in properties)
+            try
             {
-                try
-                {
-                    var value = property.GetValue(entityData);
-                    
-                    // Skip null values, empty collections, and complex navigation properties
-                    if (value == null) continue;
-                    
-                    // Handle different value types
-                    string formattedValue = value switch
-                    {
-                        string str when string.IsNullOrWhiteSpace(str) => null, // Skip empty strings
-                        string str => str,
-                        DateTime dateTime when dateTime == DateTime.MinValue => null, // Skip default dates
-                        DateTime dateTime => dateTime.ToString("yyyy-MM-dd"),
-                        bool boolean => boolean.ToString(),
-                        int number when number == 0 => null, // Skip zero values
-                        int number => number.ToString(),
-                        decimal dec when dec == 0 => null, // Skip zero values  
-                        decimal dec => dec.ToString("0.##"),
-                        Enum enumValue => enumValue.ToString(),
-                        // Skip complex objects and collections
-                        System.Collections.IEnumerable => null,
-                        _ when value.GetType().IsClass && value.GetType() != typeof(string) => null,
-                        _ => value.ToString()
-                    };
+                var properties = entityData.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                var readableLines = new List<string>();
 
-                    // Add to readable format if we have a meaningful value
-                    if (!string.IsNullOrWhiteSpace(formattedValue))
+                foreach (var property in properties)
+                {
+                    try
                     {
-                        // Convert property name from PascalCase to readable format
-                        var readablePropertyName = Regex.Replace(property.Name, "([a-z])([A-Z])", "$1 $2");
-                        readableLines.Add($"{readablePropertyName}: {formattedValue}");
+                        // Skip properties that might cause circular references or complex navigation
+                        if (property.PropertyType.IsClass && 
+                            property.PropertyType != typeof(string) && 
+                            !property.PropertyType.IsValueType &&
+                            !property.PropertyType.IsEnum)
+                        {
+                            continue; // Skip complex objects to avoid circular references
+                        }
+
+                        var value = property.GetValue(entityData);
+                        
+                        // Skip null values, empty collections, and complex navigation properties
+                        if (value == null) continue;
+                        
+                        // Handle different value types with enhanced foreign key resolution
+                        string formattedValue = await ResolvePropertyValueAsync(property, value, dbContext);
+
+                        // Add to readable format if we have a meaningful value
+                        if (!string.IsNullOrWhiteSpace(formattedValue))
+                        {
+                            // Convert property name from PascalCase to readable format
+                            var readablePropertyName = Regex.Replace(property.Name, "([a-z])([A-Z])", "$1 $2");
+                            readableLines.Add($"{readablePropertyName}: {formattedValue}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning($"Error processing property {property.Name}: {ex.Message}");
+                        // Continue processing other properties
                     }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning($"Error processing property {property.Name}: {ex.Message}");
-                }
-            }
 
-            return string.Join("\n", readableLines);
+                return string.Join("\n", readableLines);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in ConvertEntityDataToReadableStringAsync: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        private async Task<string> ResolvePropertyValueAsync(PropertyInfo property, object value, UNOPSAppDbContext dbContext)
+        {
+            try
+            {
+                // Handle different value types
+                string formattedValue = value switch
+                {
+                    string str when string.IsNullOrWhiteSpace(str) => null, // Skip empty strings
+                    string str => str,
+                    DateTime dateTime when dateTime == DateTime.MinValue => null, // Skip default dates
+                    DateTime dateTime => dateTime.ToString("yyyy-MM-dd"),
+                    bool boolean => boolean.ToString(),
+                    int number when number == 0 => null, // Skip zero values
+                    int number => await ResolveIdToNameAsync(property.Name, number, dbContext) ?? number.ToString(),
+                    decimal dec when dec == 0 => null, // Skip zero values  
+                    decimal dec => dec.ToString("0.##"),
+                    Enum enumValue => enumValue.ToString(),
+                    // Skip complex objects and collections
+                    System.Collections.IEnumerable => null,
+                    _ when value.GetType().IsClass && value.GetType() != typeof(string) => null,
+                    _ => value.ToString()
+                };
+
+                return formattedValue;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Error resolving property {property.Name}: {ex.Message}");
+                return value?.ToString();
+            }
+        }
+
+        private async Task<string> ResolveIdToNameAsync(string propertyName, int id, UNOPSAppDbContext dbContext)
+        {
+            try
+            {
+                _logger.LogDebug($"Attempting to resolve {propertyName} ID {id}");
+                
+                // Use the enhanced AiContextualService method that leverages the same mapping strategy
+                // as GetEntityIdFromText but in reverse
+                var contextService = new AiContextualService(_configuration, dbContext, null);
+                var lookupResult = await contextService.GetEntityNameFromId(id, propertyName);
+
+                _logger.LogDebug($"Lookup result for {propertyName} ID {id}: '{lookupResult}'");
+
+                // If we found a name, return "Name (ID)" format for better context
+                if (!string.IsNullOrEmpty(lookupResult))
+                {
+                    var result = $"{lookupResult} (ID: {id})";
+                    _logger.LogDebug($"Returning resolved name: {result}");
+                    return result;
+                }
+
+                _logger.LogDebug($"No name found for {propertyName} ID {id}, returning null");
+                return null; // Return null so the original ID will be used
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"Error resolving {propertyName} ID {id}: {ex.Message}");
+                _logger.LogWarning($"Exception details: {ex}");
+                return null;
+            }
         }
 
         private async Task ProcessEntityMessage(MyPubSubMessage msg, UNOPSAppDbContext dbContext, AiContextualService contextService)
@@ -189,21 +255,25 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 // Get the appropriate UNOPS manager for this entity type
                 var manager = GetUNOPSManagerByEntityName(msg.EntityName);
                 
+                _logger.LogDebug($"Processing entity {msg.EntityName} with ID {msg.EntityId.Value} using manager {manager.GetType().Name}");
+                
                 // Call GetBasicEntityDataAsync to get the entity data
                 var entityData = await manager.GetBasicEntityDataAsync(msg.EntityId.Value);
                 
                 if (entityData != null)
                 {
-                    // Convert entity data to human-readable format for better embeddings
-                    var readableContent = ConvertEntityDataToReadableString(entityData);
+                    _logger.LogDebug($"Successfully retrieved entity data for {msg.EntityName} with ID {msg.EntityId.Value}");
+                    
+                    // Convert entity data to human-readable format with resolved names for better embeddings
+                    var readableContent = await ConvertEntityDataToReadableStringAsync(entityData, dbContext);
                     
                     if (!string.IsNullOrWhiteSpace(readableContent))
                     {
-                        // Generate embedding with human-readable content
+                        // Generate embedding with human-readable content including resolved names
                         await contextService.GenerateEmbeddingAsync(msg.EntityName, msg.EntityId.Value, readableContent);
                         
                         _logger.LogInformation($"Generated embedding for {msg.EntityName} with ID {msg.EntityId.Value}");
-                        _logger.LogDebug($"Embedding content: {readableContent}");
+                        _logger.LogDebug($"Enhanced embedding content with resolved names: {readableContent}");
                         
                         // Add a delay of 1 second after each embedding generation
                         await Task.Delay(1000); // 1 second delay
@@ -222,9 +292,16 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             {
                 _logger.LogWarning($"No manager available for entity {msg.EntityName}: {ex.Message}");
             }
+            catch (NullReferenceException ex)
+            {
+                _logger.LogError($"Null reference exception processing entity {msg.EntityName} with ID {msg.EntityId.Value}: {ex.Message}");
+                _logger.LogError($"Stack trace: {ex.StackTrace}");
+            }
             catch (Exception ex)
             {
                 _logger.LogError($"Error processing entity {msg.EntityName} with ID {msg.EntityId.Value}: {ex.Message}");
+                _logger.LogError($"Exception type: {ex.GetType().Name}");
+                _logger.LogError($"Stack trace: {ex.StackTrace}");
             }
         }
 
@@ -305,7 +382,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                     msg.UserId,
                     msg.EntityName,
                     true, 
-                    progressCallback
+                    progressCallback,
+                    msg.FileId // Pass the Google Sheet ID for identification
                 );
                 
                 // Final update if it wasn't already updated at 100%

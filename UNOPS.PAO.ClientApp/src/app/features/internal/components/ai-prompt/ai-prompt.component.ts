@@ -71,8 +71,8 @@ function underscoreValidator(control: AbstractControl): ValidationErrors | null 
   if (!value) return null;
   
   // Check if the value contains only lowercase letters, numbers, and underscores
-  // and doesn't start or end with underscore
-  const underscorePattern = /^[a-z0-9]+(_[a-z0-9]+)*$/;
+  // Must contain at least one underscore and no other special characters or spaces
+  const underscorePattern = /^[a-z0-9]+(_[a-z0-9]+)+$/;
   
   if (!underscorePattern.test(value)) {
     return { underscoreFormat: true };
@@ -140,6 +140,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   saving = signal(false);
   testing = signal(false);
   upgradingModel = signal(false);
+  exporting = signal(false);
   displayDialog = signal(false);
   totalRecords = signal(0);
   pageSize = signal(10);
@@ -172,7 +173,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       canRead: false,
       canCreate: false,
       canUpdate: false,
-      canDelete: false
+      canDelete: false,
+      canExport: false,
+      canImport: false
     }
   });
   permissionsLoading = signal<boolean>(true);
@@ -201,6 +204,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
 
   // Auto-switch to test data mode when function is not available
   shouldUseTestData = computed(() => !this.showEntityIdOption());
+
+  // Disable test section for new prompts (when currentPrompt is null)
+  isTestSectionDisabled = computed(() => !this.currentPrompt());
 
   // Get max tokens for the selected model
   selectedModelMaxTokens = computed(() => {
@@ -936,6 +942,69 @@ Be extra cautious while deleting as there could be several dependencies within t
           summary: 'Error',
           detail: 'Failed to upgrade Gemini models'
         });
+      }
+    });
+
+    this.subscriptions.add(sub);
+  }
+
+  /**
+   * @uiButton export_ai_prompts_sql
+   * @description Exports all AI prompts as a SQL script file for seeding
+   * @label Export AiPrompt (SQL Script)
+   * @icon pi pi-database
+   * @when_to_use When you need to export AI prompts as SQL scripts for database seeding with configurable PROJECT_ID
+   * @permissions AI_PROMPT_READ
+   */
+  exportAiPromptsAsSql(): void {
+    // Check read permissions
+    const permissions = this.entityPermissions();
+    if (!permissions.permissions.canRead) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Permission Denied',
+        detail: 'You do not have permission to export AI prompts'
+      });
+      return;
+    }
+
+    this.exporting.set(true);
+    
+    const sub = this.aiPromptService.exportAiPromptsAsSql().subscribe({
+      next: (blob) => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        link.download = `05_AiPrompts_${timestamp}.sql`;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Export Complete',
+          detail: 'AI prompts exported successfully as SQL script file'
+        });
+      },
+      error: (error) => {
+        console.error('Error exporting AI prompts as SQL:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Export Failed',
+          detail: 'Failed to export AI prompts as SQL'
+        });
+      },
+      complete: () => {
+        this.exporting.set(false);
       }
     });
 

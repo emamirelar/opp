@@ -1,294 +1,292 @@
 {
   "entity": "SavedFilter",
-  "description": "Manages user-defined saved search configurations, allowing users to store and reuse complex search criteria for various entities.",
+  "description": "Manages saved filters for users.",
   "synonyms": [
-    "FilterPreset",
-    "SearchTemplate",
-    "CustomFilter",
-    "SavedSearch",
-    "UserFilter"
+    "Filter",
+    "Saved Search",
+    "Custom Filter",
+    "Search Template",
+    "Personalized Filter"
   ],
   "mandatoryFields": [
-    "IsAdvancedSearch"
+    "Name",
+    "EntityType"
   ],
+  "baseUrl": "/api/savedfilter",
   "endpoints": [
     {
       "name": "CreateSavedFilter",
-      "url": "api/SavedFilter",
+      "url": "/api/savedfilter",
       "method": "POST",
-      "description": "Creates a new saved filter based on provided criteria. This allows users to store a specific search configuration for future use.",
+      "intent": [
+        "create",
+        "add",
+        "new",
+        "register"
+      ],
+      "description": "Creates a new saved filter.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "request": {
           "type": "object",
-          "required": false,
+          "required": true,
           "description": "Filter creation request",
-          "properties": {
-            "Name": {
-              "type": "string",
-              "required": false,
-              "description": "Name of the saved filter"
-            },
-            "Description": {
-              "type": "string",
-              "required": false,
-              "description": "Description of the saved filter"
-            },
-            "EntityType": {
-              "type": "string",
-              "required": false,
-              "description": "The type of entity this filter applies to (e.g., 'Partner', 'Contact')"
-            },
-            "SearchCriteria": {
-              "type": "string",
-              "required": false,
-              "description": "JSON string representing the advanced search criteria"
-            },
-            "SearchText": {
-              "type": "string",
-              "required": false,
-              "description": "General search text for basic searches"
-            },
-            "IsAdvancedSearch": {
-              "type": "boolean",
-              "required": true,
-              "description": "Indicates if the filter uses advanced search criteria"
-            },
-            "OrderBy": {
-              "type": "string",
-              "required": false,
-              "description": "Field to order results by"
-            },
-            "Ascending": {
-              "type": "boolean",
-              "required": false,
-              "description": "Order direction (true for ascending, false for descending)"
-            }
-          }
+          "default": null
         }
       },
-      "example_uses": [
-        "Create a new saved filter named 'My Partner Filter' for partners, with specific criteria.",
-        "Save a complex search for 'Active Projects' that includes multiple conditions.",
-        "Can you create a saved filter for me that searches for contacts in 'New York' and is marked as advanced search?",
-        "I want to save a filter for all 'High Priority' tasks.",
-        "Please create a saved filter for all 'Open' cases, ordered by 'CreationDate' ascending."
+      "exampleBody": {
+        "Name": "My Opportunities",
+        "Description": "Opportunities I am tracking",
+        "EntityType": "Opportunity",
+        "SearchCriteria": "{\"Stage\":\"Closing\",\"Probability\":\">75\"}",
+        "SearchText": null,
+        "IsAdvancedSearch": true,
+        "OrderBy": "CloseDate",
+        "Ascending": false
+      },
+      "exampleUrl": null,
+      "requiredFields": [
+        "IsAdvancedSearch"
       ],
-      "when_to_use": "When you want to save a specific search configuration, including advanced criteria, for future reuse across different entity types."
+      "example_uses": [
+        "Create a saved filter named 'My Opportunities' for opportunities in the closing stage."
+      ],
+      "when_to_use": "When a user wants to save a specific filter configuration for later use.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
     },
     {
       "name": "UpdateSavedFilter",
-      "url": "api/SavedFilter",
+      "url": "/api/savedfilter",
       "method": "PUT",
-      "description": "Updates an existing saved filter identified by its ID. This allows modification of its name, description, or search criteria.",
+      "intent": [
+        "update",
+        "modify",
+        "edit",
+        "change"
+      ],
+      "description": "Updates an existing saved filter.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
       "parameters": {
         "request": {
           "type": "object",
-          "required": false,
+          "required": true,
           "description": "Filter update request",
-          "properties": {
-            "Id": {
-              "type": "integer",
-              "required": true,
-              "description": "Unique identifier of the saved filter to update"
-            },
-            "Name": {
-              "type": "string",
-              "required": false,
-              "description": "New name for the saved filter"
-            },
-            "Description": {
-              "type": "string",
-              "required": false,
-              "description": "New description for the saved filter"
-            },
-            "SearchCriteria": {
-              "type": "string",
-              "required": false,
-              "description": "Updated JSON string representing the advanced search criteria"
-            },
-            "SearchText": {
-              "type": "string",
-              "required": false,
-              "description": "Updated general search text for basic searches"
-            },
-            "IsAdvancedSearch": {
-              "type": "boolean",
-              "required": true,
-              "description": "Indicates if the filter uses advanced search criteria"
-            },
-            "OrderBy": {
-              "type": "string",
-              "required": false,
-              "description": "New field to order results by"
-            },
-            "Ascending": {
-              "type": "boolean",
-              "required": false,
-              "description": "New order direction (true for ascending, false for descending)"
-            }
-          }
+          "default": null
         }
       },
-      "example_uses": [
-        "Update the saved filter with ID 123 to change its name to 'Archived Projects'.",
-        "Modify the search criteria of filter 456 to include a new condition.",
-        "Can you update saved filter 789 to change its description?",
-        "I need to update the saved filter 'My Contacts' to sort by 'LastName' ascending.",
-        "Please update filter 101 to use advanced search and provide new search criteria."
+      "exampleBody": {
+        "Id": 123,
+        "Name": "Updated Opportunities",
+        "Description": "Updated description",
+        "SearchCriteria": "{\"Stage\":\"Closing\"}",
+        "SearchText": null,
+        "IsAdvancedSearch": true,
+        "OrderBy": "CloseDate",
+        "Ascending": false
+      },
+      "exampleUrl": null,
+      "requiredFields": [
+        "Id",
+        "IsAdvancedSearch"
       ],
-      "when_to_use": "When you need to modify the details or search criteria of an already saved filter."
+      "example_uses": [
+        "Update the saved filter with ID 123 to change the description."
+      ],
+      "when_to_use": "When a user wants to modify an existing saved filter.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
     },
     {
       "name": "DeleteSavedFilter",
-      "url": "api/SavedFilter/{id}",
+      "url": "/api/savedfilter/{id}",
       "method": "DELETE",
-      "description": "Deletes a saved filter by its unique identifier. This action is irreversible.",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "The unique ID of the saved filter to delete"
-        }
-      },
-      "example_uses": [
-        "Delete the saved filter with ID 123.",
-        "Remove the 'Old Tasks' saved filter.",
-        "Can you delete saved filter 789?",
-        "I want to delete the filter I created yesterday.",
-        "Please remove the saved filter with ID 555."
+      "intent": [
+        "delete",
+        "remove",
+        "destroy"
       ],
-      "when_to_use": "When a saved filter is no longer needed and should be permanently removed."
+      "description": "Deletes a saved filter by ID.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/savedfilter/123",
+      "requiredFields": [],
+      "example_uses": [
+        "Delete saved filter with ID 123."
+      ],
+      "when_to_use": "When a user wants to remove a saved filter.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetSavedFilter",
-      "url": "api/SavedFilter/{id}",
+      "url": "/api/savedfilter/{id}",
       "method": "GET",
-      "description": "Retrieves the details of a specific saved filter by its ID.",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "The unique ID of the saved filter to retrieve"
-        }
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
+      ],
+      "description": "Retrieves a specific saved filter by ID.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
       },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/savedfilter/123",
+      "requiredFields": [],
       "example_uses": [
         "Get the details of saved filter with ID 123.",
-        "Retrieve the configuration for the 'My Partner Filter'.",
-        "Can you show me the details of saved filter 789?",
-        "I need to see the criteria for filter 101.",
-        "Please fetch the saved filter with ID 222."
+        "Show me saved filter 123."
       ],
-      "when_to_use": "When you need to view the configuration and details of a particular saved filter."
+      "when_to_use": "When a user wants to view the details of a specific saved filter.",
+      "scoring": {
+        "searchBonus": 10,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     },
     {
       "name": "GetSavedFilters",
-      "url": "api/SavedFilter",
+      "url": "/api/savedfilter?EntityType={entityType}&SearchText={searchText}&OrderBy={orderBy}&Ascending={ascending}&PageIndex={pageIndex}&PageSize={pageSize}",
       "method": "GET",
-      "description": "Retrieves a paginated list of saved filters for the current user, with optional filtering by entity type or search text. This endpoint supports basic search capabilities for saved filters themselves.",
-      "parameters": {
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Search and pagination parameters for saved filters",
-          "properties": {
-            "EntityType": {
-              "type": "string",
-              "required": false,
-              "description": "Filter saved filters by the entity type they apply to (e.g., 'Partner', 'Contact')"
-            },
-            "SearchText": {
-              "type": "string",
-              "required": false,
-              "description": "General text to search within saved filter names or descriptions"
-            },
-            "OrderBy": {
-              "type": "string",
-              "required": false,
-              "description": "Field to order the list of saved filters by (e.g., 'Name', 'CreationDate')"
-            },
-            "Ascending": {
-              "type": "boolean",
-              "required": false,
-              "description": "Order direction (true for ascending, false for descending)"
-            },
-            "Direction": {
-              "type": "boolean",
-              "required": false,
-              "description": "Alternative order direction parameter (true for ascending, false for descending)"
-            },
-            "PageIndex": {
-              "type": "integer",
-              "required": true,
-              "description": "The page number to retrieve (1-based index)"
-            },
-            "PageSize": {
-              "type": "integer",
-              "required": true,
-              "description": "The number of items per page"
-            }
-          }
-        }
-      },
-      "example_uses": [
-        "List all saved filters for the current user.",
-        "Find saved filters related to 'Partner' entities.",
-        "Show me all saved filters that contain 'project' in their name or description, paginated.",
-        "Get the second page of saved filters, with 10 items per page, ordered by name.",
-        "Can you list all saved filters for 'Contact' entity type, sorted by creation date descending?"
+      "intent": [
+        "list",
+        "get",
+        "browse",
+        "show"
       ],
-      "when_to_use": "When you want to list all saved filters or search for them by entity type or text, with pagination."
+      "description": "Retrieves a list of saved filters with optional filtering and pagination.",
+      "searchCapability": {
+        "type": "simple",
+        "searchFields": [
+          "Name",
+          "Description",
+          "EntityType"
+        ],
+        "supportsPagination": true,
+        "supportsSort": true
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/savedfilter?PageIndex=1&PageSize=20",
+      "requiredFields": [],
+      "example_uses": [
+        "List all saved filters.",
+        "Show me saved filters for opportunities.",
+        "Get saved filters, page 2, 10 per page."
+      ],
+      "when_to_use": "When a user wants to browse or search for saved filters.",
+      "scoring": {
+        "searchBonus": 20,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
     },
     {
       "name": "ApplySavedFilter",
-      "url": "api/SavedFilter/{id}/apply",
+      "url": "/api/savedfilter/{id}/apply?pageIndex={pageIndex}&pageSize={pageSize}",
       "method": "GET",
-      "description": "Applies a saved filter by its ID and returns the corresponding search request object (e.g., for a 'Partner' entity search) that can then be used with the actual search endpoint for that entity. This allows for advanced, pre-defined search criteria to be loaded and executed. Pagination parameters can be overridden.",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "The unique ID of the saved filter to apply"
-        },
-        "pageIndex": {
-          "type": "integer",
-          "required": false,
-          "description": "Optional page index to override the saved filter's pagination settings (default: 1)"
-        },
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Optional page size to override the saved filter's pagination settings (default: 10)"
-        }
-      },
-      "example_uses": [
-        "Apply saved filter with ID 123 and get the search request object.",
-        "Retrieve the search criteria defined in 'My Complex Partner Search' filter.",
-        "Can you apply saved filter 456 and give me the request object, overriding page size to 20?",
-        "I need the search parameters from filter 789 to use in another query.",
-        "Please apply the filter 'All Active Users' and return the configured search request."
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
       ],
-      "when_to_use": "When you want to retrieve the full search criteria and parameters defined within a saved filter, to then apply it to another entity's search endpoint."
+      "description": "Applies a saved filter and returns the configured filter request object.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/savedfilter/123/apply?pageIndex=1&pageSize=10",
+      "requiredFields": [],
+      "example_uses": [
+        "Apply saved filter with ID 123.",
+        "Get the filter request for saved filter 123."
+      ],
+      "when_to_use": "When a user wants to apply a saved filter and retrieve the corresponding filter request.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "medium"
+      }
     },
     {
       "name": "GetFilterStatistics",
-      "url": "api/SavedFilter/statistics",
+      "url": "/api/savedfilter/statistics?entityType={entityType}",
       "method": "GET",
-      "description": "Retrieves usage statistics for saved filters, optionally filtered by entity type. This can provide insights into which filters are most frequently used.",
-      "parameters": {
-        "entityType": {
-          "type": "string",
-          "required": false,
-          "description": "Optional entity type to filter statistics (e.g., 'Partner', 'Contact')"
-        }
-      },
-      "example_uses": [
-        "Get overall usage statistics for all saved filters.",
-        "Show me the usage statistics for saved filters related to 'Partner' entities.",
-        "Can you provide statistics on how often filters for 'Projects' are used?",
-        "I need to see the most popular saved filters.",
-        "Please get the statistics for saved filters, specifically for the 'Interaction' entity type."
+      "intent": [
+        "get",
+        "retrieve",
+        "show",
+        "details"
       ],
-      "when_to_use": "When you need to see statistics or trends related to the usage of saved filters."
+      "description": "Retrieves usage statistics for saved filters, optionally filtered by entity type.",
+      "searchCapability": {
+        "type": "none",
+        "searchFields": [],
+        "supportsPagination": false,
+        "supportsSort": false
+      },
+      "parameters": {},
+      "exampleBody": {},
+      "exampleUrl": "/api/savedfilter/statistics?entityType=Opportunity",
+      "requiredFields": [],
+      "example_uses": [
+        "Get statistics for saved filters.",
+        "Show me statistics for opportunity saved filters."
+      ],
+      "when_to_use": "When a user wants to view usage statistics for saved filters.",
+      "scoring": {
+        "searchBonus": 0,
+        "intentMatch": 100,
+        "complexity": "simple"
+      }
     }
-  ]
+  ],
+  "commonPatterns": {
+    "pagination": {
+      "pageIndex": "1-based page number (default: 1)",
+      "pageSize": "items per page (default: 20)",
+      "orderBy": "field name for sorting",
+      "ascending": "sort direction boolean"
+    },
+    "search": {
+      "simple": "use GetSavedFilters with searchText parameter",
+      "advanced": "use GetSavedFilters with SearchCriteria JSON array"
+    }
+  }
 }
