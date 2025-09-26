@@ -26,8 +26,9 @@ from google.adk.tools.agent_tool import AgentTool
 from google.adk.planners import BuiltInPlanner
 from google.genai import types
 from google.adk.tools import google_search
+from typing import Optional
+from google.adk.tools.tool_context import ToolContext
 
-from .tools.invoke_app_api_tool import invoke_api_tool
 from .tools.search_corp_vector_store_tool import search_corp_vector_store
 
 # Load entities metadata
@@ -148,8 +149,6 @@ def format_entities_metadata_as_markdown(metadata):
     result = result.replace("{", "[").replace("}", "]")
     return result
 
-from typing import Optional
-from google.adk.tools.tool_context import ToolContext
 
 def prepare_api_url(url: str) -> str:
     """
