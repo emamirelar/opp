@@ -42,7 +42,7 @@ environments:
     ai_min_instances: "1"
     ai_max_instances: "10"
     ai_memory: "2Gi"
-
+    
   development:
     branch_pattern: "^development$"
     environment: "QA"
