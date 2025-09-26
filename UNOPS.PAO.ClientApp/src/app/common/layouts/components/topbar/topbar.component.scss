@@ -521,6 +521,18 @@
         transform: translateY(2px) !important;
       }
     }
+    
+    // Enhanced styling when filters are active
+    &.filters-active {
+      .p-button {
+        background-color: var(--unops-primary) !important;
+        color: white !important;
+        
+        &:hover {
+          background-color: var(--unops-primary-dark) !important;
+        }
+      }
+    }
   }
   
   // Notifications Button

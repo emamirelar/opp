@@ -20,6 +20,7 @@ import { GlobalFilterService } from '../../../../services/global-filter.service'
 import { UserPreferenceService, GlobalFilters } from '../../../../services/user-preference.service';
 import { OrganizationHierarchyService } from '../../../../services/organization-hierarchy.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
+import { GlobalFiltersDialogService } from '../../../../services/global-filters-dialog.service';
 
 /**
  * @uiEntity SearchResult
@@ -200,6 +201,7 @@ export class SearchResultComponent implements OnInit {
   private userPreferenceService = inject(UserPreferenceService);
   private organizationHierarchyService = inject(OrganizationHierarchyService);
   private authService = inject(AuthService);
+  private globalFiltersDialogService = inject(GlobalFiltersDialogService);
   private destroy$ = new Subject<void>();
 
   searchQuery = signal<string>('');
@@ -660,6 +662,11 @@ export class SearchResultComponent implements OnInit {
     } else if (this.activeTabKey === 'interactions') {
       this.router.navigate(['/partnerships/interactions', result.id]);
     }
+  }
+
+  // Open global filters dialog
+  openGlobalFiltersDialog(): void {
+    this.globalFiltersDialogService.openDialog();
   }
 
   // Optimized metadata helper methods with memoization

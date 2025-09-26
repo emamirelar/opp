@@ -51,6 +51,11 @@ public class GlobalFilters
     /// User's theme preference (e.g., "light", "dark")
     /// </summary>
     public string Theme { get; set; } = "light";
+
+    /// <summary>
+    /// Activity timeframe selection (e.g., "all", "last30days", "last90days", "thisyear", "custom")
+    /// </summary>
+    public string? ActivityTimeframe { get; set; } = "all";
 }
 
 public class UserPreference : ModifiableDeletableEntity

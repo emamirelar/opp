@@ -5,101 +5,120 @@
   [draggable]="false"
   [resizable]="false"
   styleClass="global-filters-dialog"
-  [style]="{ width: 'min(500px, 95vw)' }"
+  [style]="{ width: 'min(600px, 95vw)' }"
   header="Global Filters">
 
-  <div class="filters-container">
+  <div class="filter-explanation">
+    <p class="help-text">
+      <i class="pi pi-info-circle"></i>
+      These filters apply across all data types (Partners, Contacts, Interactions, Engagements).
+      Use them to focus on specific organizational areas or activity periods.
+    </p>
+  </div>
+
+  <!-- Loading indicator -->
+  <div *ngIf="loading" class="loading-container">
+    <i class="pi pi-spinner pi-spin"></i>
+    <span>Loading current filters...</span>
+  </div>
+
+  <div class="filters-container" *ngIf="!loading">
     
-    <!-- Organization Unit Section -->
-    <div class="filter-section org-unit-section">
+    <!-- ORGANIZATIONAL SCOPE -->
+    <div class="filter-section org-scope-section">
       <div class="section-header">
         <i class="pi pi-building section-icon"></i>
-        <h3 class="section-title">Organization Unit</h3>
+        <h3 class="section-title">Organizational Scope</h3>
       </div>
+      <p class="section-help">Show data from specific organizational units</p>
       <div class="section-content">
-        <app-org-unit-selector 
-          [preselectedOrgUnitId]="selectedOrgUnitId"
-          (orgUnitSelected)="onOrgUnitSelected($event)"
-          class="org-unit-selector">
-        </app-org-unit-selector>
+        <div class="field">
+          <label class="field-label">Organization Unit</label>
+          <app-org-unit-selector 
+            [preselectedOrgUnitId]="selectedOrgUnitId"
+            (orgUnitSelected)="onOrgUnitSelected($event)"
+            class="org-unit-selector"
+            [attr.data-key]="orgUnitSelectorKey">
+          </app-org-unit-selector>
+          <small class="field-help">Leave empty to see data from all organizational units</small>
+        </div>
       </div>
     </div>
 
-    <!-- Related to Me Section -->
-    <div class="filter-section related-section">
+    <!-- PERSONAL SCOPE -->
+    <div class="filter-section personal-scope-section">
       <div class="section-header">
         <i class="pi pi-user section-icon"></i>
-        <h3 class="section-title">My Involvement</h3>
+        <h3 class="section-title">Personal Scope</h3>
       </div>
+      <p class="section-help">Focus on your own work and contributions</p>
       <div class="section-content">
-        <div class="toggle-wrapper">
+        <div class="field-checkbox">
           <p-checkbox 
             [(ngModel)]="relatedToMe" 
             [binary]="true" 
             inputId="relatedToMe"
             class="modern-checkbox" />
-          <label for="relatedToMe" class="toggle-label">
-            <span class="label-text">Related to Me</span>
-            <span class="label-description">Show records I created or updated</span>
+          <label for="relatedToMe" class="checkbox-label">
+            <span class="label-text">Show only items I created or modified</span>
+            <small class="label-help">Filters all data to show only records you've worked on</small>
           </label>
         </div>
       </div>
     </div>
 
-    <!-- Date Section -->
-    <div class="filter-section date-section">
+    <!-- ACTIVITY TIMEFRAME -->
+    <div class="filter-section timeframe-section" *ngIf="showTimeframeFilter">
       <div class="section-header">
         <i class="pi pi-calendar section-icon"></i>
-        <h3 class="section-title">Date Filter</h3>
-        <div class="date-mode-toggle">
-          <p-button 
-            [label]="dateRange ? 'Range' : 'Single'"
-            [outlined]="true"
-            size="small"
-            severity="secondary"
-            (onClick)="dateRange = !dateRange; onDateRangeChange()"
-            class="mode-toggle-btn">
-          </p-button>
-        </div>
+        <h3 class="section-title">Activity Timeframe</h3>
       </div>
-      
+      <p class="section-help">Focus on recent activity across all data types</p>
       <div class="section-content">
-        <!-- Single Date Mode -->
-        <div *ngIf="!dateRange" class="date-single-mode">
-          <div class="date-input-group">
-            <label class="input-label">Date</label>
-            <p-calendar 
-              [(ngModel)]="dateOn"
-              [showIcon]="true"
-              placeholder="Select date"
-              dateFormat="dd/mm/yy"
-              class="modern-calendar"
-              [style]="{ width: '100%' }" />
-          </div>
+        <div class="field">
+          <label class="field-label">Show activity from</label>
+          <p-dropdown 
+            [(ngModel)]="activityTimeframe"
+            [options]="timeframeOptions"
+            placeholder="All time"
+            optionLabel="label"
+            optionValue="value"
+            class="timeframe-dropdown"
+            [showClear]="false"
+            [style]="{ width: '100%' }"
+            styleClass="w-full"
+            appendTo="body"
+            [autoZIndex]="true"
+            [baseZIndex]="10000">
+            <ng-template pTemplate="dropdownicon">
+              <i class="pi pi-chevron-down"></i>
+            </ng-template>
+          </p-dropdown>
         </div>
         
-        <!-- Range Date Mode -->
-        <div *ngIf="dateRange" class="date-range-mode">
+        <div class="custom-date-range" *ngIf="activityTimeframe === 'custom'">
           <div class="date-range-grid">
-            <div class="date-input-group">
-              <label class="input-label">From</label>
+            <div class="field">
+              <label class="field-label">From</label>
               <p-calendar 
-                [(ngModel)]="dateFrom"
+                [(ngModel)]="customStartDate"
                 [showIcon]="true"
                 placeholder="Start date"
                 dateFormat="dd/mm/yy"
                 class="modern-calendar"
-                [style]="{ width: '100%' }" />
+                [style]="{ width: '100%' }">
+              </p-calendar>
             </div>
-            <div class="date-input-group">
-              <label class="input-label">To</label>
+            <div class="field">
+              <label class="field-label">To</label>
               <p-calendar 
-                [(ngModel)]="dateTo"
+                [(ngModel)]="customEndDate"
                 [showIcon]="true"
                 placeholder="End date"
                 dateFormat="dd/mm/yy"
                 class="modern-calendar"
-                [style]="{ width: '100%' }" />
+                [style]="{ width: '100%' }">
+              </p-calendar>
             </div>
           </div>
         </div>
@@ -112,7 +131,7 @@
     <div class="dialog-footer">
       <div class="action-buttons">
         <p-button 
-          label="Reset"
+          label="Reset to All Data"
           icon="pi pi-refresh"
           severity="secondary"
           [outlined]="true"

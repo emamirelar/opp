@@ -10,8 +10,8 @@
     <ng-template pTemplate="content">
       <div class="flex items-center gap-2">
         <i class="pi pi-building"></i>
-        <span class="truncate max-w-[200px] " [title]="selectedOrgUnit?.name">
-          {{ selectedOrgUnit?.name }}
+        <span class="truncate max-w-[200px] " [title]="selectedOrgUnit?.name || 'All organizational units'">
+          {{ selectedOrgUnit?.name || 'All organizational units' }}
         </span>
       </div>
     </ng-template>

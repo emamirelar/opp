@@ -14,7 +14,12 @@
              
              <!-- Global Filter Information -->
              @if(isGlobalFilterActive() && activeFilterLabels().length > 0) {
-               <div class="flex items-center space-x-2 px-3 py-2 rounded-lg" style="background-color: color-mix(in srgb, var(--p-primary-color) 10%, transparent); border: 1px solid color-mix(in srgb, var(--p-primary-color) 30%, transparent);">
+               <button 
+                 type="button"
+                 (click)="openGlobalFiltersDialog()"
+                 class="flex items-center space-x-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md border"
+                 style="background-color: color-mix(in srgb, var(--p-primary-color) 10%, transparent); border-color: color-mix(in srgb, var(--p-primary-color) 30%, transparent);"
+                 [title]="'Click to modify global filters'">
                  <i class="pi pi-filter text-sm" style="color: color-mix(in srgb, var(--p-primary-color) calc(100% * var(--tw-text-opacity, 1)), transparent);"></i>
                  <span class="text-xs md:text-sm" style="color: color-mix(in srgb, var(--p-primary-color) 90%, transparent); font-weight: 500;">
                    {{ 'search.filteredBy' | translate }}: 
@@ -22,7 +27,8 @@
                      <span>{{ label }}@if(!isLast) {<span>, </span>}</span>
                    }
                  </span>
-               </div>
+                 <i class="pi pi-external-link text-xs ml-1" style="color: color-mix(in srgb, var(--p-primary-color) 70%, transparent);"></i>
+               </button>
              }
            </div>
          }

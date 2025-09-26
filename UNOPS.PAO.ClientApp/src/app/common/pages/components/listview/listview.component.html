@@ -4,7 +4,11 @@
 
   <!-- Global Filter Information -->
   @if(isGlobalFilterActive() && activeFilterLabels().length > 0) {
-    <div class="flex items-center space-x-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+    <button 
+      type="button"
+      (click)="openGlobalFiltersDialog()"
+      class="flex items-center space-x-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer transition-all duration-200 hover:bg-blue-100 hover:shadow-md"
+      [title]="'Click to modify global filters'">
       <i class="pi pi-filter text-blue-600"></i>
       <span class="text-blue-700 font-medium">
         {{ 'search.filteredBy' | translate }}: 
@@ -12,7 +16,8 @@
           <span>{{ label }}@if(!isLast) {<span>, </span>}</span>
         }
       </span>
-    </div>
+      <i class="pi pi-external-link text-xs ml-1 text-blue-500"></i>
+    </button>
   }
 
   <!-- Search bar -->

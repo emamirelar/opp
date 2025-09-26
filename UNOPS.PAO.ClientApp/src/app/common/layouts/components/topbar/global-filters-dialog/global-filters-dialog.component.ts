@@ -5,6 +5,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { CalendarModule } from 'primeng/calendar';
+import { DropdownModule } from 'primeng/dropdown';
 import { UserPreferenceService } from '../../../../../services/user-preference.service';
 import { AuthService } from '../../../../../essentials/services/auth.service';
 import { GlobalFilterService } from '../../../../../services/global-filter.service';
@@ -20,6 +21,7 @@ import { OrgUnitSelectorComponent } from '../org-unit-selector/org-unit-selector
     ButtonModule,
     CheckboxModule,
     CalendarModule,
+    DropdownModule,
     OrgUnitSelectorComponent
   ],
   templateUrl: './global-filters-dialog.component.html',
@@ -35,20 +37,33 @@ export class GlobalFiltersDialogComponent implements OnInit {
   currentUserId = '';
   saving = false;
   resetting = false;
+  loading = false;
   
-  // Org unit property
+  // CROSS-SECTIONAL FILTERS (Apply to ALL data)
+  
+  // 1. ORGANIZATIONAL SCOPE
   selectedOrgUnitId: number | null = null;
   
-  // Simplified toggle properties
+  // 2. PERSONAL SCOPE  
   relatedToMe = false;
-
-  // Simplified date mode properties
-  dateRange = false;
-
-  // Simplified date properties
-  dateOn: Date | null = null;
-  dateFrom: Date | null = null;
-  dateTo: Date | null = null;
+  
+  // 3. ACTIVITY TIMEFRAME
+  activityTimeframe: 'all' | 'last30days' | 'last90days' | 'thisyear' | 'custom' = 'all';
+  customStartDate: Date | null = null;
+  customEndDate: Date | null = null;
+  showTimeframeFilter = true; // Can be set to false to hide this section
+  
+  // Force re-render key for org unit selector
+  orgUnitSelectorKey = 0;
+  
+  // Timeframe options for dropdown
+  timeframeOptions = [
+    { label: 'All time', value: 'all' },
+    { label: 'Last 30 days', value: 'last30days' },
+    { label: 'Last 90 days', value: 'last90days' },
+    { label: 'This year', value: 'thisyear' },
+    { label: 'Custom date range', value: 'custom' }
+  ];
 
   ngOnInit() {
     this.loadCurrentUser();
@@ -68,8 +83,26 @@ export class GlobalFiltersDialogComponent implements OnInit {
 
   async show() {
     this.visible = true;
-    await this.loadFilters();
-    await this.syncGlobalFilterService();
+    this.loading = true;
+    
+    // Initial change detection to show loading state
+    this.cdr.detectChanges();
+    
+    try {
+      // Always reload filters fresh from backend when opening dialog
+      await this.forceReloadFilters();
+      await this.syncGlobalFilterService();
+      
+      // Small delay to ensure org unit selector has processed the changes
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+    } catch (error) {
+      console.error('Error showing global filters dialog:', error);
+    } finally {
+      this.loading = false;
+      // Use markForCheck instead of detectChanges to be less aggressive
+      this.cdr.markForCheck();
+    }
   }
 
   hide() {
@@ -90,13 +123,8 @@ export class GlobalFiltersDialogComponent implements OnInit {
         // Load toggles
         this.relatedToMe = filters.relatedToMe || false;
 
-        // Load dates
-        this.dateOn = filters.dateOn ? new Date(filters.dateOn) : null;
-        this.dateFrom = filters.dateFrom ? new Date(filters.dateFrom) : null;
-        this.dateTo = filters.dateTo ? new Date(filters.dateTo) : null;
-        
-        // Set date range checkbox based on whether we have dateFrom (range) or dateOn (single)
-        this.dateRange = !!(filters.dateFrom && filters.dateTo) && !filters.dateOn;
+        // Load timeframe filters - convert from old date format to new timeframe format
+        this.convertLegacyDateFiltersToTimeframe(filters);
         
         // Trigger change detection after updating the values
         this.cdr.markForCheck();
@@ -112,11 +140,115 @@ export class GlobalFiltersDialogComponent implements OnInit {
       
       // Reset other filters to defaults on error
       this.relatedToMe = false;
-      this.dateRange = false;
-      this.dateOn = null;
-      this.dateFrom = null;
-      this.dateTo = null;
+      this.activityTimeframe = 'all';
+      this.customStartDate = null;
+      this.customEndDate = null;
       this.cdr.markForCheck();
+    }
+  }
+
+  // Force reload filters fresh from backend (bypassing any caching)
+  private async forceReloadFilters() {
+    if (!this.currentUserId) return;
+
+    try {
+      // Reset local state first to ensure clean slate
+      this.selectedOrgUnitId = null;
+      this.relatedToMe = false;
+      this.activityTimeframe = 'all';
+      this.customStartDate = null;
+      this.customEndDate = null;
+      
+      // Increment key to force org unit selector re-render
+      this.orgUnitSelectorKey++;
+      
+      // Now fetch fresh filters from backend
+      const filters = await this.userPreferenceService.getGlobalFilters(this.currentUserId).toPromise();
+      
+      if (filters) {
+        // Load org unit - don't default to user's org unit, start with null (show everything)
+        this.selectedOrgUnitId = filters.orgUnitId || null;
+        
+        // Load toggles
+        this.relatedToMe = filters.relatedToMe || false;
+
+        // Load timeframe filters - convert from old date format to new timeframe format
+        this.convertLegacyDateFiltersToTimeframe(filters);
+        
+      }
+      
+    } catch (error) {
+      console.error('Error force reloading filters:', error);
+      // On error, ensure we have clean defaults
+      this.selectedOrgUnitId = null;
+      this.relatedToMe = false;
+      this.activityTimeframe = 'all';
+      this.customStartDate = null;
+      this.customEndDate = null;
+      this.orgUnitSelectorKey++;
+    }
+  }
+
+  // Convert legacy date filters to new timeframe format
+  private convertLegacyDateFiltersToTimeframe(filters: any) {
+    // If we have the new timeframe format, use it directly (don't guess!)
+    if (filters.activityTimeframe) {
+      this.activityTimeframe = filters.activityTimeframe;
+      
+      // For custom timeframe, load the custom dates
+      if (filters.activityTimeframe === 'custom') {
+        this.customStartDate = filters.dateFrom ? new Date(filters.dateFrom) : null;
+        this.customEndDate = filters.dateTo ? new Date(filters.dateTo) : null;
+      } else {
+        // Clear custom dates for non-custom timeframes
+        this.customStartDate = null;
+        this.customEndDate = null;
+      }
+      return;
+    }
+
+    // Legacy conversion (only when no activityTimeframe is stored)
+    const now = new Date();
+    const dateOn = filters.dateOn ? new Date(filters.dateOn) : null;
+    const dateFrom = filters.dateFrom ? new Date(filters.dateFrom) : null;
+    const dateTo = filters.dateTo ? new Date(filters.dateTo) : null;
+
+    // Reset to defaults
+    this.activityTimeframe = 'all';
+    this.customStartDate = null;
+    this.customEndDate = null;
+
+    // Only do pattern matching for legacy data (when activityTimeframe is not set)
+    if (dateFrom && dateTo) {
+      const daysDiff = Math.ceil((dateTo.getTime() - dateFrom.getTime()) / (1000 * 60 * 60 * 24));
+      const currentYear = now.getFullYear();
+      
+      // Check if it matches "This Year" pattern (January 1st to current date in same year)
+      if (dateFrom.getFullYear() === currentYear && 
+          dateFrom.getMonth() === 0 && 
+          dateFrom.getDate() === 1 &&
+          dateTo.getFullYear() === currentYear) {
+        this.activityTimeframe = 'thisyear';
+      }
+      // Check for last 30 days pattern (28-32 days to account for different months)
+      else if (daysDiff >= 28 && daysDiff <= 32) {
+        this.activityTimeframe = 'last30days';
+      } 
+      // Check for last 90 days pattern (85-95 days to account for different months)
+      else if (daysDiff >= 85 && daysDiff <= 95) {
+        this.activityTimeframe = 'last90days';
+      } 
+      // Everything else is custom
+      else {
+        this.activityTimeframe = 'custom';
+        this.customStartDate = dateFrom;
+        this.customEndDate = dateTo;
+      }
+    } else if (dateOn) {
+      // Single date - convert to custom range
+      this.activityTimeframe = 'custom';
+      this.customStartDate = dateOn;
+      this.customEndDate = dateOn;
     }
   }
 
@@ -146,68 +278,46 @@ export class GlobalFiltersDialogComponent implements OnInit {
     this.saving = true;
     
     try {
-      // Prepare the filter data
+      // Prepare the filter data with new timeframe approach
       const filters: any = {
         orgUnitId: this.selectedOrgUnitId,
         relatedToMe: this.relatedToMe,
+        activityTimeframe: this.activityTimeframe, // Send the actual timeframe selection
+        customStartDate: null,
+        customEndDate: null,
+        // Legacy fields for backward compatibility
         dateOn: null,
         dateFrom: null,
         dateTo: null
       };
 
-      // Handle date - single date or range mode
-      if (!this.dateRange && this.dateOn) {
-        // Single date mode - use dateOn field
-        filters.dateOn = this.formatDateForAPI(this.dateOn);
-      } else if (this.dateRange && this.dateFrom) {
-        // Range mode - use dateFrom and dateTo fields
-        filters.dateFrom = this.formatDateForAPI(this.dateFrom);
+      // Handle timeframe conversion to date ranges for backend
+      const dateRange = this.convertTimeframeToDateRange();
+      if (dateRange) {
+        filters.customStartDate = dateRange.startDate ? this.formatDateForAPI(dateRange.startDate) : null;
+        filters.customEndDate = dateRange.endDate ? this.formatDateForAPI(dateRange.endDate) : null;
         
-        if (this.dateTo) {
-          // Range mode: use the specified end date
-          filters.dateTo = this.formatDateForAPI(this.getEndOfDay(this.dateTo));
-        } else {
-          // Range mode but no end date: set end date to end of start date
-          filters.dateTo = this.formatDateForAPI(this.getEndOfDay(this.dateFrom));
-        }
+        // Also populate legacy fields for backward compatibility
+        filters.dateFrom = filters.customStartDate;
+        filters.dateTo = filters.customEndDate;
       }
 
       // Save the filters (backend will fallback to user's default org unit if orgUnitId is null)
-      console.log('Starting save operation...');
       await this.userPreferenceService.updateGlobalFilters(this.currentUserId, filters).toPromise();
-      console.log('Save operation completed successfully');
       
-      // Use setTimeout to ensure the save operation is fully processed before closing
-      setTimeout(() => {
-        console.log('Clearing loading state and closing dialog...');
-        // Clear loading state 
-        this.saving = false;
-        this.cdr.detectChanges(); // Force change detection for loading state
-        
-        // Close dialog
-        this.visible = false;
-        this.cdr.detectChanges(); // Force change detection for dialog visibility
-        
-        console.log('Dialog should be closed now, starting sync operations...');
-        
-        // After dialog is closed, sync with GlobalFilterService and trigger data refresh
-        setTimeout(() => {
-          try {
-            // Sync with GlobalFilterService to ensure consistency
-            if (this.selectedOrgUnitId !== this.globalFilterService.getSelectedOrgUnitId()) {
-              this.globalFilterService.setSelectedOrgUnitId(this.selectedOrgUnitId);
-            }
-            
-            // Trigger update to reload data across the app
-            this.triggerDataReload();
-            console.log('Sync operations completed');
-          } catch (syncError) {
-            // If sync/refresh fails, log it but don't show error to user since save was successful
-            console.warn('Filter sync/refresh failed after successful save:', syncError);
-          }
-        }, 50);
-        
-      }, 10); // Small delay to ensure save is fully processed
+      // Clear loading state and close dialog immediately
+      this.saving = false;
+      
+      // Sync with GlobalFilterService to ensure consistency
+      if (this.selectedOrgUnitId !== this.globalFilterService.getSelectedOrgUnitId()) {
+        this.globalFilterService.setSelectedOrgUnitId(this.selectedOrgUnitId);
+      }
+      
+      // Trigger update to reload data across the app
+      this.triggerDataReload();
+      
+      // Close dialog using the hide method
+      this.hide();
       
     } catch (error) {
       console.error('Error saving filters:', error);
@@ -231,21 +341,37 @@ export class GlobalFiltersDialogComponent implements OnInit {
       // Clear the GlobalFilterService localStorage first
       this.globalFilterService.clearAllFilters();
       
-      // Reload filters from server to show the actual reset values
-      await this.loadFilters();
+      // Immediately reset local state to ensure UI updates
+      this.selectedOrgUnitId = null;
+      this.relatedToMe = false;
+      this.activityTimeframe = 'all';
+      this.customStartDate = null;
+      this.customEndDate = null;
       
-      // Sync with GlobalFilterService to ensure consistency
-      this.globalFilterService.setSelectedOrgUnitId(this.selectedOrgUnitId);
+      // Force org unit selector to re-render by changing key
+      this.orgUnitSelectorKey++;
       
-      // Trigger update to reload data across the app
-      try {
-        this.triggerDataReload();
-      } catch (syncError) {
-        // If sync/refresh fails, log it but don't show error to user since reset was successful
-        console.warn('Filter sync/refresh failed after successful reset:', syncError);
-      }
+      // Force change detection to update the org unit selector
+      this.cdr.detectChanges();
       
-      this.cdr.markForCheck();
+      // Small delay to ensure the org unit selector has updated
+      setTimeout(async () => {
+        try {
+          // Force reload filters from server to confirm reset values
+          await this.forceReloadFilters();
+          
+          // Sync with GlobalFilterService to ensure consistency
+          this.globalFilterService.setSelectedOrgUnitId(this.selectedOrgUnitId);
+          
+          // Trigger update to reload data across the app
+          this.triggerDataReload();
+          
+        } catch (syncError) {
+          // If sync/refresh fails, log it but don't show error to user since reset was successful
+          console.warn('Filter sync/refresh failed after successful reset:', syncError);
+        }
+      }, 100);
+      
       this.hide();
     } catch (error) {
       console.error('Error resetting filters:', error);
@@ -254,23 +380,37 @@ export class GlobalFiltersDialogComponent implements OnInit {
     }
   }
 
-  // Handle date range checkbox change
-  onDateRangeChange() {
-    if (this.dateRange) {
-      // Switching to range mode - move dateOn to dateFrom
-      if (this.dateOn) {
-        this.dateFrom = this.dateOn;
-        this.dateOn = null;
-      }
-      // dateTo stays as is (may be null)
-    } else {
-      // Switching to single date mode - move dateFrom to dateOn
-      if (this.dateFrom) {
-        this.dateOn = this.dateFrom;
-        this.dateFrom = null;
-      }
-      // Clear the 'to' date since we're in single date mode
-      this.dateTo = null;
+  // Convert timeframe selection to actual date range
+  private convertTimeframeToDateRange(): { startDate: Date | null, endDate: Date | null } | null {
+    const now = new Date();
+    
+    switch (this.activityTimeframe) {
+      case 'last30days':
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(now.getDate() - 30);
+        return { startDate: thirtyDaysAgo, endDate: now };
+        
+      case 'last90days':
+        const ninetyDaysAgo = new Date();
+        ninetyDaysAgo.setDate(now.getDate() - 90);
+        return { startDate: ninetyDaysAgo, endDate: now };
+        
+      case 'thisyear':
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        return { startDate: startOfYear, endDate: now };
+        
+      case 'custom':
+        if (this.customStartDate || this.customEndDate) {
+          return { 
+            startDate: this.customStartDate, 
+            endDate: this.customEndDate || this.customStartDate 
+          };
+        }
+        return null;
+        
+      case 'all':
+      default:
+        return null; // No date filtering
     }
   }
 
@@ -290,8 +430,6 @@ export class GlobalFiltersDialogComponent implements OnInit {
     const currentGlobalOrgUnit = this.globalFilterService.getSelectedOrgUnitId();
     
     if (this.selectedOrgUnitId !== currentGlobalOrgUnit) {
-      console.log('Syncing GlobalFilterService: dialog has', this.selectedOrgUnitId, 'but service has', currentGlobalOrgUnit);
-      
       // If we have a selected org unit in the dialog but service doesn't match, update the service
       if (this.selectedOrgUnitId !== null) {
         this.globalFilterService.setSelectedOrgUnitId(this.selectedOrgUnitId);

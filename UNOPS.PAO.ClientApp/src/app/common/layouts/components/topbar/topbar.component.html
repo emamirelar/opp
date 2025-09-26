@@ -17,9 +17,29 @@
 		</a>
 	</div>
 
-	<!-- Search bar container -->
+	<!-- Search bar container with filters -->
 	<div class="flex items-center gap-2 flex-1 max-w-2xl global-search-container">
 		<app-global-search-bar (searchExpanded)="onSearchExpanded($event)"></app-global-search-bar>
+		
+		<!-- Global Filters button - moved next to search -->
+		<p-button
+			type="button"
+			[rounded]="true"
+			[text]="!hasActiveFilters"
+			[severity]="hasActiveFilters ? 'primary' : 'secondary'"
+			[attr.aria-label]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
+			(onClick)="openGlobalFilters()"
+			[title]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			class="global-filters-button flex-shrink-0"
+			[class.search-expanded-hide-mobile]="isSearchExpanded"
+			[class.filters-active]="hasActiveFilters">
+			<ng-template pTemplate="content">
+				<i class="pi pi-sliders-h text-xl" 
+				   [class.text-white]="hasActiveFilters"
+				   [class.text-gray-600]="!hasActiveFilters"></i>
+			</ng-template>
+		</p-button>
 	</div>
 
 	<div class="flex items-center justify-end" [class.search-expanded-hide-mobile]="isSearchExpanded">
@@ -48,22 +68,6 @@
 					[hidden]="showFallbackIcon" />
 				<!-- Fallback icon -->
 				<i *ngIf="showFallbackIcon" class="pi pi-cog text-xl" style="color: #0092d1;"></i>
-			</ng-template>
-		</p-button>
-		
-		<!-- Global Filters button -->
-		<p-button
-			type="button"
-			[rounded]="true"
-			[text]="true"
-			aria-label="Global Filters"
-			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center relative"
-			(onClick)="openGlobalFilters()"
-			title="Global Filters"
-			class="global-filters-button">
-			<ng-template pTemplate="content">
-				<i class="pi pi-sliders-h text-xl"></i>
-				<span *ngIf="isOrgUnitFilterActive" class="org-unit-filter-badge"></span>
 			</ng-template>
 		</p-button>
 		
