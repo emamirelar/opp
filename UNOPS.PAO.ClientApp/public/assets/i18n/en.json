@@ -558,6 +558,52 @@
     "selectDate": "Select date",
     "selectDateRange": "Select date range"
   },
+  "globalFiltersDialog": {
+    "title": "Global Filters",
+    "explanation": "These filters apply across all data types (Partners, Contacts, Interactions, Engagements). Use them to focus on specific organizational areas or activity periods.",
+    "loadingCurrentFilters": "Loading current filters...",
+    "organizationalScope": {
+      "title": "Organizational Scope",
+      "description": "Show data from specific organizational units",
+      "organizationUnitLabel": "Organization Unit",
+      "organizationUnitHelp": "Leave empty to see data from all organizational units"
+    },
+    "personalScope": {
+      "title": "Personal Scope",
+      "description": "Focus on your own work and contributions",
+      "relatedToMeLabel": "Show only items I created or modified",
+      "relatedToMeHelp": "Filters all data to show only records you've worked on"
+    },
+    "activityTimeframe": {
+      "title": "Activity Timeframe",
+      "description": "Focus on recent activity across all data types",
+      "showActivityFromLabel": "Show activity from",
+      "timeframeOptions": {
+        "allTime": "All time",
+        "last30Days": "Last 30 days",
+        "last90Days": "Last 90 days",
+        "thisYear": "This year",
+        "customRange": "Custom date range"
+      },
+      "fromLabel": "From",
+      "toLabel": "To",
+      "startDatePlaceholder": "Start date",
+      "endDatePlaceholder": "End date"
+    },
+    "buttons": {
+      "resetAllFilters": "Reset All Filters",
+      "applyFilters": "Apply Filters"
+    }
+  },
+  "orgUnitSelector": {
+    "allOrganizationalUnits": "All organizational units",
+    "selectOrganizationUnit": "Select Organization Unit",
+    "searchPlaceholder": "Search organization units...",
+    "noUnitsFound": "No organization units found",
+    "loadingUnits": "Loading organization units...",
+    "defaultUnit": "Default organization unit",
+    "setAsDefault": "Set as default"
+  },
   "action": {
     "search": "Search"
   },

@@ -503,6 +503,52 @@
         "filterName": "Nombre del filtro",
         "enterFilterName": "Ingrese el nombre del filtro"
     },
+    "globalFiltersDialog": {
+        "title": "Filtros Globales",
+        "explanation": "Estos filtros se aplican a todos los tipos de datos (Socios, Contactos, Interacciones, Compromisos). Úselos para enfocarse en áreas organizacionales específicas o períodos de actividad.",
+        "loadingCurrentFilters": "Cargando filtros actuales...",
+        "organizationalScope": {
+            "title": "Alcance Organizacional",
+            "description": "Mostrar datos de unidades organizacionales específicas",
+            "organizationUnitLabel": "Unidad Organizacional",
+            "organizationUnitHelp": "Deje vacío para ver datos de todas las unidades organizacionales"
+        },
+        "personalScope": {
+            "title": "Alcance Personal",
+            "description": "Enfóquese en su propio trabajo y contribuciones",
+            "relatedToMeLabel": "Mostrar solo elementos que creé o modifiqué",
+            "relatedToMeHelp": "Filtra todos los datos para mostrar solo los registros en los que ha trabajado"
+        },
+        "activityTimeframe": {
+            "title": "Marco Temporal de Actividad",
+            "description": "Enfóquese en la actividad reciente en todos los tipos de datos",
+            "showActivityFromLabel": "Mostrar actividad desde",
+            "timeframeOptions": {
+                "allTime": "Todo el tiempo",
+                "last30Days": "Últimos 30 días",
+                "last90Days": "Últimos 90 días",
+                "thisYear": "Este año",
+                "customRange": "Rango de fechas personalizado"
+            },
+            "fromLabel": "Desde",
+            "toLabel": "Hasta",
+            "startDatePlaceholder": "Fecha de inicio",
+            "endDatePlaceholder": "Fecha de fin"
+        },
+        "buttons": {
+            "resetAllFilters": "Restablecer Todos los Filtros",
+            "applyFilters": "Aplicar Filtros"
+        }
+    },
+    "orgUnitSelector": {
+        "allOrganizationalUnits": "Todas las unidades organizacionales",
+        "selectOrganizationUnit": "Seleccionar Unidad Organizacional",
+        "searchPlaceholder": "Buscar unidades organizacionales...",
+        "noUnitsFound": "No se encontraron unidades organizacionales",
+        "loadingUnits": "Cargando unidades organizacionales...",
+        "defaultUnit": "Unidad organizacional predeterminada",
+        "setAsDefault": "Establecer como predeterminada"
+    },
     "validation": {
         "required": "Este campo es obligatorio",
         "maxLength": "La longitud máxima es de {{max}} caracteres",

@@ -10,8 +10,8 @@
     <ng-template pTemplate="content">
       <div class="flex items-center gap-2">
         <i class="pi pi-building"></i>
-        <span class="truncate max-w-[200px] " [title]="selectedOrgUnit?.name || 'All organizational units'">
-          {{ selectedOrgUnit?.name || 'All organizational units' }}
+        <span class="truncate max-w-[200px] " [title]="getDisplayName()">
+          {{ getDisplayName() }}
         </span>
       </div>
     </ng-template>
@@ -20,7 +20,7 @@
 
 <!-- Organization Unit Selection Modal -->
 <p-dialog
-  header="Select Organization Unit"
+  [header]="'orgUnitSelector.selectOrganizationUnit' | translate"
   [(visible)]="visible"
   [style]="{ width: '600px', maxHeight: '80vh' }"
   [modal]="true"
@@ -39,7 +39,7 @@
         pInputText
         [(ngModel)]="searchText"
         (ngModelChange)="onSearchChange()"
-        placeholder="Search organization units..."
+        [placeholder]="'orgUnitSelector.searchPlaceholder' | translate"
         class="w-full"
         >
     </p-iconfield>
@@ -50,7 +50,7 @@
     @if (filteredOrgUnits.length === 0) {
       <div class="p-8 text-center text-gray-500">
         <i class="pi pi-search text-4xl mb-2"></i>
-        <p>No organization units found</p>
+        <p>{{ 'orgUnitSelector.noUnitsFound' | translate }}</p>
       </div>
     } @else {
       @for (unit of filteredOrgUnits; track unit.id) {
@@ -88,13 +88,13 @@
 
             <!-- Check icon for default -->
             @if (unit.isDefault) {
-              <i class="pi pi-check-circle text-green-600" title="Default organization unit"></i>
+              <i class="pi pi-check-circle text-green-600" [title]="'orgUnitSelector.defaultUnit' | translate"></i>
             } @else {
               <button
                 type="button"
                 (click)="setAsDefault(unit, $event)"
                 class="opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity"
-                title="Set as default">
+                [title]="'orgUnitSelector.setAsDefault' | translate">
                 <i class="pi pi-circle text-gray-400 hover:text-green-600"></i>
               </button>
             }
@@ -107,7 +107,7 @@
   <!-- Loading spinner -->
   <div *ngIf="loading" class="loading-container">
     <i class="pi pi-spinner pi-spin"></i>
-    <span>Loading organization units...</span>
+    <span>{{ 'orgUnitSelector.loadingUnits' | translate }}</span>
   </div>
 
 </p-dialog>

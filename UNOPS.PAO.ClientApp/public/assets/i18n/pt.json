@@ -501,6 +501,52 @@
         "filterName": "Nome do filtro",
         "enterFilterName": "Digite o nome do filtro"
     },
+    "globalFiltersDialog": {
+        "title": "Filtros Globais",
+        "explanation": "Estes filtros se aplicam a todos os tipos de dados (Parceiros, Contatos, Interações, Compromissos). Use-os para focar em áreas organizacionais específicas ou períodos de atividade.",
+        "loadingCurrentFilters": "Carregando filtros atuais...",
+        "organizationalScope": {
+            "title": "Escopo Organizacional",
+            "description": "Mostrar dados de unidades organizacionais específicas",
+            "organizationUnitLabel": "Unidade Organizacional",
+            "organizationUnitHelp": "Deixe vazio para ver dados de todas as unidades organizacionais"
+        },
+        "personalScope": {
+            "title": "Escopo Pessoal",
+            "description": "Foque no seu próprio trabalho e contribuições",
+            "relatedToMeLabel": "Mostrar apenas itens que criei ou modifiquei",
+            "relatedToMeHelp": "Filtra todos os dados para mostrar apenas registros nos quais você trabalhou"
+        },
+        "activityTimeframe": {
+            "title": "Período de Atividade",
+            "description": "Foque na atividade recente em todos os tipos de dados",
+            "showActivityFromLabel": "Mostrar atividade desde",
+            "timeframeOptions": {
+                "allTime": "Todo o tempo",
+                "last30Days": "Últimos 30 dias",
+                "last90Days": "Últimos 90 dias",
+                "thisYear": "Este ano",
+                "customRange": "Intervalo de datas personalizado"
+            },
+            "fromLabel": "De",
+            "toLabel": "Até",
+            "startDatePlaceholder": "Data de início",
+            "endDatePlaceholder": "Data de fim"
+        },
+        "buttons": {
+            "resetAllFilters": "Redefinir Todos os Filtros",
+            "applyFilters": "Aplicar Filtros"
+        }
+    },
+    "orgUnitSelector": {
+        "allOrganizationalUnits": "Todas as unidades organizacionais",
+        "selectOrganizationUnit": "Selecionar Unidade Organizacional",
+        "searchPlaceholder": "Pesquisar unidades organizacionais...",
+        "noUnitsFound": "Nenhuma unidade organizacional encontrada",
+        "loadingUnits": "Carregando unidades organizacionais...",
+        "defaultUnit": "Unidade organizacional padrão",
+        "setAsDefault": "Definir como padrão"
+    },
     "partner": {
         "summaryOfInteractions": "Resumo IA de Interações",
         "categoryNews": "Notícias da Categoria",

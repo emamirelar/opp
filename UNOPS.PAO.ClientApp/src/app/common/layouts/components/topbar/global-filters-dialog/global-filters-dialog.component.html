@@ -6,20 +6,19 @@
   [resizable]="false"
   styleClass="global-filters-dialog"
   [style]="{ width: 'min(600px, 95vw)' }"
-  header="Global Filters">
+  [header]="'globalFiltersDialog.title' | translate">
 
   <div class="filter-explanation">
     <p class="help-text">
       <i class="pi pi-info-circle"></i>
-      These filters apply across all data types (Partners, Contacts, Interactions, Engagements).
-      Use them to focus on specific organizational areas or activity periods.
+      {{ 'globalFiltersDialog.explanation' | translate }}
     </p>
   </div>
 
   <!-- Loading indicator -->
   <div *ngIf="loading" class="loading-container">
     <i class="pi pi-spinner pi-spin"></i>
-    <span>Loading current filters...</span>
+    <span>{{ 'globalFiltersDialog.loadingCurrentFilters' | translate }}</span>
   </div>
 
   <div class="filters-container" *ngIf="!loading">
@@ -28,19 +27,19 @@
     <div class="filter-section org-scope-section">
       <div class="section-header">
         <i class="pi pi-building section-icon"></i>
-        <h3 class="section-title">Organizational Scope</h3>
+        <h3 class="section-title">{{ 'globalFiltersDialog.organizationalScope.title' | translate }}</h3>
       </div>
-      <p class="section-help">Show data from specific organizational units</p>
+      <p class="section-help">{{ 'globalFiltersDialog.organizationalScope.description' | translate }}</p>
       <div class="section-content">
         <div class="field">
-          <label class="field-label">Organization Unit</label>
+          <label class="field-label">{{ 'globalFiltersDialog.organizationalScope.organizationUnitLabel' | translate }}</label>
           <app-org-unit-selector 
             [preselectedOrgUnitId]="selectedOrgUnitId"
             (orgUnitSelected)="onOrgUnitSelected($event)"
             class="org-unit-selector"
             [attr.data-key]="orgUnitSelectorKey">
           </app-org-unit-selector>
-          <small class="field-help">Leave empty to see data from all organizational units</small>
+          <small class="field-help">{{ 'globalFiltersDialog.organizationalScope.organizationUnitHelp' | translate }}</small>
         </div>
       </div>
     </div>
@@ -49,9 +48,9 @@
     <div class="filter-section personal-scope-section">
       <div class="section-header">
         <i class="pi pi-user section-icon"></i>
-        <h3 class="section-title">Personal Scope</h3>
+        <h3 class="section-title">{{ 'globalFiltersDialog.personalScope.title' | translate }}</h3>
       </div>
-      <p class="section-help">Focus on your own work and contributions</p>
+      <p class="section-help">{{ 'globalFiltersDialog.personalScope.description' | translate }}</p>
       <div class="section-content">
         <div class="field-checkbox">
           <p-checkbox 
@@ -60,8 +59,8 @@
             inputId="relatedToMe"
             class="modern-checkbox" />
           <label for="relatedToMe" class="checkbox-label">
-            <span class="label-text">Show only items I created or modified</span>
-            <small class="label-help">Filters all data to show only records you've worked on</small>
+            <span class="label-text">{{ 'globalFiltersDialog.personalScope.relatedToMeLabel' | translate }}</span>
+            <small class="label-help">{{ 'globalFiltersDialog.personalScope.relatedToMeHelp' | translate }}</small>
           </label>
         </div>
       </div>
@@ -71,16 +70,16 @@
     <div class="filter-section timeframe-section" *ngIf="showTimeframeFilter">
       <div class="section-header">
         <i class="pi pi-calendar section-icon"></i>
-        <h3 class="section-title">Activity Timeframe</h3>
+        <h3 class="section-title">{{ 'globalFiltersDialog.activityTimeframe.title' | translate }}</h3>
       </div>
-      <p class="section-help">Focus on recent activity across all data types</p>
+      <p class="section-help">{{ 'globalFiltersDialog.activityTimeframe.description' | translate }}</p>
       <div class="section-content">
         <div class="field">
-          <label class="field-label">Show activity from</label>
+          <label class="field-label">{{ 'globalFiltersDialog.activityTimeframe.showActivityFromLabel' | translate }}</label>
           <p-dropdown 
             [(ngModel)]="activityTimeframe"
             [options]="timeframeOptions"
-            placeholder="All time"
+            [placeholder]="'globalFiltersDialog.activityTimeframe.timeframeOptions.allTime' | translate"
             optionLabel="label"
             optionValue="value"
             class="timeframe-dropdown"
@@ -99,22 +98,22 @@
         <div class="custom-date-range" *ngIf="activityTimeframe === 'custom'">
           <div class="date-range-grid">
             <div class="field">
-              <label class="field-label">From</label>
+              <label class="field-label">{{ 'globalFiltersDialog.activityTimeframe.fromLabel' | translate }}</label>
               <p-calendar 
                 [(ngModel)]="customStartDate"
                 [showIcon]="true"
-                placeholder="Start date"
+                [placeholder]="'globalFiltersDialog.activityTimeframe.startDatePlaceholder' | translate"
                 dateFormat="dd/mm/yy"
                 class="modern-calendar"
                 [style]="{ width: '100%' }">
               </p-calendar>
             </div>
             <div class="field">
-              <label class="field-label">To</label>
+              <label class="field-label">{{ 'globalFiltersDialog.activityTimeframe.toLabel' | translate }}</label>
               <p-calendar 
                 [(ngModel)]="customEndDate"
                 [showIcon]="true"
-                placeholder="End date"
+                [placeholder]="'globalFiltersDialog.activityTimeframe.endDatePlaceholder' | translate"
                 dateFormat="dd/mm/yy"
                 class="modern-calendar"
                 [style]="{ width: '100%' }">
@@ -131,7 +130,7 @@
     <div class="dialog-footer">
       <div class="action-buttons">
         <p-button 
-          label="Reset to All Data"
+          [label]="'globalFiltersDialog.buttons.resetAllFilters' | translate"
           icon="pi pi-refresh"
           severity="secondary"
           [outlined]="true"
@@ -139,7 +138,7 @@
           (onClick)="reset()"
           class="footer-btn reset-btn" />
         <p-button 
-          label="Apply Filters"
+          [label]="'globalFiltersDialog.buttons.applyFilters' | translate"
           icon="pi pi-check"
           [loading]="saving"
           (onClick)="save()"
