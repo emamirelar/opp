@@ -7,7 +7,7 @@ namespace UNOPS.PAO.Domain.Entities;
 
 public class Link : ModifiableDeletableEntity
 {
-    public new int Id { get; set; }
+    public override int Id { get; set; }
     
     [Column(TypeName = "text")]
     [JsonConverter(typeof(JsonStringEnumConverter))]
