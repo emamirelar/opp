@@ -1,0 +1,73 @@
+:host {
+  .country-select {
+    .p-select-label {
+      font-family: 'Courier New', Monaco, monospace;
+      font-size: 0.875rem;
+    }
+  }
+
+  .phone-display {
+    font-family: 'Courier New', Monaco, monospace;
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .p-invalid {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 1px #ef4444 !important;
+  }
+
+  .error-message {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+
+  .country-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    .calling-code {
+      font-family: 'Courier New', Monaco, monospace;
+      font-size: 0.875rem;
+      min-width: 3rem;
+    }
+    
+    .country-name {
+      flex: 1;
+    }
+    
+    .country-code {
+      color: #6b7280;
+      font-size: 0.75rem;
+    }
+  }
+
+  // Multiple phone mode styles
+  .phone-input-container {
+    .phone-tags-container {
+      .phone-tag {
+        animation: fadeIn 0.2s ease-in;
+        font-family: 'Courier New', Monaco, monospace;
+        font-size: 0.875rem;
+      }
+    }
+    
+    textarea:disabled {
+      background-color: #f3f4f6;
+      cursor: not-allowed;
+    }
+  }
+  
+  @keyframes fadeIn {
+    from { 
+      opacity: 0; 
+      transform: translateY(-5px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+}
