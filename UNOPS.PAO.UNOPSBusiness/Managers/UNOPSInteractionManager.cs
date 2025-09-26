@@ -30,6 +30,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     private GoogleCloudStorageService googleCloudStorageService;
     private readonly IUserProfileCacheService userProfileCacheService;
     private readonly PartnerTreeService partnerTreeService;
+    private readonly GlobalFilterService _globalFilterService;
 
     private InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
     {
@@ -231,12 +232,13 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         await context.SaveChangesAsync();
     }
 
-    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null, IUserProfileCacheService userProfileCacheService = null)
+    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService, GlobalFilterService globalFilterService, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null, IUserProfileCacheService userProfileCacheService = null)
         : base(mapper, context, configuration, null, "Interaction", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
         this.context = context;
         this.partnerTreeService = partnerTreeService;
+        _globalFilterService = globalFilterService;
         interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration, serviceProvider);
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
@@ -694,10 +696,10 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var filteredBaseQuery = baseQuery.ApplySpecification(specification);
         var filteredQuery = filteredBaseQuery.OfType<UNOPSInteraction>();
 
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        // Apply global filters using the centralized GlobalFilterService
+        filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, GetCurrentUserOrSystemContext());
         
-        // Apply access control filters (row and column filtering) BEFORE pagination
+        // Apply access control filters (role-based permissions only) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, GetCurrentUserOrSystemContext(), "read");
         
         // Filter to ensure we only have UNOPSInteraction instances and handle pagination manually
@@ -1429,38 +1431,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         return results.Cast<object>().ToList();
     }
 
-    /// <summary>
-    /// Applies org unit filtering if the specification supports it using manual joins
-    /// </summary>
-    private IQueryable<UNOPSInteraction> ApplyOrgUnitFilterIfSupported(IQueryable<UNOPSInteraction> query, ISpecification<Interaction> specification)
-    {
-        // Check if specification has ApplyOrgUnitFilter method and call it
-        var specType = specification.GetType();
-        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<Interaction>), typeof(DbContext) });
-        
-        if (filterMethod != null)
-        {
-            try
-            {
-                // Cast to base type for the ApplyOrgUnitFilter method
-                var baseQuery = query.Cast<Interaction>();
-                var result = filterMethod.Invoke(specification, new object[] { baseQuery, context });
-                if (result is IQueryable<Interaction> filteredBaseQuery)
-                {
-                    // Cast back to UNOPSInteraction using OfType for safety
-                    return filteredBaseQuery.OfType<UNOPSInteraction>();
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue without org unit filtering
-                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
-            }
-        }
-        
-        // If no ApplyOrgUnitFilter method found, return original query
-        return query;
-    }
     
     /// <summary>
     /// Get supported search fields for interactions - helps frontend build dynamic search forms
