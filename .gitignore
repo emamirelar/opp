@@ -304,3 +304,5 @@ UNOPS.PAO.Server/appsettings.Development.json
 # External Data Service local configuration
 ExternalDataService/appsettings.Local.json
 ExternalDataService/logs/
+
+db_dump/
