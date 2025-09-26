@@ -256,6 +256,7 @@
       "selectPartnerGroup": "Select Partner Group",
       "shortDescription": "Partner Short Description",
       "longDescription": "Partner Long Description",
+      "approvalStatus": "Partner Approval Status",
       "ddApproval": "DD Approval",
       "levyStatus": "Levy Status",
       "unStateEntity": "UN State Entity",

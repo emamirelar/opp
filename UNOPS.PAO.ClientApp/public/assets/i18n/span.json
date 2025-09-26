@@ -326,6 +326,7 @@
             "partnerShortDescription": "Descripción Corta del Socio",
             "longDescription": "Descripción Larga del Socio",
             "partnerLongDescription": "Descripción Larga del Socio",
+            "approvalStatus": "Estado de Aprobación del Socio",
             "partnerGroup": "Grupo de Socio",
             "partnerCategory": "Categoría de Socio",
             "liaisonOffice": "Oficina de Enlace",

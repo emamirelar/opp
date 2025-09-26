@@ -256,6 +256,7 @@
             "partnerShortDescription": "Description Courte du Partenaire",
             "longDescription": "Description Longue du Partenaire",
             "partnerLongDescription": "Description Longue du Partenaire",
+            "approvalStatus": "Statut d'Approbation du Partenaire",
             "partnerGroup": "Groupe de Partenaire",
             "partnerCategory": "Catégorie de Partenaire",
             "liaisonOffice": "Bureau de Liaison",

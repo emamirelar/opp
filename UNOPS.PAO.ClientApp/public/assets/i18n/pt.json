@@ -322,6 +322,7 @@
             "partnerShortDescription": "Descrição Curta do Parceiro",
             "longDescription": "Descrição Longa do Parceiro",
             "partnerLongDescription": "Descrição Longa do Parceiro",
+            "approvalStatus": "Status de Aprovação do Parceiro",
             "partnerGroup": "Grupo de Parceiro",
             "partnerCategory": "Categoria de Parceiro",
             "liaisonOffice": "Escritório de Ligação",
