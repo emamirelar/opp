@@ -56,7 +56,7 @@ node("app-build") {
         }
         
         stage('Load Configuration') {
-            def configYaml = readFile('jenkins-config-external-data-service.yaml')
+            def configYaml = readFile('jenkins-config-eds.yaml')
             def yaml = new org.yaml.snakeyaml.Yaml()
             def config = yaml.load(configYaml)
 
