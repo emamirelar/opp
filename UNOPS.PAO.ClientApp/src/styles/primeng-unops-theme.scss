@@ -1,0 +1,927 @@
+/* UNOPS PrimeNG Theme Overrides */
+/* This file contains comprehensive PrimeNG component overrides using UNOPS design tokens */
+/* Version: 1.0.0 */
+
+/* ===================================== */
+/* GLOBAL BUTTON OVERRIDES */
+/* ===================================== */
+
+.p-button {
+  /* Reset PrimeNG defaults and apply UNOPS styling */
+  font-family: var(--unops-font-body) !important;
+  font-weight: var(--unops-font-weight-medium) !important;
+  font-size: var(--unops-font-size-body-medium) !important;
+  border-radius: var(--unops-radius-lg) !important;
+  padding: var(--unops-spacing-sm) var(--unops-spacing-md) !important;
+  min-height: var(--unops-min-touch) !important;
+  transition: all var(--unops-duration-short) var(--unops-easing-smooth) !important;
+  border: 1px solid transparent !important;
+  cursor: pointer !important;
+  
+  /* Primary Button (default) */
+  &:not(.p-button-outlined):not(.p-button-text):not(.p-button-link) {
+    background: var(--unops-primary) !important;
+    color: var(--unops-primary-on) !important;
+    border-color: var(--unops-primary) !important;
+    
+    &:hover:not(:disabled) {
+      background: var(--unops-primary-dark) !important;
+      border-color: var(--unops-primary-dark) !important;
+      box-shadow: var(--unops-shadow-md) !important;
+    }
+    
+    &:active:not(:disabled) {
+      background: var(--unops-primary-darker) !important;
+      border-color: var(--unops-primary-darker) !important;
+    }
+    
+    &:focus-visible {
+      outline: 2px solid var(--unops-primary) !important;
+      outline-offset: 2px !important;
+    }
+  }
+  
+  /* Outlined Button */
+  &.p-button-outlined {
+    background: transparent !important;
+    color: var(--unops-primary) !important;
+    border-color: var(--unops-primary) !important;
+    
+    &:hover:not(:disabled) {
+      background: var(--unops-primary-container-soft) !important;
+      color: var(--unops-primary-dark) !important;
+      border-color: var(--unops-primary-dark) !important;
+      box-shadow: var(--unops-shadow-md) !important;
+    }
+    
+    &:active:not(:disabled) {
+      background: var(--unops-primary-container) !important;
+      color: var(--unops-primary-darker) !important;
+    }
+  }
+  
+  /* Text Button */
+  &.p-button-text {
+    background: transparent !important;
+    color: var(--unops-primary) !important;
+    border: none !important;
+    
+    &:hover:not(:disabled) {
+      background: var(--unops-primary-container-soft) !important;
+      color: var(--unops-primary-dark) !important;
+    }
+    
+    &:active:not(:disabled) {
+      background: var(--unops-primary-container) !important;
+    }
+  }
+  
+  /* Icon-only buttons */
+  &.p-button-icon-only {
+    min-width: var(--unops-min-touch) !important;
+    width: var(--unops-min-touch) !important;
+    padding: var(--unops-spacing-sm) !important;
+    
+    /* Simple icon buttons without background */
+    &.p-button-text {
+      background: transparent !important;
+      border: none !important;
+      color: var(--unops-neutral-600) !important;
+      
+      &:hover:not(:disabled) {
+        background: transparent !important;
+        color: var(--unops-primary) !important;
+      }
+      
+      &:active:not(:disabled) {
+        background: transparent !important;
+        color: var(--unops-primary-dark) !important;
+      }
+    }
+  }
+  
+  /* Disabled state */
+  &:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    background: var(--unops-neutral-200) !important;
+    color: var(--unops-neutral-500) !important;
+    border-color: var(--unops-neutral-200) !important;
+    
+    &.p-button-text,
+    &.p-button-outlined {
+      background: transparent !important;
+    }
+  }
+  
+  /* Loading state */
+  &.p-button-loading {
+    .p-button-loading-icon {
+      color: inherit !important;
+    }
+  }
+}
+
+/* Secondary button variant */
+.p-button-secondary {
+  background: var(--unops-secondary) !important;
+  color: var(--unops-secondary-on) !important;
+  border-color: var(--unops-secondary) !important;
+  
+  &:hover:not(:disabled) {
+    background: var(--unops-secondary-dark) !important;
+    border-color: var(--unops-secondary-dark) !important;
+  }
+  
+  &:active:not(:disabled) {
+    background: var(--unops-secondary-darker) !important;
+  }
+}
+
+/* Success button variant */
+.p-button-success {
+  background: var(--unops-success) !important;
+  color: var(--unops-success-on) !important;
+  border-color: var(--unops-success) !important;
+  
+  &:hover:not(:disabled) {
+    background: var(--unops-success-dark) !important;
+    border-color: var(--unops-success-dark) !important;
+  }
+}
+
+/* Warning button variant */
+.p-button-warning {
+  background: var(--unops-warning) !important;
+  color: var(--unops-warning-on) !important;
+  border-color: var(--unops-warning) !important;
+  
+  &:hover:not(:disabled) {
+    background: var(--unops-warning-dark) !important;
+    border-color: var(--unops-warning-dark) !important;
+  }
+}
+
+/* Danger button variant */
+.p-button-danger {
+  background: var(--unops-error) !important;
+  color: var(--unops-error-on) !important;
+  border-color: var(--unops-error) !important;
+  
+  &:hover:not(:disabled) {
+    background: var(--unops-error-dark) !important;
+    border-color: var(--unops-error-dark) !important;
+  }
+}
+
+/* Info button variant */
+.p-button-info {
+  background: var(--unops-info) !important;
+  color: var(--unops-info-on) !important;
+  border-color: var(--unops-info) !important;
+  
+  &:hover:not(:disabled) {
+    background: var(--unops-info-dark) !important;
+    border-color: var(--unops-info-dark) !important;
+  }
+}
+
+/* ===================================== */
+/* INPUT FIELD OVERRIDES */
+/* ===================================== */
+
+.p-inputtext,
+.p-inputtextarea,
+.p-dropdown,
+.p-multiselect,
+.p-calendar input,
+.p-password input,
+.p-inputnumber input {
+  font-family: var(--unops-font-body) !important;
+  font-size: var(--unops-font-size-body-medium) !important;
+  color: var(--unops-neutral-900) !important;
+  background: var(--unops-surface-primary) !important;
+  border: 1px solid var(--unops-neutral-300) !important;
+  border-radius: var(--unops-radius-md) !important;
+  padding: var(--unops-spacing-sm) var(--unops-spacing-md) !important;
+  transition: all var(--unops-duration-short) var(--unops-easing-smooth) !important;
+  min-height: var(--unops-min-touch) !important;
+  
+  &:hover:not(:disabled) {
+    border-color: var(--unops-primary-light) !important;
+  }
+  
+  &:focus {
+    border-color: var(--unops-primary) !important;
+    box-shadow: 0 0 0 2px var(--unops-primary-container-soft) !important;
+    outline: none !important;
+  }
+  
+  &:disabled {
+    background: var(--unops-neutral-100) !important;
+    color: var(--unops-neutral-500) !important;
+    border-color: var(--unops-neutral-200) !important;
+    opacity: 0.7 !important;
+  }
+  
+  &::placeholder {
+    color: var(--unops-neutral-500) !important;
+  }
+}
+
+/* ===================================== */
+/* ICONFIELD OVERRIDES */
+/* ===================================== */
+
+/* Fix iconfield input padding to prevent icon overlap */
+.p-iconfield {
+  position: relative;
+  
+  /* Input with left icon - add proper left padding */
+  &[data-pc-section="root"][iconPosition="left"],
+  &.p-iconfield-left {
+    .p-inputtext,
+    input.p-inputtext {
+      padding-left: 2.5rem !important;
+    }
+  }
+  
+  /* Input with right icon - add proper right padding */
+  &[data-pc-section="root"][iconPosition="right"],
+  &.p-iconfield-right {
+    .p-inputtext,
+    input.p-inputtext {
+      padding-right: 2.5rem !important;
+    }
+  }
+  
+  /* Position left icons properly */
+  .p-inputicon:first-of-type {
+    position: absolute;
+    top: 50% !important;
+    left: 0.75rem;
+    transform: translateY(-50%) !important;
+    z-index: 2;
+    color: var(--unops-neutral-500) !important;
+    pointer-events: none;
+    margin-top: 0 !important;
+    
+    &.cursor-pointer {
+      pointer-events: auto;
+      cursor: pointer;
+      
+      &:hover {
+        color: var(--unops-primary) !important;
+      }
+    }
+  }
+  
+  /* Position right icons properly (like clear button) */
+  .p-inputicon:last-of-type {
+    position: absolute;
+    top: 50% !important;
+    right: 0.75rem;
+    transform: translateY(-50%) !important;
+    z-index: 2;
+    color: var(--unops-neutral-500) !important;
+    pointer-events: none;
+    margin-top: 0 !important;
+    
+    &.cursor-pointer {
+      pointer-events: auto;
+      cursor: pointer;
+      
+      &:hover {
+        color: var(--unops-error) !important;
+      }
+    }
+  }
+  
+  /* When there's both left and right icon (search + clear) */
+  &:has(.p-inputicon:first-of-type):has(.p-inputicon:last-of-type) {
+    .p-inputtext,
+    input.p-inputtext {
+      padding-left: 2.5rem !important;
+      padding-right: 2.5rem !important;
+    }
+  }
+}
+
+/* ===================================== */
+/* DROPDOWN OVERRIDES */
+/* ===================================== */
+
+.p-dropdown {
+  &.p-dropdown-open {
+    border-color: var(--unops-primary) !important;
+    box-shadow: 0 0 0 2px var(--unops-primary-container-soft) !important;
+  }
+  
+  .p-dropdown-trigger {
+    color: var(--unops-neutral-600) !important;
+    
+    &:hover {
+      color: var(--unops-primary) !important;
+    }
+  }
+}
+
+.p-dropdown-panel {
+  background: var(--unops-surface-primary) !important;
+  border: 1px solid var(--unops-neutral-200) !important;
+  border-radius: var(--unops-radius-lg) !important;
+  box-shadow: var(--unops-shadow-lg) !important;
+  
+  .p-dropdown-item {
+    font-family: var(--unops-font-body) !important;
+    font-size: var(--unops-font-size-body-medium) !important;
+    color: var(--unops-neutral-900) !important;
+    padding: var(--unops-spacing-sm) var(--unops-spacing-md) !important;
+    transition: all var(--unops-duration-fast) var(--unops-easing-smooth) !important;
+    
+    &:hover {
+      background: var(--unops-primary-container-soft) !important;
+      color: var(--unops-primary-dark) !important;
+    }
+    
+    &.p-dropdown-item-selected {
+      background: var(--unops-primary-container) !important;
+      color: var(--unops-primary-darker) !important;
+    }
+  }
+}
+
+/* ===================================== */
+/* CARD OVERRIDES */
+/* ===================================== */
+
+.p-card {
+  background: var(--unops-surface-primary) !important;
+  border: 1px solid var(--unops-neutral-200) !important;
+  border-radius: var(--unops-radius-lg) !important;
+  box-shadow: var(--unops-shadow-md) !important;
+  transition: box-shadow var(--unops-duration-short) var(--unops-easing-smooth) !important;
+  
+  &:hover {
+    box-shadow: var(--unops-shadow-lg) !important;
+  }
+  
+  .p-card-header {
+    padding: var(--unops-spacing-lg) var(--unops-spacing-lg) var(--unops-spacing-md) var(--unops-spacing-lg) !important;
+    border-bottom: 1px solid var(--unops-neutral-100) !important;
+  }
+  
+  .p-card-body {
+    padding: var(--unops-spacing-md) var(--unops-spacing-lg) !important;
+  }
+  
+  .p-card-content {
+    padding: 0 !important;
+  }
+  
+  .p-card-footer {
+    padding: var(--unops-spacing-md) var(--unops-spacing-lg) var(--unops-spacing-lg) var(--unops-spacing-lg) !important;
+    border-top: 1px solid var(--unops-neutral-100) !important;
+  }
+  
+  .p-card-title {
+    font-family: var(--unops-font-display) !important;
+    font-size: var(--unops-font-size-headline-small) !important;
+    font-weight: var(--unops-font-weight-semibold) !important;
+    color: var(--unops-neutral-900) !important;
+    margin-bottom: var(--unops-spacing-sm) !important;
+  }
+  
+  .p-card-subtitle {
+    font-family: var(--unops-font-body) !important;
+    font-size: var(--unops-font-size-body-medium) !important;
+    color: var(--unops-neutral-600) !important;
+    margin-bottom: var(--unops-spacing-md) !important;
+  }
+}
+
+/* ===================================== */
+/* PANEL OVERRIDES */
+/* ===================================== */
+
+.p-panel {
+  background: var(--unops-surface-primary) !important;
+  border: 1px solid var(--unops-neutral-200) !important;
+  border-radius: var(--unops-radius-lg) !important;
+  box-shadow: var(--unops-shadow-sm) !important;
+  
+  .p-panel-header {
+    background: var(--unops-surface-secondary) !important;
+    border-bottom: 1px solid var(--unops-neutral-200) !important;
+    padding: var(--unops-spacing-md) var(--unops-spacing-lg) !important;
+    border-radius: var(--unops-radius-lg) var(--unops-radius-lg) 0 0 !important;
+    
+    .p-panel-title {
+      font-family: var(--unops-font-display) !important;
+      font-size: var(--unops-font-size-headline-small) !important;
+      font-weight: var(--unops-font-weight-semibold) !important;
+      color: var(--unops-neutral-900) !important;
+    }
+    
+    .p-panel-header-actions {
+      .p-panel-header-action {
+        color: var(--unops-neutral-600) !important;
+        transition: color var(--unops-duration-fast) var(--unops-easing-smooth) !important;
+        
+        &:hover {
+          color: var(--unops-primary) !important;
+        }
+      }
+    }
+  }
+  
+  .p-panel-content {
+    padding: var(--unops-spacing-lg) !important;
+    background: var(--unops-surface-primary) !important;
+  }
+}
+
+/* ===================================== */
+/* MENU OVERRIDES */
+/* ===================================== */
+
+.p-menu {
+  background: var(--unops-surface-primary) !important;
+  border: 1px solid var(--unops-neutral-200) !important;
+  border-radius: var(--unops-radius-lg) !important;
+  box-shadow: var(--unops-shadow-lg) !important;
+  padding: var(--unops-spacing-xs) !important;
+  
+  .p-menu-list {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  .p-menuitem {
+    margin: 0 !important;
+    
+    .p-menuitem-link {
+      padding: var(--unops-spacing-sm) var(--unops-spacing-md) !important;
+      border-radius: var(--unops-radius-md) !important;
+      font-family: var(--unops-font-body) !important;
+      font-size: var(--unops-font-size-body-medium) !important;
+      color: var(--unops-neutral-900) !important;
+      transition: all var(--unops-duration-fast) var(--unops-easing-smooth) !important;
+      
+      &:hover {
+        background: var(--unops-primary-container-soft) !important;
+        color: var(--unops-primary-dark) !important;
+      }
+      
+      &:focus {
+        background: var(--unops-primary-container) !important;
+        color: var(--unops-primary-darker) !important;
+        outline: none !important;
+      }
+      
+      .p-menuitem-icon {
+        color: inherit !important;
+        margin-right: var(--unops-spacing-sm) !important;
+      }
+      
+      .p-menuitem-text {
+        color: inherit !important;
+      }
+    }
+  }
+  
+  .p-menu-separator {
+    border-top: 1px solid var(--unops-neutral-200) !important;
+    margin: var(--unops-spacing-xs) 0 !important;
+  }
+}
+
+/* ===================================== */
+/* DIALOG OVERRIDES */
+/* ===================================== */
+
+.p-dialog {
+  background: var(--unops-surface-primary) !important;
+  border: 1px solid var(--unops-neutral-200) !important;
+  border-radius: var(--unops-radius-xl) !important;
+  box-shadow: var(--unops-shadow-xl) !important;
+  
+  .p-dialog-header {
+    background: var(--unops-surface-primary) !important;
+    border-bottom: 1px solid var(--unops-neutral-200) !important;
+    padding: var(--unops-spacing-lg) !important;
+    border-radius: var(--unops-radius-xl) var(--unops-radius-xl) 0 0 !important;
+    
+    .p-dialog-title {
+      font-family: var(--unops-font-display) !important;
+      font-size: var(--unops-font-size-headline-medium) !important;
+      font-weight: var(--unops-font-weight-semibold) !important;
+      color: var(--unops-neutral-900) !important;
+    }
+    
+    .p-dialog-header-actions {
+      .p-dialog-header-close {
+        color: var(--unops-neutral-600) !important;
+        background: transparent !important;
+        border: none !important;
+        
+        &:hover {
+          color: var(--unops-error) !important;
+          background: var(--unops-error-lighter) !important;
+        }
+      }
+    }
+  }
+  
+  .p-dialog-content {
+    padding: var(--unops-spacing-lg) !important;
+    background: var(--unops-surface-primary) !important;
+  }
+  
+  .p-dialog-footer {
+    padding: var(--unops-spacing-lg) !important;
+    border-top: 1px solid var(--unops-neutral-200) !important;
+    background: var(--unops-surface-primary) !important;
+    border-radius: 0 0 var(--unops-radius-xl) var(--unops-radius-xl) !important;
+    display: flex;
+    gap: var(--unops-spacing-sm);
+    justify-content: flex-end;
+  }
+}
+
+.p-dialog-mask {
+  background: var(--unops-surface-overlay) !important;
+}
+
+/* ===================================== */
+/* TABLE OVERRIDES */
+/* ===================================== */
+
+.p-datatable {
+  background: var(--unops-surface-primary) !important;
+  border: 1px solid var(--unops-neutral-200) !important;
+  border-radius: var(--unops-radius-lg) !important;
+  overflow: hidden;
+  
+  .p-datatable-header {
+    background: var(--unops-surface-secondary) !important;
+    border-bottom: 1px solid var(--unops-neutral-200) !important;
+    padding: var(--unops-spacing-md) var(--unops-spacing-lg) !important;
+  }
+  
+  .p-datatable-thead > tr > th {
+    background: var(--unops-surface-secondary) !important;
+    color: var(--unops-neutral-900) !important;
+    font-family: var(--unops-font-body) !important;
+    font-size: var(--unops-font-size-body-medium) !important;
+    font-weight: var(--unops-font-weight-semibold) !important;
+    padding: var(--unops-spacing-md) var(--unops-spacing-lg) !important;
+    border-bottom: 2px solid var(--unops-neutral-200) !important;
+    border-right: 1px solid var(--unops-neutral-100) !important;
+    
+    &:last-child {
+      border-right: none !important;
+    }
+  }
+  
+  .p-datatable-tbody > tr {
+    &:hover {
+      background: var(--unops-primary-container-soft) !important;
+    }
+    
+    &.p-datatable-row-selected {
+      background: var(--unops-primary-container) !important;
+      color: var(--unops-primary-darker) !important;
+    }
+    
+    > td {
+      font-family: var(--unops-font-body) !important;
+      font-size: var(--unops-font-size-body-medium) !important;
+      color: var(--unops-neutral-900) !important;
+      padding: var(--unops-spacing-md) var(--unops-spacing-lg) !important;
+      border-bottom: 1px solid var(--unops-neutral-100) !important;
+      border-right: 1px solid var(--unops-neutral-100) !important;
+      
+      &:last-child {
+        border-right: none !important;
+      }
+    }
+  }
+  
+  .p-datatable-footer {
+    background: var(--unops-surface-secondary) !important;
+    border-top: 1px solid var(--unops-neutral-200) !important;
+    padding: var(--unops-spacing-md) var(--unops-spacing-lg) !important;
+  }
+}
+
+/* ===================================== */
+/* TOAST OVERRIDES */
+/* ===================================== */
+
+.p-toast {
+  .p-toast-message {
+    background: var(--unops-surface-primary) !important;
+    border: 1px solid var(--unops-neutral-200) !important;
+    border-radius: var(--unops-radius-lg) !important;
+    box-shadow: var(--unops-shadow-lg) !important;
+    margin-bottom: var(--unops-spacing-md) !important;
+    
+    .p-toast-message-content {
+      padding: var(--unops-spacing-md) var(--unops-spacing-lg) !important;
+      
+      .p-toast-summary {
+        font-family: var(--unops-font-body) !important;
+        font-size: var(--unops-font-size-body-medium) !important;
+        font-weight: var(--unops-font-weight-semibold) !important;
+        color: var(--unops-neutral-900) !important;
+      }
+      
+      .p-toast-detail {
+        font-family: var(--unops-font-body) !important;
+        font-size: var(--unops-font-size-body-medium) !important;
+        color: var(--unops-neutral-700) !important;
+      }
+    }
+    
+    &.p-toast-message-success {
+      border-left: 4px solid var(--unops-success) !important;
+    }
+    
+    &.p-toast-message-info {
+      border-left: 4px solid var(--unops-info) !important;
+    }
+    
+    &.p-toast-message-warn {
+      border-left: 4px solid var(--unops-warning) !important;
+    }
+    
+    &.p-toast-message-error {
+      border-left: 4px solid var(--unops-error) !important;
+    }
+  }
+}
+
+/* ===================================== */
+/* TOOLTIP OVERRIDES */
+/* ===================================== */
+
+.p-tooltip,
+.p-tooltip.p-component,
+[data-pc-section="tooltip"] {
+  background: var(--unops-neutral-900) !important;
+  background-color: var(--unops-neutral-900) !important;
+  color: var(--unops-neutral-50) !important;
+  border: none !important;
+  border-radius: var(--unops-radius-md) !important;
+  padding: var(--unops-spacing-sm) var(--unops-spacing-md) !important;
+  font-family: var(--unops-font-body) !important;
+  font-size: var(--unops-font-size-body-small) !important;
+  font-weight: var(--unops-font-weight-regular) !important;
+  line-height: 1.4 !important;
+  box-shadow: var(--unops-shadow-lg) !important;
+  z-index: var(--unops-z-tooltip) !important;
+  max-width: 300px !important;
+  word-wrap: break-word !important;
+}
+
+.p-tooltip .p-tooltip-text,
+.p-tooltip.p-component .p-tooltip-text,
+[data-pc-section="tooltip"] .p-tooltip-text {
+  background: transparent !important;
+  color: var(--unops-neutral-50) !important;
+  font-family: var(--unops-font-body) !important;
+  font-size: var(--unops-font-size-body-small) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.p-tooltip-arrow,
+.p-tooltip .p-tooltip-arrow,
+[data-pc-section="arrow"] {
+  border-top-color: var(--unops-neutral-900) !important;
+  border-right-color: var(--unops-neutral-900) !important;
+  border-bottom-color: var(--unops-neutral-900) !important;
+  border-left-color: var(--unops-neutral-900) !important;
+}
+
+/* Tooltip positioning arrows for all directions */
+.p-tooltip-right .p-tooltip-arrow {
+  border-right-color: var(--unops-neutral-900) !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+  border-left-color: transparent !important;
+}
+
+.p-tooltip-left .p-tooltip-arrow {
+  border-left-color: var(--unops-neutral-900) !important;
+  border-top-color: transparent !important;
+  border-bottom-color: transparent !important;
+  border-right-color: transparent !important;
+}
+
+.p-tooltip-top .p-tooltip-arrow {
+  border-top-color: var(--unops-neutral-900) !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+  border-bottom-color: transparent !important;
+}
+
+.p-tooltip-bottom .p-tooltip-arrow {
+  border-bottom-color: var(--unops-neutral-900) !important;
+  border-top-color: transparent !important;
+  border-left-color: transparent !important;
+  border-right-color: transparent !important;
+}
+
+/* ===================================== */
+/* PROGRESS BAR OVERRIDES */
+/* ===================================== */
+
+.p-progressbar {
+  background: var(--unops-neutral-200) !important;
+  border-radius: var(--unops-radius-full) !important;
+  overflow: hidden;
+  
+  .p-progressbar-value {
+    background: linear-gradient(90deg, var(--unops-primary), var(--unops-primary-light)) !important;
+    transition: width var(--unops-duration-medium) var(--unops-easing-smooth) !important;
+  }
+  
+  .p-progressbar-label {
+    color: var(--unops-neutral-900) !important;
+    font-family: var(--unops-font-body) !important;
+    font-size: var(--unops-font-size-body-small) !important;
+    font-weight: var(--unops-font-weight-medium) !important;
+  }
+}
+
+/* ===================================== */
+/* LOADING SPINNER OVERRIDES */
+/* ===================================== */
+
+.p-progress-spinner {
+  .p-progress-spinner-svg {
+    .p-progress-spinner-circle {
+      stroke: var(--unops-primary) !important;
+    }
+  }
+}
+
+/* ===================================== */
+/* UTILITY CLASS OVERRIDES */
+/* ===================================== */
+
+/* Ensure unops-icon-button utility class works with PrimeNG */
+.p-button.unops-icon-button,
+button.unops-icon-button.p-button,
+.p-button-icon-only.unops-icon-button {
+  background: transparent !important;
+  border: none !important;
+  color: var(--unops-neutral-600) !important;
+  padding: var(--unops-spacing-sm) !important;
+  border-radius: var(--unops-radius-md) !important;
+  min-width: var(--unops-min-touch) !important;
+  min-height: var(--unops-min-touch) !important;
+  
+  &:hover:not(:disabled),
+  &:focus:not(:disabled) {
+    background: transparent !important;
+    color: var(--unops-primary) !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: translateY(-1px);
+  }
+  
+  &:active:not(:disabled) {
+    background: transparent !important;
+    color: var(--unops-primary-dark) !important;
+    transform: translateY(0);
+  }
+  
+  &:focus-visible {
+    outline: 2px solid var(--unops-primary) !important;
+    outline-offset: 2px !important;
+  }
+  
+  &:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    color: var(--unops-neutral-400) !important;
+    background: transparent !important;
+  }
+  
+  /* Override any PrimeNG loading states */
+  &.p-button-loading {
+    background: transparent !important;
+    
+    .p-button-loading-icon {
+      color: inherit !important;
+    }
+  }
+  
+  /* Ensure icons are properly sized */
+  .p-button-icon,
+  .pi {
+    font-size: 1rem !important;
+    line-height: 1 !important;
+  }
+}
+
+/* Additional specificity for stubborn PrimeNG styles */
+.p-button.p-component.unops-icon-button {
+  background-color: transparent !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.p-button.p-component.unops-icon-button:hover:not(:disabled) {
+  background-color: transparent !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+/* ===================================== */
+/* DARK THEME SUPPORT */
+/* ===================================== */
+
+.app-dark {
+  /* Dark theme adjustments while maintaining UNOPS brand */
+  
+  .p-card,
+  .p-panel,
+  .p-dialog,
+  .p-datatable {
+    background: var(--unops-neutral-800) !important;
+    border-color: var(--unops-neutral-600) !important;
+  }
+  
+  .p-inputtext,
+  .p-inputtextarea,
+  .p-dropdown,
+  .p-multiselect,
+  .p-calendar input {
+    background: var(--unops-neutral-800) !important;
+    color: var(--unops-neutral-100) !important;
+    border-color: var(--unops-neutral-600) !important;
+    
+    &::placeholder {
+      color: var(--unops-neutral-400) !important;
+    }
+  }
+  
+  .p-dropdown-panel,
+  .p-menu {
+    background: var(--unops-neutral-800) !important;
+    border-color: var(--unops-neutral-600) !important;
+  }
+  
+  /* Dark theme icon button adjustments */
+  .p-button.unops-icon-button,
+  button.unops-icon-button.p-button {
+    color: var(--unops-neutral-300) !important;
+    
+    &:hover:not(:disabled) {
+      color: var(--unops-primary-light) !important;
+    }
+    
+    &:disabled {
+      color: var(--unops-neutral-600) !important;
+    }
+  }
+  
+  /* Dark theme tooltip adjustments - keep tooltips consistent */
+  .p-tooltip,
+  .p-tooltip.p-component,
+  [data-pc-section="tooltip"] {
+    background: var(--unops-neutral-900) !important;
+    background-color: var(--unops-neutral-900) !important;
+    color: var(--unops-neutral-50) !important;
+    
+    .p-tooltip-text {
+      color: var(--unops-neutral-50) !important;
+    }
+  }
+  
+  .p-tooltip-arrow,
+  .p-tooltip .p-tooltip-arrow,
+  [data-pc-section="arrow"] {
+    border-color: var(--unops-neutral-900) !important;
+  }
+  
+  .p-tooltip-right .p-tooltip-arrow {
+    border-right-color: var(--unops-neutral-900) !important;
+  }
+  
+  .p-tooltip-left .p-tooltip-arrow {
+    border-left-color: var(--unops-neutral-900) !important;
+  }
+  
+  .p-tooltip-top .p-tooltip-arrow {
+    border-top-color: var(--unops-neutral-900) !important;
+  }
+  
+  .p-tooltip-bottom .p-tooltip-arrow {
+    border-bottom-color: var(--unops-neutral-900) !important;
+  }
+}

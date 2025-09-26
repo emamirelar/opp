@@ -60,11 +60,17 @@ public class InteractionManager : IInteractionManager
                 // Add new contacts
                 foreach (var contactId in model.ContactIds.Except(existingContacts.Select(ec => ec.ContactId)))
                 {
-                    await context.InteractionContacts.AddAsync(new InteractionContact
+                    var contact = await context.Contacts.FindAsync(contactId);
+                    if (contact != null)
                     {
-                        InteractionId = interaction.Id,
-                        ContactId = contactId
-                    });
+                        await context.InteractionContacts.AddAsync(new InteractionContact
+                        {
+                            InteractionId = interaction.Id,
+                            ContactId = contactId,
+                            Interaction = interaction,
+                            Contact = contact
+                        });
+                    }
                 }
             }
 
@@ -82,11 +88,17 @@ public class InteractionManager : IInteractionManager
 
                 foreach (var partnerId in model.PartnerIds.Except(existingPartners.Select(ep => ep.PartnerId)))
                 {
-                    await context.InteractionPartners.AddAsync(new InteractionPartner
+                    var partner = await context.Partners.FindAsync(partnerId);
+                    if (partner != null)
                     {
-                        InteractionId = interaction.Id,
-                        PartnerId = partnerId
-                    });
+                        await context.InteractionPartners.AddAsync(new InteractionPartner
+                        {
+                            InteractionId = interaction.Id,
+                            PartnerId = partnerId,
+                            Interaction = interaction,
+                            Partner = partner
+                        });
+                    }
                 }
             }
 
@@ -104,11 +116,17 @@ public class InteractionManager : IInteractionManager
 
                 foreach (var userId in model.UserIds.Except(existingUsers.Select(eu => eu.UserId)))
                 {
-                    await context.InteractionUsers.AddAsync(new InteractionUser
+                    var user = await context.PAOUsers.FindAsync(userId);
+                    if (user != null)
                     {
-                        InteractionId = interaction.Id,
-                        UserId = userId
-                    });
+                        await context.InteractionUsers.AddAsync(new InteractionUser
+                        {
+                            InteractionId = interaction.Id,
+                            UserId = userId,
+                            Interaction = interaction,
+                            User = user
+                        });
+                    }
                 }
             }
             await context.SaveChangesAsync();

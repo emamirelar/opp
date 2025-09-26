@@ -17,33 +17,33 @@
 		</a>
 	</div>
 
-	<!-- Search bar container -->
+	<!-- Search bar container with filters -->
 	<div class="flex items-center gap-2 flex-1 max-w-2xl global-search-container">
 		<app-global-search-bar (searchExpanded)="onSearchExpanded($event)"></app-global-search-bar>
-	</div>
-
-	<div class="flex items-center justify-end" [class.search-expanded-hide-mobile]="isSearchExpanded">
-		<!-- Tour Button -->
-		<app-tour-control [class.search-expanded-hide-mobile]="isSearchExpanded"></app-tour-control>
 		
-		<!-- Global Filters button (moved before globe icon) -->
+		<!-- Global Filters button - moved next to search -->
 		<p-button
 			type="button"
 			[rounded]="true"
-			[text]="true"
-			aria-label="Global Filters"
-			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center relative"
+			[text]="!hasActiveFilters"
+			[severity]="hasActiveFilters ? 'primary' : 'secondary'"
+			[attr.aria-label]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
 			(onClick)="openGlobalFilters()"
-			title="Global Filters"
-			class="global-filters-button">
+			[title]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			class="global-filters-button flex-shrink-0"
+			[class.search-expanded-hide-mobile]="isSearchExpanded"
+			[class.filters-active]="hasActiveFilters">
 			<ng-template pTemplate="content">
-				<i class="pi pi-sliders-h text-xl"></i>
-				<span *ngIf="isOrgUnitFilterActive" class="org-unit-filter-badge"></span>
+				<i class="pi pi-sliders-h text-xl" 
+				   [class.text-white]="hasActiveFilters"
+				   [class.text-gray-600]="!hasActiveFilters"></i>
 			</ng-template>
 		</p-button>
-		
-      <app-language-selector class="language-selector"></app-language-selector>
-		
+	</div>
+
+	<div class="flex items-center justify-end" [class.search-expanded-hide-mobile]="isSearchExpanded">
+		<!-- AI Assistant - Key feature, most prominent position -->
 		<p-button
 			(onClick)="onAIAssistantToggle()"
 			type="button"
@@ -57,9 +57,25 @@
 			tooltipPosition="bottom"
 			class="ai-assistant-toggle">
 			<ng-template pTemplate="content">
-				<img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-6 h-6" />
+				<!-- Try SVG first -->
+				<img 
+					src="./images/AI_visual_64.svg" 
+					alt="AI Assistant" 
+					class="ai-icon w-6 h-6" 
+					style="display: block !important; width: 24px !important; height: 24px !important;"
+					(error)="onImageError($event)"
+					(load)="onImageLoad($event)"
+					[hidden]="showFallbackIcon" />
+				<!-- Fallback icon -->
+				<i *ngIf="showFallbackIcon" class="pi pi-cog text-xl" style="color: #0092d1;"></i>
 			</ng-template>
 		</p-button>
+		
+		<!-- Tour Control - Help/onboarding -->
+		<app-tour-control [class.search-expanded-hide-mobile]="isSearchExpanded"></app-tour-control>
+		
+		<!-- Language Selector - Less frequent use -->
+		<app-language-selector class="language-selector"></app-language-selector>
 		
       <div class="relative notifications-container">
 			<p-button

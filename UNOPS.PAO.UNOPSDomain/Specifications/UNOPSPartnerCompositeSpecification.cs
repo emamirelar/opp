@@ -20,7 +20,6 @@ public class UNOPSPartnerCompositeSpecification : GenericCompositeSpecification<
     {
         // Include related entities
         AddInclude(p => p.PartnerGroup);
-        AddInclude(p => p.Projects);
         
         // Apply dynamic ordering based on filter properties
         ApplyDynamicOrdering(filter);

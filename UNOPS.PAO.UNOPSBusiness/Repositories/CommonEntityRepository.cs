@@ -9,7 +9,6 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSDataAccess.Context;
-using UNOPS.PAO.UNOPSDomain.Entities.Common;
 
 public class CommonEntityRepository
 {
@@ -19,11 +18,6 @@ public class CommonEntityRepository
     {
         this.context = context;
     }
-
-    public IEnumerable<Project> GetProjects() => context.Projects.Where(x => x.Status == EntityStatus.Active);
-
-    public async Task<Project?> GetProjectByNumberAsync(string projectNumber) => 
-        await context.Projects.SingleOrDefaultAsync(x => x.ProjectNumber == projectNumber);
 
     public IEnumerable<Country> GetCountries() => context.Countries.Where(x => x.Status == EntityStatus.Active);
     public IEnumerable<EligibleEntity> GetEligibleEntities() => context.EligibleEntities.Where(x => x.Status == EntityStatus.Active);

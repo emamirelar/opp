@@ -159,7 +159,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var contactId = model.ContactIds?.FirstOrDefault() ?? 0;
         
         return MapModelToEntity(model, new UNOPSInteraction() { 
-            Name = contactId + " - " + model.Date
+            Name = contactId + " - " + model.Date,
+            Subject = model.Subject ?? "No Subject"
         });
     }
 
@@ -959,6 +960,132 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         {
             result.PartnerIds = item.InteractionPartners.Select(ip => ip.PartnerId).ToList();
         }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets interaction with comprehensive details formatted for AI prompt processing
+    /// </summary>
+    public async Task<object> GetInteractionDetailsForAIAsync(ClaimsPrincipal user, int id)
+    {
+        var entity = await interactionRepository.GetByIdAsync(id,
+            includes: new[]
+            {
+                "InteractionContacts",
+                "InteractionPartners", 
+                "InteractionUsers",
+                "InteractionContacts.Contact",
+                "InteractionContacts.Contact.Partner",
+                "InteractionPartners.Partner",
+                "InteractionUsers.User",
+                "InteractionUsers.User.UserProfile",
+                "Documents"
+            });
+
+        if (entity == null) return new { error = "Interaction not found" };
+
+        // Load organization unit relationships
+        await entity.LoadOrganizationUnitRelationshipsAsync(context);
+
+        // Create structured JSON for AI prompt placeholders
+        var result = new
+        {
+            id = entity.Id,
+            subject = entity.Subject,
+            description = entity.Description,
+            date = entity.Date.ToString("yyyy-MM-dd"),
+            time = entity.Date.ToString("HH:mm"),
+            type = entity.Type.ToString(),
+            location = entity.Location,
+            status = "Active", // Default status for interactions
+
+            // Contact information
+            contacts = entity.InteractionContacts?.Select(ic => new
+            {
+                id = ic.Contact.Id,
+                name = $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim(),
+                firstName = ic.Contact.FirstName,
+                lastName = ic.Contact.LastName,
+                email = ic.Contact.Email,
+                title = ic.Contact.Title,
+                phone = ic.Contact.Phone,
+                mobile = ic.Contact.Mobile,
+                partner = ic.Contact.Partner != null ? new
+                {
+                    id = ic.Contact.Partner.Id,
+                    name = ic.Contact.Partner.Name
+                } : null
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+
+            // Partner information
+            partners = entity.InteractionPartners?.Select(ip => new
+            {
+                id = ip.Partner.Id,
+                name = ip.Partner.Name,
+                status = ip.Partner.Status.ToString()
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+
+            // User information (UNOPS staff)
+            users = entity.InteractionUsers?.Select(iu => new
+            {
+                id = iu.User.Id,
+                name = iu.User.Name,
+                email = iu.User.UserProfile?.UserEmail,
+                title = iu.User.UserProfile?.Position,
+                office = iu.User.UserProfile?.OrgUnit
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+
+            // Organization unit relationships
+            organizationUnits = entity.OrganizationUnitRelationships?.Where(r => r.Status == (Domain.Entities.EntityStatus)1 && !r.IsDeleted)
+                .Select(r => new
+                {
+                    id = r.OrganizationHierarchy.Id,
+                    name = r.OrganizationHierarchy.Name,
+                    code = r.OrganizationHierarchy.Code,
+                    type = r.OrganizationHierarchy.Type.ToString()
+                }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+
+            // Documents and attachments
+            documents = entity.Documents?.Select(d => new
+            {
+                id = d.Id,
+                link = d.Link,
+                type = d.Type,
+                documentType = d.DocumentType?.Name,
+                uploadDate = d.CreatedDate.ToString("yyyy-MM-dd")
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+
+            // Email and phone information
+            emailAddresses = entity.EmailAddresses ?? new List<string>(),
+            phoneNumbers = entity.PhoneNumbers ?? new List<string>(),
+
+            // Computed names for easy access
+            contactNames = string.Join(", ", entity.InteractionContacts?.Select(ic => $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim()) ?? new List<string>()),
+            partnerNames = string.Join(", ", entity.InteractionPartners?.Select(ip => ip.Partner.Name) ?? new List<string>()),
+            userNames = string.Join(", ", entity.InteractionUsers?.Select(iu => iu.User.Name) ?? new List<string>()),
+
+            // Summary statistics
+            summary = new
+            {
+                totalContacts = entity.InteractionContacts?.Count ?? 0,
+                totalPartners = entity.InteractionPartners?.Count ?? 0,
+                totalUsers = entity.InteractionUsers?.Count ?? 0,
+                totalDocuments = entity.Documents?.Count ?? 0,
+                hasDocuments = entity.Documents?.Any() ?? false,
+                hasEmailAddresses = entity.EmailAddresses?.Any() ?? false,
+                hasPhoneNumbers = entity.PhoneNumbers?.Any() ?? false
+            },
+
+            // Audit information
+            auditInfo = new
+            {
+                createdDate = entity.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
+                lastModifiedDate = entity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not modified",
+                createdBy = entity.CreatedBy,
+                lastModifiedBy = entity.LastModifiedBy
+            }
+        };
 
         return result;
     }

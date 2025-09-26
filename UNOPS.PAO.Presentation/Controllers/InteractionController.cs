@@ -524,7 +524,17 @@ namespace UNOPS.PAO.Presentation.Controllers
                     throw new BusinessException("No valid file detected.");
                 }
 
-                string fileType = _geminiManager.FindFileType(req.File);
+                if (_geminiManager == null)
+                {
+                    throw new BusinessException("Gemini manager not available");
+                }
+
+                if (req == null)
+                {
+                    throw new BusinessException("Request cannot be null");
+                }
+
+                string fileType = _geminiManager.FindFileType(req.File) ?? "";
 
                 if (string.IsNullOrEmpty(fileType)) 
                 {

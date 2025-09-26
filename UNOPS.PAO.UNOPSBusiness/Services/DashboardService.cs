@@ -99,7 +99,6 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
         var query = _context.Set<UNOPSPartner>()
             .Include(p => p.PartnerGroup)
-            .Include(p => p.Projects)
             .Where(p => (p.CreatedBy == userId.Value || p.LastModifiedBy == userId.Value) 
                        && p.Status != Domain.Entities.EntityStatus.Draft)
             .OrderByDescending(p => p.LastModifiedDate ?? p.CreatedDate);

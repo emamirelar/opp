@@ -18,9 +18,4 @@ public class CommonEntitiesController : ControllerBase
         this.manager = manager;
     }
 
-    [HttpGet(APIDictionary.Project)]
-    public ActionResult GetProjects()
-    {
-        return Ok(manager.GetProjects());
-    }
 }

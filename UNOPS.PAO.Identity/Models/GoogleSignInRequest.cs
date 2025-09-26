@@ -2,6 +2,6 @@
 
 public class GoogleSignInRequest
 {
-    public string Provider { get; set; }
+    public string Provider { get; set; } = string.Empty;
     public string? IdToken { get; set; }
 }

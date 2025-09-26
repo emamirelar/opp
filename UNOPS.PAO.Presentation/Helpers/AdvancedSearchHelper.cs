@@ -166,7 +166,7 @@ public static class AdvancedSearchHelper
         // Apply legacy field name mapping for backward compatibility
         parsedCriteria = MapLegacyFieldNames(parsedCriteria);
         
-        ValidateSearchCriteria(parsedCriteria, allowedFields);
+        ValidateSearchCriteria(parsedCriteria ?? new List<SearchCriteria>(), allowedFields);
         return parsedCriteria;
     }
 
@@ -330,7 +330,7 @@ public static class AdvancedSearchHelper
     /// </summary>
     /// <param name="criteria">The search criteria to process</param>
     /// <returns>Search criteria with updated field names</returns>
-    public static List<SearchCriteria> MapLegacyFieldNames(List<SearchCriteria> criteria)
+    public static List<SearchCriteria>? MapLegacyFieldNames(List<SearchCriteria>? criteria)
     {
         if (criteria == null || !criteria.Any())
         {

@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.UNOPSDomain.Entities;
-using UNOPS.PAO.UNOPSDomain.Entities.Common;
 using Microsoft.Extensions.Hosting;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSDomain.Authorization;
@@ -45,10 +44,7 @@ public class UNOPSAppDbContext : AppDbContext
         //.HasPrincipalKey(x => x.ContactNumber);
 
         modelBuilder
-            .Entity<UNOPSPartner>()
-            .HasMany(x => x.Projects)
-            .WithMany(x => x.Partners)
-            .UsingEntity("PartnerProjects");
+            .Entity<UNOPSPartner>();
         //need to make PartnerCode unique but can not autogenerate as this can conflict with existing data from ERP
         //making PartnerCode optional for now
         //.HasIndex(x => x.PartnerCode) 
@@ -149,13 +145,109 @@ public class UNOPSAppDbContext : AppDbContext
         modelBuilder
             .Entity<OrganizationUnitRelationship>()
             .HasIndex(r => new { r.EntityId, r.EntityType });
+
+        // BaseEngagement configuration (externally managed READ-ONLY table)
+        modelBuilder.Entity<BaseEngagement>(entity =>
+        {
+            entity.ToTable("BaseEngagements"); // Maps to table created by External Data Service
+            entity.HasKey(e => e.Id);
+            
+            // Map to the actual column name from external service
+            entity.Property(e => e.EngagementNumber)
+                  .HasColumnName("BaseEngagement") // Map to actual column name
+                  .IsRequired()
+                  .HasMaxLength(50);
+                  
+            entity.Property(e => e.EngagementStage)
+                  .HasMaxLength(100);
+                  
+            entity.Property(e => e.EngagementStageDescription)
+                  .HasMaxLength(500);
+                  
+            entity.Property(e => e.BusinessDeveloper)
+                  .HasMaxLength(255);
+                  
+            entity.Property(e => e.BusinessDeveloperName)
+                  .HasMaxLength(255);
+                  
+            entity.Property(e => e.BusinessDeveloperEmailAddress)
+                  .HasMaxLength(255);
+                  
+            entity.Property(e => e.EngagementProjectExecutive)
+                  .HasMaxLength(255);
+                  
+            entity.Property(e => e.EngagementProjectExecutiveName)
+                  .HasMaxLength(255);
+            
+            entity.Property(e => e.EngagementAmount)
+                  .HasColumnType("decimal(18,2)");
+            
+            // Audit field from External Data Service
+            entity.Property(e => e.IsDeleted)
+                  .HasDefaultValue(false);
+            
+            // Text fields
+            entity.Property(e => e.ImplementationCountriesList)
+                  .HasColumnType("text");
+                  
+            entity.Property(e => e.OutputsList)
+                  .HasColumnType("text");
+                  
+            entity.Property(e => e.SDGList)
+                  .HasColumnType("text");
+                  
+            entity.Property(e => e.EngagementDescription)
+                  .HasColumnType("text");
+                  
+            entity.Property(e => e.EngagementLongDescription)
+                  .HasColumnType("text");
+        });
+        
+        // BaseEngagementPartners configuration (externally managed READ-ONLY table)
+        modelBuilder.Entity<BaseEngagementPartners>(entity =>
+        {
+            entity.ToTable("BaseEngagementPartners"); // Maps to table created by External Data Service
+            entity.HasKey(e => e.Id);
+            
+            // Property configurations (must match external data service field mappings)
+            entity.Property(e => e.Key)
+                  .IsRequired()
+                  .HasMaxLength(200);
+                  
+            entity.Property(e => e.EngagementNumber)
+                  .HasColumnName("BaseEngagement") // Map to actual column name from external service
+                  .IsRequired()
+                  .HasMaxLength(50);
+                  
+            entity.Property(e => e.PartnerType)
+                  .HasMaxLength(50);
+                  
+            entity.Property(e => e.Partner)
+                  .HasMaxLength(50);
+                  
+            entity.Property(e => e.PartnerDescription)
+                  .HasMaxLength(255);
+            
+            // Audit field from External Data Service
+            entity.Property(e => e.IsDeleted)
+                  .HasDefaultValue(false);
+            
+            // IMPORTANT: NO foreign key constraints - soft relationships only
+            // Navigation properties are configured for LINQ joins but create no DB constraints
+            entity.HasOne(e => e.BaseEngagementEntity)
+                  .WithMany(e => e.EngagementPartners)
+                  .HasForeignKey(e => e.BaseEngagementId)
+                  .OnDelete(DeleteBehavior.NoAction) // No cascade, no constraints
+                  .HasConstraintName(null); // Explicitly remove FK constraint
+                  
+            entity.HasOne(e => e.PartnerEntity)
+                  .WithMany()
+                  .HasForeignKey(e => e.PartnerId)
+                  .OnDelete(DeleteBehavior.NoAction) // No cascade, no constraints
+                  .HasConstraintName(null); // Explicitly remove FK constraint
+        });
     }
 
-    public DbSet<Project> Projects { get; set; }
-    public DbSet<WorkPackage> WorkPackages { get; set; }
-    public DbSet<Budget> Budgets { get; set; }
-    public DbSet<BudgetLine> BudgetLines { get; set; }
-    public DbSet<Donor> Donors { get; set; }
     public new DbSet<UNOPSContact> Contacts { get; set; }
     public new DbSet<UNOPSInteraction> Interactions { get; set; }
 
@@ -190,4 +282,8 @@ public class UNOPSAppDbContext : AppDbContext
     
     // Seed script tracking
     public DbSet<SeedScript> SeedScripts { get; set; }
+    
+    // Base Engagement entities (externally managed, read-only)
+    public DbSet<BaseEngagement> BaseEngagements { get; set; }
+    public DbSet<BaseEngagementPartners> BaseEngagementPartners { get; set; }
 }

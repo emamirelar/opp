@@ -9,7 +9,6 @@ using AutoMapper;
 using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
-using UNOPS.PAO.UNOPSDomain.Entities.Common;
 using UNOPS.PAO.Utilities.Interfaces;
 
 public class CommonEntitiesManager : IApplicationService
@@ -21,14 +20,5 @@ public class CommonEntitiesManager : IApplicationService
     {
         this.mapper = mapper;
         repository = new CommonEntityRepository(context);
-    }
-
-    public IEnumerable<ProjectModel> GetProjects() => repository.GetProjects().Select(x => mapper.Map<ProjectModel>(x));
-
-    public async Task<ProjectModel?> GetProjectByNumber(string projectNumber)
-    {
-        var project = await repository.GetProjectByNumberAsync(projectNumber);
-
-        return mapper.Map<ProjectModel>(project);
     }
 }

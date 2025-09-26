@@ -127,7 +127,7 @@
       <!-- New Chat button - always visible for now -->
       <p-button 
         icon="pi pi-plus"
-        (onClick)="aiAssistantData.clearConversation()"
+        (onClick)="clearConversation()"
         [text]="true"
         [rounded]="true"
         size="small"
@@ -360,8 +360,27 @@
         
         <!-- Message bubble -->
         <div class="rounded-2xl p-4 break-words bg-white dark:bg-gray-100 text-gray-900 dark:text-gray-800 rounded-bl-sm border border-gray-200 dark:border-gray-300 shadow-sm">
-          <!-- Structured content (new format) -->
-          <div *ngIf="message.result && message.result.length > 0">
+          <!-- Progressive streaming content -->
+          <div *ngIf="message.streamingTypes" class="streaming-content">
+            <!-- Render each chunk type array with trackBy for chunk type pairs -->
+            <ng-container *ngFor="let chunkTypePair of getStreamingTypeEntries(message.streamingTypes); trackBy: trackByChunkType">
+              <div *ngFor="let item of chunkTypePair.items; let itemIndex = index; trackBy: trackByRenderingId" 
+                   class="progressive-content progressive-{{chunkTypePair.chunkType}}">
+                <app-content-renderer 
+                  [item]="item"
+                  [shouldShow]="true"
+                  [isNewMessage]="true"
+                  [renderingId]="item.renderingId"
+                  [isProgressive]="true"
+                  [attr.id]="'progressive-' + item.renderingId"
+                  (cardClicked)="onCardClicked($event)">
+                </app-content-renderer>
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- Legacy content fallbacks -->
+          <div *ngIf="message.result && message.result.length > 0 && !message.streamingTypes">
             <app-content-renderer 
               *ngFor="let item of message.result; let itemIndex = index" 
               [item]="item"
@@ -372,8 +391,8 @@
             </app-content-renderer>
           </div>
           
-          <!-- Legacy text content -->
-          <div *ngIf="!message.result && message.text" class="whitespace-pre-line">{{ message.text }}</div>
+          <!-- Plain text content -->
+          <div *ngIf="!message.result && !message.streamingTypes && message.text" class="whitespace-pre-line">{{ message.text }}</div>
           
           <!-- Display inline data if any -->
           <div *ngIf="message.inlineData && message.inlineData.length > 0" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-300 border-opacity-50">

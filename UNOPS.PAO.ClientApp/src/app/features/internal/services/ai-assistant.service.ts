@@ -82,6 +82,135 @@ export class AiAssistantService {
     });
   }
 
+  // Enhanced streaming chat method with file support
+  chatWithFilesStreaming(
+    message: string, 
+    sessionId?: string, 
+    files?: File[], 
+    state?: any
+  ): Observable<{ data: any, complete: boolean }> {
+    const formData = this.createStreamingChatFormData({
+      message,
+      sessionId,
+      files,
+      state,
+      streaming: true
+    });
+    
+    return new Observable(observer => {
+      console.log('🌊 [FRONTEND] Starting streaming request...');
+      
+      // Use fetch with proper streaming headers and immediate processing
+      fetch(`${this.aiAssistantUrl}/chat`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        },
+        // Critical: Disable any client-side response buffering
+        cache: 'no-store'
+      }).then(response => {
+        console.log('🌊 [FRONTEND] Got response, status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('No response body reader available');
+        }
+        
+        console.log('🌊 [FRONTEND] Starting to read stream...');
+        
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let chunkCount = 0;
+        const startTime = Date.now();
+        
+        const processChunk = async (): Promise<void> => {
+          try {
+            const { done, value } = await reader.read();
+            
+            if (done) {
+              console.log('🌊 [FRONTEND] Stream completed, total chunks:', chunkCount);
+              observer.complete();
+              return;
+            }
+            
+            // Decode the chunk immediately
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+            
+            // Process all complete lines in the buffer
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ''; // Keep incomplete line in buffer
+            
+            for (const line of lines) {
+              if (line.trim() && line.startsWith('data: ')) {
+                chunkCount++;
+                const elapsed = Date.now() - startTime;
+                console.log(`🌊 [FRONTEND] Processing chunk ${chunkCount} at ${elapsed}ms: ${line.substring(0, 100)}...`);
+                
+                try {
+                  const dataStr = line.slice(6).trim(); // Remove 'data: ' prefix
+                  if (dataStr) {
+                    const data = JSON.parse(dataStr);
+                    
+                    // Check if this is a complete response
+                    const isComplete = this.isCompleteResponse(data);
+                    
+                    console.log(`🌊 [FRONTEND] Emitting chunk ${chunkCount}, complete: ${isComplete}`);
+                    
+                    // Emit immediately for real-time processing
+                    observer.next({ data, complete: isComplete });
+                  }
+                } catch (parseError) {
+                  console.warn('[FRONTEND] Failed to parse streaming data:', parseError, line.substring(0, 200));
+                }
+              }
+            }
+            
+            // Continue reading the next chunk immediately
+            processChunk();
+            
+          } catch (error) {
+            console.error('🌊 [FRONTEND] Error reading chunk:', error);
+            observer.error(error);
+          }
+        };
+        
+        // Start processing chunks
+        processChunk();
+        
+      }).catch(error => {
+        console.error('🌊 [FRONTEND] Fetch error:', error);
+        observer.error(error);
+      });
+      
+      // Cleanup function
+      return () => {
+        console.log('🌊 [FRONTEND] Streaming observable cleanup');
+      };
+    });
+  }
+
+  // Helper method to determine if a streaming response is complete
+  private isCompleteResponse(data: any): boolean {
+    // The final chunk is identified by content.role === 'user' 
+    // which appears to be the user message echo at the end of streaming
+    if (data.content?.role === 'user') {
+      console.log('🏁 Detected final chunk (user message echo)');
+      return true;
+    }
+    
+    // All other chunks (model responses, partial chunks, etc.) are intermediate
+    return false;
+  }
+
   // Get personalized suggestions for the user
   getSuggestions(): Observable<any> {
     return this.http.get(`${this.apiUrl}/ai-assistant/generate-suggestions`).pipe(
@@ -130,6 +259,59 @@ export class AiAssistantService {
       });
       
       console.log(`[AI-ASSISTANT] Added ${validation.valid.length} valid files to request`);
+    }
+    
+    return formData;
+  }
+
+  // Helper method to create FormData for streaming chat requests
+  private createStreamingChatFormData(requestData: ChatRequestData & { streaming?: boolean }): FormData {
+    const formData = new FormData();
+    
+    // Add message
+    formData.append('message', requestData.message);
+    
+    // Add session ID if provided
+    if (requestData.sessionId) {
+      formData.append('session_id', requestData.sessionId);
+    }
+    
+    // Add streaming flag
+    formData.append('streaming', requestData.streaming ? 'true' : 'false');
+    
+    // Add app_name (required by backend)
+    formData.append('app_name', 'opportunityplus');
+    
+    // Add user information (these should come from auth service, but using defaults for now)
+    formData.append('user_id', localStorage.getItem('user_id') || '');
+    formData.append('user_email', localStorage.getItem('user_email') || '');
+    
+    // Add state if provided
+    if (requestData.state) {
+      const stateString = typeof requestData.state === 'string' 
+        ? requestData.state 
+        : JSON.stringify(requestData.state);
+      formData.append('state', stateString);
+    }
+    
+    // Add files if provided
+    if (requestData.files && requestData.files.length > 0) {
+      // Validate files first
+      const validation = this.validateFiles(requestData.files);
+      
+      if (validation.invalid.length > 0) {
+        // Log warnings for invalid files but continue with valid ones
+        validation.invalid.forEach(item => {
+          console.warn(`[AI-ASSISTANT] Invalid file skipped: ${item.error}`);
+        });
+      }
+      
+      // Add valid files to FormData
+      validation.valid.forEach((file, index) => {
+        formData.append('files', file, file.name);
+      });
+      
+      console.log(`[AI-ASSISTANT] Added ${validation.valid.length} valid files to streaming request`);
     }
     
     return formData;

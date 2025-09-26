@@ -144,7 +144,7 @@ public class InteractionCompositeSpecification : GenericCompositeSpecification<I
         {
             "date" => i => i.Date,
             "subject" => i => i.Subject,
-            "description" => i => i.Description,
+            "description" => i => i.Description!,
             "type" => i => i.Type,
             "createddate" => i => i.CreatedDate,
             _ => i => i.Date // Default to Date descending (most recent first) if no field specified or unknown field

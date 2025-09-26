@@ -82,6 +82,7 @@ public class PartnerManager : IPartnerManager
                     var newRelationship = new OrganizationUnitRelationship
                     {
                         OrganizationHierarchyId = orgUnit.Id,
+                        OrganizationHierarchy = orgUnit,
                         EntityId = partnerId,
                         EntityType = "Partner",
                         Name = $"Partner-{partnerId}-{orgUnit.Code}",
@@ -123,6 +124,7 @@ public class PartnerManager : IPartnerManager
                 var newRelationship = new OrganizationUnitRelationship
                 {
                     OrganizationHierarchyId = orgUnit.Id,
+                    OrganizationHierarchy = orgUnit,
                     EntityId = entity.Id, // Now entity.Id has the actual saved ID
                     EntityType = nameof(Partner),
                     Name = $"Partner-{entity.Id}-{orgUnit.Code}",
@@ -783,19 +785,7 @@ public class PartnerManager : IPartnerManager
         throw new NotSupportedException("Partner approval is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
     }
 
-    public async Task<PaginationResponse<Engagement>> GetPartnerEngagementsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending)
-    {
-        // This implementation doesn't support engagements since it works with Partner entities (not UNOPSPartner)
-        // Engagement management is handled by UNOPSPartnerManager
-        throw new NotSupportedException("Partner engagements are managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
-    }
 
-    public async Task<PaginationResponse<object>> GetPartnerProjectsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending)
-    {
-        // This implementation doesn't support projects since it works with Partner entities (not UNOPSPartner)
-        // Project management is handled by UNOPSPartnerManager
-        throw new NotSupportedException("Partner projects are managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
-    }
 
     public virtual async Task<PartnerModel?> GetPartnerByNameAsync(ClaimsPrincipal user, string name)
     {

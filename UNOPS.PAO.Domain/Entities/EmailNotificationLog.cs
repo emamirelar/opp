@@ -8,7 +8,7 @@ namespace UNOPS.PAO.Domain.Entities;
 /// </summary>
 public class EmailNotificationLog : BaseEntity
 {
-    public int Id { get; set; }
+    public new int Id { get; set; }
     
     // Recipient information
     public int? RecipientUserId { get; set; }

@@ -59,8 +59,12 @@ export class ImportService {
    */
   private getEntitySpecificEndpoint(type: string): string {
     // Extract entity type from the import type and map to correct APIDictionary paths
-    if (type.includes('partner')) {
+    if (type.includes('partner') && !type.includes('partnercategory') && !type.includes('partnergroup')) {
       return `${this.apiUrl}/partner`;  // Singular: /api/partner
+    } else if (type.includes('partnercategory')) {
+      return `${this.apiUrl}/partnercategory`;   // Singular: /api/partnercategory
+    } else if (type.includes('partnergroup')) {
+      return `${this.apiUrl}/partnergroup`;   // Singular: /api/partnergroup
     } else if (type.includes('contact')) {
       return `${this.apiUrl}/contact`;   // Singular: /api/contact
     } else if (type.includes('interaction')) {

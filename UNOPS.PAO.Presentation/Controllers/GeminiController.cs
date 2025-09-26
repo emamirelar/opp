@@ -28,7 +28,6 @@ using System.Threading;
 using System.Collections.Generic;
 using Humanizer;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
@@ -37,7 +36,7 @@ public class SearchResult
 {
     public int EntityId { get; set; }
     public float Score { get; set; }
-    public string SearchType { get; set; }
+    public string SearchType { get; set; } = string.Empty;
 }
 
 [Route("/")]
@@ -48,7 +47,7 @@ public class GeminiController : BaseController
     private readonly IManagerWrapper _managerWrapper;
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
-    private readonly string _agenticAiServiceUrl;
+    private readonly string? _agenticAiServiceUrl;
 
     public GeminiController(
         IManagerWrapper manager, 
@@ -66,7 +65,7 @@ public class GeminiController : BaseController
         _managerWrapper = manager;
         _httpClient = httpClient;
         _configuration = configuration;
-        _agenticAiServiceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+        _agenticAiServiceUrl = _configuration.GetValue<string?>("AgenticAi:ServiceURL");
     }
 
     #region AI Prompt Management Endpoints
@@ -75,15 +74,6 @@ public class GeminiController : BaseController
     /// Retrieves all AI prompts with advanced filtering, pagination, search capabilities, and access control for prompt management.
     /// </summary>
     /// <param name="request">AI prompt filter request containing search and pagination parameters</param>
-    /// <param name="request.pageIndex">Page number (1-based)</param>
-    /// <param name="request.pageSize">Number of items per page</param>
-    /// <param name="request.searchText">Text to search across prompt fields</param>
-    /// <param name="request.orderBy">Field to order results by</param>
-    /// <param name="request.ascending">Sort direction (true for ascending)</param>
-    /// <param name="request.type">Filter by prompt type</param>
-    /// <param name="request.model">Filter by AI model</param>
-    /// <param name="request.project">Filter by project</param>
-    /// <param name="request.location">Filter by location</param>
     /// <example_uses>
     /// Show me all AI prompts
     /// List prompts for GPT-4 model
@@ -133,15 +123,6 @@ public class GeminiController : BaseController
     /// Creates a new AI prompt with complete configuration including content, parameters, model settings, and metadata.
     /// </summary>
     /// <param name="model">AI prompt creation request with all configuration details</param>
-    /// <param name="model.name">Prompt name (required)</param>
-    /// <param name="model.type">Prompt type/category (required)</param>
-    /// <param name="model.content">Prompt content/template (required)</param>
-    /// <param name="model.description">Description of prompt purpose</param>
-    /// <param name="model.model">AI model to use (GPT-4, GPT-3.5, etc.)</param>
-    /// <param name="model.project">Associated project</param>
-    /// <param name="model.location">Location/region</param>
-    /// <param name="model.temperature">Model temperature setting</param>
-    /// <param name="model.maxTokens">Maximum tokens for response</param>
     /// <example_uses>
     /// Create a new email generation prompt
     /// Add a customer service response template
@@ -170,13 +151,6 @@ public class GeminiController : BaseController
     /// </summary>
     /// <param name="id">AI prompt ID to update (required)</param>
     /// <param name="model">Updated AI prompt data</param>
-    /// <param name="model.name">Updated prompt name</param>
-    /// <param name="model.type">Updated prompt type</param>
-    /// <param name="model.content">Updated prompt content/template</param>
-    /// <param name="model.description">Updated description</param>
-    /// <param name="model.model">Updated AI model selection</param>
-    /// <param name="model.temperature">Updated temperature setting</param>
-    /// <param name="model.maxTokens">Updated token limit</param>
     /// <example_uses>
     /// Update prompt 123's content with new template
     /// Change prompt 456's model from GPT-3.5 to GPT-4
@@ -366,9 +340,6 @@ public class GeminiController : BaseController
     /// Tests an AI prompt with provided test data to validate prompt effectiveness and output quality before deployment.
     /// </summary>
     /// <param name="request">Test request containing prompt data and test parameters</param>
-    /// <param name="request.promptId">ID of prompt to test</param>
-    /// <param name="request.testData">Test input data for prompt validation</param>
-    /// <param name="request.parameters">Additional parameters for testing</param>
     /// <example_uses>
     /// Test email prompt with sample data
     /// Validate prompt 123 with test input
@@ -562,9 +533,9 @@ public class GeminiController : BaseController
 
     public class GenerateTitleResponse
     {
-        public string session_id { get; set; }
-        public string formatted_conversation { get; set; }
-        public string title { get; set; }
+        public string session_id { get; set; } = string.Empty;
+        public string formatted_conversation { get; set; } = string.Empty;
+        public string title { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -601,6 +572,10 @@ public class GeminiController : BaseController
         var parameter = System.Linq.Expressions.Expression.Parameter(typeof(T), "x");
         var property = System.Linq.Expressions.Expression.Property(parameter, idPropertyInfo);
         var containsMethod = typeof(List<int>).GetMethod(nameof(List<int>.Contains));
+        if (containsMethod == null)
+        {
+            throw new InvalidOperationException("Contains method not found on List<int>");
+        }
         var containsCall = System.Linq.Expressions.Expression.Call(
             System.Linq.Expressions.Expression.Constant(entityIds), 
             containsMethod, 
@@ -611,6 +586,10 @@ public class GeminiController : BaseController
         var filteredQuery = typedDbSet.Where(lambda);
 
         // Apply RBAC filtering with proper typing
+        if (_permissionService == null)
+        {
+            throw new InvalidOperationException("Permission service is not available");
+        }
         var rbacFilteredQueryResult = await _permissionService.ApplyAccessControlFiltersAsync<T>(
             filteredQuery, 
             User, 

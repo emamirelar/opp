@@ -13,8 +13,8 @@ namespace UNOPS.PAO.Domain.Entities
         public int PartnerId { get; set; }
 
         [JsonIgnore]
-        public virtual Interaction Interaction { get; set; }
+        public virtual Interaction? Interaction { get; set; }
         [JsonIgnore]
-        public virtual Partner Partner { get; set; }
+        public virtual Partner? Partner { get; set; }
     }
 }

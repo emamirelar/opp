@@ -1,0 +1,303 @@
+{
+  "metadata": {
+    "name": "UNOPS Design Tokens",
+    "description": "Complete UNOPS design system tokens - single source of truth",
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-09",
+    "source": "projects/unops-angular-components/tailwind.config.js"
+  },
+  "colors": {
+    "unops-primary": {
+      "DEFAULT": "#0092d1",
+      "light": "#1aa3db",
+      "lighter": "#4ec3e0",
+      "dark": "#007bb8",
+      "darker": "#005a8a",
+      "on": "#ffffff",
+      "container": "#b3e0f7",
+      "container-soft": "#e3f2fd",
+      "on-container": "#004976",
+      "50": "#f0f8ff",
+      "100": "#e3f2fd",
+      "200": "#b3e0f7",
+      "300": "#7dccf0",
+      "400": "#4ec3e0",
+      "500": "#0092d1",
+      "600": "#007bb8",
+      "700": "#005a8a",
+      "800": "#004976",
+      "900": "#003455"
+    },
+    "unops-secondary": {
+      "DEFAULT": "#004976",
+      "light": "#1a5d8a",
+      "lighter": "#4080b8",
+      "dark": "#003a5f",
+      "darker": "#002b47",
+      "on": "#ffffff",
+      "container": "#b3d4f7",
+      "container-soft": "#e3f0fd",
+      "on-container": "#ffffff",
+      "50": "#f0f6ff",
+      "100": "#e3f0fd",
+      "200": "#b3d4f7",
+      "300": "#7db8f0",
+      "400": "#4080b8",
+      "500": "#004976",
+      "600": "#003a5f",
+      "700": "#002b47",
+      "800": "#001f35",
+      "900": "#001426"
+    },
+    "unops-accent": {
+      "yellow": "#f8ea44",
+      "yellow-light": "#fdf168",
+      "yellow-soft": "#fefce8",
+      "orange": "#e85c0e",
+      "orange-light": "#ff7849",
+      "orange-soft": "#fff7ed",
+      "cherry": "#991e66",
+      "cherry-light": "#c2185b",
+      "cherry-soft": "#fdf2f8",
+      "lime": "#c4d600",
+      "lime-light": "#d4e157",
+      "lime-soft": "#f9fbe7",
+      "teal": "#00a997",
+      "teal-light": "#1bb3a6",
+      "teal-soft": "#e8f7f5",
+      "ocean": "#4ec3e0",
+      "ocean-light": "#7dd3ea",
+      "ocean-soft": "#f0f9ff"
+    },
+    "unops-neutral": {
+      "grey": "#97999b",
+      "grey-light": "#b8babb",
+      "grey-lighter": "#d1d2d3",
+      "grey-lightest": "#e8e9ea",
+      "grey-dark": "#7a7c7e",
+      "grey-darker": "#5c5e60",
+      "black": "#00070a",
+      "black-soft": "#1a1b1c",
+      "white": "#ffffff",
+      "white-soft": "#fefefe",
+      "50": "#f9fafb",
+      "100": "#f3f4f6",
+      "200": "#e8e9ea",
+      "300": "#d1d2d3",
+      "400": "#b8babb",
+      "500": "#97999b",
+      "600": "#7a7c7e",
+      "700": "#5c5e60",
+      "800": "#1a1b1c",
+      "900": "#00070a"
+    },
+    "unops-midnight-blue": "#004976",
+    "unops-deep-sea": "#0f172a",
+    "unops-surface": {
+      "primary": "#ffffff",
+      "secondary": "#f8fafc",
+      "elevated": "#ffffff",
+      "cool": "#f6f9fc",
+      "warm": "#fef8f5",
+      "neutral": "#f7f6f5",
+      "cream": "#fdfaf1",
+      "fresh": "#f5fbfd",
+      "mint": "#ecf8f7",
+      "overlay": "rgba(15, 23, 42, 0.8)",
+      "overlay-light": "rgba(15, 23, 42, 0.4)",
+      "overlay-soft": "rgba(15, 23, 42, 0.2)",
+      "glass": "rgba(255, 255, 255, 0.9)",
+      "glass-dark": "rgba(0, 0, 0, 0.1)"
+    },
+    "unops-colorful": {
+      "rainbow": "linear-gradient(135deg, #0092d1 0%, #00a997 33%, #f8ea44 66%, #e85c0e 100%)",
+      "ocean-sunset": "linear-gradient(135deg, #0092d1 0%, #00a997 50%, #991e66 100%)",
+      "tropical": "linear-gradient(135deg, #4ec3e0 0%, #00a997 50%, #c4d600 100%)",
+      "energy": "linear-gradient(135deg, #991e66 0%, #e85c0e 50%, #f8ea44 100%)",
+      "professional": "linear-gradient(135deg, #004976 0%, #0092d1 50%, #4ec3e0 100%)",
+      "nature": "linear-gradient(135deg, #00a997 0%, #c4d600 50%, #4ec3e0 100%)",
+      "primary-soft": "linear-gradient(135deg, #f0f8ff 0%, #e3f2fd 100%)",
+      "secondary-soft": "linear-gradient(135deg, #f0fffe 0%, #e8f7f5 100%)",
+      "accent-soft": "linear-gradient(135deg, #fdf2f8 0%, #fff7ed 100%)",
+      "vertical-ocean": "linear-gradient(180deg, #0092d1 0%, #00a997 100%)",
+      "horizontal-sunset": "linear-gradient(90deg, #e85c0e 0%, #f8ea44 100%)",
+      "diagonal-fresh": "linear-gradient(45deg, #4ec3e0 0%, #00a997 100%)",
+      "radial-primary": "radial-gradient(circle at center, #0092d1 0%, #004976 100%)",
+      "radial-warm": "radial-gradient(circle at center, #f8ea44 0%, #e85c0e 100%)",
+      "radial-cool": "radial-gradient(circle at center, #4ec3e0 0%, #00a997 100%)"
+    },
+    "unops-state": {
+      "error": "#991e66",
+      "warning": "#cc8400",
+      "success": "#10b981",
+      "info": "#4ec3e0"
+    },
+    "unops-error": {
+      "DEFAULT": "#991e66",
+      "light": "#a91e6b",
+      "lighter": "#c2185b",
+      "dark": "#7b1538",
+      "darker": "#5d0f2a",
+      "on": "#ffffff"
+    },
+    "unops-success": {
+      "DEFAULT": "#10b981",
+      "light": "#16c487",
+      "lighter": "#34d399",
+      "dark": "#059669",
+      "darker": "#047857",
+      "on": "#ffffff"
+    },
+    "unops-info": {
+      "DEFAULT": "#4ec3e0",
+      "light": "#58c6e1",
+      "lighter": "#7dd3ea",
+      "dark": "#0891b2",
+      "darker": "#0e7490",
+      "on": "#ffffff"
+    },
+    "unops-warning": {
+      "DEFAULT": "#cc8400",
+      "light": "#d49207",
+      "lighter": "#f59e0b",
+      "dark": "#92400e",
+      "darker": "#78350f",
+      "on": "#ffffff"
+    },
+    "unops-white": "#ffffff"
+  },
+  "spacing": {
+    "unops-xs": "4px",
+    "unops-sm": "8px",
+    "unops-md": "16px",
+    "unops-lg": "24px",
+    "unops-xl": "32px",
+    "unops-2xl": "48px",
+    "unops-3xl": "64px"
+  },
+  "typography": {
+    "fontFamily": {
+      "unops-display": ["Inter", "Noto Sans", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"],
+      "unops-body": ["Inter", "Noto Sans", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "system-ui", "sans-serif"]
+    },
+    "fontWeight": {
+      "unops-light": "300",
+      "unops-regular": "400",
+      "unops-medium": "500",
+      "unops-semibold": "600",
+      "unops-bold": "700"
+    },
+    "fontSize": {
+      "unops-xs": "0.75rem",
+      "unops-sm": "0.875rem",
+      "unops-base": "1rem",
+      "unops-lg": "1.125rem",
+      "unops-xl": "1.25rem",
+      "unops-2xl": "1.5rem",
+      "unops-display-large": "2.5rem",
+      "unops-display-medium": "2rem",
+      "unops-display-small": "1.5rem",
+      "unops-headline-large": "1.875rem",
+      "unops-headline-medium": "1.5rem",
+      "unops-headline-small": "1.25rem",
+      "unops-body-large": "1rem",
+      "unops-body-medium": "0.875rem",
+      "unops-body-small": "0.75rem",
+      "unops-label-large": "0.875rem",
+      "unops-label-medium": "0.75rem",
+      "unops-label-small": "0.6875rem"
+    }
+  },
+  "borderRadius": {
+    "unops-xs": "4px",
+    "unops-sm": "6px",
+    "unops-md": "8px",
+    "unops-lg": "12px",
+    "unops-xl": "16px",
+    "unops-2xl": "20px",
+    "unops-full": "9999px"
+  },
+  "boxShadow": {
+    "unops-sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    "unops-md": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+    "unops-lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+    "unops-xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+  },
+  "animation": {
+    "transitionDuration": {
+      "unops-fast": "150ms",
+      "unops-short": "200ms",
+      "unops-medium": "300ms",
+      "unops-normal": "250ms",
+      "unops-slow": "350ms"
+    },
+    "transitionTimingFunction": {
+      "unops-standard": "cubic-bezier(0.2, 0.0, 0, 1.0)",
+      "unops-decelerate": "cubic-bezier(0.0, 0.0, 0.2, 1.0)",
+      "unops-smooth": "cubic-bezier(0.4, 0, 0.2, 1)"
+    }
+  },
+  "layout": {
+    "zIndex": {
+      "unops-dropdown": "1000",
+      "unops-modal": "1050",
+      "unops-toast": "1100",
+      "unops-tooltip": "1200"
+    },
+    "screens": {
+      "unops-mobile": {"max": "599px"},
+      "unops-tablet": {"min": "600px", "max": "839px"},
+      "unops-desktop": {"min": "840px"}
+    },
+    "minHeight": {
+      "unops-touch": "44px"
+    },
+    "minWidth": {
+      "unops-touch": "44px"
+    }
+  },
+  "cssCustomProperties": {
+    "description": "All tokens are available as CSS custom properties with --unops- prefix",
+    "examples": {
+      "colors": "var(--unops-primary), var(--unops-primary-light), var(--unops-surface-primary)",
+      "spacing": "var(--unops-spacing-md), var(--unops-spacing-lg)",
+      "typography": "var(--unops-font-display), var(--unops-font-size-headline-large)",
+      "borderRadius": "var(--unops-radius-md), var(--unops-radius-full)",
+      "shadows": "var(--unops-shadow-md), var(--unops-shadow-lg)",
+      "animation": "var(--unops-duration-short), var(--unops-easing-standard)"
+    }
+  },
+  "tailwindClasses": {
+    "description": "All tokens are available as Tailwind utility classes",
+    "examples": {
+      "colors": "bg-unops-primary, text-unops-secondary, border-unops-accent-teal",
+      "spacing": "p-unops-md, m-unops-lg, gap-unops-sm",
+      "typography": "font-unops-display, text-unops-headline-large, font-unops-bold",
+      "borderRadius": "rounded-unops-md, rounded-unops-full",
+      "shadows": "shadow-unops-md, shadow-unops-lg",
+      "gradients": "bg-gradient-rainbow, bg-gradient-professional, text-gradient-ocean-sunset"
+    }
+  },
+  "scssVariables": {
+    "description": "All tokens are available as SCSS variables with $unops- prefix",
+    "examples": {
+      "colors": "$unops-primary, $unops-secondary, $unops-surface-primary",
+      "spacing": "$unops-spacing-md, $unops-spacing-lg",
+      "typography": "$unops-font-display, $unops-font-size-headline-large"
+    }
+  },
+  "usage": {
+    "html": {
+      "description": "Using design tokens in HTML with Tailwind classes",
+      "example": "<div class=\"bg-unops-primary text-unops-primary-on p-unops-md rounded-unops-lg shadow-unops-md\">UNOPS Component</div>"
+    },
+    "css": {
+      "description": "Using design tokens in CSS with custom properties",
+      "example": ".my-component {\n  background-color: var(--unops-primary);\n  color: var(--unops-primary-on);\n  padding: var(--unops-spacing-md);\n  border-radius: var(--unops-radius-lg);\n  box-shadow: var(--unops-shadow-md);\n}"
+    },
+    "scss": {
+      "description": "Using design tokens in SCSS with variables",
+      "example": ".my-component {\n  background-color: $unops-primary;\n  color: $unops-primary-on;\n  padding: $unops-spacing-md;\n  border-radius: $unops-radius-lg;\n  box-shadow: $unops-shadow-md;\n}"
+    }
+  }
+}

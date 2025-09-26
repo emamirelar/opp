@@ -13,7 +13,7 @@ public class InteractionByContactSpecification : BaseSpecification<Interaction>
     /// </summary>
     /// <param name="contactId">The contact ID to filter by</param>
     public InteractionByContactSpecification(int contactId)
-        : base(i => i.InteractionContacts.Any(ic => ic.ContactId == contactId))
+        : base(i => i.InteractionContacts != null && i.InteractionContacts.Any(ic => ic.ContactId == contactId))
     {
         // Default ordering is by date descending
         ApplyOrderByDescending(i => i.Date);

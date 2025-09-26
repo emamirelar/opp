@@ -8,300 +8,15 @@ BEGIN
     TRUNCATE TABLE public."AiPrompt" RESTART IDENTITY CASCADE;
     RAISE NOTICE 'AI prompts table cleared, inserting fresh data';
 
-    -- Insert contact_interactions_summary prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'contact_interactions_summary',
-        'I am providing a contact name. I need you to generate a summary in Markdown format, using the following template:
-
-## Contact Summary
-
-**Name:** [Contact Name]  
-**Email:** [Contact Email]
-**Title:** [Contact Title]
-**Relationship:** [Brief description of time UNOPS has engaged with the Contact and main things UNOPS has done with the contact]
-
-**Key Interactions:**
-
-*   **[Date of Interaction] - [Type of Interaction]:** [Brief description of interaction]
-*   **[Date of Interaction] - [Type of Interaction]:** [Brief description of interaction]
-
-**Partner Information:**
-
-*   **Organization:** [Partner Name]
-*   **Status:** [Partner Status]
-
-**Considerations**
-** [Summary of any issues identified with the Contact or the Partner] 
-
-**Additional Notes:**
-
-*   [Check if there is a CV linked to the contact]
-*   [Any other relevant information about the contact or their interactions]
-
-Please format the response as clean Markdown without code blocks or backticks. Please try to fill in with as much information as available in the contact''s page. Please surface the Partner related to the contact, his/her title, email, and any other information available related to this contact in the system. If any information is missing, simply omit that section.
-
-Data: {promptData}',
-        NOW(),
-        'Contact',
-        1,
-        '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":0.1,"top_p":0.2,"max_output_tokens":65535}',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        NULL,
-        '[]',
-        'GetContactWithInteractionsAsync',
-        'Generates a comprehensive summary of contact information including partner details and interaction history in a structured format.',
-        true
-    );
-
-    -- Insert interaction_action prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'interaction_action',
-        'I am sending you interaction data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
-
-JSON format:
-{ "Message": "Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message", "Category": "Interaction", ResponseType: "Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION", "type": "", "date": "", "subject": "", "description": "", "contactId": "", "status": "Active", "emailAddresses": [], dependents: ["contactId"]  }
-
-Some things to consider about the JSON format above are:
-"type" is the Interaction type which could be Email,Chat,Call,VirtualMeeting,InPersonMeeting,Other
-"date" Ensure the date is formatted as ISO 8601 timestamp
-"subject" Brief summary or title of the interaction
-"description" Detailed content of the interaction
-* Interaction can be linked to a contact. The JSON must have a property called contactId. Generally, the user will not know the ID of the Contact and hence will pass it as a Name. 
-Put the name in the "contactId" property value and add contactId to the dependents property as an array. for example, dependents: ["contactId"]
-* Only include "id" field in JSON output if ID is present in source data
-* Focus on essential fields only: type, date, subject, description, contactId, status, emailAddresses
-* "emailAddresses" should be an array of email addresses extracted from the interaction content. If no email addresses are found, use an empty array []
-
-**HEADER MAPPING:**
-"ID"/"Interaction ID" → id (number, only if present)
-"Type" → type
-"Date" → date
-"Subject" → subject
-"Description" → description
-"Contact" → contactId
-"Location" -> location
-
-STRICTLY do not use the word "markdown" while converting the final response to the final JSON.
-
-Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
-
-The prompt could be an extracted text from an audio or an image OR could be a summary of the conversation with the user. The summary could be talking about multiple entities. Only extract the details relevant to Interactions and the latest details. For example, there could have been multiple discussions about Interactions. Pick the latest request. Use this to form the JSON. Whether the prompt is an extracted text or a summary will be highlighted before the message begins (for example: Summary: <summary> OR Extracted text: <extracted text>)
-
-Prompt: 
-{promptData}',
-        NOW(),
-        'Interaction',
-        1,
-        '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":0.1,"top_p":0.2,"max_output_tokens":65535}',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        NULL,
-        '[]',
-        'GetInteractionDetailsAsync',
-        'Retrieves and summarizes interaction information in bullet points for easy understanding and reference.',
-        false
-    );
-
-    -- Insert partner_opportunity_funding_test prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'partner_opportunity_funding_test',
-        'Looking to the partner''s official channels, please find 5 current opportunities for project funding in the Africa region for UNOPS as an implementing partner. PLease include details of the opportunity and a link for further investigation.
-
-Data: {promptData}',
-        NOW(),
-        'Partner',
-        0,
-        '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        NULL,
-        '[]',
-        'GetBasicPartnerDetailsAsync',
-        'Partner opportunity funding test',
-        true
-    );
-
-    -- Insert test_partner_info prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'test_partner_info',
-        'Summarize this partner 
-{promptData}',
-        NOW(),
-        'Partner',
-        0,
-        '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        NULL,
-        '[]',
-        'GetBasicPartnerDetailsAsync',
-        'This is a test prompt for QA ',
-        true
-    );
-
-    -- Insert partner_news prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'partner_news',
-        'I am providing a JSON object containing partner information and that I work in [Org Unit]. Identify the name of the partner from that JSON data and find the latest development news articles on the partner relevant to somebody working at UNOPS. Please use sources such as Google News as well as development news sites such as Devex and donor tracker. 
-
-Give a summary of the 10 most recent partner news stories, relevant to my organisation unit in UNOPS.
-
-PLease include the lead in sentence
-"Here are the 10 most recent news stories concerning [partner], relevant to UNOPS"
-
-For each news story, please include, the following details
-headline, 
-short summary of the story, 
-date of publication 
-news source. 
-a link to the specific full news story embedded in a hyperlink icon 
-
-Please include a line between each story
-
-Data: {promptData}
-',
-        NOW(),
-        'Partner',
-        1,
-        '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":0.1,"top_p":0.1,"max_output_tokens":65535}',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]',
-        '[{"googleSearch":{}}]',
-        'GetBasicPartnerDetailsAsync',
-        'Searches for and summarizes the latest news articles about a partner organization, identifying current focus areas and trends from recent developments.',
-        true
-    );
-
-    -- Insert partner_priorities prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'partner_priorities',
-        'I am providing a JSON object containing partner information and the fact that I work in Senegal. 
-Identify the name of the partner from that JSON data and using external sources such as google search, identify the key focus areas in international development, potentially available funding or commitments and potential entry points for UNOPS.
-In additon provide an overview of crosscutting priorities as "Overarching Considerations:"
-
-PLease use the following structure
-
-**Focus Areas:**
-For each of the focus areas, please use the following structure
-**[Focus Area]**
-**Focus: ** [Provide explanation of the partner''s focus area and thier approach]
-**Budget/Expenditure Commitments: ** [Provide an overview of expenditure or commitments that are potentially available to UNOPS]
-**Key UNOPS entry points:** [Provide an overview of how this aligns with UNOPS strategy and priorities and key entry points ]
-(add 2 line breaks)
-
-
-JSON Data:
-{promptData}
-
-STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. Do not assume any detail. Please do not include "```markdown\\n" in the response.',
-        NOW(),
-        'partner_priorities',
-        0,
-        '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]',
-        '[{"googleSearch":{}}]',
-        'GetBasicPartnerDetailsAsync',
-        'Give an overview of partner priorities',
-        true
-    );
-
-    -- Insert general_information prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'general_information',
-        'Strictly return the response in JSON format as below - 
-
-{Category: "General", ResponseType: "INFORMATION", Message: "Add your response here"}',
-        NOW(),
-        'AiAssistant',
-        1,
-        '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }',
-        '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 65535 }',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        NULL,
-        '[]',
-        '',
-        'Returns a general response in JSON format.',
-        true
-    );
-
-    -- Insert qa_partner_news prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'qa_partner_news',
-        'QA TESTING
- {promptData} ',
-        NOW(),
-        'Partner',
-        0,
-        '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        NULL,
-        '[]',
-        'GetBasicPartnerDetailsAsync',
-        'qa_partner_news',
-        true
-    );
-
     -- Insert bulk_interaction_action prompt
     INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
         'bulk_interaction_action',
-        'You are an AI assistant that processes interaction data for bulk import. You will receive interaction data as an array of arrays (with optional header) or an array of objects, or text extracted from audio/image.
+        'You process interaction data for bulk import. You will receive interaction data as an array of arrays (with optional header) or an array of objects, or text extracted from audio/image.
 
 Convert each item into the exact JSON structure shown below. Only include non-empty fields.
 
@@ -326,10 +41,11 @@ Convert each item into the exact JSON structure shown below. Only include non-em
 **HEADER MAPPING:**
 "ID"/"Interaction ID" → id (number, only if present)
 "Type" → type
-"Date" → date
+"Date" → date (default to today''s date if nothing is present)
 "Subject" → subject
 "Description" → description
-"Contact" → contactIds
+"Contact" → contactIds (could be number or contact names)
+"PhoneNumbers" -> Phone numbers that you find
 "Status" → status
 "Location" -> location
 EmailAddresses -> EmailAddresses
@@ -338,255 +54,340 @@ Org Unit / Organisation Unit  -> organizationHierarchyIds
 
 Include a "name" field that summarizes the interaction in 5-6 words.
 
-
 If you cannot find the match, assign the closest match to it.
 
 **ESSENTIAL INTERACTION JSON FORMAT:**
-{"id": <number>, "type": "", "date": "", "subject": "", "description": "", "status": "Active", "contactIds": [], "emailAddresses": [],  location: "", userIds: [], "name": "", "organizationHierarchyIds": [], "dependents": ["contactIds", "userIds", "organizationHierarchyIds"], "validationError": ""}
+{"id": <number>, "type": "", "date": "", "subject": "", "description": "", "status": "Active", "contactIds": [], "emailAddresses": [],  location: "", userIds: [], "phoneNumbers": [], "name": "", "organizationHierarchyIds": [], "dependents": ["contactIds", "userIds", "organizationHierarchyIds"], "validationError": ""}
 
 **Response format:** {"Message":"Action completed successfully.", "Category":"Interaction", "ResponseType":"Action", "records":[...]}
 
-Return compact single-line JSON. If more input needed, set ResponseType to "Information". Send the "dependents" as-is. They are used for mapping purpose. Also, send "id" if and only if it is present. Even though organizationHierarchyIds is returning an array, you should expect only 1 Org unit. If there are more, you pick the last one of that record and put it in the array.
-
-Input data: {promptData}',
+Return compact single-line JSON. If more input needed, set ResponseType to "Information". Send the "dependents" as-is. They are used for mapping purpose. Also, send "id" if and only if it is present. Even though organizationHierarchyIds is returning an array, you should expect only 1 Org unit. If there are more, you pick the last one of that record and put it in the array. Remember to put the date as today''s date if there is NO date you find per record',
+        '',
         NOW(),
         'Interaction',
         1,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
         '{"temperature":0.1,"top_p":0.2,"max_output_tokens":65535}',
         'europe-west4',
-        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
         '{{PROJECT_ID}}',
         NULL,
         '[]',
         '',
         'Processes bulk interaction data from arrays or objects, converting them into structured JSON format with automatic date parsing, field mapping, and validation of interaction types.',
-        false
+        true,
+        'Data Import',
+        false,
+        60
     );
 
-    -- Insert partner_funding_test prompt
+    -- Insert partner_news prompt
     INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
-        'partner_funding_test',
-        '{promptData}',
-        NOW(),
-        'Partner',
-        0,
-        '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        NULL,
-        '[]',
-        'GetBasicPartnerDetailsAsync',
-        'partner_funding_test',
-        true
-    );
+        'partner_news',
+        'You are a partnerships assistant at the United Nations Office for Project Services (UNOPS). Your job is to scan through the latest news articles using Google Search and come up with articles that are relevant to UNOPS and of specific relevance to the user''s role and the user''s location (duty station and country).
 
-    -- Insert partner_action prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'partner_action',
-        'You are an AI assistant processing partner data. Extract partner information from the provided data and return ONLY a valid JSON object. Do not include any conversation, greetings, explanations, or markdown formatting. Return ONLY the raw JSON.
+The news articles should be about the partner specified. Find no more than 5 latest articles.
 
-JSON format:
-{"Message": "Data extracted successfully", "Category": "Partner", "ResponseType": "Action", "name": "", "partnerShortDescription": "", "partnerLongDescription": "", "status": "Active", "partnerCategoryId": null, "liaisonOfficeId": null, "partnerFocalPointUserId": null, "erpDimValue": null, "dependents": ["partnerCategoryId", "liaisonOfficeId", "partnerFocalPointUserId"]}
+Output Format:
+Provide the output in well-formed markdown in the format stated below.
+EACH article should be formatted as follows:
+# News headline [hyperlink the news headline with the link to the source]
+**Publication / Website Name** **Publication Date**
+[One or two line summary of the article - use a direct excerpt from Google Search if available]
+',
+        'The partner is: {partnerName}
+Partner Information:
+- Organization: {name}
+- Status: {status}  
+- Partnership Level: {partnerGroup.name}
+- Liaison Office: {liaisonOffice.name}
+- Total Contacts: {summary.totalContacts}
+- Recent Activity: {summary.recentInteractions} interactions in last 30 days
 
-**RULES:**
-- Required fields: name, partnerShortDescription, status
-- Status: Default to "Active"
-- Partner: Set ID fields as string names, include in dependents for ID resolution
-- Omit null/empty fields from JSON to keep it compact
-- Always set status to "Active"
-- Default ID fields to null
-- Only include "id" field in JSON output if ID is present in source data
-- Focus on essential fields only: name, partnerShortDescription, partnerLongDescription, status, and key ID references
-
-**HEADER MAPPING:**
-"ID"/"Partner ID" → id (number, only if present)
-"Partner Name"/"Organization"/"Company" → name
-"Short Name"/"Acronym"/"Abbreviation" → partnerShortDescription
-"Long Description" → partnerLongDescription
-"Partner Category" → partnerCategoryId
-"Liaison Office" → liaisonOfficeId
-"Partner Focal Point" → partnerFocalPointUserId
-"ERP Dimension" → erpDimValue
-
-Return compact single-line JSON without line breaks or unnecessary whitespace.
-
-Input data: {promptData}',
+User Information:
+- Name: {userProfile.name}
+- Position: {userProfile.position}
+- Organization Unit: {userProfile.orgUnitName}
+- Duty Station: {userProfile.dutyStation}
+- Supervisor: {userProfile.supervisor.name}',
         NOW(),
         'Partner',
         1,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":0.1,"top_p":0.2,"max_output_tokens":65535}',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        NULL,
-        '[]',
-        '',
-        'Extracts partner information from raw data or conversation summaries and formats it into structured JSON for partner creation or updates with validation of acceptable values.',
-        false
-    );
-
-    -- Insert partnertree_action prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'partnertree_action',
-        'I am sending you partner tree (level) data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
-
-JSON format:
-{ ""Message"": ""Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message"", ""Category"": ""PartnerTree"", ResponseType: ""Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION"", ""description"": """", ""code"": """", ""type"": """", ""parent"": """", ""name"": """" }
-
-Somethings to consider about the JSON format above are:
-""code"" looks like an ID field but text which will be similar to ""ACADEMIC_TRAINING_RESEARC"". If you cannot find a data in such a format, autogenerate a code of the similar kind based on the name and description you extract.
-""parent"" is also look-alike of code but the code of the parent. If you cannot find it in the data, leave it blank. If parent is left blank, consider ""type"" as Level_1 and mention it in the Message.
-""type"" can be Level_1, Level_2, Level_3 or Level_4. Level_1 will always have parent as blank.
-
-STRICTLY do not use the word "markdown" while converting the final response to the final JSON.
-
-Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
-
-The prompt could be an extracted text from an audio or an image OR could be a summary of the conversation with the user. The summary could be talking about multiple entities. Only extract the details relevant to Partner level and the latest details. This is just a one time call to you, so your task is to just extract data from the provided information if possible. For example, there could have been multiple discussions about the partner levels. Pick the latest request. Use this to form the JSON. Whether the prompt is an extracted text or a summary will be highlighted before the message begins (for example: Summary: <summary> OR Extracted text: <extracted text>)
-
-Prompt: 
-{promptData}',
-        NOW(),
-        'PartnerTree',
-        1,
-        '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }',
-        '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 65535 }',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        NULL,
-        '[]',
-        '',
-        'Extracts partner tree (level) information from raw data and formats it into structured JSON with auto-generated codes and hierarchical type determination.',
-        false
-    );
-
-    -- Insert domain_organization_lookup prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'domain_organization_lookup',
-        'I am providing a JSON array containing email domains. For each domain, identify the most likely organization or company name that uses that domain.
-
-**Input Format:**
-{promptData}
-
-**Desired Output Format:**
-Return a JSON array with the same order as input, where each element contains:
-{
-  "domain": "[original domain]",
-  "organization": "[organization name]"
-}
-
-**Instructions:**
-- For each domain, provide the most likely organization name
-- If you cannot determine a likely organization name, use "Unknown" 
-- Do not include explanations or additional text
-- Return only the JSON array
-- Ensure the response is valid JSON format
-- Maintain the same order as the input domains
-
-Example input: ["microsoft.com", "google.com", "unknowndomain123.com"]
-Example output: [{"domain": "microsoft.com", "organization": "Microsoft Corporation"}, {"domain": "google.com", "organization": "Google Inc."}, {"domain": "unknowndomain123.com", "organization": "Unknown"}]',
-        NOW(),
-        'Domain Organization Lookup',
-        1,
-        '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }',
-        '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
+        '{"temperature":0.1,"top_p":0.1,"max_output_tokens":65535}',
         'europe-west4',
         'gemini-2.5-flash-lite',
         '{{PROJECT_ID}}',
         '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]',
-        '[]',
-        'GetPartnerNamesFromGeminiAsync',
-        'Batch lookup of organization names from email domains using Gemini AI',
-        false
+        '[{"googleSearch":{}}]',
+        'GetBasicPartnerDetailsAsync',
+        'Searches for and summarizes the latest news articles about a partner organization, identifying current focus areas and trends from recent developments.',
+        true,
+        'Partner Management',
+        true,
+        120
     );
 
-    -- Insert interaction_summary prompt
+    -- Insert partner_interactions_summary prompt
     INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
-        'interaction_summary',
-        'I am providing interaction data. Please provide a concise summary of the interaction in the following structure in a bullet point list. Please do not include a lead in sentence. 
+        'partner_interactions_summary',
+        'You are an AI assistant that creates detailed partner interaction summaries. Focus on recent interactions, key personnel, and strategic engagement patterns. Use the following Markdown format:
 
+## Summary of key interactions for [Partner Name]
 
-Date of interation:
-Key people involved:
-Key points:
-Follow up needed:
+Provide an introductory paragraph highlighting key interactions from the last month with this partner. Focus on high-level strategic engagements and important developments.
 
-Data: {promptData}',
+For each significant interaction, use this format:
+On [Date], **[UNOPS Personnel Name]** from **[org unit]** had a [Type of interaction]. [Brief description of what was discussed]. (If the interaction is related to a project, indicate the country and project number; if not, say "not related to a specific project"). **[See more](interaction-link)**
+
+*(Include line breaks after each interaction summary)*
+
+## List of interactions
+
+### Interactions relevant to [org unit]
+
+Highlight key recent interactions using this structure:
+
+There have been several recent interactions between UNOPS and [Partner Name]:
+
+**[Date of interaction]:** A high-level meeting between UNOPS'' **[Personnel name, Personnel title]** and [Partner]''s **[Contact name, contact title]** to discuss [topic/purpose].
+
+**[Date of interaction]:** A meeting between [Partner] and UNOPS'' project teams to discuss project **[Engagement name, engagement code]** and project process, where key milestones such as [specific outcomes] were identified.
+
+**[Date of interaction]:** High-level meeting between [Partner]''s **[Contact name, contact title]** and the UNOPS delegation at the **[Event name]**. **[See more](interaction-link)**
+
+### Contact Information
+- **Key Contacts:** [List primary contacts with titles]
+- **Most Active Contact:** [Name and engagement level]
+- **Total Contacts:** [Number]
+
+### Partnership Overview
+- **Partnership Level:** [Partnership classification]
+- **Engagement Frequency:** [High/Medium/Low based on recent activity]
+- **Last Activity:** [Date of most recent interaction]
+
+If there are no interactions with the partner, state: "Currently, there are no interactions available in Opportunity+ with [Partner Name]."
+
+Format the response as clean Markdown without code blocks or backticks.',
+        'Create a comprehensive interaction summary for partner "{name}" and their engagement with UNOPS.
+
+**Partner Information:**
+- Organization: {name}
+- Status: {status}
+- Partnership Level: {partnerGroup.name}
+- Liaison Office: {liaisonOffice.name}
+- Established: {partnership.establishedDate}
+
+**Contact Information:**
+- Total Contacts: {summary.totalContacts}
+- Active Contacts: {summary.activeContacts}
+- Most Active Contact: {summary.mostActiveContact}
+- Key Contacts: {engagement.keyContactPoints}
+
+**Interaction History:**
+- Total Interactions: {summary.totalInteractions}
+- Recent Interactions (30 days): {summary.recentInteractions}
+- Last Interaction Date: {summary.lastInteractionDate}
+- Average Interactions per Contact: {summary.averageInteractionsPerContact}
+
+**Recent Interactions Details:**
+{recentInteractions}
+
+**All Interactions:**
+{allInteractions}
+
+**Partnership Details:**
+- Engagement Level: {engagement.engagementFrequency}
+- Last Activity: {partnership.lastActivity}
+- Organization Units Involved: {organizationUnits}
+
+**User Context:**
+- Analyst: {userProfile.name} ({userProfile.position})
+- Organization Unit: {userProfile.orgUnitName}
+- Duty Station: {userProfile.dutyStation}
+
+**Audit Information:**
+- Analysis Date: {auditInfo.createdDate}
+- Last Updated: {auditInfo.lastModifiedDate}
+
+Focus on partnership activities, collaboration patterns, key personnel involved, and strategic engagement opportunities with this partner.',
+        NOW(),
+        'Partner',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.7,"top_p":0.2,"max_output_tokens":65535}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[{"googleSearch":{}}]',
+        'GetPartnerWithContactsAndInteractionsForAIAsync',
+        'Creates detailed partner interaction summaries with contact details, interaction history, and overall partnership assessment in structured Markdown format.',
+        true,
+        'Partner Management',
+        true,
+        75
+    );
+
+    -- Insert interaction_action prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'interaction_action',
+        'I am sending you interaction data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
+
+You process interaction data for bulk import. You will receive interaction data as an array of arrays (with optional header) or an array of objects, or text extracted from audio/image.
+
+Convert each item into the exact JSON structure shown below. Only include non-empty fields.
+
+**Required fields:** type, date, subject
+**Validation rules:**
+- Map contact names to contactIds (keep as text if name, number if ID)
+- Map partner names to partnerIds (keep as text if name, number if ID)
+- Map user names to userIds (keep as text if name, number if ID)
+- Map emailAddresses to emailAddresses
+- Map location / country you find to location
+- Format date as ISO 8601 timestamp (YYYY-MM-DDTHH:mm:ss.sssZ)
+- Default status to "Active"
+- Include dependents for all ID fields that are text names
+- Based on the context of the message, auto-detect the date.
+- Put one of the contactIds into contactId
+- Only include "id" field in JSON output if ID column is present in source data
+- Focus on essential fields only: type, date, subject, description, contactId, status, emailAddresses
+- Extract email addresses from the interaction content and populate emailAddresses as an array of strings
+
+**Interaction types:** Email,Chat,Call,VirtualMeeting,InPersonMeeting,Other (USE THE EXACT WORD WITHOUT SPACES)
+
+**HEADER MAPPING:**
+"ID"/"Interaction ID" → id (number, only if present)
+"Type" → type
+"Date" → date (default to today''s date if nothing is present)
+"Subject" → subject
+"Description" → description
+"Contact" → contactIds (could be number or contact names)
+"PhoneNumbers" -> Phone numbers that you find
+"Status" → status
+"Location" -> location
+EmailAddresses -> EmailAddresses
+User ID (any user info) -> userIds
+Org Unit / Organisation Unit  -> organizationHierarchyIds
+
+Include a "name" field that summarizes the interaction in 5-6 words.
+
+If you cannot find the match, assign the closest match to it.
+
+**ESSENTIAL INTERACTION JSON FORMAT:**
+{"id": <number>, "type": "", "date": "", "subject": "", "description": "", "status": "Active", "contactIds": [], "emailAddresses": [],  location: "", userIds: [], "phoneNumbers": [], "name": "", "organizationHierarchyIds": [], "dependents": ["contactIds", "userIds", "organizationHierarchyIds"], "validationError": ""}
+
+**Response format:** {"Message":"Action completed successfully.", "Category":"Interaction", "ResponseType":"Action", "data":[...]}
+
+Return compact single-line JSON. If more input needed, set ResponseType to "Information". Send the "dependents" as-is. They are used for mapping purpose. Also, send "id" if and only if it is present. Even though organizationHierarchyIds is returning an array, you should expect only 1 Org unit. If there are more, you pick the last one of that record and put it in the array. Remember to put the date as today''s date if there is NO date you find per record
+
+The prompt could be an extracted text from an audio or an image OR could be a summary of the conversation with the user. The summary could be talking about multiple entities. Only extract the details relevant to Interactions and the latest details. For example, there could have been multiple discussions about Interactions. Pick the latest request. Use this to form the JSON. Whether the prompt is an extracted text or a summary will be highlighted before the message begins (for example: Summary: <summary> OR Extracted text: <extracted text>)',
+        '',
         NOW(),
         'Interaction',
         1,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":0.2,"top_p":0.2,"max_output_tokens":65535}',
+        '{"temperature":0.1,"top_p":0.2,"max_output_tokens":65535}',
         'europe-west4',
         'gemini-2.5-flash-lite',
         '{{PROJECT_ID}}',
         NULL,
         '[]',
         'GetInteractionDetailsAsync',
-        'Generates a comprehensive summary of interaction details including participants, content, context, and outcomes in a structured Markdown format.',
-        true
+        'Retrieves and summarizes interaction information in bullet points for easy understanding and reference.',
+        true,
+        'Interaction Management',
+        false,
+        60
     );
 
-    -- Insert contact_action prompt
+    -- Insert contact_interactions_summary prompt
     INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
-        'contact_action',
-        'You are an AI assistant processing contact data. Extract contact information from the provided data and return ONLY a valid JSON object. Do not include any conversation, greetings, explanations, or markdown formatting. Return ONLY the raw JSON.
+        'contact_interactions_summary',
+        'You are an AI assistant that generates comprehensive contact summaries in Markdown format. Use the following template structure:
 
-JSON format:
-{"Message": "Data extracted successfully", "Category": "Contact", "ResponseType": "Action", "salutation": "", "firstName": "", "lastName": "", "title": "", "email": "", "phone": "", "mobile": "", "status": "Active", "partnerId": "", "department": "", "dependents": ["partnerId"]}
+## Contact Summary
 
-**RULES:**
-- Required fields: lastName, email, title, partnerId
-- Salutation: Auto-detect from Mr., Ms., Mrs., Dr., Prof., Sir, Madam
-- Partner: Set partnerId as string name, include "partnerId" in dependents for ID resolution
-- Omit null/empty fields from JSON to keep it compact
-- Always set status to "Active"
-- Set validationError for missing required fields
-- Only include "id" field in JSON output if ID is present in source data
-- Focus on essential fields only: name components, title, email, phone, partnerId, department
+**Name:** [Contact Name]  
+**Email:** [Contact Email]
+**Title:** [Contact Title]
+**Relationship:** [Brief description of time UNOPS has engaged with the Contact and main things UNOPS has done with the contact]
 
-**HEADER MAPPING:**
-"ID"/"Contact ID" → id (number, only if present)
-"Full Name"/"Name"/"Contact Name" → firstName + lastName
-"Email"/"Email Address"/"E-mail" → email
-"Phone"/"Phone Number"/"Telephone" → phone
-"Mobile"/"Cell Phone"/"Mobile Number" → mobile
-"Company"/"Organization"/"Partner"/"Employer" → partnerId
-"Job Title"/"Position"/"Role" → title
-"Department"/"Division"/"Unit" → department
+**Key Interactions:**
+*   **[Date of Interaction] - [Type of Interaction]:** [Brief description of interaction]
+*   **[Date of Interaction] - [Type of Interaction]:** [Brief description of interaction]
 
-Return compact single-line JSON without line breaks or unnecessary whitespace.
+**Partner Information:**
+*   **Organization:** [Partner Name]
+*   **Status:** [Partner Status]
 
-Input data: {promptData}',
+**Considerations**
+** [Summary of any issues identified with the Contact or the Partner] 
+
+**Additional Notes:**
+*   [Check if there is a CV linked to the contact]
+*   [Any other relevant information about the contact or their interactions]
+
+Format the response as clean Markdown without code blocks or backticks. Fill in with as much information as available. Surface the Partner related to the contact, their title, email, and any other relevant information. If any information is missing, simply omit that section.',
+        'Generate a comprehensive summary for contact {fullName} ({email}) from {partner.name}.
+
+**Contact Information:**
+- Full Name: {salutation} {firstName} {middleName} {lastName} {suffix}
+- Title: {title}
+- Department: {department}
+- Email: {email}
+- Phone: {phone}
+- Mobile: {mobile}
+- Status: {status}
+- Description: {description}
+
+**Partner Organization:**
+- Organization: {partner.name}
+- Partner Status: {partner.status}
+- Partner Group: {partner.partnerGroup}
+
+**Contact Details:**
+- Profile Picture: {contactDetails.hasProfilePicture}
+- Mailing Address: {mailingAddress.fullAddress}
+
+**Assistant Information:** {assistant}
+
+**Documents & Attachments:**
+- Total Documents: {summary.totalDocuments}
+- Has CV/Resume: {summary.hasCV}
+- Document Details: {documents}
+
+**Interaction History:**
+- Total Interactions: {summary.totalInteractions}
+- Recent Interactions (30 days): {summary.recentInteractions}
+- Last Interaction: {summary.lastInteractionDate}
+- Interaction Details: {interactions}
+
+**Audit Information:**
+- Created: {auditInfo.createdDate}
+- Last Modified: {auditInfo.lastModifiedDate}
+
+Please create a comprehensive summary including their complete profile, interaction history, partner relationship details, document attachments, and any relevant notes about their engagement with UNOPS. Pay special attention to CV/resume documents and recent interaction patterns.',
         NOW(),
         'Contact',
         1,
@@ -597,66 +398,216 @@ Input data: {promptData}',
         '{{PROJECT_ID}}',
         NULL,
         '[]',
-        '',
-        'Extracts contact information from raw data or conversation summaries and formats it into structured JSON for contact creation or updates.',
-        false
+        'GetContactWithInteractionsAsync',
+        'Generates a comprehensive summary of contact information including partner details and interaction history in a structured format.',
+        true,
+        'Contact Management',
+        true,
+        30
     );
 
-    -- Insert partner_category_interactions_summary prompt
+    -- Insert user_role_import prompt
     INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
-        'partner_category_interactions_summary',
-        'I am providing a partner category name, please provide a summary of recent interactions for partners unders this partner category. 
+        'user_role_import',
+        'You are an AI assistant for processing user role assignment data. You will receive user role data as an array of arrays (with optional header) or an array of objects or just plain text with information. If they are in an ordered form, first row could optionally be headers. Convert each item into the exact JSON structure shown below. Use your best knowledge to determine how the data is sent.The data represents user-role assignments for the current application. Map user information (name, email, username) to userId and role information (role names) to roleIds.
 
-##Summary of key interactions
-Provide an introductory paragraph of interactions related to the partner in the last month. Highlight any key high-level interactions.
 
-For example, using the following format, generate a summary of an interaction that looks like this: 
+Expected input columns may include:
 
-On 19/09/2024, Beth Hayes from org unit (in bold) had a Type of interaction. It was discussed the need for a significant reduction in energy-efficient procedures, which could be achieved through enterprise-level investments. (If the interaction is related to a project please indicate the country and number, and if not say "not related to a specific project").**See more**  (text contains the word "See more" with a hyperlink to open the specific interaction record). (give line breaks after each interaction summary)
+- User information: user name, email, username, first name, last name
 
-##List of interactions
+- Role information: role name, role names (comma-separated), roles - anything that looks like a role
 
-####Interactions relevant to [org unit]
+User Role Assignment format: {
+  userId: null,
+  roleIds: [],
+  dependents: ["userId", "roleIds"],
+  validationError: ""
+}
 
-Highlight key recent interactions 
+If you find a user name / name / user id, put them in the userId key (only the user information). Whatever looks like the role should go into roleIds. DONOT modify the dependents key''s value. It needs to be sent as-is as it will be used for mapping.
 
-There have been several recent interactions between UNOPS and [Partner]
-[Date of interaction]: A high-level meeting between UNOPS'' [Personnel name, Personnel title] and the World Bank''s [Contact name, contact title] to discuss ongoing projects. 
-[Date of interaction]: a meeting between the World Bank and UNOPS'' project teams to discuss project [Engagement name, engagement code] and project process, where key milestones such as timely delivery of supplies were identified. 
-[Date of interaction]: high-level meeting between the World Bank''s [Contact name, contact title], and the UNOPS delegation at the [Event name]
-.**See more**  (text contains the word "See more" with a hyperlink to open the specific interaction record)
 
-If there are no interactions with the partner please state "Currently, there are not interactions available in Opportunity+ with [Partner Category]
- 
-{promptData}
+Response format: {"Message":"User role assignments processed successfully.","Category":"UserRole","ResponseType":"Action","records":[...]}
 
-',
+
+Return only the response in a compact, single-line JSON format without line breaks or unnecessary whitespace, with no other explanation. This is critical for successful parsing. If more input is needed, set ResponseType to "Information". YOU ARE EXPECTED TO ONLY RETURN THE FINAL JSON.',
+        '',
         NOW(),
-        'PartnerTree',
+        'UserRoleImport',
         0,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":1,"top_p":0.2,"max_output_tokens":8192}',
+        '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
         'europe-west4',
         'gemini-2.5-flash-lite',
         '{{PROJECT_ID}}',
         NULL,
         '[]',
-        'GetBasicPartnerCategoryDetailsAsync',
-        'Creates detailed interaction summaries for a partner category with contact details, interaction history, and overall partnership assessment in structured Markdown format.',
-        true
+        ' ',
+        'User Role Import prompt',
+        true,
+        'User Management',
+        false,
+        60
+    );
+
+    -- Insert domain_organization_lookup prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'domain_organization_lookup',
+        'You are an AI assistant that performs batch lookup of organization names from email domains using knowledge of common domain-to-organization mappings.
+
+Your task is to identify the most likely organization or company name that uses each provided domain.
+
+**Output Requirements:**
+- Return ONLY a valid JSON array
+- Maintain the exact same order as the input domains
+- Use the exact format specified below
+- Do not include any explanations, markdown, or additional text
+- Do not use code blocks or backticks
+
+**JSON Format:**
+Each element must contain exactly these fields:
+{
+"domain": "[original domain exactly as provided]",
+"organization": "[organization name or ''Unknown'']"
+}
+
+
+**Lookup Rules:**
+- For well-known domains (microsoft.com, google.com, etc.), provide the official organization name
+- For government domains (.gov, .mil), identify the specific agency or department
+- For academic domains (.edu), provide the institution name
+- For unknown or unclear domains, use exactly "Unknown"
+- For personal/generic domains (gmail.com, yahoo.com), use the service provider name
+- Prioritize official/legal organization names over brand names when possible
+
+**Examples:**
+- microsoft.com → "Microsoft Corporation"
+- google.com → "Google LLC" 
+- harvard.edu → "Harvard University"
+- state.gov → "U.S. Department of State"
+- unknowndomain123.com → "Unknown"',
+        'Perform organization lookup for the following domain analysis data:
+
+**Contact Context:**
+- Contact ID: {contactId}
+- Total Domains Found: {summary.total}
+- Resolved Domains: {summary.resolved}
+- Unresolved Domains: {summary.unresolved}
+- Success Rate: {summary.successRate}
+
+**Domain List:**
+{domains}
+
+**Search Results:**
+{searchResults}
+
+**Domain Analysis Details:**
+{domainAnalysis}
+
+**Search Metadata:**
+- Search Date: {searchMetadata.searchDate}
+- Search Method: {searchMetadata.searchMethod}
+
+**User Context:**
+- Analyst: {userProfile.name} ({userProfile.position})
+- Organization Unit: {userProfile.orgUnitName}
+- Duty Station: {userProfile.dutyStation}
+
+For each domain in the analysis, provide the most likely organization name. Focus on the domains list and return the JSON array mapping each domain to its corresponding organization.',
+        NOW(),
+        'Contact',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.1,"top_p":0.2,"max_output_tokens":2048}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]',
+        '[]',
+        'GetPartnerNamesFromGeminiAsync',
+        'Batch lookup of organization names from email domains using Gemini AI',
+        true,
+        'Data Processing',
+        true,
+        240
+    );
+
+    -- Insert interaction_summary prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'interaction_summary',
+        'You are an AI assistant that generates concise interaction summaries in a structured bullet point format. Focus on extracting key information and actionable items. Use the following structure:
+
+**Date of interaction:** [Date]
+**Key people involved:** [Contacts and their organizations]
+**Key points:** [Main discussion points and decisions]
+**Follow up needed:** [Action items and next steps]
+
+Do not include a lead-in sentence. Extract specific details from the interaction data and populate each section accordingly.',
+        'Provide a concise summary of the interaction "{subject}" that took place on {date} at {time} with the following participants:
+
+**Interaction Details:**
+- Subject: {subject}
+- Date & Time: {date} at {time}
+- Type: {type}
+- Location: {location}
+- Status: {status}
+
+**Participants:**
+- Contacts: {contactNames} from {partnerNames}
+- UNOPS Staff: {userNames}
+- Organization Units: {organizationUnits}
+
+**Communication Info:**
+- Email Addresses: {emailAddresses}
+- Phone Numbers: {phoneNumbers}
+
+**Documents:** {summary.totalDocuments} attached documents
+**Description:** {description}
+
+Focus on extracting key discussion points, decisions made, and any follow-up actions needed from the interaction description.',
+        NOW(),
+        'Interaction',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.2,"top_p":0.2,"max_output_tokens":65535}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[]',
+        'GetInteractionDetailsForAIAsync',
+        'Generates a comprehensive summary of interaction details including participants, content, context, and outcomes in a structured Markdown format.',
+        true,
+        'Interaction Management',
+        true,
+        45
     );
 
     -- Insert patner_category prompt
     INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
         'patner_category',
+        'You are an AI assistant that creates detailed partner category interaction summaries with contact details, interaction history, and overall partnership assessment in structured Markdown format.',
         'I am providing a partner category with a list of associated partners.
 
 ##Summary of key interactions
@@ -680,11 +631,9 @@ There have been several recent interactions between UNOPS and [Partner]
 
 If there are no interactions with the partner please state "Currently, there are not interactions available in Opportunity+ with [Partner Category]
  
-{promptData}
-
-',
+{promptData}',
         NOW(),
-        'patner_category',
+        'PartnerTree',
         0,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
         '{"temperature":1,"top_p":0.2,"max_output_tokens":8192}',
@@ -695,122 +644,136 @@ If there are no interactions with the partner please state "Currently, there are
         '[]',
         'GetBasicPartnerDetailsAsync',
         'Creates detailed partner category  interaction summaries with contact details, interaction history, and overall partnership assessment in structured Markdown format.',
-        true
+        true,
+        'Partner Management',
+        true,
+        90
     );
 
-    -- Insert partner_group_news prompt
+    -- Insert partner_category_interactions_summary prompt
     INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
-        'partner_group_news',
-        'I am providing a JSON object containing partner group and it''s related partner entities and that I work in [Org Unit]. Identify the name of the partners linked to this group from that data and find the latest development news articles on the partner relevant to somebody working at UNOPS. Please use sources such as Google News as well as development news sites such as Devex and donor tracker. 
+        'partner_category_interactions_summary',
+        'You are a partnerships assistant at the United Nations Office for Project Services (UNOPS) that creates detailed partner interaction summaries with contact details, interaction history, and overall partnership assessment in structured Markdown format.
 
-Give a summary of the 10 most recent partner news stories, relevant to my organisation unit in UNOPS.
+Focus on recent interactions, key personnel, and strategic engagement patterns.
 
-PLease include the lead in sentence
-"Here are the 10 most recent news stories concerning [partner], relevant to UNOPS"
+Output Format:
+Provide the output in well-formed Markdown using the following structure:
 
-For each news story, please include, the following details
-headline, 
-short summary of the story, 
-date of publication 
-news source. 
-a link to the specific full news story embedded in a hyperlink icon 
+## Summary of key interactions
+[Introductory paragraph of interactions related to the partner in the last month, highlighting key high-level interactions]
 
-Please include a line between each story
+For each interaction, use this format:
+On [Date], [UNOPS Personnel] from **[org unit]** had a [Type of interaction]. [Brief description]. (If project-related, indicate country and number, otherwise say "not related to a specific project"). **See more** [hyperlinked]
 
-Data: {promptData}
-',
+## List of interactions
+
+#### Interactions relevant to [orgunitname]
+[Highlight key recent interactions in chronological format]
+
+If no interactions exist, state: "Currently, there are no interactions available in Opportunity+ with [Partner Name]"',
+        'The partner is: {partnerName}
+Partner Information:
+- Organization: {name}
+- Status: {status}
+- Partnership Level: {partnerGroup.name}
+- Liaison Office: {liaisonOffice.name}
+
+Contact Information:
+- Total Contacts: {summary.totalContacts}
+- Active Contacts: {summary.activeContacts}
+- Most Active Contact: {summary.mostActiveContact}
+
+Interaction History:
+- Total Interactions: {summary.totalInteractions}
+- Recent Interactions (30 days): {summary.recentInteractions}
+- Last Interaction Date: {summary.lastInteractionDate}
+- Average Interactions per Contact: {summary.averageInteractionsPerContact}
+
+Recent Interactions Details:
+{recentInteractions}
+
+User Information:
+- Name: {userProfile.name}
+- Position: {userProfile.position}
+- Organization Unit: {userProfile.orgUnitName}
+- Duty Station: {userProfile.dutyStation}',
         NOW(),
         'PartnerTree',
         0,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
-        'europe-west4',
-        'gemini-2.5-flash-lite',
-        '{{PROJECT_ID}}',
-        '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]',
-        '[{"googleSearch":{}}]',
-        'GetPartnerGroupNewsDetailsAsync',
-        'Searches for and summarizes the latest news articles about a partner group, identifying current focus areas and trends from recent developments.',
-        true
-    );
-
-    -- Insert partner_group_interactions_summary prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'partner_group_interactions_summary',
-        'I am providing a partner group name, please provide a summary of recent interactions for partners related to this partner category. 
-
-##Summary of key interactions
-Provide an introductory paragraph of interactions related to the partner in the last month. Highlight any key high-level interactions.
-
-For example, using the following format, generate a summary of an interaction that looks like this: 
-
-On 19/09/2024, Beth Hayes from org unit (in bold) had a Type of interaction. It was discussed the need for a significant reduction in energy-efficient procedures, which could be achieved through enterprise-level investments. (If the interaction is related to a project please indicate the country and number, and if not say "not related to a specific project").**See more**  (text contains the word "See more" with a hyperlink to open the specific interaction record). (give line breaks after each interaction summary)
-
-##List of interactions
-
-####Interactions relevant to [org unit]
-
-Highlight key recent interactions 
-
-There have been several recent interactions between UNOPS and [Partner]
-[Date of interaction]: A high-level meeting between UNOPS'' [Personnel name, Personnel title] and the World Bank''s [Contact name, contact title] to discuss ongoing projects. 
-[Date of interaction]: a meeting between the World Bank and UNOPS'' project teams to discuss project [Engagement name, engagement code] and project process, where key milestones such as timely delivery of supplies were identified. 
-[Date of interaction]: high-level meeting between the World Bank''s [Contact name, contact title], and the UNOPS delegation at the [Event name]
-.**See more**  (text contains the word "See more" with a hyperlink to open the specific interaction record)
-
-If there are no interactions with the partner please state "Currently, there are not interactions available in Opportunity+ with [Partner Group]
- 
-{promptData}
-
-',
-        NOW(),
-        'PartnerTree',
-        0,
-        '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
+        '{"temperature":1,"top_p":0.2,"max_output_tokens":8192}',
         'europe-west4',
         'gemini-2.5-flash-lite',
         '{{PROJECT_ID}}',
         NULL,
         '[]',
-        'GetBasicPartnerGroupDetailsAsync',
-        'Creates detailed interaction summaries for a partner group with contact details, interaction history, and overall partnership assessment in structured Markdown format.',
-        true
+        'GetBasicPartnerCategoryDetailsAsync',
+        'Creates detailed interaction summaries for a partner category with contact details, interaction history, and overall partnership assessment in structured Markdown format.',
+        true,
+        'Partner Management',
+        true,
+        90
     );
 
     -- Insert partner_category_news prompt
     INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
         'partner_category_news',
-        'I am providing a JSON object containing partner category and it''s related partner entities and that I work in [Org Unit]. Identify the name of the partners linked to this category from that data and find the latest development news articles on the partner relevant to somebody working at UNOPS. Please use sources such as Google News as well as development news sites such as Devex and donor tracker. 
+        'You are a partnerships assistant at the United Nations Office for Project Services (UNOPS) that creates detailed partner interaction summaries with contact details, interaction history, and overall partnership assessment in structured Markdown format.
 
-Give a summary of the 10 most recent partner news stories, relevant to my organisation unit in UNOPS.
+Focus on recent interactions, key personnel, and strategic engagement patterns.
 
-PLease include the lead in sentence
-"Here are the 10 most recent news stories concerning [partner], relevant to UNOPS"
+Output Format:
+Provide the output in well-formed Markdown using the following structure:
 
-For each news story, please include, the following details
-headline, 
-short summary of the story, 
-date of publication 
-news source. 
-a link to the specific full news story embedded in a hyperlink icon 
+## Summary of key interactions
+[Introductory paragraph of interactions related to the partner in the last month, highlighting key high-level interactions]
 
-Please include a line between each story
+For each interaction, use this format:
+On [Date], [UNOPS Personnel] from **[org unit]** had a [Type of interaction]. [Brief description]. (If project-related, indicate country and number, otherwise say "not related to a specific project"). **See more** [hyperlinked]
 
-Data: {promptData}
-',
+## List of interactions
+
+#### Interactions relevant to [org unit]
+[Highlight key recent interactions in chronological format]
+
+If no interactions exist, state: "Currently, there are no interactions available in Opportunity+ with [Partner Name]"',
+        'The partner is: {partnerName}
+Partner Information:
+- Organization: {name}
+- Status: {status}
+- Partnership Level: {partnerGroup.name}
+- Liaison Office: {liaisonOffice.name}
+
+Contact Information:
+- Total Contacts: {summary.totalContacts}
+- Active Contacts: {summary.activeContacts}
+- Most Active Contact: {summary.mostActiveContact}
+
+Interaction History:
+- Total Interactions: {summary.totalInteractions}
+- Recent Interactions (30 days): {summary.recentInteractions}
+- Last Interaction Date: {summary.lastInteractionDate}
+- Average Interactions per Contact: {summary.averageInteractionsPerContact}
+
+Recent Interactions Details:
+{recentInteractions}
+
+User Information:
+- Name: {userProfile.name}
+- Position: {userProfile.position}
+- Organization Unit: {userProfile.orgUnitName}
+- Duty Station: {userProfile.dutyStation}',
         NOW(),
         'PartnerTree',
         0,
@@ -823,44 +786,180 @@ Data: {promptData}
         '[{"googleSearch":{}}]',
         'GetPartnerCategoryNewsDetailsAsync',
         'Searches for and summarizes the latest news articles about a partner category, identifying current focus areas and trends from recent developments.',
-        true
+        true,
+        'Partner Management',
+        true,
+        150
     );
 
-    -- Insert user_role_import prompt
+    -- Insert partner_group_news prompt
     INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
-        'user_role_import',
-        'You are an AI assistant for processing user role assignment data. You will receive user role data as an array of arrays (with optional header) or an array of objects or just plain text with information. If they are in an ordered form, first row could optionally be headers. Convert each item into the exact JSON structure shown below. Use your best knowledge to determine how the data is sent.The data represents user-role assignments for the current application. Map user information (name, email, username) to userId and role information (role names) to roleIds.
+        'partner_group_news',
+        'You are a partnerships assistant at the United Nations Office for Project Services (UNOPS) that searches for and summarizes the latest news articles about partner organizations in a specific partner group.
 
+Your job is to scan through the latest news articles using Google Search and come up with articles that are relevant to UNOPS and of specific relevance to the user''s role and the user''s location (duty station and country).
 
-Expected input columns may include:
+Use sources such as Google News as well as development news sites such as Devex and Donor Tracker to find the most recent and relevant news stories.
 
-- User information: user name, email, username, first name, last name
+Output Format:
+Provide the output in well-formed Markdown using the following structure:
 
-- Role information: role name, role names (comma-separated), roles
+**Lead-in sentence:** "Here are the [number] most recent news stories concerning partners in [Group Name], relevant to UNOPS"
 
-User Role Assignment format: {
-  userId: null,
-  roleIds: [],
-  dependents: ["userId", "roleIds"],
-  validationError: ""
-}
+For EACH article, use this format:
+## [News Headline] [🔗](link-to-article)
+**[Publication/Website Name]** | **[Publication Date]**
 
-If you find a user name / name / user id, put them in the userId key (only the user information). Whatever looks like the role should go into roleIds. DONOT modify the dependents key''s value. It needs to be sent as-is as it will be used for mapping.
+[One or two line summary of the article - use direct excerpts from the source when available]
 
+---
 
-Response format: {"Message":"User role assignments processed successfully.","Category":"UserRole","ResponseType":"Action","records":[...]}
+Requirements:
+- Find no more than 10 latest articles
+- Focus on development-related news relevant to UNOPS mandate
+- Include publication date, source, and direct link
+- Separate each story with a horizontal line (---)
+- Use hyperlink icons (🔗) for article links
+- Prioritize recent articles (last 30 days preferred)
 
+Do not include markdown code blocks or backticks in the response.',
+        'Find and summarize the latest development news articles for partners in the partner group "{groupName}".
 
-Return only the response in a compact, single-line JSON format without line breaks or unnecessary whitespace, with no other explanation. This is critical for successful parsing. If more input is needed, set ResponseType to "Information". YOU ARE EXPECTED TO ONLY RETURN THE FINAL JSON.
+**Group Information:**
+- Group Name: {groupName}
+- Group Code: {groupCode}
+- Group Type: {groupType}
+- Total Partners: {partnerCount}
 
+**Partners in Group:**
+{partnerNames}
 
-Data: {promptData}',
+**Partner Details:**
+{partners}
+
+**User Context:**
+- Name: {userProfile.name}
+- Position: {userProfile.position}
+- Organization Unit: {userProfile.orgUnitName}
+- Duty Station: {userProfile.dutyStation}
+- Country Context: {userProfile.dutyStationCountry}
+
+**Search Context:**
+- Focus Areas: {searchContext.focusAreas}
+- News Sources: {searchContext.newsSources}
+- Timeframe: {searchContext.timeframe}
+- Relevance Criteria: {searchContext.relevance}
+
+**Summary Statistics:**
+- Total Partners to Search: {summary.totalPartners}
+- Active Partners: {summary.activePartners}
+- Search Date: {searchMetadata.searchDate}
+
+**Audit Information:**
+- Request Date: {auditInfo.createdDate}
+
+Identify the partner names from the group data and find the latest development news articles relevant to somebody working at UNOPS in {userProfile.orgUnitName}. Focus on news that relates to international development, humanitarian work, infrastructure projects, procurement, or other areas aligned with UNOPS mandate.',
         NOW(),
-        'user_role_import',
+        'PartnerTree',
+        0,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]',
+        '[{"googleSearch":{}}]',
+        'GetPartnerGroupNewsDetailsAsync',
+        'Searches for and summarizes the latest news articles about a partner group, identifying current focus areas and trends from recent developments.',
+        true,
+        'Partner Management',
+        true,
+        150
+    );
+
+    -- Insert partner_group_interactions_summary prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'partner_group_interactions_summary',
+        'You are an AI assistant that creates detailed interaction summaries for partner groups. Focus on recent interactions, key personnel, and strategic engagement patterns. Use the following Markdown format:
+
+## Summary of key interactions for [Group Name]
+
+Provide an introductory paragraph highlighting key interactions from the last month with partners in this group. Focus on high-level strategic engagements and partnership activities.
+
+## Recent Interactions by Partner
+
+For each partner with recent interactions, use this format:
+
+**[Partner Name]**
+- **[Date]**: [Type] with [Contact Name] ([Contact Title]) - [Subject]
+  - Key discussion: [Description]
+  - Project context: [Project Info or "not related to a specific project"]
+  - **[See more](interaction-link)**
+
+## Partnership Analysis
+
+### Collaboration Patterns
+- **Most Active Partners:** [Partner Names with interaction counts]
+- **Engagement Frequency:** [Analysis of interaction patterns]
+- **Key Personnel:** [Most engaged contacts and their roles]
+
+### Strategic Opportunities
+- **Emerging Partnerships:** [New or growing relationships]
+- **Collaboration Areas:** [Common themes and focus areas]
+- **Follow-up Actions:** [Identified next steps and opportunities]
+
+## Activity Summary
+- **Total interactions in last 30 days:** [Count]
+- **Partner engagement rate:** [Percentage of active partners]
+- **Common interaction types:** [Most frequent types]
+- **Geographic focus:** [Key regions or countries if applicable]
+
+If no recent interactions are available, state: "Currently, there are no recent interactions available in Opportunity+ with partners in the [Group Name] group."
+
+Format the response as clean Markdown without code blocks or backticks. Focus on actionable insights and strategic partnership development opportunities.',
+        'Create a comprehensive interaction summary for the partner group "{groupName}" which includes {partnerCount} partners and their interaction history.
+
+**Group Information:**
+- Group: {groupName}
+- Code: {groupCode}
+- Type: {groupType}
+- Total Partners: {partnerCount}
+- Active Partners: {activePartners}
+
+**Partners in Group:**
+{partnerNames}
+
+**Recent Activity (Last 30 Days):**
+- Total Interactions: {summary.recentInteractions}
+- Most Active Partners: {summary.mostActivePartners}
+- Common Interaction Types: {summary.commonInteractionTypes}
+- Last Interaction: {summary.lastInteractionDate}
+
+**Detailed Recent Interactions:**
+{recentInteractions}
+
+**User Context:**
+- Analyst: {userProfile.name} ({userProfile.position})
+- Organization Unit: {userProfile.orgUnitName}
+- Duty Station: {userProfile.dutyStation}
+
+**Audit Information:**
+- Analysis Date: {auditInfo.createdDate}
+- Last Updated: {auditInfo.lastModifiedDate}
+
+Please provide a comprehensive summary of recent interactions with partners in this group. Focus on partnership activities, collaboration patterns, key personnel involved, and strategic engagement opportunities.',
+        NOW(),
+        'PartnerTree',
         0,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
         '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
@@ -869,126 +968,81 @@ Data: {promptData}',
         '{{PROJECT_ID}}',
         NULL,
         '[]',
-        ' ',
-        'User Role Import prompt',
-        true
+        'GetBasicPartnerGroupDetailsAsync',
+        'Creates detailed interaction summaries for a partner group with contact details, interaction history, and overall partnership assessment in structured Markdown format.',
+        true,
+        'Partner Management',
+        true,
+        90
     );
 
-    -- Insert bulk_partner_action prompt
+    -- Insert contact_action prompt
     INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
-        'bulk_partner_action',
-        'You are an AI assistant processing partner data from Google Sheets for UNOPS. Convert each row into the exact JSON structure below. Only include non-empty fields to keep JSON compact.
-
-**MANDATORY FIELDS:** name, partnerShortDescription, status (default: "Active")
+        'contact_action',
+        'You are processing contact data from Google Sheets for UNOPS. Convert each row into the exact JSON structure below. Only include non-empty fields. Required: lastName, email, title, partnerId.
 
 **HEADER MAPPING:**
-"ID"/"Partner ID" → id (number, only if present)
-"Partner Name"/"Organization"/"Company" → name
-"Short Name"/"Acronym"/"Abbreviation" → partnerShortDescription
-"Long Description" → partnerLongDescription
-"Status" → always default to "Draft"
-"Partner Group" → partnerGroupId(number / text) - whatever you find should be added here
-"Liaison Office" → liaisonOfficeId (number / text) - whatever you find should be added here
-"Partner Focal Point" → partnerFocalPointUserId (number / text) - whatever you find should be added here
-organizationHierarchyIds-> Array of Org units that you find 
+"ID"/"Contact ID" → id (number, only if present)
+"Full Name"/"Name"/"Contact Name" → firstName + lastName + name (computed as full name)
+"Email"/"Email Address"/"E-mail" → email
+"Phone"/"Phone Number"/"Telephone" → phone
+"Mobile"/"Cell Phone"/"Mobile Number" → mobile
+"Company"/"Organization"/"Partner"/"Employer" → partnerId (string, add to dependents)
+"Job Title"/"Position"/"Role" → title
+"Department"/"Division"/"Unit" → department
 
-**ESSENTIAL PARTNER JSON FORMAT:**
-{"id": <number>, "name": "", "partnerShortDescription": "", "partnerLongDescription": "", "status": "Draft", "partnerGroupId": null, "liaisonOfficeId": null, "partnerFocalPointUserId": null, "organizationHierarchyIds": [], "dependents": ["partnerGroupId", "liaisonOfficeId", "partnerFocalPointUserId", "organizationHierarchyIds"], "validationError": ""}
+**SALUTATION DETECTION:**
+Auto-detect from: Mr., Ms., Mrs., Dr., Prof., Sir, Madam
+
+**ESSENTIAL CONTACT JSON FORMAT:**
+{"id": <number if exists>, "salutation": "", "firstName": "", "lastName": "", "name": "", "title": "", "department": "", "email": "", "phone": "", "mobile": "", "partnerId": "", "dependents": ["partnerId"], "validationError": ""}
 
 **RULES:**
-- Set validationError for missing mandatory fields
-- Map text names to ID fields, include in dependents for resolution
-- Omit null/empty fields to keep JSON compact
-- Default status to "Draft"
-- Default ID fields to null
+- Set validationError for missing required fields (lastName, email, title, partnerId)
+- Validate email format
+- Set partnerId as string name, include "partnerId" in dependents for ID resolution
+- Omit null/empty fields from JSON to keep it compact
+- Compute name field as concatenation of salutation + firstName + lastName
 - Only include "id" field in JSON output if ID column is present in source data
-- Focus on essential fields only: name, partnerShortDescription, partnerLongDescription, status, and key ID references
+- Focus on essential fields only: name components, title, email, phone, partnerId, department
 
 **RESPONSE FORMAT:**
-{"Message":"Partner data processed successfully.","Category":"Partner","ResponseType":"Action","records":[...]}
+{"Message":"Contact data processed successfully.","Category":"Contact","ResponseType":"Action", {"id": <number if exists>, "salutation": "", "firstName": "", "lastName": "", "name": "", "title": "", "department": "", "email": "", "phone": "", "mobile": "", "partnerId": "", "dependents": ["partnerId"], "validationError": ""}}
 
-Return compact single-line JSON. If more input needed, set ResponseType to "Information". Include ID column in the response if and only if it is present, else ignore that key. Send the dependents field asis with the same values. It should always have "dependents": ["partnerGroupId", "liaisonOfficeId", "partnerFocalPointUserId", "organizationHierarchyIds"]
-
-Input data: {promptData}',
+Return compact single-line JSON. If more input needed, set ResponseType to "Information". The "dependents" property is used to indicate which property in the JSON is an ID and is required to map. In this case, it is only the partnerId. Hence, DONOT update the dependents value. Send the dependents property''s value as-is ("dependents": ["partnerId"] -> do not replace partnerId). Also, include "id" only if it is present.',
+        '',
         NOW(),
-        'Partner',
+        'Contact',
         1,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
         '{"temperature":0.1,"top_p":0.2,"max_output_tokens":65535}',
         'europe-west4',
-        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
         '{{PROJECT_ID}}',
         NULL,
         '[]',
         '',
-        'Processes bulk partner data from arrays or objects, converting them into structured JSON format with validation of acceptable values and automatic field mapping.',
-        false
-    );
-
-    -- Insert partner_interactions_summary prompt
-    INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
-        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
-    ) VALUES (
-        'partner_interactions_summary',
-        'I am providing a partner name.
-
-##Summary of key interactions
-Provide an introductory paragraph of interaction related to the partner in the last month. Highlight any key high-level interactions.
-
-For example, using the following format, generate a summary of an interaction that looks like this: 
-
-On 19/09/2024, Beth Hayes from org unit (in bold) had a Type of interaction. It was discussed the need for a significant reduction in energy-efficient procedures, which could be achieved through enterprise-level investments. (If the interaction is related to a project please indicate the country and number, and if not say "not related to a specific project").**See more**  (text contains the word "See more" with a hyperlink to open the specific interaction record). (give line breaks after each interaction summary)
-
-###List of interactions
-
-####Interactions relevant to [org unit]
-
-For example, using the following format, generate a summary of an interaction that looks like this: 
-
-On 19/09/2024, Beth Hayes from org unit (in bold) had a Type of interaction. It was discussed the need for a significant reduction in energy-efficient procedures, which could be achieved through enterprise-level investments. (If the interaction is related to a project please indicate the country and number, and if not say "not related to a specific project").**See more**  (text contains the word "See more" with a hyperlink to open the specific interaction record). (give line breaks after each interaction summary)
-
-Highlight key recent interactions 
-
-There have been several recent interactions between UNOPS and [Partner]
-[Date of interaction]: A high-level meeting between UNOPS'' [Personnel name, Personnel title] and the World Bank''s [Contact name, contact title] to discuss ongoing projects. 
-[Date of interaction]: a meeting between the World Bank and UNOPS'' project teams to discuss project [Engagement name, engagement code] and project process, where key milestones such as timely delivery of supplies were identified. 
-[Date of interaction]: high-level meeting between the World Bank''s [Contact name, contact title], and the UNOPS delegation at the [Event name]
-
-If there are no interactions with the partner please state "Currently, there are not interactions available in Opportunity+ with [Partner]
- 
-{promptData}
-
-
-',
-        NOW(),
-        'Partner',
-        1,
-        '{"role":"user","parts":[{"text":"{promptData}"}]}',
-        '{"temperature":0.7,"top_p":0.2,"max_output_tokens":65535}',
-        'europe-west4',
-        'gemini-2.5-flash',
-        '{{PROJECT_ID}}',
-        NULL,
-        '[{"googleSearch":{}}]',
-        'GetPartnerWithContactsAndInteractionsAsync',
-        'Creates detailed partner interaction summaries with contact details, interaction history, and overall partnership assessment in structured Markdown format.',
-        true
+        'Extracts contact information from raw data or conversation summaries and formats it into structured JSON for contact creation or updates.',
+        true,
+        'Contact Management',
+        false,
+        60
     );
 
     -- Insert bulk_contact_action prompt
     INSERT INTO public."AiPrompt" (
-        "Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
         "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
-        "ToolsConfig", "PromptFunction", "Description", "AdminCanChange"
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
     ) VALUES (
         'bulk_contact_action',
-        'You are an AI assistant processing contact data from Google Sheets for UNOPS. Convert each row into the exact JSON structure below. Only include non-empty fields. Required: lastName, email, title, partnerId.
+        'You are processing contact data from Google Sheets for UNOPS. Convert each row into the exact JSON structure below. Only include non-empty fields. Required: lastName, email, title, partnerId.
 
 **HEADER MAPPING:**
 "ID"/"Contact ID" → id (number, only if present)
@@ -1018,23 +1072,202 @@ Auto-detect from: Mr., Ms., Mrs., Dr., Prof., Sir, Madam
 **RESPONSE FORMAT:**
 {"Message":"Contact data processed successfully.","Category":"Contact","ResponseType":"Action","records":[...]}
 
-Return compact single-line JSON. If more input needed, set ResponseType to "Information". The "dependents" property is used to indicate which property in the JSON is an ID and is required to map. In this case, it is only the partnerId. Hence, DONOT update the dependents value. Send the dependents property''s value as-is ("dependents": ["partnerId"] -> do not replace partnerId). Also, include "id" only if it is present.
-
-Input data: {promptData}',
+Return compact single-line JSON. If more input needed, set ResponseType to "Information". The "dependents" property is used to indicate which property in the JSON is an ID and is required to map. In this case, it is only the partnerId. Hence, DONOT update the dependents value. Send the dependents property''s value as-is ("dependents": ["partnerId"] -> do not replace partnerId). Also, include "id" only if it is present.',
+        '',
         NOW(),
         'Contact',
         1,
         '{"role":"user","parts":[{"text":"{promptData}"}]}',
         '{"temperature":0.1,"top_p":0.2,"max_output_tokens":65535}',
         'europe-west4',
-        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
         '{{PROJECT_ID}}',
         NULL,
         '[]',
         ' ',
         'Processes bulk contact data from arrays or objects, converting them into structured JSON format with automatic name parsing and partner linking.',
-        false
+        true,
+        'Data Import',
+        false,
+        60
     );
 
-    RAISE NOTICE 'AI prompts inserted successfully: 24 records';
+    -- Insert partner_action prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'partner_action',
+        'Extract partner information from the provided data and return ONLY a valid JSON object. Do not include any conversation, greetings, explanations, or markdown formatting. Return ONLY the raw JSON.
+
+JSON format:
+{"Message": "Data extracted successfully", "Category": "Partner", "ResponseType": "Action", "name": "", "partnerShortDescription": "", "partnerLongDescription": "", "status": "Active", "partnerCategoryId": null, "liaisonOfficeId": null, "partnerFocalPointUserId": null, "erpDimValue": null, "dependents": ["partnerCategoryId", "liaisonOfficeId", "partnerFocalPointUserId"]}
+
+**RULES:**
+- Required fields: name, partnerShortDescription, status
+- Status: Default to "Active"
+- Partner: Set ID fields as string names, include in dependents for ID resolution
+- Omit null/empty fields from JSON to keep it compact
+- Always set status to "Active"
+- Default ID fields to null
+- Only include "id" field in JSON output if ID is present in source data
+- Focus on essential fields only: name, partnerShortDescription, partnerLongDescription, status, and key ID references
+
+**HEADER MAPPING:**
+"ID"/"Partner ID" → id (number, only if present)
+"Partner Name"/"Organization"/"Company" → name
+"Short Name"/"Acronym"/"Abbreviation" → partnerShortDescription
+"Long Description" → partnerLongDescription
+"Partner Category" → partnerCategoryId
+"Liaison Office" → liaisonOfficeId
+"Partner Focal Point" → partnerFocalPointUserId
+"ERP Dimension" → erpDimValue
+
+Return compact single-line JSON without line breaks or unnecessary whitespace.',
+        '',
+        NOW(),
+        'Partner',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.1,"top_p":0.2,"max_output_tokens":65535}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[]',
+        '',
+        'Extracts partner information from raw data or conversation summaries and formats it into structured JSON for partner creation or updates with validation of acceptable values.',
+        true,
+        'Partner Management',
+        false,
+        60
+    );
+
+    -- Insert partner_priorities prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'partner_priorities',
+        'You are a partnerships assistant at the United Nations Office for Project Services (UNOPS) that analyzes partner priorities and identifies key focus areas in international development, funding opportunities, and potential entry points for UNOPS.
+
+Use external sources such as Google Search to identify current priorities, funding commitments, and strategic opportunities.
+
+Output Format:
+Provide the output in well-formed Markdown using the following structure:
+
+**Focus Areas:**
+For each focus area, use this structure:
+**[Focus Area Name]**
+**Focus:** [Explanation of the partner''s focus area and their approach]
+**Budget/Expenditure Commitments:** [Overview of expenditure or commitments potentially available to UNOPS]  
+**Key UNOPS entry points:** [Overview of alignment with UNOPS strategy and key entry points]
+
+**Overarching Considerations:**
+[Cross-cutting priorities and strategic considerations]
+
+Do not include markdown code blocks or backticks in the response.',
+        'The partner is: {partnerName}
+Partner Information:
+- Organization: {name}
+- Status: {status}
+- Partnership Level: {partnerGroup.name}
+- Liaison Office: {liaisonOffice.name}
+- Established: {partnership.establishedDate}
+- Engagement Level: {engagement.engagementFrequency}
+- Last Activity: {partnership.lastActivity}
+
+Recent Engagement:
+- Total Contacts: {summary.totalContacts} 
+- Recent Interactions: {summary.recentInteractions} in last 30 days
+- Last Interaction: {summary.lastInteractionDate}
+- Key Contacts: {engagement.keyContactPoints}
+
+User Information:
+- Name: {userProfile.name}
+- Position: {userProfile.position}
+- Organization Unit: {userProfile.orgUnitName}
+- Duty Station: {userProfile.dutyStation}
+- Country Context: {userProfile.dutyStationCountry}',
+        NOW(),
+        'Partner',
+        0,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":1,"top_p":0.2,"max_output_tokens":65535}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]',
+        '[{"googleSearch":{}}]',
+        'GetBasicPartnerDetailsAsync',
+        'Give an overview of partner priorities',
+        true,
+        'Partner Management',
+        true,
+        180
+    );
+
+    -- Insert bulk_partner_action prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'bulk_partner_action',
+        'You are processing partner data from Google Sheets for UNOPS. Convert each row into the exact JSON structure below. Only include non-empty fields to keep JSON compact.
+
+**MANDATORY FIELDS:** name, partnerShortDescription, status (default: "Active")
+
+**HEADER MAPPING:**
+"ID"/"Partner ID" → id (number, only if present)
+"Partner Name"/"Organization"/"Company" → name
+"Short Name"/"Acronym"/"Abbreviation" → partnerShortDescription
+"Long Description" → partnerLongDescription
+"Status" → always default to "Draft"
+"Partner Group" → partnerGroupId(number / text) - whatever you find should be added here
+"Liaison Office" → liaisonOfficeId (number / text) - whatever you find should be added here
+"Partner Focal Point" → partnerFocalPointUserId (number / text) - whatever you find should be added here
+organizationHierarchyIds-> Array of Org units that you find 
+
+**ESSENTIAL PARTNER JSON FORMAT:**
+{"id": <number>, "name": "", "partnerShortDescription": "", "partnerLongDescription": "", "status": "Draft", "partnerGroupId": null, "liaisonOfficeId": null, "partnerFocalPointUserId": null, "organizationHierarchyIds": [], "dependents": ["partnerGroupId", "liaisonOfficeId", "partnerFocalPointUserId", "organizationHierarchyIds"], "validationError": ""}
+
+**RULES:**
+- Set validationError for missing mandatory fields
+- Map text names to ID fields, include in dependents for resolution
+- Omit null/empty fields to keep JSON compact
+- Default status to "Draft"
+- Default ID fields to null
+- Only include "id" field in JSON output if ID column is present in source data
+- Focus on essential fields only: name, partnerShortDescription, partnerLongDescription, status, and key ID references
+
+**RESPONSE FORMAT:**
+{"Message":"Partner data processed successfully.","Category":"Partner","ResponseType":"Action","records":[...]}
+
+Return compact single-line JSON. If more input needed, set ResponseType to "Information". Include ID column in the response if and only if it is present, else ignore that key. Send the dependents field asis with the same values. It should always have "dependents": ["partnerGroupId", "liaisonOfficeId", "partnerFocalPointUserId", "organizationHierarchyIds"]',
+        '',
+        NOW(),
+        'Partner',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.1,"top_p":0.2,"max_output_tokens":65535}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[]',
+        '',
+        'Processes bulk partner data from arrays or objects, converting them into structured JSON format with validation of acceptable values and automatic field mapping.',
+        true,
+        'Data Import',
+        false,
+        60
+    );
+
+    RAISE NOTICE 'AI prompts inserted successfully: 18 records';
 END $$;

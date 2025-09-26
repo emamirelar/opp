@@ -107,7 +107,7 @@ import { TranslateModule } from '@ngx-translate/core';
           </ng-container>
           
           <ng-container *ngIf="rightPanelType === 'component' && !rightPanelComponent">
-            <div class="coming-soon-container">
+            <!-- <div class="coming-soon-container">
               <div class="coming-soon-icon">
                 <i class="pi pi-cog pi-spin"></i>
               </div>
@@ -121,7 +121,9 @@ import { TranslateModule } from '@ngx-translate/core';
                   <strong>Entity ID:</strong> {{ rightPanelEntityId }}
                 </div>
               </div>
-            </div>
+            </div> -->
+            <!-- TAD: Defaulting to partner for now -->
+            <app-partner-view [recordId]="rightPanelEntityId || ''" [showAiPanel]="false"></app-partner-view>
           </ng-container>
           
           <ng-container *ngIf="rightPanelType === 'url'">
@@ -304,6 +306,27 @@ export class AiContentComponent implements OnInit, OnDestroy {
   rightPanelEntityId: string | null = null;
   rightPanelRowData: any = null;
 
+  // Listen for current session changes to update URL - must be in injection context
+  private sessionUrlEffect = effect(() => {
+    const currentSessionId = this.aiAssistantData.currentSessionId();
+    const currentRoute = this.router.url;
+    
+    // Only update URL if we're on an AI route
+    if (currentRoute.startsWith('/ai')) {
+      if (currentSessionId) {
+        // Navigate to session-specific URL
+        if (currentRoute !== `/ai/${currentSessionId}`) {
+          this.router.navigate(['/ai', currentSessionId], { replaceUrl: true });
+        }
+      } else {
+        // Navigate to general AI URL when no session
+        if (currentRoute !== '/ai') {
+          this.router.navigate(['/ai'], { replaceUrl: true });
+        }
+      }
+    }
+  });
+
   ngOnInit() {
     // Set the ViewContainerRef for the AI assistant data service
     this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
@@ -320,27 +343,6 @@ export class AiContentComponent implements OnInit, OnDestroy {
             this.router.navigate(['/ai'], { replaceUrl: true });
           }
         });
-      }
-    });
-    
-    // Listen for current session changes to update URL
-    effect(() => {
-      const currentSessionId = this.aiAssistantData.currentSessionId();
-      const currentRoute = this.router.url;
-      
-      // Only update URL if we're on an AI route
-      if (currentRoute.startsWith('/ai')) {
-        if (currentSessionId) {
-          // Navigate to session-specific URL
-          if (currentRoute !== `/ai/${currentSessionId}`) {
-            this.router.navigate(['/ai', currentSessionId], { replaceUrl: true });
-          }
-        } else {
-          // Navigate to general AI URL when no session
-          if (currentRoute !== '/ai') {
-            this.router.navigate(['/ai'], { replaceUrl: true });
-          }
-        }
       }
     });
   }

@@ -72,12 +72,18 @@ public static class PAOUserEndpointRouteBuilderExtensions
         routeGroup.MapGet("/isInternal", async Task<Ok<bool>>
             (HttpContext context, [FromServices] UserManager<TUser> userManager) =>
         {
-            if (!context.User.Identity.IsAuthenticated)
+            if (context.User.Identity?.IsAuthenticated != true)
             {
                 return TypedResults.Ok(false);
             }
 
-            var user = await userManager.FindByNameAsync(context.User.Identity.Name);
+            var userName = context.User.Identity.Name;
+            if (string.IsNullOrEmpty(userName))
+            {
+                return TypedResults.Ok(false);
+            }
+
+            var user = await userManager.FindByNameAsync(userName);
             if (user == null)
             {
                 return TypedResults.Ok(false);
@@ -89,12 +95,18 @@ public static class PAOUserEndpointRouteBuilderExtensions
         routeGroup.MapGet("/claims", async Task<dynamic>
             (HttpContext context, [FromServices] UserManager<TUser> userManager) =>
         {
-            if (!context.User.Identity.IsAuthenticated)
+            if (context.User.Identity?.IsAuthenticated != true)
             {
                 return Results.Unauthorized();
             }
 
-            var user = await userManager.FindByNameAsync(context.User.Identity.Name);
+            var userName = context.User.Identity.Name;
+            if (string.IsNullOrEmpty(userName))
+            {
+                return Results.Unauthorized();
+            }
+
+            var user = await userManager.FindByNameAsync(userName);
             if (user == null)
             {
                 return Results.Unauthorized();
@@ -113,18 +125,24 @@ public static class PAOUserEndpointRouteBuilderExtensions
             userClaims.Add(new Claim("userId", user.Id.ToString()));
 
             // Add essential claims
-            userClaims.Add(new Claim(ClaimTypes.Name, user.UserName));
-            userClaims.Add(new Claim(ClaimTypes.Email, user.Email));
+            if (!string.IsNullOrEmpty(user.UserName))
+            {
+                userClaims.Add(new Claim(ClaimTypes.Name, user.UserName));
+            }
+            if (!string.IsNullOrEmpty(user.Email))
+            {
+                userClaims.Add(new Claim(ClaimTypes.Email, user.Email));
+            }
             userClaims.Add(new Claim("IsInternal", user.IsInternal.ToString()));
 
             return userClaims.Select(x => new { x.Type, x.Value }).ToList();
         });
 
-        routeGroup.MapGet("/permissions", async Task<object>
+        routeGroup.MapGet("/permissions", Task<object>
             (HttpContext context, [FromServices] IPAOExecutionContext executionContext) =>
         {
             var userPermissions = executionContext.UserPermissions.Select(p => p.Name).ToList();
-            return userPermissions.Distinct().ToList();
+            return Task.FromResult<object>(userPermissions.Distinct().ToList());
         }).RequireAuthorization();
 
         return new PAOUserEndpointConventionBuilder(routeGroup);

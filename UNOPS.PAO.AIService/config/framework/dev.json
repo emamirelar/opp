@@ -1,5 +1,6 @@
 {
   "environment": "dev",
+  "description": "Development environment configuration for the AI Agent Framework",
   "cache": {
     "rules": {
       "Partner": ["screen_context"],
@@ -38,8 +39,8 @@
     }
   },
   "database": {
-        "url": "sqlite:///./ai_agent.db",
-        "secret_name": "Dev_DB_Connection_String"
+    "url": "sqlite:///./ai_agent.db",
+    "secret_name": "Dev_DB_Connection_String"
   },
   "artifacts": {
     "service_type": "GcsArtifactService",
@@ -124,11 +125,11 @@
     "enable_contextual_agent": true
   },
   "action_logging": {
-      "enabled": true,
-      "auto_log_actions": true,
-      "log_followup_suggestions": true,
-      "retention_days": 90,
-      "enable_analytics": true
+    "enabled": true,
+    "auto_log_actions": true,
+    "log_followup_suggestions": true,
+    "retention_days": 90,
+    "enable_analytics": true
   },
   "support": {
     "email": "larsj@unops.org",
@@ -167,6 +168,5 @@
     "google_drive_batch_size": 5,
     "default_host": "0.0.0.0",
     "default_port": 8000
-  },
-  "description": "Development environment configuration for the AI Agent Framework"
-} 
+  }
+}

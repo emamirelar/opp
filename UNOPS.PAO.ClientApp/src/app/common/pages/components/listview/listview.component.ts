@@ -30,6 +30,7 @@ import { SavedFilter } from '../../../interfaces/saved-filter.interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserPreferenceService, GlobalFilters } from '../../../../services/user-preference.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
+import { GlobalFiltersDialogService } from '../../../../services/global-filters-dialog.service';
 
 interface ListViewState<T> {
   loading: boolean;
@@ -84,6 +85,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   private readonly globalFilterService = inject(GlobalFilterService);
   private readonly userPreferenceService = inject(UserPreferenceService);
   private readonly authService = inject(AuthService);
+  private readonly globalFiltersDialogService = inject(GlobalFiltersDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -1097,5 +1099,10 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     }
     
     this.activeFilterLabels.set(labels);
+  }
+
+  // Open global filters dialog
+  openGlobalFiltersDialog(): void {
+    this.globalFiltersDialogService.openDialog();
   }
 }

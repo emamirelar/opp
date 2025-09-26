@@ -35,6 +35,8 @@ import { ProfileDialogComponent } from '../profile-dialog/profile-dialog.compone
 import { GlobalFiltersDialogComponent } from './global-filters-dialog/global-filters-dialog.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
+import { UserPreferenceService } from '../../../../services/user-preference.service';
+import { GlobalFiltersDialogService } from '../../../../services/global-filters-dialog.service';
 import { TourControlComponent } from '../../../components/tour-control/tour-control.component';
 import { ConfigurationService } from '../../../../essentials/services/configuration.service';
 import { AiAssistantData } from '../../../reusables/widgets/ai-assistant/ai-assistant.data';
@@ -117,6 +119,8 @@ export class TopbarComponent implements OnInit, OnDestroy {
   private notificationInterval: any;
   private http = inject(HttpClient);
   private roleService = inject(RoleService);
+  private userPreferenceService = inject(UserPreferenceService);
+  private globalFiltersDialogService = inject(GlobalFiltersDialogService);
   
   menuActive: boolean = false;
   userInfo: UserInfo | null = null;
@@ -126,10 +130,14 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   // Propriété pour le filtre d'unité organisationnelle
   isOrgUnitFilterActive: boolean = false;
+  hasActiveFilters: boolean = false;
   private globalFilterSubscription?: Subscription;
   
   // Mobile detection
   isMobile: boolean = false;
+  
+  // AI Assistant icon fallback
+  showFallbackIcon: boolean = false;
 
   // Chat history properties
   chatSessions: any[] = [];
@@ -188,6 +196,8 @@ export class TopbarComponent implements OnInit, OnDestroy {
           this.userId = userIdClaim.value;
           this.loadUserRoles();
           this.startNotificationPolling();
+          // Check for active filters once we have user ID
+          this.checkActiveFilters();
         }
         this.loadUserInfo();
       },
@@ -200,25 +210,34 @@ export class TopbarComponent implements OnInit, OnDestroy {
     this.profileMenuItems = [];
     this.setupProfileMenu();
     
-    // Debug: Vérifier l'état initial du service
-    console.log('Initial GlobalFilter state:', {
-      filterEnabled: this.globalFilterService.isFilterEnabled(),
-      selectedOrgUnitId: this.globalFilterService.getSelectedOrgUnitId(),
-      activeOrgUnitId: this.globalFilterService.getActiveOrgUnitId()
-    });
-    
-    // Souscrire aux changements du filtre d'unité organisationnelle
+    // Subscribe to global filter changes
     this.globalFilterSubscription = this.globalFilterService.activeOrgUnitId$.subscribe({
       next: (activeOrgUnitId) => {
-        console.log('GlobalFilter - activeOrgUnitId changed:', activeOrgUnitId);
         this.isOrgUnitFilterActive = activeOrgUnitId !== null;
-        console.log('GlobalFilter - isOrgUnitFilterActive set to:', this.isOrgUnitFilterActive);
+        
+        // Check all filters to update comprehensive indicator
+        this.checkActiveFilters();
         this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Error subscribing to global filter changes:', error);
       }
     });
+
+    // Also subscribe to filter changes to update indicators
+    this.globalFilterService.filtersChanged$.subscribe(() => {
+      this.checkActiveFilters();
+    });
+
+    // Subscribe to global filters dialog service
+    this.globalFiltersDialogService.openDialog$.subscribe(() => {
+      this.openGlobalFilters();
+    });
+
+    // Initial check for active filters
+    if (this.userId) {
+      this.checkActiveFilters();
+    }
 
     // Load chat sessions if on AI page
     if (this.isOnAiPage()) {
@@ -765,8 +784,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
         route = `/${entityType}/view/${entityId}`;
         break;
     }
-
-    console.log(`Navigating to entity: ${entityType} with ID: ${entityId} -> ${route}`);
     this.router.navigate([route]);
     this.markNotificationAsRead(notification.id);
   }
@@ -911,6 +928,41 @@ export class TopbarComponent implements OnInit, OnDestroy {
     this.globalFiltersDialog.show();
   }
 
+  // Check for any active filters and update indicators
+  private async checkActiveFilters() {
+    try {
+      if (!this.userId) return;
+      
+      // Get current filter state from backend
+      const filters = await this.userPreferenceService.getGlobalFilters(this.userId).toPromise();
+      
+      let hasAnyActiveFilters = false;
+      
+      if (filters) {
+        // Check for any active filters
+        if (filters.orgUnitId !== null && filters.orgUnitId !== undefined) {
+          hasAnyActiveFilters = true;
+        }
+        if (filters.relatedToMe === true) {
+          hasAnyActiveFilters = true;
+        }
+        // Check for date-based filters (using existing properties)
+        if ((filters.dateFrom && filters.dateTo) || filters.dateOn) {
+          hasAnyActiveFilters = true;
+        }
+      }
+      
+      this.hasActiveFilters = hasAnyActiveFilters;
+      
+      this.cdr.markForCheck();
+    } catch (error) {
+      console.error('Error checking active filters:', error);
+      // Set defaults on error
+      this.hasActiveFilters = false;
+      this.cdr.markForCheck();
+    }
+  }
+
 
 
   onAIAssistantToggle() {
@@ -941,7 +993,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
    * Navigate to the home page when logo is clicked
    */
   navigateToHome(): void {
-    console.log('Logo clicked - navigating to home');
     this.router.navigate(['/']);
   }
 
@@ -1065,5 +1116,29 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   trackByChatId(index: number, session: any): string {
     return session.id || index;
+  }
+
+  // Debug methods for AI assistant image
+  onImageLoad(event: any): void {
+    console.log('AI assistant image loaded successfully:', event);
+  }
+
+  onImageError(event: any): void {
+    console.error('AI assistant image failed to load:', event);
+    console.error('Image src:', event.target?.src);
+    // Try alternative paths first
+    const img = event.target;
+    if (img.src.includes('./images/')) {
+      console.log('Trying alternative path: images/AI_visual_64.svg');
+      img.src = 'images/AI_visual_64.svg';
+    } else if (img.src.includes('images/AI_visual_64.svg') && !img.src.includes('assets/')) {
+      console.log('Trying alternative path: assets/images/AI_visual_64.svg');
+      img.src = 'assets/images/AI_visual_64.svg';
+    } else {
+      // All paths failed, show fallback icon
+      console.log('All image paths failed, showing fallback icon');
+      this.showFallbackIcon = true;
+      this.cdr.markForCheck();
+    }
   }
 }

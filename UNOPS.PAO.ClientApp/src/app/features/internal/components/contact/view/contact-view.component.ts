@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -149,6 +149,9 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   recordData = signal<Contact>({});
 
   readonly entityTypeContact = EntityType.Contact;
+
+  @ViewChild('linkListComponent') linkListComponent!: LinkListComponent;
+  @ViewChild('gdriveComponent') gdriveComponent!: GDriveDocumentComponent;
 
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
@@ -373,6 +376,24 @@ export class ContactViewComponent implements OnInit, OnDestroy {
 
   onNewsError(error: any) {
     console.error('News error:', error);
+  }
+
+  /**
+   * Opens the add link dialog by calling the link list component's openEditDialog method
+   */
+  openAddLinkDialog() {
+    if (this.linkListComponent) {
+      this.linkListComponent.openEditDialog();
+    }
+  }
+
+  /**
+   * Opens the Google Drive picker by calling the GDrive component's openGoogleDrivePicker method
+   */
+  openGoogleDriveDialog() {
+    if (this.gdriveComponent) {
+      this.gdriveComponent.openGoogleDrivePicker();
+    }
   }
 
 }

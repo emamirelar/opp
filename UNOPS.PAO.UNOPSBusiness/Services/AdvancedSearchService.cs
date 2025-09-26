@@ -167,6 +167,336 @@ public class AdvancedSearchService
         return await SearchAsync<TEntity, TModel>(request, user);
     }
 
+    /// <summary>
+    /// Global search across all entities using PostgreSQL search_entity_records function
+    /// Perfect for unified search endpoint that searches Partners, Contacts, and Interactions
+    /// </summary>
+    public async Task<GlobalSearchResponse> SearchAllEntitiesAsync(string searchText, int maxResultsPerEntity = 15)
+    {
+        try
+        {
+            _logger.LogInformation("=== GLOBAL POSTGRESQL SEARCH ===");
+            _logger.LogInformation("Search Text: '{SearchText}', Max Results Per Entity: {MaxResults}", searchText, maxResultsPerEntity);
+
+            // Execute PostgreSQL search function for all entities (no filter)
+            var searchResultsJson = await ExecutePostgreSQLSearchAsync(searchText, null);
+            
+            // Parse and return structured results
+            var globalResults = ParseGlobalSearchResults(searchResultsJson);
+            
+            _logger.LogInformation("Global search completed. Partners: {PartnerCount}, Contacts: {ContactCount}, Interactions: {InteractionCount}",
+                globalResults.Partners?.Count ?? 0,
+                globalResults.Contacts?.Count ?? 0, 
+                globalResults.Interactions?.Count ?? 0);
+
+            return globalResults;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error performing global PostgreSQL search for: '{SearchText}'", searchText);
+            return new GlobalSearchResponse
+            {
+                Partners = new List<GlobalSearchResult>(),
+                Contacts = new List<GlobalSearchResult>(),
+                Interactions = new List<GlobalSearchResult>(),
+                SearchQuery = searchText,
+                ExecutionTimeMs = 0
+            };
+        }
+    }
+
+    /// <summary>
+    /// Parse PostgreSQL search results JSON into structured global search response
+    /// </summary>
+    private GlobalSearchResponse ParseGlobalSearchResults(string searchResultsJson)
+    {
+        var response = new GlobalSearchResponse
+        {
+            Partners = new List<GlobalSearchResult>(),
+            Contacts = new List<GlobalSearchResult>(),
+            Interactions = new List<GlobalSearchResult>()
+        };
+
+        try
+        {
+            if (string.IsNullOrEmpty(searchResultsJson) || searchResultsJson == "{}")
+                return response;
+
+            using var document = JsonDocument.Parse(searchResultsJson);
+            
+            // Check if we have results
+            if (!document.RootElement.TryGetProperty("results", out var results))
+                return response;
+
+            // Parse Partners
+            if (results.TryGetProperty("Partners", out var partnersElement))
+            {
+                response.Partners = ParseEntitySearchResults(partnersElement, "Partner");
+            }
+
+            // Parse Contacts  
+            if (results.TryGetProperty("Contacts", out var contactsElement))
+            {
+                response.Contacts = ParseEntitySearchResults(contactsElement, "Contact");
+            }
+
+            // Parse Interactions
+            if (results.TryGetProperty("Interactions", out var interactionsElement))
+            {
+                response.Interactions = ParseEntitySearchResults(interactionsElement, "Interaction");
+            }
+
+            // Extract execution time if available
+            if (document.RootElement.TryGetProperty("summary", out var summary) &&
+                summary.TryGetProperty("executionTimeMs", out var executionTime))
+            {
+                response.ExecutionTimeMs = executionTime.GetDouble();
+            }
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error parsing global search results JSON");
+        }
+
+        return response;
+    }
+
+    /// <summary>
+    /// Parse individual entity search results from JSON
+    /// </summary>
+    private List<GlobalSearchResult> ParseEntitySearchResults(JsonElement entityElement, string entityType)
+    {
+        var results = new List<GlobalSearchResult>();
+
+        try
+        {
+            if (entityElement.TryGetProperty("items", out var items) && items.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in items.EnumerateArray())
+                {
+                    var result = new GlobalSearchResult
+                    {
+                        EntityType = entityType,
+                        EntityId = item.TryGetProperty("entityId", out var idElement) ? idElement.GetInt32() : 0,
+                        Score = item.TryGetProperty("score", out var scoreElement) ? scoreElement.GetDouble() : 0,
+                        MatchedField = item.TryGetProperty("matchedField", out var fieldElement) ? fieldElement.GetString() : "",
+                        FieldValue = item.TryGetProperty("fieldValue", out var valueElement) ? valueElement.GetString() : "",
+                        SearchType = item.TryGetProperty("searchType", out var typeElement) ? typeElement.GetString() : "",
+                        MatchCriteria = item.TryGetProperty("matchCriteria", out var criteriaElement) ? criteriaElement.GetString() : "",
+                        Snippet = item.TryGetProperty("snippet", out var snippetElement) ? snippetElement.GetString() : ""
+                    };
+
+                    results.Add(result);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error parsing {EntityType} search results", entityType);
+        }
+
+        return results;
+    }
+
+    #endregion
+
+    #region Modular Entity Search Methods
+
+    /// <summary>
+    /// Search Partners using the dedicated PostgreSQL function with nested properties
+    /// </summary>
+    public async Task<List<GlobalSearchResult>> SearchPartnersAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
+    {
+        try
+        {
+            _logger.LogInformation("Searching Partners with nested properties: '{SearchText}'", searchText);
+
+            using var connection = new NpgsqlConnection(_context.Database.GetConnectionString());
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT * FROM public.search_partners_with_nested($1, $2, $3)";
+            command.Parameters.Add(new NpgsqlParameter { Value = searchText });
+            command.Parameters.Add(new NpgsqlParameter { Value = textBoost });
+            command.Parameters.Add(new NpgsqlParameter { Value = snippetLength });
+
+            var results = new List<GlobalSearchResult>();
+            using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                results.Add(new GlobalSearchResult
+                {
+                    EntityType = reader.GetString("entity_type"),
+                    EntityId = int.Parse(reader.GetString("entity_id")),
+                    Score = reader.GetDouble("score"),
+                    MatchedField = reader.GetString("matched_field"),
+                    FieldValue = reader.GetString("field_value"),
+                    SearchType = reader.GetString("search_type"),
+                    MatchCriteria = reader.GetString("match_criteria"),
+                    Snippet = reader.GetString("snippet")
+                });
+            }
+
+            _logger.LogInformation("Partners search completed. Found {Count} results", results.Count);
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching Partners with nested properties: '{SearchText}'", searchText);
+            return new List<GlobalSearchResult>();
+        }
+    }
+
+    /// <summary>
+    /// Search Contacts using the dedicated PostgreSQL function with nested properties
+    /// </summary>
+    public async Task<List<GlobalSearchResult>> SearchContactsAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
+    {
+        try
+        {
+            _logger.LogInformation("Searching Contacts with nested properties: '{SearchText}'", searchText);
+
+            using var connection = new NpgsqlConnection(_context.Database.GetConnectionString());
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT * FROM public.search_contacts_with_nested($1, $2, $3)";
+            command.Parameters.Add(new NpgsqlParameter { Value = searchText });
+            command.Parameters.Add(new NpgsqlParameter { Value = textBoost });
+            command.Parameters.Add(new NpgsqlParameter { Value = snippetLength });
+
+            var results = new List<GlobalSearchResult>();
+            using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                results.Add(new GlobalSearchResult
+                {
+                    EntityType = reader.GetString("entity_type"),
+                    EntityId = int.Parse(reader.GetString("entity_id")),
+                    Score = reader.GetDouble("score"),
+                    MatchedField = reader.GetString("matched_field"),
+                    FieldValue = reader.GetString("field_value"),
+                    SearchType = reader.GetString("search_type"),
+                    MatchCriteria = reader.GetString("match_criteria"),
+                    Snippet = reader.GetString("snippet")
+                });
+            }
+
+            _logger.LogInformation("Contacts search completed. Found {Count} results", results.Count);
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching Contacts with nested properties: '{SearchText}'", searchText);
+            return new List<GlobalSearchResult>();
+        }
+    }
+
+    /// <summary>
+    /// Search Interactions using the dedicated PostgreSQL function with nested properties
+    /// </summary>
+    public async Task<List<GlobalSearchResult>> SearchInteractionsAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
+    {
+        try
+        {
+            _logger.LogInformation("Searching Interactions with nested properties: '{SearchText}'", searchText);
+
+            using var connection = new NpgsqlConnection(_context.Database.GetConnectionString());
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT * FROM public.search_interactions_with_nested($1, $2, $3)";
+            command.Parameters.Add(new NpgsqlParameter { Value = searchText });
+            command.Parameters.Add(new NpgsqlParameter { Value = textBoost });
+            command.Parameters.Add(new NpgsqlParameter { Value = snippetLength });
+
+            var results = new List<GlobalSearchResult>();
+            using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                results.Add(new GlobalSearchResult
+                {
+                    EntityType = reader.GetString("entity_type"),
+                    EntityId = int.Parse(reader.GetString("entity_id")),
+                    Score = reader.GetDouble("score"),
+                    MatchedField = reader.GetString("matched_field"),
+                    FieldValue = reader.GetString("field_value"),
+                    SearchType = reader.GetString("search_type"),
+                    MatchCriteria = reader.GetString("match_criteria"),
+                    Snippet = reader.GetString("snippet")
+                });
+            }
+
+            _logger.LogInformation("Interactions search completed. Found {Count} results", results.Count);
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching Interactions with nested properties: '{SearchText}'", searchText);
+            return new List<GlobalSearchResult>();
+        }
+    }
+
+    /// <summary>
+    /// Enhanced global search using modular functions for better performance and control
+    /// </summary>
+    public async Task<GlobalSearchResponse> SearchAllEntitiesModularAsync(string searchText, float textBoost = 1.0f, int maxResultsPerEntity = 15)
+    {
+        try
+        {
+            _logger.LogInformation("=== ENHANCED MODULAR GLOBAL SEARCH ===");
+            _logger.LogInformation("Search Text: '{SearchText}', Text Boost: {TextBoost}, Max Results: {MaxResults}", 
+                searchText, textBoost, maxResultsPerEntity);
+
+            var startTime = DateTime.UtcNow;
+
+            // Execute searches in parallel for better performance
+            var partnersTask = SearchPartnersAsync(searchText, textBoost);
+            var contactsTask = SearchContactsAsync(searchText, textBoost);
+            var interactionsTask = SearchInteractionsAsync(searchText, textBoost);
+
+            await Task.WhenAll(partnersTask, contactsTask, interactionsTask);
+
+            var partners = await partnersTask;
+            var contacts = await contactsTask;
+            var interactions = await interactionsTask;
+
+            // Limit results per entity
+            var response = new GlobalSearchResponse
+            {
+                SearchQuery = searchText,
+                Partners = partners.Take(maxResultsPerEntity).ToList(),
+                Contacts = contacts.Take(maxResultsPerEntity).ToList(),
+                Interactions = interactions.Take(maxResultsPerEntity).ToList(),
+                ExecutionTimeMs = (DateTime.UtcNow - startTime).TotalMilliseconds
+            };
+
+            _logger.LogInformation("Enhanced modular search completed. Partners: {PartnerCount}, Contacts: {ContactCount}, Interactions: {InteractionCount}, Time: {ExecutionTime}ms",
+                response.Partners.Count,
+                response.Contacts.Count,
+                response.Interactions.Count,
+                response.ExecutionTimeMs);
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error performing enhanced modular global search for: '{SearchText}'", searchText);
+            return new GlobalSearchResponse
+            {
+                Partners = new List<GlobalSearchResult>(),
+                Contacts = new List<GlobalSearchResult>(),
+                Interactions = new List<GlobalSearchResult>(),
+                SearchQuery = searchText,
+                ExecutionTimeMs = 0
+            };
+        }
+    }
+
     #endregion
 
     #region Entity-Specific Query Building
@@ -245,8 +575,8 @@ public class AdvancedSearchService
         _logger.LogInformation("Found {Count} exact matches", exactMatches.Count);
 
         // Step 2: Get similarity matches for typo handling - DISABLED FOR TESTING
-        // var similarityMatches = await GetSimilarityMatchesAsync(query, searchText, entityType);
-        var similarityMatches = new List<TEntity>(); // TEMP: Empty list for testing
+        var similarityMatches = await GetSimilarityMatchesAsync(query, searchText, entityType);
+        //var similarityMatches = new List<TEntity>(); // TEMP: Empty list for testing
         _logger.LogInformation("Found {Count} similarity matches (DISABLED FOR TESTING)", similarityMatches.Count);
 
         // Step 3: Combine all matching IDs
@@ -380,54 +710,153 @@ public class AdvancedSearchService
     }
 
     /// <summary>
-    /// Get similarity matches using PostgreSQL similarity function
+    /// Get similarity matches using the new modular PostgreSQL search functions
     /// </summary>
     private async Task<List<TEntity>> GetSimilarityMatchesAsync<TEntity>(
         IQueryable<TEntity> query,
         string searchText,
         string entityType) where TEntity : class
     {
-        var allEntities = await query.ToListAsync();
-        var similarityMatches = new List<(TEntity Entity, double Score, string MatchedField, string MatchedValue)>();
-
-        foreach (var entity in allEntities)
+        try
         {
-            var maxSimilarity = 0.0;
-            var matchedField = "";
-            var matchedValue = "";
+            _logger.LogInformation("=== MODULAR POSTGRESQL SIMILARITY SEARCH ===");
+            _logger.LogInformation("Entity Type: {EntityType}, Search Text: '{SearchText}'", entityType, searchText);
 
-            // Get all searchable text fields for this entity
-            var textFields = GetSearchableTextFields(entity, entityType);
+            List<GlobalSearchResult> searchResults;
 
-            foreach (var (fieldName, fieldValue) in textFields)
+            // Use the appropriate modular search function based on entity type
+            switch (entityType)
             {
-                if (!string.IsNullOrEmpty(fieldValue))
+                case "UNOPSPartner":
+                    searchResults = await SearchPartnersAsync(searchText);
+                    break;
+                case "UNOPSContact":
+                    searchResults = await SearchContactsAsync(searchText);
+                    break;
+                case "Interaction":
+                    searchResults = await SearchInteractionsAsync(searchText);
+                    break;
+                default:
+                    _logger.LogWarning("Entity type {EntityType} not supported for modular similarity search", entityType);
+                    return new List<TEntity>();
+            }
+            
+            // Extract entity IDs from the search results
+            var entityIds = searchResults.Select(r => r.EntityId).ToList();
+            
+            if (!entityIds.Any())
+            {
+                _logger.LogInformation("No similarity matches found for '{SearchText}' in {EntityType}", searchText, entityType);
+                return new List<TEntity>();
+            }
+
+            _logger.LogInformation("Modular similarity search found {Count} matches for '{SearchText}' in {EntityType}", 
+                entityIds.Count, searchText, entityType);
+
+            // Filter the original query to only include matching IDs
+            return await query.Where(BuildIdFilterExpression<TEntity>(entityIds)).ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error performing modular similarity search for entity type: {EntityType}", entityType);
+            return new List<TEntity>();
+        }
+    }
+
+    /// <summary>
+    /// Execute PostgreSQL search_entity_records function
+    /// </summary>
+    private async Task<string> ExecutePostgreSQLSearchAsync(string searchText, string[]? entityFilter = null)
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(_context.Database.GetConnectionString());
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            
+            // Use the search_entity_records function with entity filter
+            // Parameters: search_query, embedding (null), text_boost, embedding_boost, snippet_length, debug_mode, entity_filter
+            command.CommandText = "SELECT public.search_entity_records($1, NULL, $2, $3, $4, $5, $6)";
+            command.Parameters.Add(new NpgsqlParameter { Value = searchText });
+            command.Parameters.Add(new NpgsqlParameter { Value = 1.0f }); // text_boost
+            command.Parameters.Add(new NpgsqlParameter { Value = 1.0f }); // embedding_boost (not used since embedding is null)
+            command.Parameters.Add(new NpgsqlParameter { Value = 150 }); // snippet_length
+            command.Parameters.Add(new NpgsqlParameter { Value = false }); // debug_mode
+            
+            // Add entity filter parameter
+            if (entityFilter != null && entityFilter.Length > 0)
+            {
+                command.Parameters.Add(new NpgsqlParameter 
+                { 
+                    Value = entityFilter,
+                    NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Text
+                });
+            }
+            else
+            {
+                command.Parameters.Add(new NpgsqlParameter 
+                { 
+                    Value = DBNull.Value,
+                    NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Text
+                });
+            }
+
+            var result = await command.ExecuteScalarAsync();
+            return result?.ToString() ?? "{}";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing PostgreSQL search function for query: '{SearchText}', entities: {Entities}", 
+                searchText, entityFilter != null ? string.Join(", ", entityFilter) : "all");
+            return "{}";
+        }
+    }
+
+    /// <summary>
+    /// Extract entity IDs from PostgreSQL search results JSON
+    /// </summary>
+    private List<int> ExtractEntityIdsFromSearchResults(string searchResultsJson, string targetEntityType)
+    {
+        try
+        {
+            var entityIds = new List<int>();
+            
+            if (string.IsNullOrEmpty(searchResultsJson) || searchResultsJson == "{}")
+                return entityIds;
+
+            using var document = JsonDocument.Parse(searchResultsJson);
+            
+            // Check if we have results
+            if (!document.RootElement.TryGetProperty("results", out var results))
+                return entityIds;
+
+            // Look for the specific entity type in results
+            if (results.TryGetProperty(targetEntityType, out var entityResults))
+            {
+                if (entityResults.TryGetProperty("items", out var items) && items.ValueKind == JsonValueKind.Array)
                 {
-                    var similarity = await GetSimilarityScoreAsync(fieldValue, searchText);
-                    if (similarity > maxSimilarity)
+                    foreach (var item in items.EnumerateArray())
                     {
-                        maxSimilarity = similarity;
-                        matchedField = fieldName;
-                        matchedValue = fieldValue;
+                        if (item.TryGetProperty("entityId", out var entityIdElement) && 
+                            entityIdElement.TryGetInt32(out var entityId))
+                        {
+                            entityIds.Add(entityId);
+                        }
                     }
                 }
             }
 
-            // Include if above threshold (convert to percentage for comparison)
-            if (maxSimilarity >= (SIMILARITY_THRESHOLD_PERCENT / 100.0))
-            {
-                _logger.LogDebug("Entity {EntityId} matched via similarity: {Score:F3} on '{Field}' = '{Value}' for search '{Search}'",
-                    GetEntityId(entity), maxSimilarity, matchedField, matchedValue, searchText);
-
-                similarityMatches.Add((entity, maxSimilarity, matchedField, matchedValue));
-            }
+            _logger.LogDebug("Extracted {Count} entity IDs for {EntityType} from PostgreSQL search results", 
+                entityIds.Count, targetEntityType);
+            
+            return entityIds;
         }
-
-        // Return ordered by similarity score (best matches first)
-        return similarityMatches
-            .OrderByDescending(x => x.Score)
-            .Select(x => x.Entity)
-            .ToList();
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error extracting entity IDs from search results for {EntityType}", targetEntityType);
+            return new List<int>();
+        }
     }
 
     /// <summary>
@@ -1419,35 +1848,6 @@ public class AdvancedSearchService
 
     #region Helper Methods
 
-    /// <summary>
-    /// Calculate PostgreSQL similarity score
-    /// </summary>
-    private async Task<double> GetSimilarityScoreAsync(string text1, string text2)
-    {
-        if (string.IsNullOrEmpty(text1) || string.IsNullOrEmpty(text2))
-            return 0.0;
-
-        try
-        {
-            using var connection = (NpgsqlConnection)_context.Database.GetDbConnection();
-
-            if (connection.State != System.Data.ConnectionState.Open)
-                await connection.OpenAsync();
-
-            using var command = connection.CreateCommand();
-            command.CommandText = "SELECT similarity(@text1, @text2)";
-            command.Parameters.Add(new NpgsqlParameter("@text1", NpgsqlDbType.Text) { Value = text1.ToLower() });
-            command.Parameters.Add(new NpgsqlParameter("@text2", NpgsqlDbType.Text) { Value = text2.ToLower() });
-
-            var result = await command.ExecuteScalarAsync();
-            return result != null && result != DBNull.Value ? Convert.ToDouble(result) : 0.0;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogTrace(ex, "Failed to calculate similarity for '{Text1}' vs '{Text2}'", text1, text2);
-            return 0.0;
-        }
-    }
 
     /// <summary>
     /// Get entity ID using reflection
