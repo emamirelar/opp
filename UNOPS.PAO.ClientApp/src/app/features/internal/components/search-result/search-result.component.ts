@@ -448,9 +448,22 @@ export class SearchResultComponent implements OnInit {
     const labels: string[] = [];
     const filters = this.globalFilters();
     
-    // Add org unit filter
-    if (this.globalFilterService.getActiveOrgUnitId() && this.activeOrgUnitName()) {
-      labels.push(this.activeOrgUnitName());
+    // Add org unit filter - show the org unit name or "All organizational units" if it's the root/null
+    const activeOrgUnitId = this.globalFilterService.getActiveOrgUnitId();
+    if (activeOrgUnitId !== null) {
+      if (this.activeOrgUnitName()) {
+        labels.push(this.activeOrgUnitName());
+      } else {
+        // If we have an org unit ID but no name yet, show a placeholder
+        labels.push(`Org Unit ${activeOrgUnitId}`);
+      }
+    } else if (filters && filters.orgUnitId !== null && filters.orgUnitId !== undefined) {
+      // Handle case where filters show an org unit but service doesn't have it yet
+      if (this.activeOrgUnitName()) {
+        labels.push(this.activeOrgUnitName());
+      } else {
+        labels.push(`Org Unit ${filters.orgUnitId}`);
+      }
     }
     
     if (filters) {
@@ -476,6 +489,10 @@ export class SearchResultComponent implements OnInit {
     }
     
     this.activeFilterLabels.set(labels);
+    
+    // Update the global filter active state based on whether we have any filters
+    const hasActiveFilters = activeOrgUnitId !== null || this.hasOtherActiveFilters();
+    this.isGlobalFilterActive.set(hasActiveFilters);
   }
 
   private loadAllEntityColumns(): void {

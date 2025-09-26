@@ -9,6 +9,7 @@ import {MessageService, TreeNode} from 'primeng/api';
 import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
 import { Skeleton } from 'primeng/skeleton';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { OrganizationHierarchyService } from '../../../../../services/organization-hierarchy.service';
 import { UserPreferenceService } from '../../../../../services/user-preference.service';
 import { GlobalFilterService } from '../../../../../services/global-filter.service';
@@ -41,6 +42,7 @@ interface OrgUnitOption {
     IconField,
     InputIcon,
     Skeleton,
+    TranslateModule,
   ],
   templateUrl: './org-unit-selector.component.html',
   styleUrls: ['./org-unit-selector.component.scss'],
@@ -67,7 +69,8 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
     private userPreferenceService: UserPreferenceService,
     private globalFilterService: GlobalFilterService,
     private messageService: MessageService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private translateService: TranslateService
   ) {}
 
   ngOnInit() {
@@ -85,6 +88,19 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  getDisplayName(): string {
+    if (!this.selectedOrgUnit) {
+      return this.translateService.instant('orgUnitSelector.allOrganizationalUnits');
+    }
+    
+    // If this is the root node (level 0), always show "All organizational units"
+    if (this.selectedOrgUnit.level === 0) {
+      return this.translateService.instant('orgUnitSelector.allOrganizationalUnits');
+    }
+    
+    return this.selectedOrgUnit.name;
   }
 
   showDialog() {

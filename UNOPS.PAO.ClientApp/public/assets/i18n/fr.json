@@ -257,6 +257,7 @@
             "partnerShortDescription": "Description Courte du Partenaire",
             "longDescription": "Description Longue du Partenaire",
             "partnerLongDescription": "Description Longue du Partenaire",
+            "approvalStatus": "Statut d'Approbation du Partenaire",
             "partnerGroup": "Groupe de Partenaire",
             "partnerCategory": "Catégorie de Partenaire",
             "liaisonOffice": "Bureau de Liaison",
@@ -490,6 +491,52 @@
         "dateRange": "Plage de Dates",
         "selectDate": "Sélectionner une date",
         "selectDateRange": "Sélectionner une plage de dates"
+    },
+    "globalFiltersDialog": {
+        "title": "Filtres Globaux",
+        "explanation": "Ces filtres s'appliquent à tous les types de données (Partenaires, Contacts, Interactions, Engagements). Utilisez-les pour vous concentrer sur des zones organisationnelles ou des périodes d'activité spécifiques.",
+        "loadingCurrentFilters": "Chargement des filtres actuels...",
+        "organizationalScope": {
+            "title": "Portée Organisationnelle",
+            "description": "Afficher les données d'unités organisationnelles spécifiques",
+            "organizationUnitLabel": "Unité d'Organisation",
+            "organizationUnitHelp": "Laissez vide pour voir les données de toutes les unités organisationnelles"
+        },
+        "personalScope": {
+            "title": "Portée Personnelle",
+            "description": "Concentrez-vous sur votre propre travail et contributions",
+            "relatedToMeLabel": "Afficher seulement les éléments que j'ai créés ou modifiés",
+            "relatedToMeHelp": "Filtre toutes les données pour n'afficher que les enregistrements sur lesquels vous avez travaillé"
+        },
+        "activityTimeframe": {
+            "title": "Période d'Activité",
+            "description": "Concentrez-vous sur l'activité récente dans tous les types de données",
+            "showActivityFromLabel": "Afficher l'activité depuis",
+            "timeframeOptions": {
+                "allTime": "Toute la période",
+                "last30Days": "30 derniers jours",
+                "last90Days": "90 derniers jours",
+                "thisYear": "Cette année",
+                "customRange": "Plage de dates personnalisée"
+            },
+            "fromLabel": "De",
+            "toLabel": "À",
+            "startDatePlaceholder": "Date de début",
+            "endDatePlaceholder": "Date de fin"
+        },
+        "buttons": {
+            "resetAllFilters": "Réinitialiser Tous les Filtres",
+            "applyFilters": "Appliquer les Filtres"
+        }
+    },
+    "orgUnitSelector": {
+        "allOrganizationalUnits": "Toutes les unités organisationnelles",
+        "selectOrganizationUnit": "Sélectionner une Unité d'Organisation",
+        "searchPlaceholder": "Rechercher des unités organisationnelles...",
+        "noUnitsFound": "Aucune unité organisationnelle trouvée",
+        "loadingUnits": "Chargement des unités organisationnelles...",
+        "defaultUnit": "Unité organisationnelle par défaut",
+        "setAsDefault": "Définir par défaut"
     },
     "action": {
         "search": "Rechercher"

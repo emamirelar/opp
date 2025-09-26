@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { UserPreferenceService } from '../../../../../services/user-preference.service';
 import { AuthService } from '../../../../../essentials/services/auth.service';
 import { GlobalFilterService } from '../../../../../services/global-filter.service';
@@ -22,6 +23,7 @@ import { OrgUnitSelectorComponent } from '../org-unit-selector/org-unit-selector
     CheckboxModule,
     CalendarModule,
     DropdownModule,
+    TranslateModule,
     OrgUnitSelectorComponent
   ],
   templateUrl: './global-filters-dialog.component.html',
@@ -32,6 +34,7 @@ export class GlobalFiltersDialogComponent implements OnInit {
   private authService = inject(AuthService);
   private globalFilterService = inject(GlobalFilterService);
   private cdr = inject(ChangeDetectorRef);
+  private translateService = inject(TranslateService);
 
   visible = false;
   currentUserId = '';
@@ -58,11 +61,11 @@ export class GlobalFiltersDialogComponent implements OnInit {
   
   // Timeframe options for dropdown
   timeframeOptions = [
-    { label: 'All time', value: 'all' },
-    { label: 'Last 30 days', value: 'last30days' },
-    { label: 'Last 90 days', value: 'last90days' },
-    { label: 'This year', value: 'thisyear' },
-    { label: 'Custom date range', value: 'custom' }
+    { label: this.translateService.instant('globalFiltersDialog.activityTimeframe.timeframeOptions.allTime'), value: 'all' },
+    { label: this.translateService.instant('globalFiltersDialog.activityTimeframe.timeframeOptions.last30Days'), value: 'last30days' },
+    { label: this.translateService.instant('globalFiltersDialog.activityTimeframe.timeframeOptions.last90Days'), value: 'last90days' },
+    { label: this.translateService.instant('globalFiltersDialog.activityTimeframe.timeframeOptions.thisYear'), value: 'thisyear' },
+    { label: this.translateService.instant('globalFiltersDialog.activityTimeframe.timeframeOptions.customRange'), value: 'custom' }
   ];
 
   ngOnInit() {

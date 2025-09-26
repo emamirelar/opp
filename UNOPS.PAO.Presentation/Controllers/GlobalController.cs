@@ -78,6 +78,7 @@ public class GlobalController : BaseController
     private readonly AiContextualService _aiContextualService;
     private readonly IManagerWrapper _managerWrapper;
     private readonly GlobalFilterService _globalFilterService;
+    private readonly AdvancedSearchService _advancedSearchService;
 
     public GlobalController(
         IUserPreferenceService userPreferenceService,
@@ -85,6 +86,7 @@ public class GlobalController : BaseController
         AiContextualService aiContextualService,
         IManagerWrapper managerWrapper,
         GlobalFilterService globalFilterService,
+        AdvancedSearchService advancedSearchService,
         UserResolverService<int> userResolverService, 
         IAuthorizationService authorizationService,
         ILogger<GlobalController> logger)
@@ -95,6 +97,7 @@ public class GlobalController : BaseController
         _aiContextualService = aiContextualService;
         _managerWrapper = managerWrapper;
         _globalFilterService = globalFilterService;
+        _advancedSearchService = advancedSearchService;
     }
 
     /// <summary>
@@ -472,102 +475,86 @@ public class GlobalController : BaseController
     }
 
     /// <summary>
-    /// Calls the PostgreSQL hybrid search function and returns the results
+    /// Calls the modular AdvancedSearchService to perform global search across all entities
     /// </summary>
     private async Task<object> CallSearchFunction(string query, string? embedding = null, bool debug = false)
     {
         try
         {
             // Log the search strategy being used
-            var strategy = embedding != null ? "hybrid (field + semantic)" : "field-only";
+            var strategy = embedding != null ? "hybrid (field + semantic)" : "modular-field-search";
             _logger.LogInformation("Executing {Strategy} search for query: {Query}, Debug: {Debug}", strategy, query, debug);
             
-            // Use the correct SQL function call with proper parameter types
-            var sql = "SELECT public.search_entity_records(@searchQuery, @embedding::vector, @textBoost, @embeddingBoost, @snippetLength, @debugMode)";
+            // Use the enhanced modular search from AdvancedSearchService for better performance
+            var searchResults = await _advancedSearchService.SearchAllEntitiesModularAsync(query, 1.0f, 15);
             
-            var parameters = new[]
+            // Convert the GlobalSearchResponse to the expected format for ProcessAndConsolidateResults
+            var formattedResults = new
             {
-                new NpgsqlParameter("@searchQuery", NpgsqlTypes.NpgsqlDbType.Text) { Value = query },
-                new NpgsqlParameter("@embedding", NpgsqlTypes.NpgsqlDbType.Text) 
-                { 
-                    Value = embedding ?? (object)DBNull.Value 
-                },
-                new NpgsqlParameter("@textBoost", NpgsqlTypes.NpgsqlDbType.Real) { Value = 1.0f },
-                new NpgsqlParameter("@embeddingBoost", NpgsqlTypes.NpgsqlDbType.Real) { Value = 1.2f },
-                new NpgsqlParameter("@snippetLength", NpgsqlTypes.NpgsqlDbType.Integer) { Value = 150 },
-                new NpgsqlParameter("@debugMode", NpgsqlTypes.NpgsqlDbType.Boolean) { Value = debug }
+                availableEntities = new[] { "Partners", "Contacts", "Interactions" },
+                results = new
+                {
+                    Partners = new
+                    {
+                        items = searchResults.Partners?.Select(r => new
+                        {
+                            entityId = r.EntityId,
+                            score = r.Score,
+                            matchedField = r.MatchedField,
+                            fieldValue = r.FieldValue,
+                            searchType = r.SearchType,
+                            matchCriteria = r.MatchCriteria,
+                            snippet = r.Snippet
+                        }).ToArray() ?? new object[0]
+                    },
+                    Contacts = new
+                    {
+                        items = searchResults.Contacts?.Select(r => new
+                        {
+                            entityId = r.EntityId,
+                            score = r.Score,
+                            matchedField = r.MatchedField,
+                            fieldValue = r.FieldValue,
+                            searchType = r.SearchType,
+                            matchCriteria = r.MatchCriteria,
+                            snippet = r.Snippet
+                        }).ToArray() ?? new object[0]
+                    },
+                    Interactions = new
+                    {
+                        items = searchResults.Interactions?.Select(r => new
+                        {
+                            entityId = r.EntityId,
+                            score = r.Score,
+                            matchedField = r.MatchedField,
+                            fieldValue = r.FieldValue,
+                            searchType = r.SearchType,
+                            matchCriteria = r.MatchCriteria,
+                            snippet = r.Snippet
+                        }).ToArray() ?? new object[0]
+                    }
+                }
             };
-
-            var connection = _aiContextualService._context.Database.GetDbConnection();
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
-            await using var command = connection.CreateCommand();
-            command.CommandText = sql;
-            command.Parameters.AddRange(parameters);
-
-            var result = await command.ExecuteScalarAsync();
             
-            if (result == null || result == DBNull.Value)
-            {
-                _logger.LogInformation("Hybrid search function returned no results for query: {Query}", query);
-                return new { 
-                    availableEntities = new string[0],
-                    results = new object()
-                };
-            }
-
-            // Parse and return the JSON result from the hybrid search function
-            var jsonResult = result.ToString();
-            _logger.LogInformation("Hybrid search completed. Result length: {Length} characters", jsonResult?.Length ?? 0);
+            _logger.LogInformation("Modular search completed. Partners: {PartnerCount}, Contacts: {ContactCount}, Interactions: {InteractionCount}, ExecutionTime: {ExecutionTime}ms",
+                searchResults.Partners?.Count ?? 0,
+                searchResults.Contacts?.Count ?? 0,
+                searchResults.Interactions?.Count ?? 0,
+                searchResults.ExecutionTimeMs);
             
-            try
-            {
-                // Parse the JSON response from the hybrid search function
-                if (string.IsNullOrEmpty(jsonResult))
-                {
-                    throw new InvalidOperationException("Search result is null or empty");
-                }
-                var searchResults = JObject.Parse(jsonResult);
-                
-                // Log summary information
-                var summary = searchResults["summary"];
-                if (summary != null)
-                {
-                    var totalFieldResults = summary["totalFieldResults"]?.Value<int>() ?? 0;
-                    var totalSemanticResults = summary["totalSemanticResults"]?.Value<int>() ?? 0;
-                    var entitiesSearched = summary["entitiesSearched"]?.Value<int>() ?? 0;
-                    
-                    _logger.LogInformation("Search results summary - Field: {FieldResults}, Semantic: {SemanticResults}, Entities: {EntitiesSearched}", 
-                        totalFieldResults, totalSemanticResults, entitiesSearched);
-                }
-                
-                return searchResults;
-            }
-            catch (JsonReaderException ex)
-            {
-                _logger.LogError(ex, "Failed to parse hybrid search JSON result for query: {Query}", query);
-                return new { 
-                    searchQuery = query,
-                    hasEmbedding = embedding != null,
-                    strategy = "hybrid-field-semantic",
-                    error = "Failed to parse search results",
-                    rawResult = jsonResult?.Substring(0, Math.Min(500, jsonResult.Length)),
-                    message = "JSON parsing error in hybrid search results"
-                };
-            }
+            return formattedResults;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Database error during hybrid search for query: {Query}", query);
+            _logger.LogError(ex, "Error during modular search for query: {Query}", query);
             return new { 
                 searchQuery = query,
                 hasEmbedding = embedding != null,
-                strategy = "hybrid-field-semantic",
-                error = "Database error during search",
-                message = "An error occurred while searching the database"
+                strategy = "modular-field-search",
+                error = "Error during modular search",
+                message = "An error occurred while searching using modular functions",
+                availableEntities = new string[0],
+                results = new object()
             };
         }
     }
