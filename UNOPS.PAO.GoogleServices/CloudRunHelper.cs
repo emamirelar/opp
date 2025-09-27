@@ -17,8 +17,28 @@ public class CloudRunHelper
     {
         _cache = new MemoryCache(new MemoryCacheOptions());
         _logger = logger;
+        
+        _logger.LogInformation("CloudRunHelper: Initializing with credential parameter: {HasCredential}", credential != null);
+        
         var defaultCredential = GoogleCredential.GetApplicationDefault();
-        _credential = credential ?? defaultCredential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
+        _logger.LogInformation("CloudRunHelper: Retrieved default credential. Type: {CredentialType}", 
+            defaultCredential?.GetType()?.Name ?? "null");
+            
+        if (credential != null)
+        {
+            _logger.LogInformation("CloudRunHelper: Using provided credential. Type: {CredentialType}", 
+                credential.GetType().Name);
+            _credential = credential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
+        }
+        else
+        {
+            _logger.LogInformation("CloudRunHelper: Using default credential with cloud-platform scope");
+            _credential = defaultCredential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
+        }
+        
+        _logger.LogInformation("CloudRunHelper: Final credential type: {CredentialType}, IsCreateScoped: {IsScoped}", 
+            _credential?.GetType()?.Name ?? "null", 
+            _credential != null ? "true" : "false");
     }
 
     // Custom Cloud Run service client that inherits from BaseClientService
@@ -46,20 +66,31 @@ public class CloudRunHelper
             _baseUri = baseUri;
             _credential = credential;
             _logger = logger;
+            
+            _logger?.LogInformation("CloudRunServiceClient: Initialized with baseUri: {BaseUri}, credential type: {CredentialType}", 
+                baseUri, credential?.GetType()?.Name ?? "null");
         }
 
         // Create HttpClient with proper ID token authentication for Cloud Run service-to-service calls
         public async Task<HttpClient> CreateAuthenticatedHttpClient()
         {
+            _logger?.LogInformation("CloudRunServiceClient: Creating authenticated HttpClient for baseUri: {BaseUri}", _baseUri);
+            
             var httpClient = new HttpClient();
             
             // Set the base address to the service URL
             httpClient.BaseAddress = new Uri(_baseUri);
+            _logger?.LogInformation("CloudRunServiceClient: Set HttpClient BaseAddress to: {BaseAddress}", httpClient.BaseAddress);
             
             // Get ID token with audience set to the service URL (required for Cloud Run auth)
+            _logger?.LogInformation("CloudRunServiceClient: Requesting ID token for audience: {Audience}", _baseUri);
             var idToken = await GetIdTokenAsync(_baseUri);
+            _logger?.LogInformation("CloudRunServiceClient: Received ID token. Length: {TokenLength}, First 20 chars: {TokenPrefix}", 
+                idToken?.Length ?? 0, 
+                !string.IsNullOrEmpty(idToken) && idToken.Length > 20 ? idToken.Substring(0, 20) + "..." : idToken ?? "null");
             
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", idToken);
+            _logger?.LogInformation("CloudRunServiceClient: Set Authorization header with Bearer token");
             
             return httpClient;
         }
@@ -68,24 +99,63 @@ public class CloudRunHelper
         {
             try
             {
+                _logger?.LogInformation("GetIdTokenAsync: Starting ID token generation for audience: {Audience}", audience);
+                
                 if (_credential == null)
                 {
+                    _logger?.LogError("GetIdTokenAsync: Google credential is null");
                     throw new InvalidOperationException("Google credential is not configured");
                 }
                 
+                _logger?.LogInformation("GetIdTokenAsync: Using credential type: {CredentialType}", _credential.GetType().Name);
+                
+                // Log credential details if possible
+                try
+                {
+                    var underlyingCredential = _credential.UnderlyingCredential;
+                    _logger?.LogInformation("GetIdTokenAsync: Underlying credential type: {UnderlyingType}", 
+                        underlyingCredential?.GetType()?.Name ?? "null");
+                }
+                catch (Exception credEx)
+                {
+                    _logger?.LogWarning("GetIdTokenAsync: Could not access underlying credential: {Error}", credEx.Message);
+                }
+                
                 // Get OIDC token with the target audience (the service URL)
-                var oidcToken = await _credential.GetOidcTokenAsync(OidcTokenOptions.FromTargetAudience(audience));
+                _logger?.LogInformation("GetIdTokenAsync: Creating OIDC token options for audience: {Audience}", audience);
+                var oidcTokenOptions = OidcTokenOptions.FromTargetAudience(audience);
+                _logger?.LogInformation("GetIdTokenAsync: OIDC token options created. Target audience: {TargetAudience}", 
+                    oidcTokenOptions?.TargetAudience ?? "null");
+                
+                _logger?.LogInformation("GetIdTokenAsync: Calling GetOidcTokenAsync...");
+                var oidcToken = await _credential.GetOidcTokenAsync(oidcTokenOptions);
+                _logger?.LogInformation("GetIdTokenAsync: OIDC token received. Type: {TokenType}", 
+                    oidcToken?.GetType()?.Name ?? "null");
                 
                 // Note: Despite the confusing name, GetAccessTokenAsync() on an OidcToken 
                 // actually returns the ID token string, not an access token
+                _logger?.LogInformation("GetIdTokenAsync: Calling GetAccessTokenAsync on OIDC token...");
                 var idToken = await oidcToken.GetAccessTokenAsync();
                 
-                _logger?.LogInformation("Generated ID token for audience {Audience}: {IdToken}", audience, idToken);
+                _logger?.LogInformation("GetIdTokenAsync: ID token generated successfully. Length: {TokenLength}, Starts with: {TokenPrefix}", 
+                    idToken?.Length ?? 0, 
+                    !string.IsNullOrEmpty(idToken) && idToken.Length > 10 ? idToken.Substring(0, 10) + "..." : idToken ?? "null");
                 
                 return idToken;
             }
             catch (Exception ex)
             {
+                _logger?.LogError(ex, "GetIdTokenAsync: Failed to get ID token for audience {Audience}. Error: {ErrorMessage}", 
+                    audience, ex.Message);
+                _logger?.LogError("GetIdTokenAsync: Exception type: {ExceptionType}, Stack trace: {StackTrace}", 
+                    ex.GetType().Name, ex.StackTrace);
+                    
+                if (ex.InnerException != null)
+                {
+                    _logger?.LogError("GetIdTokenAsync: Inner exception: {InnerExceptionType} - {InnerMessage}", 
+                        ex.InnerException.GetType().Name, ex.InnerException.Message);
+                }
+                
                 throw new InvalidOperationException($"Failed to get ID token for audience {audience}", ex);
             }
         }
@@ -176,12 +246,21 @@ public class CloudRunHelper
     {
         try
         {
+            _logger.LogInformation("CloudRunHelper: CreateAuthenticatedHttpClientForUrl called with serviceUrl: {ServiceUrl}", serviceUrl);
+            _logger.LogInformation("CloudRunHelper: Using credential type: {CredentialType}", _credential?.GetType()?.Name ?? "null");
+            
             var serviceClient = new CloudRunServiceClient(serviceUrl, _credential, _logger);
-            return await serviceClient.CreateAuthenticatedHttpClient();
+            _logger.LogInformation("CloudRunHelper: Created CloudRunServiceClient, calling CreateAuthenticatedHttpClient...");
+            
+            var httpClient = await serviceClient.CreateAuthenticatedHttpClient();
+            _logger.LogInformation("CloudRunHelper: Successfully created authenticated HttpClient");
+            
+            return httpClient;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create authenticated HttpClient from URL: {ErrorMessage}", ex.Message);
+            _logger.LogError(ex, "CloudRunHelper: Failed to create authenticated HttpClient from URL: {ServiceUrl}. Error: {ErrorMessage}", serviceUrl, ex.Message);
+            _logger.LogError("CloudRunHelper: Exception type: {ExceptionType}, Stack trace: {StackTrace}", ex.GetType().Name, ex.StackTrace);
             throw new InvalidOperationException("Failed to create authenticated HttpClient", ex);
         }
     }
