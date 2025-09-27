@@ -96,7 +96,10 @@ public class UNOPSGeminiManager : IGeminiManager
         
         // Initialize CloudRunHelper internally
         var cloudRunHelperLogger = new LoggerFactory().CreateLogger<CloudRunHelper>();
-        _cloudRunHelper = new CloudRunHelper(cloudRunHelperLogger, GetCredentials());
+        var credentials = GetCredentials();
+        _logger.LogInformation("UNOPSGeminiManager: Initializing CloudRunHelper with credentials. Credential type: {CredentialType}", 
+            credentials?.GetType()?.Name ?? "null");
+        _cloudRunHelper = new CloudRunHelper(cloudRunHelperLogger, credentials);
         
         _credentials = GetCredentials()
                         .CreateScoped("https://www.googleapis.com/auth/spreadsheets.readonly");
@@ -166,16 +169,36 @@ public class UNOPSGeminiManager : IGeminiManager
     // Get Google credentials from configuration
     private GoogleCredential GetCredentials()
     {
+        _logger.LogInformation("UNOPSGeminiManager: Starting credential retrieval process");
+        
         var credentialParams = _configuration.GetSection("AISettings")
             .Get<JsonCredentialParameters>();
         if (credentialParams == null)
+        {
+            _logger.LogError("UNOPSGeminiManager: AISettings configuration is missing");
             throw new Exception("AISettings configuration is missing.");
+        }
+        
+        _logger.LogInformation("UNOPSGeminiManager: Retrieved AISettings configuration. ProjectId: {ProjectId}", 
+            credentialParams.ProjectId);
     
         var secretName = _configuration.GetValue<string>("AISettings:AIServiceAccountJSONSecretName");
+        _logger.LogInformation("UNOPSGeminiManager: Using secret name: {SecretName} for project: {ProjectId}", 
+            secretName, credentialParams.ProjectId);
         
         var basicProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
+        _logger.LogInformation("UNOPSGeminiManager: Created GoogleSecretManagerConfigurationProvider for project: {ProjectId}", 
+            credentialParams.ProjectId);
+            
         var secretValue = basicProvider.GetSecretVersion(secretName, "latest");
-        return GoogleCredential.FromJson(secretValue);
+        _logger.LogInformation("UNOPSGeminiManager: Retrieved secret value. Length: {SecretLength} characters", 
+            secretValue?.Length ?? 0);
+            
+        var credential = GoogleCredential.FromJson(secretValue);
+        _logger.LogInformation("UNOPSGeminiManager: Created GoogleCredential from JSON. Credential type: {CredentialType}", 
+            credential?.GetType()?.Name ?? "null");
+            
+        return credential;
     }
 
     // Get user profile details - first check cache, then fallback to database
@@ -587,7 +610,9 @@ public class UNOPSGeminiManager : IGeminiManager
             
             var apiUrl = $"/session-with-chats?app_name={appName}&user_id={userId}&session_id={sessionId}";
             
+            _logger.LogInformation("GetSessionDataWithChats: Creating authenticated HttpClient for service URL: {ServiceUrl}", serviceUrl);
             using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            _logger.LogInformation("GetSessionDataWithChats: Successfully created authenticated HttpClient");
             httpClient.Timeout = TimeSpan.FromSeconds(30);
             
             var response = await httpClient.GetAsync(apiUrl);
@@ -641,7 +666,9 @@ public class UNOPSGeminiManager : IGeminiManager
             
             var apiUrl = $"/session-data?app_name={appName}&user_id={userId}&session_id={sessionId}";
             
+            _logger.LogInformation("GetSessionData: Creating authenticated HttpClient for service URL: {ServiceUrl}", serviceUrl);
             using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            _logger.LogInformation("GetSessionData: Successfully created authenticated HttpClient");
             httpClient.Timeout = TimeSpan.FromSeconds(30);
             
             var response = await httpClient.GetAsync(apiUrl);
@@ -678,7 +705,9 @@ public class UNOPSGeminiManager : IGeminiManager
             
             var apiUrl = $"/api/ai-assistant/get-user-sessions?app_name={appName}&user_id={userId}";
             
+            _logger.LogInformation("GetUserSessions: Creating authenticated HttpClient for service URL: {ServiceUrl}", serviceUrl);
             using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            _logger.LogInformation("GetUserSessions: Successfully created authenticated HttpClient");
             httpClient.Timeout = TimeSpan.FromSeconds(30);
             
             var response = await httpClient.GetAsync(apiUrl);
@@ -1963,58 +1992,75 @@ public class UNOPSGeminiManager : IGeminiManager
             _logger.LogInformation("Sending chat request without files to AI service");
         }
 
-        using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
-
-        var response = await httpClient.PostAsync(apiUrl, httpContent);
-        if (!response.IsSuccessStatusCode)
+        HttpClient httpClient;
+        
+        // For local development, use unauthenticated HttpClient
+        if (serviceUrl.StartsWith("http://localhost") || serviceUrl.StartsWith("http://127.0.0.1"))
         {
-            throw new InvalidOperationException($"AI service call failed. Status: {response.StatusCode}");
+            _logger.LogInformation("Using unauthenticated HttpClient for local development");
+            httpClient = new HttpClient();
+        }
+        else
+        {
+            // For production/Cloud Run, use authenticated HttpClient
+            _logger.LogInformation("ChatWithGemini: Creating authenticated HttpClient for production service URL: {ServiceUrl}", serviceUrl);
+            httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            _logger.LogInformation("ChatWithGemini: Successfully created authenticated HttpClient for production");
         }
 
-        var responseContent = await response.Content.ReadAsStringAsync();
-
-        // Check for data_modifications in the response and create notifications
-        await ProcessDataModificationsForNotifications(responseContent, int.Parse(currentUserId));
-
-        // Extract sessionId from req or responseContent
-        string sessionId = req.sessionId;
-        if (string.IsNullOrEmpty(sessionId))
+        using (httpClient)
         {
-            try
+            var response = await httpClient.PostAsync(apiUrl, httpContent);
+            if (!response.IsSuccessStatusCode)
             {
-                var responseObj = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
-                sessionId = responseObj["session_id"]?.ToString();
+                throw new InvalidOperationException($"AI service call failed. Status: {response.StatusCode}");
             }
-            catch { /* ignore parse errors, sessionId will remain null if not found */ }
-        }
 
-        if (!string.IsNullOrEmpty(sessionId))
-        {
-            var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
-            if (session != null)
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            // Check for data_modifications in the response and create notifications
+            await ProcessDataModificationsForNotifications(responseContent, int.Parse(currentUserId));
+
+            // Extract sessionId from req or responseContent
+            string sessionId = req.sessionId;
+            if (string.IsNullOrEmpty(sessionId))
             {
-                session.LastUpdated = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                var newSession = new AiChatSession
+                try
                 {
-                    Id = sessionId,
-                    UserId = int.Parse(currentUserId),
-                    Status = "Active",
-                    Title = "New Chat",
-                    LastUpdated = DateTime.UtcNow,
-                    AiGenerateTitle = true,
-                    Archived = false,
-                    Starred = false
-                };
-                _context.AiChatSession.Add(newSession);
-                await _context.SaveChangesAsync();
+                    var responseObj = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
+                    sessionId = responseObj["session_id"]?.ToString();
+                }
+                catch { /* ignore parse errors, sessionId will remain null if not found */ }
             }
-        }
 
-        return responseContent;
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
+                if (session != null)
+                {
+                    session.LastUpdated = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    var newSession = new AiChatSession
+                    {
+                        Id = sessionId,
+                        UserId = int.Parse(currentUserId),
+                        Status = "Active",
+                        Title = "New Chat",
+                        LastUpdated = DateTime.UtcNow,
+                        AiGenerateTitle = true,
+                        Archived = false,
+                        Starred = false
+                    };
+                    _context.AiChatSession.Add(newSession);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            return responseContent;
+        }
     }
 
     public async Task<string> GenerateTitle(string sessionId, int userId)
@@ -2029,7 +2075,9 @@ public class UNOPSGeminiManager : IGeminiManager
 
         var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
         var apiUrl = $"/generate-title?session_id={sessionId}&user_id={userId}";
+        _logger.LogInformation("GenerateTitle: Creating authenticated HttpClient for service URL: {ServiceUrl}", serviceUrl);
         using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+        _logger.LogInformation("GenerateTitle: Successfully created authenticated HttpClient");
         var response = await httpClient.GetAsync(apiUrl);
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException("Failed to generate title");
@@ -2054,7 +2102,9 @@ public class UNOPSGeminiManager : IGeminiManager
             var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
             var apiUrl = $"/generate-suggestions?user_id={userId}";
             
+            _logger.LogInformation("GenerateSuggestions: Creating authenticated HttpClient for service URL: {ServiceUrl}", serviceUrl);
             using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            _logger.LogInformation("GenerateSuggestions: Successfully created authenticated HttpClient");
             var response = await httpClient.GetAsync(apiUrl);
             
             if (!response.IsSuccessStatusCode)
