@@ -1913,10 +1913,19 @@ public class UNOPSGeminiManager : IGeminiManager
 
     public async Task<string> ChatWithGemini(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null)
     {
+        _logger.LogInformation("ChatWithGemini: Method called with sessionId: {SessionId}, hasFiles: {HasFiles}", 
+            req.sessionId, req.Files?.Any() ?? false);
+            
         var appName = _configuration.GetValue<string>("AgenticAi:AppName");
         var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+        
+        _logger.LogInformation("ChatWithGemini: Configuration - AppName: {AppName}, ServiceURL: {ServiceUrl}", 
+            appName, serviceUrl);
+            
         if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
         {
+            _logger.LogError("ChatWithGemini: AgenticAi configuration is missing or incomplete. AppName: {AppName}, ServiceURL: {ServiceUrl}", 
+                appName, serviceUrl);
             throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
         }
         
@@ -1929,24 +1938,36 @@ public class UNOPSGeminiManager : IGeminiManager
         // TODO: In DEV mode, somehow the currentUserId is set to 90, but the email in the database is empty
         var currentUserEmail = user.FindFirst(ClaimTypes.Email)?.Value;
         
+        _logger.LogInformation("ChatWithGemini: User details - UserId: {UserId}, UserEmail: {UserEmail}", 
+            currentUserId, currentUserEmail);
+        
         if (string.IsNullOrEmpty(currentUserEmail) || string.IsNullOrEmpty(currentUserId))
         {
+          _logger.LogError("ChatWithGemini: Missing user information - UserId: {UserId}, UserEmail: {UserEmail}", 
+              currentUserId, currentUserEmail);
           throw new InvalidOperationException($"Unable to lookup both current user email {currentUserEmail} and current user id {currentUserId}");
         }
         currentUserEmail = currentUserEmail.Contains(':') ? currentUserEmail.Split(':').Last() : currentUserEmail;
+        _logger.LogInformation("ChatWithGemini: Processed user email: {ProcessedEmail}", currentUserEmail);
 
         // Get user profile details to include in state
         var userProfileDetails = await GetUserProfileDetailsAsync(user);
+        _logger.LogInformation("ChatWithGemini: Retrieved user profile details: {HasProfile}", userProfileDetails != null);
         
         // Enhance the state with user profile information
         var enhancedState = await EnhanceStateWithUserProfile(req.State, userProfileDetails);
+        _logger.LogInformation("ChatWithGemini: Enhanced state length: {StateLength} characters", 
+            enhancedState?.Length ?? 0);
 
         var apiUrl = $"/chat";
+        _logger.LogInformation("ChatWithGemini: Using API URL: {ApiUrl}", apiUrl);
         HttpContent httpContent;
 
         // Check if request has files
         if (req.Files != null && req.Files.Any())
         {
+            _logger.LogInformation("ChatWithGemini: Request has {FileCount} files, using multipart form data", req.Files.Count());
+            
             // Use multipart form data for requests with files
             var multipartContent = new MultipartFormDataContent();
             
@@ -1959,11 +1980,16 @@ public class UNOPSGeminiManager : IGeminiManager
             multipartContent.Add(new StringContent("false"), "streaming");
             multipartContent.Add(new StringContent(enhancedState ?? ""), "state");
             
+            _logger.LogInformation("ChatWithGemini: Multipart payload - AppName: {AppName}, UserId: {UserId}, UserEmail: {UserEmail}, SessionId: {SessionId}, MessageLength: {MessageLength}, StateLength: {StateLength}", 
+                appName, currentUserId, currentUserEmail, req.sessionId?.ToString() ?? "null", req.Message?.Length ?? 0, enhancedState?.Length ?? 0);
+            
             // Add files
             foreach (var file in req.Files)
             {
                 if (file != null && file.Length > 0)
                 {
+                    _logger.LogInformation("ChatWithGemini: Adding file - Name: {FileName}, Size: {FileSize} bytes, ContentType: {ContentType}", 
+                        file.FileName, file.Length, file.ContentType);
                     var streamContent = new StreamContent(file.OpenReadStream());
                     streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
                     multipartContent.Add(streamContent, "files", file.FileName);
@@ -1971,10 +1997,12 @@ public class UNOPSGeminiManager : IGeminiManager
             }
             
             httpContent = multipartContent;
-            _logger.LogInformation($"Sending chat request with {req.Files.Count()} files to AI service");
+            _logger.LogInformation("ChatWithGemini: Sending chat request with {FileCount} files to AI service", req.Files.Count());
         }
         else
         {
+            _logger.LogInformation("ChatWithGemini: No files in request, using JSON payload");
+            
             // Use JSON for requests without files (backward compatibility)
             var aiChatRequest = new AiChatRequest
             {
@@ -1988,17 +2016,27 @@ public class UNOPSGeminiManager : IGeminiManager
             };
 
             var jsonContent = System.Text.Json.JsonSerializer.Serialize(aiChatRequest);
+            _logger.LogInformation("ChatWithGemini: JSON payload - AppName: {AppName}, UserId: {UserId}, UserEmail: {UserEmail}, SessionId: {SessionId}, MessageLength: {MessageLength}, StateLength: {StateLength}, Streaming: {Streaming}", 
+                aiChatRequest.AppName, aiChatRequest.UserId, aiChatRequest.UserEmail, aiChatRequest.SessionId, 
+                aiChatRequest.Message?.Length ?? 0, aiChatRequest.State?.Length ?? 0, aiChatRequest.Streaming);
+            _logger.LogInformation("ChatWithGemini: Serialized JSON length: {JsonLength} characters", jsonContent?.Length ?? 0);
+            
             httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-            _logger.LogInformation("Sending chat request without files to AI service");
+            _logger.LogInformation("ChatWithGemini: Sending chat request without files to AI service");
         }
 
         HttpClient httpClient;
         
+        _logger.LogInformation("ChatWithGemini: Determining HttpClient type for serviceUrl: {ServiceUrl}", serviceUrl);
+        
         // For local development, use unauthenticated HttpClient
         if (serviceUrl.StartsWith("http://localhost") || serviceUrl.StartsWith("http://127.0.0.1"))
         {
-            _logger.LogInformation("Using unauthenticated HttpClient for local development");
+            _logger.LogInformation("ChatWithGemini: Using unauthenticated HttpClient for local development");
             httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri(serviceUrl);
+            _logger.LogInformation("ChatWithGemini: Local HttpClient - BaseAddress: {BaseAddress}, Timeout: {Timeout}", 
+                httpClient.BaseAddress, httpClient.Timeout);
         }
         else
         {
@@ -2006,31 +2044,60 @@ public class UNOPSGeminiManager : IGeminiManager
             _logger.LogInformation("ChatWithGemini: Creating authenticated HttpClient for production service URL: {ServiceUrl}", serviceUrl);
             httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
             _logger.LogInformation("ChatWithGemini: Successfully created authenticated HttpClient for production");
+            _logger.LogInformation("ChatWithGemini: Production HttpClient - BaseAddress: {BaseAddress}, Timeout: {Timeout}, HasAuthHeader: {HasAuth}", 
+                httpClient.BaseAddress, httpClient.Timeout, 
+                httpClient.DefaultRequestHeaders.Authorization != null);
         }
 
         using (httpClient)
         {
+            _logger.LogInformation("ChatWithGemini: Making POST request to {FullUrl} (BaseAddress: {BaseAddress}, RelativeUrl: {ApiUrl})", 
+                httpClient.BaseAddress != null ? new Uri(httpClient.BaseAddress, apiUrl).ToString() : apiUrl, 
+                httpClient.BaseAddress, apiUrl);
+            
+            _logger.LogInformation("ChatWithGemini: Request headers - Authorization: {HasAuth}, ContentType: {ContentType}, UserAgent: {UserAgent}", 
+                httpClient.DefaultRequestHeaders.Authorization != null ? "Present" : "None", 
+                httpContent.Headers.ContentType?.ToString() ?? "None", 
+                httpClient.DefaultRequestHeaders.UserAgent.ToString());
+            
             var response = await httpClient.PostAsync(apiUrl, httpContent);
+            
+            _logger.LogInformation("ChatWithGemini: Received response - Status: {StatusCode} ({ReasonPhrase}), ContentLength: {ContentLength}", 
+                response.StatusCode, response.ReasonPhrase, 
+                response.Content.Headers.ContentLength?.ToString() ?? "Unknown");
+            
             if (!response.IsSuccessStatusCode)
             {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("ChatWithGemini: AI service call failed - Status: {StatusCode}, Reason: {ReasonPhrase}, Content: {ErrorContent}", 
+                    response.StatusCode, response.ReasonPhrase, errorContent);
                 throw new InvalidOperationException($"AI service call failed. Status: {response.StatusCode}");
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("ChatWithGemini: Response received successfully - Length: {ResponseLength} characters", 
+                responseContent?.Length ?? 0);
 
             // Check for data_modifications in the response and create notifications
+            _logger.LogInformation("ChatWithGemini: Processing data modifications for notifications");
             await ProcessDataModificationsForNotifications(responseContent, int.Parse(currentUserId));
 
             // Extract sessionId from req or responseContent
             string sessionId = req.sessionId;
+            _logger.LogInformation("ChatWithGemini: Session management - RequestSessionId: {RequestSessionId}", sessionId);
+            
             if (string.IsNullOrEmpty(sessionId))
             {
                 try
                 {
                     var responseObj = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
                     sessionId = responseObj["session_id"]?.ToString();
+                    _logger.LogInformation("ChatWithGemini: Extracted sessionId from response: {ExtractedSessionId}", sessionId);
                 }
-                catch { /* ignore parse errors, sessionId will remain null if not found */ }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("ChatWithGemini: Failed to extract sessionId from response: {Error}", ex.Message);
+                }
             }
 
             if (!string.IsNullOrEmpty(sessionId))
@@ -2038,11 +2105,13 @@ public class UNOPSGeminiManager : IGeminiManager
                 var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
                 if (session != null)
                 {
+                    _logger.LogInformation("ChatWithGemini: Updating existing session: {SessionId}", sessionId);
                     session.LastUpdated = DateTime.UtcNow;
                     await _context.SaveChangesAsync();
                 }
                 else
                 {
+                    _logger.LogInformation("ChatWithGemini: Creating new session: {SessionId}", sessionId);
                     var newSession = new AiChatSession
                     {
                         Id = sessionId,
@@ -2058,7 +2127,12 @@ public class UNOPSGeminiManager : IGeminiManager
                     await _context.SaveChangesAsync();
                 }
             }
+            else
+            {
+                _logger.LogWarning("ChatWithGemini: No sessionId available for session management");
+            }
 
+            _logger.LogInformation("ChatWithGemini: Request completed successfully, returning response");
             return responseContent;
         }
     }
