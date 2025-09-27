@@ -26,8 +26,7 @@
     <!-- UNOPS Announcement Banner -->
     <div class="banner-close-spacing bg-gradient-to-r from-unops-accent-ocean to-unops-accent-teal-light rounded-unops-lg shadow-unops-md border border-unops-accent-ocean-light/20">
       <div class="px-unops-xl py-unops-lg">
-        <div class="flex items-center justify-center text-unops-white">
-          <i class="material-symbols-outlined text-unops-2xl mr-unops-md">campaign</i>
+        <div class="text-center text-unops-white">
           <div class="font-unops-body text-unops-headline-small font-unops-medium">
             {{ 'dashboard.announcementBanner' | translate }}
           </div>
@@ -138,41 +137,11 @@
 
     <!-- UNOPS Dashboard Content -->
     @if (!loading() && !error() && dashboardData()) {
-      <!-- Quick Actions Toolbar -->
-      <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-sm border border-unops-neutral-200 mb-unops-xl">
-        <div class="px-unops-xl py-unops-lg">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-unops-lg">
-              <h2 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
-                Quick Actions
-              </h2>
-              <div class="flex items-center space-x-unops-md">
-                <button 
-                  pButton 
-                  type="button" 
-                  class="p-button-sm unops-button-primary flex items-center"
-                  (click)="navigateToPartnersPage()">
-                  <i class="material-symbols-outlined text-unops-lg mr-unops-xs">corporate_fare</i>
-                  New Partner
-                </button>
-                <button 
-                  pButton 
-                  type="button" 
-                  class="p-button-sm unops-button-primary flex items-center"
-                  (click)="navigateToContactsPage()">
-                  <i class="material-symbols-outlined text-unops-lg mr-unops-xs">contacts</i>
-                  New Contact
-                </button>
-                <button 
-                  pButton 
-                  type="button" 
-                  class="p-button-sm unops-button-primary flex items-center"
-                  (click)="navigateToInteractions()">
-                  <i class="material-symbols-outlined text-unops-lg mr-unops-xs">chat</i>
-                  New Interaction
-                </button>
-              </div>
-            </div>
+      <!-- Refresh action Toolbar -->
+      <div class="mb-unops-xl">
+        <div class="px-unops-sm py-unops-sm">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center"></div>
             <div class="flex items-center space-x-unops-md">
               <div class="text-unops-body-small text-unops-neutral-500">
                 Last updated just now
@@ -309,13 +278,13 @@
                     }
                 </div>
               } @else {
-                  <div class="text-center py-unops-3xl">
-                    <div class="flex items-center justify-center w-16 h-16 bg-unops-neutral-200 rounded-unops-full mb-unops-lg mx-auto">
-                      <i class="material-symbols-outlined text-unops-2xl text-unops-neutral-400">check_circle</i>
+                <div class="text-center py-unops-3xl">
+                  <div class="flex items-center justify-center w-16 h-16 bg-unops-neutral-200 rounded-unops-full mb-unops-lg mx-auto">
+                    <i class="material-symbols-outlined text-unops-2xl text-unops-neutral-400">check_circle</i>
                   </div>
-                    <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-unops-sm">
-                      All caught up!
-                    </h4>
+                  <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-unops-sm">
+                    All caught up!
+                  </h4>
                   <p class="font-unops-body text-unops-body-medium text-unops-neutral-500">
                       No actions require your attention at this time.
                   </p>
@@ -416,18 +385,6 @@
                         </div>
                       </div>
                     }
-                </div>
-              } @else {
-                  <div class="text-center py-unops-3xl">
-                    <div class="flex items-center justify-center w-16 h-16 bg-unops-neutral-200 rounded-unops-full mb-unops-lg mx-auto">
-                      <i class="material-symbols-outlined text-unops-2xl text-unops-neutral-400">history</i>
-                  </div>
-                    <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-unops-sm">
-                      No recent activity
-                    </h4>
-                  <p class="font-unops-body text-unops-body-medium text-unops-neutral-500">
-                      No updates from {{ dashboardData()!.orgUnitName }} to show.
-                  </p>
                 </div>
               }
             </div>
@@ -665,469 +622,241 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-unops-xl mb-unops-xl">
         
           <!-- Left Panel: Actions Required -->
-          <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200 overflow-hidden">
-            <div class="p-unops-lg border-b border-unops-neutral-200">
-              <div class="flex items-center space-x-unops-md">
-                <div class="flex items-center justify-center w-10 h-10 bg-unops-warning/10 rounded-unops-lg">
-                  <i class="material-symbols-outlined text-unops-xl text-unops-warning">priority_high</i>
-                </div>
-                <div>
-                    <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
-                    Actions Required
-                    </h3>
-                  <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
-                    {{ getTotalDraftActions() }} items need attention
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="pb-unops-lg px-unops-lg flex flex-col" style="height: 280px;">
-              <!-- Fixed content area -->
-              <div class="flex-1 mb-unops-md" style="min-height: 223px; max-height: 223px;">
-                @if (getTotalDraftActions() > 0) {
-                  <div class="space-y-unops-sm">
-                    @for (item of getTruncatedDraftActions(); track item.id) {
-                      <div class="p-unops-sm rounded-unops-sm border border-unops-neutral-200 hover:border-unops-warning/50 hover:bg-unops-warning/5 cursor-pointer transition-all duration-unops-short"
-                           (click)="navigateToEntity(getDraftActionEntityType(item), getEntityId(item.id))">
-                        <div class="flex items-start justify-between">
-                          <div class="flex-1 min-w-0">
-                            <div class="flex items-center space-x-unops-xs mb-1">
-                              @if (getDraftActionEntityType(item) === 'Partner') {
-                                <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                              } @else if (getDraftActionEntityType(item) === 'Contact') {
-                                <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                      } @else {
-                                <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
-                              }
-                              <span class="text-unops-label-small text-unops-neutral-500">{{ getDraftActionEntityType(item) }}</span>
-                            </div>
-                            <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
-                              {{ getDraftActionDisplayName(item) }}
-                            </h4>
-                            <p class="text-unops-body-small text-unops-neutral-600">
-                              {{ formatDate(item.createdDate || item.date) }}
-                            </p>
-                          </div>
-                          <div class="ml-unops-sm">
-                            <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-warning/10 text-unops-warning">
-                              Draft
-                    </span>
-                  </div>
+          <app-dashboard-card
+            [config]="actionsRequiredConfig"
+            [filters]="actionsRequiredFilters"
+            [isExpanded]="false"
+            [showViewAllButton]="getRemainingDraftActionsCount() > 0"
+            [remainingCount]="getRemainingDraftActionsCount()"
+            [hasContent]="getTotalDraftActions() > 0"
+            [isMobile]="isMobile()"
+            (filterClick)="onActionsFilterClick($event)"
+            (clearFilter)="clearDraftActionFilter()"
+            (viewAllClick)="expandPanel('actions')"
+            (emptyStateAction)="navigateToPartnersPage()">
+            
+            <!-- Content Template -->
+            @if (getTotalDraftActions() > 0) {
+              <div class="space-y-unops-sm">
+                @for (item of getTruncatedDraftActions(); track item.id) {
+                  <div class="p-unops-sm rounded-unops-sm border border-unops-neutral-200 hover:border-unops-warning/50 hover:bg-unops-warning/5 cursor-pointer transition-all duration-unops-short"
+                       (click)="navigateToEntity(getDraftActionEntityType(item), getEntityId(item.id))">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-unops-xs mb-1">
+                          @if (getDraftActionEntityType(item) === 'Partner') {
+                            <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                          } @else if (getDraftActionEntityType(item) === 'Contact') {
+                            <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          } @else {
+                            <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                          }
+                          <span class="text-unops-label-small text-unops-neutral-500">{{ getDraftActionEntityType(item) }}</span>
                         </div>
+                        <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
+                          {{ getDraftActionDisplayName(item) }}
+                        </h4>
+                        <p class="text-unops-body-small text-unops-neutral-600">
+                          {{ formatDate(item.createdDate || item.date) }}
+                        </p>
                       </div>
-                    }
-                  </div>
-                } @else {
-                  <div class="flex flex-col items-center justify-center h-full text-center">
-                    <div class="flex items-center justify-center w-12 h-12 bg-unops-neutral-200 rounded-unops-full mb-unops-md">
-                      <i class="material-symbols-outlined text-unops-xl text-unops-neutral-400">check_circle</i>
+                      <div class="ml-unops-sm">
+                        <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-warning/10 text-unops-warning">
+                          Draft
+                        </span>
+                      </div>
                     </div>
-                    <p class="font-unops-body text-unops-body-medium text-unops-neutral-500">
-                      All caught up! No actions required.
-                  </p>
-                </div>
-                }
-              </div>
-              
-              <!-- Fixed footer area -->
-              <div class="pt-unops-md border-t border-unops-neutral-200">
-                @if (getRemainingDraftActionsCount() > 0) {
-                  <div class="text-center">
-                    <button 
-                      class="text-unops-body-small text-unops-primary hover:text-unops-primary-dark font-unops-medium"
-                      (click)="expandPanel('actions')">
-                      View All ({{ getRemainingDraftActionsCount() }} more)
-                    </button>
-                  </div>
-                } @else {
-                  <div class="text-center text-unops-body-small text-unops-neutral-400">
-                    &nbsp;
                   </div>
                 }
               </div>
-            </div>
-          </div>
+            }
+          </app-dashboard-card>
 
           <!-- Center Panel: Recent Activity -->
-          <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200 overflow-hidden">
-            <div class="p-unops-lg border-b border-unops-neutral-200">
-              <div class="flex items-center space-x-unops-md">
-                <div class="flex items-center justify-center w-10 h-10 bg-unops-info/10 rounded-unops-lg">
-                  <i class="material-symbols-outlined text-unops-xl text-unops-info">history</i>
-                </div>
-                <div>
-                  <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
-                    Recent Activity
-                  </h3>
-                  <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
-                    Latest updates from {{ dashboardData()!.orgUnitName }}
-                  </p>
-                </div>
+          <app-dashboard-card
+            [config]="recentActivityConfig"
+            [filters]="recentActivityFilters"
+            [isExpanded]="false"
+            [showViewAllButton]="getRemainingOrgUnitUpdatesCount() > 0"
+            [remainingCount]="getRemainingOrgUnitUpdatesCount()"
+            [hasContent]="dashboardData()!.orgUnitRecentUpdates.length > 0"
+            [isMobile]="isMobile()"
+            (filterClick)="onActivityFilterClick($event)"
+            (clearFilter)="clearOrgUnitUpdateFilter()"
+            (viewAllClick)="expandPanel('activity')">
+            
+            <!-- Content Template -->
+            @if (dashboardData()!.orgUnitRecentUpdates.length > 0) {
+              <div class="space-y-unops-sm">
+                @for (update of getTruncatedOrgUnitUpdates(); track update.id) {
+                  <div class="flex items-start space-x-unops-md cursor-pointer hover:bg-unops-surface-cool/30 p-unops-sm rounded-unops-sm transition-colors"
+                       (click)="navigateToEntity(update.type, update.id)">
+                    <div class="flex-shrink-0 mt-1">
+                      @if (update.type === 'Partner') {
+                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      } @else if (update.type === 'Contact') {
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                      } @else {
+                        <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      }
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between mb-unops-xs">
+                        <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-0 mt-0 line-clamp-1">
+                          {{ update.name }}
+                        </h4>
+                        <span class="text-unops-label-small text-unops-neutral-500 flex-shrink-0 ml-unops-sm">{{ formatDate(update.lastModifiedDate) }}</span>
+                      </div>
+                      <div class="flex items-center space-x-unops-sm">
+                        <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium"
+                              [ngClass]="{
+                                'bg-unops-info/10 text-unops-info': update.type === 'Partner',
+                                'bg-unops-success/10 text-unops-success': update.type === 'Contact', 
+                                'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
+                              }">
+                          {{ update.type }}
+                        </span>
+                        <span class="text-unops-body-small text-unops-neutral-600 truncate">by {{ update.lastModifiedBy }}</span>
+                      </div>
                     </div>
                   </div>
-            <div class="pb-unops-lg px-unops-lg flex flex-col" style="height: 280px;">
-              <!-- Filter Chips -->
-              @if (getOrgUnitUpdateTypes().length > 1) {
-                <div class="mb-unops-sm">
-                  <div class="flex flex-wrap gap-unops-xs">
-                    @for (type of getOrgUnitUpdateTypes(); track type) {
-                      <button 
-                        class="px-unops-sm py-1 rounded-unops-md font-unops-body text-unops-body-small font-unops-medium transition-all duration-unops-short border"
-                        [class.bg-unops-info]="selectedOrgUnitUpdateType() === type"
-                        [class.text-unops-white]="selectedOrgUnitUpdateType() === type"
-                        [class.border-unops-info]="selectedOrgUnitUpdateType() === type"
-                        [class.bg-unops-surface-cool]="selectedOrgUnitUpdateType() !== type"
-                        [class.text-unops-neutral-700]="selectedOrgUnitUpdateType() !== type"
-                        [class.border-unops-neutral-300]="selectedOrgUnitUpdateType() !== type"
-                        (click)="setOrgUnitUpdateFilter(type)">
-                        {{ getOrgUnitUpdateCount(type) }} {{ type }}{{ getOrgUnitUpdateCount(type) === 1 ? '' : 's' }}
-                      </button>
-                    }
-                    @if (selectedOrgUnitUpdateType()) {
-                      <button 
-                        class="px-unops-xs py-1 rounded-unops-md bg-unops-neutral-200 text-unops-neutral-600 hover:bg-unops-neutral-300 transition-colors"
-                        (click)="clearOrgUnitUpdateFilter()">
-                        <i class="material-symbols-outlined text-unops-sm">close</i>
-                      </button>
+                }
+              </div>
+            }
+          </app-dashboard-card>
+
+          <!-- Right Panel: My Workspace -->
+          <app-dashboard-card
+            [config]="myWorkspaceConfig"
+            [filters]="myWorkspaceFilters"
+            [isExpanded]="false"
+            [showViewAllButton]="getRemainingPartnersCount() > 0 || getRemainingContactsCount() > 0"
+            [remainingCount]="getRemainingWorkspaceCount()"
+            [hasContent]="dashboardData()!.myPartners.length > 0 || dashboardData()!.myContacts.length > 0"
+            [isMobile]="isMobile()"
+            (filterClick)="onWorkspaceFilterClick($event)"
+            (clearFilter)="clearOrgUnitUpdateFilter()"
+            (viewAllClick)="expandPanel('workspace')">
+            
+            <!-- Content Template -->
+            <div class="space-y-unops-sm">
+              <!-- My Partners -->
+              @if (dashboardData()!.myPartners.length > 0 && (!selectedOrgUnitUpdateType() || selectedOrgUnitUpdateType() === 'Partner')) {
+                <div>
+                  <h4 class="font-unops-body text-unops-body-small font-unops-semibold text-unops-neutral-900 mb-unops-xs flex items-center">
+                    <i class="material-symbols-outlined text-unops-sm text-unops-accent-teal mr-unops-xs">corporate_fare</i>
+                    Partners ({{ dashboardData()!.myPartners.length }})
+                  </h4>
+                  <div class="space-y-unops-xs mb-unops-sm">
+                    @for (partner of getTruncatedPartners(); track partner.id) {
+                      <div class="flex items-center space-x-unops-sm p-unops-xs rounded-unops-sm hover:bg-unops-surface-cool/30 cursor-pointer transition-colors"
+                           (click)="navigateToEntity('Partner', getEntityId(partner.id))">
+                        <div class="w-2 h-2 bg-unops-accent-teal rounded-full flex-shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                          <div class="font-unops-body text-unops-body-small font-unops-medium text-unops-neutral-900 line-clamp-1">
+                            {{ partner.name }}
+                          </div>
+                          <div class="text-unops-label-small text-unops-neutral-600 line-clamp-1">
+                            {{ partner.status || 'Unknown' }} • {{ getDisplayDate(partner) }}
+                          </div>
+                        </div>
+                      </div>
                     }
                   </div>
                 </div>
               }
               
-              <!-- Fixed content area -->
-              <div class="flex-1 mb-unops-md" style="min-height: 180px; max-height: 180px;">
-                @if (dashboardData()!.orgUnitRecentUpdates.length > 0) {
-                  <div class="space-y-unops-sm">
-                    @for (update of getTruncatedOrgUnitUpdates(); track update.id) {
-                        <div class="flex items-start space-x-unops-md cursor-pointer hover:bg-unops-surface-cool/30 p-unops-sm rounded-unops-sm transition-colors"
-                           (click)="navigateToEntity(update.type, update.id)">
-                          <div class="flex-shrink-0 mt-1">
-                            @if (update.type === 'Partner') {
-                              <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            } @else if (update.type === 'Contact') {
-                              <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                            } @else {
-                              <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
-                            }
+              <!-- My Contacts -->
+              @if (dashboardData()!.myContacts.length > 0 && (!selectedOrgUnitUpdateType() || selectedOrgUnitUpdateType() === 'Contact')) {
+                <div>
+                  <h4 class="font-unops-body text-unops-body-small font-unops-semibold text-unops-neutral-900 mb-unops-xs flex items-center">
+                    <i class="material-symbols-outlined text-unops-sm text-unops-accent-lime mr-unops-xs">contacts</i>
+                    Contacts ({{ dashboardData()!.myContacts.length }})
+                  </h4>
+                  <div class="space-y-unops-xs">
+                    @for (contact of getTruncatedContacts(); track contact.id) {
+                      <div class="flex items-center space-x-unops-sm p-unops-xs rounded-unops-sm hover:bg-unops-surface-cool/30 cursor-pointer transition-colors"
+                           (click)="navigateToEntity('Contact', getEntityId(contact.id))">
+                        <div class="w-2 h-2 bg-unops-accent-lime rounded-full flex-shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                          <div class="font-unops-body text-unops-body-small font-unops-medium text-unops-neutral-900 line-clamp-1">
+                            {{ contact.firstName }} {{ contact.lastName }}
                           </div>
-                          <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between mb-unops-xs">
-                              <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-0 mt-0 line-clamp-1">
-                                {{ update.name }}
-                              </h4>
-                              <span class="text-unops-label-small text-unops-neutral-500 flex-shrink-0 ml-unops-sm">{{ formatDate(update.lastModifiedDate) }}</span>
-                              </div>
-                            <div class="flex items-center space-x-unops-sm">
-                              <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium"
-                                    [ngClass]="{
-                                      'bg-unops-info/10 text-unops-info': update.type === 'Partner',
-                                      'bg-unops-success/10 text-unops-success': update.type === 'Contact', 
-                                      'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
-                                    }">
-                                {{ update.type }}
-                              </span>
-                              <span class="text-unops-body-small text-unops-neutral-600 truncate">by {{ update.lastModifiedBy }}</span>
-                            </div>
+                          <div class="text-unops-label-small text-unops-neutral-600 line-clamp-1">
+                            {{ contact.title || 'No Title' }}
                           </div>
                         </div>
-                    }
-                  </div>
-                } @else {
-                  <div class="flex flex-col items-center justify-center h-full text-center">
-                    <div class="flex items-center justify-center w-12 h-12 bg-unops-neutral-200 rounded-unops-full mb-unops-md">
-                      <i class="material-symbols-outlined text-unops-xl text-unops-neutral-400">history</i>
-                    </div>
-                    <p class="font-unops-body text-unops-body-medium text-unops-neutral-500">
-                      No recent activity to show
-                    </p>
-                  </div>
-                }
-              </div>
-              
-              <!-- Fixed footer area -->
-              <div class="pt-unops-md border-t border-unops-neutral-200">
-                @if (getRemainingOrgUnitUpdatesCount() > 0) {
-                  <div class="text-center">
-                    <button 
-                      class="text-unops-body-small text-unops-primary hover:text-unops-primary-dark font-unops-medium"
-                      (click)="expandPanel('activity')">
-                      View All ({{ getRemainingOrgUnitUpdatesCount() }} more)
-                    </button>
-                  </div>
-                } @else {
-                  <div class="text-center text-unops-body-small text-unops-neutral-400">
-                    &nbsp;
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-
-          <!-- Right Panel: My Workspace -->
-          <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200 overflow-hidden">
-            <div class="p-unops-lg border-b border-unops-neutral-200">
-              <div class="flex items-center space-x-unops-md">
-                <div class="flex items-center justify-center w-10 h-10 bg-unops-primary/10 rounded-unops-lg">
-                  <i class="material-symbols-outlined text-unops-xl text-unops-primary">dashboard</i>
-                </div>
-                <div>
-                  <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
-                    My Workspace
-                  </h3>
-                  <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
-                    Quick access to your data
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div class="pb-unops-lg px-unops-lg flex flex-col" style="height: 280px;">
-              <!-- Fixed content area -->
-              <div class="flex-1 mb-unops-md" style="min-height: 210px; max-height: 210px;">
-                <!-- Filter Chips -->
-                <div class="mb-unops-sm">
-                  <div class="flex flex-wrap gap-unops-xs">
-                    <button 
-                      class="px-unops-sm py-1 rounded-unops-md font-unops-body text-unops-body-small font-unops-medium transition-all duration-unops-short border"
-                      [class.bg-unops-primary]="selectedOrgUnitUpdateType() === 'Partner'"
-                      [class.text-unops-white]="selectedOrgUnitUpdateType() === 'Partner'"
-                      [class.border-unops-primary]="selectedOrgUnitUpdateType() === 'Partner'"
-                      [class.bg-unops-surface-cool]="selectedOrgUnitUpdateType() !== 'Partner'"
-                      [class.text-unops-neutral-700]="selectedOrgUnitUpdateType() !== 'Partner'"
-                      [class.border-unops-neutral-300]="selectedOrgUnitUpdateType() !== 'Partner'"
-                      (click)="setOrgUnitUpdateFilter('Partner')">
-                      {{ dashboardData()!.myPartners.length }} Partners
-                    </button>
-                    <button 
-                      class="px-unops-sm py-1 rounded-unops-md font-unops-body text-unops-body-small font-unops-medium transition-all duration-unops-short border"
-                      [class.bg-unops-primary]="selectedOrgUnitUpdateType() === 'Contact'"
-                      [class.text-unops-white]="selectedOrgUnitUpdateType() === 'Contact'"
-                      [class.border-unops-primary]="selectedOrgUnitUpdateType() === 'Contact'"
-                      [class.bg-unops-surface-cool]="selectedOrgUnitUpdateType() !== 'Contact'"
-                      [class.text-unops-neutral-700]="selectedOrgUnitUpdateType() !== 'Contact'"
-                      [class.border-unops-neutral-300]="selectedOrgUnitUpdateType() !== 'Contact'"
-                      (click)="setOrgUnitUpdateFilter('Contact')">
-                      {{ dashboardData()!.myContacts.length }} Contacts
-                    </button>
-                    @if (selectedOrgUnitUpdateType()) {
-                      <button 
-                        class="px-unops-xs py-1 rounded-unops-md bg-unops-neutral-200 text-unops-neutral-600 hover:bg-unops-neutral-300 transition-colors"
-                        (click)="clearOrgUnitUpdateFilter()">
-                        <i class="material-symbols-outlined text-unops-sm">close</i>
-                      </button>
+                      </div>
                     }
                   </div>
                 </div>
-
-                <!-- Partners & Contacts -->
-                <div class="space-y-unops-sm">
-                  <!-- My Partners -->
-                  @if (dashboardData()!.myPartners.length > 0 && (!selectedOrgUnitUpdateType() || selectedOrgUnitUpdateType() === 'Partner')) {
-                    <div>
-                      <h4 class="font-unops-body text-unops-body-small font-unops-semibold text-unops-neutral-900 mb-unops-xs flex items-center">
-                        <i class="material-symbols-outlined text-unops-sm text-unops-accent-teal mr-unops-xs">corporate_fare</i>
-                        Partners ({{ dashboardData()!.myPartners.length }})
-                      </h4>
-                      <div class="space-y-unops-xs mb-unops-sm">
-                        @for (partner of getTruncatedPartners(2); track partner.id) {
-                          <div class="flex items-center space-x-unops-sm p-unops-xs rounded-unops-sm hover:bg-unops-surface-cool/30 cursor-pointer transition-colors"
-                               (click)="navigateToEntity('Partner', getEntityId(partner.id))">
-                            <div class="w-2 h-2 bg-unops-accent-teal rounded-full flex-shrink-0"></div>
-                            <div class="flex-1 min-w-0">
-                              <div class="font-unops-body text-unops-body-small font-unops-medium text-unops-neutral-900 line-clamp-1">
-                                {{ partner.name }}
-                              </div>
-                              <div class="text-unops-label-small text-unops-neutral-600 line-clamp-1">
-                                {{ partner.status || 'Unknown' }} • {{ getDisplayDate(partner) }}
-                              </div>
-                            </div>
-                          </div>
-                        }
-                      </div>
-                    </div>
-                  }
-                  
-                  <!-- My Contacts -->
-                  @if (dashboardData()!.myContacts.length > 0 && (!selectedOrgUnitUpdateType() || selectedOrgUnitUpdateType() === 'Contact')) {
-                    <div>
-                      <h4 class="font-unops-body text-unops-body-small font-unops-semibold text-unops-neutral-900 mb-unops-xs flex items-center">
-                        <i class="material-symbols-outlined text-unops-sm text-unops-accent-lime mr-unops-xs">contacts</i>
-                        Contacts ({{ dashboardData()!.myContacts.length }})
-                      </h4>
-                      <div class="space-y-unops-xs">
-                        @for (contact of getTruncatedContacts(1); track contact.id) {
-                          <div class="flex items-center space-x-unops-sm p-unops-xs rounded-unops-sm hover:bg-unops-surface-cool/30 cursor-pointer transition-colors"
-                               (click)="navigateToEntity('Contact', getEntityId(contact.id))">
-                            <div class="w-2 h-2 bg-unops-accent-lime rounded-full flex-shrink-0"></div>
-                            <div class="flex-1 min-w-0">
-                              <div class="font-unops-body text-unops-body-small font-unops-medium text-unops-neutral-900 line-clamp-1">
-                                {{ contact.firstName }} {{ contact.lastName }}
-                              </div>
-                              <div class="text-unops-label-small text-unops-neutral-600 line-clamp-1">
-                                {{ contact.title || 'No Title' }}
-                              </div>
-                            </div>
-                          </div>
-                        }
-                      </div>
-                    </div>
-                  }
-                  
-                  <!-- Empty State -->
-                  @if ((dashboardData()!.myPartners.length === 0 && dashboardData()!.myContacts.length === 0) || 
-                       (selectedOrgUnitUpdateType() === 'Partner' && dashboardData()!.myPartners.length === 0) ||
-                       (selectedOrgUnitUpdateType() === 'Contact' && dashboardData()!.myContacts.length === 0)) {
-                    <div class="text-center py-unops-md">
-                      <div class="flex items-center justify-center w-10 h-10 bg-unops-neutral-200 rounded-unops-full mb-unops-sm mx-auto">
-                        <i class="material-symbols-outlined text-unops-lg text-unops-neutral-400">dashboard</i>
-                      </div>
-                      <p class="font-unops-body text-unops-body-small text-unops-neutral-500">
-                        @if (selectedOrgUnitUpdateType() === 'Partner') {
-                          No partners found
-                        } @else if (selectedOrgUnitUpdateType() === 'Contact') {
-                          No contacts found
-                        } @else {
-                          No partners or contacts yet
-                        }
-                      </p>
-                    </div>
-                  }
-                </div>
-              </div>
-              
-              <!-- Fixed footer area -->
-              <div class="pt-unops-md border-t border-unops-neutral-200">
-                @if (getRemainingPartnersCount() > 0 || getRemainingContactsCount() > 0) {
-                  <div class="text-center">
-                    <button 
-                      class="text-unops-body-small text-unops-primary hover:text-unops-primary-dark font-unops-medium"
-                      (click)="expandPanel('workspace')">
-                      View All 
-                      @if (getRemainingPartnersCount() > 0 && getRemainingContactsCount() > 0) {
-                        ({{ getRemainingPartnersCount() + getRemainingContactsCount() }} more)
-                      } @else if (getRemainingPartnersCount() > 0) {
-                        ({{ getRemainingPartnersCount() }} more partners)
-                      } @else if (getRemainingContactsCount() > 0) {
-                        ({{ getRemainingContactsCount() }} more contacts)
-                      }
-                    </button>
-                  </div>
-                } @else {
-                  <div class="text-center text-unops-body-small text-unops-neutral-400">
-                    &nbsp;
-                  </div>
-                }
-              </div>
+              }
             </div>
-          </div>
+          </app-dashboard-card>
         </div>
       }
 
       <!-- Bottom Panel: Recent Interactions -->
       @if (expandedPanel() !== 'interactions') {
-        <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200 overflow-hidden">
-        <div class="p-unops-lg border-b border-unops-neutral-200">
-          <div class="flex items-center space-x-unops-md">
-            <div class="flex items-center justify-center w-10 h-10 bg-unops-accent-orange/10 rounded-unops-lg">
-              <i class="material-symbols-outlined text-unops-xl text-unops-accent-orange">chat</i>
-                </div>
-                <div>
-                    <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
-                Recent Interactions & Communications
-                    </h3>
-              <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
-                {{ summary().totalMyInteractions }} interactions • Latest activity
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="pb-unops-lg px-unops-lg flex flex-col" style="min-height: 160px; max-height: 160px;">
-          <!-- Fixed content area -->
-          <div class="flex-1 mb-unops-md" style="height: 110px; max-height: 110px;">
-            @if (dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0) {
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-unops-md interactions-grid">
-                @for (interaction of getTruncatedInteractions(); track interaction.id) {
-                  <div class="p-unops-sm rounded-unops-lg border border-unops-neutral-200 hover:border-unops-accent-orange/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
-                       (click)="navigateToEntity('Interaction', getEntityId(interaction.id))">
-                    <!-- Header with icon and type -->
-                    <div class="flex items-center space-x-unops-xs mb-unops-xs">
-                      @if (interaction.type === 'Meeting') {
-                        <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">videocam</i>
-                      } @else if (interaction.type === 'Email') {
-                        <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">mail</i>
-                      } @else if (interaction.type === 'Call') {
-                        <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">phone</i>
-                      } @else {
-                        <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">chat</i>
-                      }
-                      <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-accent-orange/10 text-unops-accent-orange">
-                        {{ interaction.type || 'Unknown' }}
-                      </span>
-                    </div>
-                    
-                    <!-- Content -->
-                    <h4 class="font-unops-body text-unops-body-small font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
-                      {{ interaction.subject || 'Untitled Interaction' }}
-                    </h4>
-                    <p class="text-unops-label-small text-unops-neutral-600 mb-1 line-clamp-1">
-                      {{ interaction.description || 'No description' }}
-                    </p>
-                    <div class="text-unops-label-small text-unops-neutral-500 mb-unops-xs">
-                      {{ formatDate(interaction.date) }}
-                    </div>
-                    
-                    <!-- Status -->
-                    <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium"
-                          [ngClass]="{
-                            'bg-unops-success/10 text-unops-success': interaction.status === 'Completed',
-                            'bg-unops-warning/10 text-unops-warning': interaction.status === 'Pending',
-                            'bg-unops-neutral-200 text-unops-neutral-600': !interaction.status || interaction.status === 'Unknown'
-                          }">
-                      {{ interaction.status || 'Unknown' }}
+        <div class="mt-unops-xl">
+          <app-dashboard-card
+          [config]="recentInteractionsConfig"
+          [isExpanded]="false"
+          [showViewAllButton]="getRemainingInteractionsCount() > 0"
+          [remainingCount]="getRemainingInteractionsCount()"
+          [hasContent]="dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0"
+          [isMobile]="isMobile()"
+          (viewAllClick)="expandPanel('interactions')"
+          (emptyStateAction)="navigateToInteractions()">
+          
+          <!-- Content Template - Only show when there are interactions -->
+          @if (dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0) {
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-unops-md interactions-grid">
+              @for (interaction of getTruncatedInteractions(); track interaction.id) {
+                <div class="p-unops-sm rounded-unops-lg border border-unops-neutral-200 hover:border-unops-accent-orange/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
+                     (click)="navigateToEntity('Interaction', getEntityId(interaction.id))">
+                  <!-- Header with icon and type -->
+                  <div class="flex items-center space-x-unops-xs mb-unops-xs">
+                    @if (interaction.type === 'Meeting') {
+                      <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">videocam</i>
+                    } @else if (interaction.type === 'Email') {
+                      <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">mail</i>
+                    } @else if (interaction.type === 'Call') {
+                      <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">phone</i>
+                    } @else {
+                      <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">chat</i>
+                    }
+                    <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-accent-orange/10 text-unops-accent-orange">
+                      {{ interaction.type || 'Unknown' }}
                     </span>
                   </div>
-                }
-              </div>
-            } @else {
-              <div class="flex flex-col items-center justify-center h-full text-center">
-                <div class="flex items-center justify-center w-12 h-12 bg-unops-neutral-200 rounded-unops-full mb-unops-sm">
-                  <i class="material-symbols-outlined text-unops-xl text-unops-neutral-400">chat</i>
+                  
+                  <!-- Content -->
+                  <h4 class="font-unops-body text-unops-body-small font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
+                    {{ interaction.subject || 'Untitled Interaction' }}
+                  </h4>
+                  <p class="text-unops-label-small text-unops-neutral-600 mb-1 line-clamp-1">
+                    {{ interaction.description || 'No description' }}
+                  </p>
+                  <div class="text-unops-label-small text-unops-neutral-500 mb-unops-xs">
+                    {{ formatDate(interaction.date) }}
+                  </div>
+                  
+                  <!-- Status -->
+                  <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium"
+                        [ngClass]="{
+                          'bg-unops-success/10 text-unops-success': interaction.status === 'Completed',
+                          'bg-unops-warning/10 text-unops-warning': interaction.status === 'Pending',
+                          'bg-unops-neutral-200 text-unops-neutral-600': !interaction.status || interaction.status === 'Unknown'
+                        }">
+                    {{ interaction.status || 'Unknown' }}
+                  </span>
                 </div>
-                <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-unops-xs">
-                  No interactions yet
-                </h4>
-                <p class="font-unops-body text-unops-body-small text-unops-neutral-500 mb-unops-sm">
-                  Start logging your communications and meetings
-                </p>
-                <button 
-                  pButton 
-                  type="button" 
-                  icon="pi pi-plus" 
-                  label="Log First Interaction"
-                  class="p-button-sm unops-button-primary"
-                  (click)="navigateToInteractions()">
-                </button>
-              </div>
-            }
-          </div>
-          
-          <!-- Fixed footer area -->
-          <div class="border-t border-unops-neutral-200">
-            @if (getRemainingInteractionsCount() > 0) {
-              <div class="text-center">
-                <button 
-                  class="text-unops-body-small text-unops-primary hover:text-unops-primary-dark font-unops-medium"
-                  (click)="expandPanel('interactions')">
-                  View All ({{ getRemainingInteractionsCount() }} more)
-                </button>
-              </div>
-            } @else {
-              <div class="text-center text-unops-body-small text-unops-neutral-400">
-                &nbsp;
+              }
             </div>
           }
-          </div>
+        </app-dashboard-card>
         </div>
-      </div>
       }
     }
 
