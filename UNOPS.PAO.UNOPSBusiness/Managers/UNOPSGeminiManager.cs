@@ -134,12 +134,6 @@ public class UNOPSGeminiManager : IGeminiManager
         return await _aiService.GetPromptData(type);
     }
 
-    // Chat with Gemini
-    private async Task<dynamic> ChatWithGemini(AiChatSession session, GeminiAssistantRequest req, string promptType, IEnumerable<dynamic> formattedChatHistory, string fileUrl, string fileType)
-    {
-        throw new NotImplementedException();
-    }
-
     // Updated FetchResultFromGemini to use CallGeminiApi
     public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string entityId = null)
     {
