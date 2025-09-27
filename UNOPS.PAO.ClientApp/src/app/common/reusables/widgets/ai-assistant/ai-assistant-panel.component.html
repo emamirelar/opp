@@ -113,8 +113,9 @@
         </p-menu>
       </div>
 
-      <!-- Fullscreen/Minimize toggle button -->
+      <!-- Fullscreen/Minimize toggle button - Hidden on mobile -->
       <p-button 
+        *ngIf="!isMobile()"
         [icon]="isInFullscreenMode() ? 'pi pi-window-minimize' : 'pi pi-window-maximize'"
         [text]="true"
         [rounded]="true"
