@@ -1,11 +1,11 @@
 <div *ngIf="aiAssistantData.isLoadingSession()" class="absolute inset-0 z-50 flex items-center justify-center bg-white bg-opacity-60">
   <i class="pi pi-spin pi-spinner text-4xl text-[var(--primary-color)]"></i>
 </div>
-<div class="h-full flex flex-col min-h-0 bg-[var(--surface-card)] border-l border-[var(--surface-border)] rounded-2xl overflow-hidden w-full"
-     [ngClass]="{'border-l-0 rounded-none': hideHeader}">
+<div class="h-full flex flex-col min-h-0 bg-transparent rounded-unops-xl overflow-hidden w-full font-unops-body"
+     [ngClass]="{'rounded-none': hideHeader}">
   
   <!-- Header section with a clean design like Google Chat -->
-  <div *ngIf="!hideHeader" class="flex items-center justify-between p-4 border-b border-[var(--surface-border)] bg-[var(--surface-ground)]">
+  <div *ngIf="!hideHeader" class="flex items-center justify-between p-unops-md border-b border-unops-neutral-200 bg-unops-surface-primary shadow-unops-sm">
     <div class="flex items-center gap-3 flex-1">
       <div class="flex items-center justify-center w-8 h-8 rounded-full">
         <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-5 h-5" />
@@ -16,7 +16,7 @@
         <div *ngIf="aiAssistantData.currentSessionId()">
           <!-- Editable title -->
           <div *ngIf="!isEditingTitle()" 
-               class="text-lg font-semibold text-[var(--text-color)] cursor-pointer hover:bg-[var(--surface-hover)] px-2 py-1 rounded truncate"
+               class="text-unops-lg font-unops-semibold text-unops-neutral-900 cursor-pointer hover:bg-unops-neutral-100 px-unops-sm py-unops-xs rounded-unops-sm truncate transition-colors duration-unops-fast"
                (click)="startEditingTitle()"
                pTooltip="Click to edit title">
             {{ aiAssistantData.sessionTitle() }}
@@ -32,7 +32,7 @@
               (keydown.enter)="saveTitle()"
               (keydown.escape)="cancelEditingTitle()"
               (blur)="saveTitle()"
-              class="flex-1 px-2 py-1 text-lg font-semibold bg-transparent border border-[var(--primary-color)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary-color)]"
+              class="flex-1 px-unops-sm py-unops-xs text-unops-lg font-unops-semibold bg-transparent border border-unops-primary rounded-unops-sm focus:outline-none focus:ring-1 focus:ring-unops-primary transition-all duration-unops-fast"
               placeholder="Enter title">
             <p-button
               icon="pi pi-check"
@@ -113,8 +113,9 @@
         </p-menu>
       </div>
 
-      <!-- Fullscreen/Minimize toggle button -->
+      <!-- Fullscreen/Minimize toggle button - Hidden on mobile -->
       <p-button 
+        *ngIf="!isMobile()"
         [icon]="isInFullscreenMode() ? 'pi pi-window-minimize' : 'pi pi-window-maximize'"
         [text]="true"
         [rounded]="true"
@@ -150,11 +151,10 @@
 
   <!-- Chat messages section -->
   <div #chatContainer 
-       class="flex-1 p-4 space-y-4 overflow-y-auto min-h-0 ai-chat-container"
+       class="flex-1 p-unops-md space-y-unops-md overflow-y-auto min-h-0 ai-chat-container bg-unops-surface-primary"
        [ngClass]="{
-         'bg-blue-50/20 border-2 border-dashed border-blue-300': isDragging(),
-         'bg-transparent': !isDragging(),
-         'p-6': hideHeader
+         'bg-unops-primary-container-soft border-2 border-dashed border-unops-primary': isDragging(),
+         'p-unops-lg': hideHeader
        }"
        (dragover)="onDragOver($event)"
        (dragleave)="onDragLeave($event)"
@@ -162,80 +162,75 @@
 
     <!-- Drag and drop overlay -->
     <div *ngIf="isDragging()"
-         class="absolute inset-0 flex items-center justify-center bg-blue-50/80 backdrop-blur-sm z-10">
-      <div class="text-blue-600 flex flex-col items-center gap-4">
+         class="absolute inset-0 flex items-center justify-center bg-unops-primary-container-soft/80 backdrop-blur-sm z-10">
+      <div class="text-unops-primary flex flex-col items-center gap-unops-md">
         <i class="pi pi-upload text-3xl"></i>
-        <span class="text-lg font-medium">{{ 'aiAssistant.dropFilesHere' | translate }}</span>
+        <span class="text-unops-lg font-unops-medium">{{ 'aiAssistant.dropFilesHere' | translate }}</span>
       </div>
     </div>
 
-    <!-- Welcome state - Gemini style (only on first page load) -->
-    <div *ngIf="aiAssistantData.chatHistory().length === 0 && aiAssistantData.isFirstPageLoad()" class="flex flex-col items-center justify-center h-full text-center px-6 py-4 max-w-4xl mx-auto ai-welcome-screen">
+    <!-- Welcome state - UNOPS styled (only on first page load) -->
+    <div *ngIf="aiAssistantData.chatHistory().length === 0 && aiAssistantData.isFirstPageLoad()" class="flex flex-col items-center justify-center h-full text-center px-unops-lg py-unops-xl max-w-3xl mx-auto ai-welcome-screen">
+      <!-- AI Assistant Icon -->
+      <div class="mb-unops-xl">
+        <div class="w-20 h-20 mx-auto mb-unops-lg rounded-full bg-gradient-to-br from-unops-primary to-unops-secondary flex items-center justify-center shadow-unops-lg">
+          <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-10 h-10" />
+        </div>
+      </div>
+
       <!-- Personalized Greeting -->
-      <div class="mb-6">
-        <h1 class="text-4xl md:text-5xl font-normal text-[var(--text-color)] mb-4">
-          Hello, {{ userName() || 'User' }}
+      <div class="mb-unops-2xl">
+        <h1 class="text-unops-display-medium unops-tablet:text-unops-display-large font-unops-regular text-unops-neutral-900 mb-unops-lg leading-tight">
+          Hello {{ userName() || 'User' }}
         </h1>
-        <p class="text-xl text-[var(--text-color-secondary)] font-light max-w-2xl leading-relaxed">
+        <p class="text-unops-xl unops-tablet:text-unops-2xl text-unops-neutral-600 font-unops-light max-w-2xl leading-relaxed mb-unops-lg">
           How can I help you with partners and opportunities today?
+        </p>
+        <p class="text-unops-base text-unops-neutral-500 font-unops-regular max-w-xl leading-relaxed">
+          I'm here to assist you with finding contacts, analyzing information, and providing insights to help you take informed actions.
         </p>
       </div>
 
-      <!-- Sample Prompts Grid -->
-      <div class="w-full max-w-5xl ai-sample-prompts">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <div *ngFor="let prompt of examplePrompts; let i = index" 
-               class="cursor-pointer group transition-all duration-200"
-               (click)="selectExamplePrompt(prompt.text)">
-            <div class="flex flex-col p-5 bg-[var(--surface-card)] hover:bg-[var(--surface-hover)] rounded-2xl border border-[var(--surface-border)] hover:border-[var(--primary-color)] transition-all duration-200 group-hover:shadow-lg h-full">
-              <div class="flex items-center gap-3 mb-3">
-                <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-[var(--primary-color)] bg-opacity-10 flex items-center justify-center">
-                  <i [class]="prompt.icon + ' text-[var(--primary-color)] text-sm'"></i>
-                </div>
-                <span class="text-xs font-medium text-[var(--text-color-secondary)] uppercase tracking-wide">
-                  {{ prompt.category }}
-                </span>
-              </div>
-              <p class="text-sm text-[var(--text-color)] text-left line-clamp-3 flex-1">
-                {{ prompt.text }}
-              </p>
-              <div class="flex justify-end mt-3">
-                <i class="pi pi-arrow-right text-xs text-[var(--text-color-secondary)] opacity-0 group-hover:opacity-100 transition-opacity duration-200"></i>
-              </div>
+      <!-- AI Capabilities info -->
+      <!-- Hide for now until we actually have some capabilities! -->
+      <!-- <div class="w-full max-w-2xl">
+        <div class="grid grid-cols-2 unops-tablet:grid-cols-4 gap-unops-md text-unops-sm text-unops-neutral-600 bg-unops-surface-cool px-unops-lg py-unops-xl rounded-unops-xl border border-unops-neutral-200 shadow-unops-sm">
+          <div class="flex flex-col items-center gap-unops-sm text-center">
+            <div class="w-10 h-10 rounded-unops-lg bg-unops-primary-container flex items-center justify-center">
+              <i class="pi pi-upload text-unops-primary text-lg"></i>
             </div>
+            <span class="font-unops-medium">Upload documents</span>
+          </div>
+          <div class="flex flex-col items-center gap-unops-sm text-center">
+            <div class="w-10 h-10 rounded-unops-lg bg-unops-accent-teal-soft flex items-center justify-center">
+              <i class="pi pi-microphone text-unops-accent-teal text-lg"></i>
+            </div>
+            <span class="font-unops-medium">Voice messages</span>
+          </div>
+          <div class="flex flex-col items-center gap-unops-sm text-center">
+            <div class="w-10 h-10 rounded-unops-lg bg-unops-accent-ocean-soft flex items-center justify-center">
+              <i class="pi pi-search text-unops-accent-ocean text-lg"></i>
+            </div>
+            <span class="font-unops-medium">Smart search</span>
+          </div>
+          <div class="flex flex-col items-center gap-unops-sm text-center">
+            <div class="w-10 h-10 rounded-unops-lg bg-unops-accent-lime-soft flex items-center justify-center">
+              <i class="pi pi-chart-line text-unops-accent-lime text-lg"></i>
+            </div>
+            <span class="font-unops-medium">Data analysis</span>
           </div>
         </div>
-
-        <!-- AI Capabilities info -->
-        <div class="flex items-center justify-center gap-6 text-xs text-[var(--text-color-secondary)] bg-[var(--surface-ground)] px-6 py-4 rounded-xl border border-[var(--surface-border)]">
-          <div class="flex items-center gap-2">
-            <i class="pi pi-upload text-[var(--primary-color)]"></i>
-            <span>Upload documents</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <i class="pi pi-microphone text-[var(--primary-color)]"></i>
-            <span>Voice messages</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <i class="pi pi-search text-[var(--primary-color)]"></i>
-            <span>Smart search</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <i class="pi pi-chart-line text-[var(--primary-color)]"></i>
-            <span>Data analysis</span>
-          </div>
-        </div>
-      </div>
+      </div> -->
     </div>
 
     <!-- New Chat blank state (when user manually starts new chat) -->
-    <div *ngIf="aiAssistantData.chatHistory().length === 0 && !aiAssistantData.isFirstPageLoad()" class="flex flex-col items-center justify-center h-full text-center px-6 py-4 max-w-4xl mx-auto ai-new-chat-screen">
-      <div class="mb-8">
-        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--primary-color)] bg-opacity-10 flex items-center justify-center">
-          <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-8 h-8 opacity-70" />
+    <div *ngIf="aiAssistantData.chatHistory().length === 0 && !aiAssistantData.isFirstPageLoad()" class="flex flex-col items-center justify-center h-full text-center px-unops-lg py-unops-xl max-w-2xl mx-auto ai-new-chat-screen">
+      <div class="mb-unops-2xl">
+        <div class="w-16 h-16 mx-auto mb-unops-lg rounded-full bg-unops-primary-container flex items-center justify-center shadow-unops-md">
+          <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-8 h-8" />
         </div>
-        <h2 class="text-2xl font-normal text-[var(--text-color)] mb-2">New Chat</h2>
-        <p class="text-[var(--text-color-secondary)] max-w-md">
+        <h2 class="text-unops-display-small font-unops-regular text-unops-neutral-900 mb-unops-md">New Chat</h2>
+        <p class="text-unops-lg text-unops-neutral-600 font-unops-light max-w-md leading-relaxed">
           Start a conversation by typing your question or request below.
         </p>
       </div>
@@ -247,8 +242,8 @@
          [ngClass]="message.isUser ? 'items-end' : 'items-start'">
 
       <!-- User message -->
-      <div *ngIf="message.isUser" class="max-w-[85%] rounded-2xl p-3 break-words bg-[var(--primary-color)] text-white rounded-br-sm">
-        <div class="whitespace-pre-line">{{ message.text }}</div>
+      <div *ngIf="message.isUser" class="max-w-[85%] unops-mobile:max-w-[90%] rounded-unops-xl p-unops-md break-words bg-unops-primary text-unops-primary-on rounded-br-unops-sm shadow-unops-sm">
+        <div class="whitespace-pre-line text-unops-base font-unops-regular leading-relaxed">{{ message.text }}</div>
         
         <!-- Display inline data if any -->
         <div *ngIf="message.inlineData && message.inlineData.length > 0" class="mt-2 pt-2 border-t border-white border-opacity-20">
@@ -350,16 +345,16 @@
       </div>
 
       <!-- Model message with copy button -->
-      <div *ngIf="!message.isUser" class="max-w-[85%] group">
+      <div *ngIf="!message.isUser" class="max-w-[85%] unops-mobile:max-w-[90%] group">
         <!-- AI Indicator (butterfly icon) -->
-        <div class="flex justify-start mb-1">
-          <div class="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+        <div class="flex justify-start mb-unops-xs">
+          <div class="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-unops-primary to-unops-secondary shadow-unops-sm">
             <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-3 h-3" />
           </div>
         </div>
         
         <!-- Message bubble -->
-        <div class="rounded-2xl p-4 break-words bg-white dark:bg-gray-100 text-gray-900 dark:text-gray-800 rounded-bl-sm border border-gray-200 dark:border-gray-300 shadow-sm">
+        <div class="rounded-unops-xl p-unops-md break-words bg-unops-surface-primary text-unops-neutral-900 rounded-bl-unops-sm border border-unops-neutral-200 shadow-unops-sm">
           <!-- Progressive streaming content -->
           <div *ngIf="message.streamingTypes" class="streaming-content">
             <!-- Render each chunk type array with trackBy for chunk type pairs -->
@@ -575,8 +570,8 @@
     </div>
   </div>
 
-  <!-- Suggested user resppnses for the most recent message -->
-  <div *ngIf="getLatestSuggestedUserResponses().length > 0 && !isWaitingResponse()" class="px-4 pb-3 border-t border-[var(--surface-border)] bg-[var(--surface-ground)]">
+  <!-- Suggested user responses for the most recent message -->
+  <div *ngIf="getLatestSuggestedUserResponses().length > 0 && !isWaitingResponse()" class="px-unops-md pb-unops-md border-t border-unops-neutral-200 bg-unops-surface-primary">
     <div class="flex flex-wrap gap-2 suggestions-up-buttons-container">
       <p-button
         *ngFor="let userResponse of getLatestSuggestedUserResponses()"
@@ -592,17 +587,17 @@
   </div>
 
   <!-- Input section -->
-  <div class="border-t border-[var(--surface-border)] bg-[var(--surface-ground)]">
+  <div class="border-t border-unops-neutral-200 bg-unops-surface-primary">
     <!-- File attachments preview -->
     <div *ngIf="selectedFiles().length > 0 && !isWaitingResponse()"
-         class="p-3 border-b border-[var(--surface-border)]">
-      <div class="text-sm font-medium mb-2 text-[var(--text-color)] flex items-center gap-2">
-        <i class="pi pi-paperclip text-[var(--primary-color)]"></i>
+         class="p-unops-md border-b border-unops-neutral-200">
+      <div class="text-unops-sm font-unops-medium mb-unops-sm text-unops-neutral-900 flex items-center gap-unops-sm">
+        <i class="pi pi-paperclip text-unops-primary"></i>
         {{ 'aiAssistant.filesToSend' | translate }}
       </div>
       <div class="space-y-2">
         <div *ngFor="let fileData of selectedFiles(); let i = index"
-             class="flex items-center gap-3 p-2 bg-[var(--surface-card)] rounded-lg border border-[var(--surface-border)]">
+             class="flex items-center gap-unops-md p-unops-sm bg-unops-surface-primary rounded-unops-lg border border-unops-neutral-200">
           <div class="flex items-center gap-2 flex-1">
             <!-- Image preview -->
             <div *ngIf="fileData.file.type.startsWith('image/')" 
@@ -635,8 +630,8 @@
     </div>
 
     <!-- Input area -->
-    <div class="p-3 ai-input-area">
-      <div class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-xl p-3 focus-within:border-[var(--primary-color)] transition-colors">
+    <div class="p-unops-md ai-input-area">
+      <div class="bg-unops-surface-primary border border-unops-neutral-300 rounded-unops-xl p-unops-md focus-within:border-unops-primary focus-within:ring-1 focus-within:ring-unops-primary focus-within:ring-opacity-20 transition-all duration-unops-fast shadow-unops-sm">
         <textarea
           pTextarea
           [ngModel]="message()"
@@ -644,7 +639,10 @@
           (paste)="onPaste($event)"
           placeholder="{{ 'aiAssistant.typeMessageOrPaste' | translate }}"
           [rows]="1"
-          class="w-full resize-none border-0 focus:ring-0 focus:outline-none bg-transparent text-sm"
+          [autoResize]="true"
+          [style.max-height]="'120px'"
+          [style.min-height]="'44px'"
+          class="w-full resize-none border-0 focus:ring-0 focus:outline-none bg-transparent text-unops-base font-unops-regular text-unops-neutral-900 placeholder:text-unops-neutral-500 leading-relaxed"
           (keydown.enter)="$event.preventDefault(); !isWaitingResponse() && sendMessage()">
         </textarea>
 
@@ -709,9 +707,9 @@
   </div>
 
   <!-- AI Disclaimer Footer -->
-  <div class="px-4 py-2 text-center bg-[var(--surface-ground)] border-t border-[var(--surface-border)]">
-    <div class="flex items-center justify-center gap-2 text-xs text-[var(--text-color-secondary)]">
-      <i class="pi pi-exclamation-triangle text-yellow-500"></i>
+  <div class="px-unops-md py-unops-sm text-center bg-unops-surface-primary border-t border-unops-neutral-200">
+    <div class="flex items-center justify-center gap-unops-sm text-unops-xs text-unops-neutral-600 font-unops-regular">
+      <i class="pi pi-exclamation-triangle text-unops-warning"></i>
       <span>{{ 'aiAssistant.disclaimer' | translate }}</span>
     </div>
   </div>

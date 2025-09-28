@@ -62,3 +62,10 @@
   >
   </app-listview>
 </div>
+
+<!-- Business Card Scanner Dialog -->
+<app-business-card-scanner 
+  *ngIf="showBusinessCardScanner()"
+  (onClose)="closeBusinessCardScanner()"
+  (onScannedContact)="handleScannedContact($event)">
+</app-business-card-scanner>

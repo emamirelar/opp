@@ -1,7 +1,7 @@
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse, HttpEventType } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map, throwError, timer } from 'rxjs';
-import { catchError, mergeMap, retry, retryWhen, tap } from 'rxjs/operators';
+import { catchError, mergeMap, retry, retryWhen, tap, filter, switchMap } from 'rxjs/operators';
 import {
   AiAssistantRequest,
   AiAssistantSessionRequest,
@@ -82,7 +82,7 @@ export class AiAssistantService {
     });
   }
 
-  // Enhanced streaming chat method with file support
+  // Streaming chat method with HttpClient
   chatWithFilesStreaming(
     message: string, 
     sessionId?: string, 
@@ -97,92 +97,93 @@ export class AiAssistantService {
       streaming: true
     });
     
-    return new Observable(observer => {
-      // Use fetch with proper streaming headers and immediate processing
-      fetch(`${this.aiAssistantUrl}/chat`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Accept': 'text/event-stream',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-        // Critical: Disable any client-side response buffering
-        cache: 'no-store'
-      }).then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+    // Use HttpClient to ensure interceptors are applied for authentication
+    return this.http.post(`${this.aiAssistantUrl}/chat`, formData, {
+      headers: {
+        'Accept': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
+      responseType: 'text',
+      observe: 'events',
+      reportProgress: true
+    }).pipe(
+      filter(event => event.type === HttpEventType.DownloadProgress || event.type === HttpEventType.Response),
+      switchMap(event => {
+        if (event.type === HttpEventType.Response) {
+          // Handle final response
+          console.log('🌊 [FRONTEND] Stream completed');
+          return this.parseCompleteStreamingResponse(event.body || '');
+        } else if (event.type === HttpEventType.DownloadProgress) {
+          // Handle streaming chunks
+          const partialText = (event as any).partialText || '';
+          return this.parseStreamingChunks(partialText);
         }
-        
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error('No response body reader available');
-        }
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let chunkCount = 0;
-        const startTime = Date.now();
-        
-        const processChunk = async (): Promise<void> => {
-          try {
-            const { done, value } = await reader.read();
-            
-            if (done) {
-              observer.complete();
-              return;
-            }
-            
-            // Decode the chunk immediately
-            const chunk = decoder.decode(value, { stream: true });
-            buffer += chunk;
-            
-            // Process all complete lines in the buffer
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || ''; // Keep incomplete line in buffer
-            
-            for (const line of lines) {
-              if (line.trim() && line.startsWith('data: ')) {
-                chunkCount++;
-                const elapsed = Date.now() - startTime;
-                try {
-                  const dataStr = line.slice(6).trim(); // Remove 'data: ' prefix
-                  if (dataStr) {
-                    const data = JSON.parse(dataStr);
-                    
-                    // Check if this is a complete response
-                    const isComplete = this.isCompleteResponse(data);
+        return [];
+      }),
+      catchError(error => {
+        console.error('🌊 [FRONTEND] HttpClient streaming error:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 
-                    // Emit immediately for real-time processing
-                    observer.next({ data, complete: isComplete });
-                  }
-                } catch (parseError) {
-                  console.warn('[FRONTEND] Failed to parse streaming data:', parseError, line.substring(0, 200));
-                }
-              }
+  // Helper method to parse streaming chunks from HttpClient
+  private parseStreamingChunks(partialText: string): Observable<{ data: any, complete: boolean }> {
+    return new Observable(observer => {
+      try {
+        // Parse Server-Sent Events format
+        const lines = partialText.split('\n');
+        const dataLines = lines.filter(line => line.trim() && line.startsWith('data: '));
+        
+        for (const line of dataLines) {
+          try {
+            const dataStr = line.slice(6).trim(); // Remove 'data: ' prefix
+            if (dataStr) {
+              const data = JSON.parse(dataStr);
+              const isComplete = this.isCompleteResponse(data);
+              
+              console.log(`🌊 [FRONTEND] HttpClient chunk parsed, complete: ${isComplete}`);
+              observer.next({ data, complete: isComplete });
             }
-            
-            // Continue reading the next chunk immediately
-            processChunk();
-            
-          } catch (error) {
-            console.error('🌊 [FRONTEND] Error reading chunk:', error);
-            observer.error(error);
+          } catch (parseError) {
+            console.warn('[FRONTEND] Failed to parse HttpClient streaming data:', parseError);
           }
-        };
+        }
         
-        // Start processing chunks
-        processChunk();
-        
-      }).catch(error => {
-        console.error('🌊 [FRONTEND] Fetch error:', error);
+        observer.complete();
+      } catch (error) {
         observer.error(error);
-      });
-      
-      // Cleanup function
-      return () => {
-        console.log('🌊 [FRONTEND] Streaming observable cleanup');
-      };
+      }
+    });
+  }
+
+  // Helper method to parse complete streaming response
+  private parseCompleteStreamingResponse(responseText: string): Observable<{ data: any, complete: boolean }> {
+    return new Observable(observer => {
+      try {
+        // Parse the final response
+        const lines = responseText.split('\n');
+        const dataLines = lines.filter(line => line.trim() && line.startsWith('data: '));
+        
+        if (dataLines.length > 0) {
+          const lastDataLine = dataLines[dataLines.length - 1];
+          try {
+            const data = JSON.parse(lastDataLine.slice(6)); // Remove 'data: ' prefix
+            observer.next({ data, complete: true });
+          } catch (parseError) {
+            console.warn('Failed to parse final streaming response:', parseError);
+            observer.next({ data: { message: 'Stream completed' }, complete: true });
+          }
+        } else {
+          observer.next({ data: { message: 'Stream completed' }, complete: true });
+        }
+        
+        observer.complete();
+      } catch (error) {
+        observer.error(error);
+      }
     });
   }
 

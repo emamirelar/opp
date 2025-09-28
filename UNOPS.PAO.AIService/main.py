@@ -121,24 +121,17 @@ async def lifespan(app_instance: FastAPI):
 def add_routers_and_endpoints(app: FastAPI):
     """Add all routers and endpoints to the FastAPI app"""
     # Add chat router with proper API prefix
-    app.include_router(chat_router, prefix="/api/ai-assistant")
-    logger.info("✅ Chat router included at /api/ai-assistant")
-
+    app.include_router(chat_router)
     # Add session router with proper API prefix  
-    app.include_router(session_router, prefix="/api/ai-assistant")
-    logger.info("✅ Session router included at /api/ai-assistant")
-
+    app.include_router(session_router)
     # Add action log router with proper API prefix
-    app.include_router(action_log_router, prefix="/api/ai-assistant") 
-    logger.info("✅ Action log router included at /api/ai-assistant")
-
+    app.include_router(action_log_router)
+     
     # Add framework endpoints (external API tools handled automatically)
     add_framework_endpoints(None)
     from routers.framework import router as framework_router
-    
     # Framework router typically goes at root level for system endpoints
-    app.include_router(framework_router, prefix="/framework")
-    logger.info("✅ Framework router included at /framework")
+    app.include_router(framework_router)
 
 
 def create_app():

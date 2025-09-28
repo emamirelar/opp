@@ -21,7 +21,7 @@ import { AuthService } from '../../../../essentials/services/auth.service';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { ImportDialogService } from '../../../reusables/components/import/dialog/import-dialog.service';
 import { ImportService } from '../../../reusables/components/import/import.service';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MenuModule } from 'primeng/menu';
 import { RippleModule } from 'primeng/ripple';
@@ -139,6 +139,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
   // AI Assistant icon fallback
   showFallbackIcon: boolean = false;
 
+  // Previous route tracking for mobile navigation
+  private previousRoute: string = '/';
+
   // Chat history properties
   chatSessions: any[] = [];
   isLoadingChatSessions: boolean = false;
@@ -245,9 +248,19 @@ export class TopbarComponent implements OnInit, OnDestroy {
     }
 
     // Listen for route changes to load chat sessions when navigating to AI page
-    this.router.events.subscribe(() => {
-      if (this.isOnAiPage()) {
-        this.loadChatSessions();
+    // and track previous routes for mobile navigation
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        // Track previous route for mobile back navigation (but not if navigating to AI page)
+        if (!event.url.startsWith('/ai') && this.router.url !== event.url) {
+          this.previousRoute = this.router.url || '/';
+          // Store in session storage for the AI assistant panel to access
+          sessionStorage.setItem('ai-assistant-previous-route', this.previousRoute);
+        }
+        
+        if (this.isOnAiPage()) {
+          this.loadChatSessions();
+        }
       }
     });
   }
@@ -968,12 +981,24 @@ export class TopbarComponent implements OnInit, OnDestroy {
   onAIAssistantToggle() {
     // Check if user is on mobile
     if (this.isMobile) {
-      // On mobile, navigate to /ai instead of opening overlay
+      // On mobile, store current route and navigate to /ai
+      if (!this.router.url.startsWith('/ai')) {
+        this.previousRoute = this.router.url;
+        // Store in session storage for the AI assistant panel to access
+        sessionStorage.setItem('ai-assistant-previous-route', this.previousRoute);
+      }
       this.router.navigate(['/ai']);
     } else {
-      // On desktop, use the current overlay behavior
+      // On desktop, toggle the sidebar panel
       this.layoutService.onAIAssistantToggle();
     }
+  }
+
+  /**
+   * Get the previous route for mobile navigation back functionality
+   */
+  getPreviousRoute(): string {
+    return this.previousRoute;
   }
 
   onMenuButtonClick() {

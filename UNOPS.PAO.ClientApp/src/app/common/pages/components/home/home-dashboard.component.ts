@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, DestroyRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, DestroyRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -27,6 +27,7 @@ import { InteractionModalComponent } from '../../../../features/internal/compone
 import { Partner } from '../../../../features/internal/models/partner.model';
 import { Contact } from '../../../../features/internal/models/contact.model';
 import { Interaction } from '../../../../features/internal/models/interaction.model';
+import { DashboardCardComponent, DashboardCardConfig, DashboardCardFilter } from '../../../components/dashboard-card';
 // import { InteractionType } from '../../../../features/internal/models/interaction-type.enum'; // Uncomment for dummy data testing
 
 interface DashboardData {
@@ -81,7 +82,8 @@ interface DashboardSummary {
     TooltipModule,
     RouterModule,
     ChartModule,
-    HttpClientModule
+    HttpClientModule,
+    DashboardCardComponent
   ],
   providers: [DialogService]
 })
@@ -96,6 +98,66 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   private permissionService = inject(PermissionService);
   private feedbackDialogService = inject(FeedbackDialogService);
   private dialogService = inject(DialogService);
+
+  // Dashboard Card Configurations specific to home dashboard
+  private readonly DASHBOARD_CARD_CONFIGS = {
+    ACTIONS_REQUIRED: {
+      icon: 'priority_high',
+      iconColor: 'bg-unops-warning/10',
+      title: 'Actions Required',
+      subtitle: 'Items need attention',
+      size: 'tall',
+      emptyStateIcon: 'check_circle',
+      emptyStateTitle: 'All caught up!',
+      emptyStateMessage: 'No actions require your attention at this time.',
+      showFilters: true,
+      showViewAll: true,
+      viewAllText: 'View All'
+    } as DashboardCardConfig,
+
+    RECENT_ACTIVITY: {
+      icon: 'history',
+      iconColor: 'bg-unops-info/10',
+      title: 'Recent Activity',
+      subtitle: 'Latest updates',
+      size: 'tall',
+      emptyStateIcon: 'history',
+      emptyStateTitle: 'No recent activity',
+      emptyStateMessage: 'No updates to show.',
+      showFilters: true,
+      showViewAll: true,
+      viewAllText: 'View All'
+    } as DashboardCardConfig,
+
+    MY_WORKSPACE: {
+      icon: 'dashboard',
+      iconColor: 'bg-unops-primary/10',
+      title: 'My Workspace',
+      subtitle: 'Quick access to your data',
+      size: 'tall',
+      emptyStateIcon: 'dashboard',
+      emptyStateTitle: 'No items yet',
+      emptyStateMessage: 'No partners or contacts yet',
+      showFilters: true,
+      showViewAll: true,
+      viewAllText: 'View All'
+    } as DashboardCardConfig,
+
+    RECENT_INTERACTIONS: {
+      icon: 'chat',
+      iconColor: 'bg-unops-accent-orange/10',
+      title: 'Recent Interactions & Communications',
+      subtitle: 'Latest activity',
+      size: 'fixed',
+      emptyStateIcon: 'chat',
+      emptyStateTitle: 'No interactions yet',
+      emptyStateMessage: 'Start logging your communications and meetings',
+      emptyStateActionLabel: 'Log First Interaction',
+      showFilters: false,
+      showViewAll: true,
+      viewAllText: 'View All'
+    } as DashboardCardConfig
+  };
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -137,8 +199,100 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   private timestampInterval?: ReturnType<typeof setInterval>;
   private lastDataLoadTime = new Date();
 
+  // Mobile detection
+  isMobile = signal<boolean>(false);
+
   // UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
   // useDummyData = signal(false);
+
+  // Dashboard Card Configurations
+  get actionsRequiredConfig(): DashboardCardConfig {
+    return {
+      ...this.DASHBOARD_CARD_CONFIGS.ACTIONS_REQUIRED,
+      subtitle: `${this.getTotalDraftActions()} items need attention`
+    };
+  }
+
+  get recentActivityConfig(): DashboardCardConfig {
+    return {
+      ...this.DASHBOARD_CARD_CONFIGS.RECENT_ACTIVITY,
+      subtitle: `Latest updates from ${this.dashboardData()?.orgUnitName || 'your organization'}`
+    };
+  }
+
+  get myWorkspaceConfig(): DashboardCardConfig {
+    return {
+      ...this.DASHBOARD_CARD_CONFIGS.MY_WORKSPACE,
+      subtitle: 'Quick access to your data'
+    };
+  }
+
+  get recentInteractionsConfig(): DashboardCardConfig {
+    return {
+      ...this.DASHBOARD_CARD_CONFIGS.RECENT_INTERACTIONS,
+      subtitle: `${this.summary().totalMyInteractions} interactions • Latest activity`
+    };
+  }
+
+  // Dashboard Card Filters
+  get actionsRequiredFilters(): DashboardCardFilter[] {
+    const types = this.getDraftActionTypes();
+    return types.map(type => ({
+      id: type,
+      label: type,
+      count: this.getDraftActionCount(type),
+      active: this.selectedDraftActionType() === type
+    }));
+  }
+
+  get recentActivityFilters(): DashboardCardFilter[] {
+    const types = this.getOrgUnitUpdateTypes();
+    return types.map(type => ({
+      id: type,
+      label: `${this.getOrgUnitUpdateCount(type)} ${type}${this.getOrgUnitUpdateCount(type) === 1 ? '' : 's'}`,
+      count: this.getOrgUnitUpdateCount(type),
+      active: this.selectedOrgUnitUpdateType() === type
+    }));
+  }
+
+  get myWorkspaceFilters(): DashboardCardFilter[] {
+    const data = this.dashboardData();
+    if (!data) return [];
+    
+    // Don't show filters if there are no items to filter
+    const totalItems = data.myPartners.length + data.myContacts.length;
+    if (totalItems === 0) return [];
+    
+    // Only show filters if there are multiple types of items or multiple items of one type
+    const hasPartners = data.myPartners.length > 0;
+    const hasContacts = data.myContacts.length > 0;
+    
+    // If only one type exists and it has only one item, don't show filters
+    if (totalItems === 1) return [];
+    
+    // If both types exist or one type has multiple items, show filters
+    const filters: DashboardCardFilter[] = [];
+    
+    if (hasPartners) {
+      filters.push({
+        id: 'Partner',
+        label: `${data.myPartners.length} Partners`,
+        count: data.myPartners.length,
+        active: this.selectedOrgUnitUpdateType() === 'Partner'
+      });
+    }
+    
+    if (hasContacts) {
+      filters.push({
+        id: 'Contact',
+        label: `${data.myContacts.length} Contacts`,
+        count: data.myContacts.length,
+        active: this.selectedOrgUnitUpdateType() === 'Contact'
+      });
+    }
+    
+    return filters;
+  }
 
   // Chart data for interactions pie chart
   interactionsChartData = signal<any>(null);
@@ -211,6 +365,7 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit() {
+    this.checkMobileView();
     this.loadDashboardData();
     this.loadPermissions();
     this.startTimestampUpdates();
@@ -282,6 +437,17 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       const days = Math.floor(diffInSeconds / 86400);
       this.lastUpdatedTime.set(`${days} day${days > 1 ? 's' : ''} ago`);
     }
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.checkMobileView();
+  }
+
+  private checkMobileView() {
+    // Consider mobile if width is less than 768px (Tailwind's md breakpoint)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    this.isMobile.set(isMobile);
   }
 
   private loadDashboardData() {
@@ -650,24 +816,30 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   }
 
   // Helper methods to get truncated items for normal view (max 3 items per panel)
+  // On mobile, returns all items; on desktop, returns truncated items
   getTruncatedDraftActions(limit: number = 3) {
-    return this.getDisplayedDraftActions().slice(0, limit);
+    const items = this.getDisplayedDraftActions();
+    return this.isMobile() ? items : items.slice(0, limit);
   }
 
   getTruncatedOrgUnitUpdates(limit: number = 3) {
-    return this.getDisplayedOrgUnitUpdates().slice(0, limit);
+    const items = this.getDisplayedOrgUnitUpdates();
+    return this.isMobile() ? items : items.slice(0, limit);
   }
 
-  getTruncatedPartners(limit: number = 2) {
-    return this.dashboardData()?.myPartners.slice(0, limit) || [];
+  getTruncatedPartners(limit: number = 3) {
+    const items = this.dashboardData()?.myPartners || [];
+    return this.isMobile() ? items : items.slice(0, limit);
   }
 
-  getTruncatedContacts(limit: number = 1) {
-    return this.dashboardData()?.myContacts.slice(0, limit) || [];
+  getTruncatedContacts(limit: number = 3) {
+    const items = this.dashboardData()?.myContacts || [];
+    return this.isMobile() ? items : items.slice(0, limit);
   }
 
   getTruncatedInteractions(limit: number = 3) {
-    return this.getDisplayedInteractions().slice(0, limit);
+    const items = this.getDisplayedInteractions();
+    return this.isMobile() ? items : items.slice(0, limit);
   }
 
   // Get remaining counts for "View All" links
@@ -680,15 +852,20 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   }
 
   getRemainingPartnersCount(): number {
-    return Math.max(0, (this.dashboardData()?.myPartners.length || 0) - 2);
+    return Math.max(0, (this.dashboardData()?.myPartners.length || 0) - 3);
   }
 
   getRemainingContactsCount(): number {
-    return Math.max(0, (this.dashboardData()?.myContacts.length || 0) - 1);
+    return Math.max(0, (this.dashboardData()?.myContacts.length || 0) - 3);
   }
 
   getRemainingInteractionsCount(): number {
     return Math.max(0, this.getDisplayedInteractions().length - 3);
+  }
+
+  // Get combined remaining count for workspace (partners + contacts)
+  getRemainingWorkspaceCount(): number {
+    return this.getRemainingPartnersCount() + this.getRemainingContactsCount();
   }
 
   navigateToInteractions() {
@@ -1128,6 +1305,19 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   clearOrgUnitUpdateFilter() {
     this.selectedOrgUnitUpdateType.set(null);
+  }
+
+  // Dashboard Card Event Handlers
+  onActionsFilterClick(filter: DashboardCardFilter): void {
+    this.setDraftActionFilter(filter.id);
+  }
+
+  onActivityFilterClick(filter: DashboardCardFilter): void {
+    this.setOrgUnitUpdateFilter(filter.id);
+  }
+
+  onWorkspaceFilterClick(filter: DashboardCardFilter): void {
+    this.setOrgUnitUpdateFilter(filter.id);
   }
 
   getDisplayedOrgUnitUpdates(): RecentUpdate[] {

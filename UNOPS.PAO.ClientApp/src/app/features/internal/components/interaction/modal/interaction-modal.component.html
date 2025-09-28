@@ -25,22 +25,17 @@
 
         @if( showPhoneNumbers ){
         <div class="col-span-12 md:col-span-6 flex flex-col gap-2">
-          <label for="phones" class="block">{{ 'label.interaction.phoneNumbers' | translate }}</label>
-          <p-autocomplete id="phones"
-                          #phoneAutocomplete
-                          formControlName="phoneNumbers"
-                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
-                          multiple
-                          fluid
-                          [typeahead]="false"
-                          (onBlur)="validatePhoneInput()"
-                          [class.ng-invalid]="formGroup.get('phoneNumbers')?.invalid" />
-          @if( formGroup.get("phoneNumbers")?.invalid && formGroup.get("phoneNumbers")?.errors?.['invalidPhone'] ) {
-            <p-message severity="error" variant="simple">
-              {{ 'message.invalidPhoneNumberFormat' | translate }}
-            </p-message>
-          }
+          <app-phone-input
+            formControlName="phoneNumbers"
+            [label]="'label.interaction.phoneNumbers' | translate"
+            [disabled]="!recordPermissions()?.permissions?.canUpdate"
+            [showClear]="true"
+            [autoProcess]="true"
+            [helperText]="'You can paste multiple numbers'"
+            [invalidPhoneMessage]="'message.invalidPhoneNumberFormat' | translate">
+          </app-phone-input>
         </div>
+
         }
 
         <div class="col-span-full flex flex-col gap-2">

@@ -56,6 +56,14 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   @Input() mode: 'overlay' | 'fullscreen' = 'overlay'; // Mode determines card click behavior
   @Output() cardClicked = new EventEmitter<any>();
 
+  // Mobile detection
+  isMobile = computed(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 768;
+    }
+    return false;
+  });
+
   firstScroll = signal(true);
   message = signal('');
   selectedFiles = signal<{ file: File, name: string, content: string }[]>([]);
@@ -91,6 +99,9 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   suggestionsLoading = signal(false);
   showSuggestions = signal(true);
   suggestionsError = signal(false);
+  
+  // Resize listener reference for cleanup
+  private resizeListener?: () => void;
   
   // Check if AI is currently in fullscreen mode (on AI route)
   isInFullscreenMode = computed(() => {
@@ -197,6 +208,14 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
         this.scrollToBottom(true); // Use smooth scroll for new messages
       }, 100);
     });
+
+    // Listen for window resize to update mobile detection
+    if (typeof window !== 'undefined') {
+      this.resizeListener = () => {
+        this.cdr.markForCheck();
+      };
+      window.addEventListener('resize', this.resizeListener);
+    }
 
     // Remove progressive rendering event subscription to prevent loops
     // Content will render directly from streamingTypes arrays in template
@@ -380,22 +399,43 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopGeneratingDotsAnimation();
+    
+    // Clean up window resize listener
+    if (typeof window !== 'undefined' && this.resizeListener) {
+      window.removeEventListener('resize', this.resizeListener);
+    }
   }
 
   // Handle closing the AI Assistant
   closeAiAssistant(): void {
     // Check if we're on the AI route
     if (this.router.url.startsWith('/ai')) {
-      // On AI route, navigate back to home to return to popup mode
-      this.router.navigate(['/']);
-      // After navigation, open the AI assistant in popup mode
-      setTimeout(() => {
-        this.layoutService.onAIAssistantToggle();
-      }, 100);
+      if (this.isMobile()) {
+        // On mobile, navigate back to the previous route
+        const previousRoute = this.getPreviousRoute();
+        this.router.navigate([previousRoute]);
+      } else {
+        // On desktop, navigate back to home and open AI assistant in popup mode
+        this.router.navigate(['/']);
+        // After navigation, open the AI assistant in popup mode
+        setTimeout(() => {
+          this.layoutService.onAIAssistantToggle();
+        }, 100);
+      }
     } else {
       // In overlay mode, close the overlay
       this.layoutService.onAIAssistantToggle();
     }
+  }
+
+  // Get previous route for mobile navigation
+  private getPreviousRoute(): string {
+    // Try to get from session storage first
+    const storedRoute = sessionStorage.getItem('ai-assistant-previous-route');
+    if (storedRoute && storedRoute !== '/ai') {
+      return storedRoute;
+    }
+    return '/'; // Default fallback
   }
 
 

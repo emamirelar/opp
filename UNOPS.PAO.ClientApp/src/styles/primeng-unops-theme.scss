@@ -505,6 +505,7 @@
   border: 1px solid var(--unops-neutral-200) !important;
   border-radius: var(--unops-radius-xl) !important;
   box-shadow: var(--unops-shadow-xl) !important;
+  overflow: hidden !important;
   
   .p-dialog-header {
     background: var(--unops-surface-primary) !important;
@@ -536,6 +537,11 @@
   .p-dialog-content {
     padding: var(--unops-spacing-lg) !important;
     background: var(--unops-surface-primary) !important;
+    
+    // Apply bottom border radius when there's no footer
+    &:last-child {
+      border-radius: 0 0 var(--unops-radius-xl) var(--unops-radius-xl) !important;
+    }
   }
   
   .p-dialog-footer {
@@ -551,6 +557,34 @@
 
 .p-dialog-mask {
   background: var(--unops-surface-overlay) !important;
+}
+
+/* Specific fixes for dynamic dialogs */
+p-dynamicdialog {
+  .p-dialog {
+    overflow: hidden !important;
+    
+    .p-dialog-content {
+      // Ensure content doesn't overflow the rounded corners
+      overflow: hidden !important;
+      
+      // For dialogs without footer, apply bottom border radius
+      &:last-child {
+        border-radius: 0 0 var(--unops-radius-xl) var(--unops-radius-xl) !important;
+      }
+      
+      // Handle manual entry dialog specific styling
+      app-manual-entry-dialog {
+        display: block;
+        margin: calc(-1 * var(--unops-spacing-lg)) !important;
+        
+        > div {
+          padding: var(--unops-spacing-lg) !important;
+          border-radius: 0 0 var(--unops-radius-xl) var(--unops-radius-xl) !important;
+        }
+      }
+    }
+  }
 }
 
 /* ===================================== */

@@ -57,6 +57,46 @@
       @apply transition-opacity duration-unops-slow ease-unops-smooth;
     }
   }
+}
+
+// Custom styling for UNOPS AI splitter
+.unops-ai-splitter {
+  .splitter-gutter {
+    @apply bg-unops-neutral-200 border-0;
+    
+    // Subtle hover effect
+    &:hover {
+      @apply bg-unops-neutral-300;
+    }
+    
+    // Active state when dragging
+    &:active,
+    &.splitter-gutter-resizing {
+      @apply bg-unops-primary-light;
+    }
+    
+    // Handle styling
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 3px;
+      height: 24px;
+      @apply bg-unops-neutral-400 rounded-full;
+      transition: background-color var(--transition-duration-unops-fast) var(--transition-timing-function-unops-smooth);
+    }
+    
+    &:hover::after {
+      @apply bg-unops-neutral-500;
+    }
+    
+    &:active::after,
+    &.splitter-gutter-resizing::after {
+      @apply bg-unops-primary;
+    }
+  }
   
   // No longer needed - splitter automatically hides gutter when only one panel is visible
 }

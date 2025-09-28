@@ -27,14 +27,15 @@ import { CalendarModule } from 'primeng/calendar';
 import { InteractionModalFooterComponent } from './footer/interaction-modal-footer.component';
 import { NgIf } from '@angular/common';
 import { ChipModule, Chip } from 'primeng/chip';
-import { AutoCompleteModule, AutoComplete } from 'primeng/autocomplete';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 import { HttpClientModule } from '@angular/common/http';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PanelModule } from 'primeng/panel';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
 import {Divider} from 'primeng/divider';
+import { PhoneInputComponent } from '../../../../../common/components/phone-input/phone-input.component';
 
 // Interface for duplicate detection response
 interface DuplicateDetectionResponse {
@@ -92,11 +93,12 @@ interface DuplicateDetectionResponse {
     CommonModule,
     MessageModule,
     ChipModule,
-    AutoCompleteModule,
     HttpClientModule,
     AiTranscribeComponent,
     PanelModule,
     Divider,
+    PhoneInputComponent,
+    AutoCompleteModule,
   ],
   providers: [
     DialogService,
@@ -110,8 +112,6 @@ export class InteractionModalComponent {
   private dialogConfig = inject(DynamicDialogConfig);
   private cdr = inject(ChangeDetectorRef);
 
-  // ViewChild for phone autocomplete field
-  @ViewChild('phoneAutocomplete') phoneAutocomplete!: AutoComplete;
 
   // Custom validator for contactIds - requires at least one contact to be selected
   private static atLeastOneContactValidator(control: AbstractControl): ValidationErrors | null {
@@ -187,8 +187,8 @@ export class InteractionModalComponent {
   //contacts: Contact[] = [];
   //partners: Partner[] = [];
   invalidEmails: string[] = [];
-  invalidPhones: string[] = [];
   showValidationFailedError = signal<boolean>(false);
+
 
   allContacts = this.cachedDataService.allContacts;
   allPartners = this.cachedDataService.allPartners;
@@ -769,51 +769,7 @@ export class InteractionModalComponent {
     }
   }
 
-  isValidPhone(phone: string): boolean {
-    // E164 international phone number format validation
-    // Format: +[country code 1-9][up to 14 digits total]
-    // Examples: +1234567890, +33123456789, +861234567890
-    const regexE164 = /^\+[1-9]\d{1,14}$/;
-    return regexE164.test(phone);
-  }
 
-  /**
-   * Extracts only digits from a phone number string
-   * Used to clean user input before validation
-   */
-  private extractDigitsOnly(phone: string): string {
-    return phone.replace(/\D/g, ''); // Keep only digits
-  }
-
-  validatePhone(phone: string) {
-    if (!this.isValidPhone(phone)) {
-      this.invalidPhones = [...(this.invalidPhones || []), phone];
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Invalid Phone Number',
-        detail: `"${phone}" is not a valid phone number`,
-        life: 3000
-      });
-    }
-  }
-
-  /**
-   * Validates phone input on blur and maintains focus if invalid
-   * This allows users to easily correct invalid phone numbers
-   */
-  validatePhoneInput(): void {
-    const phoneControl = this.formGroup.get('phoneNumbers');
-    if (phoneControl?.invalid && phoneControl.errors?.['invalidPhone']) {
-      // Keep focus on the field to allow immediate correction
-      setTimeout(() => {
-        if (this.phoneAutocomplete && this.phoneAutocomplete.inputEL?.nativeElement) {
-          this.phoneAutocomplete.inputEL.nativeElement.focus();
-          // Optionally select the text to make correction easier
-          this.phoneAutocomplete.inputEL.nativeElement.select();
-        }
-      }, 100);
-    }
-  }
 
   // Helper: Get emails for contact IDs (only valid matches) - always lowercase
   private getEmailsForContactIds(contactIds: number[]): string[] {
@@ -1134,32 +1090,8 @@ export class InteractionModalComponent {
         distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
       )
       .subscribe((newPhones: string[]) => {
-
-        const previousPhones = this.formGroup.get('previousPhones')?.value as string[] || [];
-        const addedPhones = newPhones.filter(phone => !previousPhones.includes(phone));
-
-        // Validate all added phones
-        const invalidAddedPhones = addedPhones.filter(phone => !this.isValidPhone(phone));
-
-        if (invalidAddedPhones.length > 0) {
-          // Handle invalid phones - show validation message but keep the number visible
-          invalidAddedPhones.forEach(phone => this.validatePhone(phone));
-
-          // Mark the form control as invalid to show error message
-          this.formGroup.get('phoneNumbers')?.setErrors({ 'invalidPhone': true });
-
-          // Keep all phone numbers (valid and invalid) in the field
-          // This allows the user to see what they typed and correct it
-          // The validation message will guide them to correct the format
-        } else {
-          // Clear any previous phone validation errors
-          const currentErrors = this.formGroup.get('phoneNumbers')?.errors;
-          if (currentErrors && currentErrors['invalidPhone']) {
-            delete currentErrors['invalidPhone'];
-            const hasOtherErrors = Object.keys(currentErrors).length > 0;
-            this.formGroup.get('phoneNumbers')?.setErrors(hasOtherErrors ? currentErrors : null);
-          }
-        }
+        // Phone validation is now handled by PhoneInputComponent
+        // Just track previous phones for consistency
         this.formGroup.get('previousPhones')?.setValue(newPhones);
       });
   }
