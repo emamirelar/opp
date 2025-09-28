@@ -1,0 +1,41 @@
+// Business Card Scanner - Clean Responsive Design
+// Uses Tailwind classes and computed signals for responsive behavior
+
+:host {
+  display: block;
+}
+
+// Ensure video element fills container properly
+video {
+  display: block;
+}
+
+// Custom focus styles for accessibility
+button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+// Smooth transitions for interactive elements
+button, input {
+  transition: all 0.2s ease-in-out;
+}
+
+// Ensure proper aspect ratio for camera on different devices
+.camera-container {
+  aspect-ratio: 4/3;
+  
+  @media (max-width: 768px) {
+    aspect-ratio: unset;
+  }
+}
+
+// Hide scrollbars but keep functionality
+.overflow-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

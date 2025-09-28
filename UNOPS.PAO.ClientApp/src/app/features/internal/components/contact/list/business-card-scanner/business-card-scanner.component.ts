@@ -1,17 +1,16 @@
-import { Component, OnInit, ViewChild, ElementRef, Output, EventEmitter, inject, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, Output, EventEmitter, inject, OnDestroy, computed, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { TranslateModule } from '@ngx-translate/core';
-import { FileUploadModule } from 'primeng/fileupload';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 import { from, of } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
-import {ProgressSpinner} from 'primeng/progressspinner';
 import { Contact } from '../../../../models/contact.model';
 import { GeminiService } from '../../../../services/gemini.service';
+import { TranslateService } from '@ngx-translate/core';
 
 /**
  * @uiEntity BusinessCardScanner
@@ -32,22 +31,63 @@ import { GeminiService } from '../../../../services/gemini.service';
 @Component({
   selector: 'app-business-card-scanner',
   templateUrl: './business-card-scanner.component.html',
+  styleUrls: ['./business-card-scanner.component.scss'],
   standalone: true,
-  imports: [CommonModule, ButtonModule, MessageModule, TranslateModule, FileUploadModule, ProgressSpinner]
+  imports: [CommonModule, ButtonModule, MessageModule, TranslateModule, ProgressSpinnerModule]
 })
 export class BusinessCardScannerComponent implements OnInit, OnDestroy {
   @ViewChild('video') videoElement!: ElementRef;
   @ViewChild('canvas') canvasElement!: ElementRef;
   @Output() onScannedContact = new EventEmitter<Contact>();
+  @Output() onClose = new EventEmitter<void>();
 
   private geminiService = inject(GeminiService);
-  private dialogRef = inject(DynamicDialogRef);
+  private translateService = inject(TranslateService);
+
+  // Reactive signals for responsive design
+  private windowWidth = signal(window.innerWidth);
+  private windowHeight = signal(window.innerHeight);
+  
+  // Computed responsive properties
+  isMobile = computed(() => {
+    const width = this.windowWidth();
+    const height = this.windowHeight();
+    // Consider mobile if width < 768px OR if it's a small landscape device
+    return width < 768 || (width < 1024 && height < 600);
+  });
+  
+  isLandscape = computed(() => this.windowWidth() > this.windowHeight());
+  
+  // Dialog and content classes
+  dialogClasses = computed(() => {
+    const mobile = this.isMobile();
+    return mobile 
+      ? 'fixed inset-0 z-[9999] bg-white'
+      : 'fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50';
+  });
+  
+  contentClasses = computed(() => {
+    const mobile = this.isMobile();
+    return mobile
+      ? 'h-full w-full flex flex-col'
+      : 'bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col';
+  });
 
   stream: MediaStream | null = null;
   capturedImage: string | null = null;
   scanning: boolean = false;
   error: string | null = null;
   isFrontCamera: boolean = false;
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    this.windowWidth.set(event.target.innerWidth);
+    this.windowHeight.set(event.target.innerHeight);
+  }
+
+  getDialogTitle(): string {
+    return this.translateService.instant('title.scanBusinessCard');
+  }
 
   ngOnInit() {
     this.startCamera();
@@ -61,7 +101,7 @@ export class BusinessCardScannerComponent implements OnInit, OnDestroy {
     this.stopCamera();
     this.capturedImage = null;
     this.error = null;
-    this.dialogRef.close();
+    this.onClose.emit();
   }
 
   startCamera(): void {
@@ -161,7 +201,8 @@ export class BusinessCardScannerComponent implements OnInit, OnDestroy {
     this.geminiService.scanFile(file, 'contact_action')
       .pipe(
         map(result => {
-          this.dialogRef.close(result);
+          this.onScannedContact.emit(result);
+          this.hide();
           return result;
         }),
         catchError(error => {
@@ -198,8 +239,9 @@ export class BusinessCardScannerComponent implements OnInit, OnDestroy {
    * @when_to_use When you have an existing photo of a business card saved on your device instead of taking a new one
    * @permissions File system access required
    */
-  handleFileUpload(event: any): void {
-    const file = event.files[0];
+  handleFileUpload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (file) {
       this.scanning = true;
       this.error = null;
@@ -207,7 +249,8 @@ export class BusinessCardScannerComponent implements OnInit, OnDestroy {
       this.geminiService.scanFile(file, 'contact_action')
         .pipe(
           map(result => {
-            this.dialogRef.close(result);
+            this.onScannedContact.emit(result);
+            this.hide();
             return result;
           }),
           catchError(error => {
