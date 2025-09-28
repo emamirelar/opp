@@ -68,6 +68,7 @@ export class ContactEditDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   showAssistantFields = signal<boolean>(false);
+  private partnerContextApplied = false;
 
   public formGroup: FormGroup = this.fb.group({
     // Basic contact information
@@ -154,6 +155,7 @@ export class ContactEditDialogComponent implements OnInit {
 
   ngOnInit() {
     this.record = this.dialogConfig.data?.record;
+    const partnerContext = this.dialogConfig.data?.partnerContext;
     
     // Set initial loading state
     this.isLoading.set(true);
@@ -174,6 +176,24 @@ export class ContactEditDialogComponent implements OnInit {
       }
     }
     
+    // Handle partner context (when opened from partner page)
+    if (partnerContext?.partnerId && partnerContext?.lockPartner) {
+      // Convert partner ID to number if it's a string
+      const partnerIdNum = typeof partnerContext.partnerId === 'string' 
+        ? parseInt(partnerContext.partnerId) 
+        : partnerContext.partnerId;
+      
+      // Apply partner context immediately and also after data loads
+      this.applyPartnerContext(partnerIdNum);
+      
+      // Also try after a delay to ensure data is loaded
+      setTimeout(() => {
+        if (!this.partnerContextApplied) {
+          this.applyPartnerContext(partnerIdNum);
+        }
+      }, 500);
+    }
+    
     // Check if any assistant fields have values
     const hasAssistantInfo = this.record?.assistant || 
                            this.record?.assistantPhone || 
@@ -187,6 +207,28 @@ export class ContactEditDialogComponent implements OnInit {
     setTimeout(() => {
       this.isLoading.set(false);
     }, 100);
+  }
+
+  // Check if partner field is locked due to partner context
+  isPartnerLocked(): boolean {
+    const partnerContext = this.dialogConfig.data?.partnerContext;
+    return partnerContext?.lockPartner === true;
+  }
+
+  // Apply partner context with proper timing
+  private applyPartnerContext(partnerIdNum: number): void {
+    // Set the partner ID and disable the field
+    this.formGroup.patchValue({ partnerId: partnerIdNum });
+    this.formGroup.get('partnerId')?.disable();
+    
+    // Update partner name
+    this.updatePartnerName(partnerIdNum);
+    
+    // Mark as applied
+    this.partnerContextApplied = true;
+    
+    // Trigger change detection
+    this.cdr.detectChanges();
   }
 
   handleSave() {
@@ -248,6 +290,12 @@ export class ContactEditDialogComponent implements OnInit {
   _getRequestPayload() {
     const formValue = this.formGroup.value;
     const requestJsonObj: Record<string, any> = { ...formValue };
+
+    // Include disabled fields (like locked partner field)
+    const rawFormValue = this.formGroup.getRawValue();
+    if (this.isPartnerLocked() && rawFormValue.partnerId) {
+      requestJsonObj['partnerId'] = rawFormValue.partnerId;
+    }
 
     // Clear assistant fields if the section is not shown
     if (!this.showAssistantFields()) {
@@ -417,7 +465,6 @@ export class ContactEditDialogComponent implements OnInit {
         distinctUntilChanged()
       )
       .subscribe((newPartnerId: number) => {
-        console.log('🔧 Partner ID changed to:', newPartnerId);
         this.updatePartnerName(newPartnerId);
       });
   }
@@ -431,33 +478,27 @@ export class ContactEditDialogComponent implements OnInit {
       return;
     }
 
-    console.log('🔧 updatePartnerName called with partnerId:', partnerId);
     const allPartners = this.cachedDataService.allPartners();
-    console.log('🔧 allPartners cache contains:', allPartners?.length || 0, 'partners');
 
     // First, try to find partner in the cache
     const partner = allPartners.find((p: any) => p.id === partnerId);
     if (partner) {
-      console.log('🔧 Partner found in cache:', partner.name);
       this.formGroup.get('partnerName')?.setValue(partner.name);
       return;
     }
 
     // If partner is missing from cache, load it from API
-    console.log('🔧 Partner not found in cache, loading from API:', partnerId);
     this.partnerService.getPartnerById(partnerId.toString()).pipe(
       map(partner => partner ? partner.name : null),
       catchError(error => {
-        console.warn(`🔧 Failed to load partner ${partnerId}:`, error);
+        console.warn(`Failed to load partner ${partnerId}:`, error);
         return of(null);
       })
     ).subscribe({
       next: (partnerName) => {
         if (partnerName) {
-          console.log('🔧 Partner loaded from API:', partnerName);
           this.formGroup.get('partnerName')?.setValue(partnerName);
         } else {
-          console.log('🔧 Partner not found, clearing partner name');
           this.formGroup.get('partnerName')?.setValue('');
         }
         
@@ -477,7 +518,6 @@ export class ContactEditDialogComponent implements OnInit {
   private triggerDuplicateDetectionAfterSave(payload: any, updatedRecord?: any): void {
     // Skip if no payload
     if (!payload) {
-      console.log('Skipping duplicate detection - no payload provided');
       return;
     }
 
@@ -493,17 +533,13 @@ export class ContactEditDialogComponent implements OnInit {
         delete duplicateCheckPayload.id;
       } else {
         duplicateCheckPayload.id = numericId;
-        console.log('Triggering duplicate detection for Contact edit (excluding ID:', numericId, ')');
       }
-    } else {
-      console.log('Triggering duplicate detection for new Contact (no ID exclusion)');
     }
     
     // Call the contact service to detect duplicates (uses the updated SQL with ID exclusion)
     this.contactService.detectDuplicates(duplicateCheckPayload).subscribe({
       next: (response: any) => {
         const recordType = payload.id ? `existing Contact ID ${payload.id}` : 'new Contact';
-        console.log('Post-save duplicate detection results for', recordType, ':', response);
         
         // If this is an import edit, update the duplicate information
         if (this.dialogConfig.data.isImportEdit) {
@@ -577,7 +613,6 @@ export class ContactEditDialogComponent implements OnInit {
       // Update the record's duplicate info
       this.updateRecordInImportDialog(updatedDuplicateInfo, updatedRecord);
       
-      console.log('Updated duplicate info for import record:', updatedDuplicateInfo);
     } else {
       // No duplicates found
       const noDuplicateInfo = {
@@ -594,7 +629,6 @@ export class ContactEditDialogComponent implements OnInit {
       
       this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);
       
-      console.log('No duplicates found - marked as unique record');
     }
   }
 
@@ -616,7 +650,6 @@ export class ContactEditDialogComponent implements OnInit {
         });
         
         window.dispatchEvent(updateEvent);
-        console.log('Dispatched duplicate info update event for row:', importRowId);
       } else {
         console.warn('No importRowId found to update duplicate info');
       }

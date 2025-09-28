@@ -90,7 +90,6 @@ export class ContactViewInteractionsComponent implements OnInit {
       // Get the recordId from parent route parameters
       this.route.parent?.params.subscribe(params => {
         const contactId = params['recordId'];
-        console.log('Contact ID from parent route:', contactId);
         if (contactId) {
           this.contactIdSignal.set(contactId);
         }
@@ -285,7 +284,6 @@ export class ContactViewInteractionsComponent implements OnInit {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Interaction created:', result);
         // Refresh the listview
         window.dispatchEvent(new CustomEvent('refresh-listview'));
       }
@@ -314,7 +312,6 @@ export class ContactViewInteractionsComponent implements OnInit {
   }
 
   onSearchChange(searchParams: SearchParams) {
-    console.log('Contact interactions search changed:', searchParams);
   }
 }
 

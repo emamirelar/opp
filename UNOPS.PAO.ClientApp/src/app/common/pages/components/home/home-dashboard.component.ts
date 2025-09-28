@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, DestroyRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, DestroyRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -18,6 +18,12 @@ import { PartnerService } from '../../../../features/internal/services/partner.s
 import { ContactService } from '../../../../features/internal/services/contact.service';
 import { InteractionService } from '../../../../features/internal/services/interaction.service';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
+import { PermissionService } from '../../../../essentials/services/permission.service';
+import { FeedbackDialogService } from '../../services/feedback-dialog.service';
+import { DialogService } from 'primeng/dynamicdialog';
+import { PartnerEditDialogComponent } from '../../../../features/internal/components/partner/edit-dialog/partner-edit-dialog.component';
+import { ContactEditDialogComponent } from '../../../../features/internal/components/contact/edit-dialog/contact-edit-dialog.component';
+import { InteractionModalComponent } from '../../../../features/internal/components/interaction/modal/interaction-modal.component';
 import { Partner } from '../../../../features/internal/models/partner.model';
 import { Contact } from '../../../../features/internal/models/contact.model';
 import { Interaction } from '../../../../features/internal/models/interaction.model';
@@ -78,9 +84,10 @@ interface DashboardSummary {
     ChartModule,
     HttpClientModule,
     DashboardCardComponent
-  ]
+  ],
+  providers: [DialogService]
 })
-export class HomeDashboardComponent implements OnInit {
+export class HomeDashboardComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private router = inject(Router);
   private partnerService = inject(PartnerService);
@@ -88,6 +95,9 @@ export class HomeDashboardComponent implements OnInit {
   private interactionService = inject(InteractionService);
   private globalFilterService = inject(GlobalFilterService);
   private destroyRef = inject(DestroyRef);
+  private permissionService = inject(PermissionService);
+  private feedbackDialogService = inject(FeedbackDialogService);
+  private dialogService = inject(DialogService);
 
   // Dashboard Card Configurations specific to home dashboard
   private readonly DASHBOARD_CARD_CONFIGS = {
@@ -177,6 +187,17 @@ export class HomeDashboardComponent implements OnInit {
 
   // Navigation loading state
   navigatingToEntity = signal<string | null>(null);
+
+  // Permission signals
+  partnerPermissions = signal<any>({ permissions: { canCreate: false } });
+  contactPermissions = signal<any>({ permissions: { canCreate: false } });
+  interactionPermissions = signal<any>({ permissions: { canCreate: false } });
+  permissionsLoading = signal(true);
+
+  // Live timestamp
+  lastUpdatedTime = signal<string>('just now');
+  private timestampInterval?: ReturnType<typeof setInterval>;
+  private lastDataLoadTime = new Date();
 
   // Mobile detection
   isMobile = signal<boolean>(false);
@@ -346,14 +367,76 @@ export class HomeDashboardComponent implements OnInit {
   ngOnInit() {
     this.checkMobileView();
     this.loadDashboardData();
+    this.loadPermissions();
+    this.startTimestampUpdates();
 
     // Subscribe to global filter changes to automatically refresh dashboard
     this.globalFilterService.filtersChanged$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        console.log('Global filter changed - refreshing dashboard');
         this.loadDashboardData();
       });
+  }
+
+  ngOnDestroy() {
+    if (this.timestampInterval) {
+      clearInterval(this.timestampInterval);
+    }
+  }
+
+  private loadPermissions() {
+    this.permissionsLoading.set(true);
+    
+    // Load permissions for all three entities
+    forkJoin({
+      partners: this.permissionService.getEntityPermissions('/partnerships/partners').pipe(
+        catchError(() => of({ permissions: { canCreate: false } }))
+      ),
+      contacts: this.permissionService.getEntityPermissions('/partnerships/contacts').pipe(
+        catchError(() => of({ permissions: { canCreate: false } }))
+      ),
+      interactions: this.permissionService.getEntityPermissions('/partnerships/interactions').pipe(
+        catchError(() => of({ permissions: { canCreate: false } }))
+      )
+    }).subscribe({
+      next: (permissions) => {
+        this.partnerPermissions.set(permissions.partners);
+        this.contactPermissions.set(permissions.contacts);
+        this.interactionPermissions.set(permissions.interactions);
+        this.permissionsLoading.set(false);
+      },
+      error: () => {
+        this.permissionsLoading.set(false);
+      }
+    });
+  }
+
+  private startTimestampUpdates() {
+    this.lastDataLoadTime = new Date();
+    this.updateTimestamp();
+    
+    // Update timestamp every 30 seconds
+    this.timestampInterval = setInterval(() => {
+      this.updateTimestamp();
+    }, 30000);
+  }
+
+  private updateTimestamp() {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - this.lastDataLoadTime.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) {
+      this.lastUpdatedTime.set('just now');
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      this.lastUpdatedTime.set(`${minutes} minute${minutes > 1 ? 's' : ''} ago`);
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      this.lastUpdatedTime.set(`${hours} hour${hours > 1 ? 's' : ''} ago`);
+    } else {
+      const days = Math.floor(diffInSeconds / 86400);
+      this.lastUpdatedTime.set(`${days} day${days > 1 ? 's' : ''} ago`);
+    }
   }
 
   @HostListener('window:resize', ['$event'])
@@ -370,6 +453,7 @@ export class HomeDashboardComponent implements OnInit {
   private loadDashboardData() {
     this.loading.set(true);
     this.error.set(null);
+    this.lastDataLoadTime = new Date();
 
     // UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
     // if (this.useDummyData()) {
@@ -492,11 +576,17 @@ export class HomeDashboardComponent implements OnInit {
         this.updateInteractionsChart(dashboardData);
         this.updateActionableChart(dashboardData);
         this.loading.set(false);
+        
+        // Update timestamp immediately after data loads
+        this.updateTimestamp();
       },
       error: (err) => {
         console.error('Error loading dashboard data:', err);
         this.error.set('Failed to load dashboard data. Please try again.');
         this.loading.set(false);
+        
+        // Update timestamp even on error since we attempted to refresh
+        this.updateTimestamp();
       }
     });
   }
@@ -523,6 +613,9 @@ export class HomeDashboardComponent implements OnInit {
       this.updateInteractionsChart(dashboardData);
       this.updateActionableChart(dashboardData);
       this.loading.set(false);
+      
+      // Update timestamp immediately after dummy data loads
+      this.updateTimestamp();
       
       console.log('Dummy data loaded:', {
         partners: dashboardData.myPartners.length,
@@ -625,6 +718,76 @@ export class HomeDashboardComponent implements OnInit {
     });
   }
 
+  // New modal opening methods for Quick Actions
+  openNewPartnerModal() {
+    const ref = this.dialogService.open(PartnerEditDialogComponent, {
+      header: 'New Partner',
+      width: '90vw',
+      style: { maxWidth: '800px' },
+      closable: true,
+      data: {
+        mode: 'new',
+        record: {}
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        this.feedbackDialogService.showSuccessToast({
+          detail: 'Partner created successfully!'
+        });
+        // Refresh dashboard data
+        this.loadDashboardData();
+      }
+    });
+  }
+
+  openNewContactModal() {
+    const ref = this.dialogService.open(ContactEditDialogComponent, {
+      header: 'New Contact',
+      width: '90vw',
+      style: { maxWidth: '800px' },
+      closable: true,
+      data: {
+        mode: 'new',
+        record: {}
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        this.feedbackDialogService.showSuccessToast({
+          detail: 'Contact created successfully!'
+        });
+        // Refresh dashboard data
+        this.loadDashboardData();
+      }
+    });
+  }
+
+  openNewInteractionModal() {
+    const ref = this.dialogService.open(InteractionModalComponent, {
+      header: 'New Interaction',
+      width: '90%',
+      height: '90%',
+      modal: true,
+      closable: true,
+      data: {
+        initialData: {}
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        this.feedbackDialogService.showSuccessToast({
+          detail: 'Interaction created successfully!'
+        });
+        // Refresh dashboard data
+        this.loadDashboardData();
+      }
+    });
+  }
+
   navigateToContacts() {
     // Navigate directly to contacts page
     this.navigateToContactsPage();
@@ -721,19 +884,15 @@ export class HomeDashboardComponent implements OnInit {
 
   onInteractionChartClick(event: any) {
     // Handle pie chart segment click to filter interactions by type
-    console.log('Chart click event:', event);
     
     if (event && event.element && typeof event.element.index !== 'undefined') {
       const dataIndex = event.element.index;
       const chartData = this.interactionsChartData();
       
-      console.log('Data index:', dataIndex, 'Chart data:', chartData);
-      
       if (chartData && chartData.labels && dataIndex < chartData.labels.length) {
         const selectedType = chartData.labels[dataIndex];
         const selectedColor = chartData.datasets[0].backgroundColor[dataIndex];
         
-        console.log('Selected interaction type:', selectedType, 'Selected color:', selectedColor);
         
         // Filter interactions by the selected type and display them
         this.showInteractionsByType(selectedType, selectedColor);
@@ -785,19 +944,16 @@ export class HomeDashboardComponent implements OnInit {
 
   onDraftActionsChartClick(event: any) {
     // Handle bar chart click to filter draft actions by type
-    console.log('Draft actions chart click event:', event);
     
     if (event && event.element && typeof event.element.index !== 'undefined') {
       const dataIndex = event.element.index;
       const chartData = this.actionableChartData();
       
-      console.log('Data index:', dataIndex, 'Chart data:', chartData);
       
       if (chartData && chartData.labels && dataIndex < chartData.labels.length) {
         const selectedType = chartData.labels[dataIndex];
         const selectedColor = chartData.datasets[0].backgroundColor[dataIndex];
         
-        console.log('Selected draft action type:', selectedType, 'Selected color:', selectedColor);
         
         // Filter draft actions by the selected type and display them
         this.showDraftActionsByType(selectedType, selectedColor);
@@ -851,8 +1007,7 @@ export class HomeDashboardComponent implements OnInit {
   }
 
   navigateToEntity(entityType: string, entityId: number | null | undefined) {
-    console.log('navigateToEntity called with:', { entityType, entityId });
-    
+
     if (entityId === null || entityId === undefined) {
       console.warn('navigateToEntity: No entityId provided');
       return;
@@ -869,14 +1024,12 @@ export class HomeDashboardComponent implements OnInit {
     };
     
     const routeSegments = routes[entityType as keyof typeof routes];
-    console.log('Navigating to route segments:', routeSegments);
     
     if (routeSegments) {
       // Use router navigation with promise for better performance
       this.router.navigate(routeSegments).then(
         (success) => {
           if (success) {
-            console.log('Navigation successful');
           } else {
             console.warn('Navigation failed');
             this.navigatingToEntity.set(null); // Clear loading state if navigation fails
@@ -901,8 +1054,6 @@ export class HomeDashboardComponent implements OnInit {
       }
     }).pipe(
       map(response => {
-        console.log('Org Unit Recent Updates from Dashboard API:', response.updates.length, 'items');
-        console.log('Org Unit Name:', response.orgUnitName);
         return {
           updates: response.updates,
           orgUnitName: response.orgUnitName
@@ -949,13 +1100,11 @@ export class HomeDashboardComponent implements OnInit {
 
 
   getEntityId(id: any): number | null {
-    if (id === null || id === undefined) {
-      console.log('getEntityId called with:', id, 'returning: null');
+    if (id === null || id === undefined) { 
       return null;
     }
     
     const result = typeof id === 'string' ? parseInt(id, 10) : id;
-    console.log('getEntityId called with:', id, 'returning:', result);
     return result;
   }
 

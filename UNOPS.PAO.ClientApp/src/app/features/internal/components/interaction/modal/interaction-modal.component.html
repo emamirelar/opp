@@ -42,7 +42,7 @@
           <label for="contacts">{{ 'label.interaction.relatedTo' | translate }} *</label>
           <p-multiselect id="contacts"
                          formControlName="contactIds"
-                         [options]="allContacts()"
+                         [options]="availableContacts()"
                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
                          optionLabel="name"
                          optionValue="id"
@@ -62,12 +62,24 @@
             </ng-template>
           </p-multiselect>
           @if( formGroup.get("contactIds")?.invalid && showValidationFailedError() ) {
-          <p-message severity="error" variant="simple">At least one contact must be selected.</p-message>
+            @if( formGroup.get("contactIds")?.errors?.['atLeastOneContact'] ) {
+              <p-message severity="error" variant="simple">At least one contact must be selected.</p-message>
+            }
+            @if( formGroup.get("contactIds")?.errors?.['requiresPartnerContact'] ) {
+              <p-message severity="error" variant="simple">
+                At least one contact must be from {{ formGroup.get("contactIds")?.errors?.['partnerName'] }}.
+              </p-message>
+            }
           }
         </div>
 
         <div class="col-span-full partners-display flex flex-col gap-2">
-          <label for="partners">{{ 'label.interaction.partners' | translate }}</label>
+          <label for="partners">
+            {{ 'label.interaction.partners' | translate }}
+            @if(getPartnerContext()?.partnerId) {
+              <span class="text-xs text-blue-600 ml-2">({{ 'label.interaction.requiresPartnerContact' | translate }})</span>
+            }
+          </label>
           <div class="partners-chips-container">
             @if( getSelectedPartners().length === 0 ) {
             <div class="no-partners-message">{{ 'label.interaction.noPartnersSelected' | translate }}</div>

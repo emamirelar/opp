@@ -1091,7 +1091,6 @@ export class PartnerEditDialogComponent implements OnInit {
   private triggerDuplicateDetectionAfterSave(payload: any, updatedRecord?: any): void {
     // Skip if no payload
     if (!payload) {
-      console.log('Skipping duplicate detection - no payload provided');
       return;
     }
 
@@ -1107,17 +1106,13 @@ export class PartnerEditDialogComponent implements OnInit {
         delete duplicateCheckPayload.id;
       } else {
         duplicateCheckPayload.id = numericId;
-        console.log('Triggering duplicate detection for Partner edit (excluding ID:', numericId, ')');
       }
     } else {
-      console.log('Triggering duplicate detection for new Partner (no ID exclusion)');
     }
 
     // Call the partner service to detect duplicates (uses the updated SQL with ID exclusion)
     this.partnerService.detectDuplicates(duplicateCheckPayload).subscribe({
       next: (response: any) => {
-        const recordType = payload.id ? `existing Partner ID ${payload.id}` : 'new Partner';
-        console.log('Post-save duplicate detection results for', recordType, ':', response);
 
         // If this is an import edit, update the duplicate information
         if (this.dialogConfig.data.isImportEdit) {
@@ -1126,8 +1121,7 @@ export class PartnerEditDialogComponent implements OnInit {
       },
       error: (error: any) => {
         // Silent failure - don't interrupt the user's workflow
-        const recordType = payload.id ? `Partner ID ${payload.id}` : 'new Partner';
-        console.warn('Post-save duplicate detection failed for', recordType, ':', error);
+        console.warn('Post-save duplicate detection failed:', error);
       }
     });
   }
@@ -1191,7 +1185,6 @@ export class PartnerEditDialogComponent implements OnInit {
       // Update the record's duplicate info
       this.updateRecordInImportDialog(updatedDuplicateInfo, updatedRecord);
 
-      console.log('Updated duplicate info for import record:', updatedDuplicateInfo);
     } else {
       // No duplicates found
       const noDuplicateInfo = {
@@ -1207,8 +1200,6 @@ export class PartnerEditDialogComponent implements OnInit {
       };
 
       this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);
-
-      console.log('No duplicates found - marked as unique record');
     }
   }
 
@@ -1230,9 +1221,6 @@ export class PartnerEditDialogComponent implements OnInit {
         });
 
         window.dispatchEvent(updateEvent);
-        console.log('Dispatched duplicate info update event for row:', importRowId);
-      } else {
-        console.warn('No importRowId found to update duplicate info');
       }
     } catch (error) {
       console.error('Error updating duplicate info in import dialog:', error);

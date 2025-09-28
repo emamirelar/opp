@@ -38,13 +38,6 @@ export class AppComponent implements AfterViewInit {
     const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
     const hasCookie = !!devCookie;
 
-    console.log('[APP] Current cookies:', {
-      allCookies: document.cookie,
-      cookies: cookies,
-      devCookie: devCookie,
-      hasCookie: hasCookie
-    });
-
     // Fast path for dev cookie - skip all API checks
     if (hasCookie) {
 

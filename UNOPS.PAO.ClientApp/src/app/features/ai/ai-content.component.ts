@@ -400,13 +400,11 @@ export class AiContentComponent implements OnInit, OnDestroy {
   };
 
   onCardClicked(event: { entityType: string, entityId: string, rowData: any }) {
-    console.log('🔗 AiContent - Card clicked:', event);
     
     const isDifferentEntity = this.rightPanelEntityType !== event.entityType || 
                              this.rightPanelEntityId !== event.entityId;
 
     if (isDifferentEntity) {
-      console.log('🔗 AiContent - Different entity detected, will reload component');
       
       this.rightPanelVisible = false;
       this.cdr.detectChanges();
@@ -415,12 +413,10 @@ export class AiContentComponent implements OnInit, OnDestroy {
         this.loadEntityInPanel(event);
       }, 0);
     } else {
-      console.log('🔗 AiContent - Same entity, keeping existing panel');
     }
   }
 
   private loadEntityInPanel(event: { entityType: string, entityId: string, rowData: any }) {
-    console.log('🔗 AiContent - Loading entity in panel:', event);
     
     this.rightPanelEntityType = event.entityType;
     this.rightPanelEntityId = event.entityId;
@@ -430,13 +426,11 @@ export class AiContentComponent implements OnInit, OnDestroy {
     const component = this.entityComponentMap[componentKey];
     
     if (component) {
-      console.log('🔗 AiContent - Found component for', event.entityType);
       this.rightPanelType = 'component';
       this.rightPanelComponent = component;
       this.rightPanelVisible = true;
       this.cdr.detectChanges();
     } else {
-      console.log('🔗 AiContent - No component found for', event.entityType);
       this.rightPanelType = 'component';
       this.rightPanelComponent = null;
       this.rightPanelVisible = true;
@@ -445,7 +439,6 @@ export class AiContentComponent implements OnInit, OnDestroy {
   }
 
   onUrlClicked(url: string | Event) {
-    console.log('🔗 AiContent - URL clicked:', url);
     if (typeof url === 'string') {
       this.rightPanelType = 'url';
       this.rightPanelUrl = url;
