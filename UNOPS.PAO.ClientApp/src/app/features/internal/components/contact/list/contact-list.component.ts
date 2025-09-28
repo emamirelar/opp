@@ -59,7 +59,8 @@ import { EntityConfigurationService } from '../../../services/entity-configurati
     ListviewComponent,
     ConfirmDialog,
     NgIf,
-    MenuModule
+    MenuModule,
+    BusinessCardScannerComponent
   ],
   providers: [DialogService, ConfirmationService]
 })
@@ -181,6 +182,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
   // Track current search term
   currentSearchText = '';
+
+  // Business card scanner state
+  showBusinessCardScanner = signal(false);
 
   ngOnInit() {
 
@@ -431,18 +435,25 @@ export class ContactListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const ref = this.dialogService.open(BusinessCardScannerComponent, {
-      header: this.translateService.instant('title.scanBusinessCard'),
-      width: '95vw',
-      style: { maxWidth: '800px' },
-      closable: true
-    });
+    this.showBusinessCardScanner.set(true);
+  }
 
-    const refSub = ref.onClose.subscribe((result) => {
-      if (result) {
-        this.openContactEditDialog(result);
-      }
-    });
+  /**
+   * Closes the business card scanner dialog
+   */
+  closeBusinessCardScanner() {
+    this.showBusinessCardScanner.set(false);
+  }
+
+  /**
+   * Handles the scanned contact data from the business card scanner
+   * @param contact The extracted contact data from the business card
+   */
+  handleScannedContact(contact: Contact) {
+    this.closeBusinessCardScanner();
+    if (contact) {
+      this.openContactEditDialog(contact);
+    }
   }
 
   // Import menu items
