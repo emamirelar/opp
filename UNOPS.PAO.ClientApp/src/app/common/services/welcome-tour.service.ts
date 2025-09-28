@@ -63,7 +63,6 @@ export class WelcomeTourService {
   }
 
   private async showWelcomeTour(): Promise<void> {
-    console.log('🎉 Showing welcome tour for first-time user');
 
     // Get current language
     const currentLang = this.translateService.currentLang || this.translateService.defaultLang || 'en';
@@ -118,7 +117,6 @@ export class WelcomeTourService {
       // Load homepage tour configuration (now uses translation keys)
       const tourModule = await import(`../tours/homepage-tour.json`);
       const tourConfig = tourModule.default || tourModule;
-      console.log('📋 Loaded homepage tour for welcome sequence');
 
       // Load tour registry for fallback selectors
       const registryModule = await import('../tours/tour-registry.json');
@@ -150,7 +148,6 @@ export class WelcomeTourService {
           onDestroyed: () => {
             // Mark homepage tour as completed
             this.markHomepageTourCompleted();
-            console.log('✅ Welcome sequence completed - homepage tour finished');
           }
         });
 
@@ -260,7 +257,6 @@ export class WelcomeTourService {
     state.hasSeenWelcome = true;
     state.lastWelcomeDate = new Date().toISOString();
     this.saveWelcomeTourState(state);
-    console.log('✅ Welcome overlay marked as seen');
   }
 
   public markHomepageTourCompleted(): void {
@@ -272,7 +268,6 @@ export class WelcomeTourService {
     }
 
     this.saveWelcomeTourState(state);
-    console.log('✅ Homepage tour marked as completed');
   }
 
   public markTourCompleted(tourId: string): void {
@@ -281,7 +276,6 @@ export class WelcomeTourService {
     if (!state.completedTours.includes(tourId)) {
       state.completedTours.push(tourId);
       this.saveWelcomeTourState(state);
-      console.log(`✅ Tour "${tourId}" marked as completed`);
     }
   }
 
@@ -292,7 +286,6 @@ export class WelcomeTourService {
 
   public resetWelcomeTourState(): void {
     localStorage.removeItem(this.STORAGE_KEY);
-    console.log('🔄 Welcome tour state reset - user will see welcome on next homepage visit');
   }
 
   private saveWelcomeTourState(state: WelcomeTourState): void {

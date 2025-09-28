@@ -98,8 +98,6 @@ export class AiAssistantService {
     });
     
     return new Observable(observer => {
-      console.log('🌊 [FRONTEND] Starting streaming request...');
-      
       // Use fetch with proper streaming headers and immediate processing
       fetch(`${this.aiAssistantUrl}/chat`, {
         method: 'POST',
@@ -113,8 +111,6 @@ export class AiAssistantService {
         // Critical: Disable any client-side response buffering
         cache: 'no-store'
       }).then(response => {
-        console.log('🌊 [FRONTEND] Got response, status:', response.status);
-        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -123,9 +119,6 @@ export class AiAssistantService {
         if (!reader) {
           throw new Error('No response body reader available');
         }
-        
-        console.log('🌊 [FRONTEND] Starting to read stream...');
-        
         const decoder = new TextDecoder();
         let buffer = '';
         let chunkCount = 0;
@@ -136,7 +129,6 @@ export class AiAssistantService {
             const { done, value } = await reader.read();
             
             if (done) {
-              console.log('🌊 [FRONTEND] Stream completed, total chunks:', chunkCount);
               observer.complete();
               return;
             }
@@ -153,8 +145,6 @@ export class AiAssistantService {
               if (line.trim() && line.startsWith('data: ')) {
                 chunkCount++;
                 const elapsed = Date.now() - startTime;
-                console.log(`🌊 [FRONTEND] Processing chunk ${chunkCount} at ${elapsed}ms: ${line.substring(0, 100)}...`);
-                
                 try {
                   const dataStr = line.slice(6).trim(); // Remove 'data: ' prefix
                   if (dataStr) {
@@ -162,9 +152,7 @@ export class AiAssistantService {
                     
                     // Check if this is a complete response
                     const isComplete = this.isCompleteResponse(data);
-                    
-                    console.log(`🌊 [FRONTEND] Emitting chunk ${chunkCount}, complete: ${isComplete}`);
-                    
+
                     // Emit immediately for real-time processing
                     observer.next({ data, complete: isComplete });
                   }
@@ -203,8 +191,7 @@ export class AiAssistantService {
     // The final chunk is identified by content.role === 'user' 
     // which appears to be the user message echo at the end of streaming
     if (data.content?.role === 'user') {
-      console.log('🏁 Detected final chunk (user message echo)');
-      return true;
+       return true;
     }
     
     // All other chunks (model responses, partial chunks, etc.) are intermediate
@@ -257,8 +244,6 @@ export class AiAssistantService {
       validation.valid.forEach((file, index) => {
         formData.append('Files', file, file.name);
       });
-      
-      console.log(`[AI-ASSISTANT] Added ${validation.valid.length} valid files to request`);
     }
     
     return formData;
@@ -310,8 +295,6 @@ export class AiAssistantService {
       validation.valid.forEach((file, index) => {
         formData.append('files', file, file.name);
       });
-      
-      console.log(`[AI-ASSISTANT] Added ${validation.valid.length} valid files to streaming request`);
     }
     
     return formData;

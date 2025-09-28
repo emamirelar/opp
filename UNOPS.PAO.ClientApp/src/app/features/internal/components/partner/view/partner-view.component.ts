@@ -198,8 +198,6 @@ export class PartnerViewComponent implements OnInit {
   }
 
   ngOnInit() {
-    console.log('PartnerView ngOnInit - showAiPanel value:', this.showAiPanel);
-
     // Check admin role
     this.authService.isAdmin().subscribe({
       next: (isAdmin) => {
@@ -213,7 +211,6 @@ export class PartnerViewComponent implements OnInit {
 
     // If recordId is provided via Input (AI layout), load data directly
     if (this.recordId && this.recordId !== '') {
-      console.log('Using input recordId:', this.recordId);
       this._loadRecordDetails();
       return;
     }
@@ -478,19 +475,15 @@ export class PartnerViewComponent implements OnInit {
    * @permissions canApprove
    */
   handleApprovalClick() {
-    console.log('Approval button clicked for partner:', this.recordData().name);
-
     // Show confirmation dialog
     this.confirmationService.confirm({
       message: `Are you sure you want to approve the partner "${this.recordData().name}"? This action cannot be undone.`,
       header: 'Confirm Approval',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        console.log('Approval confirmed, opening approval dialog');
         this.openApprovalDialog();
       },
       reject: () => {
-        console.log('Approval cancelled');
       }
     });
   }
@@ -526,8 +519,6 @@ export class PartnerViewComponent implements OnInit {
    * @permissions canActivate
    */
   handleActivateClick() {
-    console.log('Activate button clicked for partner:', this.recordData().name);
-
     // Check if required fields are missing before proceeding
     const partner = this.recordData();
     const missingFields = this.checkRequiredFieldsForActivation(partner);
@@ -546,7 +537,6 @@ export class PartnerViewComponent implements OnInit {
       header: this.translateService.instant('message.confirmActivation'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        console.log('Activation confirmed, calling API');
         this.activatePartner();
       },
       reject: () => {
@@ -561,7 +551,6 @@ export class PartnerViewComponent implements OnInit {
   private activatePartner() {
     this.partnerService.activatePartner(this.recordId).subscribe({
       next: (result) => {
-        console.log('Partner activated successfully:', result);
         this.feedbackDialogService.showSuccessToast({
           detail: this.translateService.instant('message.partnerActivatedSuccessfully', {
             partnerName: this.recordData().name

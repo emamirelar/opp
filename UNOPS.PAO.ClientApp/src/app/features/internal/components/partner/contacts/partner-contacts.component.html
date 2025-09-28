@@ -1,9 +1,35 @@
-<app-listview
-  [dataUrl]="dataUrl()"
-  [columns]="columns()"
-  [config]="config"
-  (rowClick)="onContactClick($event)"
->
-</app-listview>
+<p-confirmDialog></p-confirmDialog>
 
+<div class="flex flex-col gap-8">
+  <div class="flex flex-wrap items-center gap-4">
+    <div class="flex items-center gap-3 contact-section-header">
+      <span class="material-symbols-outlined text-3xl">contacts</span>
+      <p class="text-3xl font-bold">
+        {{ 'title.contacts' | translate }}
+        <span *ngIf="partnerName()" class="text-lg font-normal text-gray-600 ml-2">
+          - {{ partnerName() }}
+        </span>
+      </p>
+    </div>
+    <div class="ml-auto flex gap-2 flex-wrap">
+      <p-button
+        *ngIf="entityPermissions().permissions.canCreate"
+        icon="pi pi-plus"
+        [label]="'button.new' | translate"
+        (onClick)="openContactEditDialog()"
+        rounded
+        class="contact-new-button"
+      />
+    </div>
+  </div>
 
+  <app-listview
+    #listviewComponent
+    [dataUrl]="dataUrl()"
+    [columns]="columns()"
+    [config]="config()"
+    (rowClick)="handleOnOpenRecordDetails($event)"
+    class="contact-listview"
+  >
+  </app-listview>
+</div>

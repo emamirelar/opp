@@ -331,11 +331,7 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     }
     
     // String comparison as fallback for type mismatches
-    const result = String(selected) === String(chat.id);
-    if (result) {
-      console.log('🔍 [AI Layout] Chat matched via string conversion:', selected, '===', chat.id);
-    }
-    return result;
+    return String(selected) === String(chat.id);
   }
 
 
@@ -357,7 +353,6 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
   performSearch(): void {
     const query = this.searchQuery();
     if (query.trim()) {
-      console.log('Performing search for:', query);
       // Add your search logic here
     }
   }
@@ -369,7 +364,6 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
 
   startEditTitle(chat: any, event: MouseEvent) {
     event.stopPropagation();
-    console.log('Starting to edit title for:', chat.title);
     
     this.editingTitleChatId.set(chat.id);
     this.editingTitleText = chat.title;
@@ -397,7 +391,6 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     }
 
     try {
-      console.log('Saving title for chat:', chat.id, 'new title:', newTitle);
       
       // Optimistically update UI
       const updated = this.chatSessions().map(c => 
@@ -411,7 +404,6 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
         title: newTitle
       }).toPromise();
       
-      console.log('Title updated successfully');
       this.editingTitleChatId.set(null);
       
       // Reload sessions to ensure consistency
@@ -440,7 +432,6 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     const selectedChat = this.getSelectedChat();
     if (!selectedChat) return;
     
-    console.log('Starting to edit header title for:', selectedChat.title);
     
     this.editingTitleChatId.set(selectedChat.id);
     this.editingTitleText = selectedChat.title;
@@ -485,7 +476,6 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     await this.toggleStarChat(selectedChat);
   }
   async toggleStarChat(chat: any) {
-    console.log('toggleStarChat called for:', chat.title, 'current starred:', chat.starred);
     
     try {
       const newStarredState = !chat.starred;
@@ -502,7 +492,6 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
         starred: newStarredState
       }).toPromise();
       
-      console.log('Star status updated successfully:', response);
       
       // Reload sessions to ensure consistency
       await this.loadUserSessions();
@@ -572,14 +561,12 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
   };
 
   onCardClicked(event: { entityType: string, entityId: string, rowData: any }) {
-    console.log('🔗 AiLayout - Card clicked:', event);
     
     // Check if different entity (type or ID) is clicked
     const isDifferentEntity = this.rightPanelEntityType !== event.entityType || 
                              this.rightPanelEntityId !== event.entityId;
 
     if (isDifferentEntity) {
-      console.log('🔗 AiLayout - Different entity detected, will reload component');
       
       // Temporarily close the panel to trigger component destruction
       this.rightPanelVisible = false;
@@ -590,12 +577,10 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
         this.loadEntityInPanel(event);
       }, 0);
     } else {
-      console.log('🔗 AiLayout - Same entity, keeping existing panel');
     }
   }
 
   private loadEntityInPanel(event: { entityType: string, entityId: string, rowData: any }) {
-    console.log('🔗 AiLayout - Loading entity in panel:', event);
     
     // Store entity information
     this.rightPanelEntityType = event.entityType;
@@ -607,13 +592,11 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     const component = this.entityComponentMap[componentKey];
     
     if (component) {
-      console.log('🔗 AiLayout - Found component for', event.entityType);
       this.rightPanelType = 'component';
       this.rightPanelComponent = component;
       this.rightPanelVisible = true;
       this.cdr.detectChanges();
     } else {
-      console.log('🔗 AiLayout - No component found for', event.entityType, ', available:', Object.keys(this.entityComponentMap));
       this.rightPanelType = 'component';
       this.rightPanelComponent = null; // This will show the "Coming Soon" placeholder
       this.rightPanelVisible = true;
@@ -622,7 +605,6 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
   }
 
   onUrlClicked(url: string | Event) {
-    console.log('🔗 AiLayout - URL clicked:', url);
     if (typeof url === 'string') {
       this.rightPanelType = 'url';
       this.rightPanelUrl = url;
@@ -667,7 +649,6 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     const newState = !this.globalFilterEnabled();
     this.globalFilterEnabled.set(newState);
     this.globalFilterService.setFilterEnabled(newState);
-    console.log('Global filter toggled:', newState);
   }
 
   getEntityDisplayName(): string {

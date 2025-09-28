@@ -326,13 +326,16 @@ export class PartnerViewInteractionsComponent implements OnInit {
       data: {
         initialData: {
           partnerId: this.partnerId() // Pre-fill partner ID
+        },
+        partnerContext: {
+          partnerId: this.partnerId(),
+          lockPartner: false // Allow partner selection but require at least one contact from current partner
         }
       }
     });
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Interaction created:', result);
         // Refresh the listview and timeline
         window.dispatchEvent(new CustomEvent('refresh-listview'));
 
@@ -385,7 +388,6 @@ export class PartnerViewInteractionsComponent implements OnInit {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Interaction updated:', result);
         // Refresh the listview and timeline
         window.dispatchEvent(new CustomEvent('refresh-listview'));
 

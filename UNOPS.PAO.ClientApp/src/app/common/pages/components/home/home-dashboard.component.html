@@ -148,26 +148,29 @@
               </h2>
               <div class="flex items-center space-x-unops-md">
                 <button 
+                  *ngIf="!permissionsLoading() && partnerPermissions().permissions.canCreate"
                   pButton 
                   type="button" 
                   class="p-button-sm unops-button-primary flex items-center"
-                  (click)="navigateToPartnersPage()">
+                  (click)="openNewPartnerModal()">
                   <i class="material-symbols-outlined text-unops-lg mr-unops-xs">corporate_fare</i>
                   New Partner
                 </button>
                 <button 
+                  *ngIf="!permissionsLoading() && contactPermissions().permissions.canCreate"
                   pButton 
                   type="button" 
                   class="p-button-sm unops-button-primary flex items-center"
-                  (click)="navigateToContactsPage()">
+                  (click)="openNewContactModal()">
                   <i class="material-symbols-outlined text-unops-lg mr-unops-xs">contacts</i>
                   New Contact
                 </button>
                 <button 
+                  *ngIf="!permissionsLoading() && interactionPermissions().permissions.canCreate"
                   pButton 
                   type="button" 
                   class="p-button-sm unops-button-primary flex items-center"
-                  (click)="navigateToInteractions()">
+                  (click)="openNewInteractionModal()">
                   <i class="material-symbols-outlined text-unops-lg mr-unops-xs">chat</i>
                   New Interaction
                 </button>
@@ -175,7 +178,7 @@
             </div>
             <div class="flex items-center space-x-unops-md">
               <div class="text-unops-body-small text-unops-neutral-500">
-                Last updated just now
+                Last updated {{ lastUpdatedTime() }}
               </div>
               <button 
                 pButton 
@@ -647,12 +650,13 @@
                       Start logging your communications and meetings
                     </p>
                     <button 
+                      *ngIf="!permissionsLoading() && interactionPermissions().permissions.canCreate"
                       pButton 
                       type="button" 
                       icon="pi pi-plus" 
                       label="Log First Interaction"
                       class="p-button-sm unops-button-primary"
-                      (click)="navigateToInteractions()">
+                      (click)="openNewInteractionModal()">
                     </button>
                   </div>
                 }
@@ -1099,12 +1103,13 @@
                   Start logging your communications and meetings
                 </p>
                 <button 
+                  *ngIf="!permissionsLoading() && interactionPermissions().permissions.canCreate"
                   pButton 
                   type="button" 
                   icon="pi pi-plus" 
                   label="Log First Interaction"
                   class="p-button-sm unops-button-primary"
-                  (click)="navigateToInteractions()">
+                  (click)="openNewInteractionModal()">
                 </button>
               </div>
             }

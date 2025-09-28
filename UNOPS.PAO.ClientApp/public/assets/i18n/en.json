@@ -418,7 +418,8 @@
       "createdBy": "Created By",
       "selectCreatedBy": "Select Created By",
       "noPartnersSelected": "No partners selected",
-      "aiGeneratedSummary": "AI Generated Summary"
+      "aiGeneratedSummary": "AI Generated Summary",
+      "requiresPartnerContact": "Requires at least one contact from current partner"
     },
     "partnerGroup": {
       "name": "Partner Group Name"

@@ -842,10 +842,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
     this.totalRecordsChange.emit(totalCount);
 
-    if (pageIndex > 1) {
-      console.log(`Load more successful: page ${pageIndex}, loaded ${newRecords.length} new records, total: ${updatedData.length}/${totalCount}`);
-    }
-
     this.cdr.detectChanges();
   }
 
@@ -921,8 +917,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   }
 
   onApplySavedFilter(filter: SavedFilter): void {
-    console.log('🔄 Applying saved filter:', filter.name, 'ID:', filter.id);
-
     if (filter.isAdvancedSearch) {
       // Apply the search criteria from the saved filter
       if (filter.searchCriteria) {
@@ -935,8 +929,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
           } else {
             criteria = filter.searchCriteria;
           }
-
-          console.log('✅ Parsed criteria:', criteria.length, 'filters');
 
           // CLEAN IMPLEMENTATION: Clear and replace all criteria at once
           this.state.update(s => ({
@@ -983,9 +975,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
     // Reset pagination and trigger data load
     this.dataLoader.setPagination(0, this.state().pageSize);
-    
-    // CRITICAL: Execute the search with the applied criteria
-    console.log('🚀 Executing search with applied filter criteria');
     this.loadData();
   }
 
