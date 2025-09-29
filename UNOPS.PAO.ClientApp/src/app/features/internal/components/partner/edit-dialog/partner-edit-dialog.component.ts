@@ -315,6 +315,11 @@ export class PartnerEditDialogComponent implements OnInit {
   showCommentDialog = false;
   entityTypePartner = EntityType.Partner;
 
+  // Get isSaving signal from dialog data
+  isSaving = computed(() => {
+    return this.dialogConfig.data?.isSaving?.() || false;
+  });
+
   @Output() closeModal = new EventEmitter<void>();
 
   constructor() {
@@ -433,18 +438,6 @@ export class PartnerEditDialogComponent implements OnInit {
         if (liaisonControl) {
           liaisonControl.clearValidators();
           liaisonControl.updateValueAndValidity();
-        }
-      }
-    });
-
-    // Effect to handle partnerGroupId enable/disable based on admin status
-    effect(() => {
-      const partnerGroupControl = this.formGroup?.get('partnerGroupId');
-      if (partnerGroupControl) {
-        if (this.isAdmin()) {
-          partnerGroupControl.enable();
-        } else {
-          partnerGroupControl.disable();
         }
       }
     });
@@ -709,6 +702,7 @@ export class PartnerEditDialogComponent implements OnInit {
     const isValid = this.isFormValid();
 
     if (isValid) {
+      this.dialogConfig.data?.isSaving?.set(true);
       const payload = this._getRequestPayload();
 
       // Reset requesting save signal immediately
@@ -738,6 +732,7 @@ export class PartnerEditDialogComponent implements OnInit {
           updatedRecord.duplicateInfo = this.dialogConfig.data.record.duplicateInfo;
         }
 
+        this.dialogConfig.data?.isSaving?.set(false);
         this.dialogRef.close(updatedRecord);
 
         // Trigger duplicate detection after closing to update duplicate indicators
@@ -753,11 +748,13 @@ export class PartnerEditDialogComponent implements OnInit {
         payload['id'] = this.recordId;
         this.partnerService.updatePartnerById(payload).subscribe({
           next: (data: any) => {
+            this.dialogConfig.data?.isSaving?.set(false);
             this.feedbackDialogService.showSuccessToast({ detail: 'Record updated successfully!' });
             // Ensure we're not closing the dialog until the operation completes
             setTimeout(() => this.dialogRef.close("saved"));
           },
           error: (error) => {
+            this.dialogConfig.data?.isSaving?.set(false);
             this.feedbackDialogService.showErrorToast({ detail: 'Failed to update record' });
           }
         });
@@ -766,6 +763,7 @@ export class PartnerEditDialogComponent implements OnInit {
         this.createPartnerWithDuplicateDetection(payload);
       }
     } else {
+      this.dialogConfig.data?.isSaving?.set(false);
       this.dialogConfig.data.requestingSaveSignal.set(false);
       this.showValidationFailedError.set(true);
 
@@ -1000,6 +998,7 @@ export class PartnerEditDialogComponent implements OnInit {
           this.showDuplicateConfirmationDialog(response, payload);
         } else if (response.action === 'created' || response.success) {
           // Partner created successfully
+          this.dialogConfig.data?.isSaving?.set(false);
           this.cachedDataService.refreshPartners();
           this.feedbackDialogService.showSuccessToast({
             detail: response.message || 'Partner created successfully!'
@@ -1007,6 +1006,7 @@ export class PartnerEditDialogComponent implements OnInit {
           setTimeout(() => this.dialogRef.close(response.data || response));
         } else {
           // Fallback for successful creation (old format)
+          this.dialogConfig.data?.isSaving?.set(false);
           this.cachedDataService.refreshPartners();
           this.feedbackDialogService.showSuccessToast({
             detail: 'Partner created successfully!'
@@ -1015,6 +1015,7 @@ export class PartnerEditDialogComponent implements OnInit {
         }
       },
       error: (error: any) => {
+        this.dialogConfig.data?.isSaving?.set(false);
         this.feedbackDialogService.showErrorToast({
           detail: 'Failed to create partner. Please try again.'
         });
@@ -1055,6 +1056,7 @@ export class PartnerEditDialogComponent implements OnInit {
         this.partnerService.createPartner(confirmedPayload).subscribe({
           next: (response: any) => {
             if (response.action === 'created') {
+              this.dialogConfig.data?.isSaving?.set(false);
               this.cachedDataService.refreshPartners();
               this.feedbackDialogService.showSuccessToast({
                 detail: 'Partner created successfully (duplicate confirmation acknowledged)!'
@@ -1062,6 +1064,7 @@ export class PartnerEditDialogComponent implements OnInit {
               setTimeout(() => this.dialogRef.close(response.data));
             } else {
               // Fallback for successful creation
+              this.dialogConfig.data?.isSaving?.set(false);
               this.cachedDataService.refreshPartners();
               this.feedbackDialogService.showSuccessToast({
                 detail: 'Partner created successfully!'
@@ -1070,6 +1073,7 @@ export class PartnerEditDialogComponent implements OnInit {
             }
           },
           error: (error: any) => {
+            this.dialogConfig.data?.isSaving?.set(false);
             this.feedbackDialogService.showErrorToast({
               detail: 'Failed to create partner. Please try again.'
             });
@@ -1078,6 +1082,7 @@ export class PartnerEditDialogComponent implements OnInit {
         });
       } else {
         // User cancelled - do nothing, stay on the form
+        this.dialogConfig.data?.isSaving?.set(false);
         this.feedbackDialogService.showInfoToast({
           detail: 'Partner creation cancelled.'
         });

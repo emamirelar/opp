@@ -17,6 +17,7 @@
   }
 
   <form [formGroup]="formGroup" class="flex flex-col gap-8">
+    <fieldset [disabled]="isSaving()" class="border-0 p-0 m-0">
     <div class="flex flex-col mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
       <app-ai-transcribe
         transcribeType="partner_action"
@@ -345,5 +346,6 @@
     <div class="text-sm text-gray-600 mt-4">
       * required for activation
     </div>
+    </fieldset>
   </form>
 </div>

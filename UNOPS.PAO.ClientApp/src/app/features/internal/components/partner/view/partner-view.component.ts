@@ -410,6 +410,7 @@ export class PartnerViewComponent implements OnInit {
     }
 
     const requestingSaveSignal = signal<boolean>(false);
+    const isSaving = signal<boolean>(false);
 
     const ref = this.dialogService.open(PartnerEditDialogComponent, {
       header: 'Edit Partner',
@@ -422,7 +423,8 @@ export class PartnerViewComponent implements OnInit {
       data: {
         mode: 'edit',
         record: this.recordData(),
-        requestingSaveSignal
+        requestingSaveSignal,
+        isSaving
       }
     });
 
@@ -690,6 +692,7 @@ export class PartnerViewComponent implements OnInit {
    */
   private openEditDialogForActivation() {
     const requestingSaveSignal = signal<boolean>(false);
+    const isSaving = signal<boolean>(false);
 
     const ref = this.dialogService.open(PartnerEditDialogComponent, {
       header: this.translateService.instant('title.partnerTitles.completeRequiredFields'),
@@ -703,7 +706,8 @@ export class PartnerViewComponent implements OnInit {
         mode: 'edit',
         record: this.recordData(),
         validationMode: 'activate',
-        requestingSaveSignal
+        requestingSaveSignal,
+        isSaving
       }
     });
 
