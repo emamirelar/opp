@@ -19,16 +19,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker layer caching
-COPY requirements.txt .
+COPY UNOPS.PAO.AIService/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
-# Ensure AIService config and metadata are copied
-COPY ../AIService/ ./AIService/
+COPY UNOPS.PAO.AIService/ .
+# Copy AIService config and metadata
+COPY AIService/ ./AIService/
 
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash appuser && \

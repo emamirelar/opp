@@ -6,6 +6,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build', 
+      '-f', 'UNOPS.PAO.AIService/Dockerfile',
       '-t', 'gcr.io/$PROJECT_ID/your-team-ai-service:$SHORT_SHA',
       '-t', 'gcr.io/$PROJECT_ID/your-team-ai-service:latest',
       '.'
