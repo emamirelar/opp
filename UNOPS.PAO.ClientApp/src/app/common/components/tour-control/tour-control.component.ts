@@ -15,40 +15,24 @@ import { WelcomeTourService } from '../../services/welcome-tour.service';
   styles: [`
     :host ::ng-deep .tour-button {
       position: relative;
-      overflow: hidden;
+      transition: all 0.2s ease;
     }
 
-    :host ::ng-deep .tour-button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      transition: left 0.6s;
-    }
-
-    :host ::ng-deep .tour-button:hover::before {
-      left: 100%;
-    }
-
-    :host ::ng-deep .tour-button .p-button-label {
-      color: white !important;
+    :host ::ng-deep .tour-button:hover {
+      background: var(--unops-neutral-50) !important;
+      transform: translateY(-1px);
     }
 
     :host ::ng-deep .tour-button:focus {
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+      box-shadow: 0 0 0 2px var(--unops-primary-lighter) !important;
     }
 
-    /* Special styling for AI prompt dialog context - match main top bar colors */
-    :host.ai-prompt-tour-control ::ng-deep .tour-button {
-      background: linear-gradient(135deg, #3b82f6 0%, #9333ea 100%) !important;
+    :host ::ng-deep .tour-button i {
+      color: var(--unops-primary);
     }
 
-    :host.ai-prompt-tour-control ::ng-deep .tour-button:hover {
-      background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
-      transform: scale(1.05);
+    :host ::ng-deep .tour-button:hover i {
+      color: var(--unops-primary-dark);
     }
   `]
 })
@@ -67,7 +51,6 @@ export class TourControlComponent implements OnInit {
       try {
         const registryModule = await import('../../tours/tour-registry.json');
         this.tourRegistry = registryModule.default || registryModule;
-        console.log('📖 Tour registry loaded:', this.tourRegistry);
       } catch (error) {
         console.error('❌ Failed to load tour registry:', error);
         throw error;
@@ -77,7 +60,6 @@ export class TourControlComponent implements OnInit {
   }
 
   ngOnInit() {
-    console.log('🎯 TourControlComponent initialized');
   }
 
   showNotificationDot(): boolean {
@@ -94,11 +76,9 @@ export class TourControlComponent implements OnInit {
   // Development helper method - can be called from browser console
   public resetWelcomeTour(): void {
     this.welcomeTourService.resetWelcomeTourState();
-    console.log('🔄 Welcome tour reset - refresh homepage to see welcome tour again');
   }
 
   async detectTour() {
-    console.log('🎯 Starting tour...');
 
     try {
       // Load tour registry
@@ -109,16 +89,13 @@ export class TourControlComponent implements OnInit {
       // Check for custom tour file first (for dialogs)
       if (this.customTourFile) {
         tourFileName = this.customTourFile;
-        console.log('🎯 Using custom tour file:', tourFileName);
       } else {
         // Get current URL and find matching tour from registry
         const currentUrl = this.router.url;
-        console.log('📍 Current URL:', currentUrl);
 
         for (const route of registry.routes) {
           if (this.matchesRoute(currentUrl, route.pattern)) {
             tourFileName = route.tourFile;
-            console.log('🎯 Found matching route:', route.pattern, '→', tourFileName);
             break;
           }
         }
@@ -128,7 +105,6 @@ export class TourControlComponent implements OnInit {
         // Load tour configuration (uses translation keys now)
         const tourModule = await import(`../../tours/${tourFileName}.json`);
         const tourConfig = tourModule.default || tourModule;
-        console.log('📋 Loaded tour:', this.translateText(tourConfig.titleKey || tourConfig.title));
 
         // Convert tour steps to Driver.js format
         const driverSteps = this.convertToDriverSteps(tourConfig, registry.fallbackSelectors);
@@ -145,7 +121,6 @@ export class TourControlComponent implements OnInit {
         });
 
         // Start the tour with Driver.js after scroll completes
-        console.log('🚀 Starting Driver.js tour with', driverSteps.length, 'steps');
         
         setTimeout(() => {
           const driverInstance = driver({
@@ -159,7 +134,6 @@ export class TourControlComponent implements OnInit {
               // Mark tour as completed when user finishes or closes
               if (tourConfig.tourId) {
                 this.welcomeTourService.markTourCompleted(tourConfig.tourId);
-                console.log(`✅ Tour "${tourConfig.tourId}" marked as completed`);
               }
             }
           });
@@ -168,9 +142,6 @@ export class TourControlComponent implements OnInit {
         }, 500);
 
       } else {
-        console.log('❌ No tour found for current route');
-        console.log('📝 Available routes:', registry.routes.map((r: any) => r.pattern));
-
         // Show fallback tour for missing pages
         this.showFallbackTour();
       }
@@ -180,7 +151,6 @@ export class TourControlComponent implements OnInit {
   }
 
   private convertToDriverSteps(tourConfig: any, fallbackSelectors: any): any[] {
-    console.log('🔄 Converting tour steps and checking element eligibility...');
 
     const validSteps = tourConfig.steps
       .map((step: any, index: number) => {
@@ -196,13 +166,6 @@ export class TourControlComponent implements OnInit {
           return null;
         }
 
-        if (!element && !step.element) {
-          // This is an intro/welcome step without a specific element
-          console.log(`✅ Step ${index + 1} (intro): "${step.popover?.titleKey}"`);
-        } else {
-          console.log(`✅ Step ${index + 1} (${element}): "${step.popover?.titleKey}"`);
-        }
-
         return {
           element: element || undefined,
           popover: {
@@ -215,7 +178,6 @@ export class TourControlComponent implements OnInit {
       })
       .filter((step: any) => step !== null);
 
-    console.log(`📊 Tour summary: ${validSteps.length}/${tourConfig.steps.length} steps will be shown`);
     return validSteps;
   }
 
@@ -247,11 +209,9 @@ export class TourControlComponent implements OnInit {
 
     // Try fallback selectors from the registry based on fallbackType
     if (step.fallbackType && fallbackSelectors[step.fallbackType]) {
-      console.log(`🔄 Trying fallback selectors for type: ${step.fallbackType}`);
       for (const selector of fallbackSelectors[step.fallbackType]) {
         const element = this.trySelector(selector);
         if (element) {
-          console.log(`✅ Found element using fallback: ${selector}`);
           return selector;
         }
       }
@@ -374,14 +334,12 @@ export class TourControlComponent implements OnInit {
     if (style.display === 'none' ||
         style.visibility === 'hidden' ||
         style.opacity === '0') {
-      console.log(`🚫 Skipping hidden element: ${element.tagName}${element.className ? '.' + element.className.split(' ').join('.') : ''}`);
       return false;
     }
 
     // Check if element is outside viewport (completely hidden)
     const rect = htmlElement.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) {
-      console.log(`🚫 Skipping zero-size element: ${element.tagName}${element.className ? '.' + element.className.split(' ').join('.') : ''}`);
       return false;
     }
 
@@ -391,7 +349,6 @@ export class TourControlComponent implements OnInit {
         htmlElement instanceof HTMLSelectElement ||
         htmlElement instanceof HTMLTextAreaElement) {
       if (htmlElement.disabled) {
-        console.log(`🚫 Skipping disabled form element: ${element.tagName}${element.className ? '.' + element.className.split(' ').join('.') : ''}`);
         return false;
       }
     }
@@ -401,7 +358,6 @@ export class TourControlComponent implements OnInit {
         htmlElement.classList.contains('p-button-disabled') ||
         htmlElement.hasAttribute('aria-disabled') ||
         htmlElement.getAttribute('aria-disabled') === 'true') {
-      console.log(`🚫 Skipping PrimeNG disabled element: ${element.tagName}${element.className ? '.' + element.className.split(' ').join('.') : ''}`);
       return false;
     }
 
@@ -409,7 +365,6 @@ export class TourControlComponent implements OnInit {
     if (htmlElement.style.display === 'none' ||
         htmlElement.hidden ||
         htmlElement.hasAttribute('hidden')) {
-      console.log(`🚫 Skipping hidden attribute element: ${element.tagName}${element.className ? '.' + element.className.split(' ').join('.') : ''}`);
       return false;
     }
 
@@ -441,7 +396,6 @@ export class TourControlComponent implements OnInit {
   }
 
   private showFallbackTour() {
-    console.log('🎯 Showing fallback tour message');
 
     const driverInstance = driver({
       stagePadding: 8,

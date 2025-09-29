@@ -101,6 +101,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 partnerTreeService,
                 _mockLogger.Object,
                 _mockPermissionService.Object,
+                null, // GlobalFilterService - null for test simplicity since tests are skipped
                 _mockHttpContextAccessor.Object
             );
             

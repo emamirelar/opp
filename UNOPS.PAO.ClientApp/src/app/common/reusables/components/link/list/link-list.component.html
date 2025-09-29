@@ -5,6 +5,19 @@
     </div>
   }
 
+  <!-- Add Link Button - Top Right -->
+  <div class="flex justify-end mb-4">
+    @if (showAddButton() && !disabled()) {
+      <p-button
+        icon="pi pi-plus"
+        rounded
+        styleClass="p-button-text"
+        [label]="'button.addLink' | translate"
+        (onClick)="openEditDialog()"
+        severity="primary" />
+    }
+  </div>
+
   <div
     class="flex flex-col gap-4 relative border-2 border-dashed transition-all duration-300 ease-in-out"
     [ngClass]="{
@@ -79,19 +92,6 @@
           <div>{{ 'message.dropUrlToAddLink' | translate }}</div>
         </div>
       }
-
-
-    <div class="flex justify-between items-center">
-      @if (showAddButton() && !disabled()) {
-        <p-button
-          icon="pi pi-plus"
-          rounded
-          styleClass="p-button-text"
-          [label]="'button.addLink' | translate"
-          (onClick)="openEditDialog()"
-          severity="primary" />
-      }
-    </div>
   </div>
 
   <app-link-edit-dialog

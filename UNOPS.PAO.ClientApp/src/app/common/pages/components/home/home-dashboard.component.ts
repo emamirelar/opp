@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, DestroyRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -18,9 +18,17 @@ import { PartnerService } from '../../../../features/internal/services/partner.s
 import { ContactService } from '../../../../features/internal/services/contact.service';
 import { InteractionService } from '../../../../features/internal/services/interaction.service';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
+import { PermissionService } from '../../../../essentials/services/permission.service';
+import { FeedbackDialogService } from '../../services/feedback-dialog.service';
+import { DialogService } from 'primeng/dynamicdialog';
+import { PartnerEditDialogComponent } from '../../../../features/internal/components/partner/edit-dialog/partner-edit-dialog.component';
+import { ContactEditDialogComponent } from '../../../../features/internal/components/contact/edit-dialog/contact-edit-dialog.component';
+import { InteractionModalComponent } from '../../../../features/internal/components/interaction/modal/interaction-modal.component';
 import { Partner } from '../../../../features/internal/models/partner.model';
 import { Contact } from '../../../../features/internal/models/contact.model';
 import { Interaction } from '../../../../features/internal/models/interaction.model';
+import { DashboardCardComponent, DashboardCardConfig, DashboardCardFilter } from '../../../components/dashboard-card';
+// import { InteractionType } from '../../../../features/internal/models/interaction-type.enum'; // Uncomment for dummy data testing
 
 interface DashboardData {
   myPartners: Partner[];
@@ -74,10 +82,12 @@ interface DashboardSummary {
     TooltipModule,
     RouterModule,
     ChartModule,
-    HttpClientModule
-  ]
+    HttpClientModule,
+    DashboardCardComponent
+  ],
+  providers: [DialogService]
 })
-export class HomeDashboardComponent implements OnInit {
+export class HomeDashboardComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private router = inject(Router);
   private partnerService = inject(PartnerService);
@@ -85,6 +95,69 @@ export class HomeDashboardComponent implements OnInit {
   private interactionService = inject(InteractionService);
   private globalFilterService = inject(GlobalFilterService);
   private destroyRef = inject(DestroyRef);
+  private permissionService = inject(PermissionService);
+  private feedbackDialogService = inject(FeedbackDialogService);
+  private dialogService = inject(DialogService);
+
+  // Dashboard Card Configurations specific to home dashboard
+  private readonly DASHBOARD_CARD_CONFIGS = {
+    ACTIONS_REQUIRED: {
+      icon: 'priority_high',
+      iconColor: 'bg-unops-warning/10',
+      title: 'Actions Required',
+      subtitle: 'Items need attention',
+      size: 'tall',
+      emptyStateIcon: 'check_circle',
+      emptyStateTitle: 'All caught up!',
+      emptyStateMessage: 'No actions require your attention at this time.',
+      showFilters: true,
+      showViewAll: true,
+      viewAllText: 'View All'
+    } as DashboardCardConfig,
+
+    RECENT_ACTIVITY: {
+      icon: 'history',
+      iconColor: 'bg-unops-info/10',
+      title: 'Recent Activity',
+      subtitle: 'Latest updates',
+      size: 'tall',
+      emptyStateIcon: 'history',
+      emptyStateTitle: 'No recent activity',
+      emptyStateMessage: 'No updates to show.',
+      showFilters: true,
+      showViewAll: true,
+      viewAllText: 'View All'
+    } as DashboardCardConfig,
+
+    MY_WORKSPACE: {
+      icon: 'dashboard',
+      iconColor: 'bg-unops-primary/10',
+      title: 'My Workspace',
+      subtitle: 'Quick access to your data',
+      size: 'tall',
+      emptyStateIcon: 'dashboard',
+      emptyStateTitle: 'No items yet',
+      emptyStateMessage: 'No partners or contacts yet',
+      showFilters: true,
+      showViewAll: true,
+      viewAllText: 'View All'
+    } as DashboardCardConfig,
+
+    RECENT_INTERACTIONS: {
+      icon: 'chat',
+      iconColor: 'bg-unops-accent-orange/10',
+      title: 'Recent Interactions & Communications',
+      subtitle: 'Latest activity',
+      size: 'fixed',
+      emptyStateIcon: 'chat',
+      emptyStateTitle: 'No interactions yet',
+      emptyStateMessage: 'Start logging your communications and meetings',
+      emptyStateActionLabel: 'Log First Interaction',
+      showFilters: false,
+      showViewAll: true,
+      viewAllText: 'View All'
+    } as DashboardCardConfig
+  };
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -96,13 +169,8 @@ export class HomeDashboardComponent implements OnInit {
     totalDraftActions: 0
   });
 
-  // Visibility toggles for list views
-  showPartnersListView = signal(false);
-  showContactsListView = signal(false);
-  showInteractionsListView = signal(false);
-  showOpportunitiesListView = signal(false);
-  showActionsRequiredView = signal(false);
-  showOrgUnitUpdatesView = signal(false);
+  // Panel expansion state - only one panel can be expanded at a time
+  expandedPanel = signal<string | null>(null);
 
   // Interaction chart filtering
   selectedInteractionType = signal<string | null>(null);
@@ -119,6 +187,121 @@ export class HomeDashboardComponent implements OnInit {
 
   // Navigation loading state
   navigatingToEntity = signal<string | null>(null);
+
+  // Permission signals
+  partnerPermissions = signal<any>({ permissions: { canCreate: false } });
+  contactPermissions = signal<any>({ permissions: { canCreate: false } });
+  interactionPermissions = signal<any>({ permissions: { canCreate: false } });
+  permissionsLoading = signal(true);
+
+  // Live timestamp
+  lastUpdatedTime = signal<string>('just now');
+  private timestampInterval?: ReturnType<typeof setInterval>;
+  private lastDataLoadTime = new Date();
+
+  // Mobile detection
+  isMobile = signal<boolean>(false);
+
+  // UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
+  // useDummyData = signal(false);
+
+  // Dashboard Card Configurations
+  get actionsRequiredConfig(): DashboardCardConfig {
+    return {
+      ...this.DASHBOARD_CARD_CONFIGS.ACTIONS_REQUIRED,
+      subtitle: `${this.getTotalDraftActions()} items need attention`
+    };
+  }
+
+  get recentActivityConfig(): DashboardCardConfig {
+    return {
+      ...this.DASHBOARD_CARD_CONFIGS.RECENT_ACTIVITY,
+      subtitle: `Latest updates from ${this.dashboardData()?.orgUnitName || 'your organization'}`
+    };
+  }
+
+  get myWorkspaceConfig(): DashboardCardConfig {
+    return {
+      ...this.DASHBOARD_CARD_CONFIGS.MY_WORKSPACE,
+      subtitle: 'Quick access to your data'
+    };
+  }
+
+  get recentInteractionsConfig(): DashboardCardConfig {
+    const baseConfig = {
+      ...this.DASHBOARD_CARD_CONFIGS.RECENT_INTERACTIONS,
+      subtitle: `${this.summary().totalMyInteractions} interactions • Latest activity`
+    };
+    
+    // Only show the empty state action button if user has create permission
+    if (!this.permissionsLoading() && this.interactionPermissions().permissions.canCreate) {
+      return baseConfig;
+    } else {
+      // Remove the action button if no permission
+      const { emptyStateActionLabel, ...configWithoutAction } = baseConfig;
+      return configWithoutAction;
+    }
+  }
+
+  // Dashboard Card Filters
+  get actionsRequiredFilters(): DashboardCardFilter[] {
+    const types = this.getDraftActionTypes();
+    return types.map(type => ({
+      id: type,
+      label: type,
+      count: this.getDraftActionCount(type),
+      active: this.selectedDraftActionType() === type
+    }));
+  }
+
+  get recentActivityFilters(): DashboardCardFilter[] {
+    const types = this.getOrgUnitUpdateTypes();
+    return types.map(type => ({
+      id: type,
+      label: `${this.getOrgUnitUpdateCount(type)} ${type}${this.getOrgUnitUpdateCount(type) === 1 ? '' : 's'}`,
+      count: this.getOrgUnitUpdateCount(type),
+      active: this.selectedOrgUnitUpdateType() === type
+    }));
+  }
+
+  get myWorkspaceFilters(): DashboardCardFilter[] {
+    const data = this.dashboardData();
+    if (!data) return [];
+    
+    // Don't show filters if there are no items to filter
+    const totalItems = data.myPartners.length + data.myContacts.length;
+    if (totalItems === 0) return [];
+    
+    // Only show filters if there are multiple types of items or multiple items of one type
+    const hasPartners = data.myPartners.length > 0;
+    const hasContacts = data.myContacts.length > 0;
+    
+    // If only one type exists and it has only one item, don't show filters
+    if (totalItems === 1) return [];
+    
+    // If both types exist or one type has multiple items, show filters
+    const filters: DashboardCardFilter[] = [];
+    
+    if (hasPartners) {
+      filters.push({
+        id: 'Partner',
+        label: `${data.myPartners.length} Partners`,
+        count: data.myPartners.length,
+        active: this.selectedOrgUnitUpdateType() === 'Partner'
+      });
+    }
+    
+    if (hasContacts) {
+      filters.push({
+        id: 'Contact',
+        label: `${data.myContacts.length} Contacts`,
+        count: data.myContacts.length,
+        active: this.selectedOrgUnitUpdateType() === 'Contact'
+      });
+    }
+    
+    return filters;
+  }
 
   // Chart data for interactions pie chart
   interactionsChartData = signal<any>(null);
@@ -191,20 +374,109 @@ export class HomeDashboardComponent implements OnInit {
   });
 
   ngOnInit() {
+    this.checkMobileView();
     this.loadDashboardData();
+    this.loadPermissions();
+    this.startTimestampUpdates();
 
     // Subscribe to global filter changes to automatically refresh dashboard
     this.globalFilterService.filtersChanged$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        console.log('Global filter changed - refreshing dashboard');
         this.loadDashboardData();
       });
+  }
+
+  ngOnDestroy() {
+    if (this.timestampInterval) {
+      clearInterval(this.timestampInterval);
+    }
+  }
+
+  private loadPermissions() {
+    this.permissionsLoading.set(true);
+    
+    // Load permissions for all three entities
+    forkJoin({
+      partners: this.permissionService.getEntityPermissions('/partnerships/partners').pipe(
+        catchError(() => of({ permissions: { canCreate: false } }))
+      ),
+      contacts: this.permissionService.getEntityPermissions('/partnerships/contacts').pipe(
+        catchError(() => of({ permissions: { canCreate: false } }))
+      ),
+      interactions: this.permissionService.getEntityPermissions('/partnerships/interactions').pipe(
+        catchError(() => of({ permissions: { canCreate: false } }))
+      )
+    }).subscribe({
+      next: (permissions) => {
+        this.partnerPermissions.set(permissions.partners);
+        this.contactPermissions.set(permissions.contacts);
+        this.interactionPermissions.set(permissions.interactions);
+        this.permissionsLoading.set(false);
+      },
+      error: () => {
+        this.permissionsLoading.set(false);
+      }
+    });
+  }
+
+  private startTimestampUpdates() {
+    this.lastDataLoadTime = new Date();
+    this.updateTimestamp();
+    
+    // Update timestamp every 30 seconds
+    this.timestampInterval = setInterval(() => {
+      this.updateTimestamp();
+    }, 30000);
+  }
+
+  private updateTimestamp() {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - this.lastDataLoadTime.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) {
+      this.lastUpdatedTime.set('just now');
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      this.lastUpdatedTime.set(`${minutes} minute${minutes > 1 ? 's' : ''} ago`);
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      this.lastUpdatedTime.set(`${hours} hour${hours > 1 ? 's' : ''} ago`);
+    } else {
+      const days = Math.floor(diffInSeconds / 86400);
+      this.lastUpdatedTime.set(`${days} day${days > 1 ? 's' : ''} ago`);
+    }
+  }
+
+  // Helper method to check if user has any create permissions
+  hasAnyCreatePermission(): boolean {
+    return this.partnerPermissions().permissions.canCreate || 
+           this.contactPermissions().permissions.canCreate || 
+           this.interactionPermissions().permissions.canCreate;
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.checkMobileView();
+  }
+
+  private checkMobileView() {
+    // Consider mobile if width is less than 768px (Tailwind's md breakpoint)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    this.isMobile.set(isMobile);
   }
 
   private loadDashboardData() {
     this.loading.set(true);
     this.error.set(null);
+    this.lastDataLoadTime = new Date();
+
+    // UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
+    // if (this.useDummyData()) {
+    //   console.log('Loading dummy data for testing...');
+    //   this.loadDummyDashboardData();
+    //   return;
+    // }
 
     // Load user's partners using dedicated dashboard API
     const myPartners$ = this.http.get<any>(`/api/dashboard/my-partners`, {
@@ -320,14 +592,59 @@ export class HomeDashboardComponent implements OnInit {
         this.updateInteractionsChart(dashboardData);
         this.updateActionableChart(dashboardData);
         this.loading.set(false);
+        
+        // Update timestamp immediately after data loads
+        this.updateTimestamp();
       },
       error: (err) => {
         console.error('Error loading dashboard data:', err);
         this.error.set('Failed to load dashboard data. Please try again.');
         this.loading.set(false);
+        
+        // Update timestamp even on error since we attempted to refresh
+        this.updateTimestamp();
       }
     });
   }
+
+  /* UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
+  private loadDummyDashboardData() {
+    // Simulate loading delay for realism
+    setTimeout(() => {
+      const dashboardData: DashboardData = {
+        myPartners: this.generateDummyPartners(15), // More than the 2 shown in normal view
+        myContacts: this.generateDummyContacts(20), // More than the 1 shown in normal view
+        myInteractions: this.generateDummyInteractions(25), // More than the 3 shown in normal view
+        draftActions: {
+          partners: this.generateDummyPartners(8).map(p => ({ ...p, status: 'Draft' })), // More than the 3 shown
+          contacts: this.generateDummyContacts(12).map(c => ({ ...c, status: 'Draft' })), // More than the 3 shown
+          interactions: this.generateDummyInteractions(10).map(i => ({ ...i, status: 'Draft' })) // More than the 3 shown
+        },
+        orgUnitRecentUpdates: this.generateDummyRecentUpdates(18), // More than the 3 shown in normal view
+        orgUnitName: 'Test Organization Unit (Dummy Data)'
+      };
+
+      this.dashboardData.set(dashboardData);
+      this.updateSummary(dashboardData);
+      this.updateInteractionsChart(dashboardData);
+      this.updateActionableChart(dashboardData);
+      this.loading.set(false);
+      
+      // Update timestamp immediately after dummy data loads
+      this.updateTimestamp();
+      
+      console.log('Dummy data loaded:', {
+        partners: dashboardData.myPartners.length,
+        contacts: dashboardData.myContacts.length,
+        interactions: dashboardData.myInteractions.length,
+        draftPartners: dashboardData.draftActions.partners.length,
+        draftContacts: dashboardData.draftActions.contacts.length,
+        draftInteractions: dashboardData.draftActions.interactions.length,
+        recentUpdates: dashboardData.orgUnitRecentUpdates.length
+      });
+    }, 500); // 500ms delay to simulate loading
+  }
+  */
 
   private updateSummary(data: DashboardData) {
     const summary: DashboardSummary = {
@@ -406,8 +723,8 @@ export class HomeDashboardComponent implements OnInit {
   }
 
   navigateToPartners() {
-    // Toggle the visibility of the Partners list view
-    this.showPartnersListView.set(!this.showPartnersListView());
+    // Navigate directly to partners page
+    this.navigateToPartnersPage();
   }
 
   navigateToPartnersPage() {
@@ -417,9 +734,79 @@ export class HomeDashboardComponent implements OnInit {
     });
   }
 
+  // New modal opening methods for Quick Actions
+  openNewPartnerModal() {
+    const ref = this.dialogService.open(PartnerEditDialogComponent, {
+      header: 'New Partner',
+      width: '90vw',
+      style: { maxWidth: '800px' },
+      closable: true,
+      data: {
+        mode: 'new',
+        record: {}
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        this.feedbackDialogService.showSuccessToast({
+          detail: 'Partner created successfully!'
+        });
+        // Refresh dashboard data
+        this.loadDashboardData();
+      }
+    });
+  }
+
+  openNewContactModal() {
+    const ref = this.dialogService.open(ContactEditDialogComponent, {
+      header: 'New Contact',
+      width: '90vw',
+      style: { maxWidth: '800px' },
+      closable: true,
+      data: {
+        mode: 'new',
+        record: {}
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        this.feedbackDialogService.showSuccessToast({
+          detail: 'Contact created successfully!'
+        });
+        // Refresh dashboard data
+        this.loadDashboardData();
+      }
+    });
+  }
+
+  openNewInteractionModal() {
+    const ref = this.dialogService.open(InteractionModalComponent, {
+      header: 'New Interaction',
+      width: '90%',
+      height: '90%',
+      modal: true,
+      closable: true,
+      data: {
+        initialData: {}
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        this.feedbackDialogService.showSuccessToast({
+          detail: 'Interaction created successfully!'
+        });
+        // Refresh dashboard data
+        this.loadDashboardData();
+      }
+    });
+  }
+
   navigateToContacts() {
-    // Toggle the visibility of the Contacts list view
-    this.showContactsListView.set(!this.showContactsListView());
+    // Navigate directly to contacts page
+    this.navigateToContactsPage();
   }
 
   navigateToContactsPage() {
@@ -429,24 +816,72 @@ export class HomeDashboardComponent implements OnInit {
     });
   }
 
-  toggleInteractionsListView() {
-    // Toggle the visibility of the Interactions list view
-    this.showInteractionsListView.set(!this.showInteractionsListView());
+  // Panel expansion methods
+  expandPanel(panelName: string) {
+    const currentExpanded = this.expandedPanel();
+    // Toggle: if same panel is clicked, collapse it; otherwise expand the new one
+    this.expandedPanel.set(currentExpanded === panelName ? null : panelName);
   }
 
-  toggleOpportunitiesListView() {
-    // Toggle the visibility of the Opportunities list view
-    this.showOpportunitiesListView.set(!this.showOpportunitiesListView());
+  collapsePanel() {
+    this.expandedPanel.set(null);
   }
 
-  toggleActionsRequiredView() {
-    // Toggle the visibility of the Actions Required list view
-    this.showActionsRequiredView.set(!this.showActionsRequiredView());
+  isExpanded(panelName: string): boolean {
+    return this.expandedPanel() === panelName;
   }
 
-  toggleOrgUnitUpdates() {
-    // Toggle the visibility of the Org Unit Recent Updates list view
-    this.showOrgUnitUpdatesView.set(!this.showOrgUnitUpdatesView());
+  // Helper methods to get truncated items for normal view (max 3 items per panel)
+  // On mobile, returns all items; on desktop, returns truncated items
+  getTruncatedDraftActions(limit: number = 3) {
+    const items = this.getDisplayedDraftActions();
+    return this.isMobile() ? items : items.slice(0, limit);
+  }
+
+  getTruncatedOrgUnitUpdates(limit: number = 3) {
+    const items = this.getDisplayedOrgUnitUpdates();
+    return this.isMobile() ? items : items.slice(0, limit);
+  }
+
+  getTruncatedPartners(limit: number = 3) {
+    const items = this.dashboardData()?.myPartners || [];
+    return this.isMobile() ? items : items.slice(0, limit);
+  }
+
+  getTruncatedContacts(limit: number = 3) {
+    const items = this.dashboardData()?.myContacts || [];
+    return this.isMobile() ? items : items.slice(0, limit);
+  }
+
+  getTruncatedInteractions(limit: number = 3) {
+    const items = this.getDisplayedInteractions();
+    return this.isMobile() ? items : items.slice(0, limit);
+  }
+
+  // Get remaining counts for "View All" links
+  getRemainingDraftActionsCount(): number {
+    return Math.max(0, this.getDisplayedDraftActions().length - 3);
+  }
+
+  getRemainingOrgUnitUpdatesCount(): number {
+    return Math.max(0, this.getDisplayedOrgUnitUpdates().length - 3);
+  }
+
+  getRemainingPartnersCount(): number {
+    return Math.max(0, (this.dashboardData()?.myPartners.length || 0) - 3);
+  }
+
+  getRemainingContactsCount(): number {
+    return Math.max(0, (this.dashboardData()?.myContacts.length || 0) - 3);
+  }
+
+  getRemainingInteractionsCount(): number {
+    return Math.max(0, this.getDisplayedInteractions().length - 3);
+  }
+
+  // Get combined remaining count for workspace (partners + contacts)
+  getRemainingWorkspaceCount(): number {
+    return this.getRemainingPartnersCount() + this.getRemainingContactsCount();
   }
 
   navigateToInteractions() {
@@ -465,19 +900,15 @@ export class HomeDashboardComponent implements OnInit {
 
   onInteractionChartClick(event: any) {
     // Handle pie chart segment click to filter interactions by type
-    console.log('Chart click event:', event);
     
     if (event && event.element && typeof event.element.index !== 'undefined') {
       const dataIndex = event.element.index;
       const chartData = this.interactionsChartData();
       
-      console.log('Data index:', dataIndex, 'Chart data:', chartData);
-      
       if (chartData && chartData.labels && dataIndex < chartData.labels.length) {
         const selectedType = chartData.labels[dataIndex];
         const selectedColor = chartData.datasets[0].backgroundColor[dataIndex];
         
-        console.log('Selected interaction type:', selectedType, 'Selected color:', selectedColor);
         
         // Filter interactions by the selected type and display them
         this.showInteractionsByType(selectedType, selectedColor);
@@ -529,19 +960,16 @@ export class HomeDashboardComponent implements OnInit {
 
   onDraftActionsChartClick(event: any) {
     // Handle bar chart click to filter draft actions by type
-    console.log('Draft actions chart click event:', event);
     
     if (event && event.element && typeof event.element.index !== 'undefined') {
       const dataIndex = event.element.index;
       const chartData = this.actionableChartData();
       
-      console.log('Data index:', dataIndex, 'Chart data:', chartData);
       
       if (chartData && chartData.labels && dataIndex < chartData.labels.length) {
         const selectedType = chartData.labels[dataIndex];
         const selectedColor = chartData.datasets[0].backgroundColor[dataIndex];
         
-        console.log('Selected draft action type:', selectedType, 'Selected color:', selectedColor);
         
         // Filter draft actions by the selected type and display them
         this.showDraftActionsByType(selectedType, selectedColor);
@@ -595,8 +1023,7 @@ export class HomeDashboardComponent implements OnInit {
   }
 
   navigateToEntity(entityType: string, entityId: number | null | undefined) {
-    console.log('navigateToEntity called with:', { entityType, entityId });
-    
+
     if (entityId === null || entityId === undefined) {
       console.warn('navigateToEntity: No entityId provided');
       return;
@@ -613,14 +1040,12 @@ export class HomeDashboardComponent implements OnInit {
     };
     
     const routeSegments = routes[entityType as keyof typeof routes];
-    console.log('Navigating to route segments:', routeSegments);
     
     if (routeSegments) {
       // Use router navigation with promise for better performance
       this.router.navigate(routeSegments).then(
         (success) => {
           if (success) {
-            console.log('Navigation successful');
           } else {
             console.warn('Navigation failed');
             this.navigatingToEntity.set(null); // Clear loading state if navigation fails
@@ -645,8 +1070,6 @@ export class HomeDashboardComponent implements OnInit {
       }
     }).pipe(
       map(response => {
-        console.log('Org Unit Recent Updates from Dashboard API:', response.updates.length, 'items');
-        console.log('Org Unit Name:', response.orgUnitName);
         return {
           updates: response.updates,
           orgUnitName: response.orgUnitName
@@ -693,13 +1116,11 @@ export class HomeDashboardComponent implements OnInit {
 
 
   getEntityId(id: any): number | null {
-    if (id === null || id === undefined) {
-      console.log('getEntityId called with:', id, 'returning: null');
+    if (id === null || id === undefined) { 
       return null;
     }
     
     const result = typeof id === 'string' ? parseInt(id, 10) : id;
-    console.log('getEntityId called with:', id, 'returning:', result);
     return result;
   }
 
@@ -902,6 +1323,19 @@ export class HomeDashboardComponent implements OnInit {
     this.selectedOrgUnitUpdateType.set(null);
   }
 
+  // Dashboard Card Event Handlers
+  onActionsFilterClick(filter: DashboardCardFilter): void {
+    this.setDraftActionFilter(filter.id);
+  }
+
+  onActivityFilterClick(filter: DashboardCardFilter): void {
+    this.setOrgUnitUpdateFilter(filter.id);
+  }
+
+  onWorkspaceFilterClick(filter: DashboardCardFilter): void {
+    this.setOrgUnitUpdateFilter(filter.id);
+  }
+
   getDisplayedOrgUnitUpdates(): RecentUpdate[] {
     const dashboardData = this.dashboardData();
     if (!dashboardData || !dashboardData.orgUnitRecentUpdates) return [];
@@ -913,4 +1347,156 @@ export class HomeDashboardComponent implements OnInit {
     
     return dashboardData.orgUnitRecentUpdates.filter(update => update.type === selectedType);
   }
+
+  // UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
+  // toggleDummyData() {
+  //   this.useDummyData.set(!this.useDummyData());
+  //   this.loadDashboardData();
+  // }
+
+  /* UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
+  
+  // Dummy data generators for testing "View All" functionality
+  private generateDummyPartners(count: number = 15): Partner[] {
+    const partners: Partner[] = [];
+    const companyNames = [
+      'Acme Corporation', 'Global Solutions Inc.', 'Tech Innovations Ltd.', 'Future Dynamics',
+      'Strategic Partners LLC', 'International Holdings', 'Prime Ventures', 'Digital Enterprises',
+      'Advanced Systems', 'Elite Consulting', 'Progressive Industries', 'Summit Technologies',
+      'Apex Solutions', 'Pinnacle Group', 'Metropolitan Services', 'Continental Corp.',
+      'Universal Partners', 'Premier Associates', 'Executive Solutions', 'Leading Edge Inc.'
+    ];
+    const statuses = ['Active', 'Pending', 'Unknown'];
+    
+    for (let i = 1; i <= count; i++) {
+      partners.push({
+        id: i.toString(), // Partner ID should be string
+        name: companyNames[i % companyNames.length] + ` ${Math.floor(i / companyNames.length) + 1}`,
+        partnerDescription: companyNames[i % companyNames.length] + ` ${Math.floor(i / companyNames.length) + 1}`,
+        status: statuses[i % statuses.length],
+        lastModifiedDate: new Date(this.generateRandomDate(-30)),
+        createdDate: new Date(this.generateRandomDate(-60)),
+        // Add other Partner properties as needed
+      } as Partner);
+    }
+    return partners;
+  }
+
+  private generateDummyContacts(count: number = 20): Contact[] {
+    const contacts: Contact[] = [];
+    const firstNames = [
+      'John', 'Jane', 'Michael', 'Sarah', 'David', 'Emma', 'Robert', 'Lisa', 'James', 'Mary',
+      'Christopher', 'Jennifer', 'Daniel', 'Patricia', 'Matthew', 'Linda', 'Anthony', 'Elizabeth',
+      'Mark', 'Barbara', 'Paul', 'Susan', 'Steven', 'Jessica', 'Kenneth', 'Dorothy'
+    ];
+    const lastNames = [
+      'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez',
+      'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor',
+      'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez'
+    ];
+    const titles = [
+      'CEO', 'CTO', 'Marketing Director', 'Project Manager', 'Sales Manager', 'Operations Manager',
+      'Business Analyst', 'Senior Developer', 'HR Manager', 'Finance Director', 'Product Manager',
+      'Regional Director', 'Account Manager', 'Technical Lead', 'Consultant'
+    ];
+    const statuses = ['Active', 'Pending', 'Unknown'];
+    
+    for (let i = 1; i <= count; i++) {
+      contacts.push({
+        id: i.toString(), // Contact ID should be string
+        firstName: firstNames[i % firstNames.length],
+        lastName: lastNames[i % lastNames.length],
+        title: titles[i % titles.length],
+        status: statuses[i % statuses.length],
+        lastModifiedDate: new Date(this.generateRandomDate(-30)),
+        createdDate: new Date(this.generateRandomDate(-60)),
+        // Add other Contact properties as needed
+      } as Contact);
+    }
+    return contacts;
+  }
+
+  private generateDummyInteractions(count: number = 25): Interaction[] {
+    const interactions: Interaction[] = [];
+    const types: InteractionType[] = [
+      InteractionType.Email,
+      InteractionType.Call, 
+      InteractionType.VirtualMeeting,
+      InteractionType.InPersonMeeting,
+      InteractionType.Chat
+    ];
+    const subjects = [
+      'Project Status Update', 'Partnership Discussion', 'Contract Review', 'Technical Assessment',
+      'Budget Planning', 'Strategy Meeting', 'Quarterly Review', 'Proposal Discussion',
+      'Implementation Planning', 'Performance Review', 'Client Check-in', 'Solution Demo',
+      'Requirements Gathering', 'Risk Assessment', 'Progress Report', 'Training Session'
+    ];
+    const descriptions = [
+      'Discussed project milestones and deliverables', 'Reviewed contract terms and conditions',
+      'Addressed technical requirements and specifications', 'Evaluated partnership opportunities',
+      'Analyzed budget allocation and resource planning', 'Coordinated implementation timeline',
+      'Assessed project risks and mitigation strategies', 'Demonstrated platform capabilities',
+      'Gathered detailed business requirements', 'Reviewed quarterly performance metrics'
+    ];
+    const statuses = ['Completed', 'Pending', 'Draft'];
+    
+    for (let i = 1; i <= count; i++) {
+      interactions.push({
+        id: i, // Interaction ID should remain number
+        type: types[i % types.length],
+        subject: subjects[i % subjects.length] + ` #${i}`,
+        description: descriptions[i % descriptions.length],
+        status: statuses[i % statuses.length],
+        date: this.generateRandomDate(-30),
+        contactId: 1, // Required field
+        contactIds: [1],
+        partnerIds: [1],
+        emailAddresses: [],
+        phoneNumbers: [],
+        location: 'Virtual',
+        createdBy: 1,
+        createdDate: this.generateRandomDate(-30),
+        lastModifiedDate: this.generateRandomDate(-15),
+        // Add other required Interaction properties
+      } as Interaction);
+    }
+    return interactions;
+  }
+
+  private generateDummyRecentUpdates(count: number = 18): RecentUpdate[] {
+    const updates: RecentUpdate[] = [];
+    const types: ('Partner' | 'Contact' | 'Interaction')[] = ['Partner', 'Contact', 'Interaction'];
+    const names = [
+      'Global Tech Solutions', 'Sarah Johnson', 'Project Kickoff Meeting',
+      'Innovation Partners LLC', 'Michael Chen', 'Client Status Update',
+      'Strategic Ventures Inc.', 'Lisa Anderson', 'Requirements Review',
+      'Digital Dynamics Corp.', 'David Rodriguez', 'Partnership Discussion',
+      'Elite Consulting Group', 'Emma Thompson', 'Technical Assessment',
+      'Premier Solutions Ltd.', 'James Wilson', 'Budget Planning Session'
+    ];
+    const users = [
+      'John Smith', 'Jane Doe', 'Mike Johnson', 'Sarah Wilson', 'David Brown',
+      'Lisa Davis', 'Robert Taylor', 'Emma Anderson', 'James Garcia', 'Mary Martinez'
+    ];
+    
+    for (let i = 1; i <= count; i++) {
+      updates.push({
+        id: i,
+        name: names[i % names.length] + ` ${Math.floor(i / names.length) + 1}`,
+        type: types[i % types.length],
+        lastModifiedDate: this.generateRandomDate(-15),
+        lastModifiedBy: users[i % users.length],
+        status: 'Active'
+      });
+    }
+    return updates;
+  }
+
+  private generateRandomDate(daysAgo: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() + Math.floor(Math.random() * daysAgo));
+    return date.toISOString();
+  }
+  
+  */
 }

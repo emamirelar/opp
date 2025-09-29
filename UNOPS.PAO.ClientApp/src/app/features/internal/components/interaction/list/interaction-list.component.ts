@@ -337,7 +337,6 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
   handleOnOpenRecordDetails(record: any) {
     if (record && record.id !== undefined && record.id !== null) {
-      console.log('Navigating to interaction:', record.id);
       this.router.navigate(['partnerships/interactions', record.id.toString()]);
     } else {
       console.error('Cannot navigate: record or record.id is undefined', record);
@@ -375,7 +374,6 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
   _handleOnRecordCreation(newRecordData: Interaction) {
     if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
-      console.log('Navigating to newly created interaction:', newRecordData.id);
       this.router.navigate(['partnerships/interactions', newRecordData.id.toString()]);
     } else {
       console.error('Cannot navigate to created record: id is undefined', newRecordData);
@@ -405,7 +403,6 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Interaction updated:', result);
         // Refresh the listview
         const listviewElement = document.querySelector('app-listview');
         if (listviewElement) {
@@ -430,7 +427,6 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Interaction saved:', result);
         if (record) {
           // Update existing interaction
           const listviewElement = document.querySelector('app-listview');

@@ -4,10 +4,10 @@
   <button
     *ngIf="!isExpanded"
     (click)="toggleExpand()"
-    class="lg:hidden flex items-center justify-center h-10 w-10 rounded-full hover:bg-gray-100 ml-auto -mr-4 transition-colors"
+    class="lg:hidden flex items-center justify-center h-10 w-10 rounded-full hover:bg-unops-neutral-50 ml-auto -mr-4 transition-colors"
     type="button"
     [attr.aria-label]="'search.openSearch' | translate">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-unops-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
     </svg>
   </button>
@@ -15,17 +15,17 @@
   <!-- Search input group -->
   <div
     [ngClass]="{'hidden lg:flex': !isExpanded, 'flex lg:relative fixed top-2 lg:top-0 left-4 right-4 lg:left-0 lg:right-0 z-50': isExpanded}"
-    class="items-center h-12 rounded-full border-solid border border-gray-200 bg-white shadow-sm hover:shadow-md focus-within:shadow-md transition-all duration-200 overflow-hidden px-4 lg:max-w-2xl">
+    class="items-center h-12 rounded-full border-solid border border-unops-neutral-200 bg-unops-surface-primary transition-colors duration-200 overflow-hidden px-4 lg:max-w-2xl">
     
     <!-- Search icon -->
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-unops-neutral-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
     </svg>
 
     <!-- Search input -->
     <input
       type="text"
-      class="flex-1 w-full h-full ml-2 outline-none bg-transparent text-gray-900 placeholder-gray-500"
+      class="flex-1 w-full h-full ml-2 outline-none bg-transparent text-unops-neutral-900 placeholder-unops-neutral-500"
       [placeholder]="'search.placeholder' | translate"
       [formControl]="searchControl"
       (focus)="onSearchFocus()"

@@ -368,38 +368,6 @@
       }
     },
     {
-      "name": "GetPartnerProjects",
-      "url": "/api/partner/{partnerId}/projects?pageIndex={pageIndex}&pageSize={pageSize}&orderBy={orderBy}&ascending={ascending}",
-      "method": "GET",
-      "intent": [
-        "list",
-        "get",
-        "browse",
-        "show"
-      ],
-      "description": "Retrieves all projects associated with a specific partner with complete details and pagination.",
-      "searchCapability": {
-        "type": "none",
-        "searchFields": [],
-        "supportsPagination": true,
-        "supportsSort": true
-      },
-      "parameters": {},
-      "exampleBody": {},
-      "exampleUrl": "/api/partner/123/projects?pageIndex=1&pageSize=20&orderBy=createdDate&ascending=false",
-      "requiredFields": [],
-      "example_uses": [
-        "Show all projects for partner 123",
-        "List partner's project portfolio"
-      ],
-      "when_to_use": "Use this when the user wants to see all projects associated with a specific partner.",
-      "scoring": {
-        "searchBonus": 0,
-        "intentMatch": 90,
-        "complexity": "medium"
-      }
-    },
-    {
       "name": "Delete",
       "url": "/api/partner/{id}",
       "method": "DELETE",

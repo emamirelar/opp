@@ -242,18 +242,33 @@
                 </div>
 
                 <div class="space-y-2">
-                  <label for="promptFunction" class="block text-sm font-semibold text-gray-700">
-                    {{ 'aiPrompt.promptFunction' | translate }}
+                  <label for="dataRetrievalMethod" class="block text-sm font-semibold text-gray-700">
+                    {{ 'aiPrompt.dataRetrievalMethod' | translate }}
                   </label>
                   <input
-                    id="promptFunction"
+                    id="dataRetrievalMethod"
                     pInputText
-                    formControlName="promptFunction"
+                    formControlName="dataRetrievalMethod"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                    [class.border-red-500]="promptForm.get('promptFunction')?.invalid && promptForm.get('promptFunction')?.touched"
-                    [class.ring-red-200]="promptForm.get('promptFunction')?.invalid && promptForm.get('promptFunction')?.touched">
+                    [class.border-red-500]="promptForm.get('dataRetrievalMethod')?.invalid && promptForm.get('dataRetrievalMethod')?.touched"
+                    [class.ring-red-200]="promptForm.get('dataRetrievalMethod')?.invalid && promptForm.get('dataRetrievalMethod')?.touched">
                   <small class="text-gray-600 text-xs">
-                    {{ 'aiPrompt.promptFunctionHelper' | translate }}
+                    {{ 'aiPrompt.dataRetrievalMethodHelper' | translate }}
+                  </small>
+                </div>
+
+                <div class="space-y-2">
+                  <label for="feature" class="block text-sm font-semibold text-gray-700">
+                    {{ 'aiPrompt.feature' | translate }}
+                  </label>
+                  <input
+                    id="feature"
+                    pInputText
+                    formControlName="feature"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    [placeholder]="'aiPrompt.featurePlaceholder' | translate">
+                  <small class="text-gray-600 text-xs">
+                    {{ 'aiPrompt.featureHelper' | translate }}
                   </small>
                 </div>
 
@@ -431,6 +446,86 @@
                     </div>
                   </div>
 
+                  <!-- Caching Configuration -->
+                  <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mb-4">
+                      {{ 'aiPrompt.cachingSettings' | translate }}
+                    </h3>
+                    <div class="space-y-4">
+                      <!-- Use Cache Toggle -->
+                      <div class="flex items-center gap-3 p-3 bg-white rounded-md border border-gray-200">
+                        <p-toggleSwitch formControlName="useCache" class="flex-shrink-0"></p-toggleSwitch>
+                        <label class="text-sm font-medium text-gray-700 flex-grow">
+                          {{ 'aiPrompt.useCache' | translate }}
+                        </label>
+                      </div>
+                      
+                      <!-- Cache Duration (shown when useCache is enabled) -->
+                      <div class="space-y-3" *ngIf="promptForm.get('useCache')?.value">
+                        <div class="space-y-2">
+                          <label for="cacheInvalidationMinutes" class="block text-sm font-semibold text-gray-700">
+                            {{ 'aiPrompt.cacheInvalidationMinutes' | translate }}
+                          </label>
+                          <div class="flex gap-2">
+                            <input
+                              id="cacheInvalidationMinutes"
+                              pInputText
+                              formControlName="cacheInvalidationMinutes"
+                              type="number"
+                              min="1"
+                              max="43200"
+                              class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                              [class.border-red-500]="promptForm.get('cacheInvalidationMinutes')?.invalid && promptForm.get('cacheInvalidationMinutes')?.touched"
+                              [class.ring-red-200]="promptForm.get('cacheInvalidationMinutes')?.invalid && promptForm.get('cacheInvalidationMinutes')?.touched">
+                            <span class="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm text-gray-600">
+                              {{ 'aiPrompt.minutes' | translate }}
+                            </span>
+                          </div>
+                          <small class="text-red-600 text-xs" *ngIf="promptForm.get('cacheInvalidationMinutes')?.invalid && promptForm.get('cacheInvalidationMinutes')?.touched">
+                            {{ 'aiPrompt.cacheInvalidationMinutesError' | translate }}
+                          </small>
+                        </div>
+                        
+                        <!-- Quick Duration Buttons -->
+                        <div class="space-y-2">
+                          <label class="block text-sm font-semibold text-gray-700">
+                            {{ 'aiPrompt.quickDuration' | translate }}
+                          </label>
+                          <div class="flex flex-wrap gap-2">
+                            <button type="button" 
+                                    class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                    (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(30)">
+                              30m
+                            </button>
+                            <button type="button" 
+                                    class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                    (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(60)">
+                              1h
+                            </button>
+                            <button type="button" 
+                                    class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                    (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(180)">
+                              3h
+                            </button>
+                            <button type="button" 
+                                    class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                    (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(720)">
+                              12h
+                            </button>
+                            <button type="button" 
+                                    class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                                    (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(1440)">
+                              1d
+                            </button>
+                          </div>
+                          <small class="text-gray-600 text-xs">
+                            {{ 'aiPrompt.cachingHelper' | translate }}
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <!-- Advanced Configuration -->
                   <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                     <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mb-4">
@@ -452,26 +547,45 @@
                 </div>
               </div>
 
-              <!-- Prompt Content -->
+              <!-- System Instructions -->
               <div class="space-y-2 flex-shrink-0">
-                <label for="prompt" class="block text-sm font-semibold text-gray-700">
-                  {{ 'aiPrompt.prompt' | translate }} *
+                <label for="systemInstructions" class="block text-sm font-semibold text-gray-700">
+                  {{ 'aiPrompt.systemInstructions' | translate }} *
                 </label>
                 <div class="flex flex-col">
                   <textarea
-                    id="prompt"
+                    id="systemInstructions"
                     pInputTextarea
-                    formControlName="prompt"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y min-h-[400px]"
-                    [class.border-red-500]="promptForm.get('prompt')?.invalid && promptForm.get('prompt')?.touched"
-                    [class.ring-red-200]="promptForm.get('prompt')?.invalid && promptForm.get('prompt')?.touched"
-                    [placeholder]="'aiPrompt.promptPlaceholder' | translate">
+                    formControlName="systemInstructions"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y min-h-[200px]"
+                    [class.border-red-500]="promptForm.get('systemInstructions')?.invalid && promptForm.get('systemInstructions')?.touched"
+                    [class.ring-red-200]="promptForm.get('systemInstructions')?.invalid && promptForm.get('systemInstructions')?.touched"
+                    [placeholder]="'aiPrompt.systemInstructionsPlaceholder' | translate">
                   </textarea>
                   <small class="text-blue-600 text-xs mt-2">
-                    {{ 'aiPrompt.promptHelper' | translate }}
+                    {{ 'aiPrompt.systemInstructionsHelper' | translate }}
                   </small>
-                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('prompt')?.invalid && promptForm.get('prompt')?.touched">
-                    {{ 'aiPrompt.promptDataRequired' | translate }}
+                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('systemInstructions')?.invalid && promptForm.get('systemInstructions')?.touched">
+                    {{ 'aiPrompt.systemInstructionsRequired' | translate }}
+                  </small>
+                </div>
+              </div>
+
+              <!-- User Prompt -->
+              <div class="space-y-2 flex-shrink-0">
+                <label for="userPrompt" class="block text-sm font-semibold text-gray-700">
+                  {{ 'aiPrompt.userPrompt' | translate }}
+                </label>
+                <div class="flex flex-col">
+                  <textarea
+                    id="userPrompt"
+                    pInputTextarea
+                    formControlName="userPrompt"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y min-h-[200px]"
+                    [placeholder]="'aiPrompt.userPromptPlaceholder' | translate">
+                  </textarea>
+                  <small class="text-blue-600 text-xs mt-2">
+                    {{ 'aiPrompt.userPromptHelper' | translate }}
                   </small>
                 </div>
               </div>
@@ -592,6 +706,20 @@
                                   <button
                                     type="button"
                                     class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
+                                    [class.border-blue-500]="activeTab() === 'data'"
+                                    [class.bg-white]="activeTab() === 'data'"
+                                    [class.text-blue-700]="activeTab() === 'data'"
+                                    [class.shadow-sm]="activeTab() === 'data'"
+                                    [class.border-transparent]="activeTab() !== 'data'"
+                                    [class.text-gray-600]="activeTab() !== 'data'"
+                                    [class.hover:text-gray-800]="activeTab() !== 'data'"
+                                    (click)="setActiveTab('data')">
+                                    <i class="pi pi-database mr-2"></i>
+                                    {{ 'aiPrompt.data' | translate }}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
                                     [class.border-blue-500]="activeTab() === 'preview'"
                                     [class.bg-white]="activeTab() === 'preview'"
                                     [class.text-blue-700]="activeTab() === 'preview'"
@@ -636,7 +764,36 @@
 
                               <!-- Tab Content -->
                               <div class="p-3 min-h-[150px] max-h-[300px] overflow-y-auto">
-                                @if (activeTab() === 'preview') {
+                                @if (activeTab() === 'data') {
+                                  <!-- Data Tab - Shows data retrieval method results -->
+                                  <div class="space-y-3">
+                                    <div class="flex items-center justify-between">
+                                      <h6 class="text-sm font-semibold text-gray-800">{{ 'aiPrompt.dataRetrievalResult' | translate }}</h6>
+                                      @if (testResults()?.dataRetrievalResult) {
+                                        <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                                          <i class="pi pi-check mr-1"></i>{{ 'aiPrompt.dataAvailable' | translate }}
+                                        </span>
+                                      } @else {
+                                        <span class="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
+                                          <i class="pi pi-exclamation-triangle mr-1"></i>{{ 'aiPrompt.noDataAvailable' | translate }}
+                                        </span>
+                                      }
+                                    </div>
+                                    @if (testResults()?.dataRetrievalResult) {
+                                      <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
+                                        <p class="text-xs text-blue-700 mb-2">
+                                          <i class="pi pi-info-circle mr-1"></i>{{ 'aiPrompt.dataExplanation' | translate }}
+                                        </p>
+                                        <pre class="text-xs text-gray-700 whitespace-pre-wrap font-mono bg-white border border-blue-100 rounded p-2 overflow-x-auto">{{ formatJsonData(testResults()?.dataRetrievalResult) }}</pre>
+                                      </div>
+                                    } @else {
+                                      <div class="bg-gray-50 border border-gray-200 rounded-md p-3 text-center">
+                                        <i class="pi pi-inbox text-2xl text-gray-400 mb-2 block"></i>
+                                        <p class="text-sm text-gray-600">{{ 'aiPrompt.noDataMessage' | translate }}</p>
+                                      </div>
+                                    }
+                                  </div>
+                                } @else if (activeTab() === 'preview') {
                                   <!-- Preview Tab - Markdown Rendered AI Response -->
                                   <div class="text-sm text-gray-700 prose prose-sm max-w-none">
                                     <markdown [data]="getAiResponseText(testResults()?.response)"></markdown>

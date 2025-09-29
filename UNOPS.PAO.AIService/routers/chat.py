@@ -9,7 +9,7 @@ import logging
 import uuid
 from typing import List, Any
 from fastapi import APIRouter, HTTPException, Request, Form, File, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 from google.adk.agents import RunConfig
 from google.adk.agents.run_config import StreamingMode
 from google.adk.runners import Runner
@@ -25,6 +25,78 @@ logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter()
+
+
+@router.get("/test-stream")
+async def test_stream():
+    """Test endpoint to verify streaming is working without AI processing"""
+    
+    async def generate():
+        import time
+        import json
+        import sys
+        import asyncio
+        
+        logger.info("🧪 TEST STREAM: Starting test stream")
+        
+        # Send immediate ping
+        ping_data = f"data: {json.dumps({'ping': 'test_started', 'timestamp': time.time()})}\n\n"
+        logger.info("🧪 TEST STREAM: Sending ping")
+        sys.stdout.flush()
+        yield ping_data
+        
+        for i in range(5):
+            test_data = {
+                "test_message": f"This is test chunk {i+1}",
+                "timestamp": time.time(),
+                "chunk_id": i+1
+            }
+            
+            data = f"data: {json.dumps(test_data)}\n\n"
+            logger.info(f"🧪 TEST STREAM: Yielding chunk {i+1}")
+            sys.stdout.flush()
+            yield data
+            
+            # Add a small delay to make streaming visible
+            await asyncio.sleep(1)
+        
+        # Final message
+        final_data = {"test_message": "Stream complete", "final": True}
+        yield f"data: {json.dumps(final_data)}\n\n"
+        logger.info("🧪 TEST STREAM: Complete")
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache", 
+            "Expires": "0",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # nginx
+            "X-Proxy-Buffering": "no",  # other proxies
+            "Transfer-Encoding": "chunked",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        }
+    )
+
+
+@router.get("/test-streaming-ui")
+async def test_streaming_ui():
+    """Serve the HTML test page for streaming functionality"""
+    import os
+    
+    # Get the absolute path to the HTML file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)  # Go up one level from routers/
+    html_path = os.path.join(parent_dir, "test_streaming.html")
+    
+    if not os.path.exists(html_path):
+        raise HTTPException(status_code=404, detail=f"Test HTML file not found at {html_path}")
+    
+    return FileResponse(html_path, media_type="text/html")
 
 
 class ChatRequest(BaseModel):
@@ -209,7 +281,9 @@ async def chat_endpoint(
         logger.info("="*50)
 
         # Handle streaming vs non-streaming
-        if request_data.streaming:
+        streaming = request_data.streaming
+        streaming = True
+        if streaming:
             logger.info("🌊 Using streaming mode")
             return await _handle_streaming_response(runner, request_data, actual_session_id, user_message)
         else:
@@ -234,30 +308,66 @@ async def chat_endpoint(
 
 
 async def _handle_streaming_response(runner, request_data, session_id, user_message):
-    """Handle streaming response"""
-    async def event_generator():
+    """Handle streaming response using the pattern that avoids buffering"""
+    
+    import asyncio
+    import time
+    import sys
+    
+    async def async_event_generator():
+        """Async generator that processes events and yields immediately"""
         try:
             stream_mode = StreamingMode.SSE
-            logger.info(f"🔄 Starting streaming with mode: {stream_mode}")
+            logger.info(f"🔄 ===STREAMING=== Starting streaming with mode: {stream_mode}")
+            
+            # Send an immediate ping to establish the stream
+            ping_data = f"data: {{'ping': 'stream_started', 'timestamp': {time.time()}}}\n\n"
+            logger.info("📤 PING: Sending initial ping")
+            yield ping_data
+            
             async for event in runner.run_async(
                 user_id=request_data.user_id,
                 session_id=session_id,
                 new_message=user_message,
                 run_config=RunConfig(streaming_mode=stream_mode),
             ):
-                logger.info(f"📤 Streaming event: {type(event).__name__}")
+                start_time = time.time()
+                logger.info(f"📤 Got streaming event: {type(event).__name__}")
+                
                 sse_event = event.model_dump_json(exclude_none=True, by_alias=True)
-                yield f"data: {sse_event}\n\n"
+                data = f"data: {sse_event}\n\n"
+                
+                process_time = time.time() - start_time
+                logger.info(f"📤 IMMEDIATELY yielding: {data[:100]}... (processing took {process_time:.3f}s)")
+                
+                # Force flush stdout to ensure logs appear immediately
+                sys.stdout.flush()
+                
+                yield data
+                
         except Exception as e:
             logger.error(f"❌ Error in streaming: {e}")
             import traceback
             logger.error(f"❌ Streaming traceback: {traceback.format_exc()}")
-            error_message = "I encountered an issue while trying to do what you asked. Can you try again?"
-            yield f'data: {{"error": "{error_message}"}}\n\n'
+            error_data = f'data: {{"error": "I encountered an issue. Please try again."}}\n\n'
+            yield error_data
 
+    # Return StreamingResponse with enhanced headers for maximum compatibility
     return StreamingResponse(
-        event_generator(),
+        async_event_generator(),
         media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # nginx
+            "X-Proxy-Buffering": "no",  # other proxies
+            "Transfer-Encoding": "chunked",  # Force chunked encoding
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        }
     )
 
 
@@ -265,7 +375,7 @@ async def _handle_regular_response(runner, request_data, session_id, user_messag
     """Handle regular (non-streaming) response"""
     try:
         events = []
-        logger.info("🔄 Starting agent run...")
+        logger.info("🔄 ===REGULAR=== Starting agent run...")
 
         # Add detailed debugging for the agent run
         logger.info("🔍 Debug info:")

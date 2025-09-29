@@ -300,3 +300,13 @@ dmypy.json
 .claude/
 
 UNOPS.PAO.Server/appsettings.Development.json
+
+# Logs folders
+logs/
+**/logs/
+
+# External Data Service local configuration
+ExternalDataService/appsettings.Local.json
+ExternalDataService/logs/
+
+db_dump/

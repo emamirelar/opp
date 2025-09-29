@@ -345,35 +345,124 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         // Get all PartnerGroups that are descendants of this PartnerCategory (recursive)
         var partnerGroupIds = await partnerTreeService.GetAllDescendantsAsync(partnerCategory.Code);
 
-        // Get Partners that belong to these PartnerGroups
-        var partnerIds = await _context.Partners
+        // Get Partners that belong to these PartnerGroups with full details
+        var partners = await _context.Partners
             .Where(p => partnerGroupIds.Contains(p.PartnerGroupId.Value) && !p.IsDeleted)
-            .Select(p => p.Id)
+            .Include(p => p.PartnerGroup)
+            .Include(p => p.LiaisonOffice)
             .ToListAsync();
 
-        // Get last 10 interactions for partners in this category
+        var partnerIds = partners.Select(p => p.Id).ToList();
+
+        // Get comprehensive interactions for partners in this category (last 30 days)
+        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
         var recentInteractions = await _context.Interactions
+            .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && 
+                       !i.IsDeleted && 
+                       i.Date >= thirtyDaysAgo)
+            .Include(i => i.InteractionPartners)
+                .ThenInclude(ip => ip.Partner)
+            .Include(i => i.InteractionContacts)
+                .ThenInclude(ic => ic.Contact)
+            .Include(i => i.InteractionUsers)
+                .ThenInclude(iu => iu.User)
+            .Include(i => i.InteractionUsers)
+                .ThenInclude(iu => iu.User.UserProfile)
+            .OrderByDescending(i => i.Date)
+            .ToListAsync();
+
+        // Get all interactions (not just recent) for statistics
+        var allInteractions = await _context.Interactions
             .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && !i.IsDeleted)
             .Include(i => i.InteractionPartners)
                 .ThenInclude(ip => ip.Partner)
-            .OrderByDescending(i => i.CreatedDate)
-            .Take(10)
             .ToListAsync();
 
-        // Build simplified response object
+        // Create structured JSON for AI prompt placeholders
         var result = new
         {
-            PartnerCategoryName = partnerCategory.Description,
-            RecentInteractions = recentInteractions.Select(i => new
+            id = partnerCategory.Id,
+            categoryName = partnerCategory.Description,
+            categoryCode = partnerCategory.Code,
+            categoryType = partnerCategory.Type?.ToString(),
+
+            // Partner information
+            partners = partners.Select(p => new
             {
-                PartnerName = i.InteractionPartners?.FirstOrDefault()?.Partner?.Name,
-                Type = i.Type.ToString(),
-                Subject = i.Subject,
-                Date = i.Date,
-                Description = !string.IsNullOrEmpty(i.Description) && i.Description.Length > 200 
-                    ? i.Description.Substring(0, 200) + "..." 
-                    : i.Description
-            }).ToList()
+                id = p.Id,
+                name = p.Name,
+                status = p.Status.ToString(),
+                partnerGroup = p.PartnerGroup?.Name,
+                liaisonOffice = p.LiaisonOffice?.Name,
+                createdDate = p.CreatedDate.ToString("yyyy-MM-dd")
+            }).Cast<dynamic>().ToList(),
+
+            // Recent interactions (last 30 days) with full details
+            recentInteractions = recentInteractions.Select(i => new
+            {
+                id = i.Id,
+                subject = i.Subject,
+                description = i.Description,
+                date = i.Date.ToString("yyyy-MM-dd"),
+                time = i.Date.ToString("HH:mm"),
+                type = i.Type.ToString(),
+                location = i.Location,
+                partners = i.InteractionPartners?.Select(ip => new
+                {
+                    id = ip.Partner.Id,
+                    name = ip.Partner.Name
+                }).ToList(),
+                contacts = i.InteractionContacts?.Select(ic => new
+                {
+                    id = ic.Contact.Id,
+                    name = $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim(),
+                    title = ic.Contact.Title,
+                    email = ic.Contact.Email
+                }).ToList(),
+                users = i.InteractionUsers?.Select(iu => new
+                {
+                    id = iu.User.Id,
+                    name = iu.User.Name,
+                    title = iu.User.UserProfile?.Position,
+                    office = iu.User.UserProfile?.OrgUnit
+                }).ToList()
+            }).Cast<dynamic>().ToList(),
+
+            // Partner statistics
+            partnerCount = partners.Count,
+            activePartners = partners.Count(p => p.Status == (Domain.Entities.EntityStatus)1),
+            partnerNames = string.Join(", ", partners.Select(p => p.Name)),
+
+            // Interaction statistics
+            summary = new
+            {
+                totalInteractions = allInteractions.Count,
+                recentInteractions = recentInteractions.Count,
+                lastInteractionDate = allInteractions.OrderByDescending(i => i.Date).FirstOrDefault()?.Date.ToString("yyyy-MM-dd"),
+                mostActivePartners = recentInteractions
+                    .SelectMany(i => i.InteractionPartners ?? new List<Domain.Entities.InteractionPartner>())
+                    .GroupBy(ip => ip.Partner.Name)
+                    .OrderByDescending(g => g.Count())
+                    .Take(3)
+                    .Select(g => g.Key)
+                    .ToList(),
+                commonInteractionTypes = recentInteractions
+                    .GroupBy(i => i.Type.ToString())
+                    .OrderByDescending(g => g.Count())
+                    .Take(3)
+                    .Select(g => g.Key)
+                    .ToList()
+            },
+
+            // Audit information
+            auditInfo = new
+            {
+                createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+                lastModifiedDate = partnerCategory.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not available" ?? "Not modified"
+            },
+            
+            // User profile information for context
+            userProfile = await GetUserProfileForAIAsync(user)
         };
 
         return result;
@@ -393,35 +482,122 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
             return new { Error = "Partner group not found" };
         }
 
-        // Get partner IDs for interaction queries
-        var partnerIds = await _context.Partners
+        // Get Partners that belong to this PartnerGroup with full details
+        var partners = await _context.Partners
             .Where(p => p.PartnerGroupId == entityId && !p.IsDeleted)
-            .Select(p => p.Id)
+            .Include(p => p.PartnerGroup)
+            .Include(p => p.LiaisonOffice)
             .ToListAsync();
 
-        // Get last 10 interactions for partners in this group
+        var partnerIds = partners.Select(p => p.Id).ToList();
+
+        // Get comprehensive interactions for partners in this group (last 30 days)
+        var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
         var recentInteractions = await _context.Interactions
+            .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && 
+                       !i.IsDeleted && 
+                       i.Date >= thirtyDaysAgo)
+            .Include(i => i.InteractionPartners)
+                .ThenInclude(ip => ip.Partner)
+            .Include(i => i.InteractionContacts)
+                .ThenInclude(ic => ic.Contact)
+            .Include(i => i.InteractionUsers)
+                .ThenInclude(iu => iu.User)
+            .Include(i => i.InteractionUsers)
+                .ThenInclude(iu => iu.User.UserProfile)
+            .OrderByDescending(i => i.Date)
+            .ToListAsync();
+
+        // Get all interactions (not just recent) for statistics
+        var allInteractions = await _context.Interactions
             .Where(i => i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && !i.IsDeleted)
             .Include(i => i.InteractionPartners)
                 .ThenInclude(ip => ip.Partner)
-            .OrderByDescending(i => i.CreatedDate)
-            .Take(10)
             .ToListAsync();
 
-        // Build simplified response object
+        // Create structured JSON for AI prompt placeholders
         var result = new
         {
-            PartnerGroupName = partnerGroup.Description,
-            RecentInteractions = recentInteractions.Select(i => new
+            id = partnerGroup.Id,
+            groupName = partnerGroup.Name,
+            groupCode = partnerGroup.Code,
+            groupType = partnerGroup.Type?.ToString(),
+
+            // Partner information
+            partners = partners.Select(p => new
             {
-                PartnerName = i.InteractionPartners?.FirstOrDefault()?.Partner?.Name,
-                Type = i.Type.ToString(),
-                Subject = i.Subject,
-                Date = i.Date,
-                Description = !string.IsNullOrEmpty(i.Description) && i.Description.Length > 200 
-                    ? i.Description.Substring(0, 200) + "..." 
-                    : i.Description
-            }).ToList()
+                id = p.Id,
+                name = p.Name,
+                status = p.Status.ToString(),
+                liaisonOffice = p.LiaisonOffice?.Name,
+                website = p.Name,
+                description = p.Name,
+                createdDate = p.CreatedDate.ToString("yyyy-MM-dd")
+            }).Cast<dynamic>().ToList(),
+
+            // Recent interactions (last 30 days) with full details
+            recentInteractions = recentInteractions.Select(i => new
+            {
+                id = i.Id,
+                subject = i.Subject,
+                description = i.Description,
+                date = i.Date.ToString("yyyy-MM-dd"),
+                time = i.Date.ToString("HH:mm"),
+                type = i.Type.ToString(),
+                location = i.Location,
+                partners = i.InteractionPartners?.Select(ip => new
+                {
+                    id = ip.Partner.Id,
+                    name = ip.Partner.Name
+                }).ToList(),
+                contacts = i.InteractionContacts?.Select(ic => new
+                {
+                    id = ic.Contact.Id,
+                    name = $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim(),
+                    title = ic.Contact.Title,
+                    email = ic.Contact.Email
+                }).ToList(),
+                users = i.InteractionUsers?.Select(iu => new
+                {
+                    id = iu.User.Id,
+                    name = iu.User.Name,
+                    title = iu.User.UserProfile?.Position,
+                    office = iu.User.UserProfile?.OrgUnit
+                }).ToList()
+            }).Cast<dynamic>().ToList(),
+
+            // Partner statistics
+            partnerCount = partners.Count,
+            activePartners = partners.Count(p => p.Status == (Domain.Entities.EntityStatus)1),
+            partnerNames = string.Join(", ", partners.Select(p => p.Name)),
+
+            // Interaction statistics
+            summary = new
+            {
+                totalInteractions = allInteractions.Count,
+                recentInteractions = recentInteractions.Count,
+                lastInteractionDate = allInteractions.OrderByDescending(i => i.Date).FirstOrDefault()?.Date.ToString("yyyy-MM-dd"),
+                mostActivePartners = recentInteractions
+                    .SelectMany(i => i.InteractionPartners ?? new List<Domain.Entities.InteractionPartner>())
+                    .GroupBy(ip => ip.Partner.Name)
+                    .OrderByDescending(g => g.Count())
+                    .Take(3)
+                    .Select(g => g.Key)
+                    .ToList(),
+                commonInteractionTypes = recentInteractions
+                    .GroupBy(i => i.Type.ToString())
+                    .OrderByDescending(g => g.Count())
+                    .Take(3)
+                    .Select(g => g.Key)
+                    .ToList()
+            },
+
+            // Audit information
+            auditInfo = new
+            {
+                createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+                lastModifiedDate = partnerGroup.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not available" ?? "Not modified"
+            }
         };
 
         return result;
@@ -444,17 +620,76 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         // Get all PartnerGroups that are descendants of this PartnerCategory (recursive)
         var partnerGroupIds = await partnerTreeService.GetAllDescendantsAsync(partnerCategory.Code);
 
-        // Get Partners that belong to these PartnerGroups
+        // Get Partners that belong to these PartnerGroups with additional details
         var partners = await _context.Partners
             .Where(p => partnerGroupIds.Contains(p.PartnerGroupId.Value) && !p.IsDeleted)
-            .Select(p => new { p.Id, p.Name })
+            .Include(p => p.PartnerGroup)
+            .Include(p => p.LiaisonOffice)
             .ToListAsync();
 
-        // Build simplified response object for news analysis
+        // Create structured JSON for AI prompt placeholders
         var result = new
         {
-            PartnerCategoryName = partnerCategory.Description,
-            Partners = partners
+            id = partnerCategory.Id,
+            categoryName = partnerCategory.Description,
+            categoryCode = partnerCategory.Code,
+            categoryType = partnerCategory.Type?.ToString(),
+
+            // Partner information for news search
+            partners = partners.Select(p => new
+            {
+                id = p.Id,
+                name = p.Name,
+                status = p.Status.ToString(),
+                partnerGroup = p.PartnerGroup?.Name,
+                liaisonOffice = p.LiaisonOffice?.Name,
+                website = p.Name,
+                description = p.Name
+            }).Cast<dynamic>().ToList(),
+
+            // Partner names for search queries
+            partnerNames = string.Join(", ", partners.Select(p => p.Name)),
+            partnerCount = partners.Count,
+
+            // Search context
+            searchContext = new
+            {
+                focusAreas = new[]
+                {
+                    "Development funding and partnerships",
+                    "Policy changes affecting international cooperation",
+                    "New initiatives or programs",
+                    "Strategic partnerships",
+                    "Regional development activities"
+                },
+                newsSources = new[]
+                {
+                    "Google News",
+                    "Devex",
+                    "Donor Tracker",
+                    "Development news outlets"
+                },
+                timeframe = "Recent news stories (last 30 days)",
+                relevanceContext = "UNOPS operations and partnerships"
+            },
+
+            // Statistics
+            summary = new
+            {
+                totalPartners = partners.Count,
+                activePartners = partners.Count(p => p.Status == (Domain.Entities.EntityStatus)1),
+                partnersWithWebsites = partners.Count(p => !string.IsNullOrEmpty(p.Name))
+            },
+
+            // Audit information
+            auditInfo = new
+            {
+                createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+                lastModifiedDate = partnerCategory.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not available" ?? "Not modified"
+            },
+            
+            // User profile information for context
+            userProfile = await GetUserProfileForAIAsync(user)
         };
 
         return result;
@@ -474,17 +709,82 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
             return new { Error = "Partner group not found" };
         }
 
-        // Get Partners that belong to this PartnerGroup
+        // Get Partners that belong to this PartnerGroup with additional details
         var partners = await _context.Partners
             .Where(p => p.PartnerGroupId == entityId && !p.IsDeleted)
-            .Select(p => new { p.Id, p.Name })
+            .Include(p => p.PartnerGroup)
+            .Include(p => p.LiaisonOffice)
             .ToListAsync();
 
-        // Build simplified response object for news analysis
+        // Create structured JSON for AI prompt placeholders
         var result = new
         {
-            PartnerGroupName = partnerGroup.Description,
-            Partners = partners
+            id = partnerGroup.Id,
+            groupName = partnerGroup.Name,
+            groupCode = partnerGroup.Code,
+            groupType = partnerGroup.Type?.ToString(),
+
+            // Partner information for news search
+            partners = partners.Select(p => new
+            {
+                id = p.Id,
+                name = p.Name,
+                status = p.Status.ToString(),
+                partnerGroup = p.PartnerGroup?.Name,
+                liaisonOffice = p.LiaisonOffice?.Name,
+                website = p.Name,
+                description = p.Name
+            }).Cast<dynamic>().ToList(),
+
+            // Partner names for search queries
+            partnerNames = string.Join(", ", partners.Select(p => p.Name)),
+            partnerCount = partners.Count,
+
+            // User context information
+            orgUnit = "UNOPS",
+            userOffice = "UNOPS", 
+            userTitle = "Staff",
+            userName = user.Identity?.Name,
+
+            // Search context
+            searchContext = new
+            {
+                focusAreas = new[]
+                {
+                    "Development funding and partnerships",
+                    "Policy changes affecting international cooperation",
+                    "New initiatives or programs",
+                    "Strategic partnerships",
+                    "Regional development activities"
+                },
+                newsSources = new[]
+                {
+                    "Google News",
+                    "Devex",
+                    "Donor Tracker",
+                    "Development news outlets"
+                },
+                timeframe = "Recent news stories (last 30 days)",
+                relevanceContext = "UNOPS operations and partnerships"
+            },
+
+            // Statistics
+            summary = new
+            {
+                totalPartners = partners.Count,
+                activePartners = partners.Count(p => p.Status == (Domain.Entities.EntityStatus)1),
+                partnersWithWebsites = partners.Count(p => !string.IsNullOrEmpty(p.Name))
+            },
+
+            // Audit information
+            auditInfo = new
+            {
+                createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+                lastModifiedDate = partnerGroup.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not available" ?? "Not modified"
+            },
+            
+            // User profile information for context
+            userProfile = await GetUserProfileForAIAsync(user)
         };
 
         return result;

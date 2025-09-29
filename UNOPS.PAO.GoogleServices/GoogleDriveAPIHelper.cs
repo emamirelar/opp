@@ -17,7 +17,7 @@ using File = Google.Apis.Drive.v3.Data.File;
 public class GoogleDriveAPIHelper
 {
     private readonly IConfiguration configuration;
-    private DriveService driveService;
+    private DriveService? driveService;
     private SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
 
     public GoogleDriveAPIHelper(IConfiguration configuration)
@@ -32,10 +32,15 @@ public class GoogleDriveAPIHelper
 
         var credentialParams = configuration.GetSection("BigQuerySettings")
             .Get<JsonCredentialParameters>();
+        
+        if (credentialParams?.ProjectId == null)
+        {
+            throw new InvalidOperationException("BigQuery ProjectId is not configured");
+        }
         var bqSecret = secretManager.GetSecretVersion("BigQueryConnectionKey");
         if (bqSecret != null)
         {
-            credentialParams.PrivateKey = bqSecret?
+            credentialParams.PrivateKey = bqSecret
                 .Replace("\\n", "\n");
         }
         else
@@ -124,6 +129,11 @@ public class GoogleDriveAPIHelper
 
     public async Task<Stream> GetFileStream(string fileId)
     {
+        if (driveService == null)
+        {
+            throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient() first.");
+        }
+        
         var request = driveService.Files.Get(fileId);
         request.SupportsAllDrives = true;
         var stream = new MemoryStream();
@@ -164,6 +174,11 @@ public class GoogleDriveAPIHelper
 
     private async Task<string> UploadStream(Stream stream, File fileMetaData)
     {
+        if (driveService == null)
+        {
+            throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient() first.");
+        }
+        
         var request = driveService.Files.Create(fileMetaData, stream, fileMetaData.MimeType);
         request.SupportsTeamDrives = true;
         request.SupportsAllDrives = true;
@@ -175,13 +190,18 @@ public class GoogleDriveAPIHelper
             throw progress.Exception;
         }
 
-        return request.ResponseBody.WebViewLink;
+        return request.ResponseBody?.WebViewLink ?? throw new InvalidOperationException("Failed to get web view link from upload response");
     }
 
-    private async Task<string> CopyFile(string newFileName, string fileIdToCopy)
+    private async Task<string?> CopyFile(string newFileName, string fileIdToCopy)
     {
         try
         {
+            if (driveService == null)
+            {
+                throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient() first.");
+            }
+            
             File copiedFile = new File();
             copiedFile.Name = newFileName;
 
@@ -190,33 +210,48 @@ public class GoogleDriveAPIHelper
             copyRequest.SupportsAllDrives = true;
             copyRequest.SupportsTeamDrives = true;
             var response = await copyRequest.ExecuteAsync();
-            return response.Id;
+            return response.Id ?? throw new InvalidOperationException("Failed to get ID from copy response");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return null;
         }
     }
     public async Task<string> GetFileUrlFromGoogleDriveFileId(string fileId)
     {
+        if (driveService == null)
+        {
+            throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient() first.");
+        }
+        
         var driveFileRequest = driveService.Files.Get(fileId);
         driveFileRequest.SupportsTeamDrives = true;
         driveFileRequest.SupportsAllDrives = true;
         driveFileRequest.Fields = "id, webViewLink, size";
         var driveFile = await driveFileRequest.ExecuteAsync();
         var url = driveFile.WebViewLink;
-        return url;
+        return url ?? throw new InvalidOperationException($"Web view link not found for file ID: {fileId}");
     }
 
     public async Task<string> CloneFileToNewFolder(string newFileName, string fileIdToCopy, string targetFolderId)
     {
         var clonedFiledId = await CopyFile(newFileName, fileIdToCopy);
+        
+        if (string.IsNullOrEmpty(clonedFiledId))
+        {
+            throw new InvalidOperationException($"Failed to copy file {fileIdToCopy} with name {newFileName}");
+        }
 
         await MoveFileToFolder(clonedFiledId, targetFolderId);
         return clonedFiledId;
     }
     public async Task MoveFileToFolder(string fileId, string targetFolderId)
     {
+        if (driveService == null)
+        {
+            throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient() first.");
+        }
+        
         var driveFileRequest = driveService.Files.Get(fileId);
         driveFileRequest.SupportsTeamDrives = true;
         driveFileRequest.Fields = "parents";
@@ -251,13 +286,17 @@ public class GoogleDriveAPIHelper
 
     public async Task UpdatePermission(string email, string FileId)
     {
+        if (driveService == null)
+        {
+            throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient() first.");
+        }
+        
         var permission = new Permission
         {
             Type = "user",
             EmailAddress = email,
             Role = "reader"
         };
-
 
         var permissionResource = driveService.Permissions.Create(permission, FileId);
         permissionResource.SupportsTeamDrives = true;
@@ -269,6 +308,11 @@ public class GoogleDriveAPIHelper
 
     public async Task RemovePermission(string email, string fileId)
     {
+        if (driveService == null)
+        {
+            throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient() first.");
+        }
+        
         var listRequest = driveService.Permissions.List(fileId);
         listRequest.SupportsAllDrives = true;
         listRequest.Fields = "permissions(id,emailAddress, type)";
@@ -287,6 +331,11 @@ public class GoogleDriveAPIHelper
 
     public async Task Delete(string path)
     {
+        if (driveService == null)
+        {
+            throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient() first.");
+        }
+        
         var id = GetFileIdFromLink(path);
         var request = driveService.Files.Delete(id);
         request.SupportsTeamDrives = true;
@@ -345,6 +394,11 @@ public class GoogleDriveAPIHelper
 
     public async Task<IList<File>> ReadFiles(string[] sourceFolderIds)
     {
+        if (driveService == null)
+        {
+            throw new InvalidOperationException("Drive service is not configured. Call ConfigureClient() first.");
+        }
+        
         var parentsQuery = "";
         for (var i = 0; i < sourceFolderIds.Length; i++)
         {
@@ -457,11 +511,16 @@ public class GoogleDriveAPIHelper
         }
     }
 
-    public async Task<string> FindOrCreateFolder(string folderName, string type, string parentFolderId = null)
+    public async Task<string> FindOrCreateFolder(string folderName, string type, string? parentFolderId = null)
     {
         if (string.IsNullOrEmpty(parentFolderId))
         {
             parentFolderId = this.configuration.GetValue<string>($"GoogleDriveSettings:DefaultGoogleDriveFolderIds:{type}");
+        }
+
+        if (string.IsNullOrEmpty(parentFolderId))
+        {
+            throw new InvalidOperationException($"Parent folder ID is not configured for type: {type}");
         }
 
         return await CreateFolderIfNotExists(folderName, parentFolderId);

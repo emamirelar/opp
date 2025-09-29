@@ -53,7 +53,6 @@ public class ContactByOrgUnitHierarchySpecification : BaseSpecification<Contact>
 
         // Now filter the contacts using the materialized partner IDs
         return query.Where(contact => 
-            contact.PartnerId != null && 
             validPartnerIds.Contains(contact.PartnerId));
     }
 }

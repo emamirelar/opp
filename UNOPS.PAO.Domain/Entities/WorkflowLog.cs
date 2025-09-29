@@ -4,9 +4,9 @@ namespace UNOPS.PAO.Domain.Entities;
 
 public class WorkflowLog : ModifiableDeletableEntity
 {
-    public string EntityName { get; set; }
-    public string EntityId { get; set; }
+    public required string EntityName { get; set; }
+    public required string EntityId { get; set; }
     public string? Stage { get; set; }
-    public string NewStage { get; set; }
-    public string Comment { get; set; }
+    public required string NewStage { get; set; }
+    public required string Comment { get; set; }
 }

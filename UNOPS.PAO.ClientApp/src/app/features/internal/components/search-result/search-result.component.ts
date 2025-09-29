@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { DialogModule } from 'primeng/dialog';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -20,6 +20,7 @@ import { GlobalFilterService } from '../../../../services/global-filter.service'
 import { UserPreferenceService, GlobalFilters } from '../../../../services/user-preference.service';
 import { OrganizationHierarchyService } from '../../../../services/organization-hierarchy.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
+import { GlobalFiltersDialogService } from '../../../../services/global-filters-dialog.service';
 
 /**
  * @uiEntity SearchResult
@@ -200,6 +201,8 @@ export class SearchResultComponent implements OnInit {
   private userPreferenceService = inject(UserPreferenceService);
   private organizationHierarchyService = inject(OrganizationHierarchyService);
   private authService = inject(AuthService);
+  private globalFiltersDialogService = inject(GlobalFiltersDialogService);
+  private translateService = inject(TranslateService);
   private destroy$ = new Subject<void>();
 
   searchQuery = signal<string>('');
@@ -232,6 +235,9 @@ export class SearchResultComponent implements OnInit {
   globalFilters = signal<GlobalFilters | null>(null);
   currentUserId = signal<string>('');
   activeFilterLabels = signal<string[]>([]);
+  
+  // Filter toggle state - tracks whether filters are temporarily disabled
+  isFilterTemporarilyDisabled = signal(false);
 
   ngOnInit(): void {
     this.loadAllEntityColumns();
@@ -303,8 +309,13 @@ export class SearchResultComponent implements OnInit {
     this.isLoading.set(true);
 
     // Call the unified search endpoint without the 3-result limit
+    const filterActive = !this.isFilterTemporarilyDisabled();
     this.http.get<SearchResponse>('/api/global/search', {
-      params: { q: term, fullResults: 'true' }
+      params: { 
+        q: term, 
+        fullResults: 'true',
+        filterActive: filterActive.toString()
+      }
     }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
@@ -380,6 +391,10 @@ export class SearchResultComponent implements OnInit {
                 .subscribe({
                   next: (filters) => {
                     this.globalFilters.set(filters);
+                    
+                    // Update global filter active status
+                    this.isGlobalFilterActive.set(this.hasOtherActiveFilters());
+                    
                     this.updateActiveFilterLabels();
                   },
                   error: (error) => {
@@ -428,27 +443,27 @@ export class SearchResultComponent implements OnInit {
     return null;
   }
 
-  // Check if any global filters (other than org unit) are active
-  private hasOtherActiveFilters(): boolean {
-    const filters = this.globalFilters();
-    if (!filters) return false;
-    
-    return !!(
-      filters.relatedToMe ||
-      filters.dateOn ||
-      filters.dateFrom ||
-      filters.dateTo
-    );
-  }
-
   // Update active filter labels for display
   private updateActiveFilterLabels(): void {
     const labels: string[] = [];
     const filters = this.globalFilters();
     
-    // Add org unit filter
-    if (this.globalFilterService.getActiveOrgUnitId() && this.activeOrgUnitName()) {
-      labels.push(this.activeOrgUnitName());
+    // Add org unit filter - show the org unit name or "All organizational units" if it's the root/null
+    const activeOrgUnitId = this.globalFilterService.getActiveOrgUnitId();
+    if (activeOrgUnitId !== null) {
+      if (this.activeOrgUnitName()) {
+        labels.push(this.activeOrgUnitName());
+      } else {
+        // If we have an org unit ID but no name yet, show a placeholder
+        labels.push(`Org Unit ${activeOrgUnitId}`);
+      }
+    } else if (filters && filters.orgUnitId !== null && filters.orgUnitId !== undefined) {
+      // Handle case where filters show an org unit but service doesn't have it yet
+      if (this.activeOrgUnitName()) {
+        labels.push(this.activeOrgUnitName());
+      } else {
+        labels.push(`Org Unit ${filters.orgUnitId}`);
+      }
     }
     
     if (filters) {
@@ -474,6 +489,10 @@ export class SearchResultComponent implements OnInit {
     }
     
     this.activeFilterLabels.set(labels);
+    
+    // Update the global filter active state based on whether we have any filters
+    const hasActiveFilters = activeOrgUnitId !== null || this.hasOtherActiveFilters();
+    this.isGlobalFilterActive.set(hasActiveFilters);
   }
 
   private loadAllEntityColumns(): void {
@@ -662,6 +681,57 @@ export class SearchResultComponent implements OnInit {
     }
   }
 
+  // Toggle filter functionality
+  toggleGlobalFilter(): void {
+    const currentlyDisabled = this.isFilterTemporarilyDisabled();
+    
+    if (currentlyDisabled) {
+      // Re-enable filters
+      this.isFilterTemporarilyDisabled.set(false);
+      this.globalFilterService.setFilterEnabled(true);
+    } else {
+      // Temporarily disable filters
+      this.isFilterTemporarilyDisabled.set(true);
+      this.globalFilterService.setFilterEnabled(false);
+    }
+    
+    // Trigger search with new filter state
+    const currentQuery = this.searchQuery();
+    if (currentQuery) {
+      this.performSearch(currentQuery);
+    }
+  }
+  
+  // Check if we should show filter controls
+  shouldShowFilterToggle(): boolean {
+    // Show toggle if there are active filters OR if filters are temporarily disabled
+    return this.isGlobalFilterActive() && (this.activeFilterLabels().length > 0 || this.isFilterTemporarilyDisabled());
+  }
+  
+  // Get display text for toggle button
+  getToggleButtonText(): string {
+    return this.isFilterTemporarilyDisabled() 
+      ? this.translateService.instant('search.applyFilter')
+      : this.translateService.instant('search.showAll');
+  }
+  
+  // Get record count display text
+  getRecordCountText(): string {
+    const currentCount = this.getTotalResultsCount();
+    
+    if (this.isFilterTemporarilyDisabled() || !this.isGlobalFilterActive()) {
+      return this.translateService.instant('search.showingAllRecords', { total: currentCount });
+    } else {
+      // When filters are active, we show the filtered count
+      return this.translateService.instant('search.showingAllRecords', { total: currentCount });
+    }
+  }
+
+  // Open global filters dialog
+  openGlobalFiltersDialog(): void {
+    this.globalFiltersDialogService.openDialog();
+  }
+
   // Optimized metadata helper methods with memoization
   hasSearchMetadata(result: EnhancedSearchResult): boolean {
     const cacheKey = `metadata_${result.id}`;
@@ -836,5 +906,19 @@ export class SearchResultComponent implements OnInit {
 
   trackByTabKey(index: number, tab: EntityTab): string {
     return tab.key;
+  }
+
+  // Check if any global filters are active
+  private hasOtherActiveFilters(): boolean {
+    const filters = this.globalFilters();
+    if (!filters) return false;
+    
+    return !!(
+      filters.orgUnitId ||
+      filters.relatedToMe ||
+      filters.dateOn ||
+      filters.dateFrom ||
+      filters.dateTo
+    );
   }
 }

@@ -11,7 +11,7 @@ namespace UNOPS.PAO.Domain.Entities
 {
     public class Interaction : ModifiableDeletableEntity
     {
-        public int Id { get; set; }
+        public new int Id { get; set; }
         
         public InteractionType Type { get; set; }
         
@@ -42,7 +42,7 @@ namespace UNOPS.PAO.Domain.Entities
         //can not make this a lookup / enum as there can be a lot of combinations for city/country
         public string? Location { get; set; }
 
-        public string Subject { get; set; }
+        public required string Subject { get; set; }
 
         // Many-to-many relationship with OrganizationHierarchy through OrganizationUnitRelationships
         // This replaces the direct OrgUnitId/OrgUnit relationship to support multiple org unit associations

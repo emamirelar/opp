@@ -172,7 +172,8 @@ namespace UNOPS.PAO.Presentation.Controllers
             [FromQuery] bool ascending = true,
             [FromQuery] int? partnerId = null,
             [FromQuery] int? contactId = null,
-            [FromQuery] bool export = false)
+            [FromQuery] bool export = false,
+            [FromQuery] bool filterActive = true)
         {
             // Validate model state first
             var modelValidationResult = ValidateModelState();
@@ -198,7 +199,8 @@ namespace UNOPS.PAO.Presentation.Controllers
                     OrderBy = orderBy,
                     Ascending = ascending,
                     PartnerId = partnerId,
-                    ContactId = contactId
+                    ContactId = contactId,
+                    FilterActive = filterActive
                 };
                 
                 // Return all interactions with secure pagination
@@ -234,7 +236,8 @@ namespace UNOPS.PAO.Presentation.Controllers
         public async Task<ActionResult> SearchInteractions(
             [FromQuery] PaginationRequest request,
             [FromQuery] string query,
-            [FromQuery] bool export = false)
+            [FromQuery] bool export = false,
+            [FromQuery] bool filterActive = true)
         {
             // Validate model state first
             var modelValidationResult = ValidateModelState();
@@ -261,7 +264,8 @@ namespace UNOPS.PAO.Presentation.Controllers
                 PageIndex = request.PageIndex,
                 PageSize = export ? int.MaxValue : request.PageSize, // Remove pagination limits for export
                 OrderBy = request.OrderBy,
-                Ascending = request.Ascending
+                Ascending = request.Ascending,
+                FilterActive = filterActive
             };
 
             // Use AdvancedSearchService for unified text search with PostgreSQL similarity
@@ -306,7 +310,8 @@ namespace UNOPS.PAO.Presentation.Controllers
         [FromQuery] int pageSize = 20,
         [FromQuery] string? orderBy = null,
         [FromQuery] bool ascending = true,
-        [FromQuery] bool export = false)
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
     {
         try
         {
@@ -336,7 +341,8 @@ namespace UNOPS.PAO.Presentation.Controllers
                 PageIndex = pageIndex,
                 PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
                 OrderBy = orderBy,
-                Ascending = ascending
+                Ascending = ascending,
+                FilterActive = filterActive
             };
 
             var result = await _advancedSearchService.SearchWithFiltersAsync<UNOPSInteraction, InteractionModel>(
@@ -524,7 +530,17 @@ namespace UNOPS.PAO.Presentation.Controllers
                     throw new BusinessException("No valid file detected.");
                 }
 
-                string fileType = _geminiManager.FindFileType(req.File);
+                if (_geminiManager == null)
+                {
+                    throw new BusinessException("Gemini manager not available");
+                }
+
+                if (req == null)
+                {
+                    throw new BusinessException("Request cannot be null");
+                }
+
+                string fileType = _geminiManager.FindFileType(req.File) ?? "";
 
                 if (string.IsNullOrEmpty(fileType)) 
                 {

@@ -78,7 +78,7 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly IGeoTimeCacheService _geoTimeCacheService;
     private IManagerWrapper _managerWrapper;
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService)
     {
         _mapper = mapper;
         _context = context;
@@ -96,7 +96,10 @@ public class UNOPSGeminiManager : IGeminiManager
         
         // Initialize CloudRunHelper internally
         var cloudRunHelperLogger = new LoggerFactory().CreateLogger<CloudRunHelper>();
-        _cloudRunHelper = new CloudRunHelper(cloudRunHelperLogger, GetCredentials());
+        var credentials = GetCredentials();
+        _logger.LogInformation("UNOPSGeminiManager: Initializing CloudRunHelper with credentials. Credential type: {CredentialType}", 
+            credentials?.GetType()?.Name ?? "null");
+        _cloudRunHelper = new CloudRunHelper(cloudRunHelperLogger, credentials);
         
         _credentials = GetCredentials()
                         .CreateScoped("https://www.googleapis.com/auth/spreadsheets.readonly");
@@ -104,7 +107,7 @@ public class UNOPSGeminiManager : IGeminiManager
         _gcsService = new GoogleCloudStorageService(configuration);
 
         _ttsService = new GoogleTextToSpeechService();
-        _aiService = new AiContextualService(configuration, _context, _credentials);
+        _aiService = new AiContextualService(configuration, _context, _credentials, aiPromptCacheService);
     }
 
     public void SetManagerWrapper(IManagerWrapper managerWrapper)
@@ -115,7 +118,16 @@ public class UNOPSGeminiManager : IGeminiManager
     // Map AiPromptModel to AiPrompt entity
     private AiPrompt MapModelToEntity(AiPromptModel model)
     {
-        var entity = _mapper.Map(model, new AiPrompt());
+        var entity = _mapper.Map(model, new AiPrompt
+        {
+            Type = model.Type ?? "default",
+            DataRetrievalMethod = model.DataRetrievalMethod ?? "default",
+            GenerationConfig = model.GenerationConfig ?? "{}",
+            ContentConfig = model.ContentConfig ?? "{}",
+            Project = model.Project ?? "default",
+            Location = model.Location ?? "default",
+            Model = model.Model ?? "default"
+        });
         return entity;
     }
 
@@ -125,16 +137,10 @@ public class UNOPSGeminiManager : IGeminiManager
         return await _aiService.GetPromptData(type);
     }
 
-    // Chat with Gemini
-    private async Task<dynamic> ChatWithGemini(AiChatSession session, GeminiAssistantRequest req, string promptType, IEnumerable<dynamic> formattedChatHistory, string fileUrl, string fileType)
-    {
-        throw new NotImplementedException();
-    }
-
     // Updated FetchResultFromGemini to use CallGeminiApi
-    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string entityId = null)
     {
-        return await _aiService.FetchResultFromGemini((AiPrompt)promptData, relatedJsonData);
+        return await _aiService.FetchResultFromGemini((AiPrompt)promptData, relatedJsonData, entityId, bypassCache: false);
     }
 
     // Updated callGemini to use CallGeminiApi
@@ -163,16 +169,36 @@ public class UNOPSGeminiManager : IGeminiManager
     // Get Google credentials from configuration
     private GoogleCredential GetCredentials()
     {
+        _logger.LogInformation("UNOPSGeminiManager: Starting credential retrieval process");
+        
         var credentialParams = _configuration.GetSection("AISettings")
             .Get<JsonCredentialParameters>();
         if (credentialParams == null)
+        {
+            _logger.LogError("UNOPSGeminiManager: AISettings configuration is missing");
             throw new Exception("AISettings configuration is missing.");
+        }
+        
+        _logger.LogInformation("UNOPSGeminiManager: Retrieved AISettings configuration. ProjectId: {ProjectId}", 
+            credentialParams.ProjectId);
     
         var secretName = _configuration.GetValue<string>("AISettings:AIServiceAccountJSONSecretName");
+        _logger.LogInformation("UNOPSGeminiManager: Using secret name: {SecretName} for project: {ProjectId}", 
+            secretName, credentialParams.ProjectId);
         
         var basicProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
+        _logger.LogInformation("UNOPSGeminiManager: Created GoogleSecretManagerConfigurationProvider for project: {ProjectId}", 
+            credentialParams.ProjectId);
+            
         var secretValue = basicProvider.GetSecretVersion(secretName, "latest");
-        return GoogleCredential.FromJson(secretValue);
+        _logger.LogInformation("UNOPSGeminiManager: Retrieved secret value. Length: {SecretLength} characters", 
+            secretValue?.Length ?? 0);
+            
+        var credential = GoogleCredential.FromJson(secretValue);
+        _logger.LogInformation("UNOPSGeminiManager: Created GoogleCredential from JSON. Credential type: {CredentialType}", 
+            credential?.GetType()?.Name ?? "null");
+            
+        return credential;
     }
 
     // Get user profile details - first check cache, then fallback to database
@@ -390,8 +416,12 @@ public class UNOPSGeminiManager : IGeminiManager
             return "";
         }
 
-        // Check if promptFunction is available (new approach)
-        if (!string.IsNullOrEmpty(promptData.PromptFunction))
+        // Check if DataRetrievalMethod is available (new approach with backward compatibility)
+        var dataRetrievalMethod = !string.IsNullOrEmpty(promptData.DataRetrievalMethod) 
+            ? promptData.DataRetrievalMethod 
+            : null;
+            
+        if (!string.IsNullOrEmpty(dataRetrievalMethod))
         {
             try
             {
@@ -448,7 +478,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 if (callFunctionMethod != null)
                 {
                     // Use the BaseUNOPSManager's CallFunctionByNameAsync method which handles parameter matching
-                    var task = (Task<object>)callFunctionMethod.Invoke(managerInstance, new object[] { promptData.PromptFunction, req.Id, null });
+                    var task = (Task<object>)callFunctionMethod.Invoke(managerInstance, new object[] { dataRetrievalMethod, req.Id, null });
                     var entityData = await task;
                     
                     if (entityData != null)
@@ -474,13 +504,15 @@ public class UNOPSGeminiManager : IGeminiManager
             catch (Exception ex)
             {
                 // Log error and fallback to empty response
-                _logger.LogError(ex, "Error calling function {PromptFunction}: {ErrorMessage}", promptData.PromptFunction, ex.Message);
+                _logger.LogError(ex, "Error calling function {DataRetrievalMethod}: {ErrorMessage}", dataRetrievalMethod, ex.Message);
                 return $"Error retrieving data: {ex.Message}";
             }
         }
 
-        // Fetch result from Gemini
-        return await FetchResultFromGemini(promptData, relatedMessage);
+        // Fetch result from Gemini with caching support
+        // Pass entity ID for caching if available
+        var entityIdForCache = req.Id > 0 ? req.Id.ToString() : null;
+        return await FetchResultFromGemini(promptData, relatedMessage, entityIdForCache);
     }
 
     public async Task<string> ScanFileForGeminiProcessing(GeminiFileRequest req)
@@ -489,39 +521,57 @@ public class UNOPSGeminiManager : IGeminiManager
         string type = req?.Type;
 
         if (!string.IsNullOrEmpty(type)) {
-            // For partner_action type, use the enhanced AiContextualService approach
-            if (type.Equals("partner_action", StringComparison.OrdinalIgnoreCase))
+            var promptData = (await _aiService.GetPromptData(type)).FirstOrDefault();
+            if (promptData == null)
             {
-                var promptData = (await _aiService.GetPromptData("partner_action")).FirstOrDefault();
-                if (promptData == null)
+                return "";
+            }
+            // Send to Gemini with the extracted text
+            var geminiResponse = await _aiService.FetchResultFromGemini(promptData, extractedText, entityId: null, bypassCache: false);
+            var parsedResponse = _aiService.GetDetailsFromGeminiResponse(geminiResponse);
+
+            // Handle the nested structure - check if there's a data array
+            dynamic processedResponse;
+            
+            if (parsedResponse["data"] != null && parsedResponse["data"] is JArray dataArray && dataArray.Count > 0)
+            {
+                // Process each item in the data array
+                var processedDataArray = new JArray();
+                
+                foreach (var dataItem in dataArray)
                 {
-                    return "";
+                    var dependents = dataItem["dependents"]?.ToString();
+                    if (!string.IsNullOrEmpty(dependents))
+                    {
+                        // Process dependents for this specific data item
+                        var processedDataItem = await _aiService.GetDependentDropdownValues(dependents, dataItem, promptData);
+                        processedDataArray.Add(JToken.FromObject(processedDataItem));
+                    }
+                    else
+                    {
+                        // No dependents to process, add as-is
+                        processedDataArray.Add(dataItem);
+                    }
                 }
-
-                // Send to Gemini with the extracted text
-                var geminiResponse = await _aiService.FetchResultFromGemini(promptData, extractedText);
-                var parsedResponse = _aiService.GetDetailsFromGeminiResponse(geminiResponse);
-
-                // Process dependents to convert text to IDs using enhanced logic
-                var dependents = parsedResponse["dependents"]?.ToString();
-                var processedResponse = await _aiService.GetDependentDropdownValues(dependents, parsedResponse, promptData);
-
-                // Return the processed response as JSON string
-                return Newtonsoft.Json.JsonConvert.SerializeObject(processedResponse);
+                
+                // Reconstruct the response with processed data
+                processedResponse = new JObject
+                {
+                    ["Message"] = parsedResponse["Message"],
+                    ["Category"] = parsedResponse["Category"],
+                    ["ResponseType"] = parsedResponse["ResponseType"],
+                    ["data"] = processedDataArray
+                };
             }
             else
             {
-                // For other types, use the existing logic
-                var promptData = (await GetPromptData(type)).FirstOrDefault();
-
-                if (promptData == null)
-                {
-                    return "";
-                }
-
-                // Fetch result from Gemini
-                return await FetchResultFromGemini(promptData, extractedText);
+                // Fallback to original logic for flat structure
+                var dependents = parsedResponse["dependents"]?.ToString();
+                processedResponse = await _aiService.GetDependentDropdownValues(dependents, parsedResponse, promptData);
             }
+
+            // Return the processed response as JSON string
+            return Newtonsoft.Json.JsonConvert.SerializeObject(processedResponse);
         }
 
         return extractedText;
@@ -560,7 +610,9 @@ public class UNOPSGeminiManager : IGeminiManager
             
             var apiUrl = $"/session-with-chats?app_name={appName}&user_id={userId}&session_id={sessionId}";
             
+            _logger.LogInformation("GetSessionDataWithChats: Creating authenticated HttpClient for service URL: {ServiceUrl}", serviceUrl);
             using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            _logger.LogInformation("GetSessionDataWithChats: Successfully created authenticated HttpClient");
             httpClient.Timeout = TimeSpan.FromSeconds(30);
             
             var response = await httpClient.GetAsync(apiUrl);
@@ -614,7 +666,9 @@ public class UNOPSGeminiManager : IGeminiManager
             
             var apiUrl = $"/session-data?app_name={appName}&user_id={userId}&session_id={sessionId}";
             
+            _logger.LogInformation("GetSessionData: Creating authenticated HttpClient for service URL: {ServiceUrl}", serviceUrl);
             using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            _logger.LogInformation("GetSessionData: Successfully created authenticated HttpClient");
             httpClient.Timeout = TimeSpan.FromSeconds(30);
             
             var response = await httpClient.GetAsync(apiUrl);
@@ -649,9 +703,11 @@ public class UNOPSGeminiManager : IGeminiManager
                 throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
             }
             
-            var apiUrl = $"/user-sessions?app_name={appName}&user_id={userId}";
+            var apiUrl = $"/api/ai-assistant/get-user-sessions?app_name={appName}&user_id={userId}";
             
+            _logger.LogInformation("GetUserSessions: Creating authenticated HttpClient for service URL: {ServiceUrl}", serviceUrl);
             using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            _logger.LogInformation("GetUserSessions: Successfully created authenticated HttpClient");
             httpClient.Timeout = TimeSpan.FromSeconds(30);
             
             var response = await httpClient.GetAsync(apiUrl);
@@ -1857,10 +1913,19 @@ public class UNOPSGeminiManager : IGeminiManager
 
     public async Task<string> ChatWithGemini(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null)
     {
+        _logger.LogInformation("ChatWithGemini: Method called with sessionId: {SessionId}, hasFiles: {HasFiles}", 
+            req.sessionId, req.Files?.Any() ?? false);
+            
         var appName = _configuration.GetValue<string>("AgenticAi:AppName");
         var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+        
+        _logger.LogInformation("ChatWithGemini: Configuration - AppName: {AppName}, ServiceURL: {ServiceUrl}", 
+            appName, serviceUrl);
+            
         if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
         {
+            _logger.LogError("ChatWithGemini: AgenticAi configuration is missing or incomplete. AppName: {AppName}, ServiceURL: {ServiceUrl}", 
+                appName, serviceUrl);
             throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
         }
         
@@ -1873,24 +1938,36 @@ public class UNOPSGeminiManager : IGeminiManager
         // TODO: In DEV mode, somehow the currentUserId is set to 90, but the email in the database is empty
         var currentUserEmail = user.FindFirst(ClaimTypes.Email)?.Value;
         
+        _logger.LogInformation("ChatWithGemini: User details - UserId: {UserId}, UserEmail: {UserEmail}", 
+            currentUserId, currentUserEmail);
+        
         if (string.IsNullOrEmpty(currentUserEmail) || string.IsNullOrEmpty(currentUserId))
         {
+          _logger.LogError("ChatWithGemini: Missing user information - UserId: {UserId}, UserEmail: {UserEmail}", 
+              currentUserId, currentUserEmail);
           throw new InvalidOperationException($"Unable to lookup both current user email {currentUserEmail} and current user id {currentUserId}");
         }
         currentUserEmail = currentUserEmail.Contains(':') ? currentUserEmail.Split(':').Last() : currentUserEmail;
+        _logger.LogInformation("ChatWithGemini: Processed user email: {ProcessedEmail}", currentUserEmail);
 
         // Get user profile details to include in state
         var userProfileDetails = await GetUserProfileDetailsAsync(user);
+        _logger.LogInformation("ChatWithGemini: Retrieved user profile details: {HasProfile}", userProfileDetails != null);
         
         // Enhance the state with user profile information
         var enhancedState = await EnhanceStateWithUserProfile(req.State, userProfileDetails);
+        _logger.LogInformation("ChatWithGemini: Enhanced state length: {StateLength} characters", 
+            enhancedState?.Length ?? 0);
 
         var apiUrl = $"/chat";
+        _logger.LogInformation("ChatWithGemini: Using API URL: {ApiUrl}", apiUrl);
         HttpContent httpContent;
 
         // Check if request has files
         if (req.Files != null && req.Files.Any())
         {
+            _logger.LogInformation("ChatWithGemini: Request has {FileCount} files, using multipart form data", req.Files.Count());
+            
             // Use multipart form data for requests with files
             var multipartContent = new MultipartFormDataContent();
             
@@ -1903,11 +1980,16 @@ public class UNOPSGeminiManager : IGeminiManager
             multipartContent.Add(new StringContent("false"), "streaming");
             multipartContent.Add(new StringContent(enhancedState ?? ""), "state");
             
+            _logger.LogInformation("ChatWithGemini: Multipart payload - AppName: {AppName}, UserId: {UserId}, UserEmail: {UserEmail}, SessionId: {SessionId}, MessageLength: {MessageLength}, StateLength: {StateLength}", 
+                appName, currentUserId, currentUserEmail, req.sessionId?.ToString() ?? "null", req.Message?.Length ?? 0, enhancedState?.Length ?? 0);
+            
             // Add files
             foreach (var file in req.Files)
             {
                 if (file != null && file.Length > 0)
                 {
+                    _logger.LogInformation("ChatWithGemini: Adding file - Name: {FileName}, Size: {FileSize} bytes, ContentType: {ContentType}", 
+                        file.FileName, file.Length, file.ContentType);
                     var streamContent = new StreamContent(file.OpenReadStream());
                     streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
                     multipartContent.Add(streamContent, "files", file.FileName);
@@ -1915,10 +1997,12 @@ public class UNOPSGeminiManager : IGeminiManager
             }
             
             httpContent = multipartContent;
-            _logger.LogInformation($"Sending chat request with {req.Files.Count()} files to AI service");
+            _logger.LogInformation("ChatWithGemini: Sending chat request with {FileCount} files to AI service", req.Files.Count());
         }
         else
         {
+            _logger.LogInformation("ChatWithGemini: No files in request, using JSON payload");
+            
             // Use JSON for requests without files (backward compatibility)
             var aiChatRequest = new AiChatRequest
             {
@@ -1932,62 +2016,137 @@ public class UNOPSGeminiManager : IGeminiManager
             };
 
             var jsonContent = System.Text.Json.JsonSerializer.Serialize(aiChatRequest);
+            _logger.LogInformation("ChatWithGemini: JSON payload - AppName: {AppName}, UserId: {UserId}, UserEmail: {UserEmail}, SessionId: {SessionId}, MessageLength: {MessageLength}, StateLength: {StateLength}, Streaming: {Streaming}", 
+                aiChatRequest.AppName, aiChatRequest.UserId, aiChatRequest.UserEmail, aiChatRequest.SessionId, 
+                aiChatRequest.Message?.Length ?? 0, aiChatRequest.State?.Length ?? 0, aiChatRequest.Streaming);
+            _logger.LogInformation("ChatWithGemini: Serialized JSON length: {JsonLength} characters", jsonContent?.Length ?? 0);
+            
             httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-            _logger.LogInformation("Sending chat request without files to AI service");
+            _logger.LogInformation("ChatWithGemini: Sending chat request without files to AI service");
         }
 
-        using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
-
-        var response = await httpClient.PostAsync(apiUrl, httpContent);
-        if (!response.IsSuccessStatusCode)
+        HttpClient httpClient;
+        
+        _logger.LogInformation("ChatWithGemini: Determining HttpClient type for serviceUrl: {ServiceUrl}", serviceUrl);
+        
+        // For local development, use unauthenticated HttpClient
+        if (serviceUrl.StartsWith("http://localhost") || serviceUrl.StartsWith("http://127.0.0.1"))
         {
-            throw new InvalidOperationException($"AI service call failed. Status: {response.StatusCode}");
+            _logger.LogInformation("ChatWithGemini: Using unauthenticated HttpClient for local development");
+            httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri(serviceUrl);
+            _logger.LogInformation("ChatWithGemini: Local HttpClient - BaseAddress: {BaseAddress}, Timeout: {Timeout}", 
+                httpClient.BaseAddress, httpClient.Timeout);
+        }
+        else
+        {
+            // For production/Cloud Run, use authenticated HttpClient
+            _logger.LogInformation("ChatWithGemini: Creating authenticated HttpClient for production service URL: {ServiceUrl}", serviceUrl);
+            httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            _logger.LogInformation("ChatWithGemini: Successfully created authenticated HttpClient for production");
+            _logger.LogInformation("ChatWithGemini: Production HttpClient - BaseAddress: {BaseAddress}, Timeout: {Timeout}, HasAuthHeader: {HasAuth}", 
+                httpClient.BaseAddress, httpClient.Timeout, 
+                httpClient.DefaultRequestHeaders.Authorization != null);
         }
 
-        var responseContent = await response.Content.ReadAsStringAsync();
-
-        // Check for data_modifications in the response and create notifications
-        await ProcessDataModificationsForNotifications(responseContent, int.Parse(currentUserId));
-
-        // Extract sessionId from req or responseContent
-        string sessionId = req.sessionId;
-        if (string.IsNullOrEmpty(sessionId))
+        using (httpClient)
         {
-            try
+            _logger.LogInformation("ChatWithGemini: Making POST request to {FullUrl} (BaseAddress: {BaseAddress}, RelativeUrl: {ApiUrl})", 
+                httpClient.BaseAddress != null ? new Uri(httpClient.BaseAddress, apiUrl).ToString() : apiUrl, 
+                httpClient.BaseAddress, apiUrl);
+            
+            _logger.LogInformation("ChatWithGemini: Request headers - Authorization: {HasAuth}, ContentType: {ContentType}, UserAgent: {UserAgent}", 
+                httpClient.DefaultRequestHeaders.Authorization != null ? "Present" : "None", 
+                httpContent.Headers.ContentType?.ToString() ?? "None", 
+                httpClient.DefaultRequestHeaders.UserAgent.ToString());
+
+          // DEBUG: Log the actual authorization header details
+            if (authHeader != null)
             {
-                var responseObj = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
-                sessionId = responseObj["session_id"]?.ToString();
-            }
-            catch { /* ignore parse errors, sessionId will remain null if not found */ }
-        }
-
-        if (!string.IsNullOrEmpty(sessionId))
-        {
-            var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
-            if (session != null)
-            {
-                session.LastUpdated = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
+                _logger.LogInformation("ChatWithGemini: Authorization header - Scheme: {Scheme}, Token prefix: {TokenPrefix}", 
+                    authHeader.Scheme, 
+                    authHeader.Parameter?.Length > 20 ? authHeader.Parameter.Substring(0, 20) + "..." : authHeader.Parameter ?? "null");
             }
             else
             {
-                var newSession = new AiChatSession
-                {
-                    Id = sessionId,
-                    UserId = int.Parse(currentUserId),
-                    Status = "Active",
-                    Title = "New Chat",
-                    LastUpdated = DateTime.UtcNow,
-                    AiGenerateTitle = true,
-                    Archived = false,
-                    Starred = false
-                };
-                _context.AiChatSession.Add(newSession);
-                await _context.SaveChangesAsync();
+                _logger.LogError("ChatWithGemini: No authorization header set - this explains the 403 Forbidden!");
             }
-        }
+            
+            var response = await httpClient.PostAsync(apiUrl, httpContent);
+            
+            _logger.LogInformation("ChatWithGemini: Received response - Status: {StatusCode} ({ReasonPhrase}), ContentLength: {ContentLength}", 
+                response.StatusCode, response.ReasonPhrase, 
+                response.Content.Headers.ContentLength?.ToString() ?? "Unknown");
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("ChatWithGemini: AI service call failed - Status: {StatusCode}, Reason: {ReasonPhrase}, Content: {ErrorContent}", 
+                    response.StatusCode, response.ReasonPhrase, errorContent);
+                throw new InvalidOperationException($"AI service call failed. Status: {response.StatusCode}");
+            }
 
-        return responseContent;
+            var responseContent = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("ChatWithGemini: Response received successfully - Length: {ResponseLength} characters", 
+                responseContent?.Length ?? 0);
+
+            // Check for data_modifications in the response and create notifications
+            _logger.LogInformation("ChatWithGemini: Processing data modifications for notifications");
+            await ProcessDataModificationsForNotifications(responseContent, int.Parse(currentUserId));
+
+            // Extract sessionId from req or responseContent
+            string sessionId = req.sessionId;
+            _logger.LogInformation("ChatWithGemini: Session management - RequestSessionId: {RequestSessionId}", sessionId);
+            
+            if (string.IsNullOrEmpty(sessionId))
+            {
+                try
+                {
+                    var responseObj = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
+                    sessionId = responseObj["session_id"]?.ToString();
+                    _logger.LogInformation("ChatWithGemini: Extracted sessionId from response: {ExtractedSessionId}", sessionId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("ChatWithGemini: Failed to extract sessionId from response: {Error}", ex.Message);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
+                if (session != null)
+                {
+                    _logger.LogInformation("ChatWithGemini: Updating existing session: {SessionId}", sessionId);
+                    session.LastUpdated = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    _logger.LogInformation("ChatWithGemini: Creating new session: {SessionId}", sessionId);
+                    var newSession = new AiChatSession
+                    {
+                        Id = sessionId,
+                        UserId = int.Parse(currentUserId),
+                        Status = "Active",
+                        Title = "New Chat",
+                        LastUpdated = DateTime.UtcNow,
+                        AiGenerateTitle = true,
+                        Archived = false,
+                        Starred = false
+                    };
+                    _context.AiChatSession.Add(newSession);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            else
+            {
+                _logger.LogWarning("ChatWithGemini: No sessionId available for session management");
+            }
+
+            _logger.LogInformation("ChatWithGemini: Request completed successfully, returning response");
+            return responseContent;
+        }
     }
 
     public async Task<string> GenerateTitle(string sessionId, int userId)
@@ -2002,7 +2161,9 @@ public class UNOPSGeminiManager : IGeminiManager
 
         var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
         var apiUrl = $"/generate-title?session_id={sessionId}&user_id={userId}";
+        _logger.LogInformation("GenerateTitle: Creating authenticated HttpClient for service URL: {ServiceUrl}", serviceUrl);
         using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+        _logger.LogInformation("GenerateTitle: Successfully created authenticated HttpClient");
         var response = await httpClient.GetAsync(apiUrl);
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException("Failed to generate title");
@@ -2027,7 +2188,9 @@ public class UNOPSGeminiManager : IGeminiManager
             var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
             var apiUrl = $"/generate-suggestions?user_id={userId}";
             
+            _logger.LogInformation("GenerateSuggestions: Creating authenticated HttpClient for service URL: {ServiceUrl}", serviceUrl);
             using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            _logger.LogInformation("GenerateSuggestions: Successfully created authenticated HttpClient");
             var response = await httpClient.GetAsync(apiUrl);
             
             if (!response.IsSuccessStatusCode)

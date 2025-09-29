@@ -50,6 +50,7 @@ export class DocumentComponent implements OnInit {
   canDownload = input<boolean>(true);
   canDelete = input<boolean>(true);
   disabled = input<boolean>(false);
+  showUploadButton = input<boolean>(true);
   isLoading = this.documentService.isLoading;
 
   showUploadFile: boolean = false;
@@ -179,6 +180,13 @@ export class DocumentComponent implements OnInit {
   handleOnUploadDocumentSuccess() {
     this.showUploadFile = false;
     this.load();
+  }
+
+  /**
+   * Opens the upload document dialog
+   */
+  openUploadDialog() {
+    this.showUploadFile = true;
   }
 
   handleOnMenuButtonClick(event: any, document: any, menu: any) {

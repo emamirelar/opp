@@ -1386,6 +1386,118 @@ public abstract class BaseUNOPSManager
 
         return query;
     }
+
+    /// <summary>
+    /// Gets comprehensive user profile information for AI context
+    /// </summary>
+    /// <param name="user">The current user claims principal</param>
+    /// <returns>User profile object with complete user information including org unit, supervisor, position, and duty station</returns>
+    protected async Task<object> GetUserProfileForAIAsync(ClaimsPrincipal user)
+    {
+        try
+        {
+            // Get user ID from claims
+            var userIdClaim = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                // Return default profile for anonymous or invalid users
+                return new
+                {
+                    userId = 0,
+                    name = "Anonymous User",
+                    firstName = "Anonymous",
+                    lastName = "User",
+                    email = "anonymous@unops.org",
+                    title = "UNOPS Staff",
+                    position = "UNOPS Staff",
+                    dutyStation = "UNOPS Office",
+                    dutyStationCountry = "Global",
+                    orgUnit = "UNOPS",
+                    orgUnitName = "UNOPS",
+                    supervisor = new { id = 0, name = "Not Available" }
+                };
+            }
+
+            // Query user profile from database with related data
+            var userProfileData = await _context.UserProfile
+                .Where(up => up.UserId == userId && !up.IsDeleted)
+                .Select(up => new
+                {
+                    Profile = up,
+                    // Get organization unit name from OrganizationHierarchies
+                    OrgUnitName = _context.OrganizationHierarchies
+                        .Where(oh => oh.Name == up.OrgUnit && !oh.IsDeleted)
+                        .Select(oh => oh.Name)
+                        .FirstOrDefault(),
+                    // Get supervisor information
+                    SupervisorInfo = up.SupervisorId.HasValue ? 
+                        _context.UserProfile
+                            .Where(sup => sup.UserId == up.SupervisorId.Value && !sup.IsDeleted)
+                            .Select(sup => new { id = sup.UserId, name = sup.Name })
+                            .FirstOrDefault() : null
+                })
+                .FirstOrDefaultAsync();
+
+            if (userProfileData?.Profile != null)
+            {
+                var profile = userProfileData.Profile;
+                return new
+                {
+                    userId = profile.UserId,
+                    name = profile.Name,
+                    firstName = profile.FirstName ?? "Not Available",
+                    lastName = profile.LastName ?? "Not Available", 
+                    email = profile.UserEmail ?? "Not Available",
+                    title = !string.IsNullOrEmpty(profile.Position) ? profile.Position : "UNOPS Staff",
+                    position = !string.IsNullOrEmpty(profile.Position) ? profile.Position : "UNOPS Staff",
+                    dutyStation = !string.IsNullOrEmpty(profile.DutyStation) ? profile.DutyStation : "UNOPS Office",
+                    dutyStationCountry = !string.IsNullOrEmpty(profile.OrgUnit) ? profile.OrgUnit : "Global",
+                    orgUnit = !string.IsNullOrEmpty(profile.OrgUnit) ? profile.OrgUnit : "UNOPS",
+                    orgUnitName = !string.IsNullOrEmpty(userProfileData.OrgUnitName) ? userProfileData.OrgUnitName : profile.OrgUnit ?? "UNOPS",
+                    supervisor = userProfileData.SupervisorInfo ?? new { id = 0, name = "Not Available" }
+                };
+            }
+            else
+            {
+                // Return default profile if no profile found
+                return new
+                {
+                    userId = userId,
+                    name = "UNOPS Staff",
+                    firstName = "UNOPS",
+                    lastName = "Staff",
+                    email = "staff@unops.org",
+                    title = "UNOPS Staff",
+                    position = "UNOPS Staff",
+                    dutyStation = "UNOPS Office",
+                    dutyStationCountry = "Global",
+                    orgUnit = "UNOPS",
+                    orgUnitName = "UNOPS",
+                    supervisor = new { id = 0, name = "Not Available" }
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting user profile for AI: {ex.Message}");
+            // Return default profile on error
+            return new
+            {
+                userId = 0,
+                name = "UNOPS Staff",
+                firstName = "UNOPS",
+                lastName = "Staff", 
+                email = "staff@unops.org",
+                title = "UNOPS Staff",
+                position = "UNOPS Staff",
+                dutyStation = "UNOPS Office",
+                dutyStationCountry = "Global",
+                orgUnit = "UNOPS",
+                orgUnitName = "UNOPS",
+                supervisor = new { id = 0, name = "Not Available" }
+            };
+        }
+    }
 }
 
 /// <summary>

@@ -1,11 +1,12 @@
 <div class="content-item" [ngSwitch]="item.type" *ngIf="shouldShow">
-  <!-- Markdown content with typewriter effect -->
+  <!-- Markdown content without typewriter effect -->
   <div *ngSwitchCase="'markdown'" class="content-markdown">
-    <app-typewriter-markdown 
-      [content]="getStringMessage()"
-      [enableTypewriter]="isNewMessage"
-      (typingComplete)="onTypingComplete()">
-    </app-typewriter-markdown>
+    <markdown [data]="getStringMessage()"></markdown>
+  </div>
+  
+  <!-- Thought content with different styling -->
+  <div *ngSwitchCase="'thoughts'" class="content-thought">
+    <markdown [data]="getStringMessage()"></markdown>
   </div>
   
   <!-- Grid/Table content -->
@@ -60,12 +61,8 @@
     <pre><code [class]="'language-' + (item.language || 'javascript')">{{ getStringMessage() }}</code></pre>
   </div>
   
-  <!-- Plain text fallback with typewriter effect -->
+  <!-- Plain text fallback without typewriter effect -->
   <div *ngSwitchDefault class="text-content content-text">
-    <app-typewriter-markdown 
-      [content]="getStringMessage()"
-      [enableTypewriter]="isNewMessage"
-      (typingComplete)="onTypingComplete()">
-    </app-typewriter-markdown>
+    <markdown [data]="getStringMessage()"></markdown>
   </div>
 </div> 

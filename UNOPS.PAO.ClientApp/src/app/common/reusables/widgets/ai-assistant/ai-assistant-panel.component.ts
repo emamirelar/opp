@@ -56,6 +56,14 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   @Input() mode: 'overlay' | 'fullscreen' = 'overlay'; // Mode determines card click behavior
   @Output() cardClicked = new EventEmitter<any>();
 
+  // Mobile detection
+  isMobile = computed(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 768;
+    }
+    return false;
+  });
+
   firstScroll = signal(true);
   message = signal('');
   selectedFiles = signal<{ file: File, name: string, content: string }[]>([]);
@@ -81,6 +89,8 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   // Sequential content display
   contentDisplayState = signal<{[messageIndex: number]: number}>({});
   
+  // No longer needed - content renders directly from arrays
+  
   // User info for personalized greeting
   userName = signal<string>('');
   
@@ -89,6 +99,9 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   suggestionsLoading = signal(false);
   showSuggestions = signal(true);
   suggestionsError = signal(false);
+  
+  // Resize listener reference for cleanup
+  private resizeListener?: () => void;
   
   // Check if AI is currently in fullscreen mode (on AI route)
   isInFullscreenMode = computed(() => {
@@ -195,28 +208,234 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
         this.scrollToBottom(true); // Use smooth scroll for new messages
       }, 100);
     });
+
+    // Listen for window resize to update mobile detection
+    if (typeof window !== 'undefined') {
+      this.resizeListener = () => {
+        this.cdr.markForCheck();
+      };
+      window.addEventListener('resize', this.resizeListener);
+    }
+
+    // Remove progressive rendering event subscription to prevent loops
+    // Content will render directly from streamingTypes arrays in template
     
     this.cdr.detectChanges();
   }
 
+  // Removed handleProgressiveRender - no longer needed
+
+  // Enhanced cache for getStreamingTypeEntries to prevent card re-renders
+  private streamingEntriesCache: {chunkType: string, items: any[]}[] = [];
+  private lastStreamingTypesStructureHash: string = '';
+  private chunkTypeWrapperCache: Map<string, {chunkType: string, items: any[]}> = new Map();
+
+  /**
+   * Convert streamingTypes object to array for template iteration
+   * This method creates stable references for completed cards to prevent re-renders
+   */
+  getStreamingTypeEntries(streamingTypes: any): {chunkType: string, items: any[]}[] {
+    if (!streamingTypes) return [];
+    
+    // Create a structural hash that only considers true structural changes:
+    // - Presence/absence of chunk types
+    // - Number of items per chunk type  
+    // - Arrival order (to maintain rendering order)
+    // Deliberately excludes completion status changes to avoid unnecessary rebuilds
+    const structuralData = Object.keys(streamingTypes).sort().map(key => {
+      const items = streamingTypes[key] || [];
+      return {
+        key,
+        length: items.length,
+        firstItemArrivalOrder: items[0]?.arrivalOrder || 0
+      };
+    });
+    
+    const currentStructureHash = JSON.stringify(structuralData);
+    
+    // Return cached result if structure hasn't changed
+    if (currentStructureHash === this.lastStreamingTypesStructureHash && this.streamingEntriesCache.length > 0) {
+      console.log('🎯 Using cached streaming entries - structure unchanged');
+      return this.streamingEntriesCache;
+    }
+    
+    console.log('🔄 Rebuilding streaming entries - structure changed');
+    console.log('🔍 Structure hash details:', {
+      oldHash: this.lastStreamingTypesStructureHash,
+      newHash: currentStructureHash,
+      structuralData: structuralData
+    });
+    
+    // Build entries but preserve wrapper objects for completed card types
+    const activeChunkTypes = Object.keys(streamingTypes)
+      .filter(chunkType => streamingTypes[chunkType] && streamingTypes[chunkType].length > 0);
+    
+    const entriesWithOrder = activeChunkTypes.map(chunkType => {
+      const items = streamingTypes[chunkType];
+      const firstItem = items[0];
+      
+      // Check if this chunk type has completed cards
+      const hasCompletedCards = chunkType === 'card' && items.some((item: any) => item.completed === true);
+      
+      // AGGRESSIVE CACHING: For card types, always try to reuse cached wrapper if it exists
+      if (chunkType === 'card' && this.chunkTypeWrapperCache.has(chunkType)) {
+        const cached = this.chunkTypeWrapperCache.get(chunkType)!;
+        
+        // For cards, reuse wrapper if:
+        // 1. Items array is the same reference, OR
+        // 2. Items have the same length and first item has same renderingId (safety check)
+        const sameReference = cached.items === items;
+        const sameStructure = cached.items.length === items.length && 
+                            cached.items[0]?.renderingId === items[0]?.renderingId;
+        
+        if (sameReference || (hasCompletedCards && sameStructure)) {
+          console.log(`🔒 AGGRESSIVELY reusing cached wrapper for ${chunkType} cards:`, {
+            sameReference: sameReference,
+            sameStructure: sameStructure,
+            hasCompletedCards: hasCompletedCards,
+            cachedItemsRef: cached.items,
+            currentItemsRef: items,
+            itemsRefEqual: cached.items === items
+          });
+          
+          // Update items reference but keep the same wrapper object
+          cached.items = items;
+          
+          return {
+            ...cached,
+            arrivalOrder: firstItem?.arrivalOrder ?? 999999
+          };
+        }
+      }
+      
+      // Create new wrapper object only if we absolutely must
+      const newWrapper = {
+        chunkType: chunkType,
+        items: items // Use direct reference to prevent unnecessary copying
+      };
+      
+      // Cache wrappers for any card types (not just completed ones)
+      if (chunkType === 'card') {
+        this.chunkTypeWrapperCache.set(chunkType, newWrapper);
+        console.log(`💾 Cached new wrapper for ${chunkType} cards:`, {
+          hasCompletedCards: hasCompletedCards,
+          itemCount: items.length
+        });
+      }
+      
+      return {
+        ...newWrapper,
+        arrivalOrder: firstItem?.arrivalOrder ?? 999999
+      };
+    })
+    // Sort by the order chunks first appeared (chronological order)
+    .sort((a, b) => a.arrivalOrder - b.arrivalOrder);
+      
+    const result = entriesWithOrder.map(entry => ({
+      chunkType: entry.chunkType,
+      items: entry.items
+    }));
+    
+    // Update cache
+    this.streamingEntriesCache = result;
+    this.lastStreamingTypesStructureHash = currentStructureHash;
+    
+    // Clean up wrapper cache for chunk types that no longer exist
+    const currentChunkTypes = new Set(activeChunkTypes);
+    for (const cachedChunkType of this.chunkTypeWrapperCache.keys()) {
+      if (!currentChunkTypes.has(cachedChunkType)) {
+        this.chunkTypeWrapperCache.delete(cachedChunkType);
+        console.log(`🗑️ Cleaned up cache for removed chunk type: ${cachedChunkType}`);
+      }
+    }
+      
+    console.log('🎨 Template entries (in chronological order):', result.map((e, i) => `${i}: ${e.chunkType} (${e.items.length} items)`));
+    return result;
+  }
+
+  /**
+   * TrackBy function for chunk type pairs to prevent unnecessary re-creation of wrapper divs
+   */
+  trackByChunkType(index: number, chunkTypePair: {chunkType: string, items: any[]}): string {
+    return chunkTypePair.chunkType;
+  }
+
+  // Store stable references by renderingId to ensure cards don't get recreated
+  private stableItemRefs: Map<string, any> = new Map();
+
+  /**
+   * TrackBy function for progressive content to prevent unnecessary re-renders
+   * AGGRESSIVE: Use renderingId only, ignore all other changes for completed cards
+   */
+  trackByRenderingId = (index: number, item: any): string => {
+    const renderingId = item?.renderingId || `fallback-${index}`;
+    
+    // Ensure stableItemRefs is initialized
+    if (!this.stableItemRefs) {
+      this.stableItemRefs = new Map();
+    }
+    
+    // For cards, aggressively cache the first version we see
+    if (item?.type === 'card') {
+      if (!this.stableItemRefs.has(renderingId)) {
+        this.stableItemRefs.set(renderingId, item);
+        console.log('🎯 CACHING FIRST card reference:', {
+          renderingId: renderingId,
+          completed: item.completed,
+          objectRef: item
+        });
+      } else {
+        console.log('🎯 REUSING CACHED card reference:', {
+          renderingId: renderingId,
+          newCompleted: item.completed,
+          cachedCompleted: this.stableItemRefs.get(renderingId)?.completed,
+          sameObjectRef: this.stableItemRefs.get(renderingId) === item
+        });
+      }
+    }
+    
+    return renderingId;
+  };
+
   ngOnDestroy(): void {
     this.stopGeneratingDotsAnimation();
+    
+    // Clean up window resize listener
+    if (typeof window !== 'undefined' && this.resizeListener) {
+      window.removeEventListener('resize', this.resizeListener);
+    }
   }
 
   // Handle closing the AI Assistant
   closeAiAssistant(): void {
     // Check if we're on the AI route
     if (this.router.url.startsWith('/ai')) {
-      // On AI route, navigate back to home to return to popup mode
-      this.router.navigate(['/']);
-      // After navigation, open the AI assistant in popup mode
-      setTimeout(() => {
-        this.layoutService.onAIAssistantToggle();
-      }, 100);
+      if (this.isMobile()) {
+        // On mobile, navigate back to the previous route
+        const previousRoute = this.getPreviousRoute();
+        this.router.navigate([previousRoute]);
+      } else {
+        // On desktop, navigate back to home and open AI assistant in popup mode
+        this.router.navigate(['/']);
+        // After navigation, open the AI assistant in popup mode
+        setTimeout(() => {
+          this.layoutService.onAIAssistantToggle();
+        }, 100);
+      }
     } else {
       // In overlay mode, close the overlay
       this.layoutService.onAIAssistantToggle();
     }
+  }
+
+  // Get previous route for mobile navigation
+  private getPreviousRoute(): string {
+    // Try to get from session storage first
+    const storedRoute = sessionStorage.getItem('ai-assistant-previous-route');
+    if (storedRoute && storedRoute !== '/ai') {
+      return storedRoute;
+    }
+    return '/'; // Default fallback
   }
 
 
@@ -428,6 +647,10 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     const currentFiles = this.selectedFiles();
 
     if (currentMessage.trim() || currentFiles.length > 0) {
+      // Clear streaming cache for new message
+      this.streamingEntriesCache = [];
+      this.lastStreamingTypesStructureHash = '';
+      
       this.ngZone.run(() => {
         this.message.set('');
         this.cdr.detectChanges();
@@ -869,6 +1092,19 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     } else {
       this.openFullscreen();
     }
+  }
+
+  // Clear conversation
+  clearConversation(): void {
+    // Clear the streaming entries cache when starting a new conversation
+    this.streamingEntriesCache = [];
+    this.lastStreamingTypesStructureHash = '';
+    this.chunkTypeWrapperCache.clear();
+    this.stableItemRefs.clear();
+    
+    console.log('🗑️ Cleared all caches and stable references for new conversation');
+    
+    this.aiAssistantData.clearConversation();
   }
 
   // Sequential content display methods (modified to show all content immediately)

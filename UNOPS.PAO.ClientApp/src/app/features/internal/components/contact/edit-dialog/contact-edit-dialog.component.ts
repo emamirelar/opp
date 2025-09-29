@@ -32,6 +32,7 @@ import { AiTranscribeComponent } from '../../../../../common/reusables/component
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogService } from 'primeng/dynamicdialog';
 import { DuplicateConfirmationDialogComponent, DuplicateDetectionResponse } from '../duplicate-confirmation-dialog/duplicate-confirmation-dialog.component';
+import { PhoneInputComponent } from '../../../../../common/components/phone-input/phone-input.component';
 
 @Component({
   selector: 'app-contact-edit-dialog',
@@ -55,7 +56,8 @@ import { DuplicateConfirmationDialogComponent, DuplicateDetectionResponse } from
     CheckboxModule,
     FormsModule,
     AiTranscribeComponent,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    PhoneInputComponent
   ],
   templateUrl: './contact-edit-dialog.component.html',
   standalone: true,
@@ -66,6 +68,7 @@ export class ContactEditDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   showAssistantFields = signal<boolean>(false);
+  private partnerContextApplied = false;
 
   public formGroup: FormGroup = this.fb.group({
     // Basic contact information
@@ -152,6 +155,7 @@ export class ContactEditDialogComponent implements OnInit {
 
   ngOnInit() {
     this.record = this.dialogConfig.data?.record;
+    const partnerContext = this.dialogConfig.data?.partnerContext;
     
     // Set initial loading state
     this.isLoading.set(true);
@@ -172,6 +176,24 @@ export class ContactEditDialogComponent implements OnInit {
       }
     }
     
+    // Handle partner context (when opened from partner page)
+    if (partnerContext?.partnerId && partnerContext?.lockPartner) {
+      // Convert partner ID to number if it's a string
+      const partnerIdNum = typeof partnerContext.partnerId === 'string' 
+        ? parseInt(partnerContext.partnerId) 
+        : partnerContext.partnerId;
+      
+      // Apply partner context immediately and also after data loads
+      this.applyPartnerContext(partnerIdNum);
+      
+      // Also try after a delay to ensure data is loaded
+      setTimeout(() => {
+        if (!this.partnerContextApplied) {
+          this.applyPartnerContext(partnerIdNum);
+        }
+      }, 500);
+    }
+    
     // Check if any assistant fields have values
     const hasAssistantInfo = this.record?.assistant || 
                            this.record?.assistantPhone || 
@@ -185,6 +207,28 @@ export class ContactEditDialogComponent implements OnInit {
     setTimeout(() => {
       this.isLoading.set(false);
     }, 100);
+  }
+
+  // Check if partner field is locked due to partner context
+  isPartnerLocked(): boolean {
+    const partnerContext = this.dialogConfig.data?.partnerContext;
+    return partnerContext?.lockPartner === true;
+  }
+
+  // Apply partner context with proper timing
+  private applyPartnerContext(partnerIdNum: number): void {
+    // Set the partner ID and disable the field
+    this.formGroup.patchValue({ partnerId: partnerIdNum });
+    this.formGroup.get('partnerId')?.disable();
+    
+    // Update partner name
+    this.updatePartnerName(partnerIdNum);
+    
+    // Mark as applied
+    this.partnerContextApplied = true;
+    
+    // Trigger change detection
+    this.cdr.detectChanges();
   }
 
   handleSave() {
@@ -247,6 +291,12 @@ export class ContactEditDialogComponent implements OnInit {
     const formValue = this.formGroup.value;
     const requestJsonObj: Record<string, any> = { ...formValue };
 
+    // Include disabled fields (like locked partner field)
+    const rawFormValue = this.formGroup.getRawValue();
+    if (this.isPartnerLocked() && rawFormValue.partnerId) {
+      requestJsonObj['partnerId'] = rawFormValue.partnerId;
+    }
+
     // Clear assistant fields if the section is not shown
     if (!this.showAssistantFields()) {
       requestJsonObj['assistant'] = null;
@@ -270,26 +320,51 @@ export class ContactEditDialogComponent implements OnInit {
   // Handle AI Transcribe completion
   onTranscriptionCompleted(data: any): void {
     if (data) {
+      // Handle both flat structure (legacy) and nested structure (new format)
+      let contactData = data;
+      
+      // Check if data has the new nested structure with data array
+      if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+        // Use the first item from the data array
+        contactData = data.data[0];
+        
+        // Show success message from the response
+        if (data.Message) {
+          this.feedbackDialogService.showSuccessToast({ detail: data.Message });
+        }
+      }
+      
       // Pre-fill the contact form with AI-extracted data
       this.formGroup.patchValue({
-        salutation: data.salutation || this.formGroup.get('salutation')?.value,
-        firstName: data.firstName || this.formGroup.get('firstName')?.value,
-        middleName: data.middleName || this.formGroup.get('middleName')?.value,
-        lastName: data.lastName || this.formGroup.get('lastName')?.value,
-        suffix: data.suffix || this.formGroup.get('suffix')?.value,
-        title: data.title || this.formGroup.get('title')?.value,
-        email: data.email || this.formGroup.get('email')?.value,
-        phone: data.phone || this.formGroup.get('phone')?.value,
-        mobile: data.mobile || this.formGroup.get('mobile')?.value,
-        department: data.department || this.formGroup.get('department')?.value,
-        mailingStreet: data.mailingStreet || this.formGroup.get('mailingStreet')?.value,
-        mailingCity: data.mailingCity || this.formGroup.get('mailingCity')?.value,
-        mailingStateProvince: data.mailingStateProvince || this.formGroup.get('mailingStateProvince')?.value,
-        mailingPostalCode: data.mailingPostalCode || this.formGroup.get('mailingPostalCode')?.value,
-        mailingCountry: data.mailingCountry || this.formGroup.get('mailingCountry')?.value
+        salutation: contactData.salutation || this.formGroup.get('salutation')?.value,
+        firstName: contactData.firstName || this.formGroup.get('firstName')?.value,
+        middleName: contactData.middleName || this.formGroup.get('middleName')?.value,
+        lastName: contactData.lastName || this.formGroup.get('lastName')?.value,
+        suffix: contactData.suffix || this.formGroup.get('suffix')?.value,
+        title: contactData.title || this.formGroup.get('title')?.value,
+        email: contactData.email || this.formGroup.get('email')?.value,
+        phone: contactData.phone || this.formGroup.get('phone')?.value,
+        mobile: contactData.mobile || this.formGroup.get('mobile')?.value,
+        department: contactData.department || this.formGroup.get('department')?.value,
+        mailingStreet: contactData.mailingStreet || this.formGroup.get('mailingStreet')?.value,
+        mailingCity: contactData.mailingCity || this.formGroup.get('mailingCity')?.value,
+        mailingStateProvince: contactData.mailingStateProvince || this.formGroup.get('mailingStateProvince')?.value,
+        mailingPostalCode: contactData.mailingPostalCode || this.formGroup.get('mailingPostalCode')?.value,
+        mailingCountry: contactData.mailingCountry || this.formGroup.get('mailingCountry')?.value
       });
       
-      this.feedbackDialogService.showSuccessToast({ detail: 'Contact data transcribed successfully!' });
+      // Handle partner selection if partnerId was processed correctly
+      if (contactData.partnerId && typeof contactData.partnerId === 'number') {
+        // partnerId is now a proper ID, set it in the form
+        this.formGroup.patchValue({
+          partnerId: contactData.partnerId
+        });
+      }
+      
+      // Show success message for legacy format
+      if (!data.data) {
+        this.feedbackDialogService.showSuccessToast({ detail: 'Contact data transcribed successfully!' });
+      }
     }
   }
 
@@ -390,7 +465,6 @@ export class ContactEditDialogComponent implements OnInit {
         distinctUntilChanged()
       )
       .subscribe((newPartnerId: number) => {
-        console.log('🔧 Partner ID changed to:', newPartnerId);
         this.updatePartnerName(newPartnerId);
       });
   }
@@ -404,33 +478,27 @@ export class ContactEditDialogComponent implements OnInit {
       return;
     }
 
-    console.log('🔧 updatePartnerName called with partnerId:', partnerId);
     const allPartners = this.cachedDataService.allPartners();
-    console.log('🔧 allPartners cache contains:', allPartners?.length || 0, 'partners');
 
     // First, try to find partner in the cache
     const partner = allPartners.find((p: any) => p.id === partnerId);
     if (partner) {
-      console.log('🔧 Partner found in cache:', partner.name);
       this.formGroup.get('partnerName')?.setValue(partner.name);
       return;
     }
 
     // If partner is missing from cache, load it from API
-    console.log('🔧 Partner not found in cache, loading from API:', partnerId);
     this.partnerService.getPartnerById(partnerId.toString()).pipe(
       map(partner => partner ? partner.name : null),
       catchError(error => {
-        console.warn(`🔧 Failed to load partner ${partnerId}:`, error);
+        console.warn(`Failed to load partner ${partnerId}:`, error);
         return of(null);
       })
     ).subscribe({
       next: (partnerName) => {
         if (partnerName) {
-          console.log('🔧 Partner loaded from API:', partnerName);
           this.formGroup.get('partnerName')?.setValue(partnerName);
         } else {
-          console.log('🔧 Partner not found, clearing partner name');
           this.formGroup.get('partnerName')?.setValue('');
         }
         
@@ -450,7 +518,6 @@ export class ContactEditDialogComponent implements OnInit {
   private triggerDuplicateDetectionAfterSave(payload: any, updatedRecord?: any): void {
     // Skip if no payload
     if (!payload) {
-      console.log('Skipping duplicate detection - no payload provided');
       return;
     }
 
@@ -466,17 +533,13 @@ export class ContactEditDialogComponent implements OnInit {
         delete duplicateCheckPayload.id;
       } else {
         duplicateCheckPayload.id = numericId;
-        console.log('Triggering duplicate detection for Contact edit (excluding ID:', numericId, ')');
       }
-    } else {
-      console.log('Triggering duplicate detection for new Contact (no ID exclusion)');
     }
     
     // Call the contact service to detect duplicates (uses the updated SQL with ID exclusion)
     this.contactService.detectDuplicates(duplicateCheckPayload).subscribe({
       next: (response: any) => {
         const recordType = payload.id ? `existing Contact ID ${payload.id}` : 'new Contact';
-        console.log('Post-save duplicate detection results for', recordType, ':', response);
         
         // If this is an import edit, update the duplicate information
         if (this.dialogConfig.data.isImportEdit) {
@@ -550,7 +613,6 @@ export class ContactEditDialogComponent implements OnInit {
       // Update the record's duplicate info
       this.updateRecordInImportDialog(updatedDuplicateInfo, updatedRecord);
       
-      console.log('Updated duplicate info for import record:', updatedDuplicateInfo);
     } else {
       // No duplicates found
       const noDuplicateInfo = {
@@ -567,7 +629,6 @@ export class ContactEditDialogComponent implements OnInit {
       
       this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);
       
-      console.log('No duplicates found - marked as unique record');
     }
   }
 
@@ -589,7 +650,6 @@ export class ContactEditDialogComponent implements OnInit {
         });
         
         window.dispatchEvent(updateEvent);
-        console.log('Dispatched duplicate info update event for row:', importRowId);
       } else {
         console.warn('No importRowId found to update duplicate info');
       }

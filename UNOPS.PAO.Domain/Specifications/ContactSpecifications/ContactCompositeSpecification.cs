@@ -15,7 +15,6 @@ using UNOPS.PAO.Domain.Specifications.Interfaces;
 /// </summary>
 public class ContactCompositeSpecification : GenericCompositeSpecification<Contact, IContactSearchFilter>
 {
-    private bool nullableBool;
 
     /// <summary>
     /// Creates a specification for advanced search on contacts

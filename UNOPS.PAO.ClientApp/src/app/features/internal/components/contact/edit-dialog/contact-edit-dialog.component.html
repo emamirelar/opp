@@ -23,7 +23,9 @@
 
 
         <div class="col-span-9 flex flex-col gap-2">
-          <label for="partner">{{ 'label.partner.partner' | translate }}*</label>
+          <label for="partner">
+            {{ 'label.partner.partner' | translate }}*
+          </label>
           <p-select formControlName="partnerId" [options]="allPartners()" optionLabel="name"
                     [appendTo]="'body'"
                     optionValue="id"
@@ -32,7 +34,8 @@
                     [virtualScroll]="true"
                     [virtualScrollItemSize]="32"
                     filterBy="name"
-                    [showClear]="true"
+                    [showClear]="!isPartnerLocked()"
+                    [disabled]="isPartnerLocked()"
                     placeholder="{{ 'label.partner.selectPartner' | translate }}"
                     fluid="true" id="partner" ariaLabel="'aria.selectPartner' | translate" />
           @if( formGroup.get("partnerId")?.invalid && showValidationFailedError() ) {

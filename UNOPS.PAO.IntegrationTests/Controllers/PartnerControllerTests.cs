@@ -43,9 +43,9 @@ public class PartnerControllerTests : IntegrationTestBase
         // First, create test partner groups
         var partnerGroups = new List<PartnerTree>
         {
-            new PartnerTree { Id = 1, Name = "Corporate Partners", PartnerGroupCode = "CORP" },
-            new PartnerTree { Id = 2, Name = "Government Partners", PartnerGroupCode = "GOV" },
-            new PartnerTree { Id = 3, Name = "NGO Partners", PartnerGroupCode = "NGO" }
+            new PartnerTree { Id = 1, Name = "Corporate Partners", PartnerGroupCode = "CORP", Description = "Corporate partner organizations", Code = "CORP", Type = "Group" },
+            new PartnerTree { Id = 2, Name = "Government Partners", PartnerGroupCode = "GOV", Description = "Government partner organizations", Code = "GOV", Type = "Group" },
+            new PartnerTree { Id = 3, Name = "NGO Partners", PartnerGroupCode = "NGO", Description = "Non-governmental partner organizations", Code = "NGO", Type = "Group" }
         };
         dbContext.Set<PartnerTree>().AddRange(partnerGroups);
         await dbContext.SaveChangesAsync();
@@ -76,6 +76,7 @@ public class PartnerControllerTests : IntegrationTestBase
                 Id = 1, 
                 FirstName = "John", 
                 LastName = "Smith", 
+                Title = "Manager",
                 Email = "john.smith@acme.com", 
                 PartnerId = 1,
                 CreatedDate = DateTime.UtcNow,
@@ -85,7 +86,8 @@ public class PartnerControllerTests : IntegrationTestBase
             { 
                 Id = 2, 
                 FirstName = "Jane", 
-                LastName = "Doe", 
+                LastName = "Doe",
+                Title = "Director", 
                 Email = "jane.doe@globaltech.com", 
                 PartnerId = 2,
                 CreatedDate = DateTime.UtcNow,
@@ -95,7 +97,8 @@ public class PartnerControllerTests : IntegrationTestBase
             { 
                 Id = 3, 
                 FirstName = "Bob", 
-                LastName = "Johnson", 
+                LastName = "Johnson",
+                Title = "Coordinator", 
                 Email = "bob.johnson@beta.com", 
                 PartnerId = 3,
                 CreatedDate = DateTime.UtcNow,

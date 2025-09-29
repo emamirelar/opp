@@ -1,15 +1,18 @@
 <div class="layout-topbar flex justify-between gap-4 items-center">
 	<div class="layout-topbar-logo-container flex items-center">
+		<!-- Priority 1: Burger icon - always visible -->
 		<button pButton pRipple type="button" text class="p-link layout-menu-button flex-shrink-0 menu-toggle-button" (click)="onMenuButtonClick()">
 			<i class="pi pi-bars"></i>
 		</button>
-		<a class="flex-shrink-0 cursor-pointer transition-opacity duration-200 hover:opacity-80 homepage-logo"
+		<!-- Priority 9 & 10: Application Logo and Name -->
+		<a class="flex-shrink-0 cursor-pointer transition-opacity duration-200 hover:opacity-80 homepage-logo app-logo"
 			routerLink="/"
 			(click)="navigateToHome()"
 			title="Go to Homepage"
-			aria-label="Navigate to Homepage">
+			aria-label="Navigate to Homepage"
+			[class.search-expanded-hide-mobile]="isSearchExpanded">
 			<img src="images/PNG/Opportunity Horizontal1000px.png"
-				class="hidden lg:block flex-shrink-0  w-48"
+				class="hidden lg:block flex-shrink-0 w-48 app-name"
 				alt="UNOPS Opportunity+ Logo">
 			<img src="images/PNG/Opportunity Logo Graphic1000px.png"
 				class="lg:hidden w-6 flex-shrink-0"
@@ -17,33 +20,47 @@
 		</a>
 	</div>
 
-	<!-- Search bar container -->
+	<!-- Priority 2: Search bar - always visible -->
 	<div class="flex items-center gap-2 flex-1 max-w-2xl global-search-container">
 		<app-global-search-bar (searchExpanded)="onSearchExpanded($event)"></app-global-search-bar>
-	</div>
-
-	<div class="flex items-center justify-end" [class.search-expanded-hide-mobile]="isSearchExpanded">
-		<!-- Tour Button -->
-		<app-tour-control [class.search-expanded-hide-mobile]="isSearchExpanded"></app-tour-control>
 		
-		<!-- Global Filters button (moved before globe icon) -->
+		<!-- Priority 5: Global Filters button - Desktop only (next to search) -->
 		<p-button
 			type="button"
 			[rounded]="true"
 			[text]="true"
-			aria-label="Global Filters"
-			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center relative"
+			severity="secondary"
+			[attr.aria-label]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
 			(onClick)="openGlobalFilters()"
-			title="Global Filters"
-			class="global-filters-button">
+			[title]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			class="global-filters-button global-filters-desktop flex-shrink-0"
+			[class.filters-active]="hasActiveFilters">
 			<ng-template pTemplate="content">
 				<i class="pi pi-sliders-h text-xl"></i>
-				<span *ngIf="isOrgUnitFilterActive" class="org-unit-filter-badge"></span>
 			</ng-template>
 		</p-button>
-		
-      <app-language-selector class="language-selector"></app-language-selector>
-		
+	</div>
+
+	<div class="flex items-center justify-end" [class.search-expanded-hide-mobile]="isSearchExpanded">
+		<!-- Priority 5: Global Filters button - Mobile only (with other icons) -->
+		<p-button
+			type="button"
+			[rounded]="true"
+			[text]="true"
+			severity="secondary"
+			[attr.aria-label]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
+			(onClick)="openGlobalFilters()"
+			[title]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			class="global-filters-button global-filters-mobile flex-shrink-0"
+			[class.filters-active]="hasActiveFilters"
+			[class.search-expanded-hide-mobile]="isSearchExpanded">
+			<ng-template pTemplate="content">
+				<i class="pi pi-sliders-h text-xl"></i>
+			</ng-template>
+		</p-button>
+		<!-- Priority 3: AI Assistant -->
 		<p-button
 			(onClick)="onAIAssistantToggle()"
 			type="button"
@@ -52,16 +69,29 @@
 			[ariaLabel]="isMobile ? 'Open AI Assistant Page' : 'Toggle AI Assistant Panel'"
 			data-ai-assistant-toggle
 			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center ai-assistant-toggle-btn"
-			[class.hidden-on-mobile]="isOnAiPage()"
 			[pTooltip]="isMobile ? 'Open AI Assistant Page' : 'Toggle AI Assistant Panel'"
 			tooltipPosition="bottom"
-			class="ai-assistant-toggle">
+			class="ai-assistant-toggle"
+			[class.search-expanded-hide-mobile]="isSearchExpanded">
 			<ng-template pTemplate="content">
-				<img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-6 h-6" />
+				<img 
+					src="./images/AI_visual_64.svg" 
+					alt="AI Assistant" 
+					class="ai-icon w-6 h-6" 
+					style="display: block !important; width: 24px !important; height: 24px !important;"
+					(error)="onImageError($event)"
+					(load)="onImageLoad($event)" />
 			</ng-template>
 		</p-button>
 		
-      <div class="relative notifications-container">
+		<!-- Priority 8: Tour Control -->
+		<app-tour-control class="tour-control" [class.search-expanded-hide-mobile]="isSearchExpanded"></app-tour-control>
+		
+		<!-- Priority 7: Language Selector -->
+		<app-language-selector class="language-selector" [class.search-expanded-hide-mobile]="isSearchExpanded"></app-language-selector>
+		
+		<!-- Priority 4: Notifications -->
+		<div class="relative notifications-container" [class.search-expanded-hide-mobile]="isSearchExpanded">
 			<p-button
 				type="button"
 				[rounded]="true"
@@ -252,22 +282,23 @@
         </div>
       </p-overlayPanel>
       
-      <div class="ml-auto">
-        <div class="flex items-center gap-2">
-          <p-button
-                type="button"
-                [rounded]="true"
-                [text]="true"
-                styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
-                (onClick)="menu.toggle($event)"
-                class="profile-menu-button">
-            <ng-template pTemplate="content">
-              <i class="pi pi-user text-xl"></i>
-            </ng-template>
-          </p-button>
-          <p-menu #menu [popup]="true" [model]="profileMenuItems"></p-menu>
-        </div>
-      </div>
+		<!-- Priority 6: User Profile -->
+		<div class="ml-auto profile-menu" [class.search-expanded-hide-mobile]="isSearchExpanded">
+			<div class="flex items-center gap-2">
+				<p-button
+					type="button"
+					[rounded]="true"
+					[text]="true"
+					styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
+					(onClick)="menu.toggle($event)"
+					class="profile-menu-button">
+					<ng-template pTemplate="content">
+						<i class="pi pi-user text-xl"></i>
+					</ng-template>
+				</p-button>
+				<p-menu #menu [popup]="true" [model]="profileMenuItems"></p-menu>
+			</div>
+		</div>
 	</div>
 </div>
 <p-toast position="bottom-right"></p-toast>

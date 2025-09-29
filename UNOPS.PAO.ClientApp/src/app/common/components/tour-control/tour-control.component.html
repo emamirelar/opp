@@ -2,18 +2,14 @@
   <p-button 
     type="button"
     [rounded]="true"
-    [text]="false"
+    [text]="true"
     [ariaLabel]="'tour.control.takeATour' | translate"
-    styleClass="tour-button !w-10 !h-10 !p-0 flex items-center justify-center mr-2 !bg-gradient-to-r !from-blue-500 !to-purple-600 hover:!from-blue-600 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-300"
+    styleClass="tour-button !w-10 !h-10 !p-0 flex items-center justify-center"
     [pTooltip]="'tour.control.takeATour' | translate"
     tooltipPosition="bottom"
     (click)="detectTour()">
     <ng-template pTemplate="content">
-      <i class="pi pi-play-circle text-xl text-white animate-pulse"></i>
+      <i class="pi pi-compass text-xl"></i>
     </ng-template>
   </p-button>
-  
-  <!-- Notification dot - shows when tours are available -->
-  <div *ngIf="showNotificationDot()" class="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white animate-ping"></div>
-  <div *ngIf="showNotificationDot()" class="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full border-2 border-white"></div>
 </div>
