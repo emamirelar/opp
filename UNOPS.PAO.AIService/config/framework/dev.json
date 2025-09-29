@@ -34,7 +34,7 @@
     "location": "europe-west4",
     "oauth": {
       "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
-      "client_id": "1074199687519-6ibb4a7jivmg46v4108nfmtdo692qdau.apps.googleusercontent.com",
+      "client_id": "369001918367-t5qrahnqdaasaifvk6akpqkpjk9vli58.apps.googleusercontent.com",
       "target_principal": "pno-ai-service@unops-opportunityplus-dev.iam.gserviceaccount.com"
     }
   },
