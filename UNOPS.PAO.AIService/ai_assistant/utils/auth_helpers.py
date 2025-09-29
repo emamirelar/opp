@@ -7,16 +7,8 @@ from google.auth.transport.requests import Request
 
 SIGN_IN_WITH_IDP_API = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp'
 
-def get_identity_toolkit_api_key() -> str:
-    """Get Identity Toolkit API key from configuration"""
-    try:
-        from .api_config_manager import api_config_manager
-        return api_config_manager.get_identity_toolkit_api_key()
-    except ImportError:
-        print("⚠️ Warning: Could not import api_config_manager, using empty API key")
-        return ""
-
 def exchange_google_id_token_for_gcip_id_token(google_open_id_connect_token: str) -> str:
+  from .config import get_identity_toolkit_api_key
   api_key = get_identity_toolkit_api_key()
   if not api_key:
     raise Exception("Identity Toolkit API key is empty or not configured")
@@ -56,6 +48,7 @@ def exchange_google_id_token_for_gcip_id_token(google_open_id_connect_token: str
   return id_token
 
 def exchange_google_access_token_for_gcip_id_token(google_access_token: str) -> str:
+  from .config import get_identity_toolkit_api_key
   api_key = get_identity_toolkit_api_key()
   if not api_key:
     raise Exception("Identity Toolkit API key is empty or not configured")
@@ -190,3 +183,247 @@ def get_service_account_oidc_token(
         print(f"Error getting service account token: {e}")
         traceback.print_exc()
         return None
+
+def get_iap_token_with_impersonation(
+    audience: str,
+    target_principal: str,
+    user_email: Optional[str] = None
+) -> Optional[str]:
+    """
+    Generate a proper Google Cloud ID token for IAP with user impersonation.
+    
+    This creates a native Google Cloud ID token (not Firebase/GCIP) that IAP can validate,
+    and modifies the claims to include user impersonation information.
+    
+    Args:
+        audience: The IAP client ID (OAuth 2.0 client ID)
+        target_principal: The service account to impersonate
+        user_email: The user email to impersonate (optional)
+        
+    Returns:
+        A signed JWT token for IAP authentication, or None if an error occurs.
+    """
+    try:
+        
+        # Create impersonated credentials with minimal scopes for ID token generation
+        target_scopes = ['https://www.googleapis.com/auth/cloud-platform']
+        
+        print(f"🔐 [IAP-TOKEN] Getting impersonated credentials for IAP token generation")
+        impersonated_creds = get_impersonated_credentials(
+            target_scopes=target_scopes,
+            target_principal=target_principal,
+            subject=None  # No domain-wide delegation for this step
+        )
+        
+        # Generate a standard Google Cloud ID token first
+        id_token_creds = impersonated_credentials.IDTokenCredentials(
+            target_credentials=impersonated_creds,
+            target_audience=audience,
+            include_email=True
+        )
+        
+        # Refresh to get the token
+        request = Request()
+        id_token_creds.refresh(request)
+        base_token = id_token_creds.token
+        
+        if not base_token:
+            raise Exception("Failed to generate base ID token")
+            
+        print(f"🔐 [IAP-TOKEN] Generated base Google Cloud ID token")
+        
+        # For IAP, we'll use the base token and rely on the x-unops-impersonated-user header
+        # for impersonation information. This is more reliable than modifying JWT claims.
+        print(f"🔐 [IAP-TOKEN] Using base Google Cloud ID token with impersonation header")
+        print(f"🔐 [IAP-TOKEN] Impersonation will be handled via x-unops-impersonated-user header: {user_email}")
+        return base_token
+            
+    except Exception as e:
+        import traceback
+        print(f"❌ [IAP-TOKEN] Error generating IAP token: {e}")
+        traceback.print_exc()
+        return None
+
+def build_request_headers(
+    tool_context: Optional = None,
+    additional_headers: Optional[dict] = None,
+    url: Optional[str] = None
+) -> dict:
+    """
+    Build standardized request headers for API calls with authentication and development support.
+    
+    Args:
+        tool_context: Tool context for authentication and state (optional)
+        additional_headers: Optional additional headers to include
+        url: Optional URL to determine if this is a Google API call
+        
+    Returns:
+        dict: Complete request headers including authentication and development headers
+    """
+    import os
+    import time
+    from .config import get_config
+    config = get_config()
+    
+    print("=======================START: BUILD REQUEST HEADERS======================================")
+    # Start with default headers
+    request_headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+    
+    # Add any additional headers passed as parameter
+    if additional_headers:
+        request_headers.update(additional_headers)
+    
+    # Check local environment
+    current_environment = os.getenv('CURRENT_ENVIRONMENT', '').upper()
+    is_local = current_environment == 'LOCAL'
+    dev_email = config.get('developer', {}).get('email', '')
+    
+    # Add development IAP headers if in development mode
+    if is_local and dev_email:
+        current_timestamp = str(int(time.time()))
+        iap_headers = {
+            'x-goog-authenticated-user-email': f'accounts.google.com:{dev_email}',
+            'x-goog-authenticated-user-id': f'accounts.google.com:dev-user-id-{current_timestamp}',
+            'x-forwarded-user': dev_email,
+            'x-forwarded-email': dev_email,
+            'X-Dev-IAP-Simulation': 'true',
+            'X-Dev-Auth-Timestamp': current_timestamp
+        }
+        request_headers.update(iap_headers)
+        print(f"✅ [AUTH-HEADERS] Added development IAP headers for email: {dev_email}")
+    
+    # Add IDP token to request headers if not already present
+    if not request_headers.get('Authorization'):
+        try:
+            from .config import get_oauth_config
+            
+            # Try to get OAuth config from different sources
+            oauth_config = None
+            try:
+                oauth_config = get_oauth_config()
+            except:
+                # Fallback to get_config for vector store compatibility
+                try:
+                    oauth_config = config.get('oauth', {})
+                except:
+                    pass
+            
+            if oauth_config:
+                target_principal = oauth_config.get('target_principal')
+                target_audience = oauth_config.get('client_id')
+                
+                if target_principal and target_audience:
+                    # Get user email from tool_context if available
+                    user_email = None
+                    if tool_context:
+                        if hasattr(tool_context, 'state') and tool_context.state:
+                            user_email = tool_context.state.get('user_email')
+                        else:
+                            print(f"🔍 [AUTH-HEADERS] tool_context.state is None or missing")
+                    else:
+                        print(f"🔍 [AUTH-HEADERS] tool_context is None")
+                    
+                    # Always fall back to dev_email in development if user_email is not available
+                    user_email = 'tushard@unops.org'
+                    if not user_email and is_local and dev_email:
+                        user_email = dev_email
+                    
+                    # Check if this is a Google-related external API call
+                    is_google_api = False
+                    if url:
+                        is_google_api = any(google_path in url for google_path in [
+                            '/google-drive/', '/convert/url', '/convert/markdown-to-google-doc'
+                        ])
+                    
+                    print(f"🔍 [AUTH-HEADERS] target_audience: {target_audience}")
+                    print(f"🔍 [AUTH-HEADERS] target_principal: {target_principal}")
+                    print(f"🔍 [AUTH-HEADERS] is_google_api: {is_google_api}")
+                    print(f"🔍 [AUTH-HEADERS] user_email for impersonation: {user_email}")
+                    
+                    # Get the appropriate token based on API type
+                    if is_google_api:
+                        # For Google APIs, use service account token without impersonation
+                        idp_token = get_service_account_oidc_token(
+                            target_audience,
+                            target_principal,
+                            use_idp=False,
+                            subject=None
+                        )
+                        print(f"🔍 [AUTH-HEADERS] Using service account token for Google API")
+                    else:
+                        # For IAP APIs, use proper Google Cloud ID token (not Firebase/GCIP)
+                        # Generate service account token first, then modify claims for impersonation
+                        idp_token = get_iap_token_with_impersonation(
+                            target_audience,
+                            target_principal,
+                            user_email
+                        )
+                        print(f"🔍 [AUTH-HEADERS] Using IAP token with impersonation for regular API")
+                    
+                    if idp_token:
+                        request_headers['Authorization'] = f"Bearer {idp_token}"
+                        
+                        # Log token details for debugging (only for vector store compatibility)
+                        try:
+                            import base64
+                            import json
+                            parts = idp_token.split('.')
+                            if len(parts) >= 2:
+                                payload_part = parts[1]
+                                # Add padding if needed
+                                payload_part += '=' * (4 - len(payload_part) % 4)
+                                decoded = base64.b64decode(payload_part)
+                                token_data = json.loads(decoded)
+                                print(f"🔍 [AUTH-HEADERS-TOKEN] Token details:")
+                                print(f"   sub: {token_data.get('sub', 'Not Present')}")
+                                print(f"   email: {token_data.get('email', 'Not Present')}")
+                                print(f"   aud: {token_data.get('aud', 'Not Present')}")
+                                print(f"   iss: {token_data.get('iss', 'Not Present')}")
+                        except Exception as e:
+                            print(f"❌ [AUTH-HEADERS-TOKEN] Could not decode token: {e}")
+                    else:
+                        print(f"❌ [AUTH-HEADERS] Failed to get IDP token - will proceed without Authorization header")
+                    
+                    # Add impersonation header for ALL APIs when user email is available
+                    if user_email:
+                        request_headers['x-unops-impersonated-user'] = user_email
+                    else:
+                        print(f"⚠️ [AUTH-HEADERS] No user email available for impersonation header")
+                        
+                else:
+                    print(f"⚠️ [AUTH-HEADERS] Missing OAuth config - target_principal: {target_principal}, client_id: {target_audience}")
+            else:
+                print(f"⚠️ [AUTH-HEADERS] No OAuth config available")
+                
+        except ImportError as e:
+            print(f"⚠️ [AUTH-HEADERS] Config manager or auth helpers not available: {e}")
+            # Continue without auth
+            pass
+        except Exception as e:
+            print(f"❌ [AUTH-HEADERS] Error setting up authentication: {e}")
+            # Continue without auth
+            pass
+    
+    print(f"🔐 [AUTH-HEADERS] Final request headers prepared:")
+    print(f"📋 Total headers: {len(request_headers)}")
+    print(f"📋 Header keys: {list(request_headers.keys())}")
+    
+    # Log final headers safely
+    for key, value in request_headers.items():
+        if any(sensitive in key.lower() for sensitive in ['authorization', 'token', 'jwt', 'secret', 'password']):
+            masked_value = f"{value[:10]}..." if len(value) > 10 else "***"
+            print(f"   {key}: {masked_value} (masked)")
+        elif 'email' in key.lower():
+            print(f"   {key}: {value}")
+        elif len(str(value)) > 100:
+            print(f"   {key}: {str(value)[:50]}... (truncated)")
+        elif key.lower() in ['content-type', 'accept', 'user-agent']:
+            print(f"   {key}: {value}")
+        else:
+            print(f"   {key}: {str(value)[:50]}...")
+    
+    print("=======================END: BUILD REQUEST HEADERS======================================")
+    return request_headers

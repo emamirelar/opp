@@ -257,7 +257,8 @@ __pycache__/
 
 # Environment files
 .env
-*.env
+.env.*
+!.env.example
 
 # Distribution / packaging
 .Python

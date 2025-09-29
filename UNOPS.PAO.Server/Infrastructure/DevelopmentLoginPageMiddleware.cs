@@ -139,7 +139,7 @@ public class DevelopmentLoginPageMiddleware
         }
 
         // Get the configured user email from appsettings.json
-        var configuredUserEmail = _configuration["Development:IAPSimulation:UserEmail"] ?? "anushas@unops.org";
+        var configuredUserEmail = _configuration["Development:IAPSimulation:UserEmail"];
 
         // Standard login page HTML with textbox for email input
         var loginPageHtml = $@"
