@@ -6,7 +6,6 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build', 
-      '-f', 'UNOPS.PAO.AIService/Dockerfile',
       '-t', 'gcr.io/$PROJECT_ID/your-team-ai-service:$SHORT_SHA',
       '-t', 'gcr.io/$PROJECT_ID/your-team-ai-service:latest',
       '.'
@@ -23,7 +22,7 @@ steps:
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args: [
-      'run', 'deploy', '${_SERVICE_NAME}',
+      'run', 'deploy', 'your-team-ai-service',
       '--image', 'gcr.io/$PROJECT_ID/your-team-ai-service:$SHORT_SHA',
       '--platform', 'managed',
       '--region', 'europe-west4',
