@@ -1,11 +1,122 @@
-<p-blockui [blocked]="partnerService.isLoading() || isLoading() || cachedDataService.isLoading()">
-  <div class="flex flex-col items-center justify-center gap-3">
-    <p-progressSpinner strokeWidth="4" [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
-    <span class="text-lg font-medium">{{ 'loading.partnerData' | translate }}</span>
-  </div>
-</p-blockui>
-
 <div class="flex flex-col h-full gap-4">
+  @if(isLoading()) {
+    <div class="flex flex-col gap-8">
+      <!-- AI Transcribe Section Skeleton -->
+      <div class="flex flex-col mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
+        <p-skeleton width="40%" height="1.5rem" styleClass="mb-2"></p-skeleton>
+        <p-skeleton width="60%" height="1rem"></p-skeleton>
+      </div>
+
+      <!-- General Fields Section Skeleton -->
+      <div class="flex flex-col gap-6">
+        <!-- Section Title -->
+        <p-skeleton width="30%" height="1.5rem"></p-skeleton>
+        
+        <!-- First Row - 2 columns -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="60%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="70%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+        </div>
+
+        <!-- Long Description -->
+        <div class="flex flex-col gap-2">
+          <p-skeleton width="50%" height="1rem"></p-skeleton>
+          <p-skeleton width="100%" height="4rem"></p-skeleton>
+        </div>
+
+        <!-- Second Row - 2 columns -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="55%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="65%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+        </div>
+
+        <!-- Third Row - 2 columns -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="60%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="45%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+        </div>
+      </div>
+
+      <!-- Approval Fields Section Skeleton -->
+      <div class="flex flex-col gap-6 mt-6">
+        <!-- Section Title with Badge -->
+        <div class="flex items-center gap-2">
+          <p-skeleton width="25%" height="1.5rem"></p-skeleton>
+          <p-skeleton width="80px" height="1.5rem" borderRadius="16px"></p-skeleton>
+        </div>
+
+        <!-- Approval Fields Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="65%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="70%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="60%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="65%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+        </div>
+
+        <!-- Checkbox Fields -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="flex items-center gap-3">
+            <p-skeleton width="20px" height="20px"></p-skeleton>
+            <p-skeleton width="60%" height="1rem"></p-skeleton>
+          </div>
+          <div class="flex items-center gap-3">
+            <p-skeleton width="20px" height="20px"></p-skeleton>
+            <p-skeleton width="55%" height="1rem"></p-skeleton>
+          </div>
+          <div class="flex items-center gap-3">
+            <p-skeleton width="20px" height="20px"></p-skeleton>
+            <p-skeleton width="70%" height="1rem"></p-skeleton>
+          </div>
+          <div class="flex items-center gap-3">
+            <p-skeleton width="20px" height="20px"></p-skeleton>
+            <p-skeleton width="50%" height="1rem"></p-skeleton>
+          </div>
+        </div>
+
+        <!-- Reason TextArea -->
+        <div class="flex flex-col gap-2">
+          <p-skeleton width="65%" height="1rem"></p-skeleton>
+          <p-skeleton width="100%" height="4rem"></p-skeleton>
+        </div>
+      </div>
+
+      <!-- Footer Legend -->
+      <div class="text-sm text-gray-600 mt-4">
+        <p-skeleton width="40%" height="0.875rem"></p-skeleton>
+      </div>
+    </div>
+  } @else {
+  
   @if( showValidationFailedError() === true ){
   <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">{{ 'validation.pleaseFullAllRequired' | translate }}</p-message>
   }
@@ -348,4 +459,6 @@
     </div>
     </fieldset>
   </form>
+
+  }
 </div>

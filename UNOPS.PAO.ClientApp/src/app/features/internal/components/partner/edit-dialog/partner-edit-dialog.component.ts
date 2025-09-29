@@ -33,13 +33,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {MarkdownPipe} from '../../../pipes/markdown.pipe';
 import {LinkListComponent} from "../../../../../common/reusables/components/link/list/link-list.component";
 import {EntityType} from '../../../../../common/models/link.model';
-import { BlockUI } from 'primeng/blockui';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Partner } from '../../../models/partner.model';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 import { JsonPipe } from '@angular/common';
 import { PartnerTreeService } from '../../../services/partner-tree.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SkeletonModule } from 'primeng/skeleton';
 import { AuthService } from '../../../../../essentials/services/auth.service';
 import { ENTITY_STATUS_OPTIONS } from '../../../models/entity-status.enum';
 
@@ -78,7 +78,6 @@ interface DuplicateDetectionResponse {
     SelectModule,
     MultiSelectModule,
     AutoFocusModule,
-    BlockUI,
     DialogModule,
     MessageModule,
     DividerModule,
@@ -87,6 +86,7 @@ interface DuplicateDetectionResponse {
     ReactiveFormsModule,
     AiTranscribeComponent,
     ProgressSpinnerModule,
+    SkeletonModule,
   ],
   providers: [DialogService],
   templateUrl: './partner-edit-dialog.component.html',
@@ -169,7 +169,6 @@ export class PartnerEditDialogComponent implements OnInit {
   authService = inject(AuthService);
 
   showValidationFailedError = signal<boolean>(false);
-  isLoading = signal<boolean>(false);
   isAdmin = signal<boolean>(false);
   validationMode = signal<'save' | 'activate'>('save');
   partnerLevyStatusValue = signal<string>('');
@@ -318,6 +317,11 @@ export class PartnerEditDialogComponent implements OnInit {
   // Get isSaving signal from dialog data
   isSaving = computed(() => {
     return this.dialogConfig.data?.isSaving?.() || false;
+  });
+
+  // Get isLoading signal from dialog data
+  isLoading = computed(() => {
+    return this.dialogConfig.data?.isLoading?.() || false;
   });
 
   @Output() closeModal = new EventEmitter<void>();
@@ -540,11 +544,11 @@ export class PartnerEditDialogComponent implements OnInit {
         }
 
         if (this.recordId != '') {
-          this.isLoading.set(true);
+          this.dialogConfig.data?.isLoading?.set(true);
           this._loadRecordDetails();
         } else {
           // Data is passed directly via dialog config
-          this.isLoading.set(true);
+          this.dialogConfig.data?.isLoading?.set(true);
           this.record = this.dialogConfig.data?.record;
           this.recordData.set(this.dialogConfig.data.record);
 
@@ -592,7 +596,7 @@ export class PartnerEditDialogComponent implements OnInit {
 
           // Set loading to false after a short delay to ensure form is properly initialized
           setTimeout(() => {
-            this.isLoading.set(false);
+            this.dialogConfig.data?.isLoading?.set(false);
           }, 100);
         }
       }
@@ -867,11 +871,11 @@ export class PartnerEditDialogComponent implements OnInit {
         // Initialize display name fields
         this.initializeDisplayNames();
 
-        this.isLoading.set(false);
+        this.dialogConfig.data?.isLoading?.set(false);
       },
       error: (error) => {
         console.error('Error loading partner details:', error);
-        this.isLoading.set(false);
+        this.dialogConfig.data?.isLoading?.set(false);
       }
     });
   }
