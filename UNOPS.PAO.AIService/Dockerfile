@@ -27,6 +27,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy application code
 COPY . .
+# Ensure AIService config and metadata are copied
+COPY ../AIService/ ./AIService/
 
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash appuser && \
