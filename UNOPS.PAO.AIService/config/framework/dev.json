@@ -1,5 +1,5 @@
 {
-  "environment": "qa",
+  "environment": "dev",
   "description": "QA/Development environment configuration for the AI Agent Framework",
   "cache": {
     "rules": {
