@@ -1,176 +1,172 @@
 {
-    "environment": "dev",
-    "cache": {
-      "rules": {
-        "Partner": ["screen_context"],
-        "Contact": ["screen_context"],
-        "Interaction": ["screen_context"],
-        "Opportunity": ["screen_context"],
-        "User": ["user_profile"],
-        "UserData": ["user_profile"],
-        "UserPreferences": ["user_profile"]
-      },
-      "url_patterns": {
-        "partner": "Partner",
-        "contact": "Contact",
-        "interaction": "Interaction",
-        "opportunity": "Opportunity",
-        "user": "User",
-        "userdata": "UserData",
-        "preferences": "UserPreferences"
-      },
-      "ttl": {
-        "user_profile": 3600,
-        "screen_context": 600,
-        "general": 1800
-      },
-      "enable_cache": true,
-      "cache_backend": "memory"
+  "environment": "qa",
+  "description": "QA/Development environment configuration for the AI Agent Framework",
+  "cache": {
+    "rules": {
+      "Partner": ["screen_context"],
+      "Contact": ["screen_context"],
+      "Interaction": ["screen_context"],
+      "Opportunity": ["screen_context"],
+      "User": ["user_profile"],
+      "UserData": ["user_profile"],
+      "UserPreferences": ["user_profile"]
     },
-    "google_cloud": {
-      "use_vertex_ai": true,
-      "project": "unops-partneropportunity",
-      "location": "europe-west4",
-      "oauth": {
-        "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
-        "client_id": "1069310298210-ubl2naqi5bjeqlqrroiqb4qdm482aans.apps.googleusercontent.com",
-        "target_principal": "pno-ai-service@unops-partneropportunity.iam.gserviceaccount.com"
-      }
+    "url_patterns": {
+      "partner": "Partner",
+      "contact": "Contact",
+      "interaction": "Interaction",
+      "opportunity": "Opportunity",
+      "user": "User",
+      "userdata": "UserData",
+      "preferences": "UserPreferences"
     },
-    "database": {
-      "url": "postgresql://postgres:0Y%2FX3YNxHLL0fL4T@localhost:5433/anusha"
+    "ttl": {
+      "user_profile": 3600,
+      "screen_context": 600,
+      "general": 1800
     },
-    "artifacts": {
-      "service_type": "GcsArtifactService",
-      "gcs_bucket_name": "pno-file-storage"
+    "enable_cache": true,
+    "cache_backend": "memory"
+  },
+  "google_cloud": {
+    "use_vertex_ai": true,
+    "project": "unops-opportunityplus-dev",
+    "location": "europe-west4",
+    "oauth": {
+      "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
+      "client_id": "11994381361-9n974ebjfsjsb3rc5ejaidgm7jgdoqbt.apps.googleusercontent.com",
+      "target_principal": "pno-ai-service@unops-opportunityplus-dev.iam.gserviceaccount.com"
+    }
+  },
+  "database": {
+        "url": "sqlite:///./ai_agent.db",
+        "secret_name": "Dev_DB_Connection_String"
+  },
+  "artifacts": {
+    "service_type": "GcsArtifactService",
+    "gcs_bucket_name": "pno-file-storage-dev"
+  },
+  "server": {
+    "serve_web_interface": true,
+    "api_base_url": "https://opportunityplus.dev.unops.org",
+    "is_development": true,
+    "host": "0.0.0.0",
+    "port": 8000,
+    "allow_origins": [
+      "https://opportunityplus.dev.unops.org",
+      "https://localhost:44426/"
+    ]
+  },
+  "google_drive": {
+    "enabled": true,
+    "project_id": "unops-opportunityplus-dev",
+    "secret_name": "GoogleDriveAI",
+    "service_account_email": "google-drive-ai@unops-opportunityplus-dev.iam.gserviceaccount.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.readonly",
+      "https://www.googleapis.com/auth/drive.file"
+    ],
+    "max_file_size": 10485760,
+    "search_page_size": 20,
+    "batch_size": 5,
+    "cache_ttl": 1800,
+    "timeout": 30,
+    "max_retries": 3,
+    "chunk_size": 1024,
+    "max_search_results": 100,
+    "default_export_format": "text/plain",
+    "rate_limit_requests_per_second": 10,
+    "rate_limit_burst": 20,
+    "enable_content_search": true,
+    "enable_file_caching": true,
+    "search_operators": {
+      "name": "name contains",
+      "fullText": "fullText contains",
+      "mimeType": "mimeType =",
+      "parents": "parents in",
+      "modifiedTime": "modifiedTime >",
+      "createdTime": "createdTime >",
+      "starred": "starred = true",
+      "trashed": "trashed = false"
     },
-    "server": {
-      "serve_web_interface": true,
-      "api_base_url": "https://localhost:44426/",
-      "is_development": true,
-      "host": "0.0.0.0",
-      "port": 8000,
-      "allow_origins": [
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "http://localhost:8080",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8000",
-        "http://127.0.0.1:8080",
-        "https://localhost:44426/"
-      ]
+    "supported_mime_types": [
+      "application/vnd.google-apps.document",
+      "application/vnd.google-apps.spreadsheet",
+      "application/vnd.google-apps.presentation",
+      "application/pdf",
+      "text/plain",
+      "text/csv",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/rtf",
+      "text/html",
+      "application/epub+zip"
+    ],
+    "export_formats": {
+      "application/vnd.google-apps.document": "text/plain",
+      "application/vnd.google-apps.spreadsheet": "text/csv",
+      "application/vnd.google-apps.presentation": "text/plain"
     },
-    "google_drive": {
+    "file_extensions": {
+      "document": [".docx", ".doc", ".txt", ".rtf", ".pdf"],
+      "spreadsheet": [".xlsx", ".xls", ".csv"],
+      "presentation": [".pptx", ".ppt"],
+      "other": [".pdf", ".txt", ".html", ".epub"]
+    }
+  },
+  "developer": {
+    "email": "anushas@unops.org"
+  },
+  "agent": {
+    "enable_google_drive_agent": true,
+    "enable_workflow_agent": true,
+    "enable_search_agent": true,
+    "enable_contextual_agent": true
+  },
+  "action_logging": {
       "enabled": true,
-      "project_id": "unops-partneropportunity",
-      "secret_name": "GoogleDriveAI",
-      "service_account_email": "google-drive-ai@unops-partneropportunity.iam.gserviceaccount.com",
-      "scopes": [
-        "https://www.googleapis.com/auth/drive.readonly",
-        "https://www.googleapis.com/auth/drive.file"
-      ],
-      "max_file_size": 10485760,
-      "search_page_size": 20,
-      "batch_size": 5,
-      "cache_ttl": 1800,
-      "timeout": 30,
-      "max_retries": 3,
-      "chunk_size": 1024,
-      "max_search_results": 100,
-      "default_export_format": "text/plain",
-      "rate_limit_requests_per_second": 10,
-      "rate_limit_burst": 20,
-      "enable_content_search": true,
-      "enable_file_caching": true,
-      "search_operators": {
-        "name": "name contains",
-        "fullText": "fullText contains",
-        "mimeType": "mimeType =",
-        "parents": "parents in",
-        "modifiedTime": "modifiedTime >",
-        "createdTime": "createdTime >",
-        "starred": "starred = true",
-        "trashed": "trashed = false"
-      },
-      "supported_mime_types": [
-        "application/vnd.google-apps.document",
-        "application/vnd.google-apps.spreadsheet",
-        "application/vnd.google-apps.presentation",
-        "application/pdf",
-        "text/plain",
-        "text/csv",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        "application/rtf",
-        "text/html",
-        "application/epub+zip"
-      ],
-      "export_formats": {
-        "application/vnd.google-apps.document": "text/plain",
-        "application/vnd.google-apps.spreadsheet": "text/csv",
-        "application/vnd.google-apps.presentation": "text/plain"
-      },
-      "file_extensions": {
-        "document": [".docx", ".doc", ".txt", ".rtf", ".pdf"],
-        "spreadsheet": [".xlsx", ".xls", ".csv"],
-        "presentation": [".pptx", ".ppt"],
-        "other": [".pdf", ".txt", ".html", ".epub"]
-      }
-    },
-    "developer": {
-      "email": "anushas@unops.org"
-    },
-    "agent": {
-      "enable_google_drive_agent": true,
-      "enable_workflow_agent": true,
-      "enable_search_agent": true,
-      "enable_contextual_agent": true
-    },
-    "action_logging": {
-        "enabled": true,
-        "auto_log_actions": true,
-        "log_followup_suggestions": true,
-        "retention_days": 90,
-        "enable_analytics": true
-    },
-    "support": {
-      "email": "larsj@unops.org",
-      "response_template": "For technical support with {application_name}, please send an email to {support_email}. Include details about your issue, steps to reproduce the problem, your username, organizational unit, and any error messages. Support tickets are typically responded to within 24-48 hours during business hours.",
-      "hours": "During business hours",
-      "response_time": "24-48 hours"
-    },
-    "branding": {
-      "application_name": "Opportunity+",
-      "project_name": "Opportunity+",
-      "organization": "UNOPS",
-      "organization_full": "United Nations Office for Project Services",
-      "description": "A comprehensive partner and opportunity management system"
-    },
-    "defaults": {
-      "email": "larsj@unops.org",
-      "timeout": 30,
-      "page_size": 10,
-      "max_retries": 3,
-      "max_parallel_agents": 5,
-      "file_size_limit": 10485760
-    },
-    "runtime": {
-      "gemini_model": "gemini-2.5-flash",
-      "gemini_adhoc_model": "gemini-2.0-flash-001",
-      "api_timeout": 300,
-      "default_page_size": 10,
-      "max_retries": 3,
-      "default_cache_ttl": 1800,
-      "user_profile_cache_ttl": 3600,
-      "screen_context_cache_ttl": 7200,
-      "default_agent_timeout": 60,
-      "max_parallel_agents": 5,
-      "google_drive_max_file_size": 10485760,
-      "google_drive_search_page_size": 20,
-      "google_drive_batch_size": 5,
-      "default_host": "0.0.0.0",
-      "default_port": 8000
-    },
-    "description": "Development environment configuration for the AI Agent Framework"
-  } 
+      "auto_log_actions": true,
+      "log_followup_suggestions": true,
+      "retention_days": 90,
+      "enable_analytics": true
+  },
+  "support": {
+    "email": "larsj@unops.org",
+    "response_template": "For technical support with {application_name}, please send an email to {support_email}. Include details about your issue, steps to reproduce the problem, your username, organizational unit, and any error messages. Support tickets are typically responded to within 24-48 hours during business hours.",
+    "hours": "During business hours",
+    "response_time": "24-48 hours"
+  },
+  "branding": {
+    "application_name": "Opportunity+ AI Agent",
+    "project_name": "Opportunity+",
+    "organization": "UNOPS",
+    "organization_full": "United Nations Office for Project Services",
+    "description": "A comprehensive partner and opportunity management system"
+  },
+  "defaults": {
+    "email": "larsj@unops.org",
+    "timeout": 30,
+    "page_size": 10,
+    "max_retries": 3,
+    "max_parallel_agents": 5,
+    "file_size_limit": 10485760
+  },
+  "runtime": {
+    "gemini_model": "gemini-2.5-flash",
+    "gemini_adhoc_model": "gemini-2.0-flash-001",
+    "api_timeout": 300,
+    "default_page_size": 10,
+    "max_retries": 3,
+    "default_cache_ttl": 1800,
+    "user_profile_cache_ttl": 3600,
+    "screen_context_cache_ttl": 7200,
+    "default_agent_timeout": 60,
+    "max_parallel_agents": 5,
+    "google_drive_max_file_size": 10485760,
+    "google_drive_search_page_size": 20,
+    "google_drive_batch_size": 5,
+    "default_host": "0.0.0.0",
+    "default_port": 8000
+  }
+} 
