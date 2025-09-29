@@ -704,7 +704,6 @@ export class SearchResultComponent implements OnInit {
   
   // Check if we should show filter controls
   shouldShowFilterToggle(): boolean {
-    debugger;
     // Show toggle if there are active filters OR if filters are temporarily disabled
     return this.isGlobalFilterActive() && (this.activeFilterLabels().length > 0 || this.isFilterTemporarilyDisabled());
   }
