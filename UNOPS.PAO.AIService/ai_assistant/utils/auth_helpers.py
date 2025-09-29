@@ -327,7 +327,6 @@ def build_request_headers(
                         print(f"🔍 [AUTH-HEADERS] tool_context is None")
                     
                     # Always fall back to dev_email in development if user_email is not available
-                    user_email = 'tushard@unops.org'
                     if not user_email and is_local and dev_email:
                         user_email = dev_email
                     
