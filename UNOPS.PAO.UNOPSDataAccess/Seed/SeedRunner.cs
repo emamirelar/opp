@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Interfaces;
+using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 
 namespace UNOPS.PAO.UNOPSDataAccess.Seed
@@ -30,10 +31,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
             // Create DbContextSchema
             var dbContextSchema = new DbContextSchema(schema);
 
-            // Using null as UserResolverService since we don't need it for seeding
+            // Create a dummy UserResolverService for seeding (we don't need real user resolution during seeding)
+            var dummyUserResolver = new UserResolverService<int>(null!, null!);
             using var context = new UNOPSAppDbContext(
                 (DbContextOptions<UNOPSAppDbContext>)options, 
-                null, 
+                dummyUserResolver, 
                 dbContextSchema);
 
             // Seed data using new generic configuration-driven system

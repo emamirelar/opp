@@ -342,7 +342,15 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     const entityTypeLower = this.entityType.toLowerCase();
     
     // For interactions, use singular form to match backend endpoint
-    const entityPath = entityTypeLower === 'interactions' ? 'interaction' : entityTypeLower;
+    // For partner categories and groups, use lowercase form
+    let entityPath = entityTypeLower;
+    if (entityTypeLower === 'interactions') {
+      entityPath = 'interaction';
+    } else if (entityTypeLower === 'partnercategory') {
+      entityPath = 'partnercategory';
+    } else if (entityTypeLower === 'partnergroup') {
+      entityPath = 'partnergroup';
+    }
     const endpoint = `/api/${entityPath}/search-fields`;
 
     this.http.get<SearchFieldInfo[]>(endpoint).subscribe({

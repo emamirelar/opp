@@ -1,600 +1,895 @@
-<div class="dashboard-container">
-  <!-- Announcement Banner -->
-  <div class="announcement-banner">
-    <div class="announcement-content">
-      <div class="announcement-text">
-        {{ 'dashboard.announcementBanner' | translate }}
-      </div>
-    </div>
-  </div>
-
-  <!-- Dashboard Header -->
-  <div class="dashboard-header">
-    <div class="header-content">
-      <h1 class="dashboard-title">
-        <i class="material-symbols-outlined mr-3">home</i>
-        {{ 'dashboard.welcome' | translate }}
-      </h1>
-      <p class="dashboard-subtitle">{{ 'dashboard.subtitle' | translate }}</p>
-    </div>
-    <button 
-      pButton 
-      type="button" 
-      icon="pi pi-refresh" 
-      class="p-button-text refresh-btn"
-      [loading]="loading()"
-      (click)="refreshDashboard()"
-      pTooltip="{{ 'dashboard.refresh' | translate }}"
-      tooltipPosition="bottom"
-      [tooltipOptions]="{ showDelay: 300, hideDelay: 150, positionStyle: 'absolute' }">
-    </button>
-  </div>
-
-  <!-- Loading State -->
-  @if (loading()) {
-    <div class="loading-container">
-      <!-- All 6 cards in the same responsive grid layout (matches summary-section) -->
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        @for (item of [1,2,3,4,5,6]; track item) {
-          <p-card class="summary-card">
-            <p-skeleton height="2rem" class="mb-3"></p-skeleton>
-            <p-skeleton height="3rem" class="mb-2"></p-skeleton>
-            <p-skeleton height="1rem"></p-skeleton>
-          </p-card>
-        }
-      </div>
-    </div>
-  }
-
-  <!-- Error State -->
-  @if (error() && !loading()) {
-    <div class="error-container">
-      <p-card>
-        <div class="text-center p-8">
-          <i class="material-symbols-outlined text-6xl text-red-500 mb-4">warning</i>
-          <h3 class="text-xl font-semibold mb-2">{{ 'dashboard.error.title' | translate }}</h3>
-          <p class="text-gray-600 mb-4">{{ error() }}</p>
-          <button pButton type="button" label="{{ 'dashboard.retry' | translate }}" (click)="refreshDashboard()"></button>
+<!-- UNOPS Dashboard Container -->
+<div class="h-full">
+  <div class="max-w-7xl mx-auto px-unops-lg pt-0 pb-unops-2xl space-y-unops-xl">
+    
+    <!-- UNOPS Dashboard Header -->
+    <div>
+      <div class="px-unops-xl pb-unops-lg">
+        <div class="flex items-center">
+          <div class="flex-1">
+            <div class="text-center mb-unops-md">
+              <h1 class="font-unops-display text-unops-display-medium font-unops-bold text-unops-neutral-900 leading-tight">
+                {{ 'dashboard.welcome' | translate }}
+              </h1>
+            </div>
+            <p class="font-unops-body text-unops-body-large text-unops-neutral-600 font-unops-regular text-center">
+              {{ 'dashboard.subtitle' | translate }}
+            </p>
+          </div>
         </div>
-      </p-card>
-    </div>
-  }
-
-  <!-- Dashboard Content -->
-  @if (!loading() && !error() && dashboardData()) {
-    <!-- Integrated Summary and List Cards -->
-    <div class="summary-section">
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        
-        <!-- My Partners Integrated Card -->
-        <p-card 
-          class="integrated-card partners-card" 
-          [class.expanded]="showPartnersListView()">
-          
-          <!-- Summary Header (clickable) -->
-          <div class="card-summary" (click)="navigateToPartners()">
-            <div class="card-content">
-              <div class="card-icon partners-icon">
-                <i class="material-symbols-outlined">corporate_fare</i>
-              </div>
-              <div class="card-info">
-                <h3 class="card-title">
-                  {{ 'dashboard.myPartners' | translate }}
-                  <span class="toggle-hint">
-                    @if (showPartnersListView()) {
-                      ({{ 'dashboard.clickToHide' | translate }})
-                    } @else {
-                      ({{ 'dashboard.clickToShow' | translate }})
-                    }
-                  </span>
-                </h3>
-                <div class="card-value">{{ summary().totalMyPartners }}</div>
-                <p class="card-subtitle">{{ 'dashboard.recentlyModified' | translate }}</p>
-              </div>
-            </div>
-            <div class="card-action">
-              @if (showPartnersListView()) {
-                <i class="material-symbols-outlined">expand_less</i>
-              } @else {
-                <i class="material-symbols-outlined">expand_more</i>
-              }
-            </div>
-          </div>
-
-          <!-- Expandable List Content -->
-          @if (showPartnersListView()) {
-            <div class="card-list-content">
-              @if (dashboardData()!.myPartners.length > 0) {
-                <div class="entity-list-container">
-                  <div class="entity-list">
-                    @for (partner of dashboardData()!.myPartners; track partner.id) {
-                      <div class="entity-item" 
-                           [class.navigating]="isEntityNavigating('Partner', getEntityId(partner.id))"
-                           (click)="navigateToEntity('Partner', getEntityId(partner.id)); $event.stopPropagation()">
-                        <div class="entity-info">
-                          <h4 class="entity-name">{{ partner.name }}</h4>
-                          <p class="entity-meta">
-                            {{ getDisplayDate(partner) }}
-                          </p>
-                        </div>
-                        <div class="entity-actions">
-                          @if (isEntityNavigating('Partner', getEntityId(partner.id))) {
-                            <p-progressSpinner [style]="{ width: '20px', height: '20px' }" styleClass="custom-spinner"></p-progressSpinner>
-                          } @else {
-                          <p-tag
-                            [value]="partner.status || 'Unknown'"
-                            [severity]="getEntityStatusSeverity(partner.status || 'Unknown')">
-                          </p-tag>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
-                  @if (dashboardData()!.myPartners.length > 3) {
-                    <div class="entity-count-indicator">
-                      <span class="text-xs text-gray-500">{{ dashboardData()!.myPartners.length }} {{ 'dashboard.totalPartners' | translate }}</span>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div class="empty-state">
-                  <i class="material-symbols-outlined text-2xl text-gray-300 mb-2">group</i>
-                  <p class="text-sm text-gray-500">{{ 'dashboard.noPartners' | translate }}</p>
-                </div>
-              }
-            </div>
-          }
-        </p-card>
-
-        <!-- My Contacts Integrated Card -->
-        <p-card 
-          class="integrated-card contacts-card" 
-          [class.expanded]="showContactsListView()">
-          
-          <!-- Summary Header (clickable) -->
-          <div class="card-summary" (click)="navigateToContacts()">
-            <div class="card-content">
-              <div class="card-icon contacts-icon">
-                <i class="material-symbols-outlined">contacts</i>
-              </div>
-              <div class="card-info">
-                <h3 class="card-title">
-                  {{ 'dashboard.myContacts' | translate }}
-                  <span class="toggle-hint">
-                    @if (showContactsListView()) {
-                      ({{ 'dashboard.clickToHide' | translate }})
-                    } @else {
-                      ({{ 'dashboard.clickToShow' | translate }})
-                    }
-                  </span>
-                </h3>
-                <div class="card-value">{{ summary().totalMyContacts }}</div>
-                <p class="card-subtitle">{{ 'dashboard.recentlyModified' | translate }}</p>
-              </div>
-            </div>
-            <div class="card-action">
-              @if (showContactsListView()) {
-                <i class="material-symbols-outlined">expand_less</i>
-              } @else {
-                <i class="material-symbols-outlined">expand_more</i>
-              }
-            </div>
-          </div>
-
-          <!-- Expandable List Content -->
-          @if (showContactsListView()) {
-            <div class="card-list-content">
-              @if (dashboardData()!.myContacts.length > 0) {
-                <div class="entity-list-container">
-                  <div class="entity-list">
-                    @for (contact of dashboardData()!.myContacts; track contact.id) {
-                      <div class="entity-item" 
-                           [class.navigating]="isEntityNavigating('Contact', getEntityId(contact.id))"
-                           (click)="navigateToEntity('Contact', getEntityId(contact.id)); $event.stopPropagation()">
-                        <div class="entity-info">
-                          <h4 class="entity-name">{{ contact.firstName }} {{ contact.lastName }}</h4>
-                          <p class="entity-meta">
-                            {{ contact.title || 'No Title' }}
-                          </p>
-                        </div>
-                        <div class="entity-actions">
-                          @if (isEntityNavigating('Contact', getEntityId(contact.id))) {
-                            <p-progressSpinner [style]="{ width: '20px', height: '20px' }" styleClass="custom-spinner"></p-progressSpinner>
-                          } @else {
-                          <p-tag
-                            [value]="contact.status || 'Unknown'"
-                            [severity]="getEntityStatusSeverity(contact.status || 'Unknown')">
-                          </p-tag>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
-                  @if (dashboardData()!.myContacts.length > 3) {
-                    <div class="entity-count-indicator">
-                      <span class="text-xs text-gray-500">{{ dashboardData()!.myContacts.length }} {{ 'dashboard.totalContacts' | translate }}</span>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div class="empty-state">
-                  <i class="material-symbols-outlined text-2xl text-gray-300 mb-2">contacts</i>
-                  <p class="text-sm text-gray-500">{{ 'dashboard.noContacts' | translate }}</p>
-                </div>
-              }
-            </div>
-          }
-        </p-card>
-
-        <!-- My Interactions Integrated Card -->
-        <p-card 
-          class="integrated-card interactions-card" 
-          [class.expanded]="showInteractionsListView()">
-          
-          <!-- Summary Header (clickable) -->
-          <div class="card-summary" (click)="toggleInteractionsListView()">
-            <div class="card-content">
-              <div class="card-icon interactions-icon">
-                <i class="material-symbols-outlined">chat</i>
-              </div>
-              <div class="card-info">
-                <h3 class="card-title">
-                  {{ 'dashboard.myInteractions' | translate }}
-                  <span class="toggle-hint">
-                    @if (showInteractionsListView()) {
-                      ({{ 'dashboard.clickToHide' | translate }})
-                    } @else {
-                      ({{ 'dashboard.clickToShow' | translate }})
-                    }
-                  </span>
-                </h3>
-                <div class="card-value">{{ summary().totalMyInteractions || 0 }}</div>
-                <p class="card-subtitle">{{ 'dashboard.recentlyModified' | translate }}</p>
-              </div>
-            </div>
-            <div class="card-action">
-              @if (showInteractionsListView()) {
-                <i class="material-symbols-outlined">expand_less</i>
-              } @else {
-                <i class="material-symbols-outlined">expand_more</i>
-              }
-            </div>
-          </div>
-
-          <!-- Expandable List Content -->
-          @if (showInteractionsListView()) {
-            <div class="card-list-content">
-              <div class="list-header">
-                @if (selectedInteractionType()) {
-                  <button 
-                    pButton 
-                    type="button" 
-                    icon="pi pi-times" 
-                    class="p-button-text p-button-sm"
-                    (click)="clearInteractionFilter(); $event.stopPropagation()"
-                    pTooltip="Clear filter">
-                  </button>
-                }
-              </div>
-
-              @if (dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0) {
-                <!-- Interaction Type Filter Buttons -->
-                <div class="filter-buttons mb-4">
-                  <div class="flex flex-wrap gap-2">
-                    @for (type of getInteractionTypes(); track type) {
-                      <button 
-                        pButton 
-                        type="button" 
-                        [label]="type"
-                        [class]="selectedInteractionType() === type ? 'p-button-sm p-button-filled' : 'p-button-sm p-button-outlined'"
-                        (click)="setInteractionFilter(type); $event.stopPropagation()">
-                      </button>
-                    }
-                  </div>
-                </div>
-
-                <div class="entity-list-container">
-                  <div class="entity-list">
-                    @for (interaction of getDisplayedInteractions(); track interaction.id) {
-                      <div class="entity-item" 
-                           [class.navigating]="isEntityNavigating('Interaction', getEntityId(interaction.id))"
-                           (click)="navigateToEntity('Interaction', getEntityId(interaction.id)); $event.stopPropagation()">
-                        <div class="entity-info">
-                          <h4 class="entity-name">{{ interaction.subject || 'Untitled Interaction' }}</h4>
-                          <p class="entity-meta">
-                            {{ interaction.type || 'Unknown Type' }} • {{ formatDate(interaction.date) }}
-                            @if (interaction.description) {
-                              • {{ interaction.description.length > 50 ? (interaction.description | slice:0:50) + '...' : interaction.description }}
-                            }
-                          </p>
-                        </div>
-                        <div class="entity-actions">
-                          @if (isEntityNavigating('Interaction', getEntityId(interaction.id))) {
-                            <p-progressSpinner [style]="{ width: '20px', height: '20px' }" styleClass="custom-spinner"></p-progressSpinner>
-                          } @else {
-                            <p-tag
-                              [value]="interaction.status || 'Unknown'"
-                              [severity]="getEntityStatusSeverity(interaction.status || 'Unknown')">
-                            </p-tag>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
-                  @if (getDisplayedInteractions().length > 3) {
-                    <div class="entity-count-indicator">
-                      <span class="text-xs text-gray-500">{{ getDisplayedInteractions().length }} {{ 'dashboard.totalInteractions' | translate }}</span>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div class="empty-state">
-                  <i class="material-symbols-outlined text-2xl text-gray-300 mb-2">chat</i>
-                  <p class="text-sm text-gray-500">{{ 'dashboard.noInteractions' | translate }}</p>
-                </div>
-              }
-            </div>
-          }
-        </p-card>
-
-        <!-- My Opportunities Integrated Card -->
-        <p-card 
-          class="integrated-card opportunities-card" 
-          [class.expanded]="showOpportunitiesListView()">
-          
-          <!-- Summary Header (clickable) -->
-          <div class="card-summary" (click)="toggleOpportunitiesListView()">
-            <div class="card-content">
-                      <div class="card-icon opportunities-icon">
-              <i class="material-symbols-outlined">crown</i>
-            </div>
-              <div class="card-info">
-                <h3 class="card-title">
-                  {{ 'dashboard.myOpportunities' | translate }}
-                  <span class="toggle-hint">
-                    @if (showOpportunitiesListView()) {
-                      ({{ 'dashboard.clickToHide' | translate }})
-                    } @else {
-                      ({{ 'dashboard.clickToShow' | translate }})
-                    }
-                  </span>
-                </h3>
-                <div class="card-value coming-soon">{{ 'dashboard.comingSoon' | translate }}</div>
-                <p class="card-subtitle">{{ 'dashboard.recentlyModified' | translate }}</p>
-              </div>
-            </div>
-            <div class="card-action">
-              @if (showOpportunitiesListView()) {
-                <i class="material-symbols-outlined">expand_less</i>
-              } @else {
-                <i class="material-symbols-outlined">expand_more</i>
-              }
-            </div>
-          </div>
-
-          <!-- Expandable List Content -->
-          @if (showOpportunitiesListView()) {
-            <div class="card-list-content">
-              <div class="coming-soon-state">
-                                  <div class="text-center p-8">
-                    <i class="material-symbols-outlined text-4xl text-yellow-400 mb-4">crown</i>
-                  <h3 class="text-lg font-semibold mb-2 text-gray-700">{{ 'dashboard.comingSoon' | translate }}</h3>
-                  <p class="text-gray-500 mb-4">{{ 'dashboard.opportunitiesComingSoonMessage' | translate }}</p>
-                </div>
-              </div>
-            </div>
-          }
-        </p-card>
-
-        <!-- Actions Required Integrated Card -->
-        <p-card 
-          class="integrated-card actions-required-card" 
-          [class.expanded]="showActionsRequiredView()">
-          
-          <!-- Summary Header (clickable) -->
-          <div class="card-summary" (click)="toggleActionsRequiredView()">
-            <div class="card-content">
-              <div class="card-icon actions-icon">
-                <i class="material-symbols-outlined">warning</i>
-              </div>
-              <div class="card-info">
-                <h3 class="card-title">
-                  {{ 'dashboard.actionsRequired' | translate }}
-                  <span class="toggle-hint">
-                    @if (showActionsRequiredView()) {
-                      ({{ 'dashboard.clickToHide' | translate }})
-                    } @else {
-                      ({{ 'dashboard.clickToShow' | translate }})
-                    }
-                  </span>
-                </h3>
-                <div class="card-value">{{ getTotalDraftActions() }}</div>
-                <p class="card-subtitle">{{ 'dashboard.draftItemsSubtitle' | translate }}</p>
-              </div>
-            </div>
-            <div class="card-action">
-              @if (showActionsRequiredView()) {
-                <i class="material-symbols-outlined">expand_less</i>
-              } @else {
-                <i class="material-symbols-outlined">expand_more</i>
-              }
-            </div>
-          </div>
-
-          <!-- Expandable List Content -->
-          @if (showActionsRequiredView()) {
-            <div class="card-list-content">
-              <div class="list-header">
-                @if (selectedDraftActionType()) {
-                  <button 
-                    pButton 
-                    type="button" 
-                    icon="pi pi-times" 
-                    class="p-button-text p-button-sm"
-                    (click)="clearDraftActionFilter(); $event.stopPropagation()"
-                    pTooltip="Clear filter">
-                  </button>
-                }
-              </div>
-
-              @if (getTotalDraftActions() > 0) {
-                <!-- Draft Action Type Filter Buttons -->
-                <div class="filter-buttons mb-4">
-                  <div class="flex flex-wrap gap-2">
-                    @for (type of getDraftActionTypes(); track type) {
-                      <button 
-                        pButton 
-                        type="button" 
-                        [label]="type + ' (' + getDraftActionCount(type) + ')'"
-                        [class]="selectedDraftActionType() === type ? 'p-button-sm p-button-filled' : 'p-button-sm p-button-outlined'"
-                        (click)="setDraftActionFilter(type); $event.stopPropagation()">
-                      </button>
-                    }
-                  </div>
-                </div>
-
-                <div class="entity-list-container">
-                  <div class="entity-list">
-                    @for (item of getDisplayedDraftActions(); track item.id) {
-                      <div class="entity-item" (click)="navigateToEntity(getDraftActionEntityType(item), getEntityId(item.id)); $event.stopPropagation()">
-                        <div class="entity-info">
-                          <h4 class="entity-name">{{ getDraftActionDisplayName(item) }}</h4>
-                          <p class="entity-meta">
-                            {{ getDraftActionType(item) }} • {{ formatDate(item.createdDate || item.date) }}
-                            @if (getDraftActionDescription(item)) {
-                              • {{ getDraftActionDescription(item).length > 50 ? (getDraftActionDescription(item) | slice:0:50) + '...' : getDraftActionDescription(item) }}
-                            }
-                          </p>
-                        </div>
-                        <div class="entity-actions">
-                          <p-tag
-                            [value]="item.status || 'Draft'"
-                            [severity]="getEntityStatusSeverity(item.status || 'Draft')">
-                          </p-tag>
-                        </div>
-                      </div>
-                    }
-                  </div>
-                  @if (getDisplayedDraftActions().length > 3) {
-                    <div class="entity-count-indicator">
-                      <span class="text-xs text-gray-500">{{ getDisplayedDraftActions().length }} {{ 'dashboard.totalDraftItems' | translate }}</span>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div class="empty-state">
-                  <i class="material-symbols-outlined text-2xl text-gray-300 mb-2">warning</i>
-                  <p class="text-sm text-gray-500">{{ 'dashboard.noDraftItems' | translate }}</p>
-                </div>
-              }
-            </div>
-          }
-        </p-card>
-
-        <!-- Org Unit Recent Updates Integrated Card -->
-        <p-card 
-          class="integrated-card org-updates-card" 
-          [class.expanded]="showOrgUnitUpdatesView()">
-          <!-- Summary Header (clickable) -->
-          <div class="card-summary" (click)="toggleOrgUnitUpdates()">
-            <div class="card-content">
-              <div class="card-icon updates-icon">
-                <i class="material-symbols-outlined">history</i>
-              </div>
-              <div class="card-info">
-                <h3 class="card-title">
-                  {{ 'dashboard.orgUnitRecentUpdates' | translate }}
-                  <span class="toggle-hint">
-                    @if (showOrgUnitUpdatesView()) {
-                      ({{ 'dashboard.clickToHide' | translate }})
-                    } @else {
-                      ({{ 'dashboard.clickToShow' | translate }})
-                    }
-                  </span>
-                </h3>
-                <div class="card-value">{{ dashboardData()!.orgUnitRecentUpdates.length }}</div>
-                <p class="card-subtitle">{{ 'dashboard.orgUnitUpdatesSubtitle' | translate: {orgUnitName: dashboardData()!.orgUnitName} }}</p>
-              </div>
-            </div>
-            <div class="card-action">
-              @if (showOrgUnitUpdatesView()) {
-                <i class="material-symbols-outlined">expand_less</i>
-              } @else {
-                <i class="material-symbols-outlined">expand_more</i>
-              }
-            </div>
-          </div>
-
-          <!-- Expandable List Content -->
-          @if (showOrgUnitUpdatesView()) {
-            <div class="card-list-content">
-              <div class="list-header">
-                @if (selectedOrgUnitUpdateType()) {
-                  <button 
-                    pButton 
-                    type="button" 
-                    icon="pi pi-times" 
-                    class="p-button-text p-button-sm"
-                    (click)="clearOrgUnitUpdateFilter(); $event.stopPropagation()"
-                    pTooltip="Clear filter">
-                  </button>
-                }
-              </div>
-
-              @if (dashboardData()!.orgUnitRecentUpdates.length > 0) {
-                <!-- Entity Type Filter Buttons -->
-                <div class="filter-buttons mb-4">
-                  <div class="flex flex-wrap gap-2">
-                    @for (type of getOrgUnitUpdateTypes(); track type) {
-                      <button 
-                        pButton 
-                        type="button" 
-                        [label]="type + ' (' + getOrgUnitUpdateCount(type) + ')'"
-                        [class]="selectedOrgUnitUpdateType() === type ? 'p-button-sm p-button-filled' : 'p-button-sm p-button-outlined'"
-                        (click)="setOrgUnitUpdateFilter(type); $event.stopPropagation()">
-                      </button>
-                    }
-                  </div>
-                </div>
-
-                <div class="entity-list-container">
-                  <div class="entity-list">
-                    @for (update of getDisplayedOrgUnitUpdates(); track update.id) {
-                      <div class="entity-item" (click)="navigateToEntity(update.type, update.id); $event.stopPropagation()">
-                        <div class="entity-info">
-                          <h4 class="entity-name">{{ update.name }}</h4>
-                          <p class="entity-meta">
-                            {{ update.type }} • {{ formatDate(update.lastModifiedDate) }} • {{ update.lastModifiedBy }}
-                          </p>
-                        </div>
-                        <div class="entity-actions">
-                          <p-tag
-                            [value]="update.status || 'Unknown'"
-                            [severity]="getEntityStatusSeverity(update.status || 'Unknown')">
-                          </p-tag>
-                        </div>
-                      </div>
-                    }
-                  </div>
-                  @if (getDisplayedOrgUnitUpdates().length > 3) {
-                    <div class="entity-count-indicator">
-                      <span class="text-xs text-gray-500">{{ getDisplayedOrgUnitUpdates().length }} {{ 'dashboard.totalUpdates' | translate }}</span>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div class="empty-state">
-                  <i class="material-symbols-outlined text-2xl text-gray-300 mb-2">history</i>
-                  <p class="text-sm text-gray-500">{{ 'dashboard.noRecentUpdates' | translate: {orgUnitName: dashboardData()!.orgUnitName} }}</p>
-                </div>
-              }
-            </div>
-          }
-        </p-card>
-
       </div>
     </div>
 
+    <!-- UNOPS Announcement Banner -->
+    <div class="banner-close-spacing bg-gradient-to-r from-unops-accent-ocean to-unops-accent-teal-light rounded-unops-lg shadow-unops-md border border-unops-accent-ocean-light/20">
+      <div class="px-unops-xl py-unops-lg">
+        <div class="text-unops-white">
+          <div class="font-unops-body text-unops-headline-small font-unops-medium">
+            {{ 'dashboard.announcementBanner' | translate }}
+          </div>
+        </div>
+      </div>
+    </div>
 
-  }
+    <!-- UNOPS Loading State -->
+    @if (loading()) {
+      <div class="space-y-unops-xl">
+        <!-- Loading Quick Actions -->
+        <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-sm border border-unops-neutral-200">
+          <div class="px-unops-xl py-unops-lg">
+            <div class="animate-pulse">
+              <div class="h-6 bg-unops-neutral-200 rounded-unops-sm w-48"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Loading Main Panels -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-unops-xl mb-unops-xl">
+          @for (item of [1,2,3]; track item) {
+            <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200 overflow-hidden">
+              <div class="p-unops-lg border-b border-unops-neutral-200">
+                <div class="animate-pulse">
+                  <div class="h-6 bg-unops-neutral-200 rounded-unops-sm mb-unops-sm w-32"></div>
+                  <div class="h-4 bg-unops-neutral-200 rounded-unops-sm w-48"></div>
+                </div>
+              </div>
+              <div class="pb-unops-lg px-unops-lg flex flex-col" style="height: 280px;">
+                <div class="flex-1 mb-unops-md">
+                  <div class="animate-pulse space-y-unops-sm">
+                    @for (row of [1,2,3]; track row) {
+                      <div class="flex items-center space-x-unops-sm">
+                        <div class="w-2 h-2 bg-unops-neutral-200 rounded-full"></div>
+                        <div class="flex-1">
+                          <div class="h-4 bg-unops-neutral-200 rounded-unops-sm mb-1 w-3/4"></div>
+                          <div class="h-3 bg-unops-neutral-200 rounded-unops-sm w-1/2"></div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+                <div class="pt-unops-md mb-unops-md border-t border-unops-neutral-200">
+              <div class="animate-pulse">
+                    <div class="h-4 bg-unops-neutral-200 rounded-unops-sm w-24 mx-auto"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+        
+        <!-- Loading Bottom Panel -->
+        <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200 overflow-hidden">
+          <div class="p-unops-lg border-b border-unops-neutral-200">
+            <div class="animate-pulse">
+              <div class="h-6 bg-unops-neutral-200 rounded-unops-sm w-64 mb-unops-sm"></div>
+              <div class="h-4 bg-unops-neutral-200 rounded-unops-sm w-48"></div>
+            </div>
+          </div>
+          <div class="pb-unops-lg px-unops-lg flex flex-col" style="height: 260px;">
+            <div class="flex-1 mb-unops-md">
+              <div class="animate-pulse grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-unops-md">
+                @for (card of [1,2,3]; track card) {
+                  <div class="p-unops-sm rounded-unops-lg border border-unops-neutral-200">
+                    <div class="h-3 bg-unops-neutral-200 rounded-unops-sm mb-unops-xs w-20"></div>
+                    <div class="h-4 bg-unops-neutral-200 rounded-unops-sm mb-unops-xs"></div>
+                    <div class="h-3 bg-unops-neutral-200 rounded-unops-sm mb-unops-xs w-16"></div>
+                    <div class="h-4 bg-unops-neutral-200 rounded-unops-sm w-12"></div>
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="pt-unops-md mb-unops-md border-t border-unops-neutral-200">
+              <div class="animate-pulse">
+                <div class="h-4 bg-unops-neutral-200 rounded-unops-sm w-24 mx-auto"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- UNOPS Error State -->
+    @if (error() && !loading()) {
+      <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-error/20">
+        <div class="p-unops-3xl text-center">
+          <div class="flex items-center justify-center w-16 h-16 bg-unops-error/10 rounded-unops-full mb-unops-lg mx-auto">
+            <i class="material-symbols-outlined text-4xl text-unops-error">warning</i>
+          </div>
+          <h3 class="font-unops-display text-unops-headline-medium font-unops-semibold text-unops-neutral-900 mb-unops-md">
+            {{ 'dashboard.error.title' | translate }}
+          </h3>
+          <p class="font-unops-body text-unops-body-large text-unops-neutral-600 mb-unops-xl max-w-md mx-auto">
+            {{ error() }}
+          </p>
+          <button 
+            pButton 
+            type="button" 
+            class="unops-button-primary px-unops-xl py-unops-md"
+            label="{{ 'dashboard.retry' | translate }}" 
+            (click)="refreshDashboard()">
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- UNOPS Dashboard Content -->
+    @if (!loading() && !error() && dashboardData()) {
+      <!-- Quick Actions Toolbar -->
+      <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-sm border border-unops-neutral-200 mb-unops-xl">
+        <div class="px-unops-xl py-unops-lg">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-unops-lg">
+              <h2 *ngIf="partnerPermissions().permissions.canCreate || contactPermissions().permissions.canCreate || interactionPermissions().permissions.canCreate" class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
+                Quick Actions
+              </h2>
+              <div class="flex items-center space-x-unops-md" *ngIf="partnerPermissions().permissions.canCreate || contactPermissions().permissions.canCreate || interactionPermissions().permissions.canCreate">
+                <button 
+                  *ngIf="!permissionsLoading() && partnerPermissions().permissions.canCreate"
+                  pButton 
+                  type="button" 
+                  class="p-button-sm unops-button-primary flex items-center"
+                  (click)="openNewPartnerModal()">
+                  <i class="material-symbols-outlined text-unops-lg mr-unops-xs">corporate_fare</i>
+                  New Partner
+                </button>
+                <button 
+                  *ngIf="!permissionsLoading() && contactPermissions().permissions.canCreate"
+                  pButton 
+                  type="button" 
+                  class="p-button-sm unops-button-primary flex items-center"
+                  (click)="openNewContactModal()">
+                  <i class="material-symbols-outlined text-unops-lg mr-unops-xs">contacts</i>
+                  New Contact
+                </button>
+                <button 
+                  *ngIf="!permissionsLoading() && interactionPermissions().permissions.canCreate"
+                  pButton 
+                  type="button" 
+                  class="p-button-sm unops-button-primary flex items-center"
+                  (click)="openNewInteractionModal()">
+                  <i class="material-symbols-outlined text-unops-lg mr-unops-xs">chat</i>
+                  New Interaction
+                </button>
+              </div>
+            </div>
+            <div class="flex items-center space-x-unops-md">
+              <div class="text-unops-body-small text-unops-neutral-500">
+                Last updated {{ lastUpdatedTime() }}
+              </div>
+              <button 
+                pButton 
+                type="button" 
+                icon="pi pi-refresh" 
+                class="p-button-outlined p-button-sm unops-icon-button"
+                [loading]="loading()"
+                (click)="refreshDashboard()"
+                pTooltip="{{ 'dashboard.refresh' | translate }}"
+                tooltipPosition="bottom"
+                [tooltipOptions]="{ showDelay: 300, hideDelay: 150, positionStyle: 'absolute' }">
+              </button>
+              
+              <!-- UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY -->
+              <!-- 
+              <button 
+                pButton 
+                type="button" 
+                class="p-button-sm"
+                [class.unops-button-primary]="useDummyData()"
+                [class.p-button-outlined]="!useDummyData()"
+                (click)="toggleDummyData()"
+                pTooltip="{{ useDummyData() ? 'Switch to Real Data' : 'Switch to Dummy Data for Testing' }}"
+                tooltipPosition="bottom"
+                [tooltipOptions]="{ showDelay: 300, hideDelay: 150, positionStyle: 'absolute' }">
+                <i class="material-symbols-outlined text-unops-sm mr-unops-xs">{{ useDummyData() ? 'toggle_on' : 'toggle_off' }}</i>
+                {{ useDummyData() ? 'Dummy Data' : 'Test Data' }}
+              </button>
+              -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Panels -->
+      @if (expandedPanel()) {
+        <!-- Expanded Panel View -->
+        <div class="mb-unops-xl">
+          @if (expandedPanel() === 'actions') {
+            <!-- Expanded Actions Required Panel -->
+            <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200">
+              <div class="p-unops-lg border-b border-unops-neutral-200">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-unops-md">
+                    <div class="flex items-center justify-center w-10 h-10 bg-unops-warning/10 rounded-unops-lg">
+                      <i class="material-symbols-outlined text-unops-xl text-unops-warning">priority_high</i>
+                </div>
+                <div>
+                    <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
+                        All Actions Required
+                    </h3>
+                      <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
+                        {{ getTotalDraftActions() }} items need your attention
+                      </p>
+                  </div>
+                  </div>
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-times" 
+                    class="p-button-outlined p-button-sm"
+                    (click)="collapsePanel()"
+                    pTooltip="Collapse"
+                    tooltipPosition="bottom">
+                  </button>
+                </div>
+              </div>
+              <div class="p-unops-lg">
+              @if (getTotalDraftActions() > 0) {
+                  <!-- Filter Tags -->
+                  @if (getDraftActionTypes().length > 1) {
+                    <div class="flex flex-wrap gap-unops-sm mb-unops-lg">
+                      @for (type of getDraftActionTypes(); track type) {
+                        <button 
+                          class="px-unops-md py-unops-sm rounded-unops-md font-unops-body text-unops-body-small font-unops-medium transition-all duration-unops-short border"
+                          [class.bg-unops-warning]="selectedDraftActionType() === type"
+                          [class.text-unops-white]="selectedDraftActionType() === type"
+                          [class.border-unops-warning]="selectedDraftActionType() === type"
+                          [class.bg-unops-surface-cool]="selectedDraftActionType() !== type"
+                          [class.text-unops-neutral-700]="selectedDraftActionType() !== type"
+                          [class.border-unops-neutral-300]="selectedDraftActionType() !== type"
+                          (click)="setDraftActionFilter(type)">
+                          {{ type }} ({{ getDraftActionCount(type) }})
+                        </button>
+                      }
+                      @if (selectedDraftActionType()) {
+                        <button 
+                          class="px-unops-sm py-unops-sm rounded-unops-md bg-unops-neutral-200 text-unops-neutral-600 hover:bg-unops-neutral-300 transition-colors"
+                          (click)="clearDraftActionFilter()">
+                          <i class="material-symbols-outlined text-unops-sm">close</i>
+                        </button>
+                      }
+                    </div>
+                  }
+                  <!-- Actions Grid -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unops-md actions-grid">
+                    @for (item of getDisplayedDraftActions(); track item.id) {
+                      <div class="p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-warning/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
+                           (click)="navigateToEntity(getDraftActionEntityType(item), getEntityId(item.id))">
+                        <div class="flex items-start justify-between mb-unops-sm">
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-unops-xs mb-2">
+                              @if (getDraftActionEntityType(item) === 'Partner') {
+                                <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                              } @else if (getDraftActionEntityType(item) === 'Contact') {
+                                <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                              } @else {
+                                <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                              }
+                              <span class="text-unops-label-small text-unops-neutral-500">{{ getDraftActionEntityType(item) }}</span>
+                            </div>
+                            <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-2 mt-0 line-clamp-2">
+                              {{ getDraftActionDisplayName(item) }}
+                            </h4>
+                            @if (getDraftActionDescription(item)) {
+                              <p class="text-unops-body-small text-unops-neutral-600 mb-2 line-clamp-2">
+                                {{ getDraftActionDescription(item) }}
+                              </p>
+                            }
+                            <p class="text-unops-body-small text-unops-neutral-500">
+                              {{ formatDate(item.createdDate || item.date) }}
+                            </p>
+                          </div>
+                          <div class="ml-unops-sm">
+                            <span class="inline-flex items-center px-unops-sm py-1 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-warning/10 text-unops-warning">
+                              Draft
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                </div>
+              } @else {
+                <div class="text-center py-unops-3xl">
+                  <div class="flex items-center justify-center w-16 h-16 bg-unops-neutral-200 rounded-unops-full mb-unops-lg mx-auto">
+                    <i class="material-symbols-outlined text-unops-2xl text-unops-neutral-400">check_circle</i>
+                  </div>
+                  <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-unops-sm">
+                    All caught up!
+                  </h4>
+                  <p class="font-unops-body text-unops-body-medium text-unops-neutral-500">
+                      No actions require your attention at this time.
+                  </p>
+                </div>
+              }
+            </div>
+        </div>
+          } @else if (expandedPanel() === 'activity') {
+            <!-- Expanded Recent Activity Panel -->
+            <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200">
+              <div class="p-unops-lg border-b border-unops-neutral-200">
+            <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-unops-md">
+                    <div class="flex items-center justify-center w-10 h-10 bg-unops-info/10 rounded-unops-lg">
+                      <i class="material-symbols-outlined text-unops-xl text-unops-info">history</i>
+                </div>
+                <div>
+                    <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
+                        All Recent Activity
+                    </h3>
+                      <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
+                        Latest updates from {{ dashboardData()!.orgUnitName }}
+                      </p>
+                  </div>
+                  </div>
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-times" 
+                    class="p-button-outlined p-button-sm"
+                    (click)="collapsePanel()"
+                    pTooltip="Collapse"
+                    tooltipPosition="bottom">
+                  </button>
+                </div>
+              </div>
+              <div class="p-unops-lg">
+              @if (dashboardData()!.orgUnitRecentUpdates.length > 0) {
+                  <!-- Filter Tags -->
+                  @if (getOrgUnitUpdateTypes().length > 1) {
+                    <div class="flex flex-wrap gap-unops-sm mb-unops-lg">
+                      @for (type of getOrgUnitUpdateTypes(); track type) {
+                        <button 
+                          class="px-unops-md py-unops-sm rounded-unops-md font-unops-body text-unops-body-small font-unops-medium transition-all duration-unops-short border"
+                          [class.bg-unops-info]="selectedOrgUnitUpdateType() === type"
+                          [class.text-unops-white]="selectedOrgUnitUpdateType() === type"
+                          [class.border-unops-info]="selectedOrgUnitUpdateType() === type"
+                          [class.bg-unops-surface-cool]="selectedOrgUnitUpdateType() !== type"
+                          [class.text-unops-neutral-700]="selectedOrgUnitUpdateType() !== type"
+                          [class.border-unops-neutral-300]="selectedOrgUnitUpdateType() !== type"
+                          (click)="setOrgUnitUpdateFilter(type)">
+                          {{ getOrgUnitUpdateCount(type) }} {{ type }}{{ getOrgUnitUpdateCount(type) === 1 ? '' : 's' }}
+                        </button>
+                      }
+                      @if (selectedOrgUnitUpdateType()) {
+                        <button 
+                          class="px-unops-sm py-unops-sm rounded-unops-md bg-unops-neutral-200 text-unops-neutral-600 hover:bg-unops-neutral-300 transition-colors"
+                          (click)="clearOrgUnitUpdateFilter()">
+                          <i class="material-symbols-outlined text-unops-sm">close</i>
+                        </button>
+                      }
+                    </div>
+                  }
+                  <!-- Activity Grid -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unops-md activity-grid">
+                    @for (update of getDisplayedOrgUnitUpdates(); track update.id) {
+                      <div class="p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-info/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
+                           (click)="navigateToEntity(update.type, update.id)">
+                        <div class="flex items-start space-x-unops-sm mb-unops-sm">
+                          <div class="flex-shrink-0 mt-1">
+                            @if (update.type === 'Partner') {
+                              <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                            } @else if (update.type === 'Contact') {
+                              <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                            } @else {
+                              <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+                            }
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-unops-sm mb-2">
+                              <span class="text-unops-label-small text-unops-neutral-500">{{ formatDate(update.lastModifiedDate) }}</span>
+                            </div>
+                            <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mt-0 mb-0 line-clamp-2">
+                              {{ update.name }}
+                            </h4>
+                            <div class="flex items-center space-x-unops-sm">
+                              <span class="inline-flex items-center px-unops-sm py-1 rounded-unops-sm text-unops-label-small font-unops-medium"
+                                    [ngClass]="{
+                                      'bg-unops-info/10 text-unops-info': update.type === 'Partner',
+                                      'bg-unops-success/10 text-unops-success': update.type === 'Contact', 
+                                      'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
+                                    }">
+                                {{ update.type }}
+                              </span>
+                              <span class="text-unops-body-small text-unops-neutral-600">by {{ update.lastModifiedBy }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                </div>
+              }
+            </div>
+        </div>
+          } @else if (expandedPanel() === 'workspace') {
+            <!-- Expanded My Workspace Panel -->
+            <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200">
+              <div class="p-unops-lg border-b border-unops-neutral-200">
+            <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-unops-md">
+                    <div class="flex items-center justify-center w-10 h-10 bg-unops-primary/10 rounded-unops-lg">
+                      <i class="material-symbols-outlined text-unops-xl text-unops-primary">dashboard</i>
+                </div>
+                <div>
+                    <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
+                        My Workspace - All Items
+                    </h3>
+                      <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
+                        All your partners, contacts, and quick actions
+                      </p>
+                  </div>
+                  </div>
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-times" 
+                    class="p-button-outlined p-button-sm"
+                    (click)="collapsePanel()"
+                    pTooltip="Collapse"
+                    tooltipPosition="bottom">
+                  </button>
+                </div>
+              </div>
+              <div class="p-unops-lg">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-unops-xl">
+                  <!-- All Partners -->
+              @if (dashboardData()!.myPartners.length > 0) {
+                    <div>
+                      <h4 class="font-unops-body text-unops-body-large font-unops-semibold text-unops-neutral-900 mb-unops-md flex items-center">
+                        <i class="material-symbols-outlined text-unops-lg text-unops-accent-teal mr-unops-sm">corporate_fare</i>
+                        My Partners ({{ dashboardData()!.myPartners.length }})
+                      </h4>
+                      <div class="grid grid-cols-1 gap-unops-sm">
+                  @for (partner of dashboardData()!.myPartners; track partner.id) {
+                          <div class="flex items-center space-x-unops-sm p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-accent-teal/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
+                               (click)="navigateToEntity('Partner', getEntityId(partner.id))">
+                            <div class="w-3 h-3 bg-unops-accent-teal rounded-full flex-shrink-0"></div>
+                            <div class="flex-1 min-w-0">
+                              <div class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 truncate">
+                            {{ partner.name }}
+                              </div>
+                              <div class="text-unops-body-small text-unops-neutral-600">
+                            {{ getDisplayDate(partner) }}
+                        </div>
+                            </div>
+                            <span class="inline-flex items-center px-unops-sm py-1 rounded-unops-sm text-unops-label-small font-unops-medium"
+                                  [ngClass]="{
+                                    'bg-unops-success/10 text-unops-success': partner.status === 'Active',
+                                    'bg-unops-warning/10 text-unops-warning': partner.status === 'Pending',
+                                    'bg-unops-neutral-200 text-unops-neutral-600': !partner.status || partner.status === 'Unknown'
+                                  }">
+                              {{ partner.status || 'Unknown' }}
+                            </span>
+                          </div>
+                          }
+                      </div>
+                    </div>
+                  }
+                  
+                  <!-- All Contacts -->
+                  @if (dashboardData()!.myContacts.length > 0) {
+                <div>
+                      <h4 class="font-unops-body text-unops-body-large font-unops-semibold text-unops-neutral-900 mb-unops-md flex items-center">
+                        <i class="material-symbols-outlined text-unops-lg text-unops-accent-lime mr-unops-sm">contacts</i>
+                        My Contacts ({{ dashboardData()!.myContacts.length }})
+                      </h4>
+                      <div class="grid grid-cols-1 gap-unops-sm">
+                  @for (contact of dashboardData()!.myContacts; track contact.id) {
+                          <div class="flex items-center space-x-unops-sm p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-accent-lime/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
+                               (click)="navigateToEntity('Contact', getEntityId(contact.id))">
+                            <div class="w-3 h-3 bg-unops-accent-lime rounded-full flex-shrink-0"></div>
+                            <div class="flex-1 min-w-0">
+                              <div class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 truncate">
+                            {{ contact.firstName }} {{ contact.lastName }}
+                              </div>
+                              <div class="text-unops-body-small text-unops-neutral-600">
+                            {{ contact.title || 'No Title' }}
+                        </div>
+                            </div>
+                            <span class="inline-flex items-center px-unops-sm py-1 rounded-unops-sm text-unops-label-small font-unops-medium"
+                                  [ngClass]="{
+                                    'bg-unops-success/10 text-unops-success': contact.status === 'Active',
+                                    'bg-unops-warning/10 text-unops-warning': contact.status === 'Pending',
+                                    'bg-unops-neutral-200 text-unops-neutral-600': !contact.status || contact.status === 'Unknown'
+                                  }">
+                              {{ contact.status || 'Unknown' }}
+                            </span>
+                          </div>
+                          }
+                      </div>
+                    </div>
+                  }
+                </div>
+                </div>
+            </div>
+          } @else if (expandedPanel() === 'interactions') {
+            <!-- Expanded Recent Interactions Panel -->
+            <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200">
+              <div class="p-unops-lg border-b border-unops-neutral-200">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-unops-md">
+                    <div class="flex items-center justify-center w-10 h-10 bg-unops-accent-orange/10 rounded-unops-lg">
+                      <i class="material-symbols-outlined text-unops-xl text-unops-accent-orange">chat</i>
+                    </div>
+                    <div>
+                      <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
+                        All Recent Interactions & Communications
+                      </h3>
+                      <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
+                        {{ summary().totalMyInteractions }} interactions • Latest activity
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-times" 
+                    class="p-button-outlined p-button-sm"
+                    (click)="collapsePanel()"
+                    pTooltip="Collapse"
+                    tooltipPosition="bottom">
+                  </button>
+                </div>
+              </div>
+              <div class="p-unops-lg">
+                @if (dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0) {
+                  <!-- Filter Tags -->
+                  @if (getInteractionTypes().length > 1) {
+                    <div class="flex flex-wrap gap-unops-sm mb-unops-lg">
+                      @for (type of getInteractionTypes(); track type) {
+                        <button 
+                          class="px-unops-md py-unops-sm rounded-unops-md font-unops-body text-unops-body-small font-unops-medium transition-all duration-unops-short border"
+                          [class.bg-unops-accent-orange]="selectedInteractionType() === type"
+                          [class.text-unops-white]="selectedInteractionType() === type"
+                          [class.border-unops-accent-orange]="selectedInteractionType() === type"
+                          [class.bg-unops-surface-cool]="selectedInteractionType() !== type"
+                          [class.text-unops-neutral-700]="selectedInteractionType() !== type"
+                          [class.border-unops-neutral-300]="selectedInteractionType() !== type"
+                          (click)="setInteractionFilter(type)">
+                          {{ type }}
+                        </button>
+                      }
+                      @if (selectedInteractionType()) {
+                        <button 
+                          class="px-unops-sm py-unops-sm rounded-unops-md bg-unops-neutral-200 text-unops-neutral-600 hover:bg-unops-neutral-300 transition-colors"
+                          (click)="clearInteractionFilter()">
+                          <i class="material-symbols-outlined text-unops-sm">close</i>
+                        </button>
+                      }
+                    </div>
+                  }
+                  <!-- Interactions Grid -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unops-md interactions-grid">
+                    @for (interaction of getDisplayedInteractions(); track interaction.id) {
+                      <div class="p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-accent-orange/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
+                           (click)="navigateToEntity('Interaction', getEntityId(interaction.id))">
+                        <!-- Header with icon and type -->
+                        <div class="flex items-center space-x-unops-xs mb-unops-xs">
+                          @if (interaction.type === 'Meeting' || interaction.type === 'VirtualMeeting' || interaction.type === 'InPersonMeeting') {
+                            <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">videocam</i>
+                          } @else if (interaction.type === 'Email') {
+                            <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">mail</i>
+                          } @else if (interaction.type === 'Call') {
+                            <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">phone</i>
+                          } @else {
+                            <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">chat</i>
+                          }
+                          <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-accent-orange/10 text-unops-accent-orange">
+                            {{ interaction.type || 'Unknown' }}
+                          </span>
+                        </div>
+                        
+                        <!-- Content -->
+                        <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-2 mt-0 line-clamp-2">
+                          {{ interaction.subject || 'Untitled Interaction' }}
+                        </h4>
+                        @if (interaction.description) {
+                          <p class="text-unops-body-small text-unops-neutral-600 mb-2 line-clamp-2">
+                            {{ interaction.description }}
+                          </p>
+                        }
+                        <div class="text-unops-body-small text-unops-neutral-500 mb-unops-xs">
+                          {{ formatDate(interaction.date) }}
+                        </div>
+                        
+                        <!-- Status -->
+                        <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium"
+                              [ngClass]="{
+                                'bg-unops-success/10 text-unops-success': interaction.status === 'Completed',
+                                'bg-unops-warning/10 text-unops-warning': interaction.status === 'Pending',
+                                'bg-unops-neutral-200 text-unops-neutral-600': !interaction.status || interaction.status === 'Unknown'
+                              }">
+                          {{ interaction.status || 'Unknown' }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="text-center py-unops-3xl">
+                    <div class="flex items-center justify-center w-16 h-16 bg-unops-neutral-200 rounded-unops-full mb-unops-lg mx-auto">
+                      <i class="material-symbols-outlined text-unops-2xl text-unops-neutral-400">chat</i>
+                    </div>
+                    <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-unops-sm">
+                      No interactions yet
+                    </h4>
+                    <p class="font-unops-body text-unops-body-medium text-unops-neutral-500 mb-unops-sm">
+                      Start logging your communications and meetings
+                    </p>
+                    <button 
+                      *ngIf="!permissionsLoading() && interactionPermissions().permissions.canCreate"
+                      pButton 
+                      type="button" 
+                      icon="pi pi-plus" 
+                      label="Log First Interaction"
+                      class="p-button-sm unops-button-primary"
+                      (click)="openNewInteractionModal()">
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- Normal 3-Panel View -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-unops-xl mb-unops-xl">
+        
+          <!-- Left Panel: Actions Required -->
+          <app-dashboard-card
+            [config]="actionsRequiredConfig"
+            [filters]="actionsRequiredFilters"
+            [isExpanded]="false"
+            [showViewAllButton]="getRemainingDraftActionsCount() > 0"
+            [remainingCount]="getRemainingDraftActionsCount()"
+            [hasContent]="getTotalDraftActions() > 0"
+            [isMobile]="isMobile()"
+            (filterClick)="onActionsFilterClick($event)"
+            (clearFilter)="clearDraftActionFilter()"
+            (viewAllClick)="expandPanel('actions')"
+            (emptyStateAction)="navigateToPartnersPage()">
+            
+            <!-- Content Template -->
+            @if (getTotalDraftActions() > 0) {
+              <div class="space-y-unops-sm">
+                @for (item of getTruncatedDraftActions(); track item.id) {
+                  <div class="p-unops-sm rounded-unops-sm border border-unops-neutral-200 hover:border-unops-warning/50 hover:bg-unops-warning/5 cursor-pointer transition-all duration-unops-short"
+                       (click)="navigateToEntity(getDraftActionEntityType(item), getEntityId(item.id))">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-unops-xs mb-1">
+                          @if (getDraftActionEntityType(item) === 'Partner') {
+                            <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                          } @else if (getDraftActionEntityType(item) === 'Contact') {
+                            <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          } @else {
+                            <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                          }
+                          <span class="text-unops-label-small text-unops-neutral-500">{{ getDraftActionEntityType(item) }}</span>
+                        </div>
+                        <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
+                          {{ getDraftActionDisplayName(item) }}
+                        </h4>
+                        <p class="text-unops-body-small text-unops-neutral-600">
+                          {{ formatDate(item.createdDate || item.date) }}
+                        </p>
+                      </div>
+                      <div class="ml-unops-sm">
+                        <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-warning/10 text-unops-warning">
+                          Draft
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </app-dashboard-card>
+
+          <!-- Center Panel: Recent Activity -->
+          <app-dashboard-card
+            [config]="recentActivityConfig"
+            [filters]="recentActivityFilters"
+            [isExpanded]="false"
+            [showViewAllButton]="getRemainingOrgUnitUpdatesCount() > 0"
+            [remainingCount]="getRemainingOrgUnitUpdatesCount()"
+            [hasContent]="dashboardData()!.orgUnitRecentUpdates.length > 0"
+            [isMobile]="isMobile()"
+            (filterClick)="onActivityFilterClick($event)"
+            (clearFilter)="clearOrgUnitUpdateFilter()"
+            (viewAllClick)="expandPanel('activity')">
+            
+            <!-- Content Template -->
+            @if (dashboardData()!.orgUnitRecentUpdates.length > 0) {
+              <div class="space-y-unops-sm">
+                @for (update of getTruncatedOrgUnitUpdates(); track update.id) {
+                  <div class="flex items-start space-x-unops-md cursor-pointer hover:bg-unops-surface-cool/30 p-unops-sm rounded-unops-sm transition-colors"
+                       (click)="navigateToEntity(update.type, update.id)">
+                    <div class="flex-shrink-0 mt-1">
+                      @if (update.type === 'Partner') {
+                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      } @else if (update.type === 'Contact') {
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                      } @else {
+                        <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      }
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center justify-between mb-unops-xs">
+                        <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-0 mt-0 line-clamp-1">
+                          {{ update.name }}
+                        </h4>
+                        <span class="text-unops-label-small text-unops-neutral-500 flex-shrink-0 ml-unops-sm">{{ formatDate(update.lastModifiedDate) }}</span>
+                      </div>
+                      <div class="flex items-center space-x-unops-sm">
+                        <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium"
+                              [ngClass]="{
+                                'bg-unops-info/10 text-unops-info': update.type === 'Partner',
+                                'bg-unops-success/10 text-unops-success': update.type === 'Contact', 
+                                'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
+                              }">
+                          {{ update.type }}
+                        </span>
+                        <span class="text-unops-body-small text-unops-neutral-600 truncate">by {{ update.lastModifiedBy }}</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </app-dashboard-card>
+
+          <!-- Right Panel: My Workspace -->
+          <app-dashboard-card
+            [config]="myWorkspaceConfig"
+            [filters]="myWorkspaceFilters"
+            [isExpanded]="false"
+            [showViewAllButton]="getRemainingPartnersCount() > 0 || getRemainingContactsCount() > 0"
+            [remainingCount]="getRemainingWorkspaceCount()"
+            [hasContent]="dashboardData()!.myPartners.length > 0 || dashboardData()!.myContacts.length > 0"
+            [isMobile]="isMobile()"
+            (filterClick)="onWorkspaceFilterClick($event)"
+            (clearFilter)="clearOrgUnitUpdateFilter()"
+            (viewAllClick)="expandPanel('workspace')">
+            
+            <!-- Content Template -->
+            <div class="space-y-unops-sm">
+              <!-- My Partners -->
+              @if (dashboardData()!.myPartners.length > 0 && (!selectedOrgUnitUpdateType() || selectedOrgUnitUpdateType() === 'Partner')) {
+                <div>
+                  <h4 class="font-unops-body text-unops-body-small font-unops-semibold text-unops-neutral-900 mb-unops-xs flex items-center">
+                    <i class="material-symbols-outlined text-unops-sm text-unops-accent-teal mr-unops-xs">corporate_fare</i>
+                    Partners ({{ dashboardData()!.myPartners.length }})
+                  </h4>
+                  <div class="space-y-unops-xs mb-unops-sm">
+                    @for (partner of getTruncatedPartners(); track partner.id) {
+                      <div class="flex items-center space-x-unops-sm p-unops-xs rounded-unops-sm hover:bg-unops-surface-cool/30 cursor-pointer transition-colors"
+                           (click)="navigateToEntity('Partner', getEntityId(partner.id))">
+                        <div class="w-2 h-2 bg-unops-accent-teal rounded-full flex-shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                          <div class="font-unops-body text-unops-body-small font-unops-medium text-unops-neutral-900 line-clamp-1">
+                            {{ partner.name }}
+                          </div>
+                          <div class="text-unops-label-small text-unops-neutral-600 line-clamp-1">
+                            {{ partner.status || 'Unknown' }} • {{ getDisplayDate(partner) }}
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+              
+              <!-- My Contacts -->
+              @if (dashboardData()!.myContacts.length > 0 && (!selectedOrgUnitUpdateType() || selectedOrgUnitUpdateType() === 'Contact')) {
+                <div>
+                  <h4 class="font-unops-body text-unops-body-small font-unops-semibold text-unops-neutral-900 mb-unops-xs flex items-center">
+                    <i class="material-symbols-outlined text-unops-sm text-unops-accent-lime mr-unops-xs">contacts</i>
+                    Contacts ({{ dashboardData()!.myContacts.length }})
+                  </h4>
+                  <div class="space-y-unops-xs">
+                    @for (contact of getTruncatedContacts(); track contact.id) {
+                      <div class="flex items-center space-x-unops-sm p-unops-xs rounded-unops-sm hover:bg-unops-surface-cool/30 cursor-pointer transition-colors"
+                           (click)="navigateToEntity('Contact', getEntityId(contact.id))">
+                        <div class="w-2 h-2 bg-unops-accent-lime rounded-full flex-shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                          <div class="font-unops-body text-unops-body-small font-unops-medium text-unops-neutral-900 line-clamp-1">
+                            {{ contact.firstName }} {{ contact.lastName }}
+                          </div>
+                          <div class="text-unops-label-small text-unops-neutral-600 line-clamp-1">
+                            {{ contact.title || 'No Title' }}
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </app-dashboard-card>
+        </div>
+      }
+
+      <!-- Bottom Panel: Recent Interactions -->
+      @if (expandedPanel() !== 'interactions') {
+        <div class="mt-unops-xl">
+          <app-dashboard-card
+          [config]="recentInteractionsConfig"
+          [isExpanded]="false"
+          [showViewAllButton]="getRemainingInteractionsCount() > 0"
+          [remainingCount]="getRemainingInteractionsCount()"
+          [hasContent]="dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0"
+          [isMobile]="isMobile()"
+          (viewAllClick)="expandPanel('interactions')"
+          (emptyStateAction)="navigateToInteractions()">
+          
+          <!-- Content Template - Only show when there are interactions -->
+          @if (dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0) {
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-unops-md interactions-grid">
+              @for (interaction of getTruncatedInteractions(); track interaction.id) {
+                <div class="p-unops-sm rounded-unops-lg border border-unops-neutral-200 hover:border-unops-accent-orange/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
+                     (click)="navigateToEntity('Interaction', getEntityId(interaction.id))">
+                  <!-- Header with icon and type -->
+                  <div class="flex items-center space-x-unops-xs mb-unops-xs">
+                    @if (interaction.type === 'Meeting') {
+                      <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">videocam</i>
+                    } @else if (interaction.type === 'Email') {
+                      <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">mail</i>
+                    } @else if (interaction.type === 'Call') {
+                      <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">phone</i>
+                    } @else {
+                      <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">chat</i>
+                    }
+                    <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-accent-orange/10 text-unops-accent-orange">
+                      {{ interaction.type || 'Unknown' }}
+                    </span>
+                  </div>
+                  
+                  <!-- Content -->
+                  <h4 class="font-unops-body text-unops-body-small font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
+                    {{ interaction.subject || 'Untitled Interaction' }}
+                  </h4>
+                  <p class="text-unops-label-small text-unops-neutral-600 mb-1 line-clamp-1">
+                    {{ interaction.description || 'No description' }}
+                  </p>
+                  <div class="text-unops-label-small text-unops-neutral-500 mb-unops-xs">
+                    {{ formatDate(interaction.date) }}
+                  </div>
+                  
+                  <!-- Status -->
+                  <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium"
+                        [ngClass]="{
+                          'bg-unops-success/10 text-unops-success': interaction.status === 'Completed',
+                          'bg-unops-warning/10 text-unops-warning': interaction.status === 'Pending',
+                          'bg-unops-neutral-200 text-unops-neutral-600': !interaction.status || interaction.status === 'Unknown'
+                        }">
+                    {{ interaction.status || 'Unknown' }}
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </app-dashboard-card>
+        </div>
+      }
+    }
+
+  </div>
 </div>

@@ -143,7 +143,6 @@ export class PermissionService {
       }
     }
     
-    console.log('[PERMISSION-SERVICE] Final permission URL:', permissionUrl);
     
     // Check cache first
     const cached = this.entityPermissionsCache.get(permissionUrl);
@@ -238,10 +237,8 @@ export class PermissionService {
    * Check if the user has access to a specific route
    */
   canAccessRoute(route: string): Observable<boolean> {
-    console.log('[PERMISSION-SERVICE] Checking access for route:', route);
     return this.getPermissionsResponse(route).pipe(
       map(response => {
-        console.log('[PERMISSION-SERVICE] Route access result:', response);
         return response.hasAccess;
       }),
       catchError(error => {
@@ -286,7 +283,6 @@ export class PermissionService {
    * @private
    */
   private normalizeRoutePath(route: string): { path: string, entityId?: string } {
-    console.log('[PERMISSION-SERVICE] Original route:', route);
     if (!route) {
       return { path: '' };
     }
@@ -338,7 +334,6 @@ export class PermissionService {
     }
     
     const result = { path: route, entityId };
-    console.log('[PERMISSION-SERVICE] Normalized route:', result);
     return result;
   }
 

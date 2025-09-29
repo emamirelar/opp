@@ -30,6 +30,7 @@ import { SavedFilter } from '../../../interfaces/saved-filter.interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserPreferenceService, GlobalFilters } from '../../../../services/user-preference.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
+import { GlobalFiltersDialogService } from '../../../../services/global-filters-dialog.service';
 
 interface ListViewState<T> {
   loading: boolean;
@@ -84,6 +85,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   private readonly globalFilterService = inject(GlobalFilterService);
   private readonly userPreferenceService = inject(UserPreferenceService);
   private readonly authService = inject(AuthService);
+  private readonly globalFiltersDialogService = inject(GlobalFiltersDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -840,10 +842,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
     this.totalRecordsChange.emit(totalCount);
 
-    if (pageIndex > 1) {
-      console.log(`Load more successful: page ${pageIndex}, loaded ${newRecords.length} new records, total: ${updatedData.length}/${totalCount}`);
-    }
-
     this.cdr.detectChanges();
   }
 
@@ -919,8 +917,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   }
 
   onApplySavedFilter(filter: SavedFilter): void {
-    console.log('🔄 Applying saved filter:', filter.name, 'ID:', filter.id);
-
     if (filter.isAdvancedSearch) {
       // Apply the search criteria from the saved filter
       if (filter.searchCriteria) {
@@ -933,8 +929,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
           } else {
             criteria = filter.searchCriteria;
           }
-
-          console.log('✅ Parsed criteria:', criteria.length, 'filters');
 
           // CLEAN IMPLEMENTATION: Clear and replace all criteria at once
           this.state.update(s => ({
@@ -981,9 +975,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
     // Reset pagination and trigger data load
     this.dataLoader.setPagination(0, this.state().pageSize);
-    
-    // CRITICAL: Execute the search with the applied criteria
-    console.log('🚀 Executing search with applied filter criteria');
     this.loadData();
   }
 
@@ -1097,5 +1088,10 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     }
     
     this.activeFilterLabels.set(labels);
+  }
+
+  // Open global filters dialog
+  openGlobalFiltersDialog(): void {
+    this.globalFiltersDialogService.openDialog();
   }
 }

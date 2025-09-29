@@ -22,6 +22,7 @@ export class GDriveDocumentComponent implements OnDestroy {
   appDocumentRef = input<any>(null);
   acceptedMIMETypes = input<string>('');
   disabled = input<boolean>(false);
+  showUploadButton = input<boolean>(true);
   showAddLinkDialog: boolean = false;
 
   private drivePickerService = inject(DrivePickerService);
@@ -33,6 +34,13 @@ export class GDriveDocumentComponent implements OnDestroy {
   }
 
   handleOnSelectDriveBtnClick() {
+    this.openGoogleDrivePicker();
+  }
+
+  /**
+   * Opens the Google Drive picker for file selection
+   */
+  openGoogleDrivePicker() {
     // Set accepted MIME types for the picker
     this.drivePickerService.setAcceptedMIMETypes(this.acceptedMIMETypes());
     

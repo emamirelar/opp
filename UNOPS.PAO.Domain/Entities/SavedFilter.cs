@@ -10,7 +10,7 @@ namespace UNOPS.PAO.Domain.Entities
         /// <summary>
         /// User-friendly name for the saved filter
         /// </summary>
-        public string Name { get; set; } = string.Empty;
+        public new string Name { get; set; } = string.Empty;
         
         /// <summary>
         /// Optional description for the filter

@@ -3,7 +3,6 @@
 namespace UNOPS.PAO.UNOPSDomain.Entities;
 
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.UNOPSDomain.Entities.Common;
 
 public class UNOPSDocument : Domain.Entities.Document
 {

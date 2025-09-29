@@ -40,7 +40,6 @@ using UNOPS.PAO.UNOPSDataAccess.Seed;
 using System.IO;
 using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Business.Services;
-using UNOPS.PAO.UNOPSBusiness.Managers;
 using Google.Apis.Auth.OAuth2;
 
 namespace UNOPS.PAO.Server;
@@ -151,10 +150,10 @@ public class Startup
         {
             if (!context.Response.Headers.ContainsKey("X-Frame-Options"))
             {
-                context.Response.Headers.Add("X-Frame-Options", "SAMEORIGIN");
-                context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
-                context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
-                context.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains;");
+                context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
+                context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+                context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+                context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains;";
             }
 
             await next();
@@ -213,6 +212,9 @@ public class Startup
         
         // Add memory cache for permission caching
         services.AddMemoryCache();
+        
+        // Register AI prompt cache service
+        services.AddScoped<IAiPromptCacheService, AiPromptCacheService>();
         
         // Register EntityPermissionHelper
         services.AddScoped<EntityPermissionHelper>();

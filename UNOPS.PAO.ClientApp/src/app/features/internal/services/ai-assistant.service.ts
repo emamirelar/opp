@@ -1,7 +1,7 @@
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse, HttpEventType } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map, throwError, timer } from 'rxjs';
-import { catchError, mergeMap, retry, retryWhen, tap } from 'rxjs/operators';
+import { catchError, mergeMap, retry, retryWhen, tap, filter, switchMap } from 'rxjs/operators';
 import {
   AiAssistantRequest,
   AiAssistantSessionRequest,
@@ -82,6 +82,123 @@ export class AiAssistantService {
     });
   }
 
+  // Streaming chat method with HttpClient
+  chatWithFilesStreaming(
+    message: string, 
+    sessionId?: string, 
+    files?: File[], 
+    state?: any
+  ): Observable<{ data: any, complete: boolean }> {
+    const formData = this.createStreamingChatFormData({
+      message,
+      sessionId,
+      files,
+      state,
+      streaming: true
+    });
+    
+    // Use HttpClient to ensure interceptors are applied for authentication
+    return this.http.post(`${this.aiAssistantUrl}/chat`, formData, {
+      headers: {
+        'Accept': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
+      responseType: 'text',
+      observe: 'events',
+      reportProgress: true
+    }).pipe(
+      filter(event => event.type === HttpEventType.DownloadProgress || event.type === HttpEventType.Response),
+      switchMap(event => {
+        if (event.type === HttpEventType.Response) {
+          // Handle final response
+          console.log('🌊 [FRONTEND] Stream completed');
+          return this.parseCompleteStreamingResponse(event.body || '');
+        } else if (event.type === HttpEventType.DownloadProgress) {
+          // Handle streaming chunks
+          const partialText = (event as any).partialText || '';
+          return this.parseStreamingChunks(partialText);
+        }
+        return [];
+      }),
+      catchError(error => {
+        console.error('🌊 [FRONTEND] HttpClient streaming error:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Helper method to parse streaming chunks from HttpClient
+  private parseStreamingChunks(partialText: string): Observable<{ data: any, complete: boolean }> {
+    return new Observable(observer => {
+      try {
+        // Parse Server-Sent Events format
+        const lines = partialText.split('\n');
+        const dataLines = lines.filter(line => line.trim() && line.startsWith('data: '));
+        
+        for (const line of dataLines) {
+          try {
+            const dataStr = line.slice(6).trim(); // Remove 'data: ' prefix
+            if (dataStr) {
+              const data = JSON.parse(dataStr);
+              const isComplete = this.isCompleteResponse(data);
+              
+              console.log(`🌊 [FRONTEND] HttpClient chunk parsed, complete: ${isComplete}`);
+              observer.next({ data, complete: isComplete });
+            }
+          } catch (parseError) {
+            console.warn('[FRONTEND] Failed to parse HttpClient streaming data:', parseError);
+          }
+        }
+        
+        observer.complete();
+      } catch (error) {
+        observer.error(error);
+      }
+    });
+  }
+
+  // Helper method to parse complete streaming response
+  private parseCompleteStreamingResponse(responseText: string): Observable<{ data: any, complete: boolean }> {
+    return new Observable(observer => {
+      try {
+        // Parse the final response
+        const lines = responseText.split('\n');
+        const dataLines = lines.filter(line => line.trim() && line.startsWith('data: '));
+        
+        if (dataLines.length > 0) {
+          const lastDataLine = dataLines[dataLines.length - 1];
+          try {
+            const data = JSON.parse(lastDataLine.slice(6)); // Remove 'data: ' prefix
+            observer.next({ data, complete: true });
+          } catch (parseError) {
+            console.warn('Failed to parse final streaming response:', parseError);
+            observer.next({ data: { message: 'Stream completed' }, complete: true });
+          }
+        } else {
+          observer.next({ data: { message: 'Stream completed' }, complete: true });
+        }
+        
+        observer.complete();
+      } catch (error) {
+        observer.error(error);
+      }
+    });
+  }
+
+  // Helper method to determine if a streaming response is complete
+  private isCompleteResponse(data: any): boolean {
+    // The final chunk is identified by content.role === 'user' 
+    // which appears to be the user message echo at the end of streaming
+    if (data.content?.role === 'user') {
+       return true;
+    }
+    
+    // All other chunks (model responses, partial chunks, etc.) are intermediate
+    return false;
+  }
+
   // Get personalized suggestions for the user
   getSuggestions(): Observable<any> {
     return this.http.get(`${this.apiUrl}/ai-assistant/generate-suggestions`).pipe(
@@ -128,8 +245,57 @@ export class AiAssistantService {
       validation.valid.forEach((file, index) => {
         formData.append('Files', file, file.name);
       });
+    }
+    
+    return formData;
+  }
+
+  // Helper method to create FormData for streaming chat requests
+  private createStreamingChatFormData(requestData: ChatRequestData & { streaming?: boolean }): FormData {
+    const formData = new FormData();
+    
+    // Add message
+    formData.append('message', requestData.message);
+    
+    // Add session ID if provided
+    if (requestData.sessionId) {
+      formData.append('session_id', requestData.sessionId);
+    }
+    
+    // Add streaming flag
+    formData.append('streaming', requestData.streaming ? 'true' : 'false');
+    
+    // Add app_name (required by backend)
+    formData.append('app_name', 'opportunityplus');
+    
+    // Add user information (these should come from auth service, but using defaults for now)
+    formData.append('user_id', localStorage.getItem('user_id') || '');
+    formData.append('user_email', localStorage.getItem('user_email') || '');
+    
+    // Add state if provided
+    if (requestData.state) {
+      const stateString = typeof requestData.state === 'string' 
+        ? requestData.state 
+        : JSON.stringify(requestData.state);
+      formData.append('state', stateString);
+    }
+    
+    // Add files if provided
+    if (requestData.files && requestData.files.length > 0) {
+      // Validate files first
+      const validation = this.validateFiles(requestData.files);
       
-      console.log(`[AI-ASSISTANT] Added ${validation.valid.length} valid files to request`);
+      if (validation.invalid.length > 0) {
+        // Log warnings for invalid files but continue with valid ones
+        validation.invalid.forEach(item => {
+          console.warn(`[AI-ASSISTANT] Invalid file skipped: ${item.error}`);
+        });
+      }
+      
+      // Add valid files to FormData
+      validation.valid.forEach((file, index) => {
+        formData.append('files', file, file.name);
+      });
     }
     
     return formData;

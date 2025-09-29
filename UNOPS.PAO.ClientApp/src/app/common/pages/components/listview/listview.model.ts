@@ -3,7 +3,7 @@ import { SearchField } from '../../../services/search-parser.service';
 /**
  * Supported entity types for saved filters and advanced search functionality
  */
-export type EntityType = 'Partner' | 'Interaction' | 'Contact';
+export type EntityType = 'Partner' | 'Interaction' | 'Contact' | 'PartnerCategory' | 'PartnerGroup';
 
 export interface ListViewColumn {
   label: string;

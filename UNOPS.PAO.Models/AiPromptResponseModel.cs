@@ -1,6 +1,6 @@
 namespace UNOPS.PAO.Models;
 public class AiPromptResponseModel
 {
-    public string ScreenName { get; set; }
-    public string Response { get; set; }
+    public required string ScreenName { get; set; }
+    public required string Response { get; set; }
 }

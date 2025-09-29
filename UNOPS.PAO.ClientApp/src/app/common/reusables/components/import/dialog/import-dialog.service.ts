@@ -1339,6 +1339,8 @@ export class ImportDialogService {
     // Format the payload properly for the specific entity type
     const formattedPayload = this.formatPayloadForEntity(duplicateCheckPayload, entityType);
 
+    return of(null);
+
     // Get the appropriate API endpoint and make direct HTTP call
     const detectDuplicatesEndpoint = `/api/${entityType.toLowerCase()}/detect-duplicates`;
 

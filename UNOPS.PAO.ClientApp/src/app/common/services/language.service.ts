@@ -31,7 +31,6 @@ export class LanguageService {
       this.authService.user().pipe(
         switchMap(() => this.http.get<{ language: string }>('/api/global/preferred-language')),
         catchError((error) => {
-          console.log('Could not load preferred language, falling back to localStorage:', error);
           // Fall back to localStorage if server call fails
           const savedLanguage = this.getCurrentLanguage();
           return of({ language: savedLanguage.code });
@@ -45,17 +44,14 @@ export class LanguageService {
           localStorage.setItem(this.languageKey, JSON.stringify(preferredLanguage));
           this.currentLanguage = preferredLanguage;
           this.translationService.use(preferredLanguage.code).subscribe(() => {
-            console.log('Language initialized to:', preferredLanguage.code);
             resolve();
           });
         },
         error: (error) => {
-          console.log('Error loading preferred language:', error);
           // Final fallback to localStorage
           const fallbackLanguage = this.getCurrentLanguage();
           this.currentLanguage = fallbackLanguage;
           this.translationService.use(fallbackLanguage.code).subscribe(() => {
-            console.log('Language initialized to fallback:', fallbackLanguage.code);
             resolve();
           });
         }
@@ -76,7 +72,6 @@ export class LanguageService {
     // Update user language preference in the database
     this.updatePreferredLanguage(language.code).subscribe({
       next: () => {
-        console.log('User language preference updated successfully');
       },
       error: (error) => {
         console.error('Error updating user language preference:', error);

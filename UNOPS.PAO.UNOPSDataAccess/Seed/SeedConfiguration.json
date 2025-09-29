@@ -52,6 +52,13 @@
       "filePath": "Seeders/PartnerTreeSeeder.cs"
     },
     {
+      "order": 6,
+      "name": "AiPrompts",
+      "type": "sql",
+      "path": "AiPrompts.sql", 
+      "description": "AiPrompts data"
+    },
+    {
       "order": 7,
       "name": "AiPrompts",
       "type": "sql",

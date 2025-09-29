@@ -10,6 +10,16 @@ export interface ChatMessage {
   sources?: Source[];
   isFromHistory?: boolean; // Flag to indicate if message is loaded from history
   inlineData?: InlineData[]; // Support for inline data like images
+  // Streaming support - separate arrays for each chunk type
+  streamingTypes?: {
+    thoughts: any[];
+    functionCall: any[];
+    functionResponse: any[];
+    markdown: any[];
+    mermaid: any[];
+    chart: any[];
+    [key: string]: any[]; // Allow for additional types
+  };
 }
 
 export interface InlineData {
@@ -24,11 +34,17 @@ export interface Source {
 }
 
 export interface ResultItem {
-  type: 'markdown' | 'mermaid' | 'code' | 'text' | 'grid' | 'card' | 'chartjs';
-  message: string | any[] | any; // string for text/markdown/code, array for grid/card data, object for chartjs
+  type: 'markdown' | 'mermaid' | 'code' | 'text' | 'grid' | 'card' | 'chartjs' | 'thought' | 'functionCall' | 'functionResponse' | 'chart';
+  message: string | any[] | any; // string for text/markdown/code/thought, array for grid/card data, object for chartjs
   language?: string; // for code blocks
   entity?: string; // for grid/card data
   chartType?: string; // for chartjs: pie, bar, line, doughnut, etc.
+  partial?: boolean; // for streaming support - indicates if this is a partial chunk that should be updated
+  invocationId?: string; // unique identifier for the streaming session
+  renderingId?: string; // unique identifier for rendering tracking
+  completed?: boolean; // indicates if this stream item is completed (no more updates)
+  timestamp?: number; // timestamp for change detection
+  arrivalOrder?: number; // order in which this chunk type first appeared
 }
 
 export interface ChatFile {

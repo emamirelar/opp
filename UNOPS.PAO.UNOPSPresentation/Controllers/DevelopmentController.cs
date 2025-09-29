@@ -333,12 +333,10 @@ public class DevelopmentController : ControllerBase
             
         // Validate user exists
         var user = await _userManager.FindByEmailAsync(email);
-        bool useTestEmail = false;
         
         if (user == null)
         {
             // Try creating a dummy user for testing
-            useTestEmail = true;
             user = new PAOIdentityUser
             {
                 Email = email,
@@ -559,7 +557,7 @@ public class DevelopmentController : ControllerBase
                         .Select(s => s.GetType().FullName)
                         .ToList();
                         
-                    services = userServiceNames ?? new List<string>();
+                    services = userServiceNames?.Where(s => s != null).ToList() ?? new List<string>();
                 }
             }
         }
@@ -713,24 +711,24 @@ public class DevelopmentController : ControllerBase
             // Administrator has access to everything (not needed in EntityPermissions)
             
             // Internal role permissions
-            new { EntityName = "Partner", Action = "Read", RoleName = "Internal", PropertyName = (string)null, FilterExpression = (string)null },
-            new { EntityName = "Partner", Action = "Create", RoleName = "Internal", PropertyName = (string)null, FilterExpression = (string)null },
-            new { EntityName = "Partner", Action = "Update", RoleName = "Internal", PropertyName = (string)null, FilterExpression = (string)null },
-            new { EntityName = "Partner", Action = "Delete", RoleName = "Internal", PropertyName = (string)null, FilterExpression = (string)null },
+            new { EntityName = "Partner", Action = "Read", RoleName = "Internal", PropertyName = (string?)null, FilterExpression = (string?)null },
+            new { EntityName = "Partner", Action = "Create", RoleName = "Internal", PropertyName = (string?)null, FilterExpression = (string?)null },
+            new { EntityName = "Partner", Action = "Update", RoleName = "Internal", PropertyName = (string?)null, FilterExpression = (string?)null },
+            new { EntityName = "Partner", Action = "Delete", RoleName = "Internal", PropertyName = (string?)null, FilterExpression = (string?)null },
             
             // External role permissions with row-level filters
-            new { EntityName = "Partner", Action = "Read", RoleName = "External", PropertyName = (string)null, FilterExpression = "IsPublic == true" },
-            new { EntityName = "Partner", Action = "Create", RoleName = "External", PropertyName = (string)null, FilterExpression = (string)null },
-            new { EntityName = "Partner", Action = "Update", RoleName = "External", PropertyName = (string)null, FilterExpression = "CreatedBy == CurrentUser" },
+            new { EntityName = "Partner", Action = "Read", RoleName = "External", PropertyName = (string?)null, FilterExpression = "IsPublic == true" },
+            new { EntityName = "Partner", Action = "Create", RoleName = "External", PropertyName = (string?)null, FilterExpression = (string?)null },
+            new { EntityName = "Partner", Action = "Update", RoleName = "External", PropertyName = (string?)null, FilterExpression = "CreatedBy == CurrentUser" },
             
             // Partner role permissions with row-level filters
-            new { EntityName = "Partner", Action = "Read", RoleName = "Partner", PropertyName = (string)null, FilterExpression = "CreatedBy == CurrentUser" },
-            new { EntityName = "Partner", Action = "Update", RoleName = "Partner", PropertyName = (string)null, FilterExpression = "CreatedBy == CurrentUser" },
+            new { EntityName = "Partner", Action = "Read", RoleName = "Partner", PropertyName = (string?)null, FilterExpression = "CreatedBy == CurrentUser" },
+            new { EntityName = "Partner", Action = "Update", RoleName = "Partner", PropertyName = (string?)null, FilterExpression = "CreatedBy == CurrentUser" },
             
             // Contact permissions
-            new { EntityName = "Contact", Action = "Read", RoleName = "Internal", PropertyName = (string)null, FilterExpression = (string)null },
-            new { EntityName = "Contact", Action = "Read", RoleName = "External", PropertyName = (string)null, FilterExpression = "IsPublic == true" },
-            new { EntityName = "Contact", Action = "Read", RoleName = "Partner", PropertyName = (string)null, FilterExpression = "CreatedBy == CurrentUser" }
+            new { EntityName = "Contact", Action = "Read", RoleName = "Internal", PropertyName = (string?)null, FilterExpression = (string?)null },
+            new { EntityName = "Contact", Action = "Read", RoleName = "External", PropertyName = (string?)null, FilterExpression = "IsPublic == true" },
+            new { EntityName = "Contact", Action = "Read", RoleName = "Partner", PropertyName = (string?)null, FilterExpression = "CreatedBy == CurrentUser" }
         };
         
         // Add permissions to the database

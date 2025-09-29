@@ -107,7 +107,7 @@ import { TranslateModule } from '@ngx-translate/core';
           </ng-container>
           
           <ng-container *ngIf="rightPanelType === 'component' && !rightPanelComponent">
-            <div class="coming-soon-container">
+            <!-- <div class="coming-soon-container">
               <div class="coming-soon-icon">
                 <i class="pi pi-cog pi-spin"></i>
               </div>
@@ -121,7 +121,9 @@ import { TranslateModule } from '@ngx-translate/core';
                   <strong>Entity ID:</strong> {{ rightPanelEntityId }}
                 </div>
               </div>
-            </div>
+            </div> -->
+            <!-- TAD: Defaulting to partner for now -->
+            <app-partner-view [recordId]="rightPanelEntityId || ''" [showAiPanel]="false"></app-partner-view>
           </ng-container>
           
           <ng-container *ngIf="rightPanelType === 'url'">
@@ -304,6 +306,27 @@ export class AiContentComponent implements OnInit, OnDestroy {
   rightPanelEntityId: string | null = null;
   rightPanelRowData: any = null;
 
+  // Listen for current session changes to update URL - must be in injection context
+  private sessionUrlEffect = effect(() => {
+    const currentSessionId = this.aiAssistantData.currentSessionId();
+    const currentRoute = this.router.url;
+    
+    // Only update URL if we're on an AI route
+    if (currentRoute.startsWith('/ai')) {
+      if (currentSessionId) {
+        // Navigate to session-specific URL
+        if (currentRoute !== `/ai/${currentSessionId}`) {
+          this.router.navigate(['/ai', currentSessionId], { replaceUrl: true });
+        }
+      } else {
+        // Navigate to general AI URL when no session
+        if (currentRoute !== '/ai') {
+          this.router.navigate(['/ai'], { replaceUrl: true });
+        }
+      }
+    }
+  });
+
   ngOnInit() {
     // Set the ViewContainerRef for the AI assistant data service
     this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
@@ -320,27 +343,6 @@ export class AiContentComponent implements OnInit, OnDestroy {
             this.router.navigate(['/ai'], { replaceUrl: true });
           }
         });
-      }
-    });
-    
-    // Listen for current session changes to update URL
-    effect(() => {
-      const currentSessionId = this.aiAssistantData.currentSessionId();
-      const currentRoute = this.router.url;
-      
-      // Only update URL if we're on an AI route
-      if (currentRoute.startsWith('/ai')) {
-        if (currentSessionId) {
-          // Navigate to session-specific URL
-          if (currentRoute !== `/ai/${currentSessionId}`) {
-            this.router.navigate(['/ai', currentSessionId], { replaceUrl: true });
-          }
-        } else {
-          // Navigate to general AI URL when no session
-          if (currentRoute !== '/ai') {
-            this.router.navigate(['/ai'], { replaceUrl: true });
-          }
-        }
       }
     });
   }
@@ -398,13 +400,11 @@ export class AiContentComponent implements OnInit, OnDestroy {
   };
 
   onCardClicked(event: { entityType: string, entityId: string, rowData: any }) {
-    console.log('🔗 AiContent - Card clicked:', event);
     
     const isDifferentEntity = this.rightPanelEntityType !== event.entityType || 
                              this.rightPanelEntityId !== event.entityId;
 
     if (isDifferentEntity) {
-      console.log('🔗 AiContent - Different entity detected, will reload component');
       
       this.rightPanelVisible = false;
       this.cdr.detectChanges();
@@ -413,12 +413,10 @@ export class AiContentComponent implements OnInit, OnDestroy {
         this.loadEntityInPanel(event);
       }, 0);
     } else {
-      console.log('🔗 AiContent - Same entity, keeping existing panel');
     }
   }
 
   private loadEntityInPanel(event: { entityType: string, entityId: string, rowData: any }) {
-    console.log('🔗 AiContent - Loading entity in panel:', event);
     
     this.rightPanelEntityType = event.entityType;
     this.rightPanelEntityId = event.entityId;
@@ -428,13 +426,11 @@ export class AiContentComponent implements OnInit, OnDestroy {
     const component = this.entityComponentMap[componentKey];
     
     if (component) {
-      console.log('🔗 AiContent - Found component for', event.entityType);
       this.rightPanelType = 'component';
       this.rightPanelComponent = component;
       this.rightPanelVisible = true;
       this.cdr.detectChanges();
     } else {
-      console.log('🔗 AiContent - No component found for', event.entityType);
       this.rightPanelType = 'component';
       this.rightPanelComponent = null;
       this.rightPanelVisible = true;
@@ -443,7 +439,6 @@ export class AiContentComponent implements OnInit, OnDestroy {
   }
 
   onUrlClicked(url: string | Event) {
-    console.log('🔗 AiContent - URL clicked:', url);
     if (typeof url === 'string') {
       this.rightPanelType = 'url';
       this.rightPanelUrl = url;

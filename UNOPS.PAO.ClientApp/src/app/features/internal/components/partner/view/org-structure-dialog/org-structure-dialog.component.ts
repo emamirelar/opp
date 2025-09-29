@@ -106,28 +106,6 @@ export class OrgStructureDialogComponent implements OnInit {
     
     this.organizationService.getOrganizationHierarchy().subscribe({
       next: (response: any) => {
-        
-
-        // Log data to console for debugging
-        if (response && response.length > 0) {
-          
-
-          // Check for data properties
-          if (response[0].data) {
-            
-            console.log('Component: Sample values:',
-              'id=', response[0].data.id,
-              'name=', response[0].data.name,
-              'code=', response[0].data.code,
-              'type=', response[0].data.type,
-              'description=', response[0].data.description
-            );
-          } else {
-            console.warn('Component: No data property found in the first node');
-          }
-        } else {
-          console.warn('Component: Empty response or no items in response array');
-        }
 
         // Set the data
         this.data = response;
@@ -488,20 +466,6 @@ export class OrgStructureDialogComponent implements OnInit {
 
     // Find the main root node
     this.findMainRootNode();
-
-    // Log the debug info that should appear in the UI
-    
-    
-
-    if (this.data.length > 0 && this.data[0].data) {
-      console.log('Sample node data:',
-        'ID:', this.data[0].data.id,
-        'Name:', this.data[0].data.name,
-        'Code:', this.data[0].data.code,
-        'Type:', this.data[0].data.type,
-        'Description:', this.data[0].data.description
-      );
-    }
   }
 
   // Create the most basic possible test data

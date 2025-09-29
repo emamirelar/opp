@@ -10,7 +10,7 @@ public interface IGeminiManager
 {
     AiPrompt MapModelToEntity(GeminiProcessDataRequest req);
     Task<IEnumerable<AiPrompt>> GetPromptData(string type);
-    Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData);
+    Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string entityId = null);
     Task<SessionWithChats> GetSessionDataWithChats(string sessionId, int userId);
     Task<IEnumerable<AiChatSession>> GetSessionData(string sessionId, int userId);
     Task<IEnumerable<AiChatSession>> GetUserSessions(int userId);

@@ -5,14 +5,11 @@ using AutoMapper;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSDomain.Entities;
-using UNOPS.PAO.UNOPSDomain.Entities.Common;
 
 public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<Project, ProjectModel>();
-        CreateMap<Project, ProjectSummaryModel>();
         CreateMap<UNOPSPartner, UNOPS.PAO.Models.PartnerSummaryModel>();
         CreateMap<ContactRequest, UNOPSContact>();
         CreateMap<UNOPSContact, ContactModel>()

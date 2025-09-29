@@ -41,7 +41,7 @@ public class UserProfile : ModifiableDeletableEntity
     /// <summary>
     /// Computed full name from FirstName and LastName
     /// </summary>
-    public string Name
+    public new string Name
     {
         get
         {

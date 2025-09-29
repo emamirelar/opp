@@ -5,34 +5,70 @@ import {
   OnInit,
   signal,
   inject,
-  computed
+  computed,
+  ChangeDetectorRef,
+  ViewChild
 } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 import { ButtonModule } from 'primeng/button';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialog } from 'primeng/confirmdialog';
+import { DialogService } from 'primeng/dynamicdialog';
 
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ListviewComponent } from '../../../../../common/pages/components/listview/listview.component';
 import { ListViewColumn, ListViewConfig } from '../../../../../common/pages/components/listview/listview.model';
 import { ContactService } from '../../../services/contact.service';
 import { EntityConfigurationService } from '../../../services/entity-configuration.service';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { PermissionService, EntityPermissions } from '../../../../../essentials/services/permission.service';
+import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
+import { ContactEditDialogComponent } from '../../contact/edit-dialog/contact-edit-dialog.component';
+import { Contact } from '../../../models/contact.model';
 
 @Component({
   selector: 'app-partner-contacts',
   templateUrl: './partner-contacts.component.html',
-  imports: [ButtonModule, TranslateModule, ListviewComponent],
+  imports: [CommonModule, ButtonModule, TranslateModule, ListviewComponent, ConfirmDialog],
   standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [DialogService, ConfirmationService]
 })
 export class PartnerContactsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private contactService = inject(ContactService);
   private entityConfigurationService = inject(EntityConfigurationService);
+  private permissionUtilityService = inject(PermissionUtilityService);
+  private permissionService = inject(PermissionService);
+  private feedbackDialogService = inject(FeedbackDialogService);
+  private dialogService = inject(DialogService);
+  private translateService = inject(TranslateService);
+  private cdr = inject(ChangeDetectorRef);
 
   partnerId = input<string>();
   partnerName = input<string>();
   dataUrl = signal<string>('');
+
+  // Permission management for contacts within partner context
+  entityPermissions = signal<EntityPermissions>({
+    entity: 'Contact',
+    hasAccess: false,
+    permissions: {
+      canRead: false,
+      canCreate: false,
+      canUpdate: false,
+      canDelete: false,
+      canExport: false,
+      canImport: false
+    }
+  });
+  permissionsLoading = signal<boolean>(true);
+
+  // Reference to listview component for export functionality
+  @ViewChild(ListviewComponent) listviewComponent!: ListviewComponent;
 
   // Dynamic columns loaded from API
   columns = signal<ListViewColumn[]>([]);
@@ -78,37 +114,75 @@ export class PartnerContactsComponent implements OnInit {
     }
   ];
 
-  config: ListViewConfig = {
+  // Configure listview behavior with computed permissions
+  config = computed<ListViewConfig>(() => ({
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
     enablePagination: false, // Using infinite scroll
     enableSorting: true,
-    enableExport: true,
+    enableExport: this.entityPermissions().permissions.canCreate || this.entityPermissions().permissions.canUpdate,
     scrollable: true,
     scrollHeight: 'calc(100vh - 20rem)',
     autoSwitchToCardView: false,
     autoSwitchMinWidth: 768,
     defaultViewMode: 'card',
-    entityName: 'Contact',
-     
-  };
+    entityName: 'Contact'
+  }));
+
 
   ngOnInit(): void {
     // If partnerId is provided as input, use it directly
     if (this.partnerId()) {
       this.dataUrl.set(`/api/contact?partnerId=${this.partnerId()}`);
+      this.loadPermissions();
     } else {
       // Otherwise, get partnerId from parent route params (when used as a child route)
       this.route.parent?.paramMap.subscribe(params => {
         const recordId = params.get('recordId');
         if (recordId) {
           this.dataUrl.set(`/api/contact?partnerId=${recordId}`);
+          // Load permissions once we have the partner ID
+          this.loadPermissions();
         }
       });
     }
 
     // Load dynamic columns from API
     this.loadContactColumns();
+  }
+
+  private loadPermissions(): void {
+    this.permissionsLoading.set(true);
+    
+    // Clear cache before loading to ensure fresh permissions
+    this.permissionService.clearPermissionCaches();
+    
+    // Construct the correct route path for contacts within partner context
+    const currentPartnerId = this.partnerId() || this.getCurrentPartnerIdFromRoute();
+    const contactsRoutePath = currentPartnerId ? 
+      `partnerships/partners/${currentPartnerId}/contacts` : 
+      'partnerships/contacts';
+    
+    // Load from server using the specific contacts route
+    this.permissionService.getEntityPermissions(contactsRoutePath)
+      .subscribe({
+        next: (permissions) => {
+          if (!permissions.hasAccess) {
+            console.warn('No access to partner contacts');
+            this.router.navigate(['/access-denied']);
+            return;
+          }
+          
+          this.entityPermissions.set(permissions);
+          this.permissionsLoading.set(false);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error loading contact permissions in partner context:', error);
+          this.permissionsLoading.set(false);
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   private loadContactColumns() {
@@ -194,10 +268,7 @@ export class PartnerContactsComponent implements OnInit {
   }
 
   onAddContact(): void {
-    const currentPartnerId = this.partnerId() || this.getCurrentPartnerIdFromRoute();
-    console.log('Add contact for partner:', currentPartnerId);
-    // Open add contact dialog or navigate to create form
-    // Implementation depends on your contact creation flow
+    this.openContactEditDialog();
   }
 
   private getCurrentPartnerIdFromRoute(): string {
@@ -209,5 +280,66 @@ export class PartnerContactsComponent implements OnInit {
       return;
     }
     this.router.navigate(['/partnerships/contacts', record.id]);
+  }
+
+  /**
+   * Opens the contact creation or editing dialog with form fields for managing contact information
+   */
+  openContactEditDialog(contactData: Contact = {}) {
+    // Check if user has appropriate permission
+    if (contactData.id && !this.permissionUtilityService.canUpdate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'message.noPermissionToEdit',
+        summary: 'message.permissionDenied'
+      });
+      return;
+    } else if (!contactData.id && !this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'message.noPermissionToCreate',
+        summary: 'message.permissionDenied'
+      });
+      return;
+    }
+
+    // Set the partner for the new contact if creating
+    const currentPartnerId = this.partnerId() || this.getCurrentPartnerIdFromRoute();
+    
+    if (!contactData.id && currentPartnerId) {
+      contactData.partner = { id: currentPartnerId };
+    }
+
+    const ref = this.dialogService.open(ContactEditDialogComponent, {
+      header: contactData.id ? this.translateService.instant('title.editContact') : this.translateService.instant('title.newContact'),
+      width: '40vw',
+      breakpoints: { '960px': '95vw' },
+      closable: true,
+      data: {
+        mode: contactData.id ? 'edit' : 'new',
+        record: contactData,
+        partnerContext: {
+          partnerId: currentPartnerId,
+          lockPartner: true // Lock partner field when opened from partner context
+        }
+      }
+    });
+
+    const refSub = ref.onClose.subscribe((result) => {
+      if (result) {
+        this._handleOnRecordCreation(result);
+      }
+      refSub.unsubscribe();
+    });
+  }
+
+
+  private _handleOnRecordCreation(newRecordData: Contact) {
+    if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
+      // Refresh the list before navigating to show the new contact
+      window.dispatchEvent(new CustomEvent('refresh-listview'));
+      // Navigate to the new contact details
+      this.router.navigate(['partnerships/contacts', newRecordData.id.toString()]);
+    } else {
+      console.error('Cannot navigate to created contact: id is undefined', newRecordData);
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -51,6 +51,7 @@ import { AuthService } from '../../../../../essentials/services/auth.service';
 import { EntityTagsComponent } from '../../../../../common/components/entity-tags/entity-tags.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { BaseEngagementListComponent } from '../../base-engagement/base-engagement-list.component';
 
 /**
  * @uiEntity Partner
@@ -98,6 +99,7 @@ import { ConfirmationService } from 'primeng/api';
     RouterModule,
     ConfirmDialogModule,
     EntityTagsComponent,
+    BaseEngagementListComponent,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,
@@ -109,6 +111,16 @@ import { ConfirmationService } from 'primeng/api';
       height: 5rem !important;
       font-size: 2.5rem !important;
     }
+
+    .ai-panel .p-panel {
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+      border-radius: 0.5rem !important;
+    }
+    .ai-panel ::ng-deep .p-panel-content {
+      border-bottom-left-radius: 8px !important;
+      border-bottom-right-radius: 8px !important;
+    }
+
   `]
 })
 export class PartnerViewComponent implements OnInit {
@@ -154,6 +166,15 @@ export class PartnerViewComponent implements OnInit {
   entityTypePartner = EntityType.Partner;
   infoLoading = signal<boolean>(false);
 
+  // ViewChild reference for link list component
+  @ViewChild('linkListComponent') linkListComponent!: LinkListComponent;
+  
+  // ViewChild reference for document component
+  @ViewChild('appDocument') documentComponent!: DocumentComponent;
+  
+  // ViewChild reference for GDrive document component
+  @ViewChild('gdriveComponent') gdriveComponent!: GDriveDocumentComponent;
+
   //To be handled by permissions later so that only PRM Admin has this value set to true
   showAdditionalInfo = signal<boolean>(true);
 
@@ -177,8 +198,6 @@ export class PartnerViewComponent implements OnInit {
   }
 
   ngOnInit() {
-    console.log('PartnerView ngOnInit - showAiPanel value:', this.showAiPanel);
-
     // Check admin role
     this.authService.isAdmin().subscribe({
       next: (isAdmin) => {
@@ -192,7 +211,6 @@ export class PartnerViewComponent implements OnInit {
 
     // If recordId is provided via Input (AI layout), load data directly
     if (this.recordId && this.recordId !== '') {
-      console.log('Using input recordId:', this.recordId);
       this._loadRecordDetails();
       return;
     }
@@ -457,19 +475,15 @@ export class PartnerViewComponent implements OnInit {
    * @permissions canApprove
    */
   handleApprovalClick() {
-    console.log('Approval button clicked for partner:', this.recordData().name);
-
     // Show confirmation dialog
     this.confirmationService.confirm({
       message: `Are you sure you want to approve the partner "${this.recordData().name}"? This action cannot be undone.`,
       header: 'Confirm Approval',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        console.log('Approval confirmed, opening approval dialog');
         this.openApprovalDialog();
       },
       reject: () => {
-        console.log('Approval cancelled');
       }
     });
   }
@@ -505,8 +519,6 @@ export class PartnerViewComponent implements OnInit {
    * @permissions canActivate
    */
   handleActivateClick() {
-    console.log('Activate button clicked for partner:', this.recordData().name);
-
     // Check if required fields are missing before proceeding
     const partner = this.recordData();
     const missingFields = this.checkRequiredFieldsForActivation(partner);
@@ -525,7 +537,6 @@ export class PartnerViewComponent implements OnInit {
       header: this.translateService.instant('message.confirmActivation'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        console.log('Activation confirmed, calling API');
         this.activatePartner();
       },
       reject: () => {
@@ -540,7 +551,6 @@ export class PartnerViewComponent implements OnInit {
   private activatePartner() {
     this.partnerService.activatePartner(this.recordId).subscribe({
       next: (result) => {
-        console.log('Partner activated successfully:', result);
         this.feedbackDialogService.showSuccessToast({
           detail: this.translateService.instant('message.partnerActivatedSuccessfully', {
             partnerName: this.recordData().name
@@ -607,6 +617,33 @@ export class PartnerViewComponent implements OnInit {
 
   toggleFullContent() {
     this.showFullContent.set(!this.showFullContent());
+  }
+
+  /**
+   * Opens the add link dialog by calling the link list component's openEditDialog method
+   */
+  openAddLinkDialog() {
+    if (this.linkListComponent) {
+      this.linkListComponent.openEditDialog();
+    }
+  }
+
+  /**
+   * Opens the upload document dialog by calling the document component's openUploadDialog method
+   */
+  openUploadDialog() {
+    if (this.documentComponent) {
+      this.documentComponent.openUploadDialog();
+    }
+  }
+
+  /**
+   * Opens the Google Drive picker by calling the GDrive component's openGoogleDrivePicker method
+   */
+  openGoogleDriveDialog() {
+    if (this.gdriveComponent) {
+      this.gdriveComponent.openGoogleDrivePicker();
+    }
   }
 
 
@@ -676,6 +713,15 @@ export class PartnerViewComponent implements OnInit {
         this._loadRecordDetails();
       }
     });
+  }
+
+
+  
+  /**
+   * Convert recordId string to number for use with BaseEngagementListComponent
+   */
+  get partnerIdAsNumber(): number | undefined {
+    return this.recordId ? parseInt(this.recordId, 10) : undefined;
   }
 
 }

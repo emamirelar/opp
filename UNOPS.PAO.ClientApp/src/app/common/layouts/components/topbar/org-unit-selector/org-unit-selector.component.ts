@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -9,6 +9,7 @@ import {MessageService, TreeNode} from 'primeng/api';
 import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
 import { Skeleton } from 'primeng/skeleton';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { OrganizationHierarchyService } from '../../../../../services/organization-hierarchy.service';
 import { UserPreferenceService } from '../../../../../services/user-preference.service';
 import { GlobalFilterService } from '../../../../../services/global-filter.service';
@@ -41,6 +42,7 @@ interface OrgUnitOption {
     IconField,
     InputIcon,
     Skeleton,
+    TranslateModule,
   ],
   templateUrl: './org-unit-selector.component.html',
   styleUrls: ['./org-unit-selector.component.scss'],
@@ -66,7 +68,9 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
     private organizationHierarchyService: OrganizationHierarchyService,
     private userPreferenceService: UserPreferenceService,
     private globalFilterService: GlobalFilterService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private cdr: ChangeDetectorRef,
+    private translateService: TranslateService
   ) {}
 
   ngOnInit() {
@@ -76,13 +80,27 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     // React to changes in preselectedOrgUnitId
     if (changes['preselectedOrgUnitId'] && this.orgUnitOptions.length > 0) {
-      this.updateSelectedOrgUnit();
+      // Force update when preselectedOrgUnitId changes
+      this.forceUpdateSelectedOrgUnit();
     }
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  getDisplayName(): string {
+    if (!this.selectedOrgUnit) {
+      return this.translateService.instant('orgUnitSelector.allOrganizationalUnits');
+    }
+    
+    // If this is the root node (level 0), always show "All organizational units"
+    if (this.selectedOrgUnit.level === 0) {
+      return this.translateService.instant('orgUnitSelector.allOrganizationalUnits');
+    }
+    
+    return this.selectedOrgUnit.name;
   }
 
   showDialog() {
@@ -220,6 +238,7 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
         this.defaultOrgUnitId = preference.defaultOrgUnitId;
         this.processHierarchyData(hierarchy);
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading data:', error);
@@ -229,6 +248,7 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
           detail: 'Failed to load organization units'
         });
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -351,21 +371,27 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
     // Only set selectedOrgUnit if no explicit selection has been made
     // This prevents overriding user's choice from global filters dialog
     if (!this.selectedOrgUnit) {
-      // Priority 1: Use preselected org unit ID from global filters dialog
-      if (this.preselectedOrgUnitId) {
-        this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === this.preselectedOrgUnitId) || null;
-      }
-      
-      // Priority 2: Use user's default org unit
-      if (!this.selectedOrgUnit && this.defaultOrgUnitId) {
-        this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === this.defaultOrgUnitId) || null;
-      }
-      
-      // Priority 3: Fallback to first available
-      if (!this.selectedOrgUnit && this.orgUnitOptions.length > 0) {
-        this.selectedOrgUnit = this.orgUnitOptions.find(u => u.level === 0) || this.orgUnitOptions[0];
-      }
+      this.forceUpdateSelectedOrgUnit();
     }
+  }
+
+  private forceUpdateSelectedOrgUnit() {
+    // Always update selectedOrgUnit based on current preselectedOrgUnitId
+    // Priority 1: Use preselected org unit ID from global filters dialog
+    if (this.preselectedOrgUnitId) {
+      this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === this.preselectedOrgUnitId) || null;
+    }
+    // Priority 2: If preselectedOrgUnitId is null, clear selection (show all)
+    else if (this.preselectedOrgUnitId === null) {
+      this.selectedOrgUnit = null;
+    }
+    // Priority 3: Use user's default org unit (only if no preselected value is set)
+    else if (!this.selectedOrgUnit && this.defaultOrgUnitId) {
+      this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === this.defaultOrgUnitId) || null;
+    }
+    
+    // Trigger change detection to update the UI
+    this.cdr.detectChanges();
   }
 
   // Tree helper methods

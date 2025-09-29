@@ -966,7 +966,6 @@ export class EntityManagerComponent implements OnInit {
           if (savedField && savedField.id) {
             // Update the local field object with the database-generated ID
             field.id = savedField.id;
-            console.log(`Updated new field ${field.fieldName} with ID: ${savedField.id}`);
           }
         }
         
@@ -987,7 +986,6 @@ export class EntityManagerComponent implements OnInit {
         
         // Auto-save for new fields: immediately save the configuration again to ensure consistency
         if (isNewField) {
-          console.log('Auto-saving configuration after creating new field...');
           this.scheduleAutoSave();
         }
         
@@ -1627,9 +1625,6 @@ export class EntityManagerComponent implements OnInit {
 
     const sub = this.entityConfigService.exportEntityConfigurationAsSql().subscribe({
       next: (blob) => {
-        console.log('Received blob:', blob);
-        console.log('Blob size:', blob.size);
-        console.log('Blob type:', blob.type);
 
         if (blob.size === 0) {
           this.messageService.add({

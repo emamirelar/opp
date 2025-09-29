@@ -1,0 +1,402 @@
+/* UNOPS Design Tokens - CSS Custom Properties */
+/* Official UNOPS design system tokens */
+/* Version: 1.0.0 */
+
+:root {
+  /* ===================================== */
+  /* UNOPS COLORS */
+  /* ===================================== */
+  
+  /* Primary Colors */
+  --unops-primary: #0092d1;
+  --unops-primary-light: #1aa3db;
+  --unops-primary-lighter: #4ec3e0;
+  --unops-primary-dark: #007bb8;
+  --unops-primary-darker: #005a8a;
+  --unops-primary-on: #ffffff;
+  --unops-primary-container: #b3e0f7;
+  --unops-primary-container-soft: #e3f2fd;
+  --unops-primary-on-container: #004976;
+  
+  /* Primary Shades */
+  --unops-primary-50: #f0f8ff;
+  --unops-primary-100: #e3f2fd;
+  --unops-primary-200: #b3e0f7;
+  --unops-primary-300: #7dccf0;
+  --unops-primary-400: #4ec3e0;
+  --unops-primary-500: #0092d1;
+  --unops-primary-600: #007bb8;
+  --unops-primary-700: #005a8a;
+  --unops-primary-800: #004976;
+  --unops-primary-900: #003455;
+  
+  /* Secondary Colors */
+  --unops-secondary: #004976;
+  --unops-secondary-light: #1a5d8a;
+  --unops-secondary-lighter: #4080b8;
+  --unops-secondary-dark: #003a5f;
+  --unops-secondary-darker: #002b47;
+  --unops-secondary-on: #ffffff;
+  --unops-secondary-container: #b3d4f7;
+  --unops-secondary-container-soft: #e3f0fd;
+  --unops-secondary-on-container: #ffffff;
+  
+  /* Secondary Shades */
+  --unops-secondary-50: #f0f6ff;
+  --unops-secondary-100: #e3f0fd;
+  --unops-secondary-200: #b3d4f7;
+  --unops-secondary-300: #7db8f0;
+  --unops-secondary-400: #4080b8;
+  --unops-secondary-500: #004976;
+  --unops-secondary-600: #003a5f;
+  --unops-secondary-700: #002b47;
+  --unops-secondary-800: #001f35;
+  --unops-secondary-900: #001426;
+  
+  /* Accent Colors */
+  --unops-accent-yellow: #f8ea44;
+  --unops-accent-yellow-light: #fdf168;
+  --unops-accent-yellow-soft: #fefce8;
+  --unops-accent-orange: #e85c0e;
+  --unops-accent-orange-light: #ff7849;
+  --unops-accent-orange-soft: #fff7ed;
+  --unops-accent-cherry: #991e66;
+  --unops-accent-cherry-light: #c2185b;
+  --unops-accent-cherry-soft: #fdf2f8;
+  --unops-accent-lime: #c4d600;
+  --unops-accent-lime-light: #d4e157;
+  --unops-accent-lime-soft: #f9fbe7;
+  --unops-accent-teal: #00a997;
+  --unops-accent-teal-light: #1bb3a6;
+  --unops-accent-teal-soft: #e8f7f5;
+  --unops-accent-ocean: #4ec3e0;
+  --unops-accent-ocean-light: #7dd3ea;
+  --unops-accent-ocean-soft: #f0f9ff;
+  
+  /* Neutral Colors */
+  --unops-neutral-grey: #97999b;
+  --unops-neutral-grey-light: #b8babb;
+  --unops-neutral-grey-lighter: #d1d2d3;
+  --unops-neutral-grey-lightest: #e8e9ea;
+  --unops-neutral-grey-dark: #7a7c7e;
+  --unops-neutral-grey-darker: #5c5e60;
+  --unops-neutral-black: #00070a;
+  --unops-neutral-black-soft: #1a1b1c;
+  --unops-neutral-white: #ffffff;
+  --unops-neutral-white-soft: #fefefe;
+  
+  /* Neutral Shades */
+  --unops-neutral-50: #f9fafb;
+  --unops-neutral-100: #f3f4f6;
+  --unops-neutral-200: #e8e9ea;
+  --unops-neutral-300: #d1d2d3;
+  --unops-neutral-400: #b8babb;
+  --unops-neutral-500: #97999b;
+  --unops-neutral-600: #7a7c7e;
+  --unops-neutral-700: #5c5e60;
+  --unops-neutral-800: #1a1b1c;
+  --unops-neutral-900: #00070a;
+  
+  /* Special Colors */
+  --unops-midnight-blue: #004976;
+  --unops-deep-sea: #0f172a;
+  --unops-white: #ffffff;
+  
+  /* Surface Colors */
+  --unops-surface-primary: #ffffff;
+  --unops-surface-secondary: #f8fafc;
+  --unops-surface-elevated: #ffffff;
+  --unops-surface-cool: #f6f9fc;
+  --unops-surface-warm: #fef8f5;
+  --unops-surface-neutral: #f7f6f5;
+  --unops-surface-cream: #fdfaf1;
+  --unops-surface-fresh: #f5fbfd;
+  --unops-surface-mint: #ecf8f7;
+  --unops-surface-overlay: rgba(15, 23, 42, 0.8);
+  --unops-surface-overlay-light: rgba(15, 23, 42, 0.4);
+  --unops-surface-overlay-soft: rgba(15, 23, 42, 0.2);
+  --unops-surface-glass: rgba(255, 255, 255, 0.9);
+  --unops-surface-glass-dark: rgba(0, 0, 0, 0.1);
+  
+  /* State Colors */
+  --unops-error: #991e66;
+  --unops-error-light: #a91e6b;
+  --unops-error-lighter: #c2185b;
+  --unops-error-dark: #7b1538;
+  --unops-error-darker: #5d0f2a;
+  --unops-error-on: #ffffff;
+  
+  --unops-success: #10b981;
+  --unops-success-light: #16c487;
+  --unops-success-lighter: #34d399;
+  --unops-success-dark: #059669;
+  --unops-success-darker: #047857;
+  --unops-success-on: #ffffff;
+  
+  --unops-info: #4ec3e0;
+  --unops-info-light: #58c6e1;
+  --unops-info-lighter: #7dd3ea;
+  --unops-info-dark: #0891b2;
+  --unops-info-darker: #0e7490;
+  --unops-info-on: #ffffff;
+  
+  --unops-warning: #cc8400;
+  --unops-warning-light: #d49207;
+  --unops-warning-lighter: #f59e0b;
+  --unops-warning-dark: #92400e;
+  --unops-warning-darker: #78350f;
+  --unops-warning-on: #ffffff;
+  
+  /* ===================================== */
+  /* UNOPS SPACING */
+  /* ===================================== */
+  
+  --unops-spacing-xs: 4px;
+  --unops-spacing-sm: 8px;
+  --unops-spacing-md: 16px;
+  --unops-spacing-lg: 24px;
+  --unops-spacing-xl: 32px;
+  --unops-spacing-2xl: 48px;
+  --unops-spacing-3xl: 64px;
+  
+  /* ===================================== */
+  /* UNOPS TYPOGRAPHY */
+  /* ===================================== */
+  
+  /* Font Families */
+  --unops-font-display: 'Inter', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --unops-font-body: 'Inter', 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  
+  /* Font Weights */
+  --unops-font-weight-light: 300;
+  --unops-font-weight-regular: 400;
+  --unops-font-weight-medium: 500;
+  --unops-font-weight-semibold: 600;
+  --unops-font-weight-bold: 700;
+  
+  /* Font Sizes */
+  --unops-font-size-xs: 0.75rem;        /* 12px */
+  --unops-font-size-sm: 0.875rem;       /* 14px */
+  --unops-font-size-base: 1rem;         /* 16px */
+  --unops-font-size-lg: 1.125rem;       /* 18px */
+  --unops-font-size-xl: 1.25rem;        /* 20px */
+  --unops-font-size-2xl: 1.5rem;        /* 24px */
+  
+  /* Semantic Font Sizes */
+  --unops-font-size-display-large: 2.5rem;    /* 40px */
+  --unops-font-size-display-medium: 2rem;     /* 32px */
+  --unops-font-size-display-small: 1.5rem;    /* 24px */
+  --unops-font-size-headline-large: 1.875rem; /* 30px */
+  --unops-font-size-headline-medium: 1.5rem;  /* 24px */
+  --unops-font-size-headline-small: 1.25rem;  /* 20px */
+  --unops-font-size-body-large: 1rem;         /* 16px */
+  --unops-font-size-body-medium: 0.875rem;    /* 14px */
+  --unops-font-size-body-small: 0.75rem;      /* 12px */
+  --unops-font-size-label-large: 0.875rem;    /* 14px */
+  --unops-font-size-label-medium: 0.75rem;    /* 12px */
+  --unops-font-size-label-small: 0.6875rem;   /* 11px */
+  
+  /* ===================================== */
+  /* UNOPS BORDER RADIUS */
+  /* ===================================== */
+  
+  --unops-radius-xs: 4px;
+  --unops-radius-sm: 6px;
+  --unops-radius-md: 8px;
+  --unops-radius-lg: 12px;
+  --unops-radius-xl: 16px;
+  --unops-radius-2xl: 20px;
+  --unops-radius-full: 9999px;
+  
+  /* ===================================== */
+  /* UNOPS BOX SHADOW */
+  /* ===================================== */
+  
+  --unops-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --unops-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --unops-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --unops-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* ===================================== */
+  /* UNOPS ANIMATION */
+  /* ===================================== */
+  
+  /* Transition Durations */
+  --unops-duration-fast: 150ms;
+  --unops-duration-short: 200ms;
+  --unops-duration-medium: 300ms;
+  --unops-duration-normal: 250ms;
+  --unops-duration-slow: 350ms;
+  
+  /* Transition Timing Functions */
+  --unops-easing-standard: cubic-bezier(0.2, 0.0, 0, 1.0);
+  --unops-easing-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1.0);
+  --unops-easing-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* ===================================== */
+  /* UNOPS LAYOUT */
+  /* ===================================== */
+  
+  /* Z-Index */
+  --unops-z-dropdown: 1000;
+  --unops-z-modal: 1050;
+  --unops-z-toast: 1100;
+  --unops-z-tooltip: 1200;
+  
+  /* Touch Targets */
+  --unops-min-touch: 44px;
+  
+  /* ===================================== */
+  /* PRIMENG INTEGRATION */
+  /* ===================================== */
+  
+  /* Update PrimeNG tokens to use UNOPS colors */
+  --p-primary-color: var(--unops-primary);
+  --p-primary-contrast-color: var(--unops-primary-on);
+  --p-primary-50: var(--unops-primary-50);
+  --p-primary-100: var(--unops-primary-100);
+  --p-primary-200: var(--unops-primary-200);
+  --p-primary-300: var(--unops-primary-300);
+  --p-primary-400: var(--unops-primary-400);
+  --p-primary-500: var(--unops-primary-500);
+  --p-primary-600: var(--unops-primary-600);
+  --p-primary-700: var(--unops-primary-700);
+  --p-primary-800: var(--unops-primary-800);
+  --p-primary-900: var(--unops-primary-900);
+  
+  /* Surface colors for PrimeNG */
+  --p-content-background: var(--unops-surface-primary);
+  --p-surface-0: var(--unops-surface-primary);
+  --p-surface-50: var(--unops-neutral-50);
+  --p-surface-100: var(--unops-neutral-100);
+  --p-surface-200: var(--unops-neutral-200);
+  --p-surface-300: var(--unops-neutral-300);
+  --p-surface-400: var(--unops-neutral-400);
+  --p-surface-500: var(--unops-neutral-500);
+  --p-surface-600: var(--unops-neutral-600);
+  --p-surface-700: var(--unops-neutral-700);
+  --p-surface-800: var(--unops-neutral-800);
+  --p-surface-900: var(--unops-neutral-900);
+  
+  /* Error states */
+  --p-red-500: var(--unops-error);
+  --p-red-600: var(--unops-error-dark);
+  
+  /* Success states */
+  --p-green-500: var(--unops-success);
+  --p-green-600: var(--unops-success-dark);
+  
+  /* Warning states */
+  --p-yellow-500: var(--unops-warning);
+  --p-yellow-600: var(--unops-warning-dark);
+  
+  /* Info states */  
+  --p-blue-500: var(--unops-info);
+  --p-blue-600: var(--unops-info-dark);
+  
+  /* ===================================== */
+  /* COMPONENT ALIASES */
+  /* ===================================== */
+  
+  /* Legacy compatibility - map old tokens to new UNOPS tokens */
+  --primary-color: var(--unops-primary);
+  --primary-contrast-color: var(--unops-primary-on);
+  --text-color: var(--unops-neutral-900);
+  --text-color-secondary: var(--unops-neutral-600);
+  --surface-card: var(--unops-surface-primary);
+  --surface-border: var(--unops-neutral-200);
+}
+
+/* Dark theme support */
+.app-dark {
+  /* Adjust colors for dark mode while maintaining UNOPS brand identity */
+  --unops-surface-primary: var(--unops-neutral-900);
+  --unops-surface-secondary: var(--unops-neutral-800);
+  --unops-surface-elevated: var(--unops-neutral-800);
+  
+  --p-content-background: var(--unops-neutral-900);
+  --p-surface-0: var(--unops-neutral-900);
+  
+  --text-color: var(--unops-neutral-50);
+  --text-color-secondary: var(--unops-neutral-300);
+  --surface-card: var(--unops-neutral-800);
+  --surface-border: var(--unops-neutral-700);
+}
+
+/* ===================================== */
+/* UTILITY CLASSES */
+/* ===================================== */
+
+.unops-surface-primary {
+  background-color: var(--unops-surface-primary);
+}
+
+.unops-surface-secondary {
+  background-color: var(--unops-surface-secondary);
+}
+
+.unops-surface-elevated {
+  background-color: var(--unops-surface-elevated);
+  box-shadow: var(--unops-shadow-lg);
+}
+
+.unops-text-primary {
+  color: var(--unops-primary);
+}
+
+.unops-text-secondary {
+  color: var(--unops-secondary);
+}
+
+.unops-text-body {
+  color: var(--unops-neutral-900);
+  font-family: var(--unops-font-body);
+}
+
+.unops-card {
+  background-color: var(--unops-surface-primary);
+  border: 1px solid var(--unops-neutral-200);
+  border-radius: var(--unops-radius-lg);
+  padding: var(--unops-spacing-lg);
+  box-shadow: var(--unops-shadow-md);
+}
+
+.unops-button-primary {
+  background-color: var(--unops-primary);
+  color: var(--unops-primary-on);
+  border: 1px solid var(--unops-primary);
+  border-radius: var(--unops-radius-lg);
+  padding: var(--unops-spacing-sm) var(--unops-spacing-md);
+  font-family: var(--unops-font-body);
+  font-weight: var(--unops-font-weight-medium);
+  font-size: var(--unops-font-size-body-medium);
+  transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+  cursor: pointer;
+  min-height: var(--unops-min-touch);
+}
+
+.unops-button-primary:hover:not(:disabled) {
+  background-color: var(--unops-primary-dark);
+  border-color: var(--unops-primary-dark);
+  box-shadow: var(--unops-shadow-md);
+}
+
+.unops-button-secondary {
+  background-color: transparent;
+  color: var(--unops-primary);
+  border: 1px solid var(--unops-primary);
+  border-radius: var(--unops-radius-lg);
+  padding: var(--unops-spacing-sm) var(--unops-spacing-md);
+  font-family: var(--unops-font-body);
+  font-weight: var(--unops-font-weight-medium);
+  font-size: var(--unops-font-size-body-medium);
+  transition: all var(--unops-duration-short) var(--unops-easing-smooth);
+  cursor: pointer;
+  min-height: var(--unops-min-touch);
+}
+
+.unops-button-secondary:hover:not(:disabled) {
+  background-color: var(--unops-primary-container-soft);
+  color: var(--unops-primary-dark);
+  border-color: var(--unops-primary-dark);
+}

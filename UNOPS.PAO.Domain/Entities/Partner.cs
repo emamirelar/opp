@@ -10,7 +10,7 @@ namespace UNOPS.PAO.Domain.Entities;
 
 public class Partner : ModifiableDeletableEntity
 {
-    public int Id { get; set; }
+    public new int Id { get; set; }
     public string? LogoUrl { get; set; }
     public List<Document>? Documents { get; set; }
     
@@ -126,7 +126,7 @@ public class Partner : ModifiableDeletableEntity
 
         return Contacts
             .Where(c => c.Interactions != null)
-            .SelectMany(c => c.Interactions)
+            .SelectMany(c => c.Interactions!)
             .OrderByDescending(i => i.Date);
     }
 
@@ -150,7 +150,7 @@ public class Partner : ModifiableDeletableEntity
             .Where(c => c.Interactions != null && c.Interactions.Any())
             .ToDictionary(
                 contact => contact,
-                contact => (IEnumerable<Interaction>)contact.Interactions.OrderByDescending(i => i.Date)
+                contact => (IEnumerable<Interaction>)contact.Interactions!.OrderByDescending(i => i.Date)
             );
     }
 
@@ -416,7 +416,7 @@ public class Partner : ModifiableDeletableEntity
     }
     
     // ========== NAVIGATION PROPERTIES ==========
-    public virtual LiaisonOffice LiaisonOffice { get; set; }
+    public virtual LiaisonOffice? LiaisonOffice { get; set; }
     
     /// <summary>
     /// Navigation property to the Partner Focal Point User

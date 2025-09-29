@@ -113,20 +113,7 @@ public class UserPreferenceService : IUserPreferenceService
         if (!int.TryParse(userId, out int userIdInt))
             return;
             
-        // Ensure OrgUnitId always has a value in GlobalFilters - fall back to user's default if null
-        if (userPreferences.GlobalFilters?.OrgUnitId == null)
-        {
-            var defaultOrgUnitId = await GetDefaultOrgUnitIdFromUserProfileAsync();
-            
-            if (defaultOrgUnitId != null)
-            {
-                if (userPreferences.GlobalFilters == null)
-                {
-                    userPreferences.GlobalFilters = new GlobalFilters();
-                }
-                userPreferences.GlobalFilters.OrgUnitId = defaultOrgUnitId;
-            }
-        }
+        // Allow OrgUnitId to be null in GlobalFilters - users can choose to see everything
         
         var existingPreference = await _context.UserPreferences
             .FirstOrDefaultAsync(up => up.UserId == userIdInt);
@@ -184,12 +171,7 @@ public class UserPreferenceService : IUserPreferenceService
         if (!int.TryParse(userId, out int userIdInt))
             return;
             
-        // Ensure OrgUnitId always has a value - fall back to user's default if null
-        if (globalFilters.OrgUnitId == null)
-        {
-            var defaultOrgUnitId = await GetDefaultOrgUnitIdFromUserProfileAsync();
-            globalFilters.OrgUnitId = defaultOrgUnitId;
-        }
+        // Allow OrgUnitId to be null - users can choose to see everything
         
         var existingPreference = await _context.UserPreferences
             .FirstOrDefaultAsync(up => up.UserId == userIdInt);
@@ -230,13 +212,10 @@ public class UserPreferenceService : IUserPreferenceService
         
         if (existingPreference != null)
         {
-            // Get user's default org unit from UserProfile using email
-            var defaultOrgUnitId = await GetDefaultOrgUnitIdFromUserProfileAsync();
-            
-            // Reset to defaults but set user's default org unit
+            // Reset to defaults with no org unit filter (show everything)
             existingPreference.GlobalFilters = new GlobalFilters
             {
-                OrgUnitId = defaultOrgUnitId
+                OrgUnitId = null  // Don't default to user's org unit - show everything
             };
             await _context.SaveChangesAsync();
         }

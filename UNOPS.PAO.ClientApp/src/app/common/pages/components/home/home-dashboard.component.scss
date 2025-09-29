@@ -1,3 +1,8 @@
+// Banner with reduced top spacing
+.banner-close-spacing {
+  margin-top: 0.5rem !important; // Override space-y-unops-xl with smaller margin
+}
+
 // Announcement Banner
 .announcement-banner {
   @apply mb-6 rounded-lg overflow-hidden shadow-sm;
@@ -672,6 +677,37 @@
   }
 }
 
+// Panel expansion animations
+.panel-expand-enter {
+  animation: panelExpandIn 0.3s ease-out;
+}
+
+.panel-expand-leave {
+  animation: panelExpandOut 0.2s ease-in;
+}
+
+@keyframes panelExpandIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes panelExpandOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+
 // Responsive adjustments
 @media (max-width: 768px) {
   .dashboard-container {
@@ -683,6 +719,28 @@
     
     .header-content .dashboard-title {
       @apply text-2xl;
+    }
+  }
+
+  // Mobile: Expanded panels should be full screen friendly
+  .expanded-panel-mobile {
+    @apply rounded-none;
+    margin: -1rem;
+    min-height: calc(100vh - 200px);
+  }
+
+  // Mobile: Stack interaction cards vertically
+  @media (max-width: 640px) {
+    .interactions-grid {
+      @apply grid-cols-1;
+    }
+    
+    .actions-grid {
+      @apply grid-cols-1;
+    }
+    
+    .activity-grid {
+      @apply grid-cols-1;
     }
   }
 
@@ -705,6 +763,31 @@
       @apply flex-col items-start space-y-3;
     }
   }
+}
+
+// Line clamp utilities for text truncation
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 // Animation keyframes

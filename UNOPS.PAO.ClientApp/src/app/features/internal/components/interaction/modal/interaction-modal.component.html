@@ -25,29 +25,24 @@
 
         @if( showPhoneNumbers ){
         <div class="col-span-12 md:col-span-6 flex flex-col gap-2">
-          <label for="phones" class="block">{{ 'label.interaction.phoneNumbers' | translate }}</label>
-          <p-autocomplete id="phones"
-                          #phoneAutocomplete
-                          formControlName="phoneNumbers"
-                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
-                          multiple
-                          fluid
-                          [typeahead]="false"
-                          (onBlur)="validatePhoneInput()"
-                          [class.ng-invalid]="formGroup.get('phoneNumbers')?.invalid" />
-          @if( formGroup.get("phoneNumbers")?.invalid && formGroup.get("phoneNumbers")?.errors?.['invalidPhone'] ) {
-            <p-message severity="error" variant="simple">
-              {{ 'message.invalidPhoneNumberFormat' | translate }}
-            </p-message>
-          }
+          <app-phone-input
+            formControlName="phoneNumbers"
+            [label]="'label.interaction.phoneNumbers' | translate"
+            [disabled]="!recordPermissions()?.permissions?.canUpdate"
+            [showClear]="true"
+            [autoProcess]="true"
+            [helperText]="'You can paste multiple numbers'"
+            [invalidPhoneMessage]="'message.invalidPhoneNumberFormat' | translate">
+          </app-phone-input>
         </div>
+
         }
 
         <div class="col-span-full flex flex-col gap-2">
           <label for="contacts">{{ 'label.interaction.relatedTo' | translate }} *</label>
           <p-multiselect id="contacts"
                          formControlName="contactIds"
-                         [options]="allContacts()"
+                         [options]="availableContacts()"
                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
                          optionLabel="name"
                          optionValue="id"
@@ -67,12 +62,24 @@
             </ng-template>
           </p-multiselect>
           @if( formGroup.get("contactIds")?.invalid && showValidationFailedError() ) {
-          <p-message severity="error" variant="simple">At least one contact must be selected.</p-message>
+            @if( formGroup.get("contactIds")?.errors?.['atLeastOneContact'] ) {
+              <p-message severity="error" variant="simple">At least one contact must be selected.</p-message>
+            }
+            @if( formGroup.get("contactIds")?.errors?.['requiresPartnerContact'] ) {
+              <p-message severity="error" variant="simple">
+                At least one contact must be from {{ formGroup.get("contactIds")?.errors?.['partnerName'] }}.
+              </p-message>
+            }
           }
         </div>
 
         <div class="col-span-full partners-display flex flex-col gap-2">
-          <label for="partners">{{ 'label.interaction.partners' | translate }}</label>
+          <label for="partners">
+            {{ 'label.interaction.partners' | translate }}
+            @if(getPartnerContext()?.partnerId) {
+              <span class="text-xs text-blue-600 ml-2">({{ 'label.interaction.requiresPartnerContact' | translate }})</span>
+            }
+          </label>
           <div class="partners-chips-container">
             @if( getSelectedPartners().length === 0 ) {
             <div class="no-partners-message">{{ 'label.interaction.noPartnersSelected' | translate }}</div>

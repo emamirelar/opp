@@ -20,7 +20,7 @@ public class OrganizationHierarchyTreeDto
     /// <summary>
     /// The data contained in this node
     /// </summary>
-    public OrganizationHierarchyNodeData Data { get; set; }
+    public required OrganizationHierarchyNodeData Data { get; set; }
 
     /// <summary>
     /// Child nodes
@@ -41,12 +41,12 @@ public class OrganizationHierarchyNodeData
     /// <summary>
     /// Name of the organization unit
     /// </summary>
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
     /// <summary>
     /// Code of the organization unit
     /// </summary>
-    public string Code { get; set; }
+    public required string Code { get; set; }
 
     /// <summary>
     /// Type of the organization unit
@@ -56,7 +56,7 @@ public class OrganizationHierarchyNodeData
     /// <summary>
     /// Description of the organization unit
     /// </summary>
-    public string Description { get; set; }
+    public required string Description { get; set; }
 
     /// <summary>
     /// ID of the parent organization unit (null for root nodes)

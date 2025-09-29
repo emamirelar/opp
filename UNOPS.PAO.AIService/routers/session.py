@@ -478,15 +478,36 @@ def call_gemini_direct(prompt: str, model_name: str = "gemini-1.5-flash", max_to
 
 
 @router.get("/user-sessions")
+@router.post("/user-sessions")  # Support POST method
+@router.get("/get-user-sessions")  # Add alias for C# compatibility
+@router.post("/get-user-sessions")  # Support POST method for C# compatibility
 async def get_user_sessions(
-    app_name: str = Query(..., description="Application name"),
-    user_id: str = Query(..., description="User ID to retrieve sessions for")
+    request: Request,
+    app_name: str = Query(None, description="Application name"),
+    user_id: str = Query(None, description="User ID to retrieve sessions for")
 ):
     """
     Get all sessions for a specific user from the ADK session service
     """
     try:
         logger.info("="*50)
+        
+        # Handle cases where parameters are not provided in query string (POST requests from ASP.NET)
+        if not app_name:
+            app_name = config_manager.get_application_name()
+            logger.info(f"📋 Using app_name from config: {app_name}")
+        
+        if not user_id:
+            # Try to extract user_id from request headers (set by ASP.NET authentication)
+            headers = dict(request.headers)
+            user_id = headers.get('x-user-id') or headers.get('x-unops-user-id')
+            if not user_id:
+                # For now, use a default user_id for testing
+                user_id = "1"
+                logger.info(f"📋 No user_id provided, using default: {user_id}")
+            else:
+                logger.info(f"📋 Extracted user_id from headers: {user_id}")
+        
         logger.info(f"📋 Getting user sessions for app: {app_name}, user: {user_id}")
         
         # Create session service

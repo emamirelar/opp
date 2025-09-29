@@ -228,7 +228,7 @@ INSERT INTO public."EntityPermissions" (
 ) VALUES (
     'PartnerTree',
     'PARTNER_USER',
-    false,
+    true,
     false,
     false,
     false,
@@ -742,4 +742,520 @@ INSERT INTO public."EntityPermissions" (
     false,
     null,
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- BaseEngagement Entity Permissions (read-only, externally managed)
+
+-- UNOPS General User role permissions for BaseEngagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'BaseEngagement',
+    'UNOPS_GEN_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnership Global Admin role permissions for BaseEngagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'BaseEngagement',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnerships User role permissions for BaseEngagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'BaseEngagement',
+    'PARTNER_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Org Unit Admin role permissions for BaseEngagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'BaseEngagement',
+    'ORG_UNIT_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- PartnerCategory Entity Permissions (read-only, derived from PartnerTree)
+
+-- UNOPS General User role permissions for PartnerCategory
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerCategory',
+    'UNOPS_GEN_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnership Global Admin role permissions for PartnerCategory
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerCategory',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnerships User role permissions for PartnerCategory
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerCategory',
+    'PARTNER_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Org Unit Admin role permissions for PartnerCategory
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerCategory',
+    'ORG_UNIT_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- PartnerGroup Entity Permissions (read-only, derived from PartnerTree)
+
+-- UNOPS General User role permissions for PartnerGroup
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerGroup',
+    'UNOPS_GEN_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnership Global Admin role permissions for PartnerGroup
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerGroup',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnerships User role permissions for PartnerGroup
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerGroup',
+    'PARTNER_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Org Unit Admin role permissions for PartnerGroup
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerGroup',
+    'ORG_UNIT_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Country Entity Permissions (read-only lookup operations)
+
+-- UNOPS General User role permissions for Country
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Country',
+    'UNOPS_GEN_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnership Global Admin role permissions for Country
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Country',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnerships User role permissions for Country
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Country',
+    'PARTNER_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Org Unit Admin role permissions for Country
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Country',
+    'ORG_UNIT_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- LiaisonOffice Entity Permissions
+
+-- UNOPS General User role permissions for LiaisonOffice
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'LiaisonOffice',
+    'UNOPS_GEN_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnership Global Admin role permissions for LiaisonOffice
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'LiaisonOffice',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnerships User role permissions for LiaisonOffice
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'LiaisonOffice',
+    'PARTNER_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Org Unit Admin role permissions for LiaisonOffice
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'LiaisonOffice',
+    'ORG_UNIT_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- OrganizationHierarchy Entity Permissions
+
+-- UNOPS General User role permissions for OrganizationHierarchy
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'OrganizationHierarchy',
+    'UNOPS_GEN_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnership Global Admin role permissions for OrganizationHierarchy
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'OrganizationHierarchy',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Partnerships User role permissions for OrganizationHierarchy
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'OrganizationHierarchy',
+    'PARTNER_USER',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
+);
+
+-- Org Unit Admin role permissions for OrganizationHierarchy
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'OrganizationHierarchy',
+    'ORG_UNIT_ADMIN',
+    true,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": ""}'
 );
