@@ -186,7 +186,7 @@ INSERT INTO public."EntityPermissions" (
 ) VALUES (
     'PartnerTree',
     'UNOPS_GEN_USER',
-    true,
+    false,
     false,
     false,
     false,
@@ -228,7 +228,7 @@ INSERT INTO public."EntityPermissions" (
 ) VALUES (
     'PartnerTree',
     'PARTNER_USER',
-    false,
+    true,
     false,
     false,
     false,
