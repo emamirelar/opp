@@ -430,54 +430,45 @@ class ApiConfigManager:
             return connection_string
 
     def get_database_url(self) -> str:
-        """Get database URL, with Secret Manager support for test/prod environments"""
+        """Get database URL, with precedence to secret_name over config URL"""
         try:
-            # Get environment
-            environment = os.getenv('CURRENT_ENV', 'dev')
             db_config = self.framework_config.get("database", {})
+            secret_name = db_config.get("secret_name")
             
-            print(f"🌍 Environment: {environment}")
-            
-            # For development, use the config file directly
-            if environment == 'dev':
-                dev_url = db_config.get("url", "sqlite:///./ai_agent.db")
-                print("🛠️ Development environment - using config file URL")
-                return dev_url
-            
-            # For test/prod environments, try Secret Manager first if secret_name is configured
-            if environment in ['test', 'prod']:
-                secret_name = db_config.get("secret_name")
+            # First priority: Try Secret Manager if secret_name is configured
+            if secret_name:
+                print(f"🔐 Looking for database secret: {secret_name}")
+                secret_url = self.get_secret_from_secret_manager(secret_name)
                 
-                if secret_name:
-                    print(f"🔐 Looking for database secret: {secret_name}")
-                    secret_url = self.get_secret_from_secret_manager(secret_name)
+                if secret_url:
+                    print(f"✅ Retrieved database URL from Secret Manager ({secret_name})")
+                    print(f"📋 Raw secret format (first 50 chars): {secret_url[:50]}...")
                     
-                    if secret_url:
-                        print(f"✅ Retrieved database URL from Secret Manager ({secret_name})")
-                        print(f"📋 Raw secret format (first 50 chars): {secret_url[:50]}...")
-                        
-                        # Check if it's a .NET connection string format (contains semicolons and equals)
-                        if ';' in secret_url and '=' in secret_url:
-                            print("🔄 Detected .NET connection string format - converting to SQLAlchemy URL...")
-                            converted_url = self._convert_connection_string_to_sqlalchemy_url(secret_url)
-                            return converted_url
-                        else:
-                            print("✅ Already in SQLAlchemy URL format")
-                            return secret_url
+                    # Check if it's a .NET connection string format (contains semicolons and equals)
+                    if ';' in secret_url and '=' in secret_url:
+                        print("🔄 Detected .NET connection string format - converting to SQLAlchemy URL...")
+                        converted_url = self._convert_connection_string_to_sqlalchemy_url(secret_url)
+                        return converted_url
                     else:
-                        print(f"⚠️ Failed to get database URL from Secret Manager ({secret_name}), falling back to config")
+                        print("✅ Already in SQLAlchemy URL format")
+                        return secret_url
                 else:
-                    print(f"⚠️ No secret_name configured for {environment} environment, using config file")
+                    print(f"⚠️ Failed to get database URL from Secret Manager ({secret_name}), falling back to config")
             
-            # Fallback to config file
-            config_url = db_config.get("url", "sqlite:///./ai_agent.db")
-            print(f"ℹ️ Using database URL from config file: {config_url[:50]}...")
-            return config_url
+            # Second priority: Use URL from config file
+            config_url = db_config.get("url")
+            if config_url:
+                print(f"ℹ️ Using database URL from config file: {config_url[:50]}...")
+                return config_url
+            
+            
+            print("⚠️ No database configuration found")
+            return ""
             
         except Exception as e:
             print(f"❌ Error getting database URL: {e}")
             print("🔄 Falling back to SQLite...")
-            return "sqlite:///./ai_agent.db"
+            return ""
     
     def get_roles(self) -> Dict[str, Any]:
         return self.framework_config.get("roles", {})
