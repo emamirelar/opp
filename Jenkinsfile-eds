@@ -12,7 +12,7 @@ node("app-build") {
     def environment, PROJECT_ID, REPO_NAME, IMAGE_NAME, IMAGE_TAG
     def SERVICE_NAME, REGION, SQL_CONN_STRING, VPC_CONNECTOR
     def SECRETS, ENV_VARS, CREDENTIALS_ID, DOCKERFILE, PORT
-    def MIN_INSTANCES, MAX_INSTANCES, MEMORY, CPU, TIMEOUT, SERVICE_ACCOUNT
+    def MIN_INSTANCES, MAX_INSTANCES, MEMORY, CPU, TIMEOUT, SERVICE_ACCOUNT, INVOKER_SERVICE_ACCOUNTS
     
     try {
         stage('Checkout Code') {
@@ -95,12 +95,14 @@ node("app-build") {
             MEMORY = envConfig.memory
             CPU = envConfig.cpu
             TIMEOUT = envConfig.timeout
+            INVOKER_SERVICE_ACCOUNTS = envConfig.invoker_service_accounts
             
             echo "Configuration loaded for External Data Service environment: ${environment}"
             echo "Project ID: ${PROJECT_ID}"
             echo "Service Name: ${SERVICE_NAME}"
             echo "Service Account: ${SERVICE_ACCOUNT}"
             echo "Branch: ${currentBranch}"
+            echo "Invoker Service Accounts: ${INVOKER_SERVICE_ACCOUNTS}"
             echo "Configuration Path will be: ../ExternalDataService/config (relative to submodule)"
         }
 
@@ -214,15 +216,27 @@ node("app-build") {
                     fi
                 done
                 
-                if [ "\$DEPLOY_SUCCESS" = false ]; then
-                    echo "External Data Service deployment failed after 3 attempts"
-                    exit 1
-                fi
-                
-                # Cleanup
-                rm -f "\${UNIQUE_CREDS_FILE}"
-                cd "\${WORKSPACE}"
-                rm -rf "\${EDS_BUILD_DIR}"
+                        if [ "\$DEPLOY_SUCCESS" = false ]; then
+                            echo "External Data Service deployment failed after 3 attempts"
+                            exit 1
+                        fi
+                        
+                        # Configure IAM policies for External Data Service
+                        echo "Setting up Cloud Run invoker permissions for External Data Service..."
+                        IFS=',' read -ra ADDR <<< "${INVOKER_SERVICE_ACCOUNTS}"
+                        for service_account in "\${ADDR[@]}"; do
+                            echo "Granting Cloud Run invoker role to \$service_account for External Data Service..."
+                            gcloud run services add-iam-policy-binding ${SERVICE_NAME} \\
+                                --member="serviceAccount:\$service_account" \\
+                                --role="roles/run.invoker" \\
+                                --region=${REGION} \\
+                                --project=${PROJECT_ID} || echo "Warning: Failed to set IAM policy for External Data Service"
+                        done
+                        
+                        # Cleanup
+                        rm -f "\${UNIQUE_CREDS_FILE}"
+                        cd "\${WORKSPACE}"
+                        rm -rf "\${EDS_BUILD_DIR}"
                 """
             }
         }
