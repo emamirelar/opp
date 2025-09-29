@@ -16,6 +16,8 @@ import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
       <p-button
         icon="pi pi-check"
         [label]="isImportEdit ? ('button.updateImportData' | translate) : ('button.save' | translate)"
+        [loading]="isSaving"
+        [disabled]="isSaving"
         (click)="onSave()">
       </p-button>
     </div>
@@ -35,6 +37,11 @@ export class PartnerEditDialogFooterComponent {
   get isImportEdit(): boolean {
     const record = this.config.data?.record;
     return record?.isImportEdit || record?.skipServerSave || false;
+  }
+  
+  // Get isSaving state from the main component
+  get isSaving(): boolean {
+    return this.config.data?.isSaving?.() || false;
   }
 
   onCancel(): void {
