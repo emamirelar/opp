@@ -301,6 +301,7 @@ dmypy.json
 .claude/
 
 UNOPS.PAO.Server/appsettings.Development.json
+UNOPS.PAO.Server/appsettings.Local.json
 
 # Logs folders
 logs/
