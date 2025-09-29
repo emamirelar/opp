@@ -11,16 +11,6 @@ import base64
 import requests
 import traceback
 
-# from google.adk.agents import SequentialAgent
-
-# # Import sub-agents
-# from .sub_agents.user_request_agent import user_request_agent
-
-# # --- Root Agent Definition ---
-# # This is the entry point for the entire agent hierarchy
-# root_agent = user_request_agent
-
-
 from google.adk.agents import LlmAgent
 from google.adk.tools.agent_tool import AgentTool
 from google.adk.planners import BuiltInPlanner
@@ -35,7 +25,7 @@ from .tools.search_corp_vector_store_tool import search_corp_vector_store
 def load_entities_metadata():
     """Load the entities metadata JSON file"""
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    metadata_path = os.path.join(current_dir, '..', 'config', 'entities-metadata.json')
+    metadata_path = os.path.join(current_dir, '..', '..', 'AIService', 'metadata', 'entities-metadata.json')
     
     try:
         with open(metadata_path, 'r', encoding='utf-8') as f:
@@ -171,8 +161,8 @@ def prepare_api_url(url: str) -> str:
         # Result: https://config-base-url/api/users
     """
     try:
-        from .utils.api_config_manager import config_manager
-        base_url = config_manager.get_api_base_url()
+        from .utils.config import get_api_base_url
+        base_url = get_api_base_url()
         
         # Extract path from URL (works for both absolute and relative URLs)
         if url.startswith(('http://', 'https://')):
@@ -244,100 +234,25 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
         )
     """
 
-    print(tool_context)
+    # print(tool_context)
     
     try:
         # Prepare the final URL using the dedicated function
         final_url = prepare_api_url(url)
-        # Prepare request headers - start with default headers
-        request_headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
         
-        is_development = os.getenv('IS_DEVELOPMENT', '').upper() == 'TRUE'
-        dev_email = os.getenv('DEV_EMAIL', '')
-       
-        if is_development and dev_email:
-            current_timestamp = str(int(time.time()))
-            
-            iap_headers = {
-                'x-goog-authenticated-user-email': f'accounts.google.com:{dev_email}',
-                'x-goog-authenticated-user-id': f'accounts.google.com:dev-user-id-{current_timestamp}',
-                'x-forwarded-user': dev_email,
-                'x-forwarded-email': dev_email,
-                'X-Dev-IAP-Simulation': 'true',
-                'X-Dev-Auth-Timestamp': current_timestamp
-            }
-            request_headers.update(iap_headers)
-        
-        # Add any additional headers passed as parameter
-        if headers:
-            request_headers.update(headers)
-        
-        # Add IDP token to request headers if not already present
-        if not request_headers.get('Authorization'):
-            # Try to import config manager and auth helpers
-            try:
-                from .utils.api_config_manager import config_manager
-                from .utils.auth_helpers import get_service_account_oidc_token
-                
-                # Get OAuth configuration from config manager
-                oauth_config = config_manager.get_oauth_config()
-                target_principal = oauth_config.get('target_principal')
-                target_audience = oauth_config.get('client_id')
-                
-                if target_principal and target_audience:
-                    # Get user email from tool_context if available, otherwise use dev_email for development
-                    user_email = None
-                    if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-                        user_email = tool_context.state.get('user_email')
-                    elif is_development and dev_email:
-                        user_email = dev_email
-                    
-                    # Check if this is a Google-related external API call
-                    is_google_api = any(google_path in url for google_path in [
-                        '/google-drive/', '/convert/url', '/convert/markdown-to-google-doc'
-                    ])
-                    
-                    if is_google_api:
-                        # For Google APIs, use service account token without impersonation
-                        idp_token = get_service_account_oidc_token(
-                            target_audience,
-                            target_principal,
-                            use_idp=False,
-                            subject=None
-                        )
-                    else:
-                        # For regular APIs, use impersonated token
-                        idp_token = get_service_account_oidc_token(
-                            target_audience,
-                            target_principal,
-                            use_idp=True,
-                            subject=user_email
-                        )
-                    
-                    if idp_token:
-                        request_headers['Authorization'] = f"Bearer {idp_token}"
-                    
-                    # Add impersonation header for ALL APIs when user email is available
-                    if user_email:
-                        request_headers['x-unops-impersonated-user'] = user_email
-                        
-            except ImportError:
-                # Config manager or auth helpers not available, continue without auth
-                pass
-        
-        # In agent.py, add logging to see what user_email is being used
-        print(f"🔍 User email from tool_context: {tool_context.state.get('user_email') if tool_context and tool_context.state else 'None'}")
-        print(f"🔍 Dev email fallback: {dev_email}")
-        print(f"🔍 Final user_email: {user_email}")
+        # Use the common utility to build request headers
+        from .utils.auth_helpers import build_request_headers
+        request_headers = build_request_headers(
+            tool_context=tool_context,
+            additional_headers=headers,
+            url=url
+        )
 
         # Get API timeout (default to 30 seconds if config not available)
         api_timeout = 30
         try:
-            from .utils.api_config_manager import config_manager
-            api_timeout = config_manager.get_api_timeout()
+            from .utils.config import get_api_timeout
+            api_timeout = get_api_timeout()
         except ImportError:
             pass
         
@@ -448,17 +363,6 @@ google_search_agent = LlmAgent(
     tools=[google_search]
 )
 
-
-# ## Examples
-# **"Find private sector partners"** → `invoke_app_api("https://localhost:44426/api/partners", "GET", {{"PartnerGroupCode": "PRIVATE_SECTOR"}})`
-
-# **"Find our key global partners"** → `invoke_app_api("https://localhost:44426/api/partners", "GET", {{"KeyGlobalPartner": true}})`
-
-# **"What are the latest interactions with partners"** → `invoke_app_api("https://localhost:44426/api/interactions", "GET")`
-
-# **"Create a new contact for Microsoft"** → `invoke_app_api("https://localhost:44426/api/contacts", "POST", {{"LastName": "Smith", "FirstName": "John", "Email": "john.smith@microsoft.com", "Title": "Director", "PartnerId": 123}})`
-
-# **"Search for contacts in the technology sector"** → `invoke_app_api("https://localhost:44426/api/contacts", "GET", {{"SearchText": "technology"}})`
 
 instruction_template = """
 You are an experienced Partnerships Specialist for the United Nations Office for Project Services.

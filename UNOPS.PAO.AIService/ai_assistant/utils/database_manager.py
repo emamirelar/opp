@@ -11,8 +11,7 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
-from ai_assistant.models.action_log import Base, AiActionLog
-from ai_assistant.utils.api_config_manager import config_manager
+from ai_assistant.utils.config import get_database_url
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,7 @@ class DatabaseManager:
         Args:
             database_url: Optional database URL. If not provided, will use config manager.
         """
-        self.database_url = database_url or config_manager.get_database_url()
+        self.database_url = database_url or get_database_url()
         self.engine = None
         self.SessionLocal = None
         self._initialized = False

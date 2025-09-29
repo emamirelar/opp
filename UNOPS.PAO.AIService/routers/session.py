@@ -13,7 +13,8 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Request, Query
 from google.adk.sessions import DatabaseSessionService
 
-from ai_assistant.utils.api_config_manager import config_manager
+from ai_assistant.utils.config import get_config, get_database_url, get_gemini_adhoc_model, get_application_name
+
 
 # Vertex AI imports for title generation
 import vertexai
@@ -152,7 +153,7 @@ async def get_session_title(
 
         # Fallback to current method using session service
         logger.info("📋 Using fallback method: session conversation history")
-        db_url = config_manager.get_database_url()
+        db_url = get_database_url()
         session_service = DatabaseSessionService(db_url=db_url)
         logger.info(f"🔧 Created session service with DB: {db_url[:50]}...")
 
@@ -283,8 +284,8 @@ The response should just be the title, no explanations.
 """
         
         # Call Gemini with specific parameters for title generation
-        from ai_assistant.utils.api_config_manager import config_manager
-        gemini_model = config_manager.get_gemini_adhoc_model()
+        from ai_assistant.utils.config import get_gemini_adhoc_model
+        gemini_model = get_gemini_adhoc_model()
         title = call_gemini_direct(
             prompt=title_prompt,
             model_name=gemini_model,
@@ -320,7 +321,7 @@ async def _get_title_from_action_log(session_id: str, user_id: int) -> str:
     """
     try:
         # Check if action logging is enabled
-        config = config_manager.framework_config
+        config = get_config()
         action_logging_config = config.get('action_logging', {})
         
         if not action_logging_config.get('enabled', False):
@@ -365,7 +366,7 @@ Based on these AI interaction summaries from a conversation session, generate a 
 Response should be just the title, no explanations.
 """
             
-            gemini_model = config_manager.get_gemini_adhoc_model()
+            gemini_model = get_gemini_adhoc_model()
             title = call_gemini_direct(
                 prompt=title_prompt,
                 model_name=gemini_model,
@@ -401,12 +402,12 @@ def call_gemini_direct(prompt: str, model_name: str = "gemini-1.5-flash", max_to
     """
     try:
         # Get configuration from config manager
-        config = config_manager.framework_config
+        config = get_config()
         google_cloud_config = config.get('google_cloud', {})
         
         # Get project ID and location from config
-        project_id = google_cloud_config.get('project', os.getenv("GOOGLE_CLOUD_PROJECT_ID"))
-        location = google_cloud_config.get('location', os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"))
+        project_id = google_cloud_config.get('project')
+        location = google_cloud_config.get('location')
 
         
         if not project_id:
@@ -494,7 +495,7 @@ async def get_user_sessions(
         
         # Handle cases where parameters are not provided in query string (POST requests from ASP.NET)
         if not app_name:
-            app_name = config_manager.get_application_name()
+            app_name = get_application_name()
             logger.info(f"📋 Using app_name from config: {app_name}")
         
         if not user_id:
@@ -511,7 +512,7 @@ async def get_user_sessions(
         logger.info(f"📋 Getting user sessions for app: {app_name}, user: {user_id}")
         
         # Create session service
-        db_url = config_manager.get_database_url()
+        db_url = get_database_url()
         session_service = DatabaseSessionService(db_url=db_url)
         logger.info(f"🔧 Created session service with DB: {db_url[:50]}...")
         
@@ -571,7 +572,7 @@ async def get_session_with_chats(
         logger.info(f"📋 Getting session with chats for app: {app_name}, user: {user_id}, session: {session_id}")
         
         # Create session service
-        db_url = config_manager.get_database_url()
+        db_url = get_database_url()
         session_service = DatabaseSessionService(db_url=db_url)
         logger.info(f"🔧 Created session service with DB: {db_url[:50]}...")
         
@@ -870,7 +871,7 @@ async def get_session_data(
         logger.info(f"📋 Getting session data for app: {app_name}, user: {user_id}, session: {session_id}")
         
         # Create session service
-        db_url = config_manager.get_database_url()
+        db_url = get_database_url()
         session_service = DatabaseSessionService(db_url=db_url)
         logger.info(f"🔧 Created session service with DB: {db_url[:50]}...")
         
