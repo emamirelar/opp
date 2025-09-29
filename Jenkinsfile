@@ -210,11 +210,8 @@ node("app-build") {
                         gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
                         gcloud config set project ${PROJECT_ID}
                         
-                        # Navigate to AI service directory
-                        cd UNOPS.PAO.AIService
-
-                        # Build and push AI service image
-                        gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_AI}:${IMAGE_TAG} .
+                        # Build and push AI service image from root directory with AI service Dockerfile
+                        gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_AI}:${IMAGE_TAG} -f UNOPS.PAO.AIService/Dockerfile .
 
                         # Deploy AI service to Cloud Run with retry logic
                         echo "Deploying AI service to Cloud Run..."
