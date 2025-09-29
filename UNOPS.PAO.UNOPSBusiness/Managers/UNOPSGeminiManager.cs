@@ -2059,6 +2059,18 @@ public class UNOPSGeminiManager : IGeminiManager
                 httpClient.DefaultRequestHeaders.Authorization != null ? "Present" : "None", 
                 httpContent.Headers.ContentType?.ToString() ?? "None", 
                 httpClient.DefaultRequestHeaders.UserAgent.ToString());
+
+          // DEBUG: Log the actual authorization header details
+            if (authHeader != null)
+            {
+                _logger.LogInformation("ChatWithGemini: Authorization header - Scheme: {Scheme}, Token prefix: {TokenPrefix}", 
+                    authHeader.Scheme, 
+                    authHeader.Parameter?.Length > 20 ? authHeader.Parameter.Substring(0, 20) + "..." : authHeader.Parameter ?? "null");
+            }
+            else
+            {
+                _logger.LogError("ChatWithGemini: No authorization header set - this explains the 403 Forbidden!");
+            }
             
             var response = await httpClient.PostAsync(apiUrl, httpContent);
             
