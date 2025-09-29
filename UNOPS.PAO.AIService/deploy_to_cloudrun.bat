@@ -77,7 +77,8 @@ echo.
 
 :: Use --quiet to avoid interactive prompts
 gcloud run deploy %SERVICE_NAME% ^
-  --source . ^
+  --source .. ^
+  --dockerfile=UNOPS.PAO.AIService/Dockerfile ^
   --region=%REGION% ^
   --platform=managed ^
   --allow-unauthenticated ^
