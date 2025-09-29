@@ -152,6 +152,12 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   globalFilters = signal<GlobalFilters | null>(null);
   currentUserId = signal<string>('');
   activeFilterLabels = signal<string[]>([]);
+  
+  // Filter toggle state - tracks whether filters are temporarily disabled
+  isFilterTemporarilyDisabled = signal(false);
+  
+  // Record counts for display - we'll use the current totalRecordsCount for now
+  // In the future, we could make separate API calls to get unfiltered totals
 
   // Template references
   @ContentChild('actionsTemplate') actionsTemplate?: TemplateRef<any>;
@@ -777,6 +783,10 @@ export class ListviewComponent<T = any> implements AfterViewInit {
       params = params.set('query', searchText.trim());
     }
 
+    // Add filterActive parameter based on current filter state
+    const filterActive = !this.isFilterTemporarilyDisabled();
+    params = params.set('filterActive', filterActive.toString());
+
     // Removed automatic orgUnitId parameter addition
     // const activeOrgUnitId = this.globalFilterService.getActiveOrgUnitId();
     // if (activeOrgUnitId) {
@@ -841,10 +851,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     }));
 
     this.totalRecordsChange.emit(totalCount);
-
-    if (pageIndex > 1) {
-      console.log(`Load more successful: page ${pageIndex}, loaded ${newRecords.length} new records, total: ${updatedData.length}/${totalCount}`);
-    }
 
     this.cdr.detectChanges();
   }
@@ -921,8 +927,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   }
 
   onApplySavedFilter(filter: SavedFilter): void {
-    console.log('🔄 Applying saved filter:', filter.name, 'ID:', filter.id);
-
     if (filter.isAdvancedSearch) {
       // Apply the search criteria from the saved filter
       if (filter.searchCriteria) {
@@ -935,8 +939,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
           } else {
             criteria = filter.searchCriteria;
           }
-
-          console.log('✅ Parsed criteria:', criteria.length, 'filters');
 
           // CLEAN IMPLEMENTATION: Clear and replace all criteria at once
           this.state.update(s => ({
@@ -983,9 +985,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
     // Reset pagination and trigger data load
     this.dataLoader.setPagination(0, this.state().pageSize);
-    
-    // CRITICAL: Execute the search with the applied criteria
-    console.log('🚀 Executing search with applied filter criteria');
     this.loadData();
   }
 
@@ -1099,6 +1098,50 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     }
     
     this.activeFilterLabels.set(labels);
+  }
+
+  // Toggle filter functionality
+  toggleGlobalFilter(): void {
+    const currentlyDisabled = this.isFilterTemporarilyDisabled();
+    
+    if (currentlyDisabled) {
+      // Re-enable filters
+      this.isFilterTemporarilyDisabled.set(false);
+      this.globalFilterService.setFilterEnabled(true);
+    } else {
+      // Temporarily disable filters
+      this.isFilterTemporarilyDisabled.set(true);
+      this.globalFilterService.setFilterEnabled(false);
+    }
+    
+    // Reload data with new filter state
+    this.loadData();
+  }
+  
+  // Check if we should show filter controls
+  shouldShowFilterToggle(): boolean {
+    // Show toggle if there are active filters OR if filters are temporarily disabled
+    return this.isGlobalFilterActive() && (this.activeFilterLabels().length > 0 || this.isFilterTemporarilyDisabled());
+  }
+  
+  // Get display text for toggle button
+  getToggleButtonText(): string {
+    return this.isFilterTemporarilyDisabled() 
+      ? this.translateService.instant('search.applyFilter')
+      : this.translateService.instant('search.showAll');
+  }
+  
+  // Get record count display text
+  getRecordCountText(): string {
+    const currentCount = this.totalRecordsCount();
+    
+    if (this.isFilterTemporarilyDisabled() || !this.isGlobalFilterActive()) {
+      return this.translateService.instant('search.showingAllRecords', { total: currentCount });
+    } else {
+      // When filters are active, we show the filtered count
+      // For now, we don't have the unfiltered total, so we just show current count
+      return this.translateService.instant('search.showingAllRecords', { total: currentCount });
+    }
   }
 
   // Open global filters dialog

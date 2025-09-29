@@ -33,7 +33,6 @@ export class TourService {
       // Remove duplicates (in case multiple routes use the same tour)
       const uniqueTourFiles = [...new Set(knownTourFiles)];
 
-      console.log('🔍 Discovered tour files from registry:', uniqueTourFiles);
 
       // Filter out any tours that don't actually exist
       const existingTours: string[] = [];
@@ -50,7 +49,6 @@ export class TourService {
       }
 
       this.availableTours = existingTours;
-      console.log(`✅ Successfully loaded ${this.availableTours.length} tour files:`, this.availableTours);
     } catch (error) {
       console.error('❌ Error initializing tours:', error);
       this.availableTours = [];
@@ -334,7 +332,6 @@ export class TourService {
     this.updatePreferences(preferences);
 
     // Analytics/logging could be added here
-    console.log(`Tour ${tourId}: ${action} at step ${stepIndex}`);
   }
 
   /**

@@ -158,11 +158,9 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    console.log('ContactView ngOnInit - showAiPanel value:', this.showAiPanel);
     
     // If recordId is provided via Input (AI layout), load data directly
     if (this.recordId && this.recordId !== '') {
-      console.log('Using input recordId:', this.recordId);
       this._loadRecordDetails();
       return;
     }
@@ -355,11 +353,9 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   }
 
   onSummaryRefresh() {
-    console.log('Summary refreshed');
   }
 
   onSummaryLoaded(data: any) {
-    console.log('Summary loaded:', data);
   }
 
   onSummaryError(error: any) {
@@ -367,11 +363,9 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   }
 
   onNewsRefresh() {
-    console.log('News refreshed');
   }
 
   onNewsLoaded(data: any) {
-    console.log('News loaded:', data);
   }
 
   onNewsError(error: any) {

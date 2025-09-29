@@ -66,8 +66,8 @@ public class AdvancedSearchService
         try
         {
             _logger.LogInformation("=== ADVANCED SEARCH SERVICE ===");
-            _logger.LogInformation("Entity: {EntityType}, Query: '{Query}', Filters: {FilterCount}", 
-                typeof(TEntity).Name, request.Query, request.Filters?.Count ?? 0);
+            _logger.LogInformation("Entity: {EntityType}, Query: '{Query}', Filters: {FilterCount}, FilterActive: {FilterActive}", 
+                typeof(TEntity).Name, request.Query, request.Filters?.Count ?? 0, request.FilterActive);
 
             // Build base query with proper includes
             var query = BuildBaseQueryWithIncludes<TEntity>();
@@ -86,8 +86,8 @@ public class AdvancedSearchService
                 _logger.LogInformation("Applied smart text search for: '{Query}'", request.Query);
             }
 
-            // Apply access control and global filters
-            query = await ApplyAccessControlAsync(query, user);
+            // Apply access control and global filters (respecting filterActive flag)
+            query = await ApplyAccessControlAsync(query, user, request.FilterActive);
 
             // Get total count
             var totalCount = await query.CountAsync();
@@ -138,7 +138,8 @@ public class AdvancedSearchService
             PageIndex = pagination.PageIndex,
             PageSize = pagination.PageSize,
             OrderBy = pagination.OrderBy,
-            Ascending = pagination.Ascending ?? false
+            Ascending = pagination.Ascending ?? false,
+            FilterActive = pagination.FilterActive
         };
 
         return await SearchAsync<TEntity, TModel>(request, user);
@@ -161,7 +162,8 @@ public class AdvancedSearchService
             PageIndex = pagination.PageIndex,
             PageSize = pagination.PageSize,
             OrderBy = pagination.OrderBy,
-            Ascending = pagination.Ascending ?? false
+            Ascending = pagination.Ascending ?? false,
+            FilterActive = pagination.FilterActive
         };
 
         return await SearchAsync<TEntity, TModel>(request, user);
@@ -444,13 +446,13 @@ public class AdvancedSearchService
     /// <summary>
     /// Enhanced global search using modular functions for better performance and control
     /// </summary>
-    public async Task<GlobalSearchResponse> SearchAllEntitiesModularAsync(string searchText, float textBoost = 1.0f, int maxResultsPerEntity = 15)
+    public async Task<GlobalSearchResponse> SearchAllEntitiesModularAsync(string searchText, float textBoost = 1.0f, int maxResultsPerEntity = 15, bool filterActive = true)
     {
         try
         {
             _logger.LogInformation("=== ENHANCED MODULAR GLOBAL SEARCH ===");
-            _logger.LogInformation("Search Text: '{SearchText}', Text Boost: {TextBoost}, Max Results: {MaxResults}", 
-                searchText, textBoost, maxResultsPerEntity);
+            _logger.LogInformation("Search Text: '{SearchText}', Text Boost: {TextBoost}, Max Results: {MaxResults}, FilterActive: {FilterActive}", 
+                searchText, textBoost, maxResultsPerEntity, filterActive);
 
             var startTime = DateTime.UtcNow;
 
@@ -1912,10 +1914,19 @@ public class AdvancedSearchService
     /// <summary>
     /// Apply access control and global filters using the centralized GlobalFilterService
     /// </summary>
-    private async Task<IQueryable<TEntity>> ApplyAccessControlAsync<TEntity>(IQueryable<TEntity> query, ClaimsPrincipal user) where TEntity : class
+    private async Task<IQueryable<TEntity>> ApplyAccessControlAsync<TEntity>(IQueryable<TEntity> query, ClaimsPrincipal user, bool filterActive = true) where TEntity : class
     {
-        // Use the centralized GlobalFilterService for consistent global filter application
-        return await _globalFilterService.ApplyGlobalFiltersAsync(query, user);
+        // Apply global filters only if filterActive is true (following UNOPSPartnerManager pattern)
+        if (_globalFilterService != null && filterActive == true)
+        {
+            _logger.LogInformation("Applying global filters (filterActive: {FilterActive})", filterActive);
+            return await _globalFilterService.ApplyGlobalFiltersAsync(query, user);
+        }
+        else
+        {
+            _logger.LogInformation("Skipping global filters (filterActive: {FilterActive})", filterActive);
+            return query;
+        }
     }
 
     /// <summary>
@@ -2146,6 +2157,11 @@ public class UnifiedSearchRequest
     /// Sort direction
     /// </summary>
     public bool Ascending { get; set; } = false;
+    
+    /// <summary>
+    /// Filter toggle state - controls whether global filters are applied
+    /// </summary>
+    public bool FilterActive { get; set; } = true;
 }
 
 /// <summary>

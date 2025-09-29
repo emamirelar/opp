@@ -38,7 +38,6 @@
       }
     },
     "database": {
-          "url": "sqlite:///./ai_agent.db",
           "secret_name": "QA_DB_Connection_String"
     },
     "artifacts": {
@@ -47,12 +46,12 @@
     },
     "server": {
       "serve_web_interface": true,
-      "api_base_url": "https://opportunityplus-qa.unops.org",
+      "api_base_url": "https://opportunityplus.qa.unops.org",
       "is_development": true,
       "host": "0.0.0.0",
       "port": 8000,
       "allow_origins": [
-        "https://opportunityplus-qa.unops.org",
+        "https://opportunityplus.qa.unops.org",
         "https://localhost:44426/"
       ]
     },

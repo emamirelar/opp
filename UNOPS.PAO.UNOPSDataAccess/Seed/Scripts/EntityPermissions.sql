@@ -228,7 +228,7 @@ INSERT INTO public."EntityPermissions" (
 ) VALUES (
     'PartnerTree',
     'PARTNER_USER',
-    false,
+    true,
     false,
     false,
     false,

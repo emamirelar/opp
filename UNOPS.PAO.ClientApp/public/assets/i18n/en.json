@@ -418,7 +418,8 @@
       "createdBy": "Created By",
       "selectCreatedBy": "Select Created By",
       "noPartnersSelected": "No partners selected",
-      "aiGeneratedSummary": "AI Generated Summary"
+      "aiGeneratedSummary": "AI Generated Summary",
+      "requiresPartnerContact": "Requires at least one contact from current partner"
     },
     "partnerGroup": {
       "name": "Partner Group Name"
@@ -962,7 +963,13 @@
     "closeSearch": "Close search",
     "clearAll": "Clear All",
     "viewAllResults": "View All Results",
-    "filteredBy": "Filtered by"
+    "filteredBy": "Filtered by",
+    "showAll": "Show All",
+    "applyFilter": "Apply Filter",
+    "showingRecords": "Showing {{filtered}} of {{total}} records",
+    "showingAllRecords": "Showing {{total}} records",
+    "filterTemporarilyDisabled": "filter temporarily disabled",
+    "globalFiltersOff": "Global filters turned off"
   },
   "tour": {
     "control": {

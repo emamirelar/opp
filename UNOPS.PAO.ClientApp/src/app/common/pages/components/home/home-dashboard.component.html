@@ -134,14 +134,47 @@
 
     <!-- UNOPS Dashboard Content -->
     @if (!loading() && !error() && dashboardData()) {
-      <!-- Refresh action Toolbar -->
-      <div class="mb-unops-xl">
-        <div class="px-unops-sm py-unops-sm">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center"></div>
+      <!-- Quick Actions Toolbar - Show panel only when user has create permissions -->
+      <div *ngIf="!permissionsLoading() && hasAnyCreatePermission()" class="bg-unops-surface-primary rounded-unops-lg shadow-unops-sm border border-unops-neutral-200 mb-unops-xl">
+        <div class="px-unops-xl py-unops-lg">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-unops-lg">
+              <h2 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
+                Quick Actions
+              </h2>
+              <div class="flex items-center space-x-unops-md">
+                <button 
+                  *ngIf="partnerPermissions().permissions.canCreate"
+                  pButton 
+                  type="button" 
+                  class="p-button-sm unops-button-primary flex items-center"
+                  (click)="openNewPartnerModal()">
+                  <i class="material-symbols-outlined text-unops-lg mr-unops-xs">corporate_fare</i>
+                  New Partner
+                </button>
+                <button 
+                  *ngIf="contactPermissions().permissions.canCreate"
+                  pButton 
+                  type="button" 
+                  class="p-button-sm unops-button-primary flex items-center"
+                  (click)="openNewContactModal()">
+                  <i class="material-symbols-outlined text-unops-lg mr-unops-xs">contacts</i>
+                  New Contact
+                </button>
+                <button 
+                  *ngIf="interactionPermissions().permissions.canCreate"
+                  pButton 
+                  type="button" 
+                  class="p-button-sm unops-button-primary flex items-center"
+                  (click)="openNewInteractionModal()">
+                  <i class="material-symbols-outlined text-unops-lg mr-unops-xs">chat</i>
+                  New Interaction
+                </button>
+              </div>
+            </div>
             <div class="flex items-center space-x-unops-md">
               <div class="text-unops-body-small text-unops-neutral-500">
-                Last updated just now
+                Last updated {{ lastUpdatedTime() }}
               </div>
               <button 
                 pButton 
@@ -174,6 +207,24 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Minimal Last Updated Section - Show when no create permissions -->
+      <div *ngIf="!permissionsLoading() && !hasAnyCreatePermission()" class="flex items-center justify-end space-x-unops-md mb-unops-xl">
+        <div class="text-unops-body-small text-unops-neutral-500">
+          Last updated {{ lastUpdatedTime() }}
+        </div>
+        <button 
+          pButton 
+          type="button" 
+          icon="pi pi-refresh" 
+          class="p-button-outlined p-button-sm unops-icon-button"
+          [loading]="loading()"
+          (click)="refreshDashboard()"
+          pTooltip="{{ 'dashboard.refresh' | translate }}"
+          tooltipPosition="bottom"
+          [tooltipOptions]="{ showDelay: 300, hideDelay: 150, positionStyle: 'absolute' }">
+        </button>
       </div>
 
       <!-- Main Dashboard Panels -->
@@ -601,12 +652,13 @@
                       Start logging your communications and meetings
                     </p>
                     <button 
+                      *ngIf="!permissionsLoading() && interactionPermissions().permissions.canCreate"
                       pButton 
                       type="button" 
                       icon="pi pi-plus" 
                       label="Log First Interaction"
                       class="p-button-sm unops-button-primary"
-                      (click)="navigateToInteractions()">
+                      (click)="openNewInteractionModal()">
                     </button>
                   </div>
                 }
@@ -804,7 +856,7 @@
           [hasContent]="dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0"
           [isMobile]="isMobile()"
           (viewAllClick)="expandPanel('interactions')"
-          (emptyStateAction)="navigateToInteractions()">
+          (emptyStateAction)="openNewInteractionModal()">
           
           <!-- Content Template - Only show when there are interactions -->
           @if (dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0) {

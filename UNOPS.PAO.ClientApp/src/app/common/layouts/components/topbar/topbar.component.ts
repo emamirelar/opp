@@ -1145,7 +1145,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   // Debug methods for AI assistant image
   onImageLoad(event: any): void {
-    console.log('AI assistant image loaded successfully:', event);
   }
 
   onImageError(event: any): void {

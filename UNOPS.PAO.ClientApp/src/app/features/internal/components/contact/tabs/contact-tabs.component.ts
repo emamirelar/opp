@@ -197,7 +197,6 @@ export class ContactTabsComponent implements OnInit, OnDestroy {
 
   _loadRecordDetails(): void {
     // Reload contact data after profile picture change
-    console.log('Profile picture updated, reloading contact details...');
   }
 
   getActiveTab(): TabItem | null {

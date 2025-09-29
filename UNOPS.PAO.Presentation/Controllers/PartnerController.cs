@@ -192,7 +192,8 @@ public class PartnerController : BaseController
         [FromQuery] string? orderBy = "CreatedDate",
         [FromQuery] int? partnerGroupId = null,
         [FromQuery] bool ascending = false,
-        [FromQuery] bool export = false)
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
@@ -207,7 +208,8 @@ public class PartnerController : BaseController
                 PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
                 OrderBy = orderBy ?? "createdDate",
                 Ascending = ascending,
-                PartnerGroupId = partnerGroupId
+                PartnerGroupId = partnerGroupId,
+                FilterActive = filterActive
             };
             
             // Create simple specification - global filters will be applied by the manager
@@ -251,7 +253,8 @@ public class PartnerController : BaseController
         [FromQuery] int pageSize = 20,
         [FromQuery] string? orderBy = "CreatedDate", 
         [FromQuery] bool ascending = false,
-        [FromQuery] bool export = false)
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
     {
         try
         {
@@ -269,7 +272,8 @@ public class PartnerController : BaseController
                 PageIndex = pageIndex,
                 PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
                 OrderBy = orderBy,
-                Ascending = ascending
+                Ascending = ascending,
+                FilterActive = filterActive
             };
 
             // Use AdvancedSearchService for unified text search with PostgreSQL similarity
@@ -321,7 +325,8 @@ public class PartnerController : BaseController
         [FromQuery] int pageSize = 20,
         [FromQuery] string? orderBy = "CreatedDate",
         [FromQuery] bool ascending = false,
-        [FromQuery] bool export = false)
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
     {
         try
         {
@@ -351,7 +356,8 @@ public class PartnerController : BaseController
                 PageIndex = pageIndex,
                 PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
                 OrderBy = orderBy,
-                Ascending = ascending
+                Ascending = ascending,
+                FilterActive = filterActive
             };
 
             var result = await _advancedSearchService.SearchWithFiltersAsync<UNOPSPartner, PartnerModel>(

@@ -325,11 +325,9 @@ export class InteractionDetailComponent implements OnInit {
 
   // AI Summary Event Handlers
   onSummaryRefresh() {
-    console.log('AI Summary refreshed');
   }
 
   onSummaryLoaded(data: string) {
-    console.log('AI Summary loaded:', data);
   }
 
   onSummaryError(error: Error) {

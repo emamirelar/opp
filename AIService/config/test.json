@@ -29,38 +29,37 @@
     },
     "google_cloud": {
       "use_vertex_ai": true,
-      "project": "unops-partneropportunity",
+      "project": "unops-opportunityplus-test",
       "location": "europe-west4",
       "oauth": {
         "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
         "client_id": "1069310298210-ubl2naqi5bjeqlqrroiqb4qdm482aans.apps.googleusercontent.com",
-        "target_principal": "pno-ai-service@unops-partneropportunity.iam.gserviceaccount.com"
+        "target_principal": "pno-ai-service@unops-opportunityplus-test.iam.gserviceaccount.com"
       }
     },
     "database": {
-          "url": "sqlite:///./ai_agent.db",
           "secret_name": "QA_DB_Connection_String"
     },
     "artifacts": {
       "service_type": "GcsArtifactService",
-      "gcs_bucket_name": "pno-file-storage"
+      "gcs_bucket_name": "pno-file-storage-test"
     },
     "server": {
       "serve_web_interface": true,
-      "api_base_url": "https://test-opportunityplus.unops.org",
+      "api_base_url": "https://opportunityplus.test.unops.org",
       "is_development": true,
       "host": "0.0.0.0",
       "port": 8000,
       "allow_origins": [
-        "https://test-opportunityplus.unops.org",
+        "https://opportunityplus.test.unops.org",
         "https://localhost:44426/"
       ]
     },
     "google_drive": {
       "enabled": true,
-      "project_id": "unops-partneropportunity",
+      "project_id": "unops-opportunityplus-test",
       "secret_name": "GoogleDriveAI",
-      "service_account_email": "google-drive-ai@unops-partneropportunity.iam.gserviceaccount.com",
+      "service_account_email": "google-drive-ai@unops-opportunityplus-test.iam.gserviceaccount.com",
       "scopes": [
         "https://www.googleapis.com/auth/drive.readonly",
         "https://www.googleapis.com/auth/drive.file"

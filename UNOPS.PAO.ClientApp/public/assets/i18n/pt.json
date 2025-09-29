@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
     "global": {
         "filter": "Filtro global"
     },
@@ -637,7 +636,13 @@
         "clearAll": "Limpar Tudo",
         "noResults": "Nenhum resultado encontrado",
         "viewAllResults": "Ver Todos os Resultados",
-        "filteredBy": "Filtrado por"
+        "filteredBy": "Filtrado por",
+    "showAll": "Mostrar Tudo",
+    "applyFilter": "Aplicar Filtro",
+    "showingRecords": "Mostrando {{filtered}} de {{total}} registros",
+    "showingAllRecords": "Mostrando todos os {{total}} registros",
+    "filterTemporarilyDisabled": "filtro temporariamente desabilitado",
+    "globalFiltersOff": "Filtros globais desativados"
     },
     "tour": {
         "control": {

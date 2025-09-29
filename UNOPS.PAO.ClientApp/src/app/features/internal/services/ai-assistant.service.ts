@@ -192,8 +192,7 @@ export class AiAssistantService {
     // The final chunk is identified by content.role === 'user' 
     // which appears to be the user message echo at the end of streaming
     if (data.content?.role === 'user') {
-      console.log('🏁 Detected final chunk (user message echo)');
-      return true;
+       return true;
     }
     
     // All other chunks (model responses, partial chunks, etc.) are intermediate
@@ -246,8 +245,6 @@ export class AiAssistantService {
       validation.valid.forEach((file, index) => {
         formData.append('Files', file, file.name);
       });
-      
-      console.log(`[AI-ASSISTANT] Added ${validation.valid.length} valid files to request`);
     }
     
     return formData;
@@ -299,8 +296,6 @@ export class AiAssistantService {
       validation.valid.forEach((file, index) => {
         formData.append('files', file, file.name);
       });
-      
-      console.log(`[AI-ASSISTANT] Added ${validation.valid.length} valid files to streaming request`);
     }
     
     return formData;
