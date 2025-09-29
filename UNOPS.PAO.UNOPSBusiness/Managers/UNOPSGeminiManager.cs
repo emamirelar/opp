@@ -2061,6 +2061,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 httpClient.DefaultRequestHeaders.UserAgent.ToString());
 
           // DEBUG: Log the actual authorization header details
+            var authHeader = httpClient.DefaultRequestHeaders.Authorization;
             if (authHeader != null)
             {
                 _logger.LogInformation("ChatWithGemini: Authorization header - Scheme: {Scheme}, Token prefix: {TokenPrefix}", 
