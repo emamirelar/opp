@@ -38,7 +38,6 @@
       }
     },
     "database": {
-          "url": "sqlite:///./ai_agent.db",
           "secret_name": "QA_DB_Connection_String"
     },
     "artifacts": {

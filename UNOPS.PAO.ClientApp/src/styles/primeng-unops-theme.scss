@@ -505,7 +505,7 @@
   border: 1px solid var(--unops-neutral-200) !important;
   border-radius: var(--unops-radius-xl) !important;
   box-shadow: var(--unops-shadow-xl) !important;
-  overflow: hidden !important;
+  overflow-y: auto !important;
   
   .p-dialog-header {
     background: var(--unops-surface-primary) !important;
@@ -537,6 +537,7 @@
   .p-dialog-content {
     padding: var(--unops-spacing-lg) !important;
     background: var(--unops-surface-primary) !important;
+    overflow-y: auto !important;
     
     // Apply bottom border radius when there's no footer
     &:last-child {
@@ -562,11 +563,11 @@
 /* Specific fixes for dynamic dialogs */
 p-dynamicdialog {
   .p-dialog {
-    overflow: hidden !important;
+    overflow-y: auto !important;
     
     .p-dialog-content {
-      // Ensure content doesn't overflow the rounded corners
-      overflow: hidden !important;
+      // Ensure content can scroll
+      overflow-y: auto !important;
       
       // For dialogs without footer, apply bottom border radius
       &:last-child {
