@@ -963,7 +963,13 @@
     "closeSearch": "Close search",
     "clearAll": "Clear All",
     "viewAllResults": "View All Results",
-    "filteredBy": "Filtered by"
+    "filteredBy": "Filtered by",
+    "showAll": "Show All",
+    "applyFilter": "Apply Filter",
+    "showingRecords": "Showing {{filtered}} of {{total}} records",
+    "showingAllRecords": "Showing {{total}} records",
+    "filterTemporarilyDisabled": "filter temporarily disabled",
+    "globalFiltersOff": "Global filters turned off"
   },
   "tour": {
     "control": {

@@ -344,7 +344,7 @@ public class GlobalController : BaseController
     /// <when_to_use>Use this when the user performs any search operation across the system - it automatically chooses between text search for exact matches and semantic search for conceptual queries.</when_to_use>
     /// <returns>Comprehensive search results with relevance scoring and entity details</returns>
     [HttpGet(APIDictionary.GlobalSearch)]
-    public async Task<ActionResult> IntelligentGlobalSearch([FromQuery] string q, [FromQuery] bool debug = false, [FromQuery] bool fullResults = false)
+    public async Task<ActionResult> IntelligentGlobalSearch([FromQuery] string q, [FromQuery] bool debug = false, [FromQuery] bool fullResults = false, [FromQuery] bool filterActive = true)
     {
         try
         {
@@ -381,10 +381,10 @@ public class GlobalController : BaseController
             }
 
             // Call the PostgreSQL hybrid search function
-            var searchResults = await CallSearchFunction(cleanedQuery, embedding, debug);
+            var searchResults = await CallSearchFunction(cleanedQuery, embedding, debug, filterActive);
 
             // Process results to get actual entity data
-            var consolidatedResults = await ProcessAndConsolidateResults(searchResults, User, fullResults);
+            var consolidatedResults = await ProcessAndConsolidateResults(searchResults, User, fullResults, filterActive);
             
             return Ok(consolidatedResults);
         }
@@ -477,7 +477,7 @@ public class GlobalController : BaseController
     /// <summary>
     /// Calls the modular AdvancedSearchService to perform global search across all entities
     /// </summary>
-    private async Task<object> CallSearchFunction(string query, string? embedding = null, bool debug = false)
+    private async Task<object> CallSearchFunction(string query, string? embedding = null, bool debug = false, bool filterActive = true)
     {
         try
         {
@@ -486,7 +486,7 @@ public class GlobalController : BaseController
             _logger.LogInformation("Executing {Strategy} search for query: {Query}, Debug: {Debug}", strategy, query, debug);
             
             // Use the enhanced modular search from AdvancedSearchService for better performance
-            var searchResults = await _advancedSearchService.SearchAllEntitiesModularAsync(query, 1.0f, 15);
+            var searchResults = await _advancedSearchService.SearchAllEntitiesModularAsync(query, 1.0f, 15, filterActive);
             
             // Convert the GlobalSearchResponse to the expected format for ProcessAndConsolidateResults
             var formattedResults = new
@@ -563,7 +563,7 @@ public class GlobalController : BaseController
     /// Processes search results and retrieves actual entity data using reflection,
     /// preserving search metadata like matchedField for frontend transparency
     /// </summary>
-    private async Task<object> ProcessAndConsolidateResults(object searchResults, ClaimsPrincipal user, bool fullResults = false)
+    private async Task<object> ProcessAndConsolidateResults(object searchResults, ClaimsPrincipal user, bool fullResults = false, bool filterActive = true)
     {
         try
         {
@@ -650,7 +650,7 @@ public class GlobalController : BaseController
                             var entityIdsToProcess = fullResults ? entityIds.ToArray() : entityIds.Take(3).ToArray();
                             
                             // Use reflection to get the appropriate manager and call GetByIdsAsync
-                            var entityData = await GetEntityDataByIds(entityType, entityIdsToProcess, user);
+                            var entityData = await GetEntityDataByIds(entityType, entityIdsToProcess, user, filterActive);
                             if (entityData != null)
                             {
                                 // Enhance original entities with search metadata (no transformation needed)
@@ -757,12 +757,15 @@ public class GlobalController : BaseController
     /// <summary>
     /// Uses reflection to access manager from UNOPSManagerWrapper and get entity data by IDs
     /// </summary>
-    private async Task<object?> GetEntityDataByIds(string entityType, int[] entityIds, ClaimsPrincipal user)
+    private async Task<object?> GetEntityDataByIds(string entityType, int[] entityIds, ClaimsPrincipal user, bool filterActive = true)
     {
         try
         {
+            _logger.LogInformation("GetEntityDataByIds called for {EntityType} with filterActive={FilterActive}, EntityIds=[{EntityIds}]", 
+                entityType, filterActive, string.Join(", ", entityIds));
+            
             // Apply global filters to entity IDs before retrieving data
-            if (user != null)
+            if (user != null && filterActive)
             {
                 var currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (!string.IsNullOrEmpty(currentUserId))
@@ -772,8 +775,14 @@ public class GlobalController : BaseController
                         var globalFilters = await _userPreferenceService.GetGlobalFiltersAsync(currentUserId);
                         if (globalFilters != null)
                         {
+                            _logger.LogInformation("Applying global filters to {EntityType} entities. Original count: {OriginalCount}", 
+                                entityType, entityIds.Length);
+                            
                             // Filter entity IDs based on global filters
                             entityIds = await FilterEntityIdsByGlobalFilters(entityIds, entityType, globalFilters, user);
+                            
+                            _logger.LogInformation("After global filtering: {EntityType} count reduced to {FilteredCount}", 
+                                entityType, entityIds.Length);
                             
                             if (entityIds.Length == 0)
                             {
@@ -788,6 +797,11 @@ public class GlobalController : BaseController
                         // Continue with original entity IDs if global filtering fails
                     }
                 }
+            }
+            else
+            {
+                _logger.LogInformation("Skipping global filters for {EntityType} - filterActive={FilterActive}, user={HasUser}", 
+                    entityType, filterActive, user != null);
             }
 
             // Get manager field name from entity type

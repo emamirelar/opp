@@ -201,7 +201,8 @@ public class ContactController : BaseController
         [FromQuery] string? orderBy = null,
         [FromQuery] bool ascending = true,
         [FromQuery] int? partnerId = null,
-        [FromQuery] bool export = false)
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
@@ -216,7 +217,8 @@ public class ContactController : BaseController
                 PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
                 OrderBy = orderBy,
                 Ascending = ascending,
-                PartnerId = partnerId
+                PartnerId = partnerId,
+                FilterActive = filterActive
             };
             
             _logger.LogInformation($"[CONTROLLER DEBUG] ContactFilterRequest - PartnerId: {request.PartnerId}");
@@ -249,7 +251,8 @@ public class ContactController : BaseController
     public async Task<ActionResult> SearchContacts(
         [FromQuery] PaginationRequest request,
         [FromQuery] string query,
-        [FromQuery] bool export = false)
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
@@ -266,7 +269,8 @@ public class ContactController : BaseController
             PageIndex = request.PageIndex,
             PageSize = export ? int.MaxValue : request.PageSize, // Remove pagination limits for export
             OrderBy = request.OrderBy,
-            Ascending = request.Ascending
+            Ascending = request.Ascending,
+            FilterActive = filterActive
         };
 
         // Use AdvancedSearchService for unified text search with PostgreSQL similarity
@@ -312,7 +316,9 @@ public class ContactController : BaseController
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? orderBy = null,
-        [FromQuery] bool ascending = true)
+        [FromQuery] bool ascending = true,
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
     {
         try
         {
@@ -340,9 +346,10 @@ public class ContactController : BaseController
             var paginationRequest = new PaginationRequest
             {
                 PageIndex = pageIndex,
-                PageSize = pageSize,
+                PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
                 OrderBy = orderBy,
-                Ascending = ascending
+                Ascending = ascending,
+                FilterActive = filterActive
             };
 
             var result = await _advancedSearchService.SearchWithFiltersAsync<UNOPSContact, ContactModel>(

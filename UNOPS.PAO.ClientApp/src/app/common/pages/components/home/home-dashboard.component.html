@@ -134,17 +134,17 @@
 
     <!-- UNOPS Dashboard Content -->
     @if (!loading() && !error() && dashboardData()) {
-      <!-- Quick Actions Toolbar -->
-      <div class="bg-unops-surface-primary rounded-unops-lg shadow-unops-sm border border-unops-neutral-200 mb-unops-xl">
+      <!-- Quick Actions Toolbar - Show panel only when user has create permissions -->
+      <div *ngIf="!permissionsLoading() && hasAnyCreatePermission()" class="bg-unops-surface-primary rounded-unops-lg shadow-unops-sm border border-unops-neutral-200 mb-unops-xl">
         <div class="px-unops-xl py-unops-lg">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-unops-lg">
-              <h2 *ngIf="partnerPermissions().permissions.canCreate || contactPermissions().permissions.canCreate || interactionPermissions().permissions.canCreate" class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
+              <h2 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
                 Quick Actions
               </h2>
-              <div class="flex items-center space-x-unops-md" *ngIf="partnerPermissions().permissions.canCreate || contactPermissions().permissions.canCreate || interactionPermissions().permissions.canCreate">
+              <div class="flex items-center space-x-unops-md">
                 <button 
-                  *ngIf="!permissionsLoading() && partnerPermissions().permissions.canCreate"
+                  *ngIf="partnerPermissions().permissions.canCreate"
                   pButton 
                   type="button" 
                   class="p-button-sm unops-button-primary flex items-center"
@@ -153,7 +153,7 @@
                   New Partner
                 </button>
                 <button 
-                  *ngIf="!permissionsLoading() && contactPermissions().permissions.canCreate"
+                  *ngIf="contactPermissions().permissions.canCreate"
                   pButton 
                   type="button" 
                   class="p-button-sm unops-button-primary flex items-center"
@@ -162,7 +162,7 @@
                   New Contact
                 </button>
                 <button 
-                  *ngIf="!permissionsLoading() && interactionPermissions().permissions.canCreate"
+                  *ngIf="interactionPermissions().permissions.canCreate"
                   pButton 
                   type="button" 
                   class="p-button-sm unops-button-primary flex items-center"
@@ -207,6 +207,24 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Minimal Last Updated Section - Show when no create permissions -->
+      <div *ngIf="!permissionsLoading() && !hasAnyCreatePermission()" class="flex items-center justify-end space-x-unops-md mb-unops-xl">
+        <div class="text-unops-body-small text-unops-neutral-500">
+          Last updated {{ lastUpdatedTime() }}
+        </div>
+        <button 
+          pButton 
+          type="button" 
+          icon="pi pi-refresh" 
+          class="p-button-outlined p-button-sm unops-icon-button"
+          [loading]="loading()"
+          (click)="refreshDashboard()"
+          pTooltip="{{ 'dashboard.refresh' | translate }}"
+          tooltipPosition="bottom"
+          [tooltipOptions]="{ showDelay: 300, hideDelay: 150, positionStyle: 'absolute' }">
+        </button>
       </div>
 
       <!-- Main Dashboard Panels -->
@@ -838,7 +856,7 @@
           [hasContent]="dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0"
           [isMobile]="isMobile()"
           (viewAllClick)="expandPanel('interactions')"
-          (emptyStateAction)="navigateToInteractions()">
+          (emptyStateAction)="openNewInteractionModal()">
           
           <!-- Content Template - Only show when there are interactions -->
           @if (dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0) {

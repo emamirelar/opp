@@ -2,22 +2,47 @@
 
 <div class="flex flex-col gap-8 ">
 
-  <!-- Global Filter Information -->
-  @if(isGlobalFilterActive() && activeFilterLabels().length > 0) {
-    <button 
-      type="button"
-      (click)="openGlobalFiltersDialog()"
-      class="flex items-center space-x-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer transition-all duration-200 hover:bg-blue-100 hover:shadow-md"
-      [title]="'Click to modify global filters'">
+  <!-- Enhanced Global Filter Information with Toggle -->
+  @if(shouldShowFilterToggle()) {
+    <div class="flex items-center space-x-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg transition-all duration-200">
       <i class="pi pi-filter text-blue-600"></i>
-      <span class="text-blue-700 font-medium">
-        {{ 'search.filteredBy' | translate }}: 
-        @for(label of activeFilterLabels(); track label; let isLast = $last) {
-          <span>{{ label }}@if(!isLast) {<span>, </span>}</span>
-        }
-      </span>
-      <i class="pi pi-sliders-h text-blue-600"></i>
-    </button>
+      <div class="flex-1">
+        <div class="text-blue-700 font-medium">
+          @if(isFilterTemporarilyDisabled()) {
+            {{ 'search.globalFiltersOff' | translate }}
+          } @else {
+            {{ 'search.filteredBy' | translate }}: 
+            @for(label of activeFilterLabels(); track label; let isLast = $last) {
+              <span>{{ label }}@if(!isLast) {<span>, </span>}</span>
+            }
+          }
+        </div>
+        <div class="text-blue-600 text-sm mt-1">
+          {{ getRecordCountText() }}
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button 
+          pButton 
+          type="button"
+          class="p-button-sm p-button-outlined"
+          [class.p-button-success]="isFilterTemporarilyDisabled()"
+          [class.p-button-secondary]="!isFilterTemporarilyDisabled()"
+          (click)="toggleGlobalFilter()"
+          [title]="getToggleButtonText()">
+          <i class="pi" [class.pi-eye]="isFilterTemporarilyDisabled()" [class.pi-filter]="!isFilterTemporarilyDisabled()"></i>
+          <span class="ml-2">{{ getToggleButtonText() }}</span>
+        </button>
+        <button 
+          pButton 
+          type="button"
+          icon="pi pi-sliders-h"
+          class="p-button-sm p-button-outlined p-button-secondary"
+          (click)="openGlobalFiltersDialog()"
+          [title]="'Click to modify global filters'">
+        </button>
+      </div>
+    </div>
   }
 
   <!-- Search bar -->
