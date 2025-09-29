@@ -104,7 +104,7 @@ environments:
     port_main: "7123"
     main_min_instances: "0"
     main_max_instances: "3"
-    main_memory: "512MiB"
+    main_memory: "512Mi"
     main_cpu: "1"
     port_ai: "8080"
     ai_min_instances: "1"
