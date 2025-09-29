@@ -228,10 +228,19 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   }
 
   get recentInteractionsConfig(): DashboardCardConfig {
-    return {
+    const baseConfig = {
       ...this.DASHBOARD_CARD_CONFIGS.RECENT_INTERACTIONS,
       subtitle: `${this.summary().totalMyInteractions} interactions • Latest activity`
     };
+    
+    // Only show the empty state action button if user has create permission
+    if (!this.permissionsLoading() && this.interactionPermissions().permissions.canCreate) {
+      return baseConfig;
+    } else {
+      // Remove the action button if no permission
+      const { emptyStateActionLabel, ...configWithoutAction } = baseConfig;
+      return configWithoutAction;
+    }
   }
 
   // Dashboard Card Filters
@@ -437,6 +446,13 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
       const days = Math.floor(diffInSeconds / 86400);
       this.lastUpdatedTime.set(`${days} day${days > 1 ? 's' : ''} ago`);
     }
+  }
+
+  // Helper method to check if user has any create permissions
+  hasAnyCreatePermission(): boolean {
+    return this.partnerPermissions().permissions.canCreate || 
+           this.contactPermissions().permissions.canCreate || 
+           this.interactionPermissions().permissions.canCreate;
   }
 
   @HostListener('window:resize', ['$event'])

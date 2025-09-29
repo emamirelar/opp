@@ -697,7 +697,13 @@
         "clearAll": "Tout Effacer",
         "noResults": "Aucun résultat trouvé",
         "viewAllResults": "Voir Tous les Résultats",
-        "filteredBy": "Filtré par"
+        "filteredBy": "Filtré par",
+    "showAll": "Tout afficher",
+    "applyFilter": "Appliquer le filtre",
+    "showingRecords": "Affichage de {{filtered}} sur {{total}} enregistrements",
+    "showingAllRecords": "Affichage de tous les {{total}} enregistrements",
+    "filterTemporarilyDisabled": "filtre temporairement désactivé",
+    "globalFiltersOff": "Filtres globaux désactivés"
     },
     "tour": {
         "control": {

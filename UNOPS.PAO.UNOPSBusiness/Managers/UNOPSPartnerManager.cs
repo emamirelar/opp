@@ -289,7 +289,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var filteredQuery = filteredBaseQuery.OfType<UNOPSPartner>();
         
         // Apply global filters using the centralized GlobalFilterService
-        if (_globalFilterService != null)
+        if (_globalFilterService != null && pagination.FilterActive == true)
         {
             filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, GetCurrentUserOrSystemContext());
         }
@@ -345,7 +345,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var filteredQuery = filteredBaseQuery.OfType<UNOPSPartner>();
         
         // Apply global filters using the centralized GlobalFilterService
-        if (_globalFilterService != null)
+        if (_globalFilterService != null && pagination.FilterActive == true)
         {
             filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, user);
         }

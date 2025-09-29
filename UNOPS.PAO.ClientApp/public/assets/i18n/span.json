@@ -631,7 +631,13 @@
         "clearAll": "Limpiar Todo",
         "noResults": "No se encontraron resultados",
         "viewAllResults": "Ver Todos los Resultados",
-        "filteredBy": "Filtrado por"
+        "filteredBy": "Filtrado por",
+    "showAll": "Mostrar Todo",
+    "applyFilter": "Aplicar Filtro",
+    "showingRecords": "Mostrando {{filtered}} de {{total}} registros",
+    "showingAllRecords": "Mostrando todos los {{total}} registros",
+    "filterTemporarilyDisabled": "filtro temporalmente desactivado",
+    "globalFiltersOff": "Filtros globales desactivados"
     },
     "tour": {
         "control": {

@@ -37,6 +37,7 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
+using static Google.Cloud.Vision.V1.ProductSearchResults.Types;
 
 public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 {
@@ -393,7 +394,10 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var filteredQuery = filteredBaseQuery.OfType<UNOPSContact>();
         
         // Apply global filters using the centralized GlobalFilterService
-        filteredQuery = _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, GetCurrentUserOrSystemContext()).GetAwaiter().GetResult();
+        if (pagination.FilterActive == true)
+        {
+            filteredQuery = _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, GetCurrentUserOrSystemContext()).GetAwaiter().GetResult();
+        }
 
         // Custom pagination with efficient user lookup
         var totalCount = filteredQuery.Count();
@@ -506,8 +510,10 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var filteredQuery = query.ApplySpecification(specification);
         
         // Apply global filters using the centralized GlobalFilterService
-        filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, user);
-
+        if (pagination.FilterActive == true)
+        {
+            filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, user);
+        }
         // Apply access control filters (role-based permissions only) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
         
@@ -760,7 +766,10 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var filteredQuery = filteredBaseQuery.OfType<UNOPSContact>();
         
         // Apply global filters using the centralized GlobalFilterService
-        filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, user);
+        if (pagination.FilterActive == true)
+        {
+            filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, user);
+        }
 
         // Apply access control filters (role-based permissions only) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");

@@ -1164,8 +1164,8 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     public IEnumerable<TEntity> GetAll(string[] includes)
     {
         var set = ApplyIncludes(_dbSet, includes);
-        var filteredSet = ApplyGlobalFilters(set);
-        return filteredSet.AsEnumerable();
+        // Removed global filter application - filtering is now handled explicitly in managers
+        return set.AsEnumerable();
     }
 
     public IEnumerable<TEntity> GetAll() => GetAll(Array.Empty<string>());
@@ -1201,7 +1201,6 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
         var lambda = Expression.Lambda<Func<TEntity, object>>(Expression.Convert(property, typeof(object)), parameter);
 
         IQueryable<TEntity> query = _dbSet;
-        query = await ApplyGlobalFiltersAsync(query);
 
         if (ascending)
         {
