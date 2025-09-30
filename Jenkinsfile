@@ -210,6 +210,9 @@ node("app-build") {
                         gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
                         gcloud config set project ${PROJECT_ID}
                         
+                        # Copy AIService directory into the build directory
+                        cp -r AIService UNOPS.PAO.AIService/
+                        
                         # Navigate to AI service directory
                         cd UNOPS.PAO.AIService
 

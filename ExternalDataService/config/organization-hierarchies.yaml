@@ -1,0 +1,386 @@
+metadata:
+  name: "OrganizationHierarchies Sync"
+  description: "Organization Hierarchies data sync"
+  version: "1.0"
+  enabled: false
+  max_retry_attempts: 1
+  timeout_minutes: 5
+
+source:
+  type: "bigquery"
+  connection:
+    project_id: "unops-partneropportunity"
+    use_environment_auth: true
+  
+  query: |
+    WITH AllEntities AS (
+    -- Root / Office
+    SELECT DISTINCT
+        CONCAT(Root.dim_value, ' - ', Root.description) AS Name,        -- STRING
+        Root.dim_value AS Code,                                         -- STRING
+        "Office" as Type,
+        Root.description AS Description,                                -- STRING
+        CASE 
+            WHEN (Root.period_from = 0 OR PARSE_DATE('%Y%m', CAST(Root.period_from AS STRING)) <= CURRENT_DATE())
+             AND (Root.period_to = 0 OR Root.period_to = 209999 OR PARSE_DATE('%Y%m', CAST(Root.period_to AS STRING)) >= CURRENT_DATE()) 
+            THEN 1 ELSE 0
+        END AS Status,         
+        CAST(NULL AS STRING) AS ParentEntityType,
+        CAST(NULL AS STRING) AS ParentCode,                             -- STRING
+        1 AS EntityLevel                                                -- INT64
+    FROM `unops-fabric`.erp.agldimvalue Root
+    WHERE Root.client = 'OPS' AND Root.attribute_id = 'A3'
+
+    UNION ALL            
+
+    -- Region
+    SELECT DISTINCT
+        CONCAT(Regions.dim_value, ' - ', Regions.description) AS Name, 
+        Regions.dim_value AS Code,
+        "Region" as Type,
+        Regions.description AS Description,
+        CASE 
+            WHEN (Regions.period_from = 0 OR PARSE_DATE('%Y%m', CAST(Regions.period_from AS STRING)) <= CURRENT_DATE())
+             AND (Regions.period_to = 0 OR Regions.period_to = 209999 OR PARSE_DATE('%Y%m', CAST(Regions.period_to AS STRING)) >= CURRENT_DATE()) 
+            THEN 1 ELSE 0
+        END AS Status,
+        CASE WHEN Region_OPS_Rel.rel_value IS NOT NULL THEN 'Office' ELSE NULL END AS ParentEntityType,
+        CASE WHEN Region_OPS_Rel.rel_value IS NOT NULL THEN OPS.dim_value ELSE NULL END AS ParentCode,
+        2 AS EntityLevel
+    FROM `unops-fabric`.erp.agldimvalue Regions
+    LEFT JOIN `unops-fabric`.erp.aglrelvalue Region_OPS_Rel
+        ON Region_OPS_Rel.client = Regions.client
+        AND Region_OPS_Rel.attribute_id = Regions.attribute_id
+        AND Region_OPS_Rel.rel_attr_id = 'A3'
+        AND Region_OPS_Rel.att_value = Regions.dim_value
+        AND DATE(Region_OPS_Rel.date_from) <= CURRENT_DATE()
+        AND DATE(Region_OPS_Rel.date_to) >= CURRENT_DATE()
+    LEFT JOIN `unops-fabric`.erp.agldimvalue OPS
+        ON Region_OPS_Rel.client = OPS.client
+        AND Region_OPS_Rel.rel_value = OPS.dim_value
+        AND Region_OPS_Rel.rel_attr_id = OPS.attribute_id
+    WHERE Regions.client = 'OPS' AND Regions.attribute_id = 'U287'
+
+    UNION ALL
+
+    -- Hub
+    SELECT DISTINCT
+        CONCAT(Hubs.dim_value, ' - ', Hubs.description) AS Name,
+        Hubs.dim_value AS Code,
+        "Hub" as Type,
+        Hubs.description AS Description,
+        CASE 
+            WHEN (Hubs.period_from = 0 OR PARSE_DATE('%Y%m', CAST(Hubs.period_from AS STRING)) <= CURRENT_DATE())
+             AND (Hubs.period_to = 0 OR Hubs.period_to = 209999 OR PARSE_DATE('%Y%m', CAST(Hubs.period_to AS STRING)) >= CURRENT_DATE()) 
+            THEN 1 ELSE 0
+        END AS Status,
+        CASE 
+            WHEN Related_Region.rel_attr_id = 'U287' THEN 'Region'
+            WHEN Related_HQ_Region.rel_attr_id = 'U288' THEN 'Region'
+            ELSE NULL
+        END AS ParentEntityType,
+        CASE 
+            WHEN Related_Region.rel_attr_id = 'U287' THEN Regions.dim_value
+            WHEN Related_HQ_Region.rel_attr_id = 'U288' THEN HQ_Regions.dim_value
+            ELSE NULL
+        END AS ParentCode,
+        3 AS EntityLevel
+    FROM `unops-fabric`.erp.agldimvalue Hubs
+    LEFT JOIN `unops-fabric`.erp.aglrelvalue Related_Region
+        ON Related_Region.client = Hubs.client
+        AND Related_Region.attribute_id = Hubs.attribute_id
+        AND Related_Region.rel_attr_id = 'U287'
+        AND Related_Region.att_value = Hubs.dim_value
+        AND DATE(Related_Region.date_from) <= CURRENT_DATE()
+        AND DATE(Related_Region.date_to) >= CURRENT_DATE()
+    LEFT JOIN `unops-fabric`.erp.aglrelvalue Related_HQ_Region
+        ON Related_HQ_Region.client = Hubs.client
+        AND Related_HQ_Region.attribute_id = Hubs.attribute_id
+        AND Related_HQ_Region.att_value = Hubs.dim_value
+        AND Related_HQ_Region.rel_attr_id = 'U288'
+        AND DATE(Related_HQ_Region.date_from) <= CURRENT_DATE()
+        AND DATE(Related_HQ_Region.date_to) >= CURRENT_DATE()
+    LEFT JOIN `unops-fabric`.erp.agldimvalue Regions
+        ON Related_Region.client = Regions.client
+        AND Related_Region.rel_value = Regions.dim_value
+        AND Related_Region.rel_attr_id = Regions.attribute_id
+    LEFT JOIN `unops-fabric`.erp.agldimvalue HQ_Regions
+        ON Related_HQ_Region.client = HQ_Regions.client
+        AND Related_HQ_Region.rel_value = HQ_Regions.dim_value
+        AND Related_HQ_Region.rel_attr_id = HQ_Regions.attribute_id
+    WHERE Hubs.client = 'OPS' AND Hubs.attribute_id = 'U293'
+
+    UNION ALL
+
+    -- Org Unit
+    SELECT DISTINCT
+        CONCAT(Org_Units.dim_value, ' - ', Org_Units.description) AS Name,
+        Org_Units.dim_value AS Code,
+        "OrgUnit" as Type,
+        Org_Units.description AS Description,
+        CASE 
+            WHEN (Org_Units.period_from = 0 OR PARSE_DATE('%Y%m', CAST(Org_Units.period_from AS STRING)) <= CURRENT_DATE())
+             AND (Org_Units.period_to = 0 OR Org_Units.period_to = 209999 OR PARSE_DATE('%Y%m', CAST(Org_Units.period_to AS STRING)) >= CURRENT_DATE()) 
+            THEN 1 ELSE 0
+        END AS Status,
+        CASE 
+            WHEN Org_Unit_Hub_Rel.rel_attr_id = 'U293' THEN 'Hub'
+            WHEN Org_Unit_Region_Rel.rel_attr_id = 'U287' THEN 'Region'
+            WHEN Org_Unit_HQ_Region_Rel.rel_attr_id = 'U288' THEN 'Region'
+            ELSE NULL
+        END AS ParentEntityType,
+        CASE 
+            WHEN Org_Unit_Hub_Rel.rel_attr_id = 'U293' THEN Related_Hubs.dim_value
+            WHEN Org_Unit_Region_Rel.rel_attr_id = 'U287' THEN Related_Regions1.dim_value
+            WHEN Org_Unit_HQ_Region_Rel.rel_attr_id = 'U288' THEN Related_Regions2.dim_value
+            ELSE NULL
+        END AS ParentCode,
+        4 AS EntityLevel
+    FROM `unops-fabric`.erp.agldimvalue Org_Units
+    LEFT JOIN `unops-fabric`.erp.aglrelvalue Org_Unit_Hub_Rel
+        ON Org_Unit_Hub_Rel.client = Org_Units.client
+        AND Org_Unit_Hub_Rel.attribute_id = Org_Units.attribute_id
+        AND Org_Unit_Hub_Rel.rel_attr_id = 'U293'
+        AND Org_Unit_Hub_Rel.att_value = Org_Units.dim_value
+        AND DATE(Org_Unit_Hub_Rel.date_from) <= CURRENT_DATE()
+        AND DATE(Org_Unit_Hub_Rel.date_to) >= CURRENT_DATE()
+    LEFT JOIN `unops-fabric`.erp.aglrelvalue Org_Unit_Region_Rel
+        ON Org_Unit_Region_Rel.client = Org_Units.client
+        AND Org_Unit_Region_Rel.attribute_id = Org_Units.attribute_id
+        AND Org_Unit_Region_Rel.att_value = Org_Units.dim_value
+        AND Org_Unit_Region_Rel.rel_attr_id = 'U287'
+        AND DATE(Org_Unit_Region_Rel.date_from) <= CURRENT_DATE()
+        AND DATE(Org_Unit_Region_Rel.date_to) >= CURRENT_DATE()
+    LEFT JOIN `unops-fabric`.erp.aglrelvalue Org_Unit_HQ_Region_Rel
+        ON Org_Unit_HQ_Region_Rel.client = Org_Units.client
+        AND Org_Unit_HQ_Region_Rel.attribute_id = Org_Units.attribute_id
+        AND Org_Unit_HQ_Region_Rel.att_value = Org_Units.dim_value
+        AND Org_Unit_HQ_Region_Rel.rel_attr_id = 'U288'
+    LEFT JOIN `unops-fabric`.erp.aglrelvalue Org_Unit_Region2_Rel
+        ON Org_Unit_Region2_Rel.client = Org_Units.client
+        AND Org_Unit_Region2_Rel.attribute_id = Org_Unit_HQ_Region_Rel.rel_attr_id
+        AND Org_Unit_Region2_Rel.att_value = Org_Unit_HQ_Region_Rel.rel_value
+        AND Org_Unit_Region2_Rel.rel_attr_id = 'U287'
+    LEFT JOIN `unops-fabric`.erp.agldimvalue Related_Hubs
+        ON Org_Unit_Hub_Rel.client = Related_Hubs.client
+        AND Org_Unit_Hub_Rel.rel_value = Related_Hubs.dim_value
+        AND Org_Unit_Hub_Rel.rel_attr_id = Related_Hubs.attribute_id
+    LEFT JOIN `unops-fabric`.erp.agldimvalue Related_Regions1
+        ON Org_Unit_Region_Rel.client = Related_Regions1.client
+        AND Org_Unit_Region_Rel.rel_value = Related_Regions1.dim_value
+        AND Org_Unit_Region_Rel.rel_attr_id = Related_Regions1.attribute_id
+    LEFT JOIN `unops-fabric`.erp.agldimvalue Related_Regions2
+        ON Org_Unit_Region2_Rel.client = Related_Regions2.client
+        AND Org_Unit_Region2_Rel.rel_value = Related_Regions2.dim_value
+        AND Org_Unit_Region2_Rel.rel_attr_id = Related_Regions2.attribute_id
+    WHERE Org_Units.client = 'OPS' AND Org_Units.attribute_id = 'C1'
+    )
+    ,NumberedEntities AS (
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY EntityLevel, Type, Code) AS ID,
+            Name,
+            Code,
+            Type,
+            Description,
+            Status,
+            ParentEntityType,
+            ParentCode,
+            EntityLevel
+        FROM AllEntities
+    )
+
+    SELECT
+        NE.ID AS Id,
+        NE.Code,
+        NE.Name,
+        NE.Type,
+        NE.Description,
+        ParentEntity.ID AS ParentId,
+        NE.Status,
+        1 AS CreatedBy,
+        'NOW()' AS CreatedDate,
+        1 AS LastModifiedBy,
+        'NOW()' AS LastModifiedDate,
+        false as IsDeleted,
+        0 AS DeletedBy,
+        'NOW()' AS DeletedDate
+    FROM NumberedEntities NE
+    LEFT JOIN NumberedEntities ParentEntity
+        ON NE.ParentCode = ParentEntity.Code
+        AND NE.ParentEntityType = ParentEntity.Type 
+    ORDER BY NE.EntityLevel, NE.Name;
+    public.”Engagements” table
+
+
+
+    SELECT ROW_NUMBER() OVER(ORDER BY Base_Engagement) AS Id, Base_Engagement as BaseEngagement, Engagement_Description as EngagementDescription
+    , Engagement_Long_Description as EngagementLongDescription
+    , Engagement_Stage_Description as EngagementStageDescription
+    , Engagement_Implementation_Start_Date as EngagementImplementationStartDate
+    , Engagement_Implementation_End_Date as EngagementImplementationEndDate
+    , fs.Partner as PartnerId
+    , Implementation_Countries_Description_Concatenated as ImplementationCountriesDescriptionConcatenated 
+    , "" as Name
+    , 1 as Status
+    , 0 AS CreatedBy
+    , 'NOW()' AS CreatedDate
+    , 0 AS LastModifiedBy
+    , 'NOW()' AS LastModifiedDate
+    , false as IsDeleted
+    , 0 AS DeletedBy
+    , 'NOW()' AS DeletedDate
+    FROM `unopsreporting.Partners.Partner_Engagements_Report` 
+    , UNNEST(Funding_Sources) AS fs
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY Base_Engagement
+      ) = 1
+    public.”Projects”
+
+
+
+    select PROJ.Base_Engagement as BaseEngagement
+          , PROJ.Project as ProjectNumber
+          , PROJ.Project_Implementation_Start_Date AS StartDate
+          , PROJ.Project_Implementation_End_Date AS EndDate
+          , PROJ.Project_Stage_Description as Stage
+          , Project_Budget_Checking_Level as BudgetCheckingLevel
+          , PROJ.Project_Budget_Duration AS BudgetDuration
+          , IFNULL(PROJ.Project_Budget, 0) AS BudgetAmount
+          , IFNULL(SUM(Project_Expenditure), 0) AS ExpenditureAmount
+          from `unopsreporting.Projects.Project` PROJ
+          LEFT JOIN `unopsreporting.Project_Financials.Project_Expenditure_Report`  EXP_REPORT
+          ON EXP_REPORT.Project = PROJ.Project
+          where PROJ.Base_Engagement IS NOT NULL 
+          GROUP BY PROJ.Base_Engagement
+          , PROJ.Project
+          , PROJ.Project_Implementation_Start_Date
+          , PROJ.Project_Implementation_End_Date
+          , PROJ.Project_Stage_Description
+          , Project_Budget_Checking_Level
+          , PROJ.Project_Budget_Duration
+          , IFNULL(PROJ.Project_Budget, 0)
+          QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY PROJ.Project
+      ) = 1
+  
+  primary_key_field: "Id"
+  batch_size: 1000
+
+destination:
+  table_name: "UserProfile"
+  schema: "public"
+  
+  field_mappings:
+    - source_field: "Base_Engagement"
+      destination_field: "Name"  # Needed to implement BaseBusinessEntity
+      data_type: "varchar(50)"
+      is_required: false
+
+    - source_field: "Status"
+      destination_field: "Status"  # Needed to implement BaseBusinessEntity
+      data_type: "integer"         # Must be integer (BaseBusinessEntity requirement)
+      is_required: false
+
+    - source_field: "Base_Engagement"
+      destination_field: "BaseEngagement"
+      data_type: "varchar(50)"
+      is_required: true
+      is_unique: true
+    
+    - source_field: "Engagement_Implementation_Start_Date"
+      destination_field: "EngagementImplementationStartDate"
+      data_type: "date"
+      is_required: false
+    
+    - source_field: "Engagement_Implementation_End_Date"
+      destination_field: "EngagementImplementationEndDate"
+      data_type: "date"
+      is_required: false
+    
+    - source_field: "Engagement_Signed_Date"
+      destination_field: "EngagementSignedDate"
+      data_type: "date"
+      is_required: false
+    
+    - source_field: "Engagement_Amount"
+      destination_field: "EngagementAmount"
+      data_type: "decimal(18,2)"
+      is_required: false
+    
+    - source_field: "Engagement_Stage"
+      destination_field: "EngagementStage"
+      data_type: "varchar(100)"
+      is_required: false
+    
+    - source_field: "Engagement_Stage_Description"
+      destination_field: "EngagementStageDescription"
+      data_type: "varchar(500)"
+      is_required: false
+    
+    - source_field: "Business_Developer"
+      destination_field: "BusinessDeveloper"
+      data_type: "varchar(255)"
+      is_required: false
+    
+    - source_field: "Business_Developer_Name"
+      destination_field: "BusinessDeveloperName"
+      data_type: "varchar(255)"
+      is_required: false
+    
+    - source_field: "Business_Developer_Email_Address"
+      destination_field: "BusinessDeveloperEmailAddress"
+      data_type: "varchar(255)"
+      is_required: false
+    
+    - source_field: "Engagement_Project_Executive"
+      destination_field: "EngagementProjectExecutive"
+      data_type: "varchar(255)"
+      is_required: false
+    
+    - source_field: "Engagement_Project_Executive_Name"
+      destination_field: "EngagementProjectExecutiveName"
+      data_type: "varchar(255)"
+      is_required: false
+    
+    - source_field: "Implementation_Countries_List"
+      destination_field: "ImplementationCountriesList"
+      data_type: "text"
+      is_required: false
+    
+    - source_field: "Outputs_List"
+      destination_field: "OutputsList"
+      data_type: "text"
+      is_required: false
+    
+    - source_field: "SDG_List"
+      destination_field: "SDGList"
+      data_type: "text"
+      is_required: false
+    
+    - source_field: "Engagement_Description"
+      destination_field: "EngagementDescription"
+      data_type: "text"
+      is_required: false
+    
+    - source_field: "Engagement_Long_Description"
+      destination_field: "EngagementLongDescription"
+      data_type: "text"
+      is_required: false
+
+sync_options:
+  sync_mode: Upsert
+  batch_processing: true
+
+validation:
+  required_source_fields:
+    - "Base_Engagement"
+    - "Engagement_Description"
+  
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+
+logging:
+  log_level: "Debug"
+  log_sql_queries: true
+  log_record_details: true

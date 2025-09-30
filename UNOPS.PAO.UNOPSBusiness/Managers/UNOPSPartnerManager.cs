@@ -63,6 +63,17 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Use AutoMapper with the updated configuration
         var result = mapper.Map<UNOPSPartner, PartnerModel>(entity);
 
+        // Resolve user names for audit fields
+        if (entity.CreatedBy > 0)
+        {
+            result.CreatedByName = await GetUserNameByIdAsync(entity.CreatedBy);
+        }
+        
+        if (entity.LastModifiedBy > 0)
+        {
+            result.LastModifiedByName = await GetUserNameByIdAsync(entity.LastModifiedBy);
+        }
+
         // Convert LogoUrl to signed URL if it exists and contains Google Cloud Storage path
         if (!string.IsNullOrEmpty(result.LogoUrl) && GoogleCloudStorageService != null)
         {
@@ -179,6 +190,31 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         GoogleCloudStorageService = new GoogleCloudStorageService(configuration);
 
         commonRepository = new CommonEntityRepository(context);
+    }
+
+    private async Task<string> GetUserNameByIdAsync(int userId)
+    {
+        try
+        {
+            var userProfile = await _context.UserProfile.FirstOrDefaultAsync(up => up.UserId == userId);
+            if (userProfile != null && !string.IsNullOrEmpty(userProfile.Name))
+            {
+                return userProfile.Name;
+            }
+            
+            // Fallback to PAOUser email if UserProfile not found or Name is empty
+            var user = await _context.PAOUsers.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user != null && !string.IsNullOrEmpty(user.Email))
+            {
+                return user.Email;
+            }
+        }
+        catch (Exception)
+        {
+            // Log error if needed, but don't fail the entire operation
+        }
+        
+        return $"User #{userId}";
     }
 
     public async Task<PartnerModel> CreatePartnerAsync(PartnerRequest model)
