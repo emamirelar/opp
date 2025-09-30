@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Button } from 'primeng/button';
 import { ListviewComponent } from '../../../../../../common/pages/components/listview/listview.component';
 import { ListViewColumn, ListViewConfig, SearchParams } from '../../../../../../common/pages/components/listview/listview.model';
@@ -72,6 +72,7 @@ export class PartnerViewInteractionsComponent implements OnInit {
   private feedbackDialogService = inject(FeedbackDialogService);
   public permissionUtilityService = inject(PermissionUtilityService);
   private interactionIconService = inject(InteractionIconService);
+  private translateService = inject(TranslateService);
 
   // Get partner ID from route
   partnerId = signal<string>('');
@@ -132,14 +133,15 @@ export class PartnerViewInteractionsComponent implements OnInit {
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
     enableSorting: true,
-    enableSearch: false,
+    enableSearch: true,
     enableExport: this.entityPermissions().permissions.canCreate || this.entityPermissions().permissions.canUpdate,
     entityName: 'Interaction',
     scrollable: true,
     scrollHeight: 'flex',
     searchConfig: {
       useAdvancedSearch: true,
-      placeholder: 'Search partner interactions...',
+      placeholder: this.translateService.instant('search.interactionsPlaceholder'),
+      entityType: 'Interaction' as const,
       searchableFields: [
         {
           field: 'type',

@@ -126,7 +126,12 @@ export class PartnerContactsComponent implements OnInit {
     autoSwitchToCardView: false,
     autoSwitchMinWidth: 768,
     defaultViewMode: 'card',
-    entityName: 'Contact'
+    entityName: 'Contact',
+    searchConfig: {
+      useAdvancedSearch: true,
+      placeholder: this.translateService.instant('search.contactsPlaceholder'),
+      entityType: 'Contact' as const
+    }
   }));
 
 
