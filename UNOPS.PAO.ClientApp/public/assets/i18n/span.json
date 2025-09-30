@@ -316,7 +316,10 @@
             "matchedData": "Datos Coincidentes",
             "warningTitle": "Advertencia",
             "warningMessage": "Crear este contacto puede resultar en registros duplicados. ¿Está seguro de que desea continuar?",
-            "createAnyway": "Crear de Todos Modos"
+            "createAnyway": "Crear de Todos Modos",
+            "organizationUnit": "Unidad de Organización",
+	          "contactOrgUnit": "Unidad de Organización del Contacto",
+	          "selectContactOrgUnit": "Seleccionar Unidad de Organización"
         },
         "partner": {
             "partner": "Socio",

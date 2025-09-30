@@ -312,7 +312,10 @@
             "matchedData": "Dados Correspondentes",
             "warningTitle": "Aviso",
             "warningMessage": "Criar este contato pode resultar em registros duplicados. Tem certeza de que deseja prosseguir?",
-            "createAnyway": "Criar Mesmo Assim"
+            "createAnyway": "Criar Mesmo Assim",
+            "organizationUnit": "Unidade de Organização",
+	          "contactOrgUnit": "Unidade de Organização do Contato",
+	          "selectContactOrgUnit": "Selecionar Unidade de Organização"
         },
         "partner": {
             "partner": "Parceiro",

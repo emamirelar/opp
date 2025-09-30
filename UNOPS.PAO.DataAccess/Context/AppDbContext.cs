@@ -132,8 +132,9 @@ public class AppDbContext : AuditableDbContext<int, int>
             });
 
         modelBuilder
-            .Entity<Contact>();
-        
+            .Entity<Contact>()
+            .Ignore(c => c.OrganizationUnitRelationships); // Handle manually through extension methods
+
         modelBuilder.Entity<EntityUserRole>(entity =>
         {
             entity.HasOne(e => e.UserRole)
