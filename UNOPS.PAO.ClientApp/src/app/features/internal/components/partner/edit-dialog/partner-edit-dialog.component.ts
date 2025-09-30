@@ -280,7 +280,6 @@ export class PartnerEditDialogComponent implements OnInit {
   });
   allPartnerGroupsForSelect = this.cachedDataService.getPartnerGroupsForSelect;
 
-
   /**
    * Handles server-side user search triggered by select filter
    */
