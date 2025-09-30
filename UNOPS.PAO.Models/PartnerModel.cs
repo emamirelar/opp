@@ -104,6 +104,10 @@ public class PartnerModel
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? LastModifiedBy { get; set; }
     
+    // Resolved user names for audit fields
+    public string? CreatedByName { get; set; }
+    public string? LastModifiedByName { get; set; }
+    
     /// <summary>
     /// Gets the primary organization unit (first relationship)
     /// </summary>
