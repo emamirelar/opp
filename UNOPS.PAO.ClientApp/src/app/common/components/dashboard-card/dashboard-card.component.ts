@@ -1,7 +1,8 @@
-import { Component, Input, Output, EventEmitter, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, TemplateRef, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { DashboardCardFilter, DashboardCardConfig, DashboardCardSize } from './dashboard-card.models';
 
 /**
@@ -11,7 +12,7 @@ import { DashboardCardFilter, DashboardCardConfig, DashboardCardSize } from './d
 @Component({
   selector: 'app-dashboard-card',
   standalone: true,
-  imports: [CommonModule, ButtonModule, TooltipModule],
+  imports: [CommonModule, ButtonModule, TooltipModule, TranslateModule],
   template: `
     <div class="dashboard-card bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200 overflow-hidden"
          [style.height]="cardHeight"
@@ -48,7 +49,7 @@ import { DashboardCardFilter, DashboardCardConfig, DashboardCardSize } from './d
               icon="pi pi-times" 
               class="p-button-outlined p-button-sm"
               (click)="onCollapse()"
-              pTooltip="Collapse"
+              pTooltip="{{ 'dashboard.card.collapse' | translate }}"
               tooltipPosition="bottom">
             </button>
           }
@@ -109,10 +110,10 @@ import { DashboardCardFilter, DashboardCardConfig, DashboardCardSize } from './d
                 </i>
               </div>
               <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-unops-sm">
-                {{ config.emptyStateTitle || 'No items found' }}
+                {{ config.emptyStateTitle || ('dashboard.card.noItemsFound' | translate) }}
               </h4>
               <p class="font-unops-body text-unops-body-medium text-unops-neutral-500 mb-unops-sm">
-                {{ config.emptyStateMessage || 'No data to display at this time.' }}
+                {{ config.emptyStateMessage || ('dashboard.card.noDataMessage' | translate) }}
               </p>
               @if (config.emptyStateActionLabel) {
                 <button 
@@ -335,6 +336,8 @@ import { DashboardCardFilter, DashboardCardConfig, DashboardCardSize } from './d
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardCardComponent {
+  private translateService = inject(TranslateService);
+  
   @Input() config!: DashboardCardConfig;
   @Input() filters?: DashboardCardFilter[];
   @Input() isExpanded: boolean = false;
@@ -387,9 +390,9 @@ export class DashboardCardComponent {
   }
 
   getViewAllText(): string {
-    const baseText = this.config.viewAllText || 'View All';
+    const baseText = this.config.viewAllText || this.translateService.instant('dashboard.card.viewAll');
     if (this.remainingCount && this.remainingCount > 0) {
-      return `${baseText} (${this.remainingCount} more)`;
+      return `${baseText} (${this.remainingCount} ${this.translateService.instant('dashboard.card.more')})`;
     }
     return baseText;
   }
