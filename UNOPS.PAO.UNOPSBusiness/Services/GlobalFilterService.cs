@@ -674,38 +674,7 @@ public class GlobalFilterService
 
         _logger.LogDebug("Interaction filter found {Count} interaction IDs through contact org units", contactInteractionIds.Count);
 
-        /*
-        // 3. Get interaction IDs through associated contacts' underlying partners' org units
-        var partnerInteractionIds = await _context.Set<UNOPSInteraction>()
-            .Join(_context.Set<InteractionContact>(), 
-                  i => i.Id, 
-                  ic => ic.InteractionId, 
-                  (i, ic) => new { InteractionId = i.Id, ContactId = ic.ContactId })
-            .Join(_context.Set<UNOPSContact>(),
-                  x => x.ContactId,
-                  c => c.Id,
-                  (x, c) => new { x.InteractionId, PartnerId = c.PartnerId })
-            //.Where(x => x.PartnerId > 0) //0 is a valid partner id
-            .Join(_context.Set<OrganizationUnitRelationship>(),
-                  x => x.PartnerId,
-                  orgRel => orgRel.EntityId,
-                  (x, orgRel) => new { x.InteractionId, orgRel })
-            .Where(x => 
-                x.orgRel.EntityType == "Partner" &&
-                !x.orgRel.IsDeleted &&
-                x.orgRel.Status == EntityStatus.Active &&
-                orgUnitIds.Contains(x.orgRel.OrganizationHierarchyId))
-            .Select(x => x.InteractionId)
-            .Distinct()
-            .ToListAsync();
-
-        foreach (var id in partnerInteractionIds)
-            allValidInteractionIds.Add(id);
-
-        _logger.LogDebug("Interaction filter found {Count} interaction IDs through partner org units", partnerInteractionIds.Count);
-        */
-        
-        // 4. Also check interactions through direct partner associations (InteractionPartners)
+        // 3. Also check interactions through direct partner associations (InteractionPartners)
         var directPartnerInteractionIds = await _context.Set<UNOPSInteraction>()
             .Join(_context.Set<InteractionPartner>(), 
                   i => i.Id, 
