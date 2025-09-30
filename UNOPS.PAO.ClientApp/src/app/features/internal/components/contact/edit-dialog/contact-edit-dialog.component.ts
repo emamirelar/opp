@@ -90,6 +90,12 @@ export class ContactEditDialogComponent implements OnInit {
     description: [''],
     contactNumber: [''],
 
+    // Organization Unit fields - Array for backend compatibility
+    organizationHierarchyIds: [[]],
+    // UI FormControl for single select (synced with array)
+    selectedOrgUnitId: [null],
+    organizationHierarchyNames: [''],
+
     // Assistant information
     assistant: [''],
     assistantPhone: [''],
@@ -135,9 +141,13 @@ export class ContactEditDialogComponent implements OnInit {
   allStatusData = this.cachedDataService.allStatus;
   allPronounsData = this.cachedDataService.allPronouns;
   allPartners = this.cachedDataService.allPartners;
+  allOrganizationUnitsData = this.cachedDataService.allOrganizationUnits;
   showValidationFailedError = signal<boolean>(false);
   isLoading = signal<boolean>(false);
   maxDate = new Date();
+
+  // Signal for tracking selected organization unit
+  private selectedOrgUnitSignal = signal<number | null>(null);
 
   @Output() closeModal = new EventEmitter<void>();
   display = true;
@@ -166,6 +176,13 @@ export class ContactEditDialogComponent implements OnInit {
       const formData: any = { ...this.record };
       if (this.record.partner && this.record.partner.id) {
         formData.partnerId = this.record.partner.id;
+      }
+
+      // Handle organization unit relationships
+      if (formData.organizationUnitRelationships) {
+        const orgIds = formData.organizationUnitRelationships.map((rel: any) => rel.organizationHierarchyId);
+        this.setOrganizationHierarchyIds(orgIds);
+        delete formData.organizationUnitRelationships; // Remove from formData to avoid patch conflict
       }
       
       this.formGroup.patchValue(formData);
@@ -202,6 +219,9 @@ export class ContactEditDialogComponent implements OnInit {
 
     // Exposer la fonction handleSave
     this.dialogConfig.data.handleSave = this.handleSave.bind(this);
+
+    // Set up Organization Unit form control synchronization  
+    this.setupOrganizationUnitSync();
 
     // Set loading to false after a short delay to ensure form is properly initialized
     setTimeout(() => {
@@ -310,6 +330,9 @@ export class ContactEditDialogComponent implements OnInit {
       delete requestJsonObj['partner'];
     }
 
+    // Handle Organization Unit relationships
+    requestJsonObj['organizationHierarchyIds'] = formValue['organizationHierarchyIds'] || [];
+
     return requestJsonObj;
   }
 
@@ -360,6 +383,20 @@ export class ContactEditDialogComponent implements OnInit {
           partnerId: contactData.partnerId
         });
       }
+
+      // Handle organization unit relationships from AI transcription
+      if (data.organizationUnitRelationships && Array.isArray(data.organizationUnitRelationships)) {
+        this.setOrganizationHierarchyIds(data.organizationUnitRelationships);
+      }
+      // Fallback for legacy organizationHierarchyIds
+      else if (data.organizationHierarchyIds && Array.isArray(data.organizationHierarchyIds)) {
+        this.setOrganizationHierarchyIds(data.organizationHierarchyIds);
+      }
+
+      // Update display names after AI transcription
+      setTimeout(() => {
+        this.initializeDisplayNames();
+      }, 100);
       
       // Show success message for legacy format
       if (!data.data) {
@@ -655,6 +692,77 @@ export class ContactEditDialogComponent implements OnInit {
       }
     } catch (error) {
       console.error('Error updating duplicate info in import dialog:', error);
+    }
+  }
+
+  // Helper methods for organization hierarchy FormControl (single select managing array)
+  setOrganizationHierarchyIds(ids: number[]): void {
+    // Set the full array from backend
+    const idsArray = ids || [];
+    this.formGroup.get('organizationHierarchyIds')?.setValue(idsArray);
+
+    // Manually sync the UI control to ensure it updates (for AI transcription)
+    const firstElement = idsArray.length > 0 ? idsArray[0] : null;
+    this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement);
+    this.selectedOrgUnitSignal.set(firstElement);
+  }
+
+  getSelectedOrganizationHierarchyIds(): number[] {
+    // Return the full array for backend compatibility
+    return this.formGroup.get('organizationHierarchyIds')?.value || [];
+  }
+
+  /**
+   * Set up organization unit form control synchronization
+   */
+  private setupOrganizationUnitSync(): void {
+    // When UI FormControl changes, update the array FormControl
+    this.formGroup.get('selectedOrgUnitId')?.valueChanges.subscribe(value => {
+      const newArray = value ? [value] : [];
+      this.formGroup.get('organizationHierarchyIds')?.setValue(newArray, { emitEvent: false });
+      this.selectedOrgUnitSignal.set(value);
+      this.updateOrgUnitDisplayName(value);
+    });
+
+    // When array FormControl changes (from backend data), update UI FormControl
+    this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
+      const array = value || [];
+      const firstElement = array.length > 0 ? array[0] : null;
+      this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
+      this.selectedOrgUnitSignal.set(firstElement);
+      this.updateOrgUnitDisplayName(firstElement);
+    });
+
+    // Initialize both controls
+    const currentArray = this.formGroup.get('organizationHierarchyIds')?.value || [];
+    const firstElement = currentArray.length > 0 ? currentArray[0] : null;
+    this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
+    this.selectedOrgUnitSignal.set(firstElement);
+  }
+
+  /**
+   * Update organization unit display name
+   */
+  private updateOrgUnitDisplayName(selectedOrgUnitId: number | null): void {
+    if (selectedOrgUnitId) {
+      const orgUnits = this.allOrganizationUnitsData() as any[];
+      const selectedUnit = orgUnits.find((unit: any) => unit.id === selectedOrgUnitId);
+      if (selectedUnit) {
+        this.formGroup.get('organizationHierarchyNames')?.setValue(selectedUnit.name);
+      }
+    } else {
+      this.formGroup.get('organizationHierarchyNames')?.setValue(null);
+    }
+  }
+
+  /**
+   * Initialize display name fields based on currently selected IDs
+   */
+  private initializeDisplayNames(): void {
+    // Initialize organization hierarchy name
+    const selectedOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
+    if (selectedOrgUnitId) {
+      this.updateOrgUnitDisplayName(selectedOrgUnitId);
     }
   }
 }

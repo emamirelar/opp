@@ -385,7 +385,10 @@
             "matchedData": "Données Correspondantes",
             "warningTitle": "Avertissement",
             "warningMessage": "Créer ce contact peut entraîner des enregistrements dupliqués. Êtes-vous sûr de vouloir continuer ?",
-            "createAnyway": "Créer Quand Même"
+            "createAnyway": "Créer Quand Même",
+            "organizationUnit": "Unité d'Organisation",
+	          "contactOrgUnit": "Unité d'Organisation du Contact",
+	          "selectContactOrgUnit": "Sélectionner une Unité d'Organisation"
         },
         "pictureEditor": {
             "dropImageHere": "Déposez une image ici ou utilisez le bouton ci-dessous",

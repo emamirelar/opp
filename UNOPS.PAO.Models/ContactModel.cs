@@ -70,6 +70,11 @@ public class ContactModel
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? LastModifiedBy { get; set; }
+
+    /// <summary>
+    /// Organization Unit Relationships for this contact
+    /// </summary>
+    public List<OrganizationUnitRelationshipModel>? OrganizationUnitRelationships { get; set; }
 }
 
 /// <summary>

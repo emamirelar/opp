@@ -193,10 +193,10 @@ public class GlobalFilterService
     }
 
     /// <summary>
-    /// Apply OrgUnit filter with smart entity-specific logic
-    /// 1. Partner: Direct lookup in OrganizationUnitRelationship table
-    /// 2. Contact: Get partners in org unit, then filter contacts by those partners
-    /// 3. Interaction: Direct lookup + contacts with partners in org unit
+    /// Apply OrgUnit filter with smart entity-specific logic using comprehensive relationship-based filtering
+    /// 1. Partner: Direct relationships + through contacts + through interactions
+    /// 2. Contact: Direct relationships + through partners + through interactions
+    /// 3. Interaction: Direct relationships + through contacts + through partners
     /// </summary>
     private async Task<Expression?> ApplyOrgUnitFilterAsync(ParameterExpression parameter, Type entityType, int orgUnitId, Expression? existingExpression)
     {
@@ -221,17 +221,17 @@ public class GlobalFilterService
 
             if (entityType == typeof(Partner) || entityType == typeof(UNOPSPartner))
             {
-                // 1. Partner: Simple direct lookup in OrganizationUnitRelationship table
-                return await ApplyDirectOrgUnitFilterAsync(parameter, entityType, orgUnitIds, "Partner", existingExpression);
+                // 1. Partner: Comprehensive relationship-based filtering
+                return await ApplyPartnerOrgUnitFilterAsync(parameter, entityType, orgUnitIds, existingExpression);
             }
             else if (entityType == typeof(Contact) || entityType == typeof(UNOPSContact))
             {
-                // 2. Contact: Get partners in org unit, then filter contacts by those partners
+                // 2. Contact: Comprehensive relationship-based filtering
                 return await ApplyContactOrgUnitFilterAsync(parameter, entityType, orgUnitIds, existingExpression);
             }
             else if (entityType == typeof(Interaction) || entityType == typeof(UNOPSInteraction))
             {
-                // 3. Interaction: Direct lookup + contacts with partners in org unit
+                // 3. Interaction: Comprehensive relationship-based filtering
                 return await ApplyInteractionOrgUnitFilterAsync(parameter, entityType, orgUnitIds, existingExpression);
             }
             else
@@ -413,11 +413,31 @@ public class GlobalFilterService
     }
 
     /// <summary>
-    /// Apply organization unit filtering for Contact entities by finding partners in org unit first
+    /// Apply organization unit filtering for Contact entities using comprehensive relationship-based filtering:
+    /// 1. Direct contact org unit relationships
+    /// 2. Associated contacts through their partners' org unit relationships
+    /// 3. Associated contacts through interactions that are related to org units
     /// </summary>
     private async Task<Expression?> ApplyContactOrgUnitFilterAsync(ParameterExpression parameter, Type entityType, List<int> orgUnitIds, Expression? existingExpression)
     {
-        // Get all partners that belong to the specified organization units
+        var allValidContactIds = new HashSet<int>();
+
+        // 1. Get direct contact IDs from OrganizationUnitRelationship table
+        var directContactIds = await _context.Set<OrganizationUnitRelationship>()
+            .Where(orgRel => 
+                orgRel.EntityType == "Contact" && 
+                !orgRel.IsDeleted &&
+                orgRel.Status == EntityStatus.Active &&
+                orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+            .Select(orgRel => orgRel.EntityId)
+            .ToListAsync();
+
+        foreach (var id in directContactIds)
+            allValidContactIds.Add(id);
+
+        _logger.LogDebug("Contact filter found {Count} direct contact IDs in org units", directContactIds.Count);
+
+        // 2. Get contact IDs through their partners' org unit relationships
         var validPartnerIds = await _context.Set<OrganizationUnitRelationship>()
             .Where(orgRel => 
                 orgRel.EntityType == "Partner" && 
@@ -426,20 +446,64 @@ public class GlobalFilterService
                 orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
             .Select(orgRel => orgRel.EntityId)
             .ToListAsync();
-            
-        _logger.LogDebug("Contact filter found {Count} partner IDs in org units", validPartnerIds.Count);
 
         if (validPartnerIds.Any())
         {
-            // Filter contacts by PartnerId
-            var partnerIdProperty = entityType.GetProperty("PartnerId");
-            
-            if (partnerIdProperty != null)
+            var contactIdsThroughPartners = await _context.Set<UNOPSContact>()
+                .Where(c => validPartnerIds.Contains(c.PartnerId))
+                .Select(c => c.Id)
+                .ToListAsync();
+
+            foreach (var id in contactIdsThroughPartners)
+                allValidContactIds.Add(id);
+
+            _logger.LogDebug("Contact filter found {Count} contact IDs through partner org units", contactIdsThroughPartners.Count);
+        }
+
+        // 3. Get contact IDs through interactions that are related to org units
+        // First get all interaction IDs that are related to org units (direct + partner-based)
+        var validInteractionIds = new HashSet<int>();
+
+        // Direct interaction org unit relationships
+        var directInteractionIds = await _context.Set<OrganizationUnitRelationship>()
+            .Where(orgRel => 
+                orgRel.EntityType == "Interaction" && 
+                !orgRel.IsDeleted &&
+                orgRel.Status == EntityStatus.Active &&
+                orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+            .Select(orgRel => orgRel.EntityId)
+            .ToListAsync();
+
+        foreach (var id in directInteractionIds)
+            validInteractionIds.Add(id);
+
+        // Now get contact IDs associated with these interactions
+        if (validInteractionIds.Any())
+        {
+            var contactIdsThroughInteractions = await _context.Set<InteractionContact>()
+                .Where(ic => validInteractionIds.Contains(ic.InteractionId))
+                .Select(ic => ic.ContactId)
+                .Distinct()
+                .ToListAsync();
+
+            foreach (var id in contactIdsThroughInteractions)
+                allValidContactIds.Add(id);
+
+            _logger.LogDebug("Contact filter found {Count} contact IDs through interaction org units", contactIdsThroughInteractions.Count);
+        }
+
+        var totalContactIds = allValidContactIds.ToList();
+        _logger.LogDebug("Contact filter found {Count} total contact IDs across all org unit relationships", totalContactIds.Count);
+
+        if (totalContactIds.Any())
+        {
+            var idProperty = GetIdProperty(entityType);
+            if (idProperty != null)
             {
-                var partnerIdAccess = Expression.Property(parameter, partnerIdProperty);
-                var partnerIdsConstant = Expression.Constant(validPartnerIds);
+                var idAccess = Expression.Property(parameter, idProperty);
+                var contactIdsConstant = Expression.Constant(totalContactIds);
                 var containsMethod = typeof(List<int>).GetMethod("Contains");
-                var containsCall = Expression.Call(partnerIdsConstant, containsMethod, partnerIdAccess);
+                var containsCall = Expression.Call(contactIdsConstant, containsMethod, idAccess);
                 
                 // Combine with existing expression using AND
                 if (existingExpression != null)
@@ -450,7 +514,113 @@ public class GlobalFilterService
             }
         }
 
-        // If no valid partners found or no PartnerId property, return empty result
+        // If no valid contact IDs found, return empty result
+        return Expression.Constant(false);
+    }
+
+    /// <summary>
+    /// Apply organization unit filtering for Partner entities using comprehensive relationship-based filtering:
+    /// 1. Direct partner org unit relationships
+    /// 2. Partners associated with contacts that are in org units
+    /// 3. Partners associated with interactions that are related to org units
+    /// </summary>
+    private async Task<Expression?> ApplyPartnerOrgUnitFilterAsync(ParameterExpression parameter, Type entityType, List<int> orgUnitIds, Expression? existingExpression)
+    {
+        var allValidPartnerIds = new HashSet<int>();
+
+        // 1. Get direct partner IDs from OrganizationUnitRelationship table
+        var directPartnerIds = await _context.Set<OrganizationUnitRelationship>()
+            .Where(orgRel => 
+                orgRel.EntityType == "Partner" && 
+                !orgRel.IsDeleted &&
+                orgRel.Status == EntityStatus.Active &&
+                orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+            .Select(orgRel => orgRel.EntityId)
+            .ToListAsync();
+
+        foreach (var id in directPartnerIds)
+            allValidPartnerIds.Add(id);
+
+        _logger.LogDebug("Partner filter found {Count} direct partner IDs in org units", directPartnerIds.Count);
+
+        // 2. Get partner IDs through contacts that are directly in org units
+        var contactIdsInOrgUnits = await _context.Set<OrganizationUnitRelationship>()
+            .Where(orgRel => 
+                orgRel.EntityType == "Contact" && 
+                !orgRel.IsDeleted &&
+                orgRel.Status == EntityStatus.Active &&
+                orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+            .Select(orgRel => orgRel.EntityId)
+            .ToListAsync();
+
+        if (contactIdsInOrgUnits.Any())
+        {
+            var partnerIdsThroughContacts = await _context.Set<UNOPSContact>()
+                .Where(c => contactIdsInOrgUnits.Contains(c.Id))
+                .Select(c => c.PartnerId)
+                .Distinct()
+                .ToListAsync();
+
+            foreach (var id in partnerIdsThroughContacts)
+                allValidPartnerIds.Add(id);
+
+            _logger.LogDebug("Partner filter found {Count} partner IDs through contact org units", partnerIdsThroughContacts.Count);
+        }
+
+        // 3. Get partner IDs through interactions that are related to org units
+        // First get all interaction IDs that are directly related to org units
+        var validInteractionIds = new HashSet<int>();
+
+        var directInteractionIds = await _context.Set<OrganizationUnitRelationship>()
+            .Where(orgRel => 
+                orgRel.EntityType == "Interaction" && 
+                !orgRel.IsDeleted &&
+                orgRel.Status == EntityStatus.Active &&
+                orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+            .Select(orgRel => orgRel.EntityId)
+            .ToListAsync();
+
+        foreach (var id in directInteractionIds)
+            validInteractionIds.Add(id);
+
+        // Now get partner IDs from these interactions through InteractionPartner relationships
+        if (validInteractionIds.Any())
+        {
+            var partnerIdsThroughInteractions = await _context.Set<InteractionPartner>()
+                .Where(ip => validInteractionIds.Contains(ip.InteractionId))
+                .Select(ip => ip.PartnerId)
+                .Distinct()
+                .ToListAsync();
+
+            foreach (var id in partnerIdsThroughInteractions)
+                allValidPartnerIds.Add(id);
+
+            _logger.LogDebug("Partner filter found {Count} partner IDs through interaction org units", partnerIdsThroughInteractions.Count);
+        }
+
+        var totalPartnerIds = allValidPartnerIds.ToList();
+        _logger.LogDebug("Partner filter found {Count} total partner IDs across all org unit relationships", totalPartnerIds.Count);
+
+        if (totalPartnerIds.Any())
+        {
+            var idProperty = GetIdProperty(entityType);
+            if (idProperty != null)
+            {
+                var idAccess = Expression.Property(parameter, idProperty);
+                var partnerIdsConstant = Expression.Constant(totalPartnerIds);
+                var containsMethod = typeof(List<int>).GetMethod("Contains");
+                var containsCall = Expression.Call(partnerIdsConstant, containsMethod, idAccess);
+                
+                // Combine with existing expression using AND
+                if (existingExpression != null)
+                {
+                    return Expression.AndAlso(existingExpression, containsCall);
+                }
+                return containsCall;
+            }
+        }
+
+        // If no valid partner IDs found, return empty result
         return Expression.Constant(false);
     }
 
@@ -504,6 +674,7 @@ public class GlobalFilterService
 
         _logger.LogDebug("Interaction filter found {Count} interaction IDs through contact org units", contactInteractionIds.Count);
 
+        /*
         // 3. Get interaction IDs through associated contacts' underlying partners' org units
         var partnerInteractionIds = await _context.Set<UNOPSInteraction>()
             .Join(_context.Set<InteractionContact>(), 
@@ -514,7 +685,7 @@ public class GlobalFilterService
                   x => x.ContactId,
                   c => c.Id,
                   (x, c) => new { x.InteractionId, PartnerId = c.PartnerId })
-            .Where(x => x.PartnerId > 0)
+            //.Where(x => x.PartnerId > 0) //0 is a valid partner id
             .Join(_context.Set<OrganizationUnitRelationship>(),
                   x => x.PartnerId,
                   orgRel => orgRel.EntityId,
@@ -532,7 +703,8 @@ public class GlobalFilterService
             allValidInteractionIds.Add(id);
 
         _logger.LogDebug("Interaction filter found {Count} interaction IDs through partner org units", partnerInteractionIds.Count);
-
+        */
+        
         // 4. Also check interactions through direct partner associations (InteractionPartners)
         var directPartnerInteractionIds = await _context.Set<UNOPSInteraction>()
             .Join(_context.Set<InteractionPartner>(), 

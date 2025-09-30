@@ -204,7 +204,10 @@
       "matchedData": "Matched Data",
       "warningTitle": "Warning",
       "warningMessage": "Creating this contact may result in duplicate records. Are you sure you want to proceed?",
-      "createAnyway": "Create Anyway"
+      "createAnyway": "Create Anyway",
+      "organizationUnit": "Organization Unit",
+      "contactOrgUnit": "Contact Organization Unit",
+      "selectContactOrgUnit": "Select Organization Unit"
     },
     "partnerTree": {
       "id": "ID",
