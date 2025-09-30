@@ -36,7 +36,6 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { DialogService, DynamicDialogComponent, DynamicDialogRef } from 'primeng/dynamicdialog';
 import {Partner} from '../../../models/partner.model';
-import { PhoneInputComponent } from '../../../../../common/components/phone-input/phone-input.component';
 
 @Component({
   selector: 'app-partner-new',
@@ -56,8 +55,7 @@ import { PhoneInputComponent } from '../../../../../common/components/phone-inpu
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
-    DialogModule,
-    PhoneInputComponent
+    DialogModule
   ],
   templateUrl: './partner-new.component.html',
   standalone: true,

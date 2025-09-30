@@ -32,7 +32,6 @@ import { AiTranscribeComponent } from '../../../../../common/reusables/component
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogService } from 'primeng/dynamicdialog';
 import { DuplicateConfirmationDialogComponent, DuplicateDetectionResponse } from '../duplicate-confirmation-dialog/duplicate-confirmation-dialog.component';
-import { PhoneInputComponent } from '../../../../../common/components/phone-input/phone-input.component';
 
 @Component({
   selector: 'app-contact-edit-dialog',
@@ -56,8 +55,7 @@ import { PhoneInputComponent } from '../../../../../common/components/phone-inpu
     CheckboxModule,
     FormsModule,
     AiTranscribeComponent,
-    ProgressSpinnerModule,
-    PhoneInputComponent
+    ProgressSpinnerModule
   ],
   templateUrl: './contact-edit-dialog.component.html',
   standalone: true,
