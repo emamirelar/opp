@@ -129,8 +129,33 @@ class ConfigLoader:
 
 
     def get_database_url(self) -> str:
-        """Get the database URL"""
-        return self._config.get('database', {}).get('url')
+        """Get the database URL - supports both direct URL and secret-based configuration"""
+        database_config = self._config.get('database', {})
+        
+        # Check if URL is directly provided (for local development)
+        if 'url' in database_config and database_config['url']:
+            return database_config['url']
+        
+        # Check if secret_name is provided (for cloud environments)
+        if 'secret_name' in database_config:
+            google_cloud_config = self._config.get('google_cloud', {})
+            project_id = google_cloud_config.get('project')
+            
+            if not project_id:
+                raise ConfigurationError("No project configured for Google Cloud - required for secret retrieval")
+            
+            secret_name = database_config['secret_name']
+            try:
+                database_url = self.get_secret_from_secret_manager(secret_name, project_id)
+                if database_url:
+                    return database_url
+                else:
+                    raise ConfigurationError(f"Retrieved empty database URL from secret: {secret_name}")
+            except Exception as e:
+                raise ConfigurationError(f"Failed to retrieve database URL from secret '{secret_name}': {e}")
+        
+        # If neither URL nor secret_name is provided
+        raise ConfigurationError("No database configuration found. Please provide either 'url' (for local) or 'secret_name' (for cloud) in database config.")
     
 
     def get_oauth_config(self) -> Dict[str, str]:
