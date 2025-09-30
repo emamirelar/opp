@@ -628,6 +628,9 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         if (entity != null)
         {
+            // Soft delete associated OrganizationUnitRelationship records
+            await SoftDeleteOrganizationUnitRelationshipsAsync(id, "Interaction");
+            
             await interactionRepository.Delete(entity);
         }
     }
@@ -919,8 +922,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         ]);
         if (entity == null) return;
 
-        // Load organization unit relationships for single interaction
-        await entity.LoadOrganizationUnitRelationshipsAsync(context);
+        // Soft delete associated OrganizationUnitRelationship records
+        await SoftDeleteOrganizationUnitRelationshipsAsync(id, "Interaction");
 
         await interactionRepository.Delete(entity);
     }
@@ -1500,5 +1503,27 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             Console.WriteLine($"Error retrieving interaction search fields: {ex.Message}");
             return new List<SearchFieldInfo>();
         }
+    }
+
+    /// <summary>
+    /// Soft deletes OrganizationUnitRelationship records for a given entity
+    /// </summary>
+    private async Task SoftDeleteOrganizationUnitRelationshipsAsync(int entityId, string entityType)
+    {
+        var relationships = await context.OrganizationUnitRelationships
+            .Where(r => r.EntityId == entityId && r.EntityType == entityType && !r.IsDeleted)
+            .ToListAsync();
+
+        // Get current user ID from claims
+        var currentUser = GetCurrentUserOrSystemContext();
+        var userIdClaim = currentUser?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = int.TryParse(userIdClaim, out var id) ? id : 0;
+
+        foreach (var relationship in relationships)
+        {
+            relationship.SetDeleteAuditData(userId);
+        }
+
+        await context.SaveChangesAsync();
     }
 }
