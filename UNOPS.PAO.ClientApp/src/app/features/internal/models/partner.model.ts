@@ -54,6 +54,10 @@ export interface Partner extends TaggedEntity {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+  
+  // Resolved user names for audit fields
+  createdByName?: string;
+  lastModifiedByName?: string;
   isDeleted?: boolean | null;
   // Organization Unit Relationships
   organizationUnitRelationships?: OrganizationUnitRelationshipModel[] | null;
