@@ -29,6 +29,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 # AIService directory is already copied by Jenkins into the build context
 
+# Copy AIService config directory to the expected location
+COPY AIService ./AIService
+
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash appuser && \
     chown -R appuser:appuser /app
