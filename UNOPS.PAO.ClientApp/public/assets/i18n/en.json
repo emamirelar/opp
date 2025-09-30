@@ -70,14 +70,6 @@
       "additionalInformation": "Additional Information",
       "approvalFields": "Approval Fields"
     },
-    "interactionTitles": {
-      "primaryInformation": "Primary Information",
-      "participants": "Participants",
-      "details": "Details",
-      "organization": "Organization",
-      "aiAssistant": "AI Assistant",
-      "information": "Information"
-    },
     "partnerDetails": "Partner Details",
     "partnerDashboard": "Partner Dashboard",
     "links": "Links",
@@ -459,7 +451,6 @@
     "noPartnerGroups": "No partner groups found",
     "proposalRequirements": "The proposal cannot be submitted until all required fields are completed.",
     "welcomeTitle": "Welcome to Opportunity+",
-    "deleteInteractionConfirmation": "Are you sure you want to delete this interaction?",
     "interactionDeleted": "Interaction successfully deleted",
     "errorDeletingInteraction": "Error while deleting interaction",
     "dropUrlToAddLink": "Drop URL or file to add link",
@@ -496,7 +487,22 @@
     "partnerActivatedSuccessfully": "Partner \"{{partnerName}}\" has been activated successfully.",
     "failedToActivatePartner": "Failed to activate partner. Please try again.",
     "confirmPartnerActivation": "Are you sure you want to activate the partner \"{{partnerName}}\"?",
-    "confirmActivation": "Confirm Activation"
+    "confirmActivation": "Confirm Activation",
+    "deletePartnerConfirmation": "Are you sure you want to delete this partner? This action cannot be undone.",
+    "deleteContactConfirmation": "Are you sure you want to delete this contact? This action cannot be undone.",
+    "deleteInteractionConfirmation": "Are you sure you want to delete this interaction? This action cannot be undone.",
+    "confirmDelete": "Confirm Delete",
+    "partnerDeletedSuccessfully": "Partner deleted successfully",
+    "contactDeletedSuccessfully": "Contact deleted successfully",
+    "interactionDeletedSuccessfully": "Interaction deleted successfully",
+    "interactionDeletedSuccessfullyExclamation": "Interaction deleted successfully!",
+    "failedToDeletePartner": "Failed to delete partner",
+    "failedToDeleteContact": "Failed to delete contact",
+    "failedToDeleteInteraction": "Failed to delete interaction",
+    "noPermissionToDeletePartner": "You do not have permission to delete this partner",
+    "noPermissionToDeleteContact": "You do not have permission to delete this contact",
+    "noPermissionToDeleteInteraction": "You do not have permission to delete this interaction",
+    "noPermissionToDeleteInteractions": "You do not have permission to delete interactions"
   },
   "errors": {
     "failedToLoad": "Error al cargar",

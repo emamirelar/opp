@@ -1,3 +1,5 @@
+<p-confirmDialog></p-confirmDialog>
+
 <div class="flex flex-col gap-8">
   <div class="flex flex-col xl:flex-row gap-8 xl:items-stretch">
     <div class="flex flex-col gap-8 h-full xl:sticky xl:top-0 xl:w-[60%]">
@@ -15,6 +17,15 @@
                           [size]="'small'"
                           class="edit-button contact-edit-button"
                           (onClick)="handleEditClick()"></p-button>
+              }
+              @if (recordPermissions().permissions.canDelete) {
+                <p-button icon="pi pi-trash"
+                          [rounded]="true"
+                          [text]="true"
+                          [size]="'small'"
+                          severity="danger"
+                          class="delete-button contact-delete-button"
+                          (onClick)="deleteContact()"></p-button>
               }
             </div>
           </div>

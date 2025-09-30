@@ -365,7 +365,21 @@
         "recordDeletedSuccessfully": "Registro excluído com sucesso!",
         "failedToDeleteRecord": "Falha ao excluir registro",
         "anErrorOccurred": "Ocorreu um erro",
-        "invalidPhoneNumberFormat": "A entrada não corresponde a um formato de número de telefone (+33123456789)"
+        "invalidPhoneNumberFormat": "A entrada não corresponde a um formato de número de telefone (+33123456789)",
+        "deletePartnerConfirmation": "Tem certeza que deseja excluir este parceiro? Esta ação não pode ser desfeita.",
+        "deleteContactConfirmation": "Tem certeza que deseja excluir este contato? Esta ação não pode ser desfeita.",
+        "confirmDelete": "Confirmar Exclusão",
+        "partnerDeletedSuccessfully": "Parceiro excluído com sucesso",
+        "contactDeletedSuccessfully": "Contato excluído com sucesso",
+        "interactionDeletedSuccessfully": "Interação excluída com sucesso",
+        "interactionDeletedSuccessfullyExclamation": "Interação excluída com sucesso!",
+        "failedToDeletePartner": "Falha ao excluir parceiro",
+        "failedToDeleteContact": "Falha ao excluir contato",
+        "failedToDeleteInteraction": "Falha ao excluir interação",
+        "noPermissionToDeletePartner": "Você não tem permissão para excluir este parceiro",
+        "noPermissionToDeleteContact": "Você não tem permissão para excluir este contato",
+        "noPermissionToDeleteInteraction": "Você não tem permissão para excluir esta interação",
+        "noPermissionToDeleteInteractions": "Você não tem permissão para excluir interações"
     },
     "label.interaction.contact": "Contato",
     "errors": {

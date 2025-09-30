@@ -185,29 +185,29 @@ export class InteractionDetailComponent implements OnInit {
     const currentInteraction = this.interaction();
     if (!currentInteraction || !this.canDelete()) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to delete this interaction',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('message.noPermissionToDeleteInteraction'),
+        summary: this.translateService.instant('message.permissionDenied')
       });
       return;
     }
 
     // Show confirmation dialog
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete this interaction? This action cannot be undone.',
-      header: 'Confirm Delete',
+      message: this.translateService.instant('message.deleteInteractionConfirmation'),
+      header: this.translateService.instant('message.confirmDelete'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.interactionService.delete(currentInteraction.id!).subscribe({
           next: () => {
             this.feedbackDialogService.showSuccessToast({
-              detail: 'Interaction deleted successfully'
+              detail: this.translateService.instant('message.interactionDeletedSuccessfully')
             });
             this.router.navigate(['/partnerships/interactions']);
           },
           error: (error) => {
             console.error('Error deleting interaction:', error);
             this.feedbackDialogService.showErrorToast({
-              detail: 'Failed to delete interaction'
+              detail: this.translateService.instant('message.failedToDeleteInteraction')
             });
           }
         });

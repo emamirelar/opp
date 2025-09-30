@@ -347,15 +347,17 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     // Check if user has delete permission
     if (!this.permissionUtilityService.canDelete(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to delete interactions',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('message.noPermissionToDeleteInteractions'),
+        summary: this.translateService.instant('message.permissionDenied')
       });
       return;
     }
 
     this.interactionService.delete(record.id!).subscribe({
       next: () => {
-        this.feedbackDialogService.showSuccessToast({ detail: 'Interaction deleted successfully!' });
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('message.interactionDeletedSuccessfullyExclamation')
+        });
         // Refresh the listview
         const listviewElement = document.querySelector('app-listview');
         if (listviewElement) {
@@ -364,8 +366,8 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       },
       error: (error: any) => {
         this.feedbackDialogService.showErrorToast({
-          detail: 'Failed to delete interaction',
-          summary: 'Error'
+          detail: this.translateService.instant('message.failedToDeleteInteraction'),
+          summary: this.translateService.instant('message.anErrorOccurred')
         });
         console.error('Error deleting interaction:', error);
       }

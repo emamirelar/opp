@@ -369,7 +369,21 @@
         "recordDeletedSuccessfully": "¡Registro eliminado exitosamente!",
         "failedToDeleteRecord": "Error al eliminar el registro",
         "anErrorOccurred": "Ocurrió un error",
-        "invalidPhoneNumberFormat": "La entrada no coincide con un formato de número de teléfono (+33123456789)"
+        "invalidPhoneNumberFormat": "La entrada no coincide con un formato de número de teléfono (+33123456789)",
+        "deletePartnerConfirmation": "¿Está seguro de que desea eliminar este socio? Esta acción no se puede deshacer.",
+        "deleteContactConfirmation": "¿Está seguro de que desea eliminar este contacto? Esta acción no se puede deshacer.",
+        "confirmDelete": "Confirmar Eliminación",
+        "partnerDeletedSuccessfully": "Socio eliminado exitosamente",
+        "contactDeletedSuccessfully": "Contacto eliminado exitosamente",
+        "interactionDeletedSuccessfully": "Interacción eliminada exitosamente",
+        "interactionDeletedSuccessfullyExclamation": "¡Interacción eliminada exitosamente!",
+        "failedToDeletePartner": "Error al eliminar socio",
+        "failedToDeleteContact": "Error al eliminar contacto",
+        "failedToDeleteInteraction": "Error al eliminar interacción",
+        "noPermissionToDeletePartner": "No tiene permiso para eliminar este socio",
+        "noPermissionToDeleteContact": "No tiene permiso para eliminar este contacto",
+        "noPermissionToDeleteInteraction": "No tiene permiso para eliminar esta interacción",
+        "noPermissionToDeleteInteractions": "No tiene permiso para eliminar interacciones"
     },
     "errors": {
         "failedToLoad": "Error al cargar",

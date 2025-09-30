@@ -418,7 +418,21 @@
         "recordDeletedSuccessfully": "Enregistrement supprimé avec succès !",
         "failedToDeleteRecord": "Échec de la suppression de l'enregistrement",
         "anErrorOccurred": "Une erreur s'est produite",
-        "invalidPhoneNumberFormat": "L'entrée ne correspond pas à un numéro de téléphone (format: +33123456789)"
+        "invalidPhoneNumberFormat": "L'entrée ne correspond pas à un numéro de téléphone (format: +33123456789)",
+        "deletePartnerConfirmation": "Êtes-vous sûr de vouloir supprimer ce partenaire? Cette action ne peut pas être annulée.",
+        "deleteContactConfirmation": "Êtes-vous sûr de vouloir supprimer ce contact? Cette action ne peut pas être annulée.",
+        "confirmDelete": "Confirmer la suppression",
+        "partnerDeletedSuccessfully": "Partenaire supprimé avec succès",
+        "contactDeletedSuccessfully": "Contact supprimé avec succès",
+        "interactionDeletedSuccessfully": "Interaction supprimée avec succès",
+        "interactionDeletedSuccessfullyExclamation": "Interaction supprimée avec succès!",
+        "failedToDeletePartner": "Échec de la suppression du partenaire",
+        "failedToDeleteContact": "Échec de la suppression du contact",
+        "failedToDeleteInteraction": "Échec de la suppression de l'interaction",
+        "noPermissionToDeletePartner": "Vous n'avez pas l'autorisation de supprimer ce partenaire",
+        "noPermissionToDeleteContact": "Vous n'avez pas l'autorisation de supprimer ce contact",
+        "noPermissionToDeleteInteraction": "Vous n'avez pas l'autorisation de supprimer cette interaction",
+        "noPermissionToDeleteInteractions": "Vous n'avez pas l'autorisation de supprimer les interactions"
     },
     "errors": {
         "failedToLoad": "Erreur lors du chargement",

@@ -730,24 +730,24 @@ export class InteractionModalComponent {
     // Check if user has delete permission
     if (!this.permissionUtilityService.canDelete(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to delete this interaction',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('message.noPermissionToDeleteInteraction'),
+        summary: this.translateService.instant('message.permissionDenied')
       });
       return;
     }
 
     this.feedbackDialogService.showConfirmDialog({
       detail: this.translateService.instant('message.deleteInteractionConfirmation'),
-      summary: this.translateService.instant('title.confirmation')
+      summary: this.translateService.instant('message.confirmDelete')
     }, () => {
       const interactionId = this.formGroup.get('id')?.value;
       if (interactionId) {
         this.interactionService.delete(interactionId).subscribe({
           next: () => {
-            this.showSuccessMessage('message.interactionDeleted');
+            this.showSuccessMessage('message.interactionDeletedSuccessfully');
             this.dialogRef.close('deleted');
           },
-          error: (error) => this.showErrorMessage('message.errorDeletingInteraction', error)
+          error: (error) => this.showErrorMessage('message.failedToDeleteInteraction', error)
         });
       }
     });

@@ -44,6 +44,8 @@ import { ContactEditDialogComponent } from '../edit-dialog/contact-edit-dialog.c
 import { DialogService } from 'primeng/dynamicdialog';
 import { Contact } from '../../../models/contact.model';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 
 /**
@@ -77,12 +79,13 @@ import { PermissionUtilityService } from '../../../../../essentials/services/per
     LinkListComponent,
     CheckboxModule,
     AiPanelComponent,
-    RouterModule
+    RouterModule,
+    ConfirmDialogModule
   ],
   templateUrl: './contact-view.component.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [DialogService],
+  providers: [DialogService, ConfirmationService],
   styles: [`
     :host ::ng-deep .custom-avatar-size {
       width: 5rem !important;
@@ -126,6 +129,7 @@ export class ContactViewComponent implements OnInit, OnDestroy {
 
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
+  confirmationService = inject(ConfirmationService);
 
   // Permission management using utility service
   private permissionUtils = this.permissionUtilityService.createInstancePermissions('Contact');
@@ -388,6 +392,47 @@ export class ContactViewComponent implements OnInit, OnDestroy {
     if (this.gdriveComponent) {
       this.gdriveComponent.openGoogleDrivePicker();
     }
+  }
+
+  /**
+   * @uiButton delete_contact
+   * @description Permanently deletes a contact record after confirmation dialog
+   * @label Delete
+   * @icon pi pi-trash
+   * @when_to_use When a contact was recorded incorrectly or is no longer relevant (use with caution)
+   * @permissions CONTACT_DELETE
+   */
+  deleteContact(): void {
+    // Check if user has delete permission
+    if (!this.permissionUtilityService.canDelete(this.recordPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: this.translateService.instant('message.noPermissionToDeleteContact'),
+        summary: this.translateService.instant('message.permissionDenied')
+      });
+      return;
+    }
+
+    this.confirmationService.confirm({
+      message: this.translateService.instant('message.deleteContactConfirmation'),
+      header: this.translateService.instant('message.confirmDelete'),
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.contactService.deleteContactById(this.recordId).subscribe({
+          next: () => {
+            this.feedbackDialogService.showSuccessToast({
+              detail: this.translateService.instant('message.contactDeletedSuccessfully')
+            });
+            this.router.navigate(['/partnerships/contacts']);
+          },
+          error: (error) => {
+            console.error('Error deleting contact:', error);
+            this.feedbackDialogService.showErrorToast({
+              detail: this.translateService.instant('message.failedToDeleteContact')
+            });
+          }
+        });
+      }
+    });
   }
 
 }

@@ -732,4 +732,45 @@ export class PartnerViewComponent implements OnInit {
     return this.recordId ? parseInt(this.recordId, 10) : undefined;
   }
 
+  /**
+   * @uiButton delete_partner
+   * @description Permanently deletes a partner record after confirmation dialog
+   * @label Delete
+   * @icon pi pi-trash
+   * @when_to_use When a partner was recorded incorrectly or is no longer relevant (use with caution)
+   * @permissions PARTNER_DELETE
+   */
+  deletePartner(): void {
+    // Check if user has delete permission
+    if (!this.permissionService.canDelete(this.recordPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: this.translateService.instant('message.noPermissionToDeletePartner'),
+        summary: this.translateService.instant('message.permissionDenied')
+      });
+      return;
+    }
+
+    this.confirmationService.confirm({
+      message: this.translateService.instant('message.deletePartnerConfirmation'),
+      header: this.translateService.instant('message.confirmDelete'),
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.partnerService.deletePartnerById(this.recordId).subscribe({
+          next: () => {
+            this.feedbackDialogService.showSuccessToast({
+              detail: this.translateService.instant('message.partnerDeletedSuccessfully')
+            });
+            this.router.navigate(['/partnerships/partners']);
+          },
+          error: (error) => {
+            console.error('Error deleting partner:', error);
+            this.feedbackDialogService.showErrorToast({
+              detail: this.translateService.instant('message.failedToDeletePartner')
+            });
+          }
+        });
+      }
+    });
+  }
+
 }
