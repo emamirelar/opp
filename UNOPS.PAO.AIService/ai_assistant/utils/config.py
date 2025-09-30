@@ -13,14 +13,49 @@ from typing import Dict, Any, Optional
 from pathlib import Path
 from google.cloud import secretmanager
 
-CONFIG_DIR = "../AIService/config" # config directory - this should ALWAYS be the same for ALL projects 
-
-
 logger = logging.getLogger(__name__)
 
 class ConfigurationError(Exception):
     """Raised when configuration loading fails"""
     pass
+
+def _find_aiservice_config_dir() -> str:
+    """
+    Find the AIService config directory by checking multiple possible locations.
+    
+    Returns:
+        str: Path to the AIService/config directory
+        
+    Raises:
+        ConfigurationError: If AIService/config directory is not found
+    """
+    current_dir = Path(__file__).parent.absolute()
+    
+    # Possible locations to check for AIService folder
+    possible_paths = [
+        # Same level as current directory (for deployment scenarios)
+        current_dir / "AIService" / "config",
+        # One level up from current directory (development scenario)
+        current_dir.parent / "AIService" / "config", 
+        # Two levels up (from utils -> ai_assistant -> UNOPS.PAO.AIService -> root)
+        current_dir.parent.parent.parent / "AIService" / "config",
+        # Three levels up (alternative structure)
+        current_dir.parent.parent.parent.parent / "AIService" / "config"
+    ]
+    
+    for path in possible_paths:
+        if path.exists() and path.is_dir():
+            logger.debug(f"Found AIService config directory at: {path}")
+            return str(path)
+    
+    # If not found, raise an error with helpful information
+    searched_paths = [str(p) for p in possible_paths]
+    raise ConfigurationError(
+        f"AIService/config directory not found. Searched locations:\n" + 
+        "\n".join(f"  - {p}" for p in searched_paths)
+    )
+
+CONFIG_DIR = _find_aiservice_config_dir() # config directory - dynamically located
 
 # Global config instance
 _config_loader: Optional['ConfigLoader'] = None
