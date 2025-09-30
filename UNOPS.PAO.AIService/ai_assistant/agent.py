@@ -270,11 +270,42 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
                     final_url += separator + query_params
             
             # Make GET request
-            response = requests.get(final_url, headers=request_headers, timeout=api_timeout, verify=False)
+            print(f"🌐 [HTTP-REQUEST] Making GET request to: {final_url}")
+            # Log headers safely (mask sensitive values)
+            safe_headers = {k: ("Bearer ***" if k == "Authorization" and v.startswith("Bearer ") else v) for k, v in request_headers.items()}
+            print(f"🌐 [HTTP-REQUEST] Headers: {safe_headers}")
+            print(f"🌐 [HTTP-REQUEST] Timeout: {api_timeout}s")
+            
+            try:
+                response = requests.get(final_url, headers=request_headers, timeout=api_timeout, verify=False)
+                print(f"🌐 [HTTP-RESPONSE] Status Code: {response.status_code}")
+                print(f"🌐 [HTTP-RESPONSE] Response Headers: {dict(response.headers)}")
+                print(f"🌐 [HTTP-RESPONSE] Response Size: {len(response.content)} bytes")
+                if response.status_code != 200:
+                    print(f"🌐 [HTTP-RESPONSE] Error Response Body: {response.text[:500]}")
+            except requests.exceptions.RequestException as e:
+                print(f"❌ [HTTP-REQUEST] Request failed with exception: {e}")
+                raise
             
         elif method.upper() == 'POST':
             # Make POST request with JSON body
-            response = requests.post(final_url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
+            print(f"🌐 [HTTP-REQUEST] Making POST request to: {final_url}")
+            # Log headers safely (mask sensitive values)
+            safe_headers = {k: ("Bearer ***" if k == "Authorization" and v.startswith("Bearer ") else v) for k, v in request_headers.items()}
+            print(f"🌐 [HTTP-REQUEST] Headers: {safe_headers}")
+            print(f"🌐 [HTTP-REQUEST] Body: {str(body)[:200]}..." if body and len(str(body)) > 200 else f"🌐 [HTTP-REQUEST] Body: {body}")
+            print(f"🌐 [HTTP-REQUEST] Timeout: {api_timeout}s")
+            
+            try:
+                response = requests.post(final_url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
+                print(f"🌐 [HTTP-RESPONSE] Status Code: {response.status_code}")
+                print(f"🌐 [HTTP-RESPONSE] Response Headers: {dict(response.headers)}")
+                print(f"🌐 [HTTP-RESPONSE] Response Size: {len(response.content)} bytes")
+                if response.status_code != 200:
+                    print(f"🌐 [HTTP-RESPONSE] Error Response Body: {response.text[:500]}")
+            except requests.exceptions.RequestException as e:
+                print(f"❌ [HTTP-REQUEST] Request failed with exception: {e}")
+                raise
             
         elif method.upper() == 'PUT':
             # Make PUT request with JSON body
