@@ -36,7 +36,6 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { DialogService, DynamicDialogComponent, DynamicDialogRef } from 'primeng/dynamicdialog';
 import {Partner} from '../../../models/partner.model';
-import { PhoneInputComponent } from '../../../../../common/components/phone-input/phone-input.component';
 
 @Component({
   selector: 'app-partner-new',
@@ -56,8 +55,7 @@ import { PhoneInputComponent } from '../../../../../common/components/phone-inpu
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
-    DialogModule,
-    PhoneInputComponent
+    DialogModule
   ],
   templateUrl: './partner-new.component.html',
   standalone: true,
@@ -123,6 +121,7 @@ export class PartnerNewComponent implements OnChanges, OnInit {
   feedbackDialogService = inject(FeedbackDialogService);
   partnerService = inject(PartnerService);
   languageService = inject(LanguageService);
+  translateService = inject(TranslateService);
   cdr = inject( ChangeDetectorRef);
 
   private langChangeSubscription: Subscription = new Subscription();
@@ -174,7 +173,7 @@ export class PartnerNewComponent implements OnChanges, OnInit {
       this.partnerService.createPartner(this._getRequestPayload()).subscribe({
         next: (data: any) => {
           this.isSaving.set(false);
-          this.feedbackDialogService.showSuccessToast({ detail: 'Record created successfully!' });
+          this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.partnerCreatedSuccessfully') });
           this.onRecordCreationSuccess.emit(data);
           this.hide();
         },

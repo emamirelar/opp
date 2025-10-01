@@ -257,7 +257,8 @@ __pycache__/
 
 # Environment files
 .env
-*.env
+.env.*
+!.env.example
 
 # Distribution / packaging
 .Python
@@ -300,6 +301,7 @@ dmypy.json
 .claude/
 
 UNOPS.PAO.Server/appsettings.Development.json
+UNOPS.PAO.Server/appsettings.Local.json
 
 # Logs folders
 logs/

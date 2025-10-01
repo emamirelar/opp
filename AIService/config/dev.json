@@ -1,0 +1,57 @@
+{
+  "environment": "dev",
+  "description": "Development environment configuration for the AI Agent Framework",
+  "google_cloud": {
+    "use_vertex_ai": true,
+    "project": "unops-opportunityplus-dev",
+    "location": "europe-west4",
+    "oauth": {
+      "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
+      "client_id": "369001918367-t5qrahnqdaasaifvk6akpqkpjk9vli58.apps.googleusercontent.com",
+      "target_principal": "pno-ai-service@unops-opportunityplus-dev.iam.gserviceaccount.com"
+    }
+  },
+  "database": {
+    "secret_name": "Dev_DB_Connection_String"
+  },
+  "artifacts": {
+    "service_type": "GcsArtifactService",
+    "gcs_bucket_name": "pno-file-storage-dev"
+  },
+  "server": {
+    "serve_web_interface": true,
+    "api_base_url": "https://opportunityplus.dev.unops.org",
+    "is_development": true,
+    "host": "0.0.0.0",
+    "port": 8000,
+    "allow_origins": [
+      "https://opportunityplus.dev.unops.org",
+      "https://localhost:44426/"
+    ]
+  },
+  "developer": {
+    "email": "anushas@unops.org"
+  },
+  "support": {
+    "email": "larsj@unops.org",
+    "response_template": "For technical support with {application_name}, please send an email to {support_email}. Include details about your issue, steps to reproduce the problem, your username, organizational unit, and any error messages. Support tickets are typically responded to within 24-48 hours during business hours.",
+    "hours": "During business hours",
+    "response_time": "24-48 hours"
+  },
+  "branding": {
+    "application_name": "Opportunity+ AI Agent",
+    "project_name": "Opportunity+",
+    "organization": "UNOPS",
+    "organization_full": "United Nations Office for Project Services",
+    "description": "A comprehensive partner and opportunity management system"
+  },
+  "runtime": {
+    "gemini_model": "gemini-2.5-flash",
+    "gemini_adhoc_model": "gemini-2.0-flash-001",
+    "api_timeout": 300,
+    "max_retries": 3,
+    "default_agent_timeout": 60,
+    "default_host": "0.0.0.0",
+    "default_port": 8000
+  }
+} 

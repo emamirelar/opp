@@ -122,7 +122,7 @@ public class DevelopmentController : ControllerBase
         }
             
         // Get the configured user email from appsettings.json
-        var configuredEmail = _configuration["Development:IAPSimulation:UserEmail"] ?? "anushas@unops.org";
+        var configuredEmail = _configuration["Development:IAPSimulation:UserEmail"];
         
         // Define our specific test users and roles using configured email
         var devUsers = new[]
@@ -840,7 +840,7 @@ public class DevelopmentController : ControllerBase
         if (!_environment.IsDevelopment())
             return NotFound();
 
-        var configuredEmail = _configuration["Development:IAPSimulation:UserEmail"] ?? "anushas@unops.org";
+        var configuredEmail = _configuration["Development:IAPSimulation:UserEmail"];
         
         return Ok(new { 
             Email = configuredEmail,

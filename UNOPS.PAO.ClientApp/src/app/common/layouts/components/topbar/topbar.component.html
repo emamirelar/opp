@@ -8,15 +8,15 @@
 		<a class="flex-shrink-0 cursor-pointer transition-opacity duration-200 hover:opacity-80 homepage-logo app-logo"
 			routerLink="/"
 			(click)="navigateToHome()"
-			title="Go to Homepage"
-			aria-label="Navigate to Homepage"
+			[title]="'topbar.goToHomepage' | translate"
+			[attr.aria-label]="'topbar.navigateToHomepage' | translate"
 			[class.search-expanded-hide-mobile]="isSearchExpanded">
 			<img src="images/PNG/Opportunity Horizontal1000px.png"
 				class="hidden lg:block flex-shrink-0 w-48 app-name"
-				alt="UNOPS Opportunity+ Logo">
+				[alt]="'topbar.logoAlt' | translate">
 			<img src="images/PNG/Opportunity Logo Graphic1000px.png"
 				class="lg:hidden w-6 flex-shrink-0"
-				alt="UNOPS Opportunity+ Logo">
+				[alt]="'topbar.logoAlt' | translate">
 		</a>
 	</div>
 
@@ -30,10 +30,10 @@
 			[rounded]="true"
 			[text]="true"
 			severity="secondary"
-			[attr.aria-label]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			[attr.aria-label]="hasActiveFilters ? ('topbar.globalFiltersActive' | translate) : ('topbar.globalFilters' | translate)"
 			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
 			(onClick)="openGlobalFilters()"
-			[title]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			[title]="hasActiveFilters ? ('topbar.globalFiltersActive' | translate) : ('topbar.globalFilters' | translate)"
 			class="global-filters-button global-filters-desktop flex-shrink-0"
 			[class.filters-active]="hasActiveFilters">
 			<ng-template pTemplate="content">
@@ -49,10 +49,10 @@
 			[rounded]="true"
 			[text]="true"
 			severity="secondary"
-			[attr.aria-label]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			[attr.aria-label]="hasActiveFilters ? ('topbar.globalFiltersActive' | translate) : ('topbar.globalFilters' | translate)"
 			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
 			(onClick)="openGlobalFilters()"
-			[title]="hasActiveFilters ? 'Global Filters (active)' : 'Global Filters'"
+			[title]="hasActiveFilters ? ('topbar.globalFiltersActive' | translate) : ('topbar.globalFilters' | translate)"
 			class="global-filters-button global-filters-mobile flex-shrink-0"
 			[class.filters-active]="hasActiveFilters"
 			[class.search-expanded-hide-mobile]="isSearchExpanded">
@@ -66,17 +66,17 @@
 			type="button"
 			[rounded]="true"
 			[text]="true"
-			[ariaLabel]="isMobile ? 'Open AI Assistant Page' : 'Toggle AI Assistant Panel'"
+			[ariaLabel]="isMobile ? ('topbar.aiAssistantOpenPage' | translate) : ('topbar.aiAssistantTogglePanel' | translate)"
 			data-ai-assistant-toggle
 			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center ai-assistant-toggle-btn"
-			[pTooltip]="isMobile ? 'Open AI Assistant Page' : 'Toggle AI Assistant Panel'"
+			[pTooltip]="isMobile ? ('topbar.aiAssistantOpenPage' | translate) : ('topbar.aiAssistantTogglePanel' | translate)"
 			tooltipPosition="bottom"
 			class="ai-assistant-toggle"
 			[class.search-expanded-hide-mobile]="isSearchExpanded">
 			<ng-template pTemplate="content">
 				<img 
 					src="./images/AI_visual_64.svg" 
-					alt="AI Assistant" 
+					[alt]="'topbar.aiAssistant' | translate" 
 					class="ai-icon w-6 h-6" 
 					style="display: block !important; width: 24px !important; height: 24px !important;"
 					(error)="onImageError($event)"
@@ -96,7 +96,7 @@
 				type="button"
 				[rounded]="true"
 				[text]="true"
-				aria-label="Notifications"
+				[attr.aria-label]="'topbar.notifications' | translate"
 				styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
 				(onClick)="notificationPanel.toggle($event)"
 				class="notifications-button">
@@ -261,7 +261,7 @@
                  [class.active]="isSelectedChatSession(session)"
                  (click)="openChatSession(session); chatHistoryPanel.hide()">
               <div class="chat-item-content">
-                <div class="chat-title">{{ session.title || 'Untitled Chat' }}</div>
+                <div class="chat-title">{{ session.title || ('chatHistory.untitledChat' | translate) }}</div>
                 <div class="chat-date">{{ formatChatDate(session.lastUpdated) }}</div>
               </div>
               <div class="chat-item-actions">
@@ -269,7 +269,7 @@
                   class="star-btn"
                   [class.starred]="session.starred"
                   (click)="toggleChatStar(session, $event)"
-                  title="{{session.starred ? 'Unstar' : 'Star'}} this chat">
+                  [title]="session.starred ? ('topbar.unstarChat' | translate) : ('topbar.starChat' | translate)">
                   <i class="pi" [ngClass]="session.starred ? 'pi-star-fill' : 'pi-star'"></i>
                 </button>
               </div>

@@ -164,7 +164,9 @@ export class EntityManagerComponent implements OnInit {
   // Dialog title computed property
   fieldDialogTitle = computed(() => {
     const field = this.editingField();
-    return field?.id ? `Edit Field: ${field.fieldName}` : 'Add New Field';
+    return field?.id 
+      ? this.translateService.instant('entityManager.dialogs.titles.editField', { fieldName: field.fieldName })
+      : this.translateService.instant('entityManager.dialogs.titles.addNewField');
   });
 
   // Filtering state
@@ -336,8 +338,8 @@ export class EntityManagerComponent implements OnInit {
         if (!permissions.canRead) {
           this.messageService.add({
             severity: 'error',
-            summary: 'Access Denied',
-            detail: 'You do not have permission to access Entity Management'
+            summary: this.translateService.instant('entityManager.errors.accessDenied'),
+            detail: this.translateService.instant('entityManager.errors.noPermissionToAccess')
           });
           this.router.navigate(['/']);
           return;
@@ -350,8 +352,8 @@ export class EntityManagerComponent implements OnInit {
         this.permissionsLoading.set(false);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load permissions'
+          summary: this.translateService.instant('entityManager.errors.error'),
+          detail: this.translateService.instant('entityManager.errors.failedToLoadPermissions')
         });
       }
     });
@@ -377,8 +379,8 @@ export class EntityManagerComponent implements OnInit {
         this.entitiesLoading.set(false);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load entities'
+          summary: this.translateService.instant('entityManager.errors.error'),
+          detail: this.translateService.instant('entityManager.errors.failedToLoadEntities')
         });
       }
     });
@@ -457,8 +459,8 @@ export class EntityManagerComponent implements OnInit {
         this.configLoading.set(false);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load entity configuration'
+          summary: this.translateService.instant('entityManager.errors.error'),
+          detail: this.translateService.instant('entityManager.errors.failedToLoadConfiguration')
         });
       }
     });
@@ -512,8 +514,8 @@ export class EntityManagerComponent implements OnInit {
         if (currentListViewFields.length >= 5) {
           this.messageService.add({
             severity: 'warn',
-            summary: 'Maximum Fields Reached',
-            detail: 'You can only have a maximum of 5 fields in the List View. Please remove a field before adding a new one.',
+            summary: this.translateService.instant('entityManager.errors.maximumFieldsReached'),
+            detail: this.translateService.instant('entityManager.errors.maximumFieldsDetail'),
             life: 5000
           });
           return;
@@ -533,8 +535,8 @@ export class EntityManagerComponent implements OnInit {
         const field = updatedFields[fieldIndex];
         this.messageService.add({
           severity: 'success',
-          summary: 'Field Added',
-          detail: `${field.fieldName} has been added to the List View`,
+          summary: this.translateService.instant('entityManager.success.fieldAdded'),
+          detail: this.translateService.instant('entityManager.success.fieldAddedDetail', { fieldName: field.fieldName }),
           life: 3000
         });
       } else {
@@ -556,8 +558,8 @@ export class EntityManagerComponent implements OnInit {
         const field = updatedFields[fieldIndex];
         this.messageService.add({
           severity: 'success',
-          summary: 'Field Removed',
-          detail: `${field.fieldName} has been removed from the List View`,
+          summary: this.translateService.instant('entityManager.success.fieldRemoved'),
+          detail: this.translateService.instant('entityManager.success.fieldRemovedDetail', { fieldName: field.fieldName }),
           life: 3000
         });
       }
@@ -710,8 +712,8 @@ export class EntityManagerComponent implements OnInit {
         // Show a notification to inform the user
         this.messageService.add({
           severity: 'info',
-          summary: 'Entity Change Log Enabled',
-          detail: 'Entity change log has been automatically enabled since field change log is now enabled.'
+          summary: this.translateService.instant('entityManager.success.entityChangeLogEnabled'),
+          detail: this.translateService.instant('entityManager.success.entityChangeLogEnabledDetail')
         });
       }
     }
@@ -977,8 +979,10 @@ export class EntityManagerComponent implements OnInit {
         
         this.messageService.add({
           severity: 'success',
-          summary: 'Success',
-          detail: `Field ${field.fieldName} ${isNewField ? 'created' : 'updated'} successfully`
+          summary: this.translateService.instant('entityManager.success.success'),
+          detail: isNewField 
+            ? this.translateService.instant('entityManager.success.fieldCreated', { fieldName: field.fieldName })
+            : this.translateService.instant('entityManager.success.fieldUpdated', { fieldName: field.fieldName })
         });
         this.fieldSaving.set(false);
         this.hasUnsavedChanges.set(false);
@@ -999,8 +1003,8 @@ export class EntityManagerComponent implements OnInit {
         this.fieldSaving.set(false);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to save field changes'
+          summary: this.translateService.instant('entityManager.errors.error'),
+          detail: this.translateService.instant('entityManager.errors.failedToSaveField')
         });
       }
     });
@@ -1184,8 +1188,8 @@ export class EntityManagerComponent implements OnInit {
         this.autoSaving.set(false);
         this.messageService.add({
           severity: 'warn',
-          summary: 'Auto-save Failed',
-          detail: 'Changes could not be saved automatically. Please save manually.',
+          summary: this.translateService.instant('entityManager.errors.autoSaveFailed'),
+          detail: this.translateService.instant('entityManager.errors.autoSaveFailedDetail'),
           life: 5000
         });
       }
@@ -1400,8 +1404,8 @@ export class EntityManagerComponent implements OnInit {
 
   deleteField(field: EntityFieldConfigurationDto) {
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete the field "${field.fieldName}"?`,
-      header: 'Confirm Delete',
+      message: this.translateService.instant('entityManager.confirmations.deleteFieldMessage', { fieldName: field.fieldName }),
+      header: this.translateService.instant('entityManager.confirmations.confirmDelete'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         const fields = this.workingFields();
@@ -1427,8 +1431,8 @@ export class EntityManagerComponent implements OnInit {
         
         this.messageService.add({
           severity: 'success',
-          summary: 'Success',
-          detail: 'Field deleted successfully'
+          summary: this.translateService.instant('entityManager.success.success'),
+          detail: this.translateService.instant('entityManager.success.fieldDeleted')
         });
       }
     });
@@ -1492,8 +1496,8 @@ export class EntityManagerComponent implements OnInit {
         
         this.messageService.add({
           severity: 'success',
-          summary: 'Success',
-          detail: 'Entity configuration updated successfully'
+          summary: this.translateService.instant('entityManager.success.success'),
+          detail: this.translateService.instant('entityManager.success.entityConfigurationUpdated')
         });
       },
       error: (error) => {
@@ -1501,8 +1505,8 @@ export class EntityManagerComponent implements OnInit {
         this.configSaving.set(false);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to update entity configuration'
+          summary: this.translateService.instant('entityManager.errors.error'),
+          detail: this.translateService.instant('entityManager.errors.failedToUpdateConfiguration')
         });
       }
     });
@@ -1615,8 +1619,8 @@ export class EntityManagerComponent implements OnInit {
     if (!permissions.canRead) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Permission Denied',
-        detail: 'You do not have permission to export entity configurations'
+        summary: this.translateService.instant('entityManager.errors.permissionDenied'),
+        detail: this.translateService.instant('entityManager.errors.noPermissionToExport')
       });
       return;
     }
@@ -1629,8 +1633,8 @@ export class EntityManagerComponent implements OnInit {
         if (blob.size === 0) {
           this.messageService.add({
             severity: 'warn',
-            summary: 'Empty Export',
-            detail: 'The exported SQL file is empty. Please check if there are entity configurations to export.'
+            summary: this.translateService.instant('entityManager.errors.emptyExport'),
+            detail: this.translateService.instant('entityManager.errors.emptyExportDetail')
           });
           return;
         }
@@ -1654,16 +1658,16 @@ export class EntityManagerComponent implements OnInit {
 
         this.messageService.add({
           severity: 'success',
-          summary: 'Export Complete',
-          detail: 'Entity configurations exported successfully as SQL script file'
+          summary: this.translateService.instant('entityManager.success.exportComplete'),
+          detail: this.translateService.instant('entityManager.success.exportCompleteDetail')
         });
       },
       error: (error) => {
         console.error('Error exporting entity configurations as SQL:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Export Failed',
-          detail: 'Failed to export entity configurations as SQL'
+          summary: this.translateService.instant('entityManager.errors.exportFailed'),
+          detail: this.translateService.instant('entityManager.errors.exportFailedDetail')
         });
       },
       complete: () => {

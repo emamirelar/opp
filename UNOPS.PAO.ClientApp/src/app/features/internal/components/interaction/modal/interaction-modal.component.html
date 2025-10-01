@@ -13,33 +13,9 @@
           {{ 'title.interactionTitles.participants' | translate }}
         </div>
 
-        <div [class]="showPhoneNumbers ? 'col-span-12 md:col-span-6 flex flex-col gap-2' : 'col-span-full flex flex-col gap-2'">
-          <label for="emails" class="block">{{ 'label.interaction.emailAddresses' | translate }}</label>
-          <p-autocomplete id="emails"
-                          formControlName="emailAddresses"
-                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
-                          multiple
-                          fluid
-                          [typeahead]="false" />
-        </div>
-
-        @if( showPhoneNumbers ){
-        <div class="col-span-12 md:col-span-6 flex flex-col gap-2">
-          <app-phone-input
-            formControlName="phoneNumbers"
-            [label]="'label.interaction.phoneNumbers' | translate"
-            [disabled]="!recordPermissions()?.permissions?.canUpdate"
-            [showClear]="true"
-            [autoProcess]="true"
-            [helperText]="'You can paste multiple numbers'"
-            [invalidPhoneMessage]="'message.invalidPhoneNumberFormat' | translate">
-          </app-phone-input>
-        </div>
-
-        }
-
         <div class="col-span-full flex flex-col gap-2">
-          <label for="contacts">{{ 'label.interaction.relatedTo' | translate }} *</label>
+          <label for="contacts" class="block">{{ 'label.interaction.relatedTo' | translate }} *</label>
+          <small class="text-gray-600">{{ 'label.interaction.relatedToHelp' | translate }}</small>
           <p-multiselect id="contacts"
                          formControlName="contactIds"
                          [options]="availableContacts()"
@@ -49,9 +25,10 @@
                          [lazy]="true"
                          [virtualScroll]="true"
                          [virtualScrollItemSize]="32"
+                         [appendTo]="'body'"
                          display="chip"
                          multiple
-                         fluid
+                         fluid="true"
                          [maxSelectedLabels]="4000"
                          placeholder="{{ 'label.interaction.selectContacts' | translate }}"
                          ariaLabel="contacts">
@@ -73,8 +50,35 @@
           }
         </div>
 
+        <div [class]="showPhoneNumbers ? 'col-span-12 md:col-span-6 flex flex-col gap-2' : 'col-span-full flex flex-col gap-2'">
+          <label for="emails" class="block">{{ 'label.interaction.emailAddresses' | translate }}</label>
+
+          <p-autocomplete id="emails"
+                          formControlName="emailAddresses"
+                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
+                          multiple
+                          fluid="true"
+                          [typeahead]="false" />
+          <small class="text-gray-600">{{ 'label.interaction.emailAddressesHelp' | translate }}</small>
+        </div>
+
+        @if( showPhoneNumbers ){
+        <div class="col-span-12 md:col-span-6 flex flex-col gap-2">
+          <app-phone-input
+            formControlName="phoneNumbers"
+            [label]="'label.interaction.phoneNumbers' | translate"
+            [disabled]="!recordPermissions()?.permissions?.canUpdate"
+            [showClear]="true"
+            [autoProcess]="true"
+            [helperText]="'You can paste multiple numbers'"
+            [invalidPhoneMessage]="'message.invalidPhoneNumberFormat' | translate">
+          </app-phone-input>
+        </div>
+
+        }
+
         <div class="col-span-full partners-display flex flex-col gap-2">
-          <label for="partners">
+          <label for="partners" class="block">
             {{ 'label.interaction.partners' | translate }}
             @if(getPartnerContext()?.partnerId) {
               <span class="text-xs text-blue-600 ml-2">({{ 'label.interaction.requiresPartnerContact' | translate }})</span>
@@ -95,7 +99,8 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="users">{{ 'label.interaction.users' | translate }}</label>
+          <label for="users" class="block">{{ 'label.interaction.users' | translate }}</label>
+          <small class="text-gray-600">{{ 'label.interaction.usersHelp' | translate }}</small>
           <p-multiselect id="users"
                          formControlName="userIds"
                          [options]="availableUsers()"
@@ -136,7 +141,7 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="subject">{{ 'label.interaction.subject' | translate }} *</label>
+          <label for="subject" class="block">{{ 'label.interaction.subject' | translate }} *</label>
           <input pInputText
                  fluid="true"
                  formControlName="subject"
@@ -148,7 +153,7 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="description">{{ 'label.interaction.description' | translate }}</label>
+          <label for="description" class="block">{{ 'label.interaction.description' | translate }}</label>
           <p-editor
             id="description"
             formControlName="description"
@@ -179,7 +184,7 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="type">{{ 'label.interaction.type' | translate }} *</label>
+          <label for="type" class="block">{{ 'label.interaction.type' | translate }} *</label>
           <p-select id="type"
                     [options]="typeOptions"
                     [appendTo]="'body'"
@@ -202,7 +207,7 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="date">{{ 'label.interaction.date' | translate }} *</label>
+          <label for="date" class="block">{{ 'label.interaction.date' | translate }} *</label>
           <p-calendar id="date"
                       formControlName="date"
                       [disabled]="!recordPermissions()?.permissions?.canUpdate"

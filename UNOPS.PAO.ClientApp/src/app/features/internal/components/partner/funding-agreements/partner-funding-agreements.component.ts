@@ -28,11 +28,11 @@ import {Panel} from 'primeng/panel';
     <div class="flex flex-col gap-8">
       <div class="flex flex-col xl:flex-row gap-8">
         <div class="xl:w-1/2 flex flex-col gap-8">
-          <p-panel header="Partner Funding Opportunities" styleClass="shadow-sm">
+          <p-panel [header]="'title.partnerFundingOpportunities' | translate" styleClass="shadow-sm">
           </p-panel>
 
 
-          <p-panel header="Partnership Agreements & Templates" styleClass="shadow-sm">
+          <p-panel [header]="'title.partnershipAgreementsTemplates' | translate" styleClass="shadow-sm">
           </p-panel>
         </div>
       </div>

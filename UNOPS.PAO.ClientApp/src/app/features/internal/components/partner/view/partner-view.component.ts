@@ -350,10 +350,14 @@ export class PartnerViewComponent implements OnInit {
 
     this.documentService.uploadUnopsFiles(formData).subscribe({
       next: (response: any) => {
-        this.feedbackDialogService.showSuccessToast({ detail: `File ${response.name} uploaded successfully!` });
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.upload.successMessage', { fileName: response.name })
+        });
       },
       error: (error) => {
-        this.feedbackDialogService.showErrorDialog({ detail: 'Unable to upload file!' });
+        this.feedbackDialogService.showErrorDialog({ 
+          detail: this.translateService.instant('partner.view.upload.errorMessage')
+        });
       },
     });
   }
@@ -371,10 +375,14 @@ export class PartnerViewComponent implements OnInit {
 
     this.documentService.linkUnopsFiles(req).subscribe({
       next: (response: any) => {
-        this.feedbackDialogService.showSuccessToast({ detail: `File ${response.name} uploaded successfully!` });
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.upload.successMessage', { fileName: response.name })
+        });
       },
       error: (error) => {
-        this.feedbackDialogService.showErrorDialog({ detail: 'Unable to upload file!' });
+        this.feedbackDialogService.showErrorDialog({ 
+          detail: this.translateService.instant('partner.view.upload.errorMessage')
+        });
       },
     });
   }
@@ -403,8 +411,8 @@ export class PartnerViewComponent implements OnInit {
     // Check if user has update permission
     if (!this.permissionService.canUpdate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit this partner',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('partner.view.error.editPermissionDenied'),
+        summary: this.translateService.instant('common.error.permissionDenied')
       });
       return;
     }
@@ -414,7 +422,7 @@ export class PartnerViewComponent implements OnInit {
     const isLoading = signal<boolean>(false);
 
     const ref = this.dialogService.open(PartnerEditDialogComponent, {
-      header: 'Edit Partner',
+      header: this.translateService.instant('partner.view.modal.editHeader'),
       width: '90vw',
       style: { maxWidth: '800px' },
       closable: true,
@@ -481,8 +489,8 @@ export class PartnerViewComponent implements OnInit {
   handleApprovalClick() {
     // Show confirmation dialog
     this.confirmationService.confirm({
-      message: `Are you sure you want to approve the partner "${this.recordData().name}"? This action cannot be undone.`,
-      header: 'Confirm Approval',
+      message: this.translateService.instant('partner.view.approval.confirmMessage', { partnerName: this.recordData().name }),
+      header: this.translateService.instant('partner.view.approval.confirmHeader'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.openApprovalDialog();
@@ -497,7 +505,7 @@ export class PartnerViewComponent implements OnInit {
    */
   private openApprovalDialog() {
     const ref = this.dialogService.open(PartnerApprovalDialogComponent, {
-      header: 'Partner Approval',
+      header: this.translateService.instant('partner.view.approval.modalHeader'),
       width: '90vw',
       style: { maxWidth: '800px' },
       closable: true,

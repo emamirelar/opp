@@ -280,7 +280,6 @@ export class PartnerEditDialogComponent implements OnInit {
   });
   allPartnerGroupsForSelect = this.cachedDataService.getPartnerGroupsForSelect;
 
-
   /**
    * Handles server-side user search triggered by select filter
    */
@@ -753,13 +752,13 @@ export class PartnerEditDialogComponent implements OnInit {
         this.partnerService.updatePartnerById(payload).subscribe({
           next: (data: any) => {
             this.dialogConfig.data?.isSaving?.set(false);
-            this.feedbackDialogService.showSuccessToast({ detail: 'Record updated successfully!' });
+            this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('partner.edit.success.updated') });
             // Ensure we're not closing the dialog until the operation completes
             setTimeout(() => this.dialogRef.close("saved"));
           },
           error: (error) => {
             this.dialogConfig.data?.isSaving?.set(false);
-            this.feedbackDialogService.showErrorToast({ detail: 'Failed to update record' });
+            this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('partner.edit.error.updateFailed') });
           }
         });
       } else {
@@ -1005,7 +1004,7 @@ export class PartnerEditDialogComponent implements OnInit {
           this.dialogConfig.data?.isSaving?.set(false);
           this.cachedDataService.refreshPartners();
           this.feedbackDialogService.showSuccessToast({
-            detail: response.message || 'Partner created successfully!'
+            detail: response.message || this.translateService.instant('partner.edit.success.created')
           });
           setTimeout(() => this.dialogRef.close(response.data || response));
         } else {
@@ -1013,7 +1012,7 @@ export class PartnerEditDialogComponent implements OnInit {
           this.dialogConfig.data?.isSaving?.set(false);
           this.cachedDataService.refreshPartners();
           this.feedbackDialogService.showSuccessToast({
-            detail: 'Partner created successfully!'
+            detail: this.translateService.instant('partner.edit.success.created')
           });
           setTimeout(() => this.dialogRef.close(response));
         }
@@ -1021,7 +1020,7 @@ export class PartnerEditDialogComponent implements OnInit {
       error: (error: any) => {
         this.dialogConfig.data?.isSaving?.set(false);
         this.feedbackDialogService.showErrorToast({
-          detail: 'Failed to create partner. Please try again.'
+          detail: this.translateService.instant('partner.edit.error.createFailed')
         });
         console.error('Partner creation error:', error);
       }
@@ -1040,7 +1039,7 @@ export class PartnerEditDialogComponent implements OnInit {
 
     const dialogRef = this.dialogService.open(DuplicateConfirmationDialogComponent, {
       data: responseWithEntityType,
-      header: 'Duplicate Partner Detected',
+      header: this.translateService.instant('partner.edit.modal.duplicateDetectedHeader'),
       width: '500px',
       modal: true,
       breakpoints: {
@@ -1063,7 +1062,7 @@ export class PartnerEditDialogComponent implements OnInit {
               this.dialogConfig.data?.isSaving?.set(false);
               this.cachedDataService.refreshPartners();
               this.feedbackDialogService.showSuccessToast({
-                detail: 'Partner created successfully (duplicate confirmation acknowledged)!'
+                detail: this.translateService.instant('partner.edit.success.createdWithDuplicateConfirmation')
               });
               setTimeout(() => this.dialogRef.close(response.data));
             } else {
@@ -1071,7 +1070,7 @@ export class PartnerEditDialogComponent implements OnInit {
               this.dialogConfig.data?.isSaving?.set(false);
               this.cachedDataService.refreshPartners();
               this.feedbackDialogService.showSuccessToast({
-                detail: 'Partner created successfully!'
+                detail: this.translateService.instant('partner.edit.success.created')
               });
               setTimeout(() => this.dialogRef.close(response));
             }
@@ -1079,7 +1078,7 @@ export class PartnerEditDialogComponent implements OnInit {
           error: (error: any) => {
             this.dialogConfig.data?.isSaving?.set(false);
             this.feedbackDialogService.showErrorToast({
-              detail: 'Failed to create partner. Please try again.'
+              detail: this.translateService.instant('partner.edit.error.createFailed')
             });
             console.error('Confirmed partner creation error:', error);
           }
@@ -1088,7 +1087,7 @@ export class PartnerEditDialogComponent implements OnInit {
         // User cancelled - do nothing, stay on the form
         this.dialogConfig.data?.isSaving?.set(false);
         this.feedbackDialogService.showInfoToast({
-          detail: 'Partner creation cancelled.'
+          detail: this.translateService.instant('partner.edit.info.creationCancelled')
         });
       }
     });
@@ -1187,8 +1186,8 @@ export class PartnerEditDialogComponent implements OnInit {
         topDuplicate: parsedTopDuplicate,
         duplicates: parsedDuplicates,
         tooltip: duplicateInfo.totalDuplicates > 0
-          ? `${duplicateInfo.totalDuplicates} duplicate(s) found`
-          : 'Unique record'
+          ? this.translateService.instant('partner.edit.duplicate.foundTooltip', { count: duplicateInfo.totalDuplicates })
+          : this.translateService.instant('partner.edit.duplicate.uniqueRecord')
       };
 
       // Update the record's duplicate info
@@ -1205,7 +1204,7 @@ export class PartnerEditDialogComponent implements OnInit {
         lowConfidence: 0,
         topDuplicate: null,
         duplicates: null,
-        tooltip: 'Unique record'
+        tooltip: this.translateService.instant('partner.edit.duplicate.uniqueRecord')
       };
 
       this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);
