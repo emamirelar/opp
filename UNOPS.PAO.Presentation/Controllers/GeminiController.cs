@@ -31,12 +31,99 @@ using System.Net.Http;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 public class SearchResult
 {
     public int EntityId { get; set; }
     public float Score { get; set; }
     public string SearchType { get; set; } = string.Empty;
+}
+
+public class StreamingActionResult : ActionResult
+{
+    private readonly IGeminiManager _manager;
+    private readonly GeminiAssistantRequest _request;
+    private readonly ClaimsPrincipal _user;
+    private readonly IHeaderDictionary _headers;
+
+    public StreamingActionResult(IGeminiManager manager, GeminiAssistantRequest request, ClaimsPrincipal user, IHeaderDictionary headers)
+    {
+        _manager = manager;
+        _request = request;
+        _user = user;
+        _headers = headers;
+    }
+
+    public override async Task ExecuteResultAsync(ActionContext context)
+    {
+        var response = context.HttpContext.Response;
+        
+        // Set SSE headers (remove Transfer-Encoding to avoid conflicts)
+        response.Headers.Add("Content-Type", "text/event-stream");
+        response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.Headers.Add("Pragma", "no-cache");
+        response.Headers.Add("Expires", "0");
+        response.Headers.Add("Connection", "keep-alive");
+        response.Headers.Add("X-Accel-Buffering", "no");
+        response.Headers.Add("X-Proxy-Buffering", "no");
+        response.Headers.Add("Access-Control-Allow-Origin", "*");
+        response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        
+        try
+        {
+            Console.WriteLine("🌊 [CONTROLLER] Starting streaming response");
+            var chunkCount = 0;
+            var startTime = DateTime.UtcNow;
+            
+            await foreach (var chunk in _manager.ChatWithGeminiStreaming(_request, _user, _headers))
+            {
+                chunkCount++;
+                var elapsed = DateTime.UtcNow - startTime;
+                Console.WriteLine($"🌊 [CONTROLLER] Chunk #{chunkCount} (after {elapsed.TotalSeconds:F2}s): {chunk.Substring(0, Math.Min(100, chunk.Length))}...");
+                
+                // Format as proper SSE event if the chunk doesn't already have SSE formatting
+                string formattedChunk;
+                if (chunk.StartsWith("data: ") || chunk.StartsWith("event: "))
+                {
+                    // Already SSE formatted
+                    formattedChunk = chunk.EndsWith("\n\n") ? chunk : chunk + "\n\n";
+                    Console.WriteLine($"🌊 [CONTROLLER] Chunk #{chunkCount} already SSE formatted");
+                }
+                else
+                {
+                    // Raw JSON - format as SSE
+                    // Ensure the JSON is properly escaped for SSE
+                    var escapedChunk = chunk.Replace("\n", "\\n").Replace("\r", "\\r");
+                    formattedChunk = $"data: {escapedChunk}\n\n";
+                    Console.WriteLine($"🌊 [CONTROLLER] Chunk #{chunkCount} formatted raw JSON as SSE");
+                }
+                
+                await response.WriteAsync(formattedChunk);
+                await response.Body.FlushAsync();
+                
+                // Force immediate transmission to client
+                if (response.HttpContext.Response.HasStarted)
+                {
+                    // Additional flush to ensure immediate delivery
+                    await response.HttpContext.Response.Body.FlushAsync();
+                }
+                
+                Console.WriteLine($"🌊 [CONTROLLER] Chunk #{chunkCount} sent to client");
+            }
+            var totalElapsed = DateTime.UtcNow - startTime;
+            Console.WriteLine($"🌊 [CONTROLLER] Streaming completed successfully - {chunkCount} chunks in {totalElapsed.TotalSeconds:F2}s");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ [CONTROLLER] Streaming error: {ex.Message}");
+            var errorEvent = $"data: {{\"error\": \"An error occurred during streaming: {ex.Message}\"}}\n\n";
+            await response.WriteAsync(errorEvent);
+            await response.Body.FlushAsync();
+        }
+    }
 }
 
 [Route("/")]
@@ -396,26 +483,49 @@ public class GeminiController : BaseController
     }
 
     [HttpPost(APIDictionary.AiAssistantChat)]
+    [HttpHead(APIDictionary.AiAssistantChat)]
     public async Task<ActionResult> ChatWithGemini([FromForm] GeminiAssistantRequest req) 
     {
-        return await HandleOperationAsync(async () => 
+        // Debug logging for file upload
+        if (req.Files != null && req.Files.Any())
         {
-            // Debug logging for file upload
-            if (req.Files != null && req.Files.Any())
+            Console.WriteLine($"📎 [CONTROLLER] Received {req.Files.Count()} files:");
+            foreach (var file in req.Files)
             {
-                Console.WriteLine($"📎 [CONTROLLER] Received {req.Files.Count()} files:");
-                foreach (var file in req.Files)
-                {
-                    Console.WriteLine($"   - {file.FileName} ({file.ContentType}, {file.Length} bytes)");
-                }
+                Console.WriteLine($"   - {file.FileName} ({file.ContentType}, {file.Length} bytes)");
             }
-            else
-            {
-                Console.WriteLine("📎 [CONTROLLER] No files received in request");
-            }
+        }
+        else
+        {
+            Console.WriteLine("📎 [CONTROLLER] No files received in request");
+        }
+
+        // Handle HEAD requests
+        if (Request.Method == "HEAD")
+        {
+            return Ok();
+        }
+
+        // Check if streaming is requested
+        var streaming = req.Streaming;
+        streaming = true; // Force streaming mode for testing
+        if (streaming)
+        {
+            Console.WriteLine("📡 [CONTROLLER] Streaming mode requested");
             
-            return await _manager.ChatWithGemini(req, User, Request.Headers);
-        });
+            // Return Server-Sent Events stream
+            return new StreamingActionResult(_manager, req, User, Request.Headers);
+        }
+        else
+        {
+            Console.WriteLine("📄 [CONTROLLER] Regular (non-streaming) mode requested");
+            
+            // Handle regular non-streaming request
+            return await HandleOperationAsync(async () => 
+            {
+                return await _manager.ChatWithGemini(req, User, Request.Headers);
+            });
+        }
     }
 
 
