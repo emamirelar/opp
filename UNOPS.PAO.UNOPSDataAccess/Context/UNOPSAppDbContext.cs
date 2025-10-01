@@ -84,7 +84,7 @@ public class UNOPSAppDbContext : AppDbContext
             .HasIndex(lo => lo.Code)
             .IsUnique();
 
-        // Configure unique constraint for PartnerTree Code (allows null but enforces uniqueness when not null)
+        // Configure unique constraint for PartnerTree Code
         modelBuilder
             .Entity<PartnerTree>()
             .HasIndex(pt => pt.Code)
