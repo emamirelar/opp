@@ -42,6 +42,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SkeletonModule } from 'primeng/skeleton';
 import { AuthService } from '../../../../../essentials/services/auth.service';
 import { ENTITY_STATUS_OPTIONS } from '../../../models/entity-status.enum';
+import { TooltipModule } from 'primeng/tooltip';
 
 // Interface for duplicate detection response
 interface DuplicateDetectionResponse {
@@ -87,6 +88,7 @@ interface DuplicateDetectionResponse {
     AiTranscribeComponent,
     ProgressSpinnerModule,
     SkeletonModule,
+    TooltipModule
   ],
   providers: [DialogService],
   templateUrl: './partner-edit-dialog.component.html',

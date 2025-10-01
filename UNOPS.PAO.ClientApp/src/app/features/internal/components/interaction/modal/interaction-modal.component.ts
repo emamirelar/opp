@@ -36,6 +36,7 @@ import { PermissionUtilityService } from '../../../../../essentials/services/per
 import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
 import {Divider} from 'primeng/divider';
 import { PhoneInputComponent } from '../../../../../common/components/phone-input/phone-input.component';
+import { TooltipModule } from 'primeng/tooltip';
 
 // Interface for duplicate detection response
 interface DuplicateDetectionResponse {
@@ -99,6 +100,7 @@ interface DuplicateDetectionResponse {
     Divider,
     PhoneInputComponent,
     AutoCompleteModule,
+    TooltipModule,
   ],
   providers: [
     DialogService,

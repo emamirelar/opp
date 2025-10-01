@@ -32,6 +32,7 @@ import { AiTranscribeComponent } from '../../../../../common/reusables/component
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogService } from 'primeng/dynamicdialog';
 import { DuplicateConfirmationDialogComponent, DuplicateDetectionResponse } from '../duplicate-confirmation-dialog/duplicate-confirmation-dialog.component';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-contact-edit-dialog',
@@ -55,7 +56,8 @@ import { DuplicateConfirmationDialogComponent, DuplicateDetectionResponse } from
     CheckboxModule,
     FormsModule,
     AiTranscribeComponent,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    TooltipModule
   ],
   templateUrl: './contact-edit-dialog.component.html',
   standalone: true,
