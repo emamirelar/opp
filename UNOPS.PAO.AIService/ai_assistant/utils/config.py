@@ -129,8 +129,84 @@ class ConfigLoader:
 
 
     def get_database_url(self) -> str:
-        """Get the database URL"""
-        return self._config.get('database', {}).get('url')
+        """Get the database URL - supports both direct URL and secret-based configuration"""
+        database_config = self._config.get('database', {})
+        
+        # Check if URL is directly provided (for local development)
+        if 'url' in database_config and database_config['url']:
+            return database_config['url']
+        
+        # Check if secret_name is provided (for cloud environments)
+        if 'secret_name' in database_config:
+            google_cloud_config = self._config.get('google_cloud', {})
+            project_id = google_cloud_config.get('project')
+            
+            if not project_id:
+                raise ConfigurationError("No project configured for Google Cloud - required for secret retrieval")
+            
+            secret_name = database_config['secret_name']
+            try:
+                database_connection_string = self.get_secret_from_secret_manager(secret_name, project_id)
+                if database_connection_string:
+                    # Convert .NET connection string format to PostgreSQL URL format
+                    database_url = self._parse_connection_string_to_url(database_connection_string)
+                    return database_url
+                else:
+                    raise ConfigurationError(f"Retrieved empty database URL from secret: {secret_name}")
+            except Exception as e:
+                raise ConfigurationError(f"Failed to retrieve database URL from secret '{secret_name}': {e}")
+        
+        # If neither URL nor secret_name is provided
+        raise ConfigurationError("No database configuration found. Please provide either 'url' (for local) or 'secret_name' (for cloud) in database config.")
+    
+    def _parse_connection_string_to_url(self, connection_string: str) -> str:
+        """
+        Parse .NET-style connection string to PostgreSQL URL format.
+        
+        Input format: Username=user;Password=pass;Host=host;Port=port;Database=db;
+        Output format: postgresql://user:pass@host:port/db
+        """
+        try:
+            # Parse connection string parameters
+            params = {}
+            for pair in connection_string.split(';'):
+                if '=' in pair:
+                    key, value = pair.split('=', 1)
+                    params[key.strip()] = value.strip()
+            
+            # Extract required parameters
+            username = params.get('Username') or params.get('User ID') or params.get('UserId')
+            password = params.get('Password')
+            host = params.get('Host') or params.get('Server')
+            port = params.get('Port', '5432')
+            database = params.get('Database') or params.get('Initial Catalog')
+            
+            # Validate required parameters
+            missing_params = []
+            if not username:
+                missing_params.append('Username/User ID')
+            if not password:
+                missing_params.append('Password')
+            if not host:
+                missing_params.append('Host/Server')
+            if not database:
+                missing_params.append('Database/Initial Catalog')
+            
+            if missing_params:
+                raise ConfigurationError(f"Missing required connection string parameters: {', '.join(missing_params)}")
+            
+            # URL-encode password if it contains special characters
+            import urllib.parse
+            encoded_password = urllib.parse.quote(password, safe='')
+            
+            # Construct PostgreSQL URL
+            postgresql_url = f"postgresql://{username}:{encoded_password}@{host}:{port}/{database}"
+            
+            logger.info(f"Successfully converted connection string to PostgreSQL URL format")
+            return postgresql_url
+            
+        except Exception as e:
+            raise ConfigurationError(f"Failed to parse connection string: {e}. Connection string format should be: Username=user;Password=pass;Host=host;Port=port;Database=db;")
     
 
     def get_oauth_config(self) -> Dict[str, str]:

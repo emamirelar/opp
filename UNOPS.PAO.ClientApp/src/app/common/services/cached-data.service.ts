@@ -108,7 +108,8 @@ export class CachedDataService {
     value: category.partnerCategoryCode,
     items: category.children.map(group => ({
       name: group.partnerGroupName,
-      value: group.partnerGroupId
+      value: group.partnerGroupId,
+      searchText: `${category.partnerCategoryName} ${group.partnerGroupName}`.toLowerCase()
     }))
   })) || []);
 

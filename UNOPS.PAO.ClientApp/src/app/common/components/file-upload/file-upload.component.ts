@@ -1,12 +1,13 @@
 import { Component, EventEmitter, Input, Output, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FileUpload } from '../../../features/internal/models/ai-assistant.model';
 import { AiAssistantService } from '../../../features/internal/services/ai-assistant.service';
 
 @Component({
   selector: 'app-file-upload',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   template: `
     <div class="file-upload-container">
       <!-- Upload Area -->
@@ -29,13 +30,13 @@ import { AiAssistantService } from '../../../features/internal/services/ai-assis
           <div class="upload-icon" [innerHTML]="getUploadIcon()"></div>
           <div class="upload-text">
             <div class="primary-text" *ngIf="!selectedFiles.length">
-              Drop files here or click to browse
+              {{ 'fileUpload.dropFilesHere' | translate }}
             </div>
             <div class="primary-text" *ngIf="selectedFiles.length">
-              {{selectedFiles.length}} file(s) selected
+              {{ 'fileUpload.filesSelected' | translate: {count: selectedFiles.length} }}
             </div>
             <div class="secondary-text">
-              Max {{maxSizeMB}}MB per file • Supports images, documents, PDFs
+              {{ 'fileUpload.maxSizeInfo' | translate: {maxSize: maxSizeMB} }}
             </div>
           </div>
         </div>
@@ -44,9 +45,9 @@ import { AiAssistantService } from '../../../features/internal/services/ai-assis
       <!-- File List -->
       <div class="file-list" *ngIf="selectedFiles.length">
         <div class="file-list-header">
-          <span>Attached Files ({{selectedFiles.length}})</span>
+          <span>{{ 'fileUpload.attachedFiles' | translate: {count: selectedFiles.length} }}</span>
           <button class="clear-all-btn" (click)="clearAllFiles()" type="button">
-            Clear All
+            {{ 'fileUpload.clearAll' | translate }}
           </button>
         </div>
         
@@ -99,7 +100,7 @@ import { AiAssistantService } from '../../../features/internal/services/ai-assis
       <div class="error-messages" *ngIf="errors.length">
         <div class="error-header">
           <span class="error-icon">⚠️</span>
-          <span>File Upload Issues</span>
+          <span>{{ 'fileUpload.fileUploadIssues' | translate }}</span>
         </div>
         <div class="error-list">
           <div class="error-item" *ngFor="let error of errors">
@@ -114,7 +115,7 @@ import { AiAssistantService } from '../../../features/internal/services/ai-assis
           <div class="progress-fill" [style.width.%]="uploadProgress"></div>
         </div>
         <div class="progress-text">
-          Uploading files... {{uploadProgress}}%
+          {{ 'fileUpload.uploadingFiles' | translate: {progress: uploadProgress} }}
         </div>
       </div>
     </div>
@@ -423,7 +424,10 @@ export class FileUploadComponent {
   isUploading = false;
   uploadProgress = 0;
 
-  constructor(public aiService: AiAssistantService) {
+  constructor(
+    public aiService: AiAssistantService,
+    private translateService: TranslateService
+  ) {
     // Use AI service defaults if not provided
     if (this.acceptedTypes.length === 0) {
       this.acceptedTypes = this.aiService.supportedFileTypes;
@@ -532,21 +536,21 @@ export class FileUploadComponent {
   }
 
   getFileTypeDisplay(mimeType: string): string {
-    if (mimeType.startsWith('image/')) return 'Image';
-    if (mimeType === 'application/pdf') return 'PDF';
-    if (mimeType.includes('word') || mimeType.includes('document')) return 'Document';
-    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'Spreadsheet';
-    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'Presentation';
-    if (mimeType.startsWith('text/')) return 'Text';
-    return 'File';
+    if (mimeType.startsWith('image/')) return this.translateService.instant('fileUpload.fileTypes.image');
+    if (mimeType === 'application/pdf') return this.translateService.instant('fileUpload.fileTypes.pdf');
+    if (mimeType.includes('word') || mimeType.includes('document')) return this.translateService.instant('fileUpload.fileTypes.document');
+    if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return this.translateService.instant('fileUpload.fileTypes.spreadsheet');
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return this.translateService.instant('fileUpload.fileTypes.presentation');
+    if (mimeType.startsWith('text/')) return this.translateService.instant('fileUpload.fileTypes.text');
+    return this.translateService.instant('fileUpload.fileTypes.file');
   }
 
   getStatusText(status: string): string {
     switch (status) {
-      case 'pending': return 'Ready';
-      case 'uploading': return 'Uploading...';
-      case 'completed': return 'Uploaded';
-      case 'error': return 'Error';
+      case 'pending': return this.translateService.instant('fileUpload.status.ready');
+      case 'uploading': return this.translateService.instant('fileUpload.status.uploading');
+      case 'completed': return this.translateService.instant('fileUpload.status.uploaded');
+      case 'error': return this.translateService.instant('fileUpload.status.error');
       default: return '';
     }
   }

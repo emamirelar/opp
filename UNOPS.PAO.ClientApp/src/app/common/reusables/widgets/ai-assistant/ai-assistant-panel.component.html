@@ -8,7 +8,7 @@
   <div *ngIf="!hideHeader" class="flex items-center justify-between p-unops-md border-b border-unops-neutral-200 bg-unops-surface-primary shadow-unops-sm">
     <div class="flex items-center gap-3 flex-1">
       <div class="flex items-center justify-center w-8 h-8 rounded-full">
-        <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-5 h-5" />
+        <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="w-5 h-5" />
       </div>
 
       <div class="flex-1 min-w-0">
@@ -18,7 +18,7 @@
           <div *ngIf="!isEditingTitle()" 
                class="text-unops-lg font-unops-semibold text-unops-neutral-900 cursor-pointer hover:bg-unops-neutral-100 px-unops-sm py-unops-xs rounded-unops-sm truncate transition-colors duration-unops-fast"
                (click)="startEditingTitle()"
-               pTooltip="Click to edit title">
+               [pTooltip]="'aiAssistant.clickToEditTitle' | translate">
             {{ aiAssistantData.sessionTitle() }}
           </div>
           
@@ -33,7 +33,7 @@
               (keydown.escape)="cancelEditingTitle()"
               (blur)="saveTitle()"
               class="flex-1 px-unops-sm py-unops-xs text-unops-lg font-unops-semibold bg-transparent border border-unops-primary rounded-unops-sm focus:outline-none focus:ring-1 focus:ring-unops-primary transition-all duration-unops-fast"
-              placeholder="Enter title">
+              [placeholder]="'aiAssistant.enterTitle' | translate">
             <p-button
               icon="pi pi-check"
               (onClick)="saveTitle()"
@@ -120,7 +120,7 @@
         [text]="true"
         [rounded]="true"
         size="small"
-        [pTooltip]="isInFullscreenMode() ? 'Minimize to popup' : 'Expand to fullscreen'"
+        [pTooltip]="isInFullscreenMode() ? ('aiAssistant.minimizeToPopup' | translate) : ('aiAssistant.expandToFullscreen' | translate)"
         (onClick)="toggleFullscreen()"
         tooltipPosition="left">
       </p-button>
@@ -174,20 +174,20 @@
       <!-- AI Assistant Icon -->
       <div class="mb-unops-xl">
         <div class="w-20 h-20 mx-auto mb-unops-lg rounded-full bg-gradient-to-br from-unops-primary to-unops-secondary flex items-center justify-center shadow-unops-lg">
-          <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-10 h-10" />
+          <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="w-10 h-10" />
         </div>
       </div>
 
       <!-- Personalized Greeting -->
       <div class="mb-unops-2xl">
         <h1 class="text-unops-display-medium unops-tablet:text-unops-display-large font-unops-regular text-unops-neutral-900 mb-unops-lg leading-tight">
-          Hello {{ userName() || 'User' }}
+          {{ 'aiAssistant.hello' | translate }} {{ userName() || ('aiAssistant.user' | translate) }}
         </h1>
         <p class="text-unops-xl unops-tablet:text-unops-2xl text-unops-neutral-600 font-unops-light max-w-2xl leading-relaxed mb-unops-lg">
-          How can I help you with partners and opportunities today?
+          {{ 'aiAssistant.welcomeMessage' | translate }}
         </p>
         <p class="text-unops-base text-unops-neutral-500 font-unops-regular max-w-xl leading-relaxed">
-          I'm here to assist you with finding contacts, analyzing information, and providing insights to help you take informed actions.
+          {{ 'aiAssistant.welcomeDescription' | translate }}
         </p>
       </div>
 
@@ -227,11 +227,11 @@
     <div *ngIf="aiAssistantData.chatHistory().length === 0 && !aiAssistantData.isFirstPageLoad()" class="flex flex-col items-center justify-center h-full text-center px-unops-lg py-unops-xl max-w-2xl mx-auto ai-new-chat-screen">
       <div class="mb-unops-2xl">
         <div class="w-16 h-16 mx-auto mb-unops-lg rounded-full bg-unops-primary-container flex items-center justify-center shadow-unops-md">
-          <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-8 h-8" />
+          <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="w-8 h-8" />
         </div>
-        <h2 class="text-unops-display-small font-unops-regular text-unops-neutral-900 mb-unops-md">New Chat</h2>
+        <h2 class="text-unops-display-small font-unops-regular text-unops-neutral-900 mb-unops-md">{{ 'aiAssistant.newChat' | translate }}</h2>
         <p class="text-unops-lg text-unops-neutral-600 font-unops-light max-w-md leading-relaxed">
-          Start a conversation by typing your question or request below.
+          {{ 'aiAssistant.startConversation' | translate }}
         </p>
       </div>
     </div>
@@ -252,12 +252,12 @@
                               <!-- Images -->
                 <div *ngSwitchCase="'image'" class="inline-block">
                   <img [src]="'data:' + inline.mimeType + ';base64,' + inline.data" 
-                       alt="Inline Image" 
+                       [alt]="'aiAssistant.inlineImage' | translate" 
                        class="inline-image max-w-[300px] max-h-[200px] w-auto h-auto border border-white border-opacity-30 cursor-pointer"
                        (click)="openImageModal(inline)"
                        (error)="onImageError($event, inline)"
                        loading="lazy"
-                       pTooltip="Click to view larger"
+                       [pTooltip]="'aiAssistant.clickToViewLarger' | translate"
                        tooltipPosition="top"/>
                 </div>
               
@@ -266,7 +266,7 @@
                 <i class="pi pi-volume-up text-white"></i>
                 <audio controls class="h-8 flex-1 max-w-[250px]">
                   <source [src]="'data:' + inline.mimeType + ';base64,' + inline.data" [type]="inline.mimeType">
-                  Your browser does not support the audio element.
+                  {{ 'aiAssistant.audioNotSupported' | translate }}
                 </audio>
               </div>
               
@@ -274,7 +274,7 @@
               <div *ngSwitchCase="'video'" class="inline-block">
                 <video controls class="max-w-[300px] max-h-[200px] rounded-lg border border-white border-opacity-30">
                   <source [src]="'data:' + inline.mimeType + ';base64,' + inline.data" [type]="inline.mimeType">
-                  Your browser does not support the video element.
+                  {{ 'aiAssistant.videoNotSupported' | translate }}
                 </video>
               </div>
               
@@ -283,8 +283,8 @@
                    (click)="downloadInlineFile(inline, 'document.pdf')">
                 <i class="pi pi-file-pdf text-red-400 text-lg"></i>
                 <div class="flex flex-col flex-1">
-                  <span class="text-sm font-medium text-white">PDF Document</span>
-                  <span class="text-xs text-white text-opacity-70">Click to view/download</span>
+                  <span class="text-sm font-medium text-white">{{ 'aiAssistant.pdfDocument' | translate }}</span>
+                  <span class="text-xs text-white text-opacity-70">{{ 'aiAssistant.clickToViewDownload' | translate }}</span>
                 </div>
                 <i class="pi pi-download text-white text-opacity-70"></i>
               </div>
@@ -304,7 +304,7 @@
                 <i [class]="getFileIcon(inline.mimeType)" class="text-lg"></i>
                 <div class="flex flex-col flex-1">
                   <span class="text-sm font-medium text-white">{{ getFileTypeName(inline.mimeType) }}</span>
-                  <span class="text-xs text-white text-opacity-70">Click to download</span>
+                  <span class="text-xs text-white text-opacity-70">{{ 'aiAssistant.clickToDownload' | translate }}</span>
                 </div>
                 <i class="pi pi-download text-white text-opacity-70"></i>
               </div>
@@ -314,9 +314,9 @@
                    (click)="downloadInlineFile(inline, 'file')">
                 <i class="pi pi-file text-gray-400 text-lg"></i>
                 <div class="flex flex-col flex-1">
-                  <span class="text-sm font-medium text-white">File</span>
+                  <span class="text-sm font-medium text-white">{{ 'aiAssistant.file' | translate }}</span>
                   <span class="text-xs text-white text-opacity-70">{{ inline.mimeType }}</span>
-                  <span class="text-xs text-white text-opacity-70">Click to download</span>
+                  <span class="text-xs text-white text-opacity-70">{{ 'aiAssistant.clickToDownload' | translate }}</span>
                 </div>
                 <i class="pi pi-download text-white text-opacity-70"></i>
               </div>
@@ -349,7 +349,7 @@
         <!-- AI Indicator (butterfly icon) -->
         <div class="flex justify-start mb-unops-xs">
           <div class="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-unops-primary to-unops-secondary shadow-unops-sm">
-            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-3 h-3" />
+            <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="w-3 h-3" />
           </div>
         </div>
         
@@ -396,12 +396,12 @@
                 <!-- Images -->
                 <div *ngSwitchCase="'image'" class="inline-block">
                   <img [src]="'data:' + inline.mimeType + ';base64,' + inline.data" 
-                       alt="Inline Image" 
+                       [alt]="'aiAssistant.inlineImage' | translate" 
                        class="inline-image max-w-[300px] max-h-[200px] w-auto h-auto border border-gray-200 dark:border-gray-300 cursor-pointer"
                        (click)="openImageModal(inline)"
                        (error)="onImageError($event, inline)"
                        loading="lazy"
-                       pTooltip="Click to view larger"
+                       [pTooltip]="'aiAssistant.clickToViewLarger' | translate"
                        tooltipPosition="top"/>
                 </div>
                 
@@ -410,7 +410,7 @@
                   <i class="pi pi-volume-up text-gray-600 dark:text-gray-400"></i>
                   <audio controls class="h-8 flex-1 max-w-[250px]">
                     <source [src]="'data:' + inline.mimeType + ';base64,' + inline.data" [type]="inline.mimeType">
-                    Your browser does not support the audio element.
+                    {{ 'aiAssistant.audioNotSupported' | translate }}
                   </audio>
                 </div>
                 
@@ -418,7 +418,7 @@
                 <div *ngSwitchCase="'video'" class="inline-block">
                   <video controls class="max-w-[300px] max-h-[200px] rounded-lg border border-gray-200 dark:border-gray-300">
                     <source [src]="'data:' + inline.mimeType + ';base64,' + inline.data" [type]="inline.mimeType">
-                    Your browser does not support the video element.
+                    {{ 'aiAssistant.videoNotSupported' | translate }}
                   </video>
                 </div>
                 
@@ -427,8 +427,8 @@
                      (click)="downloadInlineFile(inline, 'document.pdf')">
                   <i class="pi pi-file-pdf text-red-500 text-lg"></i>
                   <div class="flex flex-col flex-1">
-                    <span class="text-sm font-medium text-gray-800 dark:text-gray-200">PDF Document</span>
-                    <span class="text-xs text-gray-600 dark:text-gray-400">Click to view/download</span>
+                    <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ 'aiAssistant.pdfDocument' | translate }}</span>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">{{ 'aiAssistant.clickToViewDownload' | translate }}</span>
                   </div>
                   <i class="pi pi-download text-gray-500 dark:text-gray-400"></i>
                 </div>
@@ -448,7 +448,7 @@
                   <i [class]="getFileIcon(inline.mimeType)" class="text-lg"></i>
                   <div class="flex flex-col flex-1">
                     <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ getFileTypeName(inline.mimeType) }}</span>
-                    <span class="text-xs text-gray-600 dark:text-gray-400">Click to download</span>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">{{ 'aiAssistant.clickToDownload' | translate }}</span>
                   </div>
                   <i class="pi pi-download text-gray-500 dark:text-gray-400"></i>
                 </div>
@@ -458,9 +458,9 @@
                      (click)="downloadInlineFile(inline, 'file')">
                   <i class="pi pi-file text-gray-400 text-lg"></i>
                   <div class="flex flex-col flex-1">
-                    <span class="text-sm font-medium text-gray-800 dark:text-gray-200">File</span>
+                    <span class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ 'aiAssistant.file' | translate }}</span>
                     <span class="text-xs text-gray-600 dark:text-gray-400">{{ inline.mimeType }}</span>
-                    <span class="text-xs text-gray-600 dark:text-gray-400">Click to download</span>
+                    <span class="text-xs text-gray-600 dark:text-gray-400">{{ 'aiAssistant.clickToDownload' | translate }}</span>
                   </div>
                   <i class="pi pi-download text-gray-500 dark:text-gray-400"></i>
                 </div>
@@ -470,7 +470,7 @@
           
           <!-- Sources section -->
           <div *ngIf="message.sources && message.sources.length > 0 && shouldShowSources(messageIndex)" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-300 border-opacity-50 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-            <div class="text-sm font-medium text-gray-700 dark:text-gray-600 mb-3">Sources:</div>
+            <div class="text-sm font-medium text-gray-700 dark:text-gray-600 mb-3">{{ 'aiAssistant.sources' | translate }}:</div>
             <div class="space-y-2">
               <div *ngFor="let source of message.sources" class="source-item flex items-start gap-3 p-2 rounded-lg transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
                 <!-- Source icon -->
@@ -497,7 +497,7 @@
                 <div class="flex-shrink-0 mt-1">
                   <i class="pi pi-external-link text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 text-xs external-link-icon cursor-pointer transition-colors duration-200" 
                      (click)="openSourceLink(source)"
-                     pTooltip="Open link in new tab"
+                     [pTooltip]="'aiAssistant.openLinkInNewTab' | translate"
                      tooltipPosition="top"></i>
                 </div>
               </div>
@@ -533,7 +533,7 @@
             size="small"
             class="action-button-below"
             severity="secondary"
-            pTooltip="Copy message"
+            [pTooltip]="'aiAssistant.copyMessage' | translate"
             (onClick)="copyMessageText(message)">
           </p-button>
           <p-button
@@ -543,7 +543,7 @@
             size="small"
             class="action-button-below"
             severity="secondary"
-            pTooltip="Regenerate response"
+            [pTooltip]="'aiAssistant.regenerateResponse' | translate"
             (onClick)="regenerateMessage(messageIndex)">
           </p-button>
         </div>
@@ -556,14 +556,14 @@
         <!-- AI Indicator (butterfly icon) -->
         <div class="flex justify-start mb-1">
           <div class="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
-            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-3 h-3 animate-pulse" />
+            <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="w-3 h-3 animate-pulse" />
           </div>
         </div>
         
         <!-- Generating bubble -->
         <div class="rounded-2xl p-4 break-words bg-white dark:bg-gray-100 text-gray-900 dark:text-gray-800 rounded-bl-sm border border-gray-200 dark:border-gray-300 shadow-sm generating-message">
           <div class="flex items-center gap-2">
-            <span class="text-base font-medium">Generating{{ getGeneratingDotsText() }}</span>
+            <span class="text-base font-medium">{{ 'aiAssistant.generating' | translate }}{{ getGeneratingDotsText() }}</span>
           </div>
         </div>
       </div>
@@ -602,7 +602,7 @@
             <!-- Image preview -->
             <div *ngIf="fileData.file.type.startsWith('image/')" 
                  class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-[var(--surface-border)]">
-              <img [src]="fileData.file | safeUrl" class="w-full h-full object-cover" alt="thumbnail" />
+              <img [src]="fileData.file | safeUrl" class="w-full h-full object-cover" [alt]="'aiAssistant.thumbnail' | translate" />
             </div>
             <!-- Audio preview -->
             <div *ngIf="fileData.file.type.startsWith('audio/')" class="flex items-center">

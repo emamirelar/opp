@@ -42,4 +42,6 @@ public class Contact : ModifiableDeletableEntity
     public virtual Partner? Partner { get; set; }
     public int PartnerId { get; set; }
     public List<Document>? Documents { get; set; }
+    // Many-to-many relationship with OrganizationHierarchy through OrganizationUnitRelationships
+    public virtual ICollection<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; } = new HashSet<OrganizationUnitRelationship>();
 }

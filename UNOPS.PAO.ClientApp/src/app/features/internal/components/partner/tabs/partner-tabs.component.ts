@@ -43,7 +43,7 @@ import { ResponsiveTabsComponent, ResponsiveTabItem } from '../../../../../commo
           <app-picture
             [imageUrl]="recordData.logoUrl || ''"
             [uploadUrl]="getUploadLogoUrl()"
-            [altText]="'Partner logo'"
+            [altText]="'partner.tabs.logoAltText' | translate"
             [size]="isMobile() ? 'extra-small' : 'small'"
             (imageChanged)="_loadRecordDetails()"
           />
@@ -58,7 +58,7 @@ import { ResponsiveTabsComponent, ResponsiveTabItem } from '../../../../../commo
       <!-- Responsive tabs -->
       <app-responsive-tabs
         [tabs]="tabs"
-        [dropdownPlaceholder]="'Select tab'"
+        [dropdownPlaceholder]="'partner.tabs.selectTabPlaceholder' | translate"
         class="partner-tabs-navigation">
       </app-responsive-tabs>
 

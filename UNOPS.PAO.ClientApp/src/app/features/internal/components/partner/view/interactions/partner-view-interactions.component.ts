@@ -99,7 +99,7 @@ export class PartnerViewInteractionsComponent implements OnInit {
     dataLoadingStrategy:  'navigator-full',
     cluster: {
       maxItems: 3,
-      titleTemplate: 'Groupe de {count} interactions',
+      titleTemplate: this.translateService.instant('partner.interactions.timeline.clusterTitle', { count: '{count}' }),
       showStipes: true,
       fitOnDoubleClick: true
     },
@@ -140,36 +140,36 @@ export class PartnerViewInteractionsComponent implements OnInit {
     scrollHeight: 'flex',
     searchConfig: {
       useAdvancedSearch: true,
-      placeholder: this.translateService.instant('search.interactionsPlaceholder'),
+      placeholder: this.translateService.instant('partner.interactions.search.placeholder'),
       entityType: 'Interaction' as const,
       searchableFields: [
         {
           field: 'type',
-          label: 'Type',
+          label: this.translateService.instant('partner.interactions.search.type'),
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'subject',
-          label: 'Subject',
+          label: this.translateService.instant('partner.interactions.search.subject'),
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'description',
-          label: 'Description',
+          label: this.translateService.instant('partner.interactions.search.description'),
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'date',
-          label: 'Date',
+          label: this.translateService.instant('partner.interactions.search.date'),
           type: 'date',
           operators: ['is', 'is not', 'after', 'before', 'between', '>', '<', '>=', '<=']
         },
         {
           field: 'contactName',
-          label: 'Contact Name',
+          label: this.translateService.instant('partner.interactions.search.contactName'),
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         }
@@ -313,14 +313,14 @@ export class PartnerViewInteractionsComponent implements OnInit {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to create interactions',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('partner.interactions.error.createPermissionDenied'),
+        summary: this.translateService.instant('common.error.permissionDenied')
       });
       return;
     }
 
     const ref = this.dialogService.open(InteractionModalComponent, {
-      header: 'New Interaction',
+      header: this.translateService.instant('partner.interactions.modal.newHeader'),
       width: '90%',
       height: '90%',
       modal: true,
@@ -371,14 +371,14 @@ export class PartnerViewInteractionsComponent implements OnInit {
     // Check if user has update permission
     if (!this.permissionUtilityService.canUpdate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit interactions',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('partner.interactions.error.editPermissionDenied'),
+        summary: this.translateService.instant('common.error.permissionDenied')
       });
       return;
     }
 
     const ref = this.dialogService.open(InteractionModalComponent, {
-      header: 'Edit Interaction',
+      header: this.translateService.instant('partner.interactions.modal.editHeader'),
       width: '90%',
       height: '90%',
       modal: true,

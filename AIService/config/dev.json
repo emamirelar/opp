@@ -7,12 +7,11 @@
     "location": "europe-west4",
     "oauth": {
       "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
-      "client_id": "11994381361-9n974ebjfsjsb3rc5ejaidgm7jgdoqbt.apps.googleusercontent.com",
+      "client_id": "369001918367-t5qrahnqdaasaifvk6akpqkpjk9vli58.apps.googleusercontent.com",
       "target_principal": "pno-ai-service@unops-opportunityplus-dev.iam.gserviceaccount.com"
     }
   },
   "database": {
-    "url": "sqlite:///./ai_agent.db",
     "secret_name": "Dev_DB_Connection_String"
   },
   "artifacts": {

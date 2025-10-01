@@ -3,7 +3,7 @@ import { Component, Input } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { FeedbackDialogService } from '../../services/feedback-dialog.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-document-list',
@@ -14,13 +14,16 @@ import { TranslateModule } from '@ngx-translate/core';
 export class DocumentListComponent {
   @Input() documents: any[] = [];
 
-  constructor(private messageService: FeedbackDialogService) { }
+  constructor(
+    private messageService: FeedbackDialogService,
+    private translate: TranslateService
+  ) { }
 
   openDocument(documentLink: string) {
     if (!documentLink) {
       this.messageService.showErrorDialog({
-        summary: 'Error',
-        detail: 'Document link is not available',
+        summary: this.translate.instant('documentList.error'),
+        detail: this.translate.instant('documentList.documentLinkNotAvailable'),
       });
       return;
     }

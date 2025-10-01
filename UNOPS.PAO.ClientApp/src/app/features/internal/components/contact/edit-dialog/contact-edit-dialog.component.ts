@@ -7,7 +7,7 @@ import { FeedbackDialogService } from '../../../../../common/pages/services/feed
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../../../../../common/services/language.service';
 import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
@@ -88,6 +88,12 @@ export class ContactEditDialogComponent implements OnInit {
     description: [''],
     contactNumber: [''],
 
+    // Organization Unit fields - Array for backend compatibility
+    organizationHierarchyIds: [[]],
+    // UI FormControl for single select (synced with array)
+    selectedOrgUnitId: [null],
+    organizationHierarchyNames: [''],
+
     // Assistant information
     assistant: [''],
     assistantPhone: [''],
@@ -121,6 +127,7 @@ export class ContactEditDialogComponent implements OnInit {
   contactService = inject(ContactService);
   partnerService = inject(PartnerService);
   languageService = inject(LanguageService);
+  translateService = inject(TranslateService);
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
   private dialogService = inject(DialogService);
@@ -133,9 +140,13 @@ export class ContactEditDialogComponent implements OnInit {
   allStatusData = this.cachedDataService.allStatus;
   allPronounsData = this.cachedDataService.allPronouns;
   allPartners = this.cachedDataService.allPartners;
+  allOrganizationUnitsData = this.cachedDataService.allOrganizationUnits;
   showValidationFailedError = signal<boolean>(false);
   isLoading = signal<boolean>(false);
   maxDate = new Date();
+
+  // Signal for tracking selected organization unit
+  private selectedOrgUnitSignal = signal<number | null>(null);
 
   @Output() closeModal = new EventEmitter<void>();
   display = true;
@@ -164,6 +175,13 @@ export class ContactEditDialogComponent implements OnInit {
       const formData: any = { ...this.record };
       if (this.record.partner && this.record.partner.id) {
         formData.partnerId = this.record.partner.id;
+      }
+
+      // Handle organization unit relationships
+      if (formData.organizationUnitRelationships) {
+        const orgIds = formData.organizationUnitRelationships.map((rel: any) => rel.organizationHierarchyId);
+        this.setOrganizationHierarchyIds(orgIds);
+        delete formData.organizationUnitRelationships; // Remove from formData to avoid patch conflict
       }
       
       this.formGroup.patchValue(formData);
@@ -200,6 +218,9 @@ export class ContactEditDialogComponent implements OnInit {
 
     // Exposer la fonction handleSave
     this.dialogConfig.data.handleSave = this.handleSave.bind(this);
+
+    // Set up Organization Unit form control synchronization  
+    this.setupOrganizationUnitSync();
 
     // Set loading to false after a short delay to ensure form is properly initialized
     setTimeout(() => {
@@ -263,7 +284,7 @@ export class ContactEditDialogComponent implements OnInit {
         payload['id'] = this.record['id'];
         this.contactService.updateContactById(payload).subscribe({
           next: (data: any) => {
-            this.feedbackDialogService.showSuccessToast({ detail: 'Record updated successfully!' });
+            this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.recordUpdatedSuccessfully') });
             
             // Trigger duplicate detection for the updated record
             this.triggerDuplicateDetectionAfterSave(payload);
@@ -272,7 +293,7 @@ export class ContactEditDialogComponent implements OnInit {
             setTimeout(() => this.dialogRef.close("saved"));
           },
           error: (error: any) => {
-            this.feedbackDialogService.showErrorToast({ detail: 'Failed to update record' });
+            this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('message.failedToUpdateRecord') });
           }
         });
       } else {
@@ -307,6 +328,9 @@ export class ContactEditDialogComponent implements OnInit {
       requestJsonObj['partnerId'] = formValue['partner']['id'];
       delete requestJsonObj['partner'];
     }
+
+    // Handle Organization Unit relationships
+    requestJsonObj['organizationHierarchyIds'] = formValue['organizationHierarchyIds'] || [];
 
     return requestJsonObj;
   }
@@ -358,10 +382,24 @@ export class ContactEditDialogComponent implements OnInit {
           partnerId: contactData.partnerId
         });
       }
+
+      // Handle organization unit relationships from AI transcription
+      if (data.organizationUnitRelationships && Array.isArray(data.organizationUnitRelationships)) {
+        this.setOrganizationHierarchyIds(data.organizationUnitRelationships);
+      }
+      // Fallback for legacy organizationHierarchyIds
+      else if (data.organizationHierarchyIds && Array.isArray(data.organizationHierarchyIds)) {
+        this.setOrganizationHierarchyIds(data.organizationHierarchyIds);
+      }
+
+      // Update display names after AI transcription
+      setTimeout(() => {
+        this.initializeDisplayNames();
+      }, 100);
       
       // Show success message for legacy format
       if (!data.data) {
-        this.feedbackDialogService.showSuccessToast({ detail: 'Contact data transcribed successfully!' });
+        this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.contactDataTranscribedSuccessfully') });
       }
     }
   }
@@ -379,20 +417,20 @@ export class ContactEditDialogComponent implements OnInit {
         } else if (response.action === 'created' || response.success) {
           // Contact created successfully
           this.feedbackDialogService.showSuccessToast({ 
-            detail: response.message || 'Contact created successfully!' 
+            detail: response.message || this.translateService.instant('message.contactCreatedSuccessfully') 
           });
           setTimeout(() => this.dialogRef.close(response.data || response));
         } else {
           // Fallback for successful creation (old format)
           this.feedbackDialogService.showSuccessToast({ 
-            detail: 'Contact created successfully!' 
+            detail: this.translateService.instant('message.contactCreatedSuccessfully') 
           });
           setTimeout(() => this.dialogRef.close(response));
         }
       },
       error: (error: any) => {
         this.feedbackDialogService.showErrorToast({ 
-          detail: 'Failed to create contact. Please try again.' 
+          detail: this.translateService.instant('message.failedToCreateContact') 
         });
         console.error('Contact creation error:', error);
       }
@@ -405,7 +443,7 @@ export class ContactEditDialogComponent implements OnInit {
   private showDuplicateConfirmationDialog(duplicateResponse: DuplicateDetectionResponse, originalPayload: any): void {
     const dialogRef = this.dialogService.open(DuplicateConfirmationDialogComponent, {
       data: duplicateResponse,
-      header: 'Duplicate Contact Detected',
+      header: this.translateService.instant('title.duplicateContactDetected'),
       width: '500px',
       modal: true,
       breakpoints: {
@@ -447,7 +485,7 @@ export class ContactEditDialogComponent implements OnInit {
       } else {
         // User cancelled - do nothing, stay on the form
         this.feedbackDialogService.showInfoToast({ 
-          detail: 'Contact creation cancelled.' 
+          detail: this.translateService.instant('message.contactCreationCancelled') 
         });
       }
     });
@@ -604,8 +642,8 @@ export class ContactEditDialogComponent implements OnInit {
         topDuplicate: parsedTopDuplicate,
         duplicates: parsedDuplicates,
         tooltip: duplicateInfo.totalDuplicates > 0 
-          ? `${duplicateInfo.totalDuplicates} duplicate(s) found` 
-          : 'Unique record'
+          ? this.translateService.instant('message.duplicatesFound', { count: duplicateInfo.totalDuplicates })
+          : this.translateService.instant('message.uniqueRecord')
       };
 
       // Update the record's duplicate info
@@ -622,7 +660,7 @@ export class ContactEditDialogComponent implements OnInit {
         lowConfidence: 0,
         topDuplicate: null,
         duplicates: null,
-        tooltip: 'Unique record'
+        tooltip: this.translateService.instant('message.uniqueRecord')
       };
       
       this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);
@@ -653,6 +691,77 @@ export class ContactEditDialogComponent implements OnInit {
       }
     } catch (error) {
       console.error('Error updating duplicate info in import dialog:', error);
+    }
+  }
+
+  // Helper methods for organization hierarchy FormControl (single select managing array)
+  setOrganizationHierarchyIds(ids: number[]): void {
+    // Set the full array from backend
+    const idsArray = ids || [];
+    this.formGroup.get('organizationHierarchyIds')?.setValue(idsArray);
+
+    // Manually sync the UI control to ensure it updates (for AI transcription)
+    const firstElement = idsArray.length > 0 ? idsArray[0] : null;
+    this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement);
+    this.selectedOrgUnitSignal.set(firstElement);
+  }
+
+  getSelectedOrganizationHierarchyIds(): number[] {
+    // Return the full array for backend compatibility
+    return this.formGroup.get('organizationHierarchyIds')?.value || [];
+  }
+
+  /**
+   * Set up organization unit form control synchronization
+   */
+  private setupOrganizationUnitSync(): void {
+    // When UI FormControl changes, update the array FormControl
+    this.formGroup.get('selectedOrgUnitId')?.valueChanges.subscribe(value => {
+      const newArray = value ? [value] : [];
+      this.formGroup.get('organizationHierarchyIds')?.setValue(newArray, { emitEvent: false });
+      this.selectedOrgUnitSignal.set(value);
+      this.updateOrgUnitDisplayName(value);
+    });
+
+    // When array FormControl changes (from backend data), update UI FormControl
+    this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
+      const array = value || [];
+      const firstElement = array.length > 0 ? array[0] : null;
+      this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
+      this.selectedOrgUnitSignal.set(firstElement);
+      this.updateOrgUnitDisplayName(firstElement);
+    });
+
+    // Initialize both controls
+    const currentArray = this.formGroup.get('organizationHierarchyIds')?.value || [];
+    const firstElement = currentArray.length > 0 ? currentArray[0] : null;
+    this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
+    this.selectedOrgUnitSignal.set(firstElement);
+  }
+
+  /**
+   * Update organization unit display name
+   */
+  private updateOrgUnitDisplayName(selectedOrgUnitId: number | null): void {
+    if (selectedOrgUnitId) {
+      const orgUnits = this.allOrganizationUnitsData() as any[];
+      const selectedUnit = orgUnits.find((unit: any) => unit.id === selectedOrgUnitId);
+      if (selectedUnit) {
+        this.formGroup.get('organizationHierarchyNames')?.setValue(selectedUnit.name);
+      }
+    } else {
+      this.formGroup.get('organizationHierarchyNames')?.setValue(null);
+    }
+  }
+
+  /**
+   * Initialize display name fields based on currently selected IDs
+   */
+  private initializeDisplayNames(): void {
+    // Initialize organization hierarchy name
+    const selectedOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
+    if (selectedOrgUnitId) {
+      this.updateOrgUnitDisplayName(selectedOrgUnitId);
     }
   }
 }
