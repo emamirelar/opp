@@ -14,8 +14,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="contacts" class="block">{{ 'label.interaction.relatedTo' | translate }} *</label>
-          <small class="text-gray-600">{{ 'label.interaction.relatedToHelp' | translate }}</small>
+          <label for="contacts" class="block">
+            {{ 'label.interaction.relatedTo' | translate }} *
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.relatedTo' | translate"></i>
+          </label>
           <p-multiselect id="contacts"
                          formControlName="contactIds"
                          [options]="availableContacts()"
@@ -51,7 +54,11 @@
         </div>
 
         <div [class]="showPhoneNumbers ? 'col-span-12 md:col-span-6 flex flex-col gap-2' : 'col-span-full flex flex-col gap-2'">
-          <label for="emails" class="block">{{ 'label.interaction.emailAddresses' | translate }}</label>
+          <label for="emails" class="block">
+            {{ 'label.interaction.emailAddresses' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.emailAddresses' | translate"></i>
+          </label>
 
           <p-autocomplete id="emails"
                           formControlName="emailAddresses"
@@ -59,7 +66,6 @@
                           multiple
                           fluid="true"
                           [typeahead]="false" />
-          <small class="text-gray-600">{{ 'label.interaction.emailAddressesHelp' | translate }}</small>
         </div>
 
         @if( showPhoneNumbers ){
@@ -70,7 +76,7 @@
             [disabled]="!recordPermissions()?.permissions?.canUpdate"
             [showClear]="true"
             [autoProcess]="true"
-            [helperText]="'You can paste multiple numbers'"
+            [helperText]="'helperText.interaction.phoneNumbers' | translate"
             [invalidPhoneMessage]="'message.invalidPhoneNumberFormat' | translate">
           </app-phone-input>
         </div>
@@ -80,6 +86,8 @@
         <div class="col-span-full partners-display flex flex-col gap-2">
           <label for="partners" class="block">
             {{ 'label.interaction.partners' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.partners' | translate"></i>
             @if(getPartnerContext()?.partnerId) {
               <span class="text-xs text-blue-600 ml-2">({{ 'label.interaction.requiresPartnerContact' | translate }})</span>
             }
@@ -99,8 +107,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="users" class="block">{{ 'label.interaction.users' | translate }}</label>
-          <small class="text-gray-600">{{ 'label.interaction.usersHelp' | translate }}</small>
+          <label for="users" class="block">
+            {{ 'label.interaction.users' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.users' | translate"></i>
+          </label>
           <p-multiselect id="users"
                          formControlName="userIds"
                          [options]="availableUsers()"
@@ -141,7 +152,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="subject" class="block">{{ 'label.interaction.subject' | translate }} *</label>
+          <label for="subject" class="block">
+            {{ 'label.interaction.subject' | translate }} *
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.subject' | translate"></i>
+          </label>
           <input pInputText
                  fluid="true"
                  formControlName="subject"
@@ -153,13 +168,17 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="description" class="block">{{ 'label.interaction.description' | translate }}</label>
+          <label for="description" class="block">
+            {{ 'label.interaction.description' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.description' | translate"></i>
+          </label>
           <p-editor
             id="description"
             formControlName="description"
             [readonly]="!recordPermissions()?.permissions?.canUpdate"
             [style]="{ height: '300px' }"
-            placeholder="Enter interaction description...">
+            [placeholder]="'placeholder.interaction.description' | translate">
           </p-editor>
         </div>
 
@@ -184,7 +203,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="type" class="block">{{ 'label.interaction.type' | translate }} *</label>
+          <label for="type" class="block">
+            {{ 'label.interaction.type' | translate }} *
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.type' | translate"></i>
+          </label>
           <p-select id="type"
                     [options]="typeOptions"
                     [appendTo]="'body'"
@@ -207,7 +230,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="date" class="block">{{ 'label.interaction.date' | translate }} *</label>
+          <label for="date" class="block">
+            {{ 'label.interaction.date' | translate }} *
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.date' | translate"></i>
+          </label>
           <p-calendar id="date"
                       formControlName="date"
                       [disabled]="!recordPermissions()?.permissions?.canUpdate"
@@ -219,7 +246,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="location">{{ 'label.interaction.location' | translate }}</label>
+          <label for="location">
+            {{ 'label.interaction.location' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.location' | translate"></i>
+          </label>
           <input pInputText
                  fluid="true"
                  formControlName="location"
@@ -228,7 +259,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="organizationUnit">{{ 'label.interaction.organizationUnit' | translate }}</label>
+          <label for="organizationUnit">
+            {{ 'label.interaction.organizationUnit' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.organizationUnit' | translate"></i>
+          </label>
           <p-select id="organizationUnit"
                     formControlName="selectedOrgUnitId"
                     [options]="allOrgUnits()"
@@ -246,7 +281,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="createdBy">{{ 'label.interaction.createdBy' | translate }}</label>
+          <label for="createdBy">
+            {{ 'label.interaction.createdBy' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.createdBy' | translate"></i>
+          </label>
           <p-select id="createdBy"
                     formControlName="createdBy"
                     [options]="availableCreatedByUsers()"
@@ -281,6 +320,8 @@
         <!-- Documents Section -->
         <div class="text-2xl col-span-full">
           {{ 'title.doc' | translate }}
+          <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+             [pTooltip]="'tooltip.interaction.document' | translate"></i>
         </div>
 
         <div class="col-span-full">

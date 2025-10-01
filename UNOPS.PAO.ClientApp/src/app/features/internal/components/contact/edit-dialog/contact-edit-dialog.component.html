@@ -22,8 +22,11 @@
 
 
           <div class="col-span-9 flex flex-col gap-2">
-            <label for="partner">
+            <label for="partner" class="flex items-center gap-2">
               {{ 'label.partner.partner' | translate }}*
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.partner' | translate"
+                 tooltipPosition="right"></i>
             </label>
             <p-select formControlName="partnerId" [options]="allPartners()" optionLabel="name"
                       [appendTo]="'body'"
@@ -43,7 +46,12 @@
           </div>
 
           <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
-            <div>{{ "label.contact.salutation" | translate }}</div>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.salutation" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.salutation' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <p-select formControlName="salutation"
                       [options]="allSalutationsData()"
                       [appendTo]="'body'"
@@ -55,17 +63,32 @@
           </div>
 
           <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
-            <label>{{ "label.contact.firstName" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.firstName" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.firstName' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="firstName" />
           </div>
 
           <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
-            <label>{{ "label.contact.middleName" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.middleName" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.middleName' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="middleName" />
           </div>
 
           <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
-            <label>{{ "label.contact.lastName" | translate }} *</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.lastName" | translate }} *
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.lastName' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="lastName" />
             @if( formGroup.get("lastName")?.invalid && showValidationFailedError() ) {
             <p-message severity="error" variant="simple">{{ 'validation.lastNameRequired' | translate }}</p-message>
@@ -73,12 +96,22 @@
           </div>
 
           <div class="col-span-9 sm:col-span-1 flex flex-col gap-2">
-            <label>{{ "label.contact.suffix" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.suffix" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.suffix' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="suffix" />
           </div>
 
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.email" | translate }} *</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.email" | translate }} *
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.email' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="email" />
             @if( formGroup.get("email")?.invalid && showValidationFailedError() ) {
             <p-message severity="error" variant="simple">{{ 'validation.emailRequired' | translate }}</p-message>
@@ -86,12 +119,22 @@
           </div>
 
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.phone" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.phone" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.phone' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="phone" />
           </div>
 
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.mobile" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.mobile" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.mobile' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="mobile" />
           </div>
 
@@ -114,7 +157,12 @@
           </div>
 
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.title" | translate }} *</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.title" | translate }} *
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.title' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="title" />
             @if( formGroup.get("title")?.invalid && showValidationFailedError() ) {
             <p-message severity="error" variant="simple">{{ 'validation.titleRequired' | translate }}</p-message>
@@ -122,12 +170,22 @@
           </div>
 
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.department" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.department" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.department' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="department" />
           </div>
 
           <div class="col-span-9 flex flex-col gap-2">
-            <label>{{ "label.contact.description" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.description" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.description' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="description" />
           </div>
 
@@ -144,22 +202,42 @@
                         (ngModelChange)="showAssistantFields.set($event)"
                         [ngModelOptions]="{standalone: true}"
                         inputId="assistantToggle" />
-            <label for="assistantToggle" class="font-medium">{{ "label.contact.contactViaAssistant" | translate }}</label>
+            <label for="assistantToggle" class="font-medium flex items-center gap-2">
+              {{ "label.contact.contactViaAssistant" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.contactViaAssistant' | translate"
+                 tooltipPosition="right"></i>
+            </label>
           </div>
 
           @if(showAssistantFields()) {
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.assistant" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.assistant" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.assistant' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="assistant" />
           </div>
 
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.assistantPhone" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.assistantPhone" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.assistantPhone' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="assistantPhone" />
           </div>
 
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.assistantEmail" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.assistantEmail" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.assistantEmail' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="assistantEmail" />
           </div>
           }
@@ -171,23 +249,48 @@
             {{ "label.contact.mailingAddress" | translate }}
           </div>
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.mailingStreet" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.mailingStreet" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.mailingStreet' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="mailingStreet" />
           </div>
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.mailingStreet2" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.mailingStreet2" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.mailingStreet2' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="mailingStreet2" />
           </div>
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.mailingCity" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.mailingCity" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.mailingCity' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="mailingCity" />
           </div>
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.mailingStateProvince" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.mailingStateProvince" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.mailingStateProvince' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="mailingStateProvince" />
           </div>
           <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-            <label>{{ "label.contact.mailingCountry" | translate }}</label>
+            <label class="flex items-center gap-2">
+              {{ "label.contact.mailingCountry" | translate }}
+              <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+                 [pTooltip]="'tooltip.contact.mailingCountry' | translate"
+                 tooltipPosition="right"></i>
+            </label>
             <input pInputText fluid="true" formControlName="mailingCountry" />
           </div>
         </div>        
