@@ -1834,5 +1834,22 @@
 	"validation.required": "This field is required",
 	"validation.shortNameRequired": "Short Name must be entered.",
 	"validation.statusRequired": "Status must be entered.",
-	"validation.titleRequired": "Title must be entered."
+	"validation.titleRequired": "Title must be entered.",
+	"documentType.partner.partnerNationalStrategicPlan": "Partner/National strategic plan",
+	"documentType.partner.conceptNote": "Concept note",
+	"documentType.partner.actionPlan": "Action plan",
+	"documentType.partner.missionReport": "Mission report",
+	"documentType.partner.draftWorkingDocument": "Draft/working document",
+	"documentType.partner.presentation": "Presentation",
+	"documentType.partner.factsheet": "Factsheet",
+	"documentType.partner.reportsProducedByPartner": "Reports produced by partner",
+	"documentType.partner.other": "Other",
+	"documentType.contact.cvBio": "CV/Bio",
+	"documentType.contact.talkingPoints": "Talking points",
+	"documentType.contact.backgroundNote": "Background note",
+	"documentType.contact.other": "Other",
+	"documentType.interaction.minutes": "Minutes",
+	"documentType.interaction.actionPlanNextSteps": "Action plan/next steps",
+	"documentType.interaction.supportingMaterials": "Supporting materials",
+	"documentType.interaction.other": "Other"
 }
