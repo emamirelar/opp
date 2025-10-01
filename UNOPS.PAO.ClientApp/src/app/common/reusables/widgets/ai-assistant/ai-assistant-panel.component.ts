@@ -16,10 +16,7 @@ import { signal, computed } from '@angular/core';
 import { LayoutService } from '../../../layouts/services/layout.service';
 import { AiAssistantScanComponent } from './scan/ai-assistant-scan.component';
 import { SafeUrlPipe } from './safe-url.pipe';
-// LEGACY IMPORT REMOVED - ContentRendererComponent is now created dynamically by DynamicContentService
-// import { ContentRendererComponent } from './content-renderer/content-renderer.component';
 import { Router } from '@angular/router';
-
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../essentials/services/auth.service';
@@ -90,12 +87,6 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   generatingDots = signal(1);
   private generatingInterval?: number;
   
-  // Sequential content display
-  // LEGACY SIGNAL REMOVED - contentDisplayState was used for sequential content display
-  // All content is now handled by the DynamicContentService
-  
-  // No longer needed - content renders directly from arrays
-  
   // User info for personalized greeting
   userName = signal<string>('');
   
@@ -157,9 +148,6 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
         this.stopGeneratingDotsAnimation();
       }
     });
-
-    // LEGACY EFFECT REMOVED - content display initialization is no longer needed
-    // All content is now handled by the DynamicContentService
   }
 
   ngOnInit(): void {
@@ -940,14 +928,6 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     
     this.aiAssistantService.clearConversation();
   }
-
-  // LEGACY METHODS REMOVED - shouldShowContentItem and shouldShowSources
-  // These were used by the old template-based content rendering system
-  // All content is now handled by the DynamicContentService
-
-  // LEGACY METHODS REMOVED - onContentItemComplete, initializeContentDisplay, and isNewMessage
-  // These were used by the old template-based content rendering system with sequential display
-  // All content is now handled by the DynamicContentService without sequential effects
 
   // Handler for cardClicked event from content-renderer/entity-grid
   onCardClicked(event: { entityType: string, entityId: string, rowData: any }): void {
