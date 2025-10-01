@@ -10,6 +10,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 import { ButtonModule } from 'primeng/button';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,6 +21,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ListviewComponent } from '../../../../../common/pages/components/listview/listview.component';
 import { ListViewColumn, ListViewConfig } from '../../../../../common/pages/components/listview/listview.model';
+import { SearchField } from '../../../../../common/services/search-parser.service';
 import { ContactService } from '../../../services/contact.service';
 import { EntityConfigurationService } from '../../../services/entity-configuration.service';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
@@ -27,6 +29,21 @@ import { PermissionService, EntityPermissions } from '../../../../../essentials/
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { ContactEditDialogComponent } from '../../contact/edit-dialog/contact-edit-dialog.component';
 import { Contact } from '../../../models/contact.model';
+
+// Backend SearchFieldInfo interface to match the API response
+interface SearchFieldInfo {
+  field: string;
+  displayName: string;
+  fieldType: string;
+  isNavigationProperty?: boolean;
+  allowedOperators: string[];
+  dropdownOptions?: DropdownOption[];
+}
+
+interface DropdownOption {
+  value: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-partner-contacts',
@@ -39,6 +56,7 @@ import { Contact } from '../../../models/contact.model';
 export class PartnerContactsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private http = inject(HttpClient);
   private contactService = inject(ContactService);
   private entityConfigurationService = inject(EntityConfigurationService);
   private permissionUtilityService = inject(PermissionUtilityService);
@@ -73,6 +91,11 @@ export class PartnerContactsComponent implements OnInit {
   // Dynamic columns loaded from API
   columns = signal<ListViewColumn[]>([]);
   columnsLoading = signal(true);
+
+  // Dynamic search fields from API
+  searchFieldsFromAPI = signal<SearchFieldInfo[]>([]);
+  isLoadingSearchFields = signal<boolean>(false);
+  searchFieldsError = signal<string | null>(null);
 
   // Fallback columns definition
   private fallbackColumns: ListViewColumn[] = [
@@ -114,7 +137,7 @@ export class PartnerContactsComponent implements OnInit {
     }
   ];
 
-  // Configure listview behavior with computed permissions
+  // Configure listview behavior with computed permissions and dynamic search fields
   config = computed<ListViewConfig>(() => ({
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
@@ -126,26 +149,75 @@ export class PartnerContactsComponent implements OnInit {
     autoSwitchToCardView: false,
     autoSwitchMinWidth: 768,
     defaultViewMode: 'card',
+    enableSearch: true,
     entityName: 'Contact',
     searchConfig: {
       useAdvancedSearch: true,
       placeholder: this.translateService.instant('search.contactsPlaceholder'),
-      entityType: 'Contact' as const
+      entityType: 'Contact' as const,
+      searchableFields: this.getSearchableFields()
     }
   }));
+
+  // Convert API search fields to SearchField format
+  private getSearchableFields(): SearchField[] {
+    const apiFields = this.searchFieldsFromAPI();
+    
+    if (apiFields.length > 0) {
+      return apiFields.map(field => {
+        // Get translation or fallback to the displayName itself
+        const translatedLabel = this.translateService.instant(field.displayName);
+        const label = translatedLabel !== field.displayName ? translatedLabel : field.displayName;
+        
+        return {
+          field: field.field,
+          label: label,
+          type: this.mapFieldTypeToSearchFieldType(field.fieldType),
+          operators: field.allowedOperators || ['like', 'eq', 'neq'],
+          dropdownOptions: field.dropdownOptions
+        };
+      });
+    }
+    
+    // Fallback to empty array if API hasn't loaded yet
+    return [];
+  }
+
+  // Map backend field types to frontend search field types
+  private mapFieldTypeToSearchFieldType(backendType: string): 'string' | 'number' | 'date' | 'boolean' {
+    switch (backendType.toLowerCase()) {
+      case 'text':
+      case 'string':
+      case 'enum':
+      case 'dropdown':
+        return 'string';
+      case 'number':
+      case 'int':
+      case 'decimal':
+        return 'number';
+      case 'date':
+      case 'datetime':
+        return 'date';
+      case 'bool':
+      case 'boolean':
+        return 'boolean';
+      default:
+        return 'string';
+    }
+  }
 
 
   ngOnInit(): void {
     // If partnerId is provided as input, use it directly
     if (this.partnerId()) {
-      this.dataUrl.set(`/api/contact?partnerId=${this.partnerId()}`);
+      this.setupDataUrlWithPartnerFilter(this.partnerId()!);
       this.loadPermissions();
     } else {
       // Otherwise, get partnerId from parent route params (when used as a child route)
       this.route.parent?.paramMap.subscribe(params => {
         const recordId = params.get('recordId');
         if (recordId) {
-          this.dataUrl.set(`/api/contact?partnerId=${recordId}`);
+          this.setupDataUrlWithPartnerFilter(recordId);
           // Load permissions once we have the partner ID
           this.loadPermissions();
         }
@@ -154,6 +226,42 @@ export class PartnerContactsComponent implements OnInit {
 
     // Load dynamic columns from API
     this.loadContactColumns();
+    
+    // Load dynamic search fields from API
+    this.loadSearchFields();
+  }
+
+  private setupDataUrlWithPartnerFilter(partnerId: string): void {
+    // Set the base URL with partnerId parameter for filtering
+    this.dataUrl.set(`/api/contact?partnerId=${partnerId}`);
+  }
+
+  private loadSearchFields(): void {
+    this.isLoadingSearchFields.set(true);
+    this.searchFieldsError.set(null);
+
+    const endpoint = '/api/contact/search-fields';
+
+    this.http.get<SearchFieldInfo[]>(endpoint).subscribe({
+      next: (searchFields) => {
+        // Transform API response to include translation keys for displayName
+        const transformedFields = searchFields.map(field => ({
+          ...field,
+          displayName: this.translateService.instant(field.displayName) || field.displayName
+        }));
+        
+        this.searchFieldsFromAPI.set(transformedFields);
+        this.isLoadingSearchFields.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading contact search fields:', error);
+        this.searchFieldsError.set('Failed to load search fields');
+        this.isLoadingSearchFields.set(false);
+        
+        // Fallback to empty array if API fails
+        this.searchFieldsFromAPI.set([]);
+      }
+    });
   }
 
   private loadPermissions(): void {

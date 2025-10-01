@@ -38,6 +38,7 @@ using UNOPS.PAO.Presentation;
 public class ContactController : BaseController
 {
     private readonly IContactManager _manager;
+    private readonly ISecureSpecificationFactory _secureSpecificationFactory;
     private readonly IGeminiManager _geminiManager;
     private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
     private readonly AiContextualService _aiContextualService;
@@ -45,6 +46,7 @@ public class ContactController : BaseController
 
     public ContactController(
         IManagerWrapper manager, 
+        ISecureSpecificationFactory secureSpecificationFactory,
         UserResolverService<int> userResolverService, 
         ILogger<ContactController> logger,
         IAuthorizationService authorizationService,
@@ -53,6 +55,7 @@ public class ContactController : BaseController
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.ContactManager;
+        _secureSpecificationFactory = secureSpecificationFactory;
         _geminiManager = manager.GeminiManager;
         _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
         _aiContextualService = aiContextualService;
@@ -251,6 +254,7 @@ public class ContactController : BaseController
     public async Task<ActionResult> SearchContacts(
         [FromQuery] PaginationRequest request,
         [FromQuery] string query,
+        [FromQuery] int? partnerId = null,
         [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {
@@ -272,6 +276,42 @@ public class ContactController : BaseController
             Ascending = request.Ascending,
             FilterActive = filterActive
         };
+
+        // Apply base entity filtering first if partnerId is provided
+        if (partnerId.HasValue)
+        {
+            // Add partnerId as a filter to the search request
+            var baseFilters = new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>
+            {
+                new UNOPS.PAO.UNOPSBusiness.Services.SearchFilter
+                {
+                    field = "PartnerId",
+                    @operator = "eq",
+                    value = partnerId.Value.ToString(),
+                    logicalOperator = "AND",
+                    fieldType = "int"
+                }
+            };
+
+            // Create unified search request with query and base entity filters
+            var searchRequest = new UNOPS.PAO.UNOPSBusiness.Services.UnifiedSearchRequest
+            {
+                Query = query,
+                Filters = baseFilters,
+                PageIndex = paginationRequest.PageIndex,
+                PageSize = paginationRequest.PageSize,
+                OrderBy = paginationRequest.OrderBy,
+                Ascending = paginationRequest.Ascending ?? true,
+                FilterActive = paginationRequest.FilterActive
+            };
+
+            // Use AdvancedSearchService for unified text search with entity pre-filtering
+            var searchResult = await _advancedSearchService.SearchAsync<UNOPSContact, ContactModel>(
+                searchRequest,
+                User);
+
+            return Ok(searchResult);
+        }
 
         // Use AdvancedSearchService for unified text search with PostgreSQL similarity
         var result = await _advancedSearchService.SearchWithQueryAsync<UNOPSContact, ContactModel>(
@@ -317,6 +357,7 @@ public class ContactController : BaseController
         [FromQuery] int pageSize = 20,
         [FromQuery] string? orderBy = null,
         [FromQuery] bool ascending = true,
+        [FromQuery] int? partnerId = null,
         [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {
@@ -340,6 +381,20 @@ public class ContactController : BaseController
             {
                 _logger.LogWarning(ex, "Failed to parse search filters: {Filters}", filters);
                 return BadRequest(new { error = "Invalid filter format. Expected JSON array of filter objects." });
+            }
+
+            // Apply base entity filtering first if partnerId is provided
+            if (partnerId.HasValue)
+            {
+                // Add the entity filter to the existing search filters
+                searchFilters.Add(new UNOPS.PAO.UNOPSBusiness.Services.SearchFilter
+                {
+                    field = "PartnerId",
+                    @operator = "eq",
+                    value = partnerId.Value.ToString(),
+                    logicalOperator = "AND",
+                    fieldType = "int"
+                });
             }
 
             // Use AdvancedSearchService for structured filters with PostgreSQL similarity on "like" operators

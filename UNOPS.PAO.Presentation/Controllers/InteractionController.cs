@@ -17,6 +17,9 @@ using Newtonsoft.Json.Linq;
 using System.Text.Json;
 using Newtonsoft.Json;
 using static UNOPS.PAO.UNOPSBusiness.Services.AdvancedSearchService;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Dynamic.Core;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
@@ -236,6 +239,8 @@ namespace UNOPS.PAO.Presentation.Controllers
         public async Task<ActionResult> SearchInteractions(
             [FromQuery] PaginationRequest request,
             [FromQuery] string query,
+            [FromQuery] int? partnerId = null,
+            [FromQuery] int? contactId = null,
             [FromQuery] bool export = false,
             [FromQuery] bool filterActive = true)
         {
@@ -268,10 +273,56 @@ namespace UNOPS.PAO.Presentation.Controllers
                 FilterActive = filterActive
             };
 
+            // Create unified search request with query and filters for entity-specific search
+            var additionalFilters = new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>();
+
+        // Apply base entity filtering first if partnerId or contactId is provided
+        if (partnerId.HasValue || contactId.HasValue)
+        {
+            _logger.LogInformation("Adding entity filters to search - PartnerId: {PartnerId}, ContactId: {ContactId}", partnerId, contactId);
+            
+            // Add the entity filters to the search filters list
+            if (partnerId.HasValue)
+            {
+                additionalFilters.Add(new UNOPS.PAO.UNOPSBusiness.Services.SearchFilter
+                {
+                    field = "InteractionPartners.Any(ip => ip.PartnerId == " + partnerId.Value + ")",
+                    @operator = "eq",
+                    value = "true",
+                    logicalOperator = "AND",
+                    fieldType = "bool"
+                });
+            }
+            
+            if (contactId.HasValue)
+            {
+                additionalFilters.Add(new UNOPS.PAO.UNOPSBusiness.Services.SearchFilter
+                {
+                    field = "InteractionContacts.Any(ic => ic.ContactId == " + contactId.Value + ")",
+                    @operator = "eq",
+                    value = "true",
+                    logicalOperator = "AND",
+                    fieldType = "bool"
+                });
+            }
+        }
+
+        _logger.LogInformation("Using AdvancedSearchService for search with {FilterCount} entity filters", additionalFilters.Count);
+
+            var searchRequest = new UNOPS.PAO.UNOPSBusiness.Services.UnifiedSearchRequest
+            {
+                Query = query,
+                Filters = additionalFilters,
+                PageIndex = paginationRequest.PageIndex,
+                PageSize = paginationRequest.PageSize,
+                OrderBy = paginationRequest.OrderBy,
+                Ascending = paginationRequest.Ascending ?? true,
+                FilterActive = paginationRequest.FilterActive
+            };
+
             // Use AdvancedSearchService for unified text search with PostgreSQL similarity
-            var result = await _advancedSearchService.SearchWithQueryAsync<UNOPSInteraction, InteractionModel>(
-                query, 
-                paginationRequest, 
+            var result = await _advancedSearchService.SearchAsync<UNOPSInteraction, InteractionModel>(
+                searchRequest, 
                 User);
 
             _logger.LogInformation("Interaction search completed: Found {TotalCount} results for query: {Query}, export: {Export}", result.TotalCount, query, export);
@@ -310,13 +361,18 @@ namespace UNOPS.PAO.Presentation.Controllers
         [FromQuery] int pageSize = 20,
         [FromQuery] string? orderBy = null,
         [FromQuery] bool ascending = true,
+        [FromQuery] int? partnerId = null,
+        [FromQuery] int? contactId = null,
         [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {
+        _logger.LogInformation("=== INTERACTION ADVANCED SEARCH ENDPOINT ENTRY ===");
+        
         try
         {
             _logger.LogInformation("=== INTERACTION ADVANCED SEARCH ENDPOINT ===");
             _logger.LogInformation("Filters: {Filters}, Page: {PageIndex}, Size: {PageSize}", filters, pageIndex, pageSize);
+            _logger.LogInformation("PartnerId: {PartnerId}, ContactId: {ContactId}, Export: {Export}, FilterActive: {FilterActive}", partnerId, contactId, export, filterActive);
 
             if (string.IsNullOrWhiteSpace(filters))
             {
@@ -334,6 +390,39 @@ namespace UNOPS.PAO.Presentation.Controllers
                 _logger.LogWarning(ex, "Failed to parse search filters: {Filters}", filters);
                 return BadRequest(new { error = "Invalid filter format. Expected JSON array of filter objects." });
             }
+
+            // Apply base entity filtering first if partnerId or contactId is provided
+            if (partnerId.HasValue || contactId.HasValue)
+            {
+                _logger.LogInformation("Adding entity filters to advanced search - PartnerId: {PartnerId}, ContactId: {ContactId}", partnerId, contactId);
+                
+                // Add the entity filters to the existing search filters
+                if (partnerId.HasValue)
+                {
+                    searchFilters.Add(new UNOPS.PAO.UNOPSBusiness.Services.SearchFilter
+                    {
+                        field = "InteractionPartners.Any(ip => ip.PartnerId == " + partnerId.Value + ")",
+                        @operator = "eq",
+                        value = "true",
+                        logicalOperator = "AND",
+                        fieldType = "bool"
+                    });
+                }
+                
+                if (contactId.HasValue)
+                {
+                    searchFilters.Add(new UNOPS.PAO.UNOPSBusiness.Services.SearchFilter
+                    {
+                        field = "InteractionContacts.Any(ic => ic.ContactId == " + contactId.Value + ")",
+                        @operator = "eq",
+                        value = "true",
+                        logicalOperator = "AND",
+                        fieldType = "bool"
+                    });
+                }
+            }
+
+            _logger.LogInformation("Using AdvancedSearchService with {FilterCount} total filters", searchFilters.Count);
 
             // Use AdvancedSearchService for structured filters with PostgreSQL similarity on "like" operators
             var paginationRequest = new PaginationRequest
@@ -355,7 +444,12 @@ namespace UNOPS.PAO.Presentation.Controllers
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in advanced interaction search");
+            _logger.LogError(ex, "Error in advanced interaction search - PartnerId: {PartnerId}, ContactId: {ContactId}, Filters: {Filters}", partnerId, contactId, filters);
+            _logger.LogError("Exception details: {ExceptionType} - {ExceptionMessage}", ex.GetType().Name, ex.Message);
+            if (ex.InnerException != null)
+            {
+                _logger.LogError("Inner exception: {InnerExceptionType} - {InnerExceptionMessage}", ex.InnerException.GetType().Name, ex.InnerException.Message);
+            }
             return StatusCode(500, new { error = "Internal server error during interaction search", details = ex.Message });
         }
     }

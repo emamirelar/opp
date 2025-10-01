@@ -10,6 +10,7 @@ using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Utilities.Helpers;
+using UNOPS.PAO.GoogleServices;
 
 [Route("/")]
 public class ConfigurationController : BaseController
@@ -38,10 +39,56 @@ public class ConfigurationController : BaseController
             var appConfig = _configuration.GetSection("AppConfig");
             var aiSettings = _configuration.GetSection("AISettings");
             
+            // Get Google credentials from Secret Manager
+            string? googleClientId = null;
+            string? googleApiKey = null;
+            
+            try
+            {
+                var clientIdSecretName = googleSettings.GetSection("ClientIdSecretName").Value;
+                var apiKeySecretName = googleSettings.GetSection("ApiSecretName").Value;
+                var projectId = appConfig.GetSection("ProjectId").Value;
+                
+                if (!string.IsNullOrEmpty(projectId))
+                {
+                    var secretProvider = new GoogleSecretManagerConfigurationProvider(projectId);
+                    
+                    // Get Client ID from secret
+                    if (!string.IsNullOrEmpty(clientIdSecretName))
+                    {
+                        googleClientId = secretProvider.GetSecretVersion(clientIdSecretName, "latest");
+                    }
+                    
+                    // Get API Key from secret
+                    if (!string.IsNullOrEmpty(apiKeySecretName))
+                    {
+                        googleApiKey = secretProvider.GetSecretVersion(apiKeySecretName, "latest");
+                    }
+                }
+                
+                // Fallback to direct configuration if secret retrieval fails
+                if (string.IsNullOrEmpty(googleClientId))
+                {
+                    googleClientId = googleSettings.GetSection("clientId").Value;
+                }
+                
+                if (string.IsNullOrEmpty(googleApiKey))
+                {
+                    googleApiKey = googleSettings.GetSection("apiKey").Value;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error and fallback to direct configuration
+                _logger.LogWarning(ex, "Failed to retrieve Google credentials from Secret Manager, falling back to configuration");
+                googleClientId = googleSettings.GetSection("clientId").Value;
+                googleApiKey = googleSettings.GetSection("apiKey").Value;
+            }
+            
             return await Task.FromResult(new ConfigurationResponse()
             {
-                GoogleClientId = googleSettings.GetSection("clientId").Value,
-                GoogleApiKey = googleSettings.GetSection("apiKey").Value,
+                GoogleClientId = googleClientId,
+                GoogleApiKey = googleApiKey,
                 Environment = appConfig.GetSection("Environment").Value ?? _environment.EnvironmentName,
                 ProjectId = aiSettings.GetSection("ProjectId").Value,
                 Location = aiSettings.GetSection("Location").Value,
