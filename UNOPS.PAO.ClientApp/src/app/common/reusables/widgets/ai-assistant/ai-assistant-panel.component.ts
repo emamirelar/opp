@@ -11,7 +11,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MenuModule } from 'primeng/menu';
 import { Menu } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { signal, computed } from '@angular/core';
 import { LayoutService } from '../../../layouts/services/layout.service';
 import { AiAssistantScanComponent } from './scan/ai-assistant-scan.component';
@@ -165,7 +165,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   ngOnInit(): void {
     this.message.set('');
     this.loadUserInfo();
-    this.initializeExamplePrompts();
+    // this.initializeExamplePrompts();
     
     if (this.viewContainerRef) {
       this.aiAssistantService.setViewContainerRef(this.viewContainerRef);
