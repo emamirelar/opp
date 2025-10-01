@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { AiAssistantPanelComponent } from '../../common/reusables/widgets/ai-assistant/ai-assistant-panel.component';
-import { AiAssistantData } from '../../common/reusables/widgets/ai-assistant/ai-assistant.data';
+import { AiAssistantService } from '../internal/services/ai-assistant.service';
 
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -280,7 +280,7 @@ export class AiContentComponent implements OnInit, OnDestroy {
   route = inject(ActivatedRoute);
   http = inject(HttpClient);
   viewContainerRef = inject(ViewContainerRef);
-  aiAssistantData = inject(AiAssistantData);
+  aiAssistantService = inject(AiAssistantService);
   confirmationService = inject(ConfirmationService);
   private cdr = inject(ChangeDetectorRef);
   private injector = inject(Injector);
@@ -308,7 +308,7 @@ export class AiContentComponent implements OnInit, OnDestroy {
 
   // Listen for current session changes to update URL - must be in injection context
   private sessionUrlEffect = effect(() => {
-    const currentSessionId = this.aiAssistantData.currentSessionId();
+    const currentSessionId = this.aiAssistantService.currentSessionId();
     const currentRoute = this.router.url;
     
     // Only update URL if we're on an AI route
@@ -329,14 +329,14 @@ export class AiContentComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     // Set the ViewContainerRef for the AI assistant data service
-    this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
+    this.aiAssistantService.setViewContainerRef(this.viewContainerRef);
     
     // Handle sessionId from route parameter
     this.route.params.subscribe(params => {
       const sessionId = params['sessionId'];
       if (sessionId) {
         // Load the specific session
-        this.aiAssistantData.switchToSession(sessionId).subscribe({
+        this.aiAssistantService.switchToSession(sessionId).subscribe({
           error: (error) => {
             console.error('Failed to load session from URL:', error);
             // Redirect to /ai without sessionId if session doesn't exist

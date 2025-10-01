@@ -566,4 +566,60 @@
     padding: 0.5rem;
     margin: 0.5rem 0;
   }
+}
+
+/* Function Call and Response Styling */
+.content-function-call,
+.content-function-response {
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+}
+
+.content-function-call .content-type-header,
+.content-function-response .content-type-header {
+  margin-bottom: 0.75rem;
+}
+
+.function-call-content,
+.function-response-content {
+  background: rgba(15, 23, 42, 0.8);
+  color: #e2e8f0;
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 0;
+  font-family: 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.content-function-call {
+  border-left: 4px solid #3b82f6;
+}
+
+.content-function-response {
+  border-left: 4px solid #10b981;
+}
+
+/* Chart content styling */
+.content-chart {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+}
+
+.content-chart::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(16, 185, 129, 0.4) 25%, 
+    rgba(34, 197, 94, 0.5) 50%, 
+    rgba(16, 185, 129, 0.4) 75%, 
+    transparent 100%);
 } 
