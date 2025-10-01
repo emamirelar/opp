@@ -30,6 +30,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     private GoogleCloudStorageService googleCloudStorageService;
     private readonly IUserProfileCacheService userProfileCacheService;
     private readonly PartnerTreeService partnerTreeService;
+    private readonly GlobalFilterService _globalFilterService;
 
     private InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
     {
@@ -159,7 +160,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var contactId = model.ContactIds?.FirstOrDefault() ?? 0;
         
         return MapModelToEntity(model, new UNOPSInteraction() { 
-            Name = contactId + " - " + model.Date
+            Name = contactId + " - " + model.Date,
+            Subject = model.Subject ?? "No Subject"
         });
     }
 
@@ -230,12 +232,13 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         await context.SaveChangesAsync();
     }
 
-    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null, IUserProfileCacheService userProfileCacheService = null)
+    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService, GlobalFilterService globalFilterService, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null, IUserProfileCacheService userProfileCacheService = null)
         : base(mapper, context, configuration, null, "Interaction", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
         this.context = context;
         this.partnerTreeService = partnerTreeService;
+        _globalFilterService = globalFilterService;
         interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration, serviceProvider);
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
@@ -600,7 +603,10 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
         entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
         //Update CreatedBy value selected by the User on the Interaction edit page
-        entity.CreatedBy = model.CreatedBy.Value;
+        if (model.CreatedBy.HasValue)
+        {
+            entity.CreatedBy = model.CreatedBy.Value;
+        }
 
         // Handle OrganizationHierarchyIds if provided
         if (model.OrganizationHierarchyIds != null)
@@ -690,10 +696,10 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var filteredBaseQuery = baseQuery.ApplySpecification(specification);
         var filteredQuery = filteredBaseQuery.OfType<UNOPSInteraction>();
 
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        // Apply global filters using the centralized GlobalFilterService
+        filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, GetCurrentUserOrSystemContext());
         
-        // Apply access control filters (row and column filtering) BEFORE pagination
+        // Apply access control filters (role-based permissions only) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, GetCurrentUserOrSystemContext(), "read");
         
         // Filter to ensure we only have UNOPSInteraction instances and handle pagination manually
@@ -961,6 +967,132 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     }
 
     /// <summary>
+    /// Gets interaction with comprehensive details formatted for AI prompt processing
+    /// </summary>
+    public async Task<object> GetInteractionDetailsForAIAsync(ClaimsPrincipal user, int id)
+    {
+        var entity = await interactionRepository.GetByIdAsync(id,
+            includes: new[]
+            {
+                "InteractionContacts",
+                "InteractionPartners", 
+                "InteractionUsers",
+                "InteractionContacts.Contact",
+                "InteractionContacts.Contact.Partner",
+                "InteractionPartners.Partner",
+                "InteractionUsers.User",
+                "InteractionUsers.User.UserProfile",
+                "Documents"
+            });
+
+        if (entity == null) return new { error = "Interaction not found" };
+
+        // Load organization unit relationships
+        await entity.LoadOrganizationUnitRelationshipsAsync(context);
+
+        // Create structured JSON for AI prompt placeholders
+        var result = new
+        {
+            id = entity.Id,
+            subject = entity.Subject,
+            description = entity.Description,
+            date = entity.Date.ToString("yyyy-MM-dd"),
+            time = entity.Date.ToString("HH:mm"),
+            type = entity.Type.ToString(),
+            location = entity.Location,
+            status = "Active", // Default status for interactions
+
+            // Contact information
+            contacts = entity.InteractionContacts?.Select(ic => new
+            {
+                id = ic.Contact.Id,
+                name = $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim(),
+                firstName = ic.Contact.FirstName,
+                lastName = ic.Contact.LastName,
+                email = ic.Contact.Email,
+                title = ic.Contact.Title,
+                phone = ic.Contact.Phone,
+                mobile = ic.Contact.Mobile,
+                partner = ic.Contact.Partner != null ? new
+                {
+                    id = ic.Contact.Partner.Id,
+                    name = ic.Contact.Partner.Name
+                } : null
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+
+            // Partner information
+            partners = entity.InteractionPartners?.Select(ip => new
+            {
+                id = ip.Partner.Id,
+                name = ip.Partner.Name,
+                status = ip.Partner.Status.ToString()
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+
+            // User information (UNOPS staff)
+            users = entity.InteractionUsers?.Select(iu => new
+            {
+                id = iu.User.Id,
+                name = iu.User.Name,
+                email = iu.User.UserProfile?.UserEmail,
+                title = iu.User.UserProfile?.Position,
+                office = iu.User.UserProfile?.OrgUnit
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+
+            // Organization unit relationships
+            organizationUnits = entity.OrganizationUnitRelationships?.Where(r => r.Status == (Domain.Entities.EntityStatus)1 && !r.IsDeleted)
+                .Select(r => new
+                {
+                    id = r.OrganizationHierarchy.Id,
+                    name = r.OrganizationHierarchy.Name,
+                    code = r.OrganizationHierarchy.Code,
+                    type = r.OrganizationHierarchy.Type.ToString()
+                }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+
+            // Documents and attachments
+            documents = entity.Documents?.Select(d => new
+            {
+                id = d.Id,
+                link = d.Link,
+                type = d.Type,
+                documentType = d.DocumentType?.Name,
+                uploadDate = d.CreatedDate.ToString("yyyy-MM-dd")
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+
+            // Email and phone information
+            emailAddresses = entity.EmailAddresses ?? new List<string>(),
+            phoneNumbers = entity.PhoneNumbers ?? new List<string>(),
+
+            // Computed names for easy access
+            contactNames = string.Join(", ", entity.InteractionContacts?.Select(ic => $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim()) ?? new List<string>()),
+            partnerNames = string.Join(", ", entity.InteractionPartners?.Select(ip => ip.Partner.Name) ?? new List<string>()),
+            userNames = string.Join(", ", entity.InteractionUsers?.Select(iu => iu.User.Name) ?? new List<string>()),
+
+            // Summary statistics
+            summary = new
+            {
+                totalContacts = entity.InteractionContacts?.Count ?? 0,
+                totalPartners = entity.InteractionPartners?.Count ?? 0,
+                totalUsers = entity.InteractionUsers?.Count ?? 0,
+                totalDocuments = entity.Documents?.Count ?? 0,
+                hasDocuments = entity.Documents?.Any() ?? false,
+                hasEmailAddresses = entity.EmailAddresses?.Any() ?? false,
+                hasPhoneNumbers = entity.PhoneNumbers?.Any() ?? false
+            },
+
+            // Audit information
+            auditInfo = new
+            {
+                createdDate = entity.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
+                lastModifiedDate = entity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not modified",
+                createdBy = entity.CreatedBy,
+                lastModifiedBy = entity.LastModifiedBy
+            }
+        };
+
+        return result;
+    }
+
+    /// <summary>
     /// Gets comprehensive interaction details for AI prompts including all related entities (legacy method without security)
     /// </summary>
     public async Task<InteractionModel?> GetInteractionDetailsLegacyAsync(int id)
@@ -1074,7 +1206,43 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             await context.Interactions.AddAsync(entity);
             await context.SaveChangesAsync();
 
+            // Get current user and their organization unit
+            var currentUser = GetCurrentUserOrSystemContext();
+            if (currentUser != null)
+            {
+                // Get user email from claims
+                var emailClaim = currentUser.FindFirst(ClaimTypes.Email) ?? currentUser.FindFirst("email");
+                if (emailClaim != null && !string.IsNullOrEmpty(emailClaim.Value))
+                {
+                    // Get user profile by email to find their org unit
+                    var userProfile = await context.UserProfile
+                        .FirstOrDefaultAsync(up => up.UserEmail.ToLower() == emailClaim.Value.ToLower());
 
+                    if (userProfile?.OrgUnit != null)
+                    {
+                        // Find the organization hierarchy by org unit code
+                        var orgHierarchy = await context.OrganizationHierarchies
+                            .FirstOrDefaultAsync(oh => oh.Code == userProfile.OrgUnit && 
+                                                      oh.Type == Domain.Enums.OrganizationUnitType.OrgUnit);
+
+                        if (orgHierarchy != null)
+                        {
+                            // Create organization unit relationship for the interaction
+                            var newRelationship = new OrganizationUnitRelationship
+                            {
+                                OrganizationHierarchyId = orgHierarchy.Id,
+                                EntityId = entity.Id,
+                                EntityType = nameof(Interaction),
+                                Name = $"Interaction-{entity.Id}-{orgHierarchy.Code}",
+                                Status = EntityStatus.Active
+                            };
+                            
+                            context.OrganizationUnitRelationships.Add(newRelationship);
+                            await context.SaveChangesAsync();
+                        }
+                    }
+                }
+            }
 
             await transaction.CommitAsync();
         }
@@ -1085,54 +1253,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         }
 
         await ProcessGmailInteractionJunctionTables(entity, model);
-        return mapper.Map<InteractionModel>(entity);
-    }
-
-    public virtual async Task<InteractionModel?> UpdateGmailInteractionAsync(UpdateInteractionRequest model)
-    {
-        var includes = new[]
-        {
-            "InteractionContacts",
-            "InteractionContacts.Contact",
-            "InteractionContacts.Contact.Partner",
-            "InteractionPartners.Partner",
-            "InteractionUsers.User",
-            "Documents"
-        };
-
-        var query = context.Interactions.AsQueryable();
-        foreach (var include in includes)
-        {
-            query = query.Include(include);
-        }
-
-        var entity = await query.FirstOrDefaultAsync(i => i.Id == model.Id);
-
-        if (entity == null)
-        {
-            throw new BusinessException($"Interaction {model.Id} does not exist.");
-        }
-
-        // Load organization unit relationships for single interaction
-        await entity.LoadOrganizationUnitRelationshipsAsync(context);
-
-        if (model.EmailAddresses != null && model.EmailAddresses.Count > 0)
-        {
-            model.EmailAddresses = model.EmailAddresses.Distinct().ToList();
-        }
-
-        entity = MapModelToEntity(model, entity);
-
-        // Update emails/phones
-        entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
-        entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
-
-        // Update junction tables
-        await ProcessGmailInteractionJunctionTables(entity, model);
-
-        context.Interactions.Update(entity);
-        await context.SaveChangesAsync();
-
         return mapper.Map<InteractionModel>(entity);
     }
 
@@ -1157,21 +1277,14 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 .Select(ip => ip.PartnerId)
                 .ToListAsync();
 
-            var existingOrgUnitRelationships = await context.OrganizationUnitRelationships
-                .Where(r => r.EntityId == interaction.Id && r.EntityType == "Interaction")
-                .Select(r => r.OrganizationHierarchyId)
-                .ToListAsync();
-
             var existingContactIds = existingContacts.ToHashSet();
             var existingUserIds = existingUsers.ToHashSet();
             var existingPartnerIds = existingPartners.ToHashSet();
-            var existingOrgUnitIds = existingOrgUnitRelationships.ToHashSet();
 
             // Prepare bulk insert lists
             var contactsToAdd = new List<InteractionContact>();
             var partnersToAdd = new List<InteractionPartner>();
             var usersToAdd = new List<InteractionUser>();
-            var orgUnitRelationshipsToAdd = new List<OrganizationUnitRelationship>();
 
             // Process ContactIds - bulk prepare
             if (model.ContactIds?.Any() == true)
@@ -1236,44 +1349,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 }
             }
 
-            // Process OrganizationUnitRelationships from related partners - bulk prepare
-            if (model.PartnerIds?.Any() == true)
-            {
-                // Get organization unit relationships for all related partners
-                var partnerOrgUnitRelationships = await context.OrganizationUnitRelationships
-                    .Where(r => model.PartnerIds.Contains(r.EntityId) && r.EntityType == "Partner")
-                    .ToListAsync();
-
-                if (partnerOrgUnitRelationships.Any())
-                {
-                    var uniqueOrgUnitIds = partnerOrgUnitRelationships
-                        .Select(r => r.OrganizationHierarchyId)
-                        .Distinct()
-                        .Where(id => !existingOrgUnitIds.Contains(id))
-                        .ToList();
-
-                    if (uniqueOrgUnitIds.Any())
-                    {
-                        // Load organization units into context to ensure EF can track them
-                        var orgUnits = await context.OrganizationHierarchies
-                            .Where(ou => uniqueOrgUnitIds.Contains(ou.Id) && ou.Type == Domain.Enums.OrganizationUnitType.OrgUnit)
-                            .ToListAsync();
-
-                        foreach (var orgUnit in orgUnits)
-                        {
-                            orgUnitRelationshipsToAdd.Add(new OrganizationUnitRelationship
-                            {
-                                OrganizationHierarchyId = orgUnit.Id,
-                                EntityId = interaction.Id,
-                                EntityType = nameof(Interaction),
-                                Name = $"Interaction-{interaction.Id}-{orgUnit.Code}",
-                                Status = EntityStatus.Active
-                            });
-                        }
-                    }
-                }
-            }
-
             // Bulk insert all relationships
             if (contactsToAdd.Any())
             {
@@ -1288,11 +1363,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             if (usersToAdd.Any())
             {
                 await context.InteractionUsers.AddRangeAsync(usersToAdd);
-            }
-
-            if (orgUnitRelationshipsToAdd.Any())
-            {
-                await context.OrganizationUnitRelationships.AddRangeAsync(orgUnitRelationshipsToAdd);
             }
 
             await context.SaveChangesAsync();
@@ -1361,36 +1431,74 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         return results.Cast<object>().ToList();
     }
 
+    
     /// <summary>
-    /// Applies org unit filtering if the specification supports it using manual joins
+    /// Get supported search fields for interactions - helps frontend build dynamic search forms
     /// </summary>
-    private IQueryable<UNOPSInteraction> ApplyOrgUnitFilterIfSupported(IQueryable<UNOPSInteraction> query, ISpecification<Interaction> specification)
+    /// <returns>List of all supported search fields with their metadata</returns>
+    public List<SearchFieldInfo> GetInteractionSearchFields()
     {
-        // Check if specification has ApplyOrgUnitFilter method and call it
-        var specType = specification.GetType();
-        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<Interaction>), typeof(DbContext) });
-        
-        if (filterMethod != null)
+        try
         {
-            try
+            var fields = new List<SearchFieldInfo>
             {
-                // Cast to base type for the ApplyOrgUnitFilter method
-                var baseQuery = query.Cast<Interaction>();
-                var result = filterMethod.Invoke(specification, new object[] { baseQuery, context });
-                if (result is IQueryable<Interaction> filteredBaseQuery)
-                {
-                    // Cast back to UNOPSInteraction using OfType for safety
-                    return filteredBaseQuery.OfType<UNOPSInteraction>();
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue without org unit filtering
-                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
-            }
+                // Direct Interaction fields - using translation keys
+                new() { 
+                    Field = "type", 
+                    DisplayName = "label.interaction.type", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Email", Label = "enums.interactionType.email" },
+                        new() { Value = "Chat", Label = "enums.interactionType.chat" },
+                        new() { Value = "Call", Label = "enums.interactionType.call" },
+                        new() { Value = "VirtualMeeting", Label = "enums.interactionType.virtualMeeting" },
+                        new() { Value = "InPersonMeeting", Label = "enums.interactionType.inPersonMeeting" },
+                        new() { Value = "Other", Label = "enums.interactionType.other" }
+                    }
+                },
+                new() { 
+                    Field = "status", 
+                    DisplayName = "label.common.status", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Inactive", Label = "enums.entityStatus.inactive" },
+                        new() { Value = "Active", Label = "enums.entityStatus.active" },
+                        new() { Value = "Closed", Label = "enums.entityStatus.closed" },
+                        new() { Value = "Draft", Label = "enums.entityStatus.draft" },
+                        new() { Value = "Archived", Label = "enums.entityStatus.archived" }
+                    }
+                },
+                new() { Field = "subject", DisplayName = "label.interaction.subject", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "description", DisplayName = "label.interaction.description", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "date", DisplayName = "label.interaction.date", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "fromDate", DisplayName = "label.interaction.fromDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "toDate", DisplayName = "label.interaction.toDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+
+                // Contact relationship fields through InteractionContacts junction table - using translation keys
+                new() { Field = "interactioncontacts.contact.fullName", DisplayName = "label.contact.fullName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "interactioncontacts.contact.firstName", DisplayName = "label.contact.firstName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "interactioncontacts.contact.lastName", DisplayName = "label.contact.lastName", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "interactioncontacts.contact.email", DisplayName = "label.contact.email", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+
+                // Partner relationship fields through InteractionPartners junction table - using translation keys  
+                new() { Field = "interactionpartners.partner.name", DisplayName = "label.partner.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                
+                // User relationship fields through InteractionUsers junction table - using translation keys
+                new() { Field = "interactionusers.user.name", DisplayName = "label.user.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+            };
+            
+            return fields;
         }
-        
-        // If no ApplyOrgUnitFilter method found, return original query
-        return query;
+        catch (Exception ex)
+        {
+            // Log error - no logger available in this manager
+            Console.WriteLine($"Error retrieving interaction search fields: {ex.Message}");
+            return new List<SearchFieldInfo>();
+        }
     }
 }

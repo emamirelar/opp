@@ -1,7 +1,8 @@
 @if (isReadOnly() !== true && !disabled()) {
 <div class="mb-2 flex gap-2">
-  <!--commenting the upload button functionality as it is not used in the current implementation yet-->
-  <!--<p-button icon="pi pi-upload" label="{{ 'button.upload' | translate }}" (onClick)="showUploadFile = true" />-->
+  @if (showUploadButton()) {
+    <p-button icon="pi pi-upload" label="{{ 'button.upload' | translate }}" (onClick)="openUploadDialog()" />
+  }
   <ng-content select="document-toolbar"></ng-content>
 </div>
 }
@@ -66,9 +67,11 @@
           } @else {
             <p-menu #menu [model]="items" [popup]="true" appendTo="body" />
             <p-button size="small"
+                      class="unops-icon-button"
                       (click)="handleOnMenuButtonClick($event, document, menu)"
                       icon="pi pi-ellipsis-v"
                       severity="secondary"
+                      text
                       rounded />
           }
         </td>

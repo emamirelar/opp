@@ -13,6 +13,8 @@ public class AnalyseFileRequest
 
     public string FileId { get; set; } = string.Empty;
 
+    public string? SheetName { get; set; }
+
     public int CurrentUserId { get; set; } // User who initiated the analysis
 
     public bool IsUpdate { get; set; } = false;

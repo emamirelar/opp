@@ -31,7 +31,8 @@ public class PartnerModel
     
     // Partner Focal Point  
     public int? PartnerFocalPointUserId { get; set; } // Business Developer UserId
-    public string? PartnerFocalPointUserName { get; set; } // Business Developer Name (from navigation)
+    public string? PartnerFocalPointUserName { get; set; } // Business Developer Email (from navigation)
+    public string? PartnerFocalPointName { get; set; } // Business Developer Display Name (from navigation)
     
     // Partner Group Information
     public string? PartnerGroupCode { get; set; }
@@ -71,15 +72,14 @@ public class PartnerModel
     // First 5 contacts by date (computed property will be handled in mapping)
     public List<ContactModel>? First5ContactsByDate { get; set; }
     
+    // Computed property from NotMapped field in Partner entity
+    public string? PartnerOrgUnit { get; set; }
+    
     public List<DocumentModel>? Documents { get; set; }
     
     // Organization Unit Relationships
     public List<OrganizationUnitRelationshipModel>? OrganizationUnitRelationships { get; set; }
     
-    /// <summary>
-    /// Projects associated with this partner through the many-to-many relationship
-    /// </summary>
-    public List<ProjectSummaryModel>? Projects { get; set; }
     
     // ========== CONDITIONAL TAGS ==========
     public List<EntityTagModel>? Tags => CalculateConditionalTags(); // Dynamic conditional tags
@@ -103,6 +103,10 @@ public class PartnerModel
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? LastModifiedBy { get; set; }
+    
+    // Resolved user names for audit fields
+    public string? CreatedByName { get; set; }
+    public string? LastModifiedByName { get; set; }
     
     /// <summary>
     /// Gets the primary organization unit (first relationship)
@@ -171,21 +175,4 @@ public class PartnerModel
         
         return tags;
     }
-}
-
-/// <summary>
-/// Simplified project model to avoid circular references
-/// </summary>
-public class ProjectSummaryModel
-{
-    public int Id { get; set; }
-    public string ProjectNumber { get; set; }
-    public string Name { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    public string Stage { get; set; }
-    public string BudgetCheckingLevel { get; set; }
-    public string BudgetDuration { get; set; }
-    public Double? BudgetAmount { get; set; }
-    public Double? ExpenditureAmount { get; set; }
 }

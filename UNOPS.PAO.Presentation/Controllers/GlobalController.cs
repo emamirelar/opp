@@ -33,6 +33,13 @@
 // - Graceful fallback to text search if embedding fails
 // - Efficient database queries with proper indexing
 // - Comprehensive logging for monitoring and optimization
+//
+// GLOBAL FILTER INTEGRATION:
+// - Search results now respect user's global filter preferences
+// - Applies org unit, date range, "related to me", and other global filters
+// - Filters applied at retrieval time for consistency with list views
+// - Graceful fallback if global filtering fails (returns unfiltered results)
+// - Maintains search performance while ensuring data consistency
 // ============================================================================
 
 using Microsoft.AspNetCore.Authorization;
@@ -58,6 +65,7 @@ using UNOPS.PAO.Domain.Enums;
 using System.Reflection;
 using System.Security.Claims;
 using System.Dynamic;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -69,12 +77,16 @@ public class GlobalController : BaseController
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly AiContextualService _aiContextualService;
     private readonly IManagerWrapper _managerWrapper;
+    private readonly GlobalFilterService _globalFilterService;
+    private readonly AdvancedSearchService _advancedSearchService;
 
     public GlobalController(
         IUserPreferenceService userPreferenceService,
         UserManager<PAOIdentityUser> userManager,
         AiContextualService aiContextualService,
         IManagerWrapper managerWrapper,
+        GlobalFilterService globalFilterService,
+        AdvancedSearchService advancedSearchService,
         UserResolverService<int> userResolverService, 
         IAuthorizationService authorizationService,
         ILogger<GlobalController> logger)
@@ -84,6 +96,8 @@ public class GlobalController : BaseController
         _userManager = userManager;
         _aiContextualService = aiContextualService;
         _managerWrapper = managerWrapper;
+        _globalFilterService = globalFilterService;
+        _advancedSearchService = advancedSearchService;
     }
 
     /// <summary>
@@ -330,7 +344,7 @@ public class GlobalController : BaseController
     /// <when_to_use>Use this when the user performs any search operation across the system - it automatically chooses between text search for exact matches and semantic search for conceptual queries.</when_to_use>
     /// <returns>Comprehensive search results with relevance scoring and entity details</returns>
     [HttpGet(APIDictionary.GlobalSearch)]
-    public async Task<ActionResult> IntelligentGlobalSearch([FromQuery] string q, [FromQuery] bool debug = false, [FromQuery] bool fullResults = false)
+    public async Task<ActionResult> IntelligentGlobalSearch([FromQuery] string q, [FromQuery] bool debug = false, [FromQuery] bool fullResults = false, [FromQuery] bool filterActive = true)
     {
         try
         {
@@ -345,7 +359,7 @@ public class GlobalController : BaseController
             // Determine if we need semantic search using enhanced heuristics
             bool needsSemanticSearch = ShouldUseSemanticSearch(cleanedQuery);
             
-            string embedding = null;
+            string? embedding = null;
             if (needsSemanticSearch)
             {
                 try
@@ -367,10 +381,10 @@ public class GlobalController : BaseController
             }
 
             // Call the PostgreSQL hybrid search function
-            var searchResults = await CallSearchFunction(cleanedQuery, embedding, debug);
+            var searchResults = await CallSearchFunction(cleanedQuery, embedding, debug, filterActive);
 
             // Process results to get actual entity data
-            var consolidatedResults = await ProcessAndConsolidateResults(searchResults, User, fullResults);
+            var consolidatedResults = await ProcessAndConsolidateResults(searchResults, User, fullResults, filterActive);
             
             return Ok(consolidatedResults);
         }
@@ -461,98 +475,86 @@ public class GlobalController : BaseController
     }
 
     /// <summary>
-    /// Calls the PostgreSQL hybrid search function and returns the results
+    /// Calls the modular AdvancedSearchService to perform global search across all entities
     /// </summary>
-    private async Task<object> CallSearchFunction(string query, string embedding = null, bool debug = false)
+    private async Task<object> CallSearchFunction(string query, string? embedding = null, bool debug = false, bool filterActive = true)
     {
         try
         {
             // Log the search strategy being used
-            var strategy = embedding != null ? "hybrid (field + semantic)" : "field-only";
+            var strategy = embedding != null ? "hybrid (field + semantic)" : "modular-field-search";
             _logger.LogInformation("Executing {Strategy} search for query: {Query}, Debug: {Debug}", strategy, query, debug);
             
-            // Use the correct SQL function call with proper parameter types
-            var sql = "SELECT public.search_entity_records(@searchQuery, @embedding::vector, @textBoost, @embeddingBoost, @snippetLength, @debugMode)";
+            // Use the enhanced modular search from AdvancedSearchService for better performance
+            var searchResults = await _advancedSearchService.SearchAllEntitiesModularAsync(query, 1.0f, 15, filterActive);
             
-            var parameters = new[]
+            // Convert the GlobalSearchResponse to the expected format for ProcessAndConsolidateResults
+            var formattedResults = new
             {
-                new NpgsqlParameter("@searchQuery", NpgsqlTypes.NpgsqlDbType.Text) { Value = query },
-                new NpgsqlParameter("@embedding", NpgsqlTypes.NpgsqlDbType.Text) 
-                { 
-                    Value = embedding ?? (object)DBNull.Value 
-                },
-                new NpgsqlParameter("@textBoost", NpgsqlTypes.NpgsqlDbType.Real) { Value = 1.0f },
-                new NpgsqlParameter("@embeddingBoost", NpgsqlTypes.NpgsqlDbType.Real) { Value = 1.2f },
-                new NpgsqlParameter("@snippetLength", NpgsqlTypes.NpgsqlDbType.Integer) { Value = 150 },
-                new NpgsqlParameter("@debugMode", NpgsqlTypes.NpgsqlDbType.Boolean) { Value = debug }
-            };
-
-            var connection = _aiContextualService._context.Database.GetDbConnection();
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
-            await using var command = connection.CreateCommand();
-            command.CommandText = sql;
-            command.Parameters.AddRange(parameters);
-
-            var result = await command.ExecuteScalarAsync();
-            
-            if (result == null || result == DBNull.Value)
-            {
-                _logger.LogInformation("Hybrid search function returned no results for query: {Query}", query);
-                return new { 
-                    availableEntities = new string[0],
-                    results = new object()
-                };
-            }
-
-            // Parse and return the JSON result from the hybrid search function
-            var jsonResult = result.ToString();
-            _logger.LogInformation("Hybrid search completed. Result length: {Length} characters", jsonResult?.Length ?? 0);
-            
-            try
-            {
-                // Parse the JSON response from the hybrid search function
-                var searchResults = JObject.Parse(jsonResult);
-                
-                // Log summary information
-                var summary = searchResults["summary"];
-                if (summary != null)
+                availableEntities = new[] { "Partners", "Contacts", "Interactions" },
+                results = new
                 {
-                    var totalFieldResults = summary["totalFieldResults"]?.Value<int>() ?? 0;
-                    var totalSemanticResults = summary["totalSemanticResults"]?.Value<int>() ?? 0;
-                    var entitiesSearched = summary["entitiesSearched"]?.Value<int>() ?? 0;
-                    
-                    _logger.LogInformation("Search results summary - Field: {FieldResults}, Semantic: {SemanticResults}, Entities: {EntitiesSearched}", 
-                        totalFieldResults, totalSemanticResults, entitiesSearched);
+                    Partners = new
+                    {
+                        items = searchResults.Partners?.Select(r => new
+                        {
+                            entityId = r.EntityId,
+                            score = r.Score,
+                            matchedField = r.MatchedField,
+                            fieldValue = r.FieldValue,
+                            searchType = r.SearchType,
+                            matchCriteria = r.MatchCriteria,
+                            snippet = r.Snippet
+                        }).ToArray() ?? new object[0]
+                    },
+                    Contacts = new
+                    {
+                        items = searchResults.Contacts?.Select(r => new
+                        {
+                            entityId = r.EntityId,
+                            score = r.Score,
+                            matchedField = r.MatchedField,
+                            fieldValue = r.FieldValue,
+                            searchType = r.SearchType,
+                            matchCriteria = r.MatchCriteria,
+                            snippet = r.Snippet
+                        }).ToArray() ?? new object[0]
+                    },
+                    Interactions = new
+                    {
+                        items = searchResults.Interactions?.Select(r => new
+                        {
+                            entityId = r.EntityId,
+                            score = r.Score,
+                            matchedField = r.MatchedField,
+                            fieldValue = r.FieldValue,
+                            searchType = r.SearchType,
+                            matchCriteria = r.MatchCriteria,
+                            snippet = r.Snippet
+                        }).ToArray() ?? new object[0]
+                    }
                 }
-                
-                return searchResults;
-            }
-            catch (JsonReaderException ex)
-            {
-                _logger.LogError(ex, "Failed to parse hybrid search JSON result for query: {Query}", query);
-                return new { 
-                    searchQuery = query,
-                    hasEmbedding = embedding != null,
-                    strategy = "hybrid-field-semantic",
-                    error = "Failed to parse search results",
-                    rawResult = jsonResult?.Substring(0, Math.Min(500, jsonResult.Length)),
-                    message = "JSON parsing error in hybrid search results"
-                };
-            }
+            };
+            
+            _logger.LogInformation("Modular search completed. Partners: {PartnerCount}, Contacts: {ContactCount}, Interactions: {InteractionCount}, ExecutionTime: {ExecutionTime}ms",
+                searchResults.Partners?.Count ?? 0,
+                searchResults.Contacts?.Count ?? 0,
+                searchResults.Interactions?.Count ?? 0,
+                searchResults.ExecutionTimeMs);
+            
+            return formattedResults;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Database error during hybrid search for query: {Query}", query);
+            _logger.LogError(ex, "Error during modular search for query: {Query}", query);
             return new { 
                 searchQuery = query,
                 hasEmbedding = embedding != null,
-                strategy = "hybrid-field-semantic",
-                error = "Database error during search",
-                message = "An error occurred while searching the database"
+                strategy = "modular-field-search",
+                error = "Error during modular search",
+                message = "An error occurred while searching using modular functions",
+                availableEntities = new string[0],
+                results = new object()
             };
         }
     }
@@ -561,7 +563,7 @@ public class GlobalController : BaseController
     /// Processes search results and retrieves actual entity data using reflection,
     /// preserving search metadata like matchedField for frontend transparency
     /// </summary>
-    private async Task<object> ProcessAndConsolidateResults(object searchResults, ClaimsPrincipal user, bool fullResults = false)
+    private async Task<object> ProcessAndConsolidateResults(object searchResults, ClaimsPrincipal user, bool fullResults = false, bool filterActive = true)
     {
         try
         {
@@ -648,7 +650,7 @@ public class GlobalController : BaseController
                             var entityIdsToProcess = fullResults ? entityIds.ToArray() : entityIds.Take(3).ToArray();
                             
                             // Use reflection to get the appropriate manager and call GetByIdsAsync
-                            var entityData = await GetEntityDataByIds(entityType, entityIdsToProcess, user);
+                            var entityData = await GetEntityDataByIds(entityType, entityIdsToProcess, user, filterActive);
                             if (entityData != null)
                             {
                                 // Enhance original entities with search metadata (no transformation needed)
@@ -720,7 +722,7 @@ public class GlobalController : BaseController
                             try
                             {
                                 var value = property.GetValue(entity);
-                                flattened[property.Name] = value;
+                                flattened[property.Name] = value ?? string.Empty;
                             }
                             catch (Exception propEx)
                             {
@@ -755,10 +757,53 @@ public class GlobalController : BaseController
     /// <summary>
     /// Uses reflection to access manager from UNOPSManagerWrapper and get entity data by IDs
     /// </summary>
-    private async Task<object> GetEntityDataByIds(string entityType, int[] entityIds, ClaimsPrincipal user)
+    private async Task<object?> GetEntityDataByIds(string entityType, int[] entityIds, ClaimsPrincipal user, bool filterActive = true)
     {
         try
         {
+            _logger.LogInformation("GetEntityDataByIds called for {EntityType} with filterActive={FilterActive}, EntityIds=[{EntityIds}]", 
+                entityType, filterActive, string.Join(", ", entityIds));
+            
+            // Apply global filters to entity IDs before retrieving data
+            if (user != null && filterActive)
+            {
+                var currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(currentUserId))
+                {
+                    try
+                    {
+                        var globalFilters = await _userPreferenceService.GetGlobalFiltersAsync(currentUserId);
+                        if (globalFilters != null)
+                        {
+                            _logger.LogInformation("Applying global filters to {EntityType} entities. Original count: {OriginalCount}", 
+                                entityType, entityIds.Length);
+                            
+                            // Filter entity IDs based on global filters
+                            entityIds = await FilterEntityIdsByGlobalFilters(entityIds, entityType, globalFilters, user);
+                            
+                            _logger.LogInformation("After global filtering: {EntityType} count reduced to {FilteredCount}", 
+                                entityType, entityIds.Length);
+                            
+                            if (entityIds.Length == 0)
+                            {
+                                _logger.LogInformation("Global filters excluded all {EntityType} entities from search results", entityType);
+                                return new List<object>(); // Return empty list if all entities are filtered out
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Error applying global filters to {EntityType} search results, proceeding without global filters", entityType);
+                        // Continue with original entity IDs if global filtering fails
+                    }
+                }
+            }
+            else
+            {
+                _logger.LogInformation("Skipping global filters for {EntityType} - filterActive={FilterActive}, user={HasUser}", 
+                    entityType, filterActive, user != null);
+            }
+
             // Get manager field name from entity type
             string managerFieldName = GetManagerFieldName(entityType);
             
@@ -792,31 +837,35 @@ public class GlobalController : BaseController
             }
 
             // Call the method with parameters
-            var task = (Task)method.Invoke(manager, new object[] { entityIds, user });
-            await task;
-
-            // Get the result from the completed task
-            var resultProperty = task.GetType().GetProperty("Result");
-            var result = resultProperty?.GetValue(task);
-
-            if (result is IEnumerable<object> resultList)
+            var task = (Task?)method.Invoke(manager, new object[] { entityIds, user });
+            if (task != null)
             {
-                var count = resultList.Count();
-                _logger.LogInformation("Successfully retrieved {ActualCount} out of {RequestedCount} {EntityType} entities using {ManagerFieldName}", 
-                    count, entityIds.Length, entityType, managerFieldName);
+                await task;
+
+                // Get the result from the completed task
+                var resultProperty = task.GetType().GetProperty("Result");
+                var result = resultProperty?.GetValue(task);
                 
-                if (count == 0)
+                if (result is IEnumerable<object> resultList)
                 {
-                    _logger.LogWarning("No {EntityType} entities returned after RBAC filtering for IDs: [{EntityIds}]", 
-                        entityType, string.Join(", ", entityIds));
+                    var count = resultList.Count();
+                    _logger.LogInformation("Successfully retrieved {ActualCount} out of {RequestedCount} {EntityType} entities using {ManagerFieldName}", 
+                        count, entityIds.Length, entityType, managerFieldName);
+                    
+                    if (count == 0)
+                    {
+                        _logger.LogWarning("No {EntityType} entities returned after RBAC filtering for IDs: [{EntityIds}]", 
+                            entityType, string.Join(", ", entityIds));
+                    }
                 }
-            }
-            else
-            {
-                _logger.LogWarning("Unexpected result type from GetByIdsAsync: {ResultType}", result?.GetType().Name ?? "null");
-            }
+                else
+                {
+                    _logger.LogWarning("Unexpected result type from GetByIdsAsync: {ResultType}", result?.GetType().Name ?? "null");
+                }
 
-            return result;
+                return result;
+            }
+            return (object?)null;
         }
         catch (Exception ex)
         {
@@ -824,6 +873,95 @@ public class GlobalController : BaseController
                 entityType, string.Join(", ", entityIds));
             return null;
         }
+    }
+
+    /// <summary>
+    /// Filters entity IDs based on user's global filter preferences
+    /// </summary>
+    private async Task<int[]> FilterEntityIdsByGlobalFilters(int[] entityIds, string entityType, dynamic globalFilters, ClaimsPrincipal user)
+    {
+        try
+        {
+            if (entityIds == null || entityIds.Length == 0)
+                return entityIds;
+
+            _logger.LogInformation("Applying global filters to {Count} {EntityType} entities", entityIds.Length, entityType);
+
+            // Apply global filters based on entity type
+            var filteredIds = await ApplyGlobalFiltersForEntityType(entityIds, entityType, user);
+            var filteredArray = filteredIds.Where(id => entityIds.Contains(id)).ToArray();
+            
+            _logger.LogInformation("Global filters reduced {OriginalCount} {EntityType} entities to {FilteredCount}", 
+                entityIds.Length, entityType, filteredArray.Length);
+            
+            return filteredArray;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying global filters to {EntityType} entities, returning original IDs", entityType);
+            return entityIds; // Return original IDs if filtering fails
+        }
+    }
+
+    /// <summary>
+    /// Builds a queryable for the specified entity type with the given IDs
+    /// </summary>
+    private async Task<List<int>> ApplyGlobalFiltersForEntityType(int[] entityIds, string entityType, ClaimsPrincipal user)
+    {
+        try
+        {
+            var context = _aiContextualService._context;
+            
+            return entityType.ToLower() switch
+            {
+                "partners" => await ApplyGlobalFiltersToPartners(entityIds, user, context),
+                "contacts" => await ApplyGlobalFiltersToContacts(entityIds, user, context),
+                "interactions" => await ApplyGlobalFiltersToInteractions(entityIds, user, context),
+                "baseengagements" => await ApplyGlobalFiltersToBaseEngagements(entityIds, user, context),
+                _ => entityIds.ToList()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying global filters for entity type: {EntityType}", entityType);
+            return entityIds.ToList();
+        }
+    }
+
+    private async Task<List<int>> ApplyGlobalFiltersToPartners(int[] entityIds, ClaimsPrincipal user, UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext context)
+    {
+        var query = context.Set<UNOPS.PAO.UNOPSDomain.Entities.UNOPSPartner>()
+            .Where(p => entityIds.Contains(p.Id) && !p.IsDeleted);
+        
+        var filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(query, user);
+        return await filteredQuery.Select(p => p.Id).ToListAsync();
+    }
+
+    private async Task<List<int>> ApplyGlobalFiltersToContacts(int[] entityIds, ClaimsPrincipal user, UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext context)
+    {
+        var query = context.Set<UNOPS.PAO.UNOPSDomain.Entities.UNOPSContact>()
+            .Where(c => entityIds.Contains(c.Id) && !c.IsDeleted);
+        
+        var filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(query, user);
+        return await filteredQuery.Select(c => c.Id).ToListAsync();
+    }
+
+    private async Task<List<int>> ApplyGlobalFiltersToInteractions(int[] entityIds, ClaimsPrincipal user, UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext context)
+    {
+        var query = context.Set<UNOPS.PAO.Domain.Entities.Interaction>()
+            .Where(i => entityIds.Contains(i.Id) && !i.IsDeleted);
+        
+        var filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(query, user);
+        return await filteredQuery.Select(i => i.Id).ToListAsync();
+    }
+
+    private async Task<List<int>> ApplyGlobalFiltersToBaseEngagements(int[] entityIds, ClaimsPrincipal user, UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext context)
+    {
+        var query = context.Set<UNOPS.PAO.UNOPSDomain.Entities.BaseEngagement>()
+            .Where(e => entityIds.Contains(e.Id) && !e.IsDeleted);
+        
+        var filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(query, user);
+        return await filteredQuery.Select(e => e.Id).ToListAsync();
     }
 
     /// <summary>

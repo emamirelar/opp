@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -48,6 +48,7 @@ interface TestResult {
   success: boolean;
   response?: string;
   error?: string;
+  dataRetrievalResult?: string; // JSON data retrieved by the data retrieval method
 }
 
 interface ConfigurationData {
@@ -133,6 +134,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   private permissionService = inject(PermissionService);
   private configurationService = inject(ConfigurationService);
   private cdr = inject(ChangeDetectorRef);
+  private translateService = inject(TranslateService);
 
   // Signals for reactive state
   prompts = signal<AiPrompt[]>([]);
@@ -147,7 +149,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   searchText = '';
   geminiModels = signal<GeminiModel[]>([]);
   testResults = signal<TestResult | null>(null);
-  activeTab = signal<'preview' | 'text' | 'raw'>('preview');
+  activeTab = signal<'preview' | 'text' | 'raw' | 'data'>('preview');
   configurationData = signal<ConfigurationData>({});
   showCreateBanner = signal(false);
   showHelpTab = signal(true); // Default to open
@@ -191,7 +193,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   
   // Computed values
   dialogTitle = computed(() => 
-    this.currentPrompt() ? 'Edit AI Prompt' : 'Create AI Prompt'
+    this.currentPrompt() ? this.translateService.instant('aiPrompt.dialog.editTitle') : this.translateService.instant('aiPrompt.dialog.createTitle')
   );
 
   isEditMode = computed(() => !!this.currentPrompt());
@@ -311,8 +313,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
           this.permissionsLoading.set(false);
           this.messageService.add({
             severity: 'error',
-            summary: 'Access Error',
-            detail: 'Unable to verify permissions for AI prompt management'
+            summary: this.translateService.instant('aiPrompt.messages.accessError'),
+            detail: this.translateService.instant('aiPrompt.messages.unableToVerifyPermissions')
           });
           this.cdr.detectChanges();
         }
@@ -330,8 +332,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         console.error('Error loading Gemini models:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load Gemini models'
+          summary: this.translateService.instant('aiPrompt.messages.error'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToLoadModels')
         });
       }
     });
@@ -381,8 +383,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         console.error('Error loading prompts:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load AI prompts'
+          summary: this.translateService.instant('aiPrompt.messages.error'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToLoadPrompts')
         });
         this.loading.set(false);
       }
@@ -450,8 +452,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     if (prompt && !permissions.permissions.canUpdate) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Permission Denied',
-        detail: 'You do not have permission to edit AI prompts'
+        summary: this.translateService.instant('aiPrompt.messages.permissionDenied'),
+        detail: this.translateService.instant('aiPrompt.messages.noEditPermission')
       });
       return;
     }
@@ -459,8 +461,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     if (!prompt && !permissions.permissions.canCreate) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Permission Denied',
-        detail: 'You do not have permission to create AI prompts'
+        summary: this.translateService.instant('aiPrompt.messages.permissionDenied'),
+        detail: this.translateService.instant('aiPrompt.messages.noCreatePermission')
       });
       return;
     }
@@ -509,8 +511,11 @@ export class AiPromptComponent implements OnInit, OnDestroy {
 
       this.promptForm.patchValue({
         type: prompt.type,
-        promptFunction: prompt.promptFunction,
-        prompt: prompt.prompt,
+        // Use new fields with fallback to legacy fields
+        dataRetrievalMethod: prompt.dataRetrievalMethod || prompt.promptFunction,
+        systemInstructions: prompt.systemInstructions || prompt.prompt,
+        userPrompt: prompt.userPrompt,
+        feature: prompt.feature,
         description: prompt.description,
         project: prompt.project,
         location: prompt.location,
@@ -519,11 +524,14 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         topP: this.ensureNumber(generationConfig.top_p, 0.2),
         maxOutputTokens: this.ensureNumber(generationConfig.max_output_tokens, 8192),
         googleSearch: googleSearchEnabled,
-        safetySettings: prompt.safetySettings
+        safetySettings: prompt.safetySettings,
+        // New caching fields
+        useCache: prompt.useCache || false,
+        cacheInvalidationMinutes: prompt.cacheInvalidationMinutes || 60
       });
       
       // Update the signals for reactivity
-      this.promptFunctionValue.set(prompt.promptFunction || '');
+      this.promptFunctionValue.set(prompt.dataRetrievalMethod || prompt.promptFunction || '');
       this.selectedModelValue.set(prompt.model || '');
       
       // Disable type field on edit
@@ -620,8 +628,10 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     
     this.promptForm.patchValue({
       type: '',
-      promptFunction: '',
-      prompt: '',
+      dataRetrievalMethod: '',
+      systemInstructions: '',
+      userPrompt: '',
+      feature: '',
       description: '',
       contentConfig: defaultContentConfig,
       project: config?.projectId || '',
@@ -634,7 +644,12 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       topP: 0.2,
       maxOutputTokens: 8192,
       googleSearch: false,
-      safetySettings: ''
+      safetySettings: '',
+      useCache: false,
+      cacheInvalidationMinutes: 60,
+      // Legacy fields
+      promptFunction: '',
+      prompt: ''
     });
     
     // Trigger change detection for computed signals
@@ -671,8 +686,11 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     const promptData: AiPrompt = {
       id: this.currentPrompt()?.id || 0,
       type: typeValue,
-      promptFunction: formValue.promptFunction,
-      prompt: formValue.prompt,
+      // NEW: Use enhanced structure
+      dataRetrievalMethod: formValue.dataRetrievalMethod,
+      systemInstructions: formValue.systemInstructions,
+      userPrompt: formValue.userPrompt,
+      feature: formValue.feature,
       description: formValue.description,
       name: this.currentPrompt()?.name || typeValue, // Preserve original name for existing prompts, use type for new ones
       generationConfig: JSON.stringify(generationConfig),
@@ -682,7 +700,13 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       project: projectValue,
       location: locationValue,
       model: formValue.model,
-      createdAt: this.currentPrompt()?.createdAt || new Date()
+      createdAt: this.currentPrompt()?.createdAt || new Date(),
+      // NEW: Caching configuration
+      useCache: formValue.useCache,
+      cacheInvalidationMinutes: formValue.cacheInvalidationMinutes,
+      // LEGACY: Keep for backward compatibility
+      promptFunction: formValue.dataRetrievalMethod, // Map to new field
+      prompt: formValue.systemInstructions // Map to new field
     };
 
     const operation = this.currentPrompt() 
@@ -693,8 +717,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.messageService.add({
           severity: 'success',
-          summary: 'Success',
-          detail: this.currentPrompt() ? 'Prompt updated successfully' : 'Prompt created successfully'
+          summary: this.translateService.instant('aiPrompt.messages.success'),
+          detail: this.currentPrompt() ? this.translateService.instant('aiPrompt.messages.updatedSuccessfully') : this.translateService.instant('aiPrompt.messages.createdSuccessfully')
         });
         this.closeDialog();
         this.loadPrompts();
@@ -703,8 +727,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         console.error('Error saving prompt:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to save prompt'
+          summary: this.translateService.instant('aiPrompt.messages.error'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToSave')
         });
       },
       complete: () => {
@@ -727,15 +751,15 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     if (!this.canRunTest()) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Warning',
-        detail: 'Please fill in all required fields and test data before testing'
+        summary: this.translateService.instant('aiPrompt.messages.warning'),
+        detail: this.translateService.instant('aiPrompt.messages.fillRequiredFields')
       });
       return;
     }
 
     this.testing.set(true);
     this.testResults.set(null);
-    this.activeTab.set('preview'); // Reset to preview tab for new test
+    this.activeTab.set('data'); // Reset to data tab for new test to show input data first
     
     // Use getRawValue() to include disabled fields like 'type', 'project', 'location'
     const formValue = this.promptForm.getRawValue();
@@ -746,8 +770,11 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         ? { id: formValue.entityId }
         : { testData: formValue.testData }
       ),
+      // Enhanced prompt structure
+      systemInstructions: formValue.systemInstructions,
+      userPrompt: formValue.userPrompt,
+      dataRetrievalMethod: formValue.dataRetrievalMethod,
       // Optional overrides for testing
-      prompt: formValue.prompt,
       model: formValue.model,
       project: formValue.project,
       location: formValue.location,
@@ -755,7 +782,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       topP: formValue.topP,
       maxOutputTokens: formValue.maxOutputTokens,
       googleSearch: formValue.googleSearch,
-      safetySettings: formValue.safetySettings
+      safetySettings: formValue.safetySettings,
+      // Backward compatibility
+      prompt: formValue.systemInstructions // Map to legacy field
     };
 
     const sub = this.aiPromptService.testPrompt(testRequest).subscribe({
@@ -764,7 +793,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
           this.testResults.set({
             success: response.body.success,
             response: response.body.response,
-            error: response.body.error
+            error: response.body.error,
+            dataRetrievalResult: response.body.dataRetrievalResult
           });
         }
       },
@@ -789,11 +819,11 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     
     // First check that required core fields are valid
     const typeControl = form.get('type');
-    const promptControl = form.get('prompt');
+    const systemInstructionsControl = form.get('systemInstructions');
     const modelControl = form.get('model');
     
     if (!typeControl?.value || typeControl.invalid ||
-        !promptControl?.value || promptControl.invalid ||
+        !systemInstructionsControl?.value || systemInstructionsControl.invalid ||
         !modelControl?.value || modelControl.invalid) {
       return false;
     }
@@ -832,8 +862,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     if (!permissions.permissions.canDelete) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Permission Denied',
-        detail: 'You do not have permission to delete AI prompts'
+        summary: this.translateService.instant('aiPrompt.messages.permissionDenied'),
+        detail: this.translateService.instant('aiPrompt.messages.noDeletePermission')
       });
       return;
     }
@@ -841,12 +871,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     const featureName = prompt.name || 'Unknown';
     
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete the AI prompt "${prompt.type}"? 
-
-⚠️ This prompt is currently being used by the ${featureName} feature. Deleting it will affect the functionality of this feature.
-
-Be extra cautious while deleting as there could be several dependencies within the application.`,
-      header: 'Confirm Delete - Feature Impact Warning',
+      message: this.translateService.instant('aiPrompt.confirmation.deleteMessage', { type: prompt.type, featureName: featureName }),
+      header: this.translateService.instant('aiPrompt.confirmation.deleteHeader'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.deletePrompt(prompt);
@@ -859,8 +885,8 @@ Be extra cautious while deleting as there could be several dependencies within t
       next: () => {
         this.messageService.add({
           severity: 'success',
-          summary: 'Success',
-          detail: 'AI Prompt deleted successfully'
+          summary: this.translateService.instant('aiPrompt.messages.success'),
+          detail: this.translateService.instant('aiPrompt.messages.deletedSuccessfully')
         });
         this.loadPrompts();
       },
@@ -868,8 +894,8 @@ Be extra cautious while deleting as there could be several dependencies within t
         console.error('Error deleting prompt:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to delete AI prompt'
+          summary: this.translateService.instant('aiPrompt.messages.error'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToDelete')
         });
       }
     });
@@ -891,8 +917,8 @@ Be extra cautious while deleting as there could be several dependencies within t
     if (!permissions.permissions.canUpdate) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Permission Denied',
-        detail: 'You do not have permission to upgrade AI prompts'
+        summary: this.translateService.instant('aiPrompt.messages.permissionDenied'),
+        detail: this.translateService.instant('aiPrompt.messages.noUpgradePermission')
       });
       return;
     }
@@ -908,13 +934,13 @@ Be extra cautious while deleting as there could be several dependencies within t
           if (result.alreadyLatest) {
             this.messageService.add({
               severity: 'info',
-              summary: 'Already Up to Date',
-              detail: result.message + ' If you think there is a newer model that is not integrated with Opportunity+, please contact system support.'
+              summary: this.translateService.instant('aiPrompt.messages.alreadyUpToDate'),
+              detail: result.message + ' ' + this.translateService.instant('aiPrompt.messages.contactSupport')
             });
           } else {
             this.messageService.add({
               severity: 'success',
-              summary: 'Upgrade Complete',
+              summary: this.translateService.instant('aiPrompt.messages.upgradeComplete'),
               detail: result.message
             });
             // Reload prompts to show updated models
@@ -923,14 +949,14 @@ Be extra cautious while deleting as there could be several dependencies within t
         } else if (result) {
           this.messageService.add({
             severity: 'error',
-            summary: 'Upgrade Failed',
+            summary: this.translateService.instant('aiPrompt.messages.upgradeFailed'),
             detail: result.message
           });
         } else {
           this.messageService.add({
             severity: 'error',
-            summary: 'Upgrade Failed',
-            detail: 'No response received from server'
+            summary: this.translateService.instant('aiPrompt.messages.upgradeFailed'),
+            detail: this.translateService.instant('aiPrompt.messages.noResponseFromServer')
           });
         }
       },
@@ -939,8 +965,8 @@ Be extra cautious while deleting as there could be several dependencies within t
         console.error('Error upgrading Gemini models:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to upgrade Gemini models'
+          summary: this.translateService.instant('aiPrompt.messages.error'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToUpgrade')
         });
       }
     });
@@ -962,8 +988,8 @@ Be extra cautious while deleting as there could be several dependencies within t
     if (!permissions.permissions.canRead) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Permission Denied',
-        detail: 'You do not have permission to export AI prompts'
+        summary: this.translateService.instant('aiPrompt.messages.permissionDenied'),
+        detail: this.translateService.instant('aiPrompt.messages.noExportPermission')
       });
       return;
     }
@@ -991,16 +1017,16 @@ Be extra cautious while deleting as there could be several dependencies within t
         
         this.messageService.add({
           severity: 'success',
-          summary: 'Export Complete',
-          detail: 'AI prompts exported successfully as SQL script file'
+          summary: this.translateService.instant('aiPrompt.messages.exportComplete'),
+          detail: this.translateService.instant('aiPrompt.messages.exportedSuccessfully')
         });
       },
       error: (error) => {
         console.error('Error exporting AI prompts as SQL:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Export Failed',
-          detail: 'Failed to export AI prompts as SQL'
+          summary: this.translateService.instant('aiPrompt.messages.exportFailed'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToExport')
         });
       },
       complete: () => {
@@ -1021,18 +1047,6 @@ Be extra cautious while deleting as there could be several dependencies within t
   truncateText(text: string | undefined, maxLength: number): string {
     if (!text) return '';
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-  }
-
-  /**
-   * @uiButton toggle_preview_raw
-   * @description Switches between formatted preview and raw JSON response in test results
-   * @label Preview | Raw
-   * @icon pi pi-eye | pi pi-code
-   * @when_to_use Switch to Preview for readable output, or Raw to see technical JSON response details
-   * @permissions None required
-   */
-  setActiveTab(tab: 'preview' | 'text' | 'raw'): void {
-    this.activeTab.set(tab);
   }
 
   /**
@@ -1111,8 +1125,12 @@ Be extra cautious while deleting as there could be several dependencies within t
     
     const form = this.fb.group({
       type: ['', [Validators.required, underscoreValidator]],
-      promptFunction: [''], // Not required, but when provided enables entity ID mode
-      prompt: ['', [Validators.required, promptDataValidator]],
+      // NEW: Enhanced structure fields
+      dataRetrievalMethod: [''], // Not required, but when provided enables entity ID mode
+      systemInstructions: ['', [Validators.required]], // System instructions are required
+      userPrompt: [''], // Optional user prompt for additional context
+      feature: [''], // Feature categorization
+      // Existing fields
       description: [''], // Add description field
       contentConfig: [defaultContentConfig], // Hidden field with default value
       project: [config.projectId || '', Validators.required],
@@ -1128,11 +1146,17 @@ Be extra cautious while deleting as there could be several dependencies within t
       // Tools config controls
       googleSearch: [false],
       // Advanced settings
-      safetySettings: ['']
+      safetySettings: [''],
+      // NEW: Caching configuration
+      useCache: [false],
+      cacheInvalidationMinutes: [60, [Validators.min(1), Validators.max(1440)]], // 1 minute to 24 hours
+      // LEGACY: Keep for backward compatibility during transition
+      promptFunction: [''], // Will be mapped to dataRetrievalMethod
+      prompt: [''] // Will be mapped to systemInstructions
     });
 
-    // Watch for promptFunction changes to auto-switch test mode
-    const promptFunctionSub = form.get('promptFunction')?.valueChanges.subscribe(value => {
+    // Watch for dataRetrievalMethod changes to auto-switch test mode
+    const dataRetrievalMethodSub = form.get('dataRetrievalMethod')?.valueChanges.subscribe(value => {
       const hasFunction = !!(value && value.trim().length > 0);
       
       // Update the signal for reactivity
@@ -1195,8 +1219,8 @@ Be extra cautious while deleting as there could be several dependencies within t
     });
 
     // Add to subscriptions for cleanup
-    if (promptFunctionSub) {
-      this.subscriptions.add(promptFunctionSub);
+    if (dataRetrievalMethodSub) {
+      this.subscriptions.add(dataRetrievalMethodSub);
     }
     if (modelSub) {
       this.subscriptions.add(modelSub);
@@ -1212,5 +1236,33 @@ Be extra cautious while deleting as there could be several dependencies within t
     }
 
     return form;
+  }
+
+  /**
+   * Sets the active tab for test results display
+   * @param tab - The tab to activate ('data', 'preview', 'text', 'raw')
+   */
+  setActiveTab(tab: 'data' | 'preview' | 'text' | 'raw'): void {
+    this.activeTab.set(tab);
+  }
+
+  /**
+   * Formats JSON data for display in the Data tab
+   * @param jsonData - The JSON string to format
+   * @returns Formatted JSON string or error message
+   */
+  formatJsonData(jsonData: string | undefined): string {
+    if (!jsonData) {
+      return this.translateService.instant('aiPrompt.messages.noDataAvailable');
+    }
+
+    try {
+      // Try to parse and re-stringify with proper formatting
+      const parsed = JSON.parse(jsonData);
+      return JSON.stringify(parsed, null, 2);
+    } catch (error) {
+      // If it's not valid JSON, return as-is
+      return jsonData;
+    }
   }
 } 

@@ -44,6 +44,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     private readonly UNOPSAppDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<UNOPSPartnerManager> _logger;
+    private readonly GlobalFilterService? _globalFilterService;
 
     private BaseRepository<UNOPSPartner> PartnerRepository;
     private BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
@@ -61,6 +62,17 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         // Use AutoMapper with the updated configuration
         var result = mapper.Map<UNOPSPartner, PartnerModel>(entity);
+
+        // Resolve user names for audit fields
+        if (entity.CreatedBy > 0)
+        {
+            result.CreatedByName = await GetUserNameByIdAsync(entity.CreatedBy);
+        }
+        
+        if (entity.LastModifiedBy > 0)
+        {
+            result.LastModifiedByName = await GetUserNameByIdAsync(entity.LastModifiedBy);
+        }
 
         // Convert LogoUrl to signed URL if it exists and contains Google Cloud Storage path
         if (!string.IsNullOrEmpty(result.LogoUrl) && GoogleCloudStorageService != null)
@@ -84,15 +96,17 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
-        // Populate PartnerFocalPointUserName if PartnerFocalPointUserId exists
+        // Populate PartnerFocalPointUserName and PartnerFocalPointName if PartnerFocalPointUserId exists
         if (result.PartnerFocalPointUserId.HasValue && result.PartnerFocalPointUserId.Value > 0)
         {
             var focalPointUser = await _context.PAOUsers
+                .Include(u => u.UserProfile)
                 .Where(u => u.Id == result.PartnerFocalPointUserId.Value)
                 .FirstOrDefaultAsync();
             if (focalPointUser != null)
             {
-                result.PartnerFocalPointUserName = focalPointUser.Email;
+                result.PartnerFocalPointUserName = focalPointUser.Email; // Username is the email
+                result.PartnerFocalPointName = !string.IsNullOrEmpty(focalPointUser.Name) ? focalPointUser.Name : focalPointUser.Email; // Display name
             }
         }
 
@@ -158,13 +172,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return MapModelToEntity(model, new UNOPSPartner());
     }
 
-    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, ILogger<UNOPSPartnerManager> logger, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null)
+    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, ILogger<UNOPSPartnerManager> logger, IPermissionService permissionService, GlobalFilterService? globalFilterService, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null)
         : base(mapper, context, configuration, null, "Partner", permissionService, httpContextAccessor)
     {
         _mapper = mapper;
         _context = context;
         _configuration = configuration;
         _logger = logger;
+        _globalFilterService = globalFilterService;
        // _securityService = securityService;
         PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
         PartnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration, serviceProvider);
@@ -175,6 +190,31 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         GoogleCloudStorageService = new GoogleCloudStorageService(configuration);
 
         commonRepository = new CommonEntityRepository(context);
+    }
+
+    private async Task<string> GetUserNameByIdAsync(int userId)
+    {
+        try
+        {
+            var userProfile = await _context.UserProfile.FirstOrDefaultAsync(up => up.UserId == userId);
+            if (userProfile != null && !string.IsNullOrEmpty(userProfile.Name))
+            {
+                return userProfile.Name;
+            }
+            
+            // Fallback to PAOUser email if UserProfile not found or Name is empty
+            var user = await _context.PAOUsers.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user != null && !string.IsNullOrEmpty(user.Email))
+            {
+                return user.Email;
+            }
+        }
+        catch (Exception)
+        {
+            // Log error if needed, but don't fail the entire operation
+        }
+        
+        return $"User #{userId}";
     }
 
     public async Task<PartnerModel> CreatePartnerAsync(PartnerRequest model)
@@ -284,8 +324,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var filteredBaseQuery = baseQuery.ApplySpecification(specification);
         var filteredQuery = filteredBaseQuery.OfType<UNOPSPartner>();
         
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        // Apply global filters using the centralized GlobalFilterService
+        if (_globalFilterService != null && pagination.FilterActive == true)
+        {
+            filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, GetCurrentUserOrSystemContext());
+        }
         
         // Get total count
         var totalCount = filteredQuery.Count();
@@ -320,10 +363,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         };
     }
 
+    
+
     public async Task<object> GetPartnersWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Partner> specification, PaginationRequest pagination)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerGroup"])
+            .GetAll(["PartnerGroup", "Contacts", "LiaisonOffice"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
 
@@ -335,12 +380,13 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var filteredBaseQuery = baseQuery.ApplySpecification(specification);
         var filteredQuery = filteredBaseQuery.OfType<UNOPSPartner>();
         
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        // Apply global filters using the centralized GlobalFilterService
+        if (_globalFilterService != null && pagination.FilterActive == true)
+        {
+            filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, user);
+        }
         
-        // OrgUnit filtering is now handled by the specification and our manual join method
-        
-        // Apply access control filters (row and column filtering) BEFORE pagination
+        // Apply access control filters (role-based permissions only) BEFORE pagination
         // Cast the query to UNOPSPartner query for access control to maintain type consistency
         var unosPartnerQuery = filteredQuery.Cast<UNOPSPartner>();
         var filteredData = await ApplyAccessControlFilters(unosPartnerQuery, user, "read");
@@ -386,7 +432,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     public async Task<PartnerModel?> GetPartner(int userId, int id)
     {
-        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerGroup"]);
+        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerGroup", "LiaisonOffice"]);
         if (item == null)
         {
             return default;
@@ -398,27 +444,143 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return await MapEntityToModelAsync(item, _mapper, null);
     }
 
+
     /// <summary>
-    /// Gets basic partner details without contacts and interactions - designed for AI prompts
+    /// Gets comprehensive partner details formatted for AI prompt processing
     /// </summary>
-    public async Task<PartnerModel?> GetBasicPartnerDetailsAsync(int id)
+    public async Task<object> GetBasicPartnerDetailsAsync(ClaimsPrincipal user, int id)
     {
-        string[] includes = ["PartnerGroup"];
+        string[] includes = ["PartnerGroup", "LiaisonOffice", "Documents", "Contacts", "Contacts.Interactions"];
 
-        var item = await PartnerRepository.GetByIdAsync(id, includes);
-
-        if (item == null)
+        var entity = await PartnerRepository.GetByIdAsync(id, includes);
+        if (entity == null) 
         {
-            return default;
+            return new { error = "Partner not found" };
         }
 
-        // Load organization unit relationships for single partner
-        await item.LoadOrganizationUnitRelationshipsAsync(_context);
+        // Load organization unit relationships
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
 
-        return await MapEntityToModelAsync(item, _mapper, null);
+        // Create comprehensive JSON for AI prompt placeholders
+        var result = new
+        {
+            id = entity.Id,
+            name = entity.Name,
+            partnerName = entity.Name, // Alias for prompt compatibility
+            status = entity.Status.ToString(),
+            description = entity.Name, // Partners don't have a separate description field
+            
+            // Partner group information
+            partnerGroup = entity.PartnerGroup != null ? new
+            {
+                id = entity.PartnerGroup.Id,
+                name = entity.PartnerGroup.Name,
+                code = entity.PartnerGroup.Code,
+                type = entity.PartnerGroup.Type?.ToString()
+            } : null,
+            
+            // Liaison office information
+            liaisonOffice = entity.LiaisonOffice != null ? new
+            {
+                id = entity.LiaisonOffice.Id,
+                name = entity.LiaisonOffice.Name,
+                code = entity.LiaisonOffice.Code
+            } : null,
+            
+            // Contact information
+            contacts = entity.Contacts?.Select(c => new
+            {
+                id = c.Id,
+                fullName = $"{c.FirstName} {c.LastName}".Trim(),
+                firstName = c.FirstName,
+                lastName = c.LastName,
+                title = c.Title,
+                email = c.Email,
+                phone = c.Phone,
+                mobile = c.Mobile,
+                department = c.Department,
+                status = c.Status.ToString(),
+                totalInteractions = c.Interactions?.Count ?? 0
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Recent interactions (through contacts)
+            recentInteractions = entity.Contacts?
+                .SelectMany(c => c.Interactions ?? new List<Interaction>())
+                .Where(i => i.Date >= DateTime.UtcNow.AddDays(-30))
+                .OrderByDescending(i => i.Date)
+                .Take(10)
+                .Select(i => new
+                {
+                    id = i.Id,
+                    subject = i.Subject,
+                    description = i.Description,
+                    date = i.Date.ToString("yyyy-MM-dd HH:mm"),
+                    type = i.Type.ToString(),
+                    location = i.Location
+                }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Documents and attachments
+            documents = entity.Documents?.Select(d => new
+            {
+                id = d.Id,
+                link = d.Link,
+                type = d.Type,
+                documentType = d.DocumentType?.Name,
+                uploadDate = d.CreatedDate.ToString("yyyy-MM-dd"),
+                downloadUrl = d.Link
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Organization unit relationships
+            organizationUnits = entity.OrganizationUnitRelationships?.Select(our => new
+            {
+                id = our.OrganizationHierarchyId,
+                name = our.OrganizationHierarchy?.Name ?? "Organization Unit",
+                code = our.OrganizationHierarchy?.Code ?? our.OrganizationHierarchyId.ToString(),
+                type = our.OrganizationHierarchy?.Type.ToString() ?? "OrgUnit"
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Summary statistics
+            summary = new
+            {
+                totalContacts = entity.Contacts?.Count ?? 0,
+                activeContacts = entity.Contacts?.Count(c => c.Status == Domain.Entities.EntityStatus.Active) ?? 0,
+                totalDocuments = entity.Documents?.Count ?? 0,
+                totalInteractions = entity.Contacts?.SelectMany(c => c.Interactions ?? new List<Interaction>()).Count() ?? 0,
+                recentInteractions = entity.Contacts?
+                    .SelectMany(c => c.Interactions ?? new List<Interaction>())
+                    .Count(i => i.Date >= DateTime.UtcNow.AddDays(-30)) ?? 0,
+                lastInteractionDate = entity.Contacts?
+                    .SelectMany(c => c.Interactions ?? new List<Interaction>())
+                    .OrderByDescending(i => i.Date)
+                    .FirstOrDefault()?.Date.ToString("yyyy-MM-dd")
+            },
+            
+            // Partnership details
+            partnership = new
+            {
+                partnershipLevel = entity.PartnerGroup?.Name ?? "Not specified",
+                primaryContact = entity.Contacts?.FirstOrDefault(c => c.Status == Domain.Entities.EntityStatus.Active),
+                establishedDate = entity.CreatedDate.ToString("yyyy-MM-dd"),
+                lastActivity = entity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not available"
+            },
+            
+            // Audit information
+            auditInfo = new
+            {
+                createdDate = entity.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
+                lastModifiedDate = entity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not modified",
+                createdBy = entity.CreatedBy,
+                lastModifiedBy = entity.LastModifiedBy
+            },
+            
+            // User profile information for context
+            userProfile = await GetUserProfileForAIAsync(user)
+        };
+
+        return result;
     }
 
-    /// <summary>
+    /// <summary>   
     /// Gets a partner with its contacts and their interactions included
     /// </summary>
     public async Task<PartnerModel?> GetPartnerWithContactsAndInteractionsAsync(int id)
@@ -462,68 +624,227 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
-        // OrganizationUnitRelationships are now loaded via includes
-
-        // Now you can use the Partner entity's methods to get interaction data
-        // Examples:
-        // var allInteractions = partner.GetAllInteractions();
-        // var recentInteractions = partner.GetRecentInteractions(5);
-        // var interactionsByContact = partner.GetInteractionsByContact();
-        // var summary = partner.GetSummary();
-
         return await MapEntityToModelAsync(partner, _mapper, null);
     }
 
     /// <summary>
-    /// Gets a partner with its associated projects through the many-to-many relationship
+    /// Gets comprehensive partner with contacts and interactions formatted for AI prompt processing
     /// </summary>
-    public async Task<PartnerModel?> GetPartnerWithProjectsAsync(int id)
+    public async Task<object> GetPartnerWithContactsAndInteractionsForAIAsync(ClaimsPrincipal user, int id)
     {
-        // Include the projects through the many-to-many relationship
-        string[] includes = ["Documents", "PartnerGroup", "Projects"];
+        // Get partner with comprehensive includes
+        string[] includes = ["Documents", "PartnerGroup", "LiaisonOffice", "Contacts"];
 
-        var partner = await PartnerRepository.GetByIdAsync(id, includes);
-
-        if (partner == null)
+        var entity = await PartnerRepository.GetByIdAsync(id, includes);
+        if (entity == null) 
         {
-            return default;
+            return new { error = "Partner not found" };
         }
 
-        // Load organization unit relationships for single partner
-        await partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        // Load organization unit relationships
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
 
-        // OrganizationUnitRelationships are now loaded via includes
-
-        var result = await MapEntityToModelAsync(partner, _mapper, null);
-
-        // Map the projects to ProjectSummaryModel
-        if (partner.Projects != null && partner.Projects.Any())
+        // Manually load interactions for each contact through the InteractionContacts junction table
+        if (entity.Contacts != null && entity.Contacts.Any())
         {
-            result.Projects = partner.Projects.Select(project => new ProjectSummaryModel
+            var contactIds = entity.Contacts.Select(c => c.Id).ToList();
+            
+            // Get interactions through the junction table
+            var interactionContacts = await _context.InteractionContacts
+                .Where(ic => contactIds.Contains(ic.ContactId))
+                .Include(ic => ic.Interaction)
+                .ToListAsync();
+
+            // Group interactions by contact
+            var interactionsByContact = interactionContacts
+                .GroupBy(ic => ic.ContactId)
+                .ToDictionary(g => g.Key, g => g.Select(ic => ic.Interaction).ToList());
+
+            // Assign interactions to each contact
+            foreach (var contact in entity.Contacts)
             {
-                Id = project.Id,
-                ProjectNumber = project.ProjectNumber,
-                Name = project.Name,
-                StartDate = project.StartDate,
-                EndDate = project.EndDate,
-                Stage = project.Stage,
-                BudgetCheckingLevel = project.BudgetCheckingLevel,
-                BudgetDuration = project.BudgetDuration,
-                BudgetAmount = project.BudgetAmount,
-                ExpenditureAmount = project.ExpenditureAmount
-            }).ToList();
+                if (interactionsByContact.TryGetValue(contact.Id, out var interactions))
+                {
+                    contact.Interactions = interactions;
+                }
+            }
         }
+
+        // Create comprehensive JSON for AI prompt placeholders
+        var result = new
+        {
+            id = entity.Id,
+            name = entity.Name,
+            partnerName = entity.Name, // Alias for prompt compatibility
+            status = entity.Status.ToString(),
+            description = entity.Name, // Partners don't have a separate description field
+            
+            // Partner group information
+            partnerGroup = entity.PartnerGroup != null ? new
+            {
+                id = entity.PartnerGroup.Id,
+                name = entity.PartnerGroup.Name,
+                code = entity.PartnerGroup.Code,
+                type = entity.PartnerGroup.Type?.ToString()
+            } : null,
+            
+            // Liaison office information
+            liaisonOffice = entity.LiaisonOffice != null ? new
+            {
+                id = entity.LiaisonOffice.Id,
+                name = entity.LiaisonOffice.Name,
+                code = entity.LiaisonOffice.Code
+            } : null,
+            
+            // Comprehensive contact information with interactions
+            contacts = entity.Contacts?.Select(c => new
+            {
+                id = c.Id,
+                fullName = $"{c.FirstName} {c.LastName}".Trim(),
+                firstName = c.FirstName,
+                lastName = c.LastName,
+                title = c.Title,
+                email = c.Email,
+                phone = c.Phone,
+                mobile = c.Mobile,
+                department = c.Department,
+                status = c.Status.ToString(),
+                
+                // Contact's interactions
+                interactions = c.Interactions?.Select(i => new
+                {
+                    id = i.Id,
+                    subject = i.Subject,
+                    description = i.Description,
+                    date = i.Date.ToString("yyyy-MM-dd HH:mm"),
+                    type = i.Type.ToString(),
+                    location = i.Location,
+                    status = "Active" // Default status for interactions
+                }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+                
+                totalInteractions = c.Interactions?.Count ?? 0,
+                recentInteractions = c.Interactions?.Where(i => i.Date >= DateTime.UtcNow.AddDays(-30)).Count() ?? 0,
+                lastInteractionDate = c.Interactions?.OrderByDescending(i => i.Date).FirstOrDefault()?.Date.ToString("yyyy-MM-dd")
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // All interactions (flattened from contacts)
+            allInteractions = entity.Contacts?
+                .SelectMany(c => c.Interactions ?? new List<Interaction>())
+                .OrderByDescending(i => i.Date)
+                .Select(i => new
+                {
+                    id = i.Id,
+                    subject = i.Subject,
+                    description = i.Description,
+                    date = i.Date.ToString("yyyy-MM-dd HH:mm"),
+                    type = i.Type.ToString(),
+                    location = i.Location,
+                    contactName = entity.Contacts?.FirstOrDefault(c => c.Interactions?.Contains(i) == true)?.FirstName + " " + 
+                                  entity.Contacts?.FirstOrDefault(c => c.Interactions?.Contains(i) == true)?.LastName
+                }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Recent interactions (last 30 days)
+            recentInteractions = entity.Contacts?
+                .SelectMany(c => c.Interactions ?? new List<Interaction>())
+                .Where(i => i.Date >= DateTime.UtcNow.AddDays(-30))
+                .OrderByDescending(i => i.Date)
+                .Take(10)
+                .Select(i => new
+                {
+                    id = i.Id,
+                    subject = i.Subject,
+                    description = i.Description,
+                    date = i.Date.ToString("yyyy-MM-dd HH:mm"),
+                    type = i.Type.ToString(),
+                    location = i.Location,
+                    contactName = entity.Contacts?.FirstOrDefault(c => c.Interactions?.Contains(i) == true)?.FirstName + " " + 
+                                  entity.Contacts?.FirstOrDefault(c => c.Interactions?.Contains(i) == true)?.LastName
+                }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Documents and attachments
+            documents = entity.Documents?.Select(d => new
+            {
+                id = d.Id,
+                link = d.Link,
+                type = d.Type,
+                documentType = d.DocumentType?.Name,
+                uploadDate = d.CreatedDate.ToString("yyyy-MM-dd"),
+                downloadUrl = d.Link
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Organization unit relationships
+            organizationUnits = entity.OrganizationUnitRelationships?.Select(our => new
+            {
+                id = our.OrganizationHierarchyId,
+                name = our.OrganizationHierarchy?.Name ?? "Organization Unit",
+                code = our.OrganizationHierarchy?.Code ?? our.OrganizationHierarchyId.ToString(),
+                type = our.OrganizationHierarchy?.Type.ToString() ?? "OrgUnit"
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Comprehensive summary statistics
+            summary = new
+            {
+                totalContacts = entity.Contacts?.Count ?? 0,
+                activeContacts = entity.Contacts?.Count(c => c.Status == Domain.Entities.EntityStatus.Active) ?? 0,
+                totalDocuments = entity.Documents?.Count ?? 0,
+                totalInteractions = entity.Contacts?.SelectMany(c => c.Interactions ?? new List<Interaction>()).Count() ?? 0,
+                recentInteractions = entity.Contacts?
+                    .SelectMany(c => c.Interactions ?? new List<Interaction>())
+                    .Count(i => i.Date >= DateTime.UtcNow.AddDays(-30)) ?? 0,
+                lastInteractionDate = entity.Contacts?
+                    .SelectMany(c => c.Interactions ?? new List<Interaction>())
+                    .OrderByDescending(i => i.Date)
+                    .FirstOrDefault()?.Date.ToString("yyyy-MM-dd"),
+                mostActiveContact = entity.Contacts?
+                    .OrderByDescending(c => c.Interactions?.Count ?? 0)
+                    .FirstOrDefault()?.FirstName + " " + 
+                    entity.Contacts?
+                    .OrderByDescending(c => c.Interactions?.Count ?? 0)
+                    .FirstOrDefault()?.LastName,
+                averageInteractionsPerContact = entity.Contacts?.Count > 0 ? 
+                    (entity.Contacts.SelectMany(c => c.Interactions ?? new List<Interaction>()).Count() / (double)entity.Contacts.Count) : 0
+            },
+            
+            // Partnership engagement analysis
+            engagement = new
+            {
+                partnershipLevel = entity.PartnerGroup?.Name ?? "Not specified",
+                engagementFrequency = entity.Contacts?
+                    .SelectMany(c => c.Interactions ?? new List<Interaction>())
+                    .Count(i => i.Date >= DateTime.UtcNow.AddDays(-90)) > 5 ? "High" : "Low",
+                keyContactPoints = entity.Contacts?
+                    .Where(c => (c.Interactions?.Count ?? 0) > 0)
+                    .Select(c => c.FirstName + " " + c.LastName)
+                    .ToList() ?? new List<string>(),
+                lastEngagementType = entity.Contacts?
+                    .SelectMany(c => c.Interactions ?? new List<Interaction>())
+                    .OrderByDescending(i => i.Date)
+                    .FirstOrDefault()?.Type.ToString()
+            },
+            
+            // Audit information
+            auditInfo = new
+            {
+                createdDate = entity.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
+                lastModifiedDate = entity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not modified",
+                createdBy = entity.CreatedBy,
+                lastModifiedBy = entity.LastModifiedBy
+            },
+            
+            // User profile information for context
+            userProfile = await GetUserProfileForAIAsync(user)
+        };
 
         return result;
     }
 
     /// <summary>
-    /// Gets partner risk profile with comprehensive details including projects - designed for risk analysis and AI prompts
+    /// Gets partner risk profile with comprehensive details - designed for risk analysis and AI prompts
     /// </summary>
     public async Task<PartnerModel?> GetPartnerRiskProfileAsync(int id)
     {
-        // Include all relevant data for risk assessment: documents, organization units, group, contacts, interactions, and projects
-        string[] includes = ["Documents", "PartnerGroup", "Contacts", "Contacts.Interactions", "Projects"];
+        // Include all relevant data for risk assessment: documents, organization units, group, contacts, interactions
+        string[] includes = ["Documents", "PartnerGroup", "Contacts", "Contacts.Interactions"];
 
         var partner = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -536,24 +857,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         await partner.LoadOrganizationUnitRelationshipsAsync(_context);
 
         var result = await MapEntityToModelAsync(partner, _mapper, null);
-
-        // Map the projects to ProjectSummaryModel
-        if (partner.Projects != null && partner.Projects.Any())
-        {
-            result.Projects = partner.Projects.Select(project => new ProjectSummaryModel
-            {
-                Id = project.Id,
-                ProjectNumber = project.ProjectNumber,
-                Name = project.Name,
-                StartDate = project.StartDate,
-                EndDate = project.EndDate,
-                Stage = project.Stage,
-                BudgetCheckingLevel = project.BudgetCheckingLevel,
-                BudgetDuration = project.BudgetDuration,
-                BudgetAmount = project.BudgetAmount,
-                ExpenditureAmount = project.ExpenditureAmount
-            }).ToList();
-        }
 
         return result;
     }
@@ -898,7 +1201,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetPartnerAsync(ClaimsPrincipal user, int id)
     {
-        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerGroup"]);
+        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerGroup", "LiaisonOffice"]);
         if (item == null)
         {
             return null;
@@ -907,7 +1210,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Check if user has permission to access this specific entity
         // Create a single-item query and apply access control filters
         var query = PartnerRepository
-            .GetAll(["PartnerGroup"])
+            .GetAll(["PartnerGroup", "LiaisonOffice"])
             .Where(x => x.Id == id && !x.IsDeleted)
             .AsQueryable();
 
@@ -945,6 +1248,15 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         if (string.IsNullOrWhiteSpace(model.Name))
         {
             throw new BusinessException("Partner Name is required for creation");
+        }
+
+        // Validate Partner Levy business rules
+        if (model.PartnerLevyStatus == "DoesNotApply" || model.PartnerLevyStatus == "PotentiallyNotApplied")
+        {
+            if (string.IsNullOrWhiteSpace(model.ReasonForLevy))
+            {
+                throw new BusinessException("Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'.");
+            }
         }
         
         // Validate ErpDimValue uniqueness if provided
@@ -1098,6 +1410,15 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         if (entity == null)
         {
             return null;
+        }
+
+        // Validate Partner Levy business rules
+        if (model.PartnerLevyStatus == "DoesNotApply" || model.PartnerLevyStatus == "PotentiallyNotApplied")
+        {
+            if (string.IsNullOrWhiteSpace(model.ReasonForLevy))
+            {
+                throw new BusinessException("Reason for Levy is required when Partner Levy status is 'Does Not Apply' or 'Potentially Not Applied'.");
+            }
         }
 
         // Validate ErpDimValue uniqueness if provided and different from current value
@@ -1468,7 +1789,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public override async Task<object> GetBasicEntityDataAsync(int id)
     {
-        var partner = await _context.Partners.FirstOrDefaultAsync(e => e.Id == id);
+        var partner = await _context.Partners
+            .Include(p => p.PartnerGroup)
+            .Include(p => p.LiaisonOffice)
+            .FirstOrDefaultAsync(e => e.Id == id);
         if (partner != null)
         {
             return _mapper.Map<UNOPSPartner, PartnerModel>(partner);
@@ -1527,75 +1851,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return results.Cast<object>().ToList();
     }
     
-    /// <summary>
-    /// Applies org unit filtering if the specification supports it using manual joins
-    /// </summary>
-    private IQueryable<UNOPSPartner> ApplyOrgUnitFilterIfSupported(IQueryable<UNOPSPartner> query, ISpecification<Partner> specification)
-    {
-        // Check if this is a PartnerSpecificationAdapter and get the original specification
-        if (specification is PartnerSpecificationAdapter adapter)
-        {
-            var originalSpec = adapter.GetOriginalSpecification();
-            return ApplyUNOPSPartnerOrgUnitFilterIfSupported(query, originalSpec);
-        }
-        
-        // Check if specification has ApplyOrgUnitFilter method and call it
-        var specType = specification.GetType();
-        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<Partner>), typeof(DbContext) });
-        
-        if (filterMethod != null)
-        {
-            try
-            {
-                // Cast to base type for Partner specifications
-                var baseQuery = query.Cast<Partner>();
-                var result = filterMethod.Invoke(specification, new object[] { baseQuery, _context });
-                if (result is IQueryable<Partner> filteredBaseQuery)
-                {
-                    return filteredBaseQuery.OfType<UNOPSPartner>();
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue without org unit filtering
-                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
-            }
-        }
-        
-        // If no ApplyOrgUnitFilter method found, return original query
-        return query;
-    }
     
-    /// <summary>
-    /// Applies org unit filtering for UNOPS-specific specifications
-    /// </summary>
-    private IQueryable<UNOPSPartner> ApplyUNOPSPartnerOrgUnitFilterIfSupported(IQueryable<UNOPSPartner> query, ISpecification<UNOPSPartner> specification)
-    {
-        // Check if specification has ApplyOrgUnitFilter method and call it
-        var specType = specification.GetType();
-        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<UNOPSPartner>), typeof(DbContext) });
-        
-        if (filterMethod != null)
-        {
-            try
-            {
-                // Direct call for UNOPSPartner specifications
-                var result = filterMethod.Invoke(specification, new object[] { query, _context });
-                if (result is IQueryable<UNOPSPartner> filteredQuery)
-                {
-                    return filteredQuery;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue without org unit filtering
-                Console.WriteLine($"Error applying UNOPS partner org unit filter: {ex.Message}");
-            }
-        }
-        
-        // If no ApplyOrgUnitFilter method found, return original query
-        return query;
-    }
 
     #region Partner Status Management Methods
 
@@ -1681,6 +1937,18 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     }
 
     /// <summary>
+    /// Gets the next available ErpDimValue based on the highest existing value
+    /// </summary>
+    private async Task<int> GetNextErpDimValueAsync()
+    {
+        var highestErpDimValue = await _context.Partners
+            .Where(p => p.ErpDimValue.HasValue && !p.IsDeleted)
+            .MaxAsync(p => (int?)p.ErpDimValue) ?? 0;
+        
+        return highestErpDimValue + 1;
+    }
+
+    /// <summary>
     /// Approves an active partner (Admin only) - locks data fields and records approval audit trail
     /// </summary>
     public async Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, UpdatePartnerRequest request)
@@ -1705,8 +1973,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
         var userName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown Admin";
 
-        // Now approve the partner (this sets the approval status and audit trail)
-        entity.ApprovePartner(int.Parse(userId), userName);
+        // Get the next ErpDimValue for this partner (only if not already assigned)
+        var nextErpDimValue = entity.ErpDimValue ?? await GetNextErpDimValueAsync();
+
+        // Now approve the partner (this sets the approval status, audit trail, and ErpDimValue if not already set)
+        entity.ApprovePartner(int.Parse(userId), userName, nextErpDimValue);
         await PartnerRepository.UpdateAsync(entity);
         
         // Load relationships and return updated model
@@ -1719,138 +1990,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     #region Partner Related Data Methods
 
-    /// <summary>
-    /// Gets all engagements for a specific partner with pagination
-    /// </summary>
-    public async Task<PaginationResponse<Engagement>> GetPartnerEngagementsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending)
-    {
-        // Validate pagination parameters
-        if (pageIndex < 1) pageIndex = 1;
-        if (pageSize < 1 || pageSize > 100) pageSize = 20;
 
-        // First get the partner's ErpDimValue since Engagement.PartnerId references Partner.ErpDimValue, not Partner.Id
-        var partner = await _context.Partners
-            .Where(p => p.Id == partnerId && !p.IsDeleted)
-            .FirstOrDefaultAsync();
-
-        if (partner == null || !partner.ErpDimValue.HasValue)
-        {
-            return new PaginationResponse<Engagement>
-            {
-                Records = new List<Engagement>(),
-                TotalCount = 0,
-                PageIndex = pageIndex,
-                PageSize = pageSize,
-                TotalPages = 0
-            };
-        }
-
-        var baseQuery = _context.Engagements
-            .Where(e => e.PartnerId == partner.ErpDimValue.Value && !e.IsDeleted)
-            .Include(e => e.Partner);
-
-        IQueryable<Engagement> query;
-        
-        // Apply ordering
-        if (!string.IsNullOrEmpty(orderBy))
-        {
-            query = ascending 
-                ? baseQuery.OrderBy(e => EF.Property<object>(e, orderBy))
-                : baseQuery.OrderByDescending(e => EF.Property<object>(e, orderBy));
-        }
-        else
-        {
-            // Default ordering by creation date (newest first)
-            query = baseQuery.OrderByDescending(e => e.CreatedDate);
-        }
-
-        // Get total count
-        var totalCount = await query.CountAsync();
-
-        // Apply pagination
-        var engagements = await query
-            .Skip((pageIndex - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-
-        return new PaginationResponse<Engagement>
-        {
-            Records = engagements,
-            TotalCount = totalCount,
-            PageIndex = pageIndex,
-            PageSize = pageSize,
-            TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
-        };
-    }
-
-    /// <summary>
-    /// Gets all projects for a specific partner with pagination
-    /// </summary>
-    public async Task<PaginationResponse<object>> GetPartnerProjectsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending)
-    {
-        // Validate pagination parameters
-        if (pageIndex < 1) pageIndex = 1;
-        if (pageSize < 1 || pageSize > 100) pageSize = 20;
-
-        // Get the partner first to access the projects through the many-to-many relationship
-        var partner = await _context.Partners
-            .Include(p => p.Projects)
-            .ThenInclude(proj => proj.Partners) // Include partners for each project
-            .FirstOrDefaultAsync(p => p.Id == partnerId && !p.IsDeleted);
-
-        if (partner == null)
-        {
-            throw new ArgumentException("Partner not found or access denied.");
-        }
-
-        // Get the projects associated with this partner
-        var projectsQuery = partner.Projects.AsQueryable()
-            .Where(p => p.Status == EntityStatus.Active);
-
-        // Apply ordering
-        if (!string.IsNullOrEmpty(orderBy))
-        {
-            projectsQuery = ascending 
-                ? projectsQuery.OrderBy(p => EF.Property<object>(p, orderBy))
-                : projectsQuery.OrderByDescending(p => EF.Property<object>(p, orderBy));
-        }
-        else
-        {
-            // Default ordering by start date (newest first)
-            projectsQuery = projectsQuery.OrderByDescending(p => p.StartDate);
-        }
-
-        var totalCount = projectsQuery.Count();
-
-        // Apply pagination
-        var projects = projectsQuery
-            .Skip((pageIndex - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-
-        // Map to anonymous objects to avoid ProjectModel dependency
-        var projectModels = projects.Select(p => (object)new {
-            p.Id,
-            p.ProjectNumber,
-            p.Name,
-            p.StartDate,
-            p.EndDate,
-            p.Stage,
-            p.BudgetCheckingLevel,
-            p.BudgetDuration,
-            p.BudgetAmount,
-            p.ExpenditureAmount
-        }).ToList();
-
-        return new PaginationResponse<object>
-        {
-            Records = projectModels,
-            TotalCount = totalCount,
-            PageIndex = pageIndex,
-            PageSize = pageSize,
-            TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
-        };
-    }
 
     #endregion
 
@@ -1873,6 +2013,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             var partner = await _context.Partners
                 .Where(p => p.Name.ToLower() == name.ToLower() && !p.IsDeleted)
                 .Include(p => p.PartnerGroup)
+                .Include(p => p.LiaisonOffice)
                 .AsQueryable()
                 .FirstOrDefaultAsync();
 
@@ -1888,6 +2029,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             var query = _context.Partners
                 .Where(p => p.Id == partner.Id)
                 .Include(p => p.PartnerGroup)
+                .Include(p => p.LiaisonOffice)
                 .AsQueryable();
 
             var filteredData = await ApplyAccessControlFilters(query, user, "read");
@@ -1911,6 +2053,146 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         {
             _logger?.LogError(ex, "Error getting partner by name: {Name}", name);
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Performs smart search for partners using AI-powered search capabilities
+    /// </summary>
+    public async Task<PaginationResponse<PartnerModel>> SmartSearchPartnersAsync(
+        ClaimsPrincipal user, 
+        string searchText, 
+        int maxResults = 50,
+        PaginationRequest request = null)
+    {
+        try
+        {
+            // Perform smart search to get accessible partners
+            var smartSearchResult = await PerformSmartSearchAsync<UNOPSPartner>(searchText, false, maxResults);
+            var accessiblePartners = await FilterAccessiblePartners(smartSearchResult.Results.Select(r => r.Entity).ToList(), user);
+
+            var partnerModels = new List<PartnerModel>();
+            foreach (var partner in accessiblePartners)
+            {
+                var model = await MapEntityToModelAsync(partner, _mapper, user);
+                var modelWithPermissions = await MapEntityToModelWithPermissionsAsync(model, user, partner);
+                partnerModels.Add(modelWithPermissions);
+            }
+
+            // Create pagination response
+            var paginationRequest = request ?? new PaginationRequest { PageIndex = 0, PageSize = maxResults };
+            var totalCount = partnerModels.Count;
+            var pageIndex = Math.Max(0, paginationRequest.PageIndex);
+            var pageSize = Math.Max(1, Math.Min(paginationRequest.PageSize, maxResults));
+            
+            var pagedResults = partnerModels
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            _logger?.LogInformation("Smart search completed: Found {TotalResults} partners in {ExecutionTime}ms. Strategy: {Strategy}", 
+                totalCount, smartSearchResult.ExecutionTime.TotalMilliseconds, smartSearchResult.SearchStrategy);
+
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = pagedResults,
+                TotalCount = totalCount,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error performing smart search for: '{SearchText}'", searchText);
+            
+            // Return empty result on error
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = new List<PartnerModel>(),
+                TotalCount = 0,
+                PageIndex = 0,
+                PageSize = maxResults,
+                TotalPages = 0
+            };
+        }
+    }
+
+    /// <summary>
+    /// Performs smart search for partners using AI-powered search capabilities
+    /// </summary>
+    public async Task<PaginationResponse<PartnerModel>> PerformSmartSearchAsync(
+        ClaimsPrincipal user, 
+        string searchText, 
+        bool includeInactive = false,
+        int maxResults = 50,
+        PaginationRequest request = null)
+    {
+        return await SmartSearchPartnersAsync(user, searchText, maxResults, request);
+    }
+
+    /// <summary>
+    /// Debug method to get total partner count
+    /// </summary>
+    public async Task<int> GetTotalPartnerCountAsync(ClaimsPrincipal user)
+    {
+        return await _context.Partners.CountAsync();
+    }
+
+    /// <summary>
+    /// Debug method to get sample partner names
+    /// </summary>
+    public async Task<List<string>> GetSamplePartnerNamesAsync(ClaimsPrincipal user, int count = 5)
+    {
+        try
+        {
+            return await _context.Partners
+                .Take(count)
+                .Select(p => p.Name)
+                .ToListAsync();
+        }
+        catch
+        {
+            return new List<string> { "Error retrieving sample names" };
+        }
+    }
+
+
+    // GetPartnerSearchFields removed - now handled directly in PartnerController with translation keys for multilingual support
+
+    /// <summary>
+    /// Filters the list of partners based on user's RBAC permissions
+    /// </summary>
+    private async Task<List<UNOPSPartner>> FilterAccessiblePartners(List<UNOPSPartner> partners, ClaimsPrincipal user)
+    {
+        try
+        {
+            var accessiblePartners = new List<UNOPSPartner>();
+            
+            foreach (var partner in partners)
+            {
+                // Apply access control filters to ensure user has permission to access this partner
+                var query = _context.Partners
+                    .Where(p => p.Id == partner.Id)
+                    .Include(p => p.PartnerGroup)
+                    .AsQueryable();
+
+                var filteredData = await ApplyAccessControlFilters(query, user, "read");
+                
+                if (filteredData is IEnumerable<UNOPSPartner> partnerList && partnerList.Any())
+                {
+                    // Load relationships for accessible partners
+                    await partner.LoadOrganizationUnitRelationshipsAsync(_context);
+                    accessiblePartners.Add(partner);
+                }
+            }
+            
+            return accessiblePartners;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Error filtering accessible partners, returning empty list");
+            return new List<UNOPSPartner>();
         }
     }
 

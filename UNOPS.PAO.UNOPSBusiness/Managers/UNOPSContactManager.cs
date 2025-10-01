@@ -22,6 +22,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using UNOPS.PAO.Business.Extensions;
+using UNOPS.PAO.UNOPSBusiness.Extensions;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.Business.Repositories.Generic;
@@ -37,6 +39,7 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
+using static Google.Cloud.Vision.V1.ProductSearchResults.Types;
 
 public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 {
@@ -50,6 +53,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     private readonly ILogger<UNOPSContactManager>? _logger;
     private readonly DataRepository<AiPrompt> promptRepository;
     private readonly UNOPSAppDbContext _context;
+    private readonly GlobalFilterService _globalFilterService;
 
     private async Task<ContactModel> MapEntityToModel(UNOPSContact entity, IMapper mapper, ClaimsPrincipal user)
     {
@@ -132,14 +136,20 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     private UNOPSContact MapModelToEntity(ContactRequest model)
     {
-        return MapModelToEntity(model, new UNOPSContact());
+        return MapModelToEntity(model, new UNOPSContact
+        {
+            LastName = model.LastName ?? "Unknown",
+            Title = model.Title ?? "Unknown",
+            Email = model.Email ?? "unknown@example.com"
+        });
     }
 
-    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService, IHttpContextAccessor httpContextAccessor = null, ILogger<UNOPSContactManager> logger = null, IServiceProvider serviceProvider = null)
+    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService, GlobalFilterService globalFilterService, IHttpContextAccessor httpContextAccessor = null, ILogger<UNOPSContactManager> logger = null, IServiceProvider serviceProvider = null)
         : base(mapper, context, configuration, null, "Contact", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
         _context = context;
+        _globalFilterService = globalFilterService;
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
         userInfoRepository = new BaseRepository<UserProfile>(context, configuration, serviceProvider);
@@ -150,13 +160,92 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         _logger = logger;
     }
 
+    private async Task UpdateContactOrganizationUnitRelationshipsAsync(int contactId, IEnumerable<int>? newOrgUnitIds)
+    {
+        if (newOrgUnitIds == null) return;
+
+        // Get current relationships
+        var currentRelationships = await _context.OrganizationUnitRelationships
+            .Where(r => r.EntityId == contactId && r.EntityType == "Contact")
+            .ToListAsync();
+
+        var currentOrgUnitIds = currentRelationships.Select(r => r.OrganizationHierarchyId).ToHashSet();
+        var newOrgUnitIdsSet = newOrgUnitIds.ToHashSet();
+
+        // Find relationships to remove (in current but not in new)
+        var relationshipsToRemove = currentRelationships
+            .Where(r => !newOrgUnitIdsSet.Contains(r.OrganizationHierarchyId))
+            .ToList();
+
+        // Find relationships to add (in new but not in current)
+        var orgUnitIdsToAdd = newOrgUnitIdsSet
+            .Where(id => !currentOrgUnitIds.Contains(id))
+            .ToList();
+
+        // Remove old relationships
+        if (relationshipsToRemove.Any())
+        {
+            await _context.OrganizationUnitRelationships
+                .Where(r => r.EntityId == contactId && r.EntityType == "Contact" &&
+                           relationshipsToRemove.Select(rel => rel.OrganizationHierarchyId).Contains(r.OrganizationHierarchyId))
+                .ExecuteDeleteAsync();
+        }
+
+        // Add new relationships
+        if (orgUnitIdsToAdd.Any())
+        {
+            var relationshipsToAdd = new List<OrganizationUnitRelationship>();
+            foreach (var orgUnitId in orgUnitIdsToAdd)
+            {
+                var orgUnit = await organizationHierarchyRepository.GetByIdAsync(orgUnitId);
+                if (orgUnit != null && orgUnit.Type == Domain.Enums.OrganizationUnitType.OrgUnit)
+                {
+                    var newRelationship = new OrganizationUnitRelationship
+                    {
+                        OrganizationHierarchyId = orgUnitId,
+                        EntityId = contactId,
+                        EntityType = nameof(Contact),
+                        Name = $"Contact-{contactId}-{orgUnit.Code}",
+                        Status = EntityStatus.Active
+                    };
+                    relationshipsToAdd.Add(newRelationship);
+                }
+            }
+
+            foreach (var relationship in relationshipsToAdd)
+            {
+                _context.OrganizationUnitRelationships.Add(relationship);
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<ContactModel> CreateContactAsync(ContactRequest model)
     {
-        var entity = MapModelToEntity(model);
-        
-        await contactRepository.AddAsync(entity);
+        await using var transaction = await _context.Database.BeginTransactionAsync();
 
-        return mapper.Map<ContactModel>(entity);
+        try
+        {
+            var entity = MapModelToEntity(model);
+
+            await contactRepository.AddAsync(entity);
+            await _context.SaveChangesAsync();
+
+            // Handle OrganizationHierarchyIds
+            if (model.OrganizationHierarchyIds != null && model.OrganizationHierarchyIds.Any())
+            {
+                await UpdateContactOrganizationUnitRelationshipsAsync(entity.Id, model.OrganizationHierarchyIds);
+            }
+
+            await transaction.CommitAsync();
+            return mapper.Map<ContactModel>(entity);
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request)
@@ -175,11 +264,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             .Take(request.PageSize)
             .ToList();
 
-        // Load OrganizationUnitRelationships manually for all items
-        /*foreach (var item in items.Where(i => i.Partner != null))
+        // Load OrganizationUnitRelationships manually for all contacts and their partners
+        items.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
+        foreach (var item in items.Where(i => i.Partner != null))
         {
             item.Partner.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
-        }*/
+        }
 
         // Get all unique user IDs from the contacts
         var userIds = items.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
@@ -220,12 +310,6 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             .GetAll(["Partner", "Partner.PartnerGroup"])
             .AsQueryable();
 
-        // Load OrganizationUnitRelationships manually for all items
-        /*foreach (var qItem in query.Where(i => i.Partner != null))
-        {
-            await qItem.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-        }*/
-
         // Apply access control filters (row and column filtering) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(query, user, "read");
         
@@ -242,11 +326,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 .Take(request.PageSize)
                 .ToArray();
 
-            // Load OrganizationUnitRelationships manually for all items
-            /*foreach (var item in pagedItems.Where(i => i.Partner != null))
+            // Load OrganizationUnitRelationships manually for all contacts and their partners
+            await pagedItems.LoadOrganizationUnitRelationshipsAsync(_context);
+            foreach (var item in pagedItems.Where(i => i.Partner != null))
             {
                 await item.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-            }*/
+            }
 
             // Get all unique user IDs from the contacts for user info lookup
             var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
@@ -296,24 +381,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup"]);
         if (entity == null) return null;
 
-        // Load OrganizationUnitRelationships manually
-        /*if (entity.Partner != null)
-        {
-            await entity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-        }*/
-
         // Check if user has permission to access this specific entity
         // Create a single-item query and apply access control filters
         var query = contactRepository
             .GetAll(["Partner", "Partner.PartnerGroup"])
             .Where(x => x.Id == id)
             .AsQueryable();
-
-        // Load OrganizationUnitRelationships manually for all items
-        /*foreach (var qItem in query.Where(i => i.Partner != null))
-        {
-            await qItem.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-        }*/
 
         // Apply access control filters (row and column filtering)
         var filteredData = await ApplyAccessControlFilters(query, user, "read");
@@ -324,11 +397,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             var accessibleContact = contactList.FirstOrDefault();
             if (accessibleContact != null)
             {
-                // Load OrganizationUnitRelationships manually
-                /*if (accessibleContact.Partner != null)
+                // Load OrganizationUnitRelationships manually for all contacts and their partners
+                await accessibleContact.LoadOrganizationUnitRelationshipsAsync(_context);
+                if (accessibleContact.Partner != null)
                 {
                     await accessibleContact.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-                }*/
+                }
                 return await MapEntityToModel(accessibleContact, mapper, user);
             }
         }
@@ -347,17 +421,27 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
         entity.Name = String.Concat(model.Salutation, ' ', model.FirstName, ' ', model.MiddleName, ' ', model.LastName);
 
+        // Handle OrganizationHierarchyIds if provided
+        if (model.OrganizationHierarchyIds != null)
+        {
+            await UpdateContactOrganizationUnitRelationshipsAsync(entity.Id, model.OrganizationHierarchyIds);
+        }
+
         await contactRepository.UpdateAsync(entity);
         
         // Return updated entity with includes
         var updatedEntity = await contactRepository.GetByIdAsync(entity.Id, ["Partner", "Partner.PartnerGroup"]);
         
         // Load OrganizationUnitRelationships manually
-        /*if (updatedEntity?.Partner != null)
+        if (updatedEntity != null)
         {
-            await updatedEntity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-        }*/
-        
+            await updatedEntity.LoadOrganizationUnitRelationshipsAsync(_context);
+            if (updatedEntity.Partner != null)
+            {
+                await updatedEntity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+            }
+        }
+
         return await MapEntityToModel(updatedEntity, mapper, user);
     }
 
@@ -374,19 +458,16 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         // Apply the specification to the query
         var query = contactRepository.GetAll(["Partner"]).AsQueryable();
 
-        // Load OrganizationUnitRelationships manually for all items
-        /*foreach (var qItem in query.Where(i => i.Partner != null))
-        {
-            qItem.Partner.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
-        }*/
-
         // Cast to base type to apply specification, then cast back to derived type
         var baseQuery = query.Cast<Contact>();
         var filteredBaseQuery = baseQuery.ApplySpecification(specification);
         var filteredQuery = filteredBaseQuery.OfType<UNOPSContact>();
         
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        // Apply global filters using the centralized GlobalFilterService
+        if (pagination.FilterActive == true)
+        {
+            filteredQuery = _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, GetCurrentUserOrSystemContext()).GetAwaiter().GetResult();
+        }
 
         // Custom pagination with efficient user lookup
         var totalCount = filteredQuery.Count();
@@ -398,6 +479,13 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             .Take(pagination.PageSize)
             .Cast<UNOPSContact>()
             .ToList();
+
+        // Load OrganizationUnitRelationships manually for all contacts and their partners
+        items.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
+        foreach (var item in items.Where(i => i.Partner != null))
+        {
+            item.Partner.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
+        }
 
         // Get all unique user IDs from the contacts
         var userIds = items.Select(c => c.CreatedBy).Distinct().Where(id => id > 0).ToList();
@@ -435,11 +523,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup"]);
         if (entity == null) return null;
 
-        // Load OrganizationUnitRelationships manually
-        /*if (entity.Partner != null)
+        // Load OrganizationUnitRelationships manually for contact and the partner
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
+        if (entity.Partner != null)
         {
             await entity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-        }*/
+        }
 
         return await MapEntityToModel(entity, mapper, GetCurrentUserOrSystemContext());
     }
@@ -449,6 +538,14 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var contacts = contactRepository.GetAll();
         // Note: IsPosted property may not exist, commenting out for now
         // return contacts.Where(c => c.IsPosted).Select(c => MapEntityToExternalModel(c, mapper));
+
+        // Load OrganizationUnitRelationships manually for all contacts and their partners
+        contacts.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
+        foreach (var item in contacts.Where(i => i.Partner != null))
+        {
+            item.Partner.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
+        }
+
         return contacts.Select(c => MapEntityToExternalModel(c, mapper));
     }
 
@@ -459,18 +556,26 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         // if (entity == null || !entity.IsPosted) return null;
         if (entity == null) return null;
 
+        // Load OrganizationUnitRelationships manually for all contacts and their partners
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
+        if (entity.Partner != null)
+        {
+            await entity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }
+
         return MapEntityToExternalModel(entity, mapper);
     }
 
     public IEnumerable<ContactModel> GetPartnerContacts(int partnerId)
     {
         var contacts = contactRepository.GetAll(["Partner", "Partner.PartnerGroup"]).Where(c => c.PartnerId == partnerId).ToList();
-        
-        // Load OrganizationUnitRelationships manually for all contacts
-        /*foreach (var contact in contacts.Where(c => c.Partner != null))
+
+        // Load OrganizationUnitRelationships manually for all contacts and their partners
+        contacts.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
+        foreach (var contact in contacts.Where(c => c.Partner != null))
         {
             contact.Partner.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
-        }*/
+        }
         
         var results = new List<ContactModel>();
         foreach (var contact in contacts)
@@ -490,18 +595,14 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             .GetAll(["Partner", "Partner.PartnerGroup"])
             .AsQueryable();
 
-        // Load OrganizationUnitRelationships manually for all items
-        /*foreach (var qItem in query.Where(i => i.Partner != null))
-        {
-            await qItem.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-        }*/
-
         var filteredQuery = query.ApplySpecification(specification);
         
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyUNOPSContactOrgUnitFilterIfSupported(filteredQuery, specification);
-
-        // Apply access control filters (row and column filtering) BEFORE pagination
+        // Apply global filters using the centralized GlobalFilterService
+        if (pagination.FilterActive == true)
+        {
+            filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, user);
+        }
+        // Apply access control filters (role-based permissions only) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
         
         // If filteredData is a list, we need to handle pagination manually
@@ -516,12 +617,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 .Skip(excludedRows)
                 .Take(pagination.PageSize)
                 .ToArray();
-
-            // Load OrganizationUnitRelationships manually for all items
-            /*foreach (var item in pagedItems.Where(i => i.Partner != null))
+            // Load OrganizationUnitRelationships manually for all contacts and their partners
+            await pagedItems.LoadOrganizationUnitRelationshipsAsync(_context);
+            foreach (var item in pagedItems.Where(i => i.Partner != null))
             {
                 await item.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-            }*/
+            }
 
             // Get all unique user IDs from the contacts for user info lookup
             var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
@@ -592,42 +693,139 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup"]);
         if (entity == null) return null;
 
-        // Load OrganizationUnitRelationships manually
-        /*if (entity.Partner != null)
+        /// Load OrganizationUnitRelationships manually for all contacts and their partners
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
+        if (entity.Partner != null)
         {
             await entity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-        }*/
+        }
 
         return await MapEntityToModel(entity, mapper, GetCurrentUserOrSystemContext());
     }
 
-    public async Task<ContactModel?> GetContactWithInteractionsAsync(int id)
+    /// <summary>
+    /// Gets contact with interactions formatted for AI prompt processing
+    /// </summary>
+    public async Task<object> GetContactWithInteractionsAsync(ClaimsPrincipal user, int id)
     {
-        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup", "Interactions"]);
-        if (entity == null) return null;
-
-        // Load OrganizationUnitRelationships manually
-        /*if (entity.Partner != null)
-        {
-            await entity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-        }*/
-
-        var result = await MapEntityToModel(entity, mapper, GetCurrentUserOrSystemContext());
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup", "Interactions", "Documents"]);
+        if (entity == null) return new { error = "Contact not found" };
         
-        // Map interactions if they exist - commenting out problematic properties
-        if (entity.Interactions?.Any() == true)
+        // Create structured JSON for AI prompt placeholders
+        var result = new
         {
-            result.Interactions = entity.Interactions.Select(i => new InteractionModel
+            id = entity.Id,
+            fullName = $"{entity.FirstName} {entity.LastName}".Trim(),
+            firstName = entity.FirstName,
+            middleName = entity.MiddleName,
+            lastName = entity.LastName,
+            suffix = entity.Suffix,
+            salutation = entity.Salutation,
+            email = entity.Email,
+            title = entity.Title,
+            department = entity.Department,
+            description = entity.Description,
+            phone = entity.Phone,
+            mobile = entity.Mobile,
+            status = entity.Status.ToString(),
+            
+            // Partner information
+            partner = entity.Partner != null ? new
             {
-                Id = i.Id,
-                Subject = i.Subject,
-                Description = i.Description,
-                Date = i.Date,
-                Type = i.Type
-                // ContactId = i.ContactId,  // These properties may not exist
-                // PartnerId = i.PartnerId
-            }).ToList();
-        }
+                id = entity.Partner.Id,
+                name = entity.Partner.Name,
+                status = entity.Partner.Status.ToString(),
+                partnerGroup = entity.Partner.PartnerGroup?.Name,
+                liaisonOffice = entity.Partner.LiaisonOffice?.Name
+            } : null,
+            
+            // Interaction history with full details
+            interactions = entity.Interactions?.Select(i => new
+            {
+                id = i.Id,
+                subject = i.Subject,
+                description = i.Description,
+                date = i.Date.ToString("yyyy-MM-dd HH:mm"),
+                type = i.Type.ToString(),
+                location = i.Location,
+                status = "Active" // Default status for interactions
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Contact details and communication info
+            contactDetails = new
+            {
+                profilePictureUrl = entity.ProfilePictureUrl,
+                hasProfilePicture = !string.IsNullOrEmpty(entity.ProfilePictureUrl)
+            },
+            
+            // Mailing address information
+            mailingAddress = !string.IsNullOrEmpty(entity.MailingStreet) ? new
+            {
+                street = entity.MailingStreet,
+                street2 = entity.MailingStreet2,
+                city = entity.MailingCity,
+                state = entity.MailingStateProvince,
+                postalCode = entity.MailingPostalCode,
+                country = entity.MailingCountry,
+                fullAddress = string.Join(", ", new[] {
+                    entity.MailingStreet,
+                    entity.MailingStreet2,
+                    entity.MailingCity,
+                    entity.MailingStateProvince,
+                    entity.MailingPostalCode,
+                    entity.MailingCountry
+                }.Where(s => !string.IsNullOrEmpty(s)))
+            } : null,
+            
+            // Assistant information
+            assistant = !string.IsNullOrEmpty(entity.Assistant) ? new
+            {
+                name = entity.Assistant,
+                phone = entity.AssistantPhone,
+                email = entity.AssistantEmail
+            } : null,
+            
+            // Documents and attachments
+            documents = entity.Documents?.Select(d => new
+            {
+                id = d.Id,
+                link = d.Link,
+                type = d.Type,
+                documentType = d.DocumentType?.Name,
+                uploadDate = d.CreatedDate.ToString("yyyy-MM-dd"),
+                isCV = d.Link?.ToLower().Contains("cv") == true || 
+                       d.Link?.ToLower().Contains("resume") == true ||
+                       d.Type?.ToLower().Contains("cv") == true ||
+                       d.Type?.ToLower().Contains("resume") == true,
+                downloadUrl = d.Link
+            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+            
+            // Summary statistics
+            summary = new
+            {
+                totalInteractions = entity.Interactions?.Count ?? 0,
+                totalDocuments = entity.Documents?.Count ?? 0,
+                hasCV = entity.Documents?.Any(d => 
+                    d.Link?.ToLower().Contains("cv") == true || 
+                    d.Link?.ToLower().Contains("resume") == true ||
+                    d.Type?.ToLower().Contains("cv") == true ||
+                    d.Type?.ToLower().Contains("resume") == true) ?? false,
+                lastInteractionDate = entity.Interactions?.OrderByDescending(i => i.Date).FirstOrDefault()?.Date.ToString("yyyy-MM-dd"),
+                recentInteractions = entity.Interactions?.Where(i => i.Date >= DateTime.UtcNow.AddDays(-30)).Count() ?? 0
+            },
+            
+            // Audit information
+            auditInfo = new
+            {
+                createdDate = entity.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
+                lastModifiedDate = entity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not modified",
+                createdBy = entity.CreatedBy,
+                lastModifiedBy = entity.LastModifiedBy
+            },
+            
+            // User profile information for context
+            userProfile = await GetUserProfileForAIAsync(user)
+        };
 
         return result;
     }
@@ -645,21 +843,18 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             .GetAll(["Partner", "Partner.PartnerGroup"])
             .AsQueryable();
 
-        // Load OrganizationUnitRelationships manually for all items
-        /*foreach (var qItem in query.Where(i => i.Partner != null))
-        {
-            await qItem.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-        }*/
-
         // Cast to base type to apply specification, then cast back to derived type
         var baseQuery = query.Cast<Contact>();
         var filteredBaseQuery = baseQuery.ApplySpecification(specification);
         var filteredQuery = filteredBaseQuery.OfType<UNOPSContact>();
         
-        // Apply org unit filtering if the specification supports it
-        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        // Apply global filters using the centralized GlobalFilterService
+        if (pagination.FilterActive == true)
+        {
+            filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, user);
+        }
 
-        // Apply access control filters (row and column filtering) BEFORE pagination
+        // Apply access control filters (role-based permissions only) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
         
         // If filteredData is a list, we need to handle pagination manually
@@ -675,11 +870,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 .Take(pagination.PageSize)
                 .ToArray();
 
-            // Load OrganizationUnitRelationships manually for all items
-            /*foreach (var item in pagedItems.Where(i => i.Partner != null))
+            // Load OrganizationUnitRelationships manually for all contacts and their partners
+            await pagedItems.LoadOrganizationUnitRelationshipsAsync(_context);
+            foreach (var item in pagedItems.Where(i => i.Partner != null))
             {
                 await item.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
-            }*/
+            }
 
             // Get all unique user IDs from the contacts for user info lookup
             var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
@@ -732,9 +928,26 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         PatchNonNullProperties(model, entity);
         entity.Name = String.Concat(model.Salutation, ' ', model.FirstName, ' ', model.MiddleName, ' ', model.LastName);
 
+        // Handle OrganizationHierarchyIds if provided
+        if (model.OrganizationHierarchyIds != null)
+        {
+            await UpdateContactOrganizationUnitRelationshipsAsync(entity.Id, model.OrganizationHierarchyIds);
+        }
+
         await contactRepository.UpdateAsync(entity);
         
         var updatedEntity = await contactRepository.GetByIdAsync(entity.Id, ["Partner"]);
+
+        // Load OrganizationUnitRelationships manually
+        if (updatedEntity != null)
+        {
+            await updatedEntity.LoadOrganizationUnitRelationshipsAsync(_context);
+            if (updatedEntity.Partner != null)
+            {
+                await updatedEntity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+            }
+        }
+
         return await MapEntityToModel(updatedEntity, mapper, GetCurrentUserOrSystemContext());
     }
 
@@ -866,6 +1079,13 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 return null;
             }
 
+            // Load OrganizationUnitRelationships manually for all contacts and their partners
+            await contact.LoadOrganizationUnitRelationshipsAsync(_context);
+            if (contact.Partner != null)
+            {
+                await contact.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+            }
+
             // Apply access control filters to ensure user has permission to access this contact
             var query = _context.Contacts
                                 .Where(c => c.Id == contact.Id)
@@ -984,6 +1204,9 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return unmatchedEmails;
     }
     
+    /// <summary>
+    /// Gets partner names from domain lookup using AI - original private method for internal use
+    /// </summary>
     private async Task<Dictionary<string, string>> GetPartnerNamesFromGeminiAsync(List<string> domains)
     {
         var result = new Dictionary<string, string>();
@@ -1080,6 +1303,289 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     }
 
     /// <summary>
+    /// Gets comprehensive partner names from domain lookup using AI, with full user context and analytics
+    /// </summary>
+    /// <summary>
+    /// Gets partner names from Gemini processing for AI prompts - reflection-compatible version
+    /// </summary>
+    public async Task<object> GetPartnerNamesFromGeminiAsync(ClaimsPrincipal user, int id)
+    {
+        // Get contact details to extract domain information
+        var contact = await contactRepository.GetByIdAsync(id, ["Partner"]);
+        if (contact == null)
+        {
+            return new
+            {
+                contactId = id,
+                domains = new List<string>(),
+                partnerNames = new Dictionary<string, string>(),
+                searchResults = new List<object>(),
+                summary = new
+                {
+                    total = 0,
+                    resolved = 0,
+                    unresolved = 0,
+                    successRate = "0%"
+                },
+                searchMetadata = new
+                {
+                    searchDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+                    searchMethod = "Gemini AI Processing"
+                },
+                domainAnalysis = new List<object>(),
+                userProfile = await GetUserProfileForAIAsync(user)
+            };
+        }
+
+        // Extract domain from contact's email if available
+        var domains = new List<string>();
+        if (!string.IsNullOrEmpty(contact.Email) && contact.Email.Contains("@"))
+        {
+            var domain = contact.Email.Split('@')[1];
+            domains.Add(domain);
+        }
+
+        // If contact has partner, also try to extract domain from partner name or other info
+        if (contact.Partner != null && !string.IsNullOrEmpty(contact.Partner.Name))
+        {
+            // You could add logic here to derive domains from partner names
+            // For now, we'll work with email domain
+        }
+
+        // Call the existing method with domains
+        return await GetPartnerNamesForAIAsync(user, domains);
+    }
+
+    public async Task<object> GetPartnerNamesForAIAsync(ClaimsPrincipal user, List<string> domains)
+    {
+        var partnerNameResults = new Dictionary<string, string>();
+        
+        // Initialize with fallback values
+        foreach (var domain in domains)
+        {
+            partnerNameResults[domain] = $"Organization for {domain}";
+        }
+        
+        if (!domains.Any())
+        {
+            // Return comprehensive response even with empty domains
+            return new
+            {
+                domains = new List<string>(),
+                partnerNames = partnerNameResults,
+                searchResults = new List<object>(),
+                summary = new
+                {
+                    totalDomains = 0,
+                    resolvedDomains = 0,
+                    unresolvedDomains = 0,
+                    successRate = 0.0
+                },
+                searchMetadata = new
+                {
+                    searchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm"),
+                    searchMethod = "AI Domain Lookup",
+                    promptType = "domain_organization_lookup"
+                },
+                userProfile = await GetUserProfileForAIAsync(user)
+            };
+        }
+        
+        var searchResults = new List<object>();
+        var resolvedCount = 0;
+        
+        try
+        {
+            // Get the prompt configuration from the AiPrompt table
+            var promptConfig = promptRepository.GetAll()
+                .Where(p => p.Type == "domain_organization_lookup" && p.Status == EntityStatus.Active)
+                .FirstOrDefault();
+            
+            if (promptConfig == null)
+            {
+                _logger?.LogWarning("No active AiPrompt found for domain_organization_lookup");
+                
+                // Return comprehensive response with error info
+                return new
+                {
+                    domains = domains,
+                    partnerNames = partnerNameResults,
+                    searchResults = searchResults,
+                    error = "No active AI prompt configuration found for domain organization lookup",
+                    summary = new
+                    {
+                        totalDomains = domains.Count,
+                        resolvedDomains = 0,
+                        unresolvedDomains = domains.Count,
+                        successRate = 0.0
+                    },
+                    searchMetadata = new
+                    {
+                        searchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm"),
+                        searchMethod = "AI Domain Lookup",
+                        promptType = "domain_organization_lookup",
+                        promptFound = false
+                    },
+                    userProfile = await GetUserProfileForAIAsync(user)
+                };
+            }
+            
+            // Create comprehensive prompt data with user context
+            var promptData = new
+            {
+                domains = domains,
+                searchContext = new
+                {
+                    requestedBy = user?.Identity?.Name ?? "System",
+                    searchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm"),
+                    totalDomains = domains.Count
+                },
+                instructions = "Identify the primary organization name for each domain. Return accurate, well-known organization names."
+            };
+            
+            var domainsJson = System.Text.Json.JsonSerializer.Serialize(promptData);
+            
+            // Use the existing AI service to make the call
+            var aiService = new AiContextualService(_configuration, _context, null);
+            var response = await aiService.FetchResultFromGemini(promptConfig, domainsJson);
+            
+            // Parse the response - expecting a JSON array
+            try
+            {
+                var parsedResponse = aiService.GetDetailsFromGeminiResponse(response);
+                var responseText = parsedResponse["Message"]?.ToString() ??
+                                    parsedResponse["text"]?.ToString() ?? 
+                                    parsedResponse["content"]?.ToString() ?? 
+                                    response.Trim();
+                
+                // Clean up the response text
+                responseText = responseText?.Trim()?.Trim('"');
+                
+                // Parse the JSON response
+                if (!string.IsNullOrEmpty(responseText))
+                {
+                    var organizationResults = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, string>>>(responseText);
+                    
+                    if (organizationResults != null)
+                    {
+                        foreach (var orgResult in organizationResults)
+                        {
+                            if (orgResult.TryGetValue("domain", out var domain) && 
+                                orgResult.TryGetValue("organization", out var organization))
+                            {
+                                var searchResult = new
+                                {
+                                    domain = domain,
+                                    organization = organization,
+                                    resolved = !string.IsNullOrEmpty(organization) && 
+                                              organization != "Unknown" && 
+                                              !organization.Contains("cannot") &&
+                                              !organization.Contains("unable"),
+                                    confidence = "AI Generated",
+                                    source = "Gemini AI"
+                                };
+                                
+                                searchResults.Add(searchResult);
+                                
+                                if (searchResult.resolved)
+                                {
+                                    partnerNameResults[domain] = organization;
+                                    resolvedCount++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception parseEx)
+            {
+                _logger?.LogWarning($"Failed to parse Gemini response for domain lookup: {parseEx.Message}. Response: {response}");
+                
+                // Try to extract text directly from response if JSON parsing fails
+                var cleanResponse = response?.Trim()?.Trim('"');
+                if (!string.IsNullOrEmpty(cleanResponse) && cleanResponse != "Unknown")
+                {
+                    // If single domain and simple text response, use it
+                    if (domains.Count == 1)
+                    {
+                        partnerNameResults[domains[0]] = cleanResponse;
+                        resolvedCount = 1;
+                        
+                        searchResults.Add(new
+                        {
+                            domain = domains[0],
+                            organization = cleanResponse,
+                            resolved = true,
+                            confidence = "AI Generated (Fallback)",
+                            source = "Gemini AI (Text Parse)"
+                        });
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning($"Failed to get organization names from Gemini for domains: {ex.Message}");
+            
+            // Add error info to search results
+            foreach (var domain in domains)
+            {
+                searchResults.Add(new
+                {
+                    domain = domain,
+                    organization = partnerNameResults[domain],
+                    resolved = false,
+                    confidence = "Fallback",
+                    source = "System Generated",
+                    error = ex.Message
+                });
+            }
+        }
+        
+        // Return comprehensive response with all context
+        return new
+        {
+            domains = domains,
+            partnerNames = partnerNameResults,
+            searchResults = searchResults,
+            
+            // Summary statistics
+            summary = new
+            {
+                totalDomains = domains.Count,
+                resolvedDomains = resolvedCount,
+                unresolvedDomains = domains.Count - resolvedCount,
+                successRate = domains.Count > 0 ? (double)resolvedCount / domains.Count : 0.0,
+                fallbacksUsed = domains.Count - resolvedCount
+            },
+            
+            // Search metadata
+            searchMetadata = new
+            {
+                searchDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm"),
+                searchMethod = "AI Domain Lookup",
+                promptType = "domain_organization_lookup",
+                promptFound = true,
+                aiModel = "Gemini",
+                processingTime = "Real-time"
+            },
+            
+            // Domain analysis
+            domainAnalysis = domains.Select(d => new
+            {
+                domain = d,
+                tld = d.Contains('.') ? d.Substring(d.LastIndexOf('.')) : "unknown",
+                length = d.Length,
+                hasSubdomain = d.Count(c => c == '.') > 1,
+                resolvedName = partnerNameResults.ContainsKey(d) ? partnerNameResults[d] : null
+            }).Cast<dynamic>().ToList(),
+            
+            // User profile information for context
+            userProfile = await GetUserProfileForAIAsync(user)
+        };
+    }
+
+    /// <summary>
     /// Gets multiple contacts by their IDs for search results
     /// </summary>
     public override async Task<List<object>> GetByIdsAsync(int[] ids, ClaimsPrincipal user = null)
@@ -1092,11 +1598,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             .Where(c => ids.Contains(c.Id))
             .ToList();
 
-        // Load OrganizationUnitRelationships manually for all contacts
-        /*foreach (var contact in contacts.Where(c => c.Partner != null))
+        // Load OrganizationUnitRelationships manually for all contacts and their partners
+        await contacts.LoadOrganizationUnitRelationshipsAsync(_context);
+        foreach (var item in contacts.Where(i => i.Partner != null))
         {
-            contact.Partner.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
-        }*/
+            await item.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }
 
         // Apply access control if user context is provided
         if (user != null)
@@ -1130,69 +1637,55 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return contacts.Select(contact => (object)MapEntityToModelWithUserInfo(contact, mapper, userInfoLookup, orgHierarchyLookup)).ToList();
     }
     
-    /// <summary>
-    /// Applies org unit filtering if the specification supports it using manual joins for Contact specifications
-    /// </summary>
-    private IQueryable<UNOPSContact> ApplyOrgUnitFilterIfSupported(IQueryable<UNOPSContact> query, ISpecification<Contact> specification)
-    {
-        // Check if specification has ApplyOrgUnitFilter method and call it
-        var specType = specification.GetType();
-        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<Contact>), typeof(DbContext) });
-        
-        if (filterMethod != null)
-        {
-            try
-            {
-                // Cast to base type for the ApplyOrgUnitFilter method
-                var baseQuery = query.Cast<Contact>();
-                var result = filterMethod.Invoke(specification, new object[] { baseQuery, _context });
-                if (result is IQueryable<Contact> filteredBaseQuery)
-                {
-                    // Cast back to UNOPSContact using OfType for safety
-                    return filteredBaseQuery.OfType<UNOPSContact>();
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue without org unit filtering
-                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
-            }
-        }
-        
-        // If no ApplyOrgUnitFilter method found, return original query
-        // This is normal for composite specifications that handle filtering internally
-        return query;
-    }
+    
     
     /// <summary>
-    /// Applies org unit filtering if the specification supports it using manual joins for UNOPSContact specifications
+    /// Get supported search fields for contacts - helps frontend build dynamic search forms
     /// </summary>
-    private IQueryable<UNOPSContact> ApplyUNOPSContactOrgUnitFilterIfSupported(IQueryable<UNOPSContact> query, ISpecification<UNOPSContact> specification)
+    /// <returns>List of all supported search fields with their metadata</returns>
+    public List<SearchFieldInfo> GetContactSearchFields()
     {
-        // Check if specification has ApplyOrgUnitFilter method and call it
-        var specType = specification.GetType();
-        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<UNOPSContact>), typeof(DbContext) });
-        
-        if (filterMethod != null)
+        try
         {
-            try
+            var fields = new List<SearchFieldInfo>
             {
-                // Direct call for UNOPSContact specifications
-                var result = filterMethod.Invoke(specification, new object[] { query, _context });
-                if (result is IQueryable<UNOPSContact> filteredQuery)
-                {
-                    return filteredQuery;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log error but continue without org unit filtering
-                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
-            }
+                // Direct Contact fields - using translation keys
+                new() { Field = "fullName", DisplayName = "label.contact.fullName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "firstName", DisplayName = "label.contact.firstName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "lastName", DisplayName = "label.contact.lastName", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "email", DisplayName = "label.contact.email", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "title", DisplayName = "label.contact.title", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "department", DisplayName = "label.contact.department", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "phone", DisplayName = "label.contact.phone", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "mobile", DisplayName = "label.contact.mobile", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { 
+                    Field = "status", 
+                    DisplayName = "label.common.status", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Inactive", Label = "enums.entityStatus.inactive" },
+                        new() { Value = "Active", Label = "enums.entityStatus.active" },
+                        new() { Value = "Closed", Label = "enums.entityStatus.closed" },
+                        new() { Value = "Draft", Label = "enums.entityStatus.draft" },
+                        new() { Value = "Archived", Label = "enums.entityStatus.archived" }
+                    }
+                },
+                new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+
+                // Partner relationship fields - using translation keys
+                new() { Field = "partner.name", DisplayName = "label.partner.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partner.partnerGroup.name", DisplayName = "label.partnerGroup.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partner.liaisonOffice.name", DisplayName = "label.liaisonOffice.name", FieldType = "text", IsNavigationProperty = true, AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+            };
+            
+            return fields;
         }
-        
-        // If no ApplyOrgUnitFilter method found, return original query
-        // This is normal for specifications that don't support org unit filtering
-        return query;
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error retrieving contact search fields");
+            return new List<SearchFieldInfo>();
+        }
     }
 }

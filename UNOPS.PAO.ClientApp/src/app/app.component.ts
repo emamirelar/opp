@@ -4,14 +4,13 @@ import { AuthService } from './essentials/services/auth.service';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FeedbackDialogComponent } from './common/reusables/widgets/feedback-dialog/feedback-dialog.component';
-import { TranslationCheckerService } from './services/translation-checker.service';
 
 @Component({
   selector: 'app-root',
   imports: [
-    RouterOutlet, 
-    RouterModule, 
-    ToastModule, 
+    RouterOutlet,
+    RouterModule,
+    ToastModule,
     ConfirmDialogModule,
     FeedbackDialogComponent
   ],
@@ -27,72 +26,47 @@ export class AppComponent implements AfterViewInit {
   public isLoggedIn: Boolean = false;
   @ViewChild('dynamicComponent', { read: ViewContainerRef, static: false }) dynamicComponent!: ViewContainerRef;
   viewContainerRef!: ViewContainerRef;
-  
-  private translationChecker = inject(TranslationCheckerService);
-  
+
+
   constructor(
     private authService: AuthService,
     private router: Router
   ) { }
-  
+
   ngOnInit() {
-    // Add translation monitoring for development
-    if (this.isProduction() === false) {
-      // Clear any previously cached false positives
-      this.translationChecker.clearMissingTranslations();
-      
-      // Perform fresh comprehensive check
-      this.translationChecker.performComprehensiveCheck().subscribe(results => {
-        const missing = results.reduce((sum, stat) => sum + stat.missingKeys, 0);
-        if (missing > 0) {
-          console.warn(`🚨 ${missing} missing translations detected`);
-          console.log('Translation check results:', results);
-        } else {
-          console.log('✅ All translations are complete!');
-        }
-      });
-    }
-    
     const cookies = document.cookie.split(';').map(c => c.trim());
     const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
     const hasCookie = !!devCookie;
-    
-    console.log('[APP] Current cookies:', {
-      allCookies: document.cookie,
-      cookies: cookies,
-      devCookie: devCookie,
-      hasCookie: hasCookie
-    });
-    
+
     // Fast path for dev cookie - skip all API checks
     if (hasCookie) {
-      
+
       this.isLoggedIn = true;
       // If on login page with dev cookie, redirect to home
       if (window.location.href.includes('/login')) {
-        
+
         window.location.href = '/';
       }
       return;
     }
-    
+
     // If no dev cookie, proceed with normal auth check
-    
-    
+
+
     this.authService.isLogedIn().subscribe((res) => {
       this.isLoggedIn = res;
-      
+
     });
   }
 
   private isProduction(): boolean {
     const hostname = window.location.hostname;
-    return hostname !== 'localhost' && 
+    return hostname !== 'localhost' &&
            hostname !== '127.0.0.1' &&
            !hostname.includes('dev') &&
            !hostname.includes('staging');
   }
-  
+
   ngAfterViewInit() {
     this.viewContainerRef = this.dynamicComponent;
   }

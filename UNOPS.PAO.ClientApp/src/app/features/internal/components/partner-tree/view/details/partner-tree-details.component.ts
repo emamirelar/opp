@@ -16,7 +16,7 @@ import { GDriveDocumentComponent } from '../../../../overrides/reusables/compone
 import { AiPanelComponent, AiDataService } from '../../../../../../common/reusables/components/ai-panel/ai-panel.component';
 import { GeminiService } from '../../../../services/gemini.service';
 
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 //PrimeNG imports
 import { InputTextModule } from 'primeng/inputtext';
@@ -96,6 +96,7 @@ export class PartnerTreeDetailsComponent implements OnInit {
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
   geminiService = inject(GeminiService);
+  translateService = inject(TranslateService);
 
   // RBAC permissions
   permissionUtilityService = inject(PermissionUtilityService);
@@ -177,9 +178,9 @@ export class PartnerTreeDetailsComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading partner tree data:', error);
+        console.error(this.translateService.instant('error.loading_partner_tree_data'), error);
         this.feedbackDialogService.showErrorToast({
-          detail: 'Failed to load partner tree data'
+          detail: this.translateService.instant('error.failed_to_load_partner_tree_data')
         });
         this.isLoading.set(false);
       }
@@ -231,13 +232,13 @@ export class PartnerTreeDetailsComponent implements OnInit {
     // Check permission before opening modal
     if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit this partner tree'
+        detail: this.translateService.instant('error.no_permission_edit_partner_tree')
       });
       return;
     }
 
     const ref = this.dialogService.open(PartnerTreeItemComponent, {
-      header: 'Edit Partner Level',
+      header: this.translateService.instant('dialog.edit_partner_level'),
       width: '50rem',
       closable: true,
       data: {
@@ -252,11 +253,15 @@ export class PartnerTreeDetailsComponent implements OnInit {
         this.cachedDataService.partnerTreeService.getPartnerTreeDataById(result.id!.toString()).subscribe({
           next: (data: any) => {
             this.partnerTree.set(data.data);
-            this.feedbackDialogService.showSuccessToast({ detail: 'Partner tree updated successfully!' });
+            this.feedbackDialogService.showSuccessToast({ 
+              detail: this.translateService.instant('success.partner_tree_updated_successfully')
+            });
             this.isLoading.set(false);
           },
           error: (error) => {
-            this.feedbackDialogService.showErrorToast({ detail: 'Failed to update partner tree' });
+            this.feedbackDialogService.showErrorToast({ 
+              detail: this.translateService.instant('error.failed_to_update_partner_tree')
+            });
             this.isLoading.set(false);
           }
         });
@@ -283,7 +288,7 @@ export class PartnerTreeDetailsComponent implements OnInit {
           this.partnerColumnsLoading.set(false);
         },
         error: (error) => {
-          console.error('Failed to load partner columns:', error);
+          console.error(this.translateService.instant('error.failed_to_load_partner_columns'), error);
           // Use fallback columns if API fails
           this.setFallbackPartnerColumns();
           this.partnerColumnsLoading.set(false);
@@ -328,7 +333,7 @@ export class PartnerTreeDetailsComponent implements OnInit {
           const value = this.getNestedProperty(rowData, expression.trim());
           return value !== null && value !== undefined ? String(value) : '';
         } catch (error) {
-          console.warn(`Template expression error: ${expression}`, error);
+          console.warn(`${this.translateService.instant('error.template_expression_error')} ${expression}`, error);
           return '';
         }
       });

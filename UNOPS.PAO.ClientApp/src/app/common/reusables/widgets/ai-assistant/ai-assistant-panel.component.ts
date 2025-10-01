@@ -9,7 +9,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MenuModule } from 'primeng/menu';
 import { Menu } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AiAssistantData } from './ai-assistant.data';
 import { signal, computed } from '@angular/core';
 import { LayoutService } from '../../../layouts/services/layout.service';
@@ -56,6 +56,14 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   @Input() mode: 'overlay' | 'fullscreen' = 'overlay'; // Mode determines card click behavior
   @Output() cardClicked = new EventEmitter<any>();
 
+  // Mobile detection
+  isMobile = computed(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 768;
+    }
+    return false;
+  });
+
   firstScroll = signal(true);
   message = signal('');
   selectedFiles = signal<{ file: File, name: string, content: string }[]>([]);
@@ -81,6 +89,8 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   // Sequential content display
   contentDisplayState = signal<{[messageIndex: number]: number}>({});
   
+  // No longer needed - content renders directly from arrays
+  
   // User info for personalized greeting
   userName = signal<string>('');
   
@@ -90,51 +100,24 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   showSuggestions = signal(true);
   suggestionsError = signal(false);
   
+  // Resize listener reference for cleanup
+  private resizeListener?: () => void;
+  
   // Check if AI is currently in fullscreen mode (on AI route)
   isInFullscreenMode = computed(() => {
     return this.router.url.startsWith('/ai');
   });
   
-  // Example prompts for welcome message - Gemini style business-specific
-  examplePrompts = [
-    { 
-      text: 'Find qualified partners for infrastructure projects in West Africa', 
-      icon: 'pi pi-search',
-      category: 'Partner Search'
-    },
-    { 
-      text: 'Create a proposal summary for a climate resilience project', 
-      icon: 'pi pi-file-edit',
-      category: 'Proposal Writing'
-    },
-    { 
-      text: 'Analyze partnership trends in renewable energy sector', 
-      icon: 'pi pi-chart-line',
-      category: 'Data Analysis'
-    },
-    { 
-      text: 'Draft an engagement strategy for local NGOs', 
-      icon: 'pi pi-users',
-      category: 'Engagement'
-    },
-    { 
-      text: 'Review compliance requirements for new partnerships', 
-      icon: 'pi pi-shield',
-      category: 'Compliance'
-    },
-    { 
-      text: 'Generate a partnership impact report template', 
-      icon: 'pi pi-file-pdf',
-      category: 'Reporting'
-    }
-  ];
+  // Example prompts for welcome message - initialized after translation service is available
+  examplePrompts: { text: string, icon: string, category: string }[] = [];
 
   constructor(
     public aiAssistantData: AiAssistantData,
     private router: Router,
     private globalFilterService: GlobalFilterService,
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private translateService: TranslateService
   ) {
     effect(() => {
       const chatHistory = this.aiAssistantData.chatHistory();
@@ -180,6 +163,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.message.set('');
     this.loadUserInfo();
+    this.initializeExamplePrompts();
     
     if (this.viewContainerRef) {
       this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
@@ -195,28 +179,269 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
         this.scrollToBottom(true); // Use smooth scroll for new messages
       }, 100);
     });
+
+    // Listen for window resize to update mobile detection
+    if (typeof window !== 'undefined') {
+      this.resizeListener = () => {
+        this.cdr.markForCheck();
+      };
+      window.addEventListener('resize', this.resizeListener);
+    }
+
+    // Remove progressive rendering event subscription to prevent loops
+    // Content will render directly from streamingTypes arrays in template
     
     this.cdr.detectChanges();
   }
 
+  private initializeExamplePrompts(): void {
+    this.examplePrompts = [
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.partnersInfrastructure'), 
+        icon: 'pi pi-search',
+        category: this.translateService.instant('aiAssistant.exampleCategories.partnerSearch')
+      },
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.proposalClimate'), 
+        icon: 'pi pi-file-edit',
+        category: this.translateService.instant('aiAssistant.exampleCategories.proposalWriting')
+      },
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.trendsRenewable'), 
+        icon: 'pi pi-chart-line',
+        category: this.translateService.instant('aiAssistant.exampleCategories.dataAnalysis')
+      },
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.strategyNgos'), 
+        icon: 'pi pi-users',
+        category: this.translateService.instant('aiAssistant.exampleCategories.engagement')
+      },
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.complianceReview'), 
+        icon: 'pi pi-shield',
+        category: this.translateService.instant('aiAssistant.exampleCategories.compliance')
+      },
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.impactReport'), 
+        icon: 'pi pi-file-pdf',
+        category: this.translateService.instant('aiAssistant.exampleCategories.reporting')
+      }
+    ];
+  }
+
+  // Removed handleProgressiveRender - no longer needed
+
+  // Enhanced cache for getStreamingTypeEntries to prevent card re-renders
+  private streamingEntriesCache: {chunkType: string, items: any[]}[] = [];
+  private lastStreamingTypesStructureHash: string = '';
+  private chunkTypeWrapperCache: Map<string, {chunkType: string, items: any[]}> = new Map();
+
+  /**
+   * Convert streamingTypes object to array for template iteration
+   * This method creates stable references for completed cards to prevent re-renders
+   */
+  getStreamingTypeEntries(streamingTypes: any): {chunkType: string, items: any[]}[] {
+    if (!streamingTypes) return [];
+    
+    // Create a structural hash that only considers true structural changes:
+    // - Presence/absence of chunk types
+    // - Number of items per chunk type  
+    // - Arrival order (to maintain rendering order)
+    // Deliberately excludes completion status changes to avoid unnecessary rebuilds
+    const structuralData = Object.keys(streamingTypes).sort().map(key => {
+      const items = streamingTypes[key] || [];
+      return {
+        key,
+        length: items.length,
+        firstItemArrivalOrder: items[0]?.arrivalOrder || 0
+      };
+    });
+    
+    const currentStructureHash = JSON.stringify(structuralData);
+    
+    // Return cached result if structure hasn't changed
+    if (currentStructureHash === this.lastStreamingTypesStructureHash && this.streamingEntriesCache.length > 0) {
+      console.log('🎯 Using cached streaming entries - structure unchanged');
+      return this.streamingEntriesCache;
+    }
+    
+    console.log('🔄 Rebuilding streaming entries - structure changed');
+    console.log('🔍 Structure hash details:', {
+      oldHash: this.lastStreamingTypesStructureHash,
+      newHash: currentStructureHash,
+      structuralData: structuralData
+    });
+    
+    // Build entries but preserve wrapper objects for completed card types
+    const activeChunkTypes = Object.keys(streamingTypes)
+      .filter(chunkType => streamingTypes[chunkType] && streamingTypes[chunkType].length > 0);
+    
+    const entriesWithOrder = activeChunkTypes.map(chunkType => {
+      const items = streamingTypes[chunkType];
+      const firstItem = items[0];
+      
+      // Check if this chunk type has completed cards
+      const hasCompletedCards = chunkType === 'card' && items.some((item: any) => item.completed === true);
+      
+      // AGGRESSIVE CACHING: For card types, always try to reuse cached wrapper if it exists
+      if (chunkType === 'card' && this.chunkTypeWrapperCache.has(chunkType)) {
+        const cached = this.chunkTypeWrapperCache.get(chunkType)!;
+        
+        // For cards, reuse wrapper if:
+        // 1. Items array is the same reference, OR
+        // 2. Items have the same length and first item has same renderingId (safety check)
+        const sameReference = cached.items === items;
+        const sameStructure = cached.items.length === items.length && 
+                            cached.items[0]?.renderingId === items[0]?.renderingId;
+        
+        if (sameReference || (hasCompletedCards && sameStructure)) {
+          console.log(`🔒 AGGRESSIVELY reusing cached wrapper for ${chunkType} cards:`, {
+            sameReference: sameReference,
+            sameStructure: sameStructure,
+            hasCompletedCards: hasCompletedCards,
+            cachedItemsRef: cached.items,
+            currentItemsRef: items,
+            itemsRefEqual: cached.items === items
+          });
+          
+          // Update items reference but keep the same wrapper object
+          cached.items = items;
+          
+          return {
+            ...cached,
+            arrivalOrder: firstItem?.arrivalOrder ?? 999999
+          };
+        }
+      }
+      
+      // Create new wrapper object only if we absolutely must
+      const newWrapper = {
+        chunkType: chunkType,
+        items: items // Use direct reference to prevent unnecessary copying
+      };
+      
+      // Cache wrappers for any card types (not just completed ones)
+      if (chunkType === 'card') {
+        this.chunkTypeWrapperCache.set(chunkType, newWrapper);
+        console.log(`💾 Cached new wrapper for ${chunkType} cards:`, {
+          hasCompletedCards: hasCompletedCards,
+          itemCount: items.length
+        });
+      }
+      
+      return {
+        ...newWrapper,
+        arrivalOrder: firstItem?.arrivalOrder ?? 999999
+      };
+    })
+    // Sort by the order chunks first appeared (chronological order)
+    .sort((a, b) => a.arrivalOrder - b.arrivalOrder);
+      
+    const result = entriesWithOrder.map(entry => ({
+      chunkType: entry.chunkType,
+      items: entry.items
+    }));
+    
+    // Update cache
+    this.streamingEntriesCache = result;
+    this.lastStreamingTypesStructureHash = currentStructureHash;
+    
+    // Clean up wrapper cache for chunk types that no longer exist
+    const currentChunkTypes = new Set(activeChunkTypes);
+    for (const cachedChunkType of this.chunkTypeWrapperCache.keys()) {
+      if (!currentChunkTypes.has(cachedChunkType)) {
+        this.chunkTypeWrapperCache.delete(cachedChunkType);
+        console.log(`🗑️ Cleaned up cache for removed chunk type: ${cachedChunkType}`);
+      }
+    }
+      
+    console.log('🎨 Template entries (in chronological order):', result.map((e, i) => `${i}: ${e.chunkType} (${e.items.length} items)`));
+    return result;
+  }
+
+  /**
+   * TrackBy function for chunk type pairs to prevent unnecessary re-creation of wrapper divs
+   */
+  trackByChunkType(index: number, chunkTypePair: {chunkType: string, items: any[]}): string {
+    return chunkTypePair.chunkType;
+  }
+
+  // Store stable references by renderingId to ensure cards don't get recreated
+  private stableItemRefs: Map<string, any> = new Map();
+
+  /**
+   * TrackBy function for progressive content to prevent unnecessary re-renders
+   * AGGRESSIVE: Use renderingId only, ignore all other changes for completed cards
+   */
+  trackByRenderingId = (index: number, item: any): string => {
+    const renderingId = item?.renderingId || `fallback-${index}`;
+    
+    // Ensure stableItemRefs is initialized
+    if (!this.stableItemRefs) {
+      this.stableItemRefs = new Map();
+    }
+    
+    // For cards, aggressively cache the first version we see
+    if (item?.type === 'card') {
+      if (!this.stableItemRefs.has(renderingId)) {
+        this.stableItemRefs.set(renderingId, item);
+        console.log('🎯 CACHING FIRST card reference:', {
+          renderingId: renderingId,
+          completed: item.completed,
+          objectRef: item
+        });
+      } else {
+        console.log('🎯 REUSING CACHED card reference:', {
+          renderingId: renderingId,
+          newCompleted: item.completed,
+          cachedCompleted: this.stableItemRefs.get(renderingId)?.completed,
+          sameObjectRef: this.stableItemRefs.get(renderingId) === item
+        });
+      }
+    }
+    
+    return renderingId;
+  };
+
   ngOnDestroy(): void {
     this.stopGeneratingDotsAnimation();
+    
+    // Clean up window resize listener
+    if (typeof window !== 'undefined' && this.resizeListener) {
+      window.removeEventListener('resize', this.resizeListener);
+    }
   }
 
   // Handle closing the AI Assistant
   closeAiAssistant(): void {
     // Check if we're on the AI route
     if (this.router.url.startsWith('/ai')) {
-      // On AI route, navigate back to home to return to popup mode
-      this.router.navigate(['/']);
-      // After navigation, open the AI assistant in popup mode
-      setTimeout(() => {
-        this.layoutService.onAIAssistantToggle();
-      }, 100);
+      if (this.isMobile()) {
+        // On mobile, navigate back to the previous route
+        const previousRoute = this.getPreviousRoute();
+        this.router.navigate([previousRoute]);
+      } else {
+        // On desktop, navigate back to home and open AI assistant in popup mode
+        this.router.navigate(['/']);
+        // After navigation, open the AI assistant in popup mode
+        setTimeout(() => {
+          this.layoutService.onAIAssistantToggle();
+        }, 100);
+      }
     } else {
       // In overlay mode, close the overlay
       this.layoutService.onAIAssistantToggle();
     }
+  }
+
+  // Get previous route for mobile navigation
+  private getPreviousRoute(): string {
+    // Try to get from session storage first
+    const storedRoute = sessionStorage.getItem('ai-assistant-previous-route');
+    if (storedRoute && storedRoute !== '/ai') {
+      return storedRoute;
+    }
+    return '/'; // Default fallback
   }
 
 
@@ -428,6 +653,10 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     const currentFiles = this.selectedFiles();
 
     if (currentMessage.trim() || currentFiles.length > 0) {
+      // Clear streaming cache for new message
+      this.streamingEntriesCache = [];
+      this.lastStreamingTypesStructureHash = '';
+      
       this.ngZone.run(() => {
         this.message.set('');
         this.cdr.detectChanges();
@@ -710,7 +939,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     if (validSessions.length === 0) {
       // Show placeholder when no sessions exist
       const menuItems: MenuItem[] = [{
-        label: 'No chat history available',
+        label: this.translateService.instant('aiAssistant.noChatsAvailable'),
         icon: 'pi pi-inbox',
         disabled: true,
         styleClass: 'text-gray-500'
@@ -739,11 +968,11 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       },
       // Add chat sessions
       ...sortedSessions.map(session => ({
-        label: (session as any).title || 'Untitled Chat',
+        label: (session as any).title || this.translateService.instant('aiAssistant.untitledChat'),
         icon: session.id === currentSessionId ? 'pi pi-check' : 'pi pi-comment',
         command: () => this.switchToSession(session.id!),
         styleClass: session.id === currentSessionId ? 'font-bold bg-blue-50' : '',
-        title: (session as any).title || 'Untitled Chat' // Tooltip
+        title: (session as any).title || this.translateService.instant('aiAssistant.untitledChat') // Tooltip
       }))
     ];
 
@@ -869,6 +1098,19 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     } else {
       this.openFullscreen();
     }
+  }
+
+  // Clear conversation
+  clearConversation(): void {
+    // Clear the streaming entries cache when starting a new conversation
+    this.streamingEntriesCache = [];
+    this.lastStreamingTypesStructureHash = '';
+    this.chunkTypeWrapperCache.clear();
+    this.stableItemRefs.clear();
+    
+    console.log('🗑️ Cleared all caches and stable references for new conversation');
+    
+    this.aiAssistantData.clearConversation();
   }
 
   // Sequential content display methods (modified to show all content immediately)
@@ -1094,7 +1336,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     try {
       return atob(data);
     } catch (error) {
-      return 'Unable to decode text content';
+      return this.translateService.instant('aiAssistant.unableToDecodeText');
     }
   }
 
@@ -1110,16 +1352,16 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   }
 
   getFileTypeName(mimeType: string): string {
-    if (!mimeType) return 'File';
+    if (!mimeType) return this.translateService.instant('aiAssistant.fileTypes.file');
     
-    if (mimeType.includes('word')) return 'Word Document';
-    if (mimeType.includes('excel') || mimeType.includes('sheet')) return 'Excel Spreadsheet';
-    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'PowerPoint Presentation';
-    if (mimeType.includes('zip')) return 'Archive';
-    if (mimeType.includes('json')) return 'JSON File';
-    if (mimeType.includes('xml')) return 'XML File';
+    if (mimeType.includes('word')) return this.translateService.instant('aiAssistant.fileTypes.wordDocument');
+    if (mimeType.includes('excel') || mimeType.includes('sheet')) return this.translateService.instant('aiAssistant.fileTypes.excelSpreadsheet');
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return this.translateService.instant('aiAssistant.fileTypes.powerpointPresentation');
+    if (mimeType.includes('zip')) return this.translateService.instant('aiAssistant.fileTypes.archive');
+    if (mimeType.includes('json')) return this.translateService.instant('aiAssistant.fileTypes.jsonFile');
+    if (mimeType.includes('xml')) return this.translateService.instant('aiAssistant.fileTypes.xmlFile');
     
-    return mimeType.split('/')[1]?.toUpperCase() || 'File';
+    return mimeType.split('/')[1]?.toUpperCase() || this.translateService.instant('aiAssistant.fileTypes.file');
   }
 
   getFileName(mimeType: string): string {
@@ -1298,7 +1540,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
               this.userName.set(name);
             } else {
               console.warn('No user info data received from API');
-              this.userName.set('User');
+              this.userName.set(this.translateService.instant('aiAssistant.user'));
             }
           },
           error: (error) => {

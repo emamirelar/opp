@@ -7,8 +7,14 @@ import { PaginationResponse } from '../../../common/models/pagination-response.m
 export interface AiPrompt {
   id: number;
   type: string;
-  promptFunction?: string;
-  prompt?: string;
+  
+  // NEW: Enhanced structure
+  dataRetrievalMethod?: string;
+  systemInstructions?: string;
+  userPrompt?: string;
+  feature?: string;
+  
+  // Existing fields
   description?: string;
   name?: string;
   createdAt: Date;
@@ -19,6 +25,14 @@ export interface AiPrompt {
   project: string;
   location: string;
   model: string;
+  
+  // NEW: Caching configuration
+  useCache?: boolean;
+  cacheInvalidationMinutes?: number;
+  
+  // LEGACY: Keep for backward compatibility
+  promptFunction?: string;
+  prompt?: string;
 }
 
 export interface GeminiModel {
@@ -46,7 +60,10 @@ export interface TestPromptRequest {
   type: string;
   id?: number;
   testData?: string;
-  prompt?: string;
+  // NEW: Enhanced structure
+  dataRetrievalMethod?: string;
+  systemInstructions?: string;
+  userPrompt?: string;
   model?: string;
   project?: string;
   location?: string;
@@ -55,12 +72,15 @@ export interface TestPromptRequest {
   maxOutputTokens?: number;
   googleSearch?: boolean;
   safetySettings?: string;
+  // LEGACY: Keep for backward compatibility
+  prompt?: string;
 }
 
 export interface TestPromptResponse {
   success: boolean;
   response?: string;
   error?: string;
+  dataRetrievalResult?: string; // JSON data retrieved by the data retrieval method
 }
 
 export interface GeminiModelUpgradeResult {

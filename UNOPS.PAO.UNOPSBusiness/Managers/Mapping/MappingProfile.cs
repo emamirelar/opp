@@ -5,16 +5,14 @@ using AutoMapper;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSDomain.Entities;
-using UNOPS.PAO.UNOPSDomain.Entities.Common;
 
 public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<Project, ProjectModel>();
-        CreateMap<Project, ProjectSummaryModel>();
         CreateMap<UNOPSPartner, UNOPS.PAO.Models.PartnerSummaryModel>();
-        CreateMap<ContactRequest, UNOPSContact>();
+        CreateMap<ContactRequest, UNOPSContact>()
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         CreateMap<UNOPSContact, ContactModel>()
             .PreserveReferences()
             .MaxDepth(2)
@@ -22,7 +20,8 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.ProfilePictureUrl, opt => opt.MapFrom(src => src.ProfilePictureUrl))
             .ForMember(dest => dest.Interactions, opt => opt.Ignore()); // Avoid circular reference - handle separately if needed
         CreateMap<ContactModel, UNOPSContact>()
-            .ForMember(dest => dest.Partner, opt => opt.Ignore());
+            .ForMember(dest => dest.Partner, opt => opt.Ignore())
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         CreateMap<InteractionRequest, UNOPSInteraction>()
             .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         CreateMap<UNOPSInteraction, InteractionModel>()

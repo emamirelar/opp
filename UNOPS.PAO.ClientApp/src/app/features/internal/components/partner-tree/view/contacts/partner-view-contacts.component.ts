@@ -10,6 +10,7 @@ import { map } from 'rxjs/operators';
 import { ContactViewModel, GroupedContact } from '../../../../models/contact-view.model';
 import { ContactService } from '../../../../services/contact.service';
 import { PartnerViewContactsDialogComponent } from './dialog/partner-view-contacts-dialog.component';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-partner-view-contacts',
@@ -20,7 +21,8 @@ import { PartnerViewContactsDialogComponent } from './dialog/partner-view-contac
     TooltipModule,
     DynamicDialogModule,
     PartnerViewContactsItemComponent,
-    PartnerViewContactsDialogComponent
+    PartnerViewContactsDialogComponent,
+    TranslateModule
   ],
   templateUrl: './partner-view-contacts.component.html',
   providers: [DialogService]
@@ -36,7 +38,8 @@ export class PartnerViewContactsComponent implements OnInit {
   constructor(
     private dialogService: DialogService,
     private contactService: ContactService,
-    private router: Router
+    private router: Router,
+    private translateService: TranslateService
   ) {}
 
   ngOnInit() {
@@ -71,7 +74,7 @@ export class PartnerViewContactsComponent implements OnInit {
 
   openFullScreenContacts(): void {
     this.dialogRef = this.dialogService.open(PartnerViewContactsDialogComponent, {
-      header: 'Contacts',
+      header: this.translateService.instant('title.contacts'),
       width: '90vw',
       height: '90vh',
       closable: true,

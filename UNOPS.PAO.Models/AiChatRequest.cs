@@ -5,19 +5,19 @@ namespace UNOPS.PAO.Models
     public class AiChatRequest
     {
         [JsonPropertyName("app_name")]
-        public string AppName { get; set; }
+        public required string AppName { get; set; }
 
         [JsonPropertyName("user_id")]
-        public string UserId { get; set; }
+        public required string UserId { get; set; }
 
         [JsonPropertyName("user_email")]
-        public string UserEmail { get; set; }
+        public required string UserEmail { get; set; }
 
         [JsonPropertyName("session_id")]
-        public string SessionId { get; set; }
+        public required string SessionId { get; set; }
 
         [JsonPropertyName("message")]
-        public string Message { get; set; }
+        public required string Message { get; set; }
 
         [JsonPropertyName("streaming")]
         public bool Streaming { get; set; } = false;

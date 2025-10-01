@@ -95,13 +95,28 @@ public interface IPartnerManager
     Task<PartnerModel?> ArchivePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request);
     Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, UpdatePartnerRequest request);
     
-    /// <summary>
-    /// Gets all engagements for a specific partner with pagination
-    /// </summary>
-    Task<PaginationResponse<Engagement>> GetPartnerEngagementsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending);
+    
     
     /// <summary>
-    /// Gets all projects for a specific partner with pagination
+    /// Performs comprehensive smart search across Partners and all related entities.
+    /// Searches through partner information, contacts, partner groups, liaison offices, 
+    /// organization units, and applies intelligent ranking based on relevance.
     /// </summary>
-    Task<PaginationResponse<object>> GetPartnerProjectsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending);
+    /// <param name="user">The user performing the search (for RBAC)</param>
+    /// <param name="searchText">Text to search across all partner and related entity fields</param>
+    /// <param name="includeInactive">Whether to include inactive/deleted partners (default: false)</param>
+    /// <param name="maxResults">Maximum number of results to return (default: 50)</param>
+    /// <param name="request">Pagination request for final result formatting</param>
+    /// <returns>Paginated response with ranked search results and metadata</returns>
+    Task<PaginationResponse<PartnerModel>> PerformSmartSearchAsync(
+        ClaimsPrincipal user,
+        string searchText,
+        bool includeInactive = false,
+        int maxResults = 50,
+        PaginationRequest? request = null);
+
+    Task<int> GetTotalPartnerCountAsync(ClaimsPrincipal user);
+    Task<List<string>> GetSamplePartnerNamesAsync(ClaimsPrincipal user, int count = 5);
+
+    // GetPartnerSearchFields removed - now handled directly in PartnerController for dynamic translation support
 }

@@ -257,7 +257,8 @@ __pycache__/
 
 # Environment files
 .env
-*.env
+.env.*
+!.env.example
 
 # Distribution / packaging
 .Python
@@ -298,3 +299,16 @@ coverage.xml
 .dmypy.json
 dmypy.json
 .claude/
+
+UNOPS.PAO.Server/appsettings.Development.json
+UNOPS.PAO.Server/appsettings.Local.json
+
+# Logs folders
+logs/
+**/logs/
+
+# External Data Service local configuration
+ExternalDataService/appsettings.Local.json
+ExternalDataService/logs/
+
+db_dump/

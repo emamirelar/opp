@@ -7,8 +7,9 @@ import { ButtonModule } from 'primeng/button';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogService } from 'primeng/dynamicdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MenuItem } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
+import { MenuModule } from 'primeng/menu';
 
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -57,7 +58,9 @@ import { EntityConfigurationService } from '../../../services/entity-configurati
     TranslateModule,
     ListviewComponent,
     ConfirmDialog,
-    NgIf
+    NgIf,
+    MenuModule,
+    BusinessCardScannerComponent
   ],
   providers: [DialogService, ConfirmationService]
 })
@@ -97,9 +100,11 @@ export class ContactListComponent implements OnInit, OnDestroy {
     entityName: 'Contact',
     scrollable: true,
     scrollHeight: 'flex',
+    defaultSortField: 'lastModifiedDate',
+    defaultSortOrder: 'desc',
     sortableFields: [
-      { field: 'createdBy', label: 'Created By' },
-      { field: 'lastModifiedBy', label: 'Last Updated By' }
+      { field: 'createdDate', label: 'Created Date' },
+      { field: 'lastModifiedDate', label: 'Last Updated Date' }
     ],
           searchConfig: {
         useAdvancedSearch: true,
@@ -177,6 +182,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
   // Track current search term
   currentSearchText = '';
+
+  // Business card scanner state
+  showBusinessCardScanner = signal(false);
 
   ngOnInit() {
 
@@ -427,19 +435,42 @@ export class ContactListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const ref = this.dialogService.open(BusinessCardScannerComponent, {
-      header: this.translateService.instant('title.scanBusinessCard'),
-      width: '95vw',
-      style: { maxWidth: '800px' },
-      closable: true
-    });
-
-    const refSub = ref.onClose.subscribe((result) => {
-      if (result) {
-        this.openContactEditDialog(result);
-      }
-    });
+    this.showBusinessCardScanner.set(true);
   }
+
+  /**
+   * Closes the business card scanner dialog
+   */
+  closeBusinessCardScanner() {
+    this.showBusinessCardScanner.set(false);
+  }
+
+  /**
+   * Handles the scanned contact data from the business card scanner
+   * @param contact The extracted contact data from the business card
+   */
+  handleScannedContact(contact: Contact) {
+    this.closeBusinessCardScanner();
+    if (contact) {
+      this.openContactEditDialog(contact);
+    }
+  }
+
+  // Import menu items
+  importMenuItems = signal<MenuItem[]>([
+    {
+      label: 'Select from Google Drive',
+      icon: 'pi pi-google',
+      command: () => this.openGooglePickerImport(),
+      title: 'Select a Google Sheet from your Drive. Make sure to set the sheet to "Anyone with the link can view" for public access.'
+    },
+    {
+      label: 'Manual Entry',
+      icon: 'pi pi-link',
+      command: () => this.openManualEntryImport(),
+      title: 'Paste a Google Sheet URL directly and specify the sheet name'
+    }
+  ]);
 
   /**
    * @uiButton import_contacts
@@ -450,6 +481,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
    * @permissions CONTACT_CREATE
    */
   openImportDialog() {
+    // This method now shows the import menu instead of directly opening the picker
+    // The actual menu is handled in the template via p-menu
+  }
+
+  /**
+   * Open Google Picker for import (original flow)
+   */
+  openGooglePickerImport() {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
@@ -461,6 +500,22 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('contact');
+  }
+
+  /**
+   * Open manual entry dialog for import
+   */
+  openManualEntryImport() {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'message.noPermissionToImport',
+        summary: 'message.permissionDenied'
+      });
+      return;
+    }
+
+    this.importDialogService.openManualEntryDialog('contact');
   }
 
   /**

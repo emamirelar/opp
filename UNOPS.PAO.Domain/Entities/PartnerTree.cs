@@ -10,11 +10,11 @@ namespace UNOPS.PAO.Domain.Entities;
 public class PartnerTree : ModifiableDeletableEntity
 {
     public static readonly string[] specialCategoryCodes = { "MULTILATERAL", "GOVERNMENT" };
-    public string Description { get; set; }
+    public required string Description { get; set; }
     
-    public string Code { get; set; }
+    public required string Code { get; set; }
     
-    public string Type { get; set; }
+    public required string Type { get; set; }
     public string? Parent { get; set; }
     public string? PartnerCategoryCode { get; set; }
     public string? PartnerGroupCode { get; set; }

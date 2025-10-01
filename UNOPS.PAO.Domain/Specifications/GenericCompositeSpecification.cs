@@ -379,7 +379,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                                         break;
                                 }
                             }
-                            catch (Exception conversionEx)
+                            catch (Exception)
                             {
                                 continue;
                             }
@@ -418,7 +418,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                             criteriaWithOperators.Add((comparisonExpr, logicalOperator));
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         continue;
                     }
@@ -547,7 +547,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                         propertyExpressions.Add(finalExpression);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                 }
             }
@@ -566,7 +566,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
 
             return Expression.Lambda<Func<TEntity, bool>>(combinedExpression, parameter);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return null;
         }
@@ -606,7 +606,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             
             return expression;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return null;
         }
@@ -714,6 +714,24 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                 "PartnerLongDescription",  // Added for long description
                 "Status",
                 "PartnerGroupCode"         // Updated from PartnerCode
+            });
+
+            return searchableProperties;
+        }
+
+        // Define core searchable properties for Interaction - exclude NotMapped computed properties
+        if (type.Name == "Interaction" || type.Name == "UNOPSInteraction")
+        {
+            searchableProperties.AddRange(new[]
+            {
+                "Description",
+                "Location", 
+                "Subject",
+                "GmailThreadId",
+                "GmailMessageId",
+                "Name"
+                // Explicitly exclude: InteractionContactsList, InteractionPartnersList, 
+                // InteractionUsersList, InteractionOrgUnits (these are [NotMapped] computed properties)
             });
 
             return searchableProperties;
@@ -866,7 +884,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
 
             return Expression.Lambda<Func<TEntity, bool>>(comparison, parameter);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return null;
         }
@@ -920,7 +938,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                     return criteriaList.Cast<dynamic>();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
@@ -981,9 +999,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             Debug.WriteLine("Successfully created PartnerId expression using Any()");
             return Expression.Lambda<Func<TEntity, bool>>(anyCall, parameter);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Debug.WriteLine($"Error creating PartnerId expression: {ex.Message}");
+            Debug.WriteLine("Error creating PartnerId expression");
             return null;
         }
     }
@@ -1041,9 +1059,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             Debug.WriteLine("Successfully created ContactId expression using Any()");
             return Expression.Lambda<Func<TEntity, bool>>(anyCall, parameter);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Debug.WriteLine($"Error creating ContactId expression: {ex.Message}");
+            Debug.WriteLine("Error creating ContactId expression");
             return null;
         }
     }
@@ -1111,7 +1129,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             return SearchTextMode.ExactPhrase;
 
         // Si le texte contient plusieurs mots, utiliser la recherche par mots multiples
-        if (searchText.Contains(' '))
+        if (searchText.Contains('|'))
             return SearchTextMode.MultipleWords;
 
         // Sinon, recherche de phrase exacte (mot unique)

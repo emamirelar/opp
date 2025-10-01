@@ -14,7 +14,7 @@
         <app-advanced-search-saved-filter
         class=" ml-auto"
         [entityType]="entityType"
-        [searchCriteria]="searchCriteria"
+        [searchCriteria]="filters"
         [isLoading]="isLoading"
         [orderBy]="orderBy"
         [ascending]="ascending"
@@ -51,7 +51,7 @@
 
     <!-- Search chips display -->
     <div class="flex flex-wrap items-center">
-      @for (criterion of searchCriteria; track criterion.field; let i = $index) {
+      @for (criterion of filters; track criterion.field; let i = $index) {
         @if (i > 0) {
           <span class="flex items-center px-4 text-gray-600">{{ criterion.logicalOperator || 'AND' }}</span>
         }
@@ -80,7 +80,7 @@
           <span class="text-gray-600 p-2">{{ 'search.noFilters' | translate }}</span>
         </div>
       }
-      @if (searchCriteria.length > 0) {
+      @if (filters.length > 0) {
         <p-button
           icon="pi pi-times"
           class="ml-auto"
@@ -95,7 +95,7 @@
 
     <!-- Search input and field dropdown -->
     <div class="flex gap-2 flex-wrap items-center w-full">
-      @if (searchCriteria.length > 0) {
+      @if (filters.length > 0) {
         <p-dropdown
           [options]="logicalOperators"
           [(ngModel)]="selectedLogicalOperator"
@@ -165,8 +165,25 @@
             styleClass="w-48"
           ></p-calendar>
         }
+      } @else if (isDropdownField()) {
+        <!-- Dropdown for enum fields -->
+        <p-dropdown
+          [options]="getDropdownOptions()"
+          [(ngModel)]="selectedEnumValue"
+          optionLabel="label"
+          optionValue="value"
+          [placeholder]="'entityCards.selectValue' | translate"
+          styleClass="w-48"
+        >
+          <ng-template pTemplate="selectedItem" let-selectedOption>
+            {{ selectedOption.label | translate }}
+          </ng-template>
+          <ng-template pTemplate="item" let-option>
+            {{ option.label | translate }}
+          </ng-template>
+        </p-dropdown>
       } @else {
-        <!-- Text input for non-date fields -->
+        <!-- Text input for non-date, non-enum fields -->
         <p-iconfield iconPosition="left" class="grow">
           <input pInputText type="text"
           [placeholder]="'search.placeholder' | translate"

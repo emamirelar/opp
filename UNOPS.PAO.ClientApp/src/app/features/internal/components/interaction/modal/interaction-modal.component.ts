@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect, computed } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect, computed, ViewChild } from '@angular/core';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { UserSearchService } from '../../../../../common/services/user-search.service';
 import { UserProfileService } from '../../../../../common/services/user-profile.service';
@@ -25,14 +27,15 @@ import { CalendarModule } from 'primeng/calendar';
 import { InteractionModalFooterComponent } from './footer/interaction-modal-footer.component';
 import { NgIf } from '@angular/common';
 import { ChipModule, Chip } from 'primeng/chip';
-import { AutoCompleteModule } from 'primeng/autocomplete';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 import { HttpClientModule } from '@angular/common/http';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PanelModule } from 'primeng/panel';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
 import {Divider} from 'primeng/divider';
+import { PhoneInputComponent } from '../../../../../common/components/phone-input/phone-input.component';
 
 // Interface for duplicate detection response
 interface DuplicateDetectionResponse {
@@ -90,11 +93,12 @@ interface DuplicateDetectionResponse {
     CommonModule,
     MessageModule,
     ChipModule,
-    AutoCompleteModule,
     HttpClientModule,
     AiTranscribeComponent,
     PanelModule,
     Divider,
+    PhoneInputComponent,
+    AutoCompleteModule,
   ],
   providers: [
     DialogService,
@@ -106,6 +110,8 @@ interface DuplicateDetectionResponse {
 export class InteractionModalComponent {
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
+  private cdr = inject(ChangeDetectorRef);
+
 
   // Custom validator for contactIds - requires at least one contact to be selected
   private static atLeastOneContactValidator(control: AbstractControl): ValidationErrors | null {
@@ -116,14 +122,55 @@ export class InteractionModalComponent {
     return null;
   }
 
+  // Custom validator for partner context - requires at least one contact from current partner
+  private partnerContextValidator = (control: AbstractControl): ValidationErrors | null => {
+    const partnerContext = this.getPartnerContext();
+    if (!partnerContext?.partnerId) {
+      return null; // No partner context, no validation needed
+    }
+
+    const selectedContactIds = control.value as number[];
+    if (!selectedContactIds || selectedContactIds.length === 0) {
+      return null; // Let the required validator handle empty selection
+    }
+
+    const partnerIdNum = parseInt(partnerContext.partnerId);
+    const allContacts = this.allContacts();
+    
+    // Check if at least one selected contact belongs to the current partner
+    const hasPartnerContact = selectedContactIds.some(contactId => {
+      const contact = allContacts.find(c => c.id === contactId);
+      return contact && contact.partnerId === partnerIdNum;
+    });
+
+    if (!hasPartnerContact) {
+      return { 
+        requiresPartnerContact: true,
+        partnerName: this.getPartnerName(partnerIdNum)
+      };
+    }
+
+    return null;
+  };
+
+  // Helper method to get partner name by ID
+  private getPartnerName(partnerId: number): string {
+    const partner = this.allPartners().find(p => p.id === partnerId);
+    return partner?.name || 'Unknown Partner';
+  }
+
   onChange: any = () => { };
   onTouched: any = () => { };
 
   record?: Interaction;
   isSaving = signal(false);
+  isLoadingExistingData = signal(false);
 
   // Input property for recordId when used in AI layout
   @Input() recordId: string = '';
+  
+  // Input property for partner context (when opened from partner page)
+  @Input() partnerContext: { partnerId: string; lockPartner: boolean } | null = null;
 
   formGroup: FormGroup;
 
@@ -140,12 +187,17 @@ export class InteractionModalComponent {
   //contacts: Contact[] = [];
   //partners: Partner[] = [];
   invalidEmails: string[] = [];
-  invalidPhones: string[] = [];
   showValidationFailedError = signal<boolean>(false);
+
 
   allContacts = this.cachedDataService.allContacts;
   allPartners = this.cachedDataService.allPartners;
   allUsers = this.cachedDataService.allUsers;
+
+  // Available contacts - always show all contacts, but we'll add validation for partner context
+  availableContacts = computed(() => {
+    return this.allContacts();
+  });
 
   // User management signals - separate for Users multi-select and Created By single-select
   userSearchResults = signal<any[]>([]); // For Users multi-select field
@@ -188,6 +240,31 @@ export class InteractionModalComponent {
     return record?.isImportEdit || record?.skipServerSave || this.dialogConfig.data?.isImportEdit || false;
   }
 
+  // Get partner context from input or dialog data
+  getPartnerContext(): { partnerId: string; lockPartner: boolean } | null {
+    // First check input property (for AI layout)
+    if (this.partnerContext) {
+      return this.partnerContext;
+    }
+    
+    // Then check dialog data for explicit partner context
+    const partnerContext = this.dialogConfig.data?.partnerContext;
+    if (partnerContext) {
+      return partnerContext;
+    }
+    
+    // Fallback: check initial data for partner context
+    const initialData = this.dialogConfig.data?.initialData;
+    if (initialData?.partnerId) {
+      return {
+        partnerId: initialData.partnerId.toString(),
+        lockPartner: true // Always lock partner when opened from partner context
+      };
+    }
+    
+    return null;
+  }
+
   // Permission management using utility service
   private permissionUtils: any;
   recordPermissions: any;
@@ -209,7 +286,7 @@ export class InteractionModalComponent {
       date: [new Date(), Validators.required],
       description: [''],
       contactId: ['', Validators.required],
-      contactIds: [[], InteractionModalComponent.atLeastOneContactValidator],
+      contactIds: [[], [InteractionModalComponent.atLeastOneContactValidator, this.partnerContextValidator]],
       partnerIds: [[]],
       userIds: [[]],
       emailAddresses: [[]],
@@ -225,23 +302,33 @@ export class InteractionModalComponent {
       // Organization Unit - Array for backend compatibility
       organizationHierarchyIds: [[]],
       // UI FormControl for single select (synced with array)
-      selectedOrgUnitId: [null]
+      selectedOrgUnitId: [null],
+      // System generated fields
+      contactNames: '',
+      partnerNames: '',
+      userNames: '',
+      organizationHierarchyNames: ''
     });
 
     this.setupContactIdsChangeListener();
     this.setupEmailChangeListener();
     this.setupPhoneNumberChangeListener();
     this.setupUserIdsChangeListener();
+    this.setupPartnerIdsChangeListener();
     this.setupOrganizationUnitSyncListener();
 
     // Effect to prepopulate form fields from current user profile (org unit and created by)
+    // Only for new records and only after server data has had time to load
     effect(() => {
       const orgUnits = this.allOrgUnits();
-      const currentOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
-      const currentCreatedBy = this.formGroup.get('createdBy')?.value;
+      const isLoadingData = this.isLoadingExistingData();
 
-      if ((orgUnits && orgUnits.length > 0 && !currentOrgUnitId) || !currentCreatedBy) {
-        this.prepopulateFromCurrentUserProfile();
+      // Only prepopulate for new records (no ID) and when org units are available and not loading data
+      if (orgUnits && orgUnits.length > 0 && !this.recordId && !isLoadingData && !this.isImportEdit) {
+        // Add timeout to allow any async form population to complete first
+        setTimeout(() => {
+          this.prepopulateFromCurrentUserProfileIfEmpty();
+        }, 2000); // Wait 2 seconds for any async data to load
       }
     });
 
@@ -309,18 +396,22 @@ export class InteractionModalComponent {
       this.loadInteractionById(Number(recordId));
     } else if (initialData && initialData.id) {
       // Existing record passed as initial data (fallback)
+      this.isLoadingExistingData.set(true);
       this.record = initialData;
       if (this.record) {
         this.recordId = this.record.id + '';
         this.populateForm(this.record);
       }
+      this.isLoadingExistingData.set(false);
     } else if (recordData && Object.keys(recordData).length > 0) {
       // Import edit data - use record data directly
+      this.isLoadingExistingData.set(true);
       this.record = recordData;
       if (this.record) {
         this.recordId = this.record.id ? this.record.id + '' : '';
         this.populateForm(this.record);
       }
+      this.isLoadingExistingData.set(false);
     } else {
       // New interaction - set default permissions that allow creation
       this.recordPermissions.set({
@@ -371,15 +462,18 @@ export class InteractionModalComponent {
   }
 
   private loadInteractionById(id: number) {
+    this.isLoadingExistingData.set(true);
     this.interactionService.getById(id).subscribe({
       next: (response) => {
         if (response.body) {
           this.record = response.body;
           this.populateForm(this.record);
         }
+        this.isLoadingExistingData.set(false);
       },
       error: (error) => {
         console.error('Failed to load interaction:', error);
+        this.isLoadingExistingData.set(false);
         this.feedbackDialogService.showErrorToast({
           detail: 'Failed to load interaction details',
           summary: 'Error'
@@ -389,16 +483,35 @@ export class InteractionModalComponent {
   }
 
   private populateForm(record: Interaction) {
+
     // Handle organization unit relationships - extract all IDs for array support
     const organizationHierarchyIds: number[] = [];
-    if (record.organizationUnitRelationships && record.organizationUnitRelationships.length > 0) {
+
+    // Check if this is an imported record (has organizationHierarchyIds directly)
+    const recordWithOrgIds = record as any; // Cast to any to access potential import fields
+    if (recordWithOrgIds.organizationHierarchyIds && Array.isArray(recordWithOrgIds.organizationHierarchyIds)) {
+      // Import record format - organizationHierarchyIds is already an array
+      organizationHierarchyIds.push(...recordWithOrgIds.organizationHierarchyIds);
+    } else if (record.organizationUnitRelationships && record.organizationUnitRelationships.length > 0) {
+      // Regular database record format - extract from relationships
       record.organizationUnitRelationships.forEach(rel => {
         organizationHierarchyIds.push(rel.organizationHierarchyId);
       });
     }
 
-    // User IDs for form population - extract from users array
-    const userIds = record.users?.map(user => user.id) || [];
+    // User IDs for form population - handle both import and regular record formats
+    let userIds: number[] = [];
+    const recordWithUserIds = record as any; // Cast to access potential import fields
+
+    if (recordWithUserIds.userIds && Array.isArray(recordWithUserIds.userIds)) {
+      // Import record format - userIds is already an array
+      userIds = recordWithUserIds.userIds;
+    } else if (record.users && Array.isArray(record.users)) {
+      // Regular database record format - extract from users array
+      userIds = record.users.map(user => user.id);
+    } else {
+      userIds = [];
+    }
 
     // Convert email addresses to lowercase for case-insensitive handling
     const lowercaseEmails = (record.emailAddresses || []).map(email => email.toLowerCase());
@@ -406,7 +519,7 @@ export class InteractionModalComponent {
     this.formGroup.patchValue({
       id: record.id,
       type: record.type,
-      date: new Date(record.date),
+      date: record.date ? new Date(record.date) : null,
       description: record.description,
       contactId: record.contactId,
       contactIds: record.contactIds || [],
@@ -417,24 +530,41 @@ export class InteractionModalComponent {
       location: record.location,
       subject: record.subject,
       createdBy: record.createdBy,
+      organizationHierarchyIds: organizationHierarchyIds,
       previousContactIds: record.contactIds || [],
       previousEmails: lowercaseEmails,
       previousPhones: record.phoneNumbers || [],
       previousUserIds: userIds
     });
 
+    // Initialize name fields for existing interaction
+    this.updateContactNames(record.contactIds || []);
+    this.updatePartnerNames(record.partnerIds || []);
+    this.updateUserNames(userIds);
+    this.updateOrganizationHierarchyNames(organizationHierarchyIds);
+
     // Load selected users separately for each field to avoid UI confusion
 
     // Ensure Users multi-select field has selected users available
     if (userIds.length > 0) {
-      this.userSearchService.searchUsers('', 50, userIds).subscribe({
-        next: (users) => {
-          this.userSearchResults.set(users);
-        },
-        error: (error) => {
-          console.warn('Failed to load selected users for Users field:', error);
-        }
-      });
+      // Use setTimeout to ensure form is fully initialized before triggering user search
+      setTimeout(() => {
+        this.userSearchService.searchUsers('', 50, userIds).subscribe({
+          next: (users) => {
+            this.userSearchResults.set(users);
+
+            // Trigger change detection to ensure UI updates
+            if (this.cdr) {
+              this.cdr.detectChanges();
+            }
+          },
+          error: (error) => {
+            console.warn('Failed to load selected users for Users field:', error);
+          }
+        });
+      }, 100); // Small delay to ensure form is ready
+    } else {
+      this.userSearchResults.set([]);
     }
 
     // Ensure Created By single-select field has selected user available
@@ -519,6 +649,17 @@ export class InteractionModalComponent {
           Object.assign(this.record, formValue);
           this.record._updated = true;
 
+          // Preserve existing duplicate info if available
+          if (this.dialogConfig.data.record?.duplicateInfo) {
+            (this.record as any).duplicateInfo = this.dialogConfig.data.record.duplicateInfo;
+          }
+          
+          // Trigger duplicate detection after closing to update duplicate indicators
+          // This will update the record in the import dialog asynchronously
+          setTimeout(() => {
+            this.triggerDuplicateDetectionAfterSave(formValue, this.record);
+          }, 100);
+
           // Close the dialog with the updated record
           this.dialogRef.close(this.record);
           return;
@@ -555,6 +696,10 @@ export class InteractionModalComponent {
         this.interactionService.update(formValue).subscribe({
           next: () => {
             this.showSuccessMessage('message.interactionUpdated');
+            
+            // Trigger duplicate detection for the updated record
+            this.triggerDuplicateDetectionAfterSave(formValue);
+            
             this.dialogRef.close('saved');
           },
           error: (error) => {
@@ -624,28 +769,12 @@ export class InteractionModalComponent {
     }
   }
 
-  isValidPhone(phone: string): boolean {
-    // Basic international phone validation pattern
-    const phonePattern = /^\+?[\d\s\-\(\)]{8,}$/;
-    return phonePattern.test(phone);
-  }
 
-  validatePhone(phone: string) {
-    if (!this.isValidPhone(phone)) {
-      this.invalidPhones = [...(this.invalidPhones || []), phone];
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Invalid Phone Number',
-        detail: `"${phone}" is not a valid phone number`,
-        life: 3000
-      });
-    }
-  }
 
   // Helper: Get emails for contact IDs (only valid matches) - always lowercase
   private getEmailsForContactIds(contactIds: number[]): string[] {
     return contactIds
-      .map(id => this.allContacts().find(c => c.id === id)?.email)
+      .map(id => this.availableContacts().find(c => c.id === id)?.email)
       .filter((email): email is string => email !== undefined)
       .map(email => email.toLowerCase());
   }
@@ -655,7 +784,7 @@ export class InteractionModalComponent {
     return emails
       .map(email => {
         const lowerEmail = email.toLowerCase();
-        return this.allContacts().find(c => c.email?.toLowerCase() === lowerEmail)?.id;
+        return this.availableContacts().find(c => c.email?.toLowerCase() === lowerEmail)?.id;
       })
       .filter((id): id is number => id !== undefined);
   }
@@ -681,16 +810,34 @@ export class InteractionModalComponent {
 
   /**
    * Prepopulates form fields from current user's profile (org unit and created by)
+   * Only applies defaults if the fields are truly empty (not set by server data)
    */
-  private prepopulateFromCurrentUserProfile(): void {
+  private prepopulateFromCurrentUserProfileIfEmpty(): void {
+    // Skip if this is an edit (has recordId) - server data should take precedence
+    if (this.recordId && this.recordId !== '') {
+      return;
+    }
+
+    // Skip if this is an import edit - preserve import data
+    if (this.isImportEdit) {
+      return;
+    }
+
+    // Skip if we're currently loading existing data
+    if (this.isLoadingExistingData()) {
+      return;
+    }
+
     this.userProfileService.getCurrentUserProfile().subscribe({
       next: (response) => {
         const userProfile = response.userInfoWithOrgSettings;
 
         // Prepopulate Organization Unit from user's org unit code
-        if (userProfile?.orgUnit) {
-          const currentOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
-          if (!currentOrgUnitId) {
+        // Only if no org unit is currently set in either the UI control or the array
+        const currentOrgUnitId = this.formGroup.get('selectedOrgUnitId')?.value;
+        const currentOrgUnitArray = this.formGroup.get('organizationHierarchyIds')?.value || [];
+
+        if (userProfile?.orgUnit && !currentOrgUnitId && currentOrgUnitArray.length === 0) {
           // Find matching organization unit by code
           const orgUnits = this.allOrgUnits() || [];
           const matchingOrgUnit = orgUnits.find((unit: any) =>
@@ -698,27 +845,26 @@ export class InteractionModalComponent {
           ) as any;
 
           if (matchingOrgUnit?.id) {
-              this.setOrganizationHierarchyId(matchingOrgUnit.id);
-            }
+            this.setOrganizationHierarchyId(matchingOrgUnit.id);
           }
         }
 
         // Prepopulate Created By with current user ID
-        if (userProfile?.userId) {
-          const currentCreatedBy = this.formGroup.get('createdBy')?.value;
-          if (!currentCreatedBy) { // Only set if not already set
-            this.formGroup.patchValue({ createdBy: userProfile.userId });
+        // Only if no created by is currently set
+        const currentCreatedBy = this.formGroup.get('createdBy')?.value;
 
-            // Ensure the created by user is available in the dropdown
-            this.userSearchService.searchUsers('', 50, [userProfile.userId]).subscribe({
-              next: (users) => {
-                this.createdBySearchResults.set(users);
-              },
-              error: (error) => {
-                console.warn('Failed to load current user for Created By field:', error);
-              }
-            });
-          }
+        if (userProfile?.userId && !currentCreatedBy) {
+          this.formGroup.patchValue({ createdBy: userProfile.userId });
+
+          // Ensure the created by user is available in the dropdown
+          this.userSearchService.searchUsers('', 50, [userProfile.userId]).subscribe({
+            next: (users) => {
+              this.createdBySearchResults.set(users);
+            },
+            error: (error) => {
+              console.warn('Failed to load current user for Created By field:', error);
+            }
+          });
         }
       },
       error: (error) => {
@@ -791,6 +937,10 @@ export class InteractionModalComponent {
       )
       .subscribe((newContactIds: number[]) => {
         this.updatePartnerIdsBasedOnContacts();
+
+        // Update contact names
+        this.updateContactNames(newContactIds);
+
         const currentEmails = this.formGroup.get('emailAddresses')?.value as string[];
         const validEmailsForNewContactIds = this.getEmailsForContactIds(newContactIds);
 
@@ -824,6 +974,8 @@ export class InteractionModalComponent {
         distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
       )
       .subscribe((newUserIds: number[]) => {
+        // Update user names
+        this.updateUserNames(newUserIds);
         const currentEmails = this.formGroup.get('emailAddresses')?.value as string[];
         const validEmailsForNewUserIds = this.getEmailsForUserIds(newUserIds);
 
@@ -938,22 +1090,8 @@ export class InteractionModalComponent {
         distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
       )
       .subscribe((newPhones: string[]) => {
-
-        const previousPhones = this.formGroup.get('previousPhones')?.value as string[] || [];
-        const addedPhones = newPhones.filter(phone => !previousPhones.includes(phone));
-
-        // Validate all added phones
-        const invalidAddedPhones = addedPhones.filter(phone => !this.isValidPhone(phone));
-
-        if (invalidAddedPhones.length > 0) {
-          // Handle invalid phones
-          this.invalidPhones.forEach(phone => this.validatePhone(phone));
-
-          // Revert to previous valid state
-          this.formGroup.get('phoneNumbers')?.setValue(previousPhones, { emitEvent: false });
-
-          return;
-        }
+        // Phone validation is now handled by PhoneInputComponent
+        // Just track previous phones for consistency
         this.formGroup.get('previousPhones')?.setValue(newPhones);
       });
   }
@@ -966,6 +1104,8 @@ export class InteractionModalComponent {
       const newArray = value ? [value] : [];
       this.formGroup.get('organizationHierarchyIds')?.setValue(newArray, { emitEvent: false });
       this.selectedOrgUnitSignal.set(value);
+      // Update organization hierarchy names
+      this.updateOrganizationHierarchyNames(newArray);
     });
 
     // When array FormControl changes (from backend data), update UI FormControl
@@ -974,6 +1114,8 @@ export class InteractionModalComponent {
       const firstElement = array.length > 0 ? array[0] : null;
       this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
       this.selectedOrgUnitSignal.set(firstElement);
+      // Update organization hierarchy names
+      this.updateOrganizationHierarchyNames(array);
     });
 
     // Initialize both controls
@@ -987,7 +1129,7 @@ export class InteractionModalComponent {
     const selectedContactIds = this.formGroup.get('contactIds')?.value as number[];
 
     // Get unique partnerIds from the selected contacts
-    const relatedPartnerIds = this.allContacts()
+    const relatedPartnerIds = this.availableContacts()
       .filter(contact => selectedContactIds.includes(contact.id))
       .map(contact => contact.partnerId)
       .filter((partnerId, index, self) => self.indexOf(partnerId) === index); // Remove duplicates
@@ -1108,5 +1250,271 @@ export class InteractionModalComponent {
 
   private showInfoMessage(message: string): void {
     this.feedbackDialogService.showInfoToast({ detail: message });
+  }
+
+  // Setup partner IDs change listener
+  private setupPartnerIdsChangeListener() {
+    this.formGroup.get('partnerIds')?.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+      )
+      .subscribe((newPartnerIds: number[]) => {
+        this.updatePartnerNames(newPartnerIds);
+      });
+  }
+
+  // Update contact names based on contact IDs
+  private updateContactNames(contactIds: number[]) {
+    if (!contactIds || contactIds.length === 0) {
+      this.formGroup.get('contactNames')?.setValue('');
+      return;
+    }
+
+    const availableContacts = this.availableContacts();
+    const contactNames = contactIds
+      .map(id => {
+        const contact = availableContacts.find((c: any) => c.id === id);
+        return contact ? contact.name : null;
+      })
+      .filter(name => name !== null)
+      .join(', ');
+
+    this.formGroup.get('contactNames')?.setValue(contactNames);
+  }
+
+  // Update partner names based on partner IDs
+  private updatePartnerNames(partnerIds: number[]) {
+    if (!partnerIds || partnerIds.length === 0) {
+      this.formGroup.get('partnerNames')?.setValue('');
+      return;
+    }
+
+    const allPartners = this.allPartners();
+
+    const foundPartners: string[] = [];
+    const missingPartnerIds: number[] = [];
+
+    // First, try to find partners in the cache
+    partnerIds.forEach(id => {
+      const partner = allPartners.find((p: any) => p.id === id);
+      if (partner) {
+        foundPartners.push(partner.name);
+      } else {
+        missingPartnerIds.push(id);
+      }
+    });
+
+    // If we found all partners in cache, set the names and return
+    if (missingPartnerIds.length === 0) {
+      this.formGroup.get('partnerNames')?.setValue(foundPartners.join(', '));
+      return;
+    }
+
+    // If some partners are missing from cache, load them individually
+    const loadObservables = missingPartnerIds.map(id =>
+      this.partnerService.getPartnerById(id.toString()).pipe(
+        map(partner => partner ? partner.name : null),
+        catchError(error => {
+          console.warn(`Failed to load partner ${id}:`, error);
+          return of(null);
+        })
+      )
+    );
+
+    forkJoin(loadObservables).subscribe({
+      next: (loadedPartnerNames) => {
+        // Combine found partners with loaded partners
+        const validLoadedNames = loadedPartnerNames.filter(name => name !== null) as string[];
+        const allPartnerNames = [...foundPartners, ...validLoadedNames];
+
+        this.formGroup.get('partnerNames')?.setValue(allPartnerNames.join(', '));
+
+        // Trigger change detection
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.warn('Error loading partner names:', error);
+        // Fallback to showing found partners only
+        this.formGroup.get('partnerNames')?.setValue(foundPartners.join(', '));
+      }
+    });
+  }
+
+  // Update user names based on user IDs
+  private updateUserNames(userIds: number[]) {
+    if (!userIds || userIds.length === 0) {
+      this.formGroup.get('userNames')?.setValue('');
+      return;
+    }
+
+    const allUsers = this.allUsers();
+    const userNames = userIds
+      .map(id => {
+        const user = allUsers.find((u: any) => u.id === id);
+        return user ? user.name : null;
+      })
+      .filter(name => name !== null)
+      .join(', ');
+
+    this.formGroup.get('userNames')?.setValue(userNames);
+  }
+
+  // Update organization hierarchy names based on organization hierarchy IDs
+  private updateOrganizationHierarchyNames(orgUnitIds: number[]) {
+    if (!orgUnitIds || orgUnitIds.length === 0) {
+      this.formGroup.get('organizationHierarchyNames')?.setValue('');
+      return;
+    }
+
+    const allOrgUnits = this.allOrgUnits() as any[];
+    const orgUnitNames = orgUnitIds
+      .map(id => {
+        const orgUnit = allOrgUnits.find((ou: any) => ou.id === id);
+        return orgUnit ? orgUnit.name : null;
+      })
+      .filter(name => name !== null)
+      .join(', ');
+
+    this.formGroup.get('organizationHierarchyNames')?.setValue(orgUnitNames);
+  }
+
+  /**
+   * Triggers duplicate detection for a saved record to update duplicate information
+   */
+  private triggerDuplicateDetectionAfterSave(payload: any, updatedRecord?: any): void {
+    // Skip if no payload
+    if (!payload) {
+      return;
+    }
+
+    // Create a copy of payload for duplicate detection
+    const duplicateCheckPayload = { ...payload };
+    
+    // If there's an ID (edit scenario), ensure it's properly formatted as a number
+    // The backend SQL will use this ID to exclude the record from duplicate detection
+    if (payload.id) {
+      const numericId = parseInt(payload.id.toString(), 10);
+      if (isNaN(numericId)) {
+        delete duplicateCheckPayload.id;
+      } else {
+        duplicateCheckPayload.id = numericId;
+      }
+    }
+    
+    // Call the interaction service to detect duplicates (uses the updated SQL with ID exclusion)
+    this.interactionService.detectDuplicates(duplicateCheckPayload).subscribe({
+      next: (response: any) => {
+        // If this is an import edit, update the duplicate information
+        if (this.dialogConfig.data.isImportEdit) {
+          this.updateDuplicateInfoAfterDetection(response, payload, updatedRecord);
+        }
+      },
+      error: (error: any) => {
+        // Silent failure - don't interrupt the user's workflow
+        const recordType = payload.id ? `Interaction ID ${payload.id}` : 'new Interaction';
+        console.warn('Post-save duplicate detection failed for', recordType, ':', error);
+      }
+    });
+  }
+
+  /**
+   * Update the duplicate information in the record for import dialog refresh
+   */
+  private updateDuplicateInfoAfterDetection(response: any, payload: any, updatedRecord?: any): void {
+    if (!response) {
+      return;
+    }
+
+    // Extract duplicate information from the response
+    const duplicateInfo = response.duplicateInfo;
+    
+    if (duplicateInfo) {
+      // Parse the stringified JSON fields
+      let parsedTopDuplicate = null;
+      if (duplicateInfo.topDuplicate) {
+        parsedTopDuplicate = { ...duplicateInfo.topDuplicate };
+        
+        // Parse matchedData if it's a string
+        if (typeof duplicateInfo.topDuplicate.matchedData === 'string') {
+          try {
+            parsedTopDuplicate.matchedData = JSON.parse(duplicateInfo.topDuplicate.matchedData);
+          } catch (e) {
+            console.warn('Failed to parse matchedData:', e);
+            parsedTopDuplicate.matchedData = duplicateInfo.topDuplicate.matchedData;
+          }
+        }
+      }
+
+      // Parse duplicates if it's a string
+      let parsedDuplicates = null;
+      if (typeof duplicateInfo.duplicates === 'string') {
+        try {
+          parsedDuplicates = JSON.parse(duplicateInfo.duplicates);
+        } catch (e) {
+          console.warn('Failed to parse duplicates:', e);
+          parsedDuplicates = duplicateInfo.duplicates;
+        }
+      } else {
+        parsedDuplicates = duplicateInfo.duplicates;
+      }
+
+      // Update the record with new duplicate information
+      const updatedDuplicateInfo = {
+        isDuplicate: duplicateInfo.totalDuplicates > 0,
+        hasDuplicates: duplicateInfo.totalDuplicates > 0,
+        totalDuplicates: duplicateInfo.totalDuplicates || 0,
+        highConfidence: duplicateInfo.highConfidence || 0,
+        mediumConfidence: duplicateInfo.mediumConfidence || 0,
+        lowConfidence: duplicateInfo.lowConfidence || 0,
+        topDuplicate: parsedTopDuplicate,
+        duplicates: parsedDuplicates,
+        tooltip: duplicateInfo.totalDuplicates > 0 
+          ? `${duplicateInfo.totalDuplicates} duplicate(s) found` 
+          : 'Unique record'
+      };
+
+      // Update the record's duplicate info
+      this.updateRecordInImportDialog(updatedDuplicateInfo, updatedRecord);
+    } else {
+      // No duplicates found
+      const noDuplicateInfo = {
+        isDuplicate: false,
+        hasDuplicates: false,
+        totalDuplicates: 0,
+        highConfidence: 0,
+        mediumConfidence: 0,
+        lowConfidence: 0,
+        topDuplicate: null,
+        duplicates: null,
+        tooltip: 'Unique record'
+      };
+      
+      this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);
+    }
+  }
+
+  /**
+   * Update the record in the import dialog with new duplicate information
+   */
+  private updateRecordInImportDialog(duplicateInfo: any, updatedRecord?: any): void {
+    // Try to find the import dialog service in the global scope
+    try {
+      // Use a custom event to communicate with the import dialog
+      const importRowId = updatedRecord?._importRowId || this.dialogConfig.data.record?._importRowId;
+      
+      if (importRowId) {
+        const updateEvent = new CustomEvent('update-duplicate-info', {
+          detail: {
+            importRowId: importRowId,
+            duplicateInfo: duplicateInfo
+          }
+        });
+        
+        window.dispatchEvent(updateEvent);
+      }
+    } catch (error) {
+      console.error('Error updating duplicate info in import dialog:', error);
+    }
   }
 }

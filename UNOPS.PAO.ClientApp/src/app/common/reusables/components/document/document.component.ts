@@ -14,7 +14,7 @@ import { TooltipModule } from 'primeng/tooltip';
 
 import { UploadDocumentComponent } from './upload/upload-document.component';
 import { DocumentService } from './../../../services/document.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FeedbackDialogService } from '../../services/feedback-dialog.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
 import { DocumentLinkModel } from '../../../interfaces/document.interface';
@@ -40,6 +40,7 @@ import { DocumentLinkModel } from '../../../interfaces/document.interface';
 export class DocumentComponent implements OnInit {
   documentService = inject(DocumentService);
   feedbackService = inject(FeedbackDialogService);
+  translateService = inject(TranslateService);
 
   isReadOnly = input<boolean>(false);
   entityName = input<string>('');
@@ -50,6 +51,7 @@ export class DocumentComponent implements OnInit {
   canDownload = input<boolean>(true);
   canDelete = input<boolean>(true);
   disabled = input<boolean>(false);
+  showUploadButton = input<boolean>(true);
   isLoading = this.documentService.isLoading;
 
   showUploadFile: boolean = false;
@@ -132,7 +134,7 @@ export class DocumentComponent implements OnInit {
   savePendingFile(file: any) {
     if (!file.selectedDocumentType) {
       this.feedbackService.showInfoToast({
-        detail: 'Please select a document type before saving.',
+        detail: this.translateService.instant('message.selectDocumentTypeRequired'),
       });
       return;
     }
@@ -153,7 +155,7 @@ export class DocumentComponent implements OnInit {
     this.documentService.linkFile(documentLinkModel).subscribe({
       next: (response: any) => {
         this.feedbackService.showSuccessToast({ 
-          detail: `File ${response.name} linked successfully!` 
+          detail: this.translateService.instant('message.documentLinkedSuccessfully', { fileName: response.name })
         });
         
         // Remove from pending files
@@ -179,6 +181,13 @@ export class DocumentComponent implements OnInit {
   handleOnUploadDocumentSuccess() {
     this.showUploadFile = false;
     this.load();
+  }
+
+  /**
+   * Opens the upload document dialog
+   */
+  openUploadDialog() {
+    this.showUploadFile = true;
   }
 
   handleOnMenuButtonClick(event: any, document: any, menu: any) {
@@ -229,7 +238,7 @@ export class DocumentComponent implements OnInit {
     this.documentService.delete(this.selectedDocument.id).subscribe({
       next: () => {
         this.feedbackService.showSuccessToast({
-          detail: `Document deleted successfully!`,
+          detail: this.translateService.instant('message.documentDeleteSuccess'),
         });
         this.load();
       },
@@ -273,7 +282,7 @@ export class DocumentComponent implements OnInit {
         document.body.removeChild(a);
 
         this.feedbackService.showSuccessToast({
-          detail: `Document downloaded successfully!`,
+          detail: this.translateService.instant('message.documentDownloadSuccess'),
         });
         this.load();
       },
@@ -285,7 +294,7 @@ export class DocumentComponent implements OnInit {
 
     if (document.link && this.canPreview()) {
       menuItem.push({
-        label: 'Preview',
+        label: this.translateService.instant('button.preview'),
         icon: 'pi pi-eye',
         command: () => {
           this.handleOnDocumentPreview();
@@ -295,7 +304,7 @@ export class DocumentComponent implements OnInit {
 
     if (this.canDownload()) {
       menuItem.push({
-        label: 'Download',
+        label: this.translateService.instant('button.download'),
         icon: 'pi pi-download',
         command: () => {
           this.handleOnDocumentDownload();
@@ -305,7 +314,7 @@ export class DocumentComponent implements OnInit {
 
     if (this.isReadOnly() !== true && this.canDelete()) {
       menuItem.push({
-        label: 'Delete',
+        label: this.translateService.instant('button.delete'),
         icon: 'pi pi-trash',
         command: () => {
           this.handleOnDocumentDelete();

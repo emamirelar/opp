@@ -35,7 +35,7 @@ public class UserProfileController : BaseController
     
     // Dependencies from UserInfoController
     private readonly IUserInfoService _userInfoService;
-    private readonly UserResolverService<int> _userResolverService;
+    private new readonly UserResolverService<int> _userResolverService;
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly IUserPreferenceService _userPreferenceService;
     private readonly IUserProfileCacheService _userProfileCacheService;
@@ -205,7 +205,7 @@ public class UserProfileController : BaseController
     [HttpGet(APIDictionary.CurrentUserInfo)]
     public async Task<ActionResult<UserProfile>> GetUserProfileDetails([FromQuery] string? email = null)
     {
-        string currentEmail;
+        string? currentEmail;
         
         // Use provided email parameter if available, otherwise fall back to claims
         if (!string.IsNullOrEmpty(email))
@@ -256,7 +256,7 @@ public class UserProfileController : BaseController
                     userRoles = (await _userManager.GetRolesAsync(aspNetUser)).ToList();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Log the error but continue - we'll return empty roles
                 // You might want to add proper logging here
@@ -285,7 +285,7 @@ public class UserProfileController : BaseController
                 userPreferences = await _userPreferenceService.GetUserPreferencesAsync(aspNetUser.Id.ToString());
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             userPreferences = null;
         }

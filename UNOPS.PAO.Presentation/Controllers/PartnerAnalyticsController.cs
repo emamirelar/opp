@@ -25,7 +25,7 @@ namespace UNOPS.PAO.Presentation.Controllers
     {
         private readonly IPartnerManager _manager;
         private readonly UNOPSAppDbContext _context;
-        private readonly ILogger<PartnerAnalyticsController> _logger;
+        private new readonly ILogger<PartnerAnalyticsController> _logger;
 
         public PartnerAnalyticsController(
             IManagerWrapper manager,
@@ -168,13 +168,8 @@ namespace UNOPS.PAO.Presentation.Controllers
                     })
                     .ToListAsync();
 
-                // Get engagement counts
+                // Get partner IDs for future analytics (engagement data no longer available)
                 var partnerIds = partners.Select(p => p.Id).ToList();
-                var engagementCounts = await _context.Engagements
-                    .Where(e => partnerIds.Contains((int)e.PartnerId) && !e.IsDeleted)
-                    .GroupBy(e => e.PartnerId)
-                    .Select(g => new { PartnerId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(x => x.PartnerId, x => x.Count);
 
                 // Combine data
                 var result = partners.Select(p => new
@@ -190,7 +185,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                     p.IsFocalPoint,
                     p.IsCreator,
                     p.LastModifier,
-                    EngagementCount = engagementCounts.ContainsKey(p.Id) ? engagementCounts[p.Id] : 0
+                    EngagementCount = 0 // Engagement data no longer available
                 }).ToList();
 
                 return Ok(new
@@ -253,24 +248,23 @@ namespace UNOPS.PAO.Presentation.Controllers
                 var startDate = DateTime.UtcNow.AddMonths(-months);
 
                 // Build query
-                var query = _context.Engagements
-                    .Where(e => !e.IsDeleted && e.CreatedDate >= startDate);
+                var query = _context.BaseEngagements
+                    .Where(e => !e.IsDeleted && e.EngagementSignedDate >= startDate);
 
-                // Filter by partner if specified
-                if (partnerId.HasValue)
-                {
-                    query = query.Where(e => e.PartnerId == partnerId.Value);
-                }
-
-                // Get all engagements within the time period
+                // Get all engagements within the time period with partner information
                 var engagements = await query
-                    .Select(e => new
-                    {
-                        e.Id,
-                        e.PartnerId,
-                        e.CreatedDate,
-                        e.Status
-                    })
+                    .Join(_context.BaseEngagementPartners,
+                        e => e.Id,
+                        ep => ep.BaseEngagementId,
+                        (e, ep) => new
+                        {
+                            e.Id,
+                            PartnerId = ep.PartnerId,
+                            CreatedDate = e.EngagementSignedDate,
+                            e.Status
+                        })
+                    .Where(x => x.PartnerId.HasValue)
+                    .Where(x => !partnerId.HasValue || x.PartnerId == partnerId.Value)
                     .ToListAsync();
 
                 // Group by time period
@@ -440,9 +434,14 @@ namespace UNOPS.PAO.Presentation.Controllers
             {
                 case "engagements":
                     // Get partners with most engagements in the time period
-                    var engagementCounts = await _context.Engagements
-                        .Where(e => !e.IsDeleted && e.CreatedDate >= cutoffDate)
-                        .GroupBy(e => e.PartnerId)
+                    var engagementCounts = await _context.BaseEngagements
+                        .Where(e => !e.IsDeleted && e.EngagementSignedDate >= cutoffDate)
+                        .Join(_context.BaseEngagementPartners,
+                            e => e.Id,
+                            ep => ep.BaseEngagementId,
+                            (e, ep) => ep.PartnerId)
+                        .Where(partnerId => partnerId.HasValue)
+                        .GroupBy(partnerId => partnerId)
                         .Select(g => new { PartnerId = g.Key, Count = g.Count() })
                         .OrderByDescending(x => x.Count)
                         .Take(limit)
@@ -475,7 +474,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                     var partnersWithContacts = await _context.Partners
                         .Where(p => !p.IsDeleted && p.Status == EntityStatus.Active)
                         .Include(p => p.Contacts)
-                            .ThenInclude(c => c.Interactions.Where(i => i.Date >= cutoffDate))
+                            .ThenInclude(c => c.Interactions != null ? c.Interactions.Where(i => i.Date >= cutoffDate) : new List<Interaction>())
                         .ToListAsync();
 
                     return partnersWithContacts

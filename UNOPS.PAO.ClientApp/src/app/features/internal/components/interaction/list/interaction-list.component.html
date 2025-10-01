@@ -15,13 +15,22 @@
         />
       }
       @if(!permissionsLoading() && entityPermissions().permissions.canImport) {
-        <p-button
-          icon="pi pi-file-import"
-          [label]="'button.import' | translate"
-          (click)="openImportDialog()"
-          text rounded
-          class="interaction-import-button"
-        />
+        <div class="relative">
+          <p-button
+            #importBtn
+            icon="pi pi-file-import"
+            [label]="'button.import' | translate"
+            (click)="importMenu.toggle($event)"
+            text rounded
+            class="interaction-import-button"
+          />
+          <p-menu 
+            #importMenu 
+            [model]="importMenuItems()" 
+            [popup]="true"
+            appendTo="body">
+          </p-menu>
+        </div>
       }
       @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
         <p-button

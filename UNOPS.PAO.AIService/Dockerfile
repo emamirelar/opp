@@ -27,6 +27,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy application code
 COPY . .
+# AIService directory is already copied by Jenkins into the build context
+
+# Copy AIService config directory to the expected location
+COPY AIService ./AIService
 
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash appuser && \
@@ -42,5 +46,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/framework/info || exit 1
 
-# Command to run the application
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Command to run the application with streaming optimizations
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--loop", "asyncio", "--no-access-log", "--workers", "1"]

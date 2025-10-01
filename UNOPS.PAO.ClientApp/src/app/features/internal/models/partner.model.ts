@@ -14,8 +14,10 @@ export interface Partner extends TaggedEntity {
   partnerLongDescription?: string | null; // Optional long description
   partnerCategoryId?: number | null; // FK to Partner Category (required)
   liaisonOfficeId?: number | null; // FK to LiaisonOffice (required)
+  liaisonOfficeName?: string | null; // LiaisonOffice Name
   partnerFocalPointUserId?: number | null; // FK to User (Partner Focal Point)
-  partnerFocalPointUserName?: string | null; // Partner Focal Point User Name
+  partnerFocalPointUserName?: string | null; // Partner Focal Point User Email
+  partnerFocalPointName?: string | null; // Partner Focal Point Display Name
 
   // Backward compatibility
   name?: string | null; // Maps to partnerDescription for backward compatibility
@@ -52,6 +54,10 @@ export interface Partner extends TaggedEntity {
   createdDate?: Date | null;
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
+  
+  // Resolved user names for audit fields
+  createdByName?: string;
+  lastModifiedByName?: string;
   isDeleted?: boolean | null;
   // Organization Unit Relationships
   organizationUnitRelationships?: OrganizationUnitRelationshipModel[] | null;

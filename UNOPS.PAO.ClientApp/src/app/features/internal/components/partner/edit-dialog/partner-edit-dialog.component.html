@@ -1,16 +1,134 @@
-<p-blockui [blocked]="partnerService.isLoading() || isLoading() || cachedDataService.isLoading()">
-  <div class="flex flex-col items-center justify-center gap-3">
-    <p-progressSpinner strokeWidth="4" [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
-    <span class="text-lg font-medium">{{ 'loading.partnerData' | translate }}</span>
-  </div>
-</p-blockui>
-
 <div class="flex flex-col h-full gap-4">
+  @if(isLoading()) {
+    <div class="flex flex-col gap-8">
+      <!-- AI Transcribe Section Skeleton -->
+      <div class="flex flex-col mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
+        <p-skeleton width="40%" height="1.5rem" styleClass="mb-2"></p-skeleton>
+        <p-skeleton width="60%" height="1rem"></p-skeleton>
+      </div>
+
+      <!-- General Fields Section Skeleton -->
+      <div class="flex flex-col gap-6">
+        <!-- Section Title -->
+        <p-skeleton width="30%" height="1.5rem"></p-skeleton>
+        
+        <!-- First Row - 2 columns -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="60%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="70%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+        </div>
+
+        <!-- Long Description -->
+        <div class="flex flex-col gap-2">
+          <p-skeleton width="50%" height="1rem"></p-skeleton>
+          <p-skeleton width="100%" height="4rem"></p-skeleton>
+        </div>
+
+        <!-- Second Row - 2 columns -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="55%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="65%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+        </div>
+
+        <!-- Third Row - 2 columns -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="60%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="45%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+        </div>
+      </div>
+
+      <!-- Approval Fields Section Skeleton -->
+      <div class="flex flex-col gap-6 mt-6">
+        <!-- Section Title with Badge -->
+        <div class="flex items-center gap-2">
+          <p-skeleton width="25%" height="1.5rem"></p-skeleton>
+          <p-skeleton width="80px" height="1.5rem" borderRadius="16px"></p-skeleton>
+        </div>
+
+        <!-- Approval Fields Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="65%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="70%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="60%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+          <div class="flex flex-col gap-2">
+            <p-skeleton width="65%" height="1rem"></p-skeleton>
+            <p-skeleton width="100%" height="2.5rem"></p-skeleton>
+          </div>
+        </div>
+
+        <!-- Checkbox Fields -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="flex items-center gap-3">
+            <p-skeleton width="20px" height="20px"></p-skeleton>
+            <p-skeleton width="60%" height="1rem"></p-skeleton>
+          </div>
+          <div class="flex items-center gap-3">
+            <p-skeleton width="20px" height="20px"></p-skeleton>
+            <p-skeleton width="55%" height="1rem"></p-skeleton>
+          </div>
+          <div class="flex items-center gap-3">
+            <p-skeleton width="20px" height="20px"></p-skeleton>
+            <p-skeleton width="70%" height="1rem"></p-skeleton>
+          </div>
+          <div class="flex items-center gap-3">
+            <p-skeleton width="20px" height="20px"></p-skeleton>
+            <p-skeleton width="50%" height="1rem"></p-skeleton>
+          </div>
+        </div>
+
+        <!-- Reason TextArea -->
+        <div class="flex flex-col gap-2">
+          <p-skeleton width="65%" height="1rem"></p-skeleton>
+          <p-skeleton width="100%" height="4rem"></p-skeleton>
+        </div>
+      </div>
+
+      <!-- Footer Legend -->
+      <div class="text-sm text-gray-600 mt-4">
+        <p-skeleton width="40%" height="0.875rem"></p-skeleton>
+      </div>
+    </div>
+  } @else {
+  
   @if( showValidationFailedError() === true ){
   <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">{{ 'validation.pleaseFullAllRequired' | translate }}</p-message>
   }
 
+  @if( validationMode() === 'activate' ){
+  <p-message severity="warn" icon="pi pi-exclamation-triangle" styleClass="mt-2 mb-3 text-lg">
+    <strong>{{ 'message.activationValidationRequired' | translate }}</strong>
+  </p-message>
+  }
+
   <form [formGroup]="formGroup" class="flex flex-col gap-8">
+    <fieldset [disabled]="isSaving()" class="border-0 p-0 m-0">
     <div class="flex flex-col mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
       <app-ai-transcribe
         transcribeType="partner_action"
@@ -31,13 +149,17 @@
           <label>{{ "label.partner.partnerDescription" | translate }} *</label>
           <input pInputText fluid="true" formControlName="name" />
           @if( formGroup.get("name")?.invalid && showValidationFailedError() ) {
-          <p-message severity="error" variant="simple">Partner Description is required.</p-message>
+          <p-message severity="error" variant="simple">
+            {{ validationMode() === 'activate' ? 'Partner Description is required to activate.' : 'Partner Description is required.' }}
+          </p-message>
           }
         </div>
 
         <!-- Partner Short Description -->
         <div class="flex flex-col gap-2">
-          <label for="partnerShortDescription">{{ 'label.partner.partnerShortDescription' | translate }}</label>
+          <label for="partnerShortDescription">
+            {{ 'label.partner.partnerShortDescription' | translate }} *
+          </label>
           <input pInputText formControlName="partnerShortDescription" fluid="true" id="partnerShortDescription" />
         </div>
 
@@ -98,7 +220,9 @@
 
         <!-- Partner Liaison Office -->
         <div class="flex flex-col gap-2">
-        <label for="liaisonOfficeId">{{ 'label.partner.partnerLiaisonOffice' | translate }}</label>
+        <label for="liaisonOfficeId">
+          {{ 'label.partner.partnerLiaisonOffice' | translate }} *
+        </label>
         <p-select formControlName="liaisonOfficeId" [options]="allLiaisonOfficesData()"
                   optionLabel="name"
                   optionValue="id"
@@ -107,18 +231,22 @@
                   [appendTo]="'body'"
                   fluid="true" id="liaisonOfficeId"
                   [ariaLabel]="'aria.selectLiaisonOffice' | translate" />
+        @if( formGroup.get("liaisonOfficeId")?.invalid && showValidationFailedError() && validationMode() === 'activate' ) {
+        <p-message severity="error" variant="simple">Partner Liaison Office is required to activate.</p-message>
+        }
       </div>
 
         <!-- Partner Group -->
         <div class="flex flex-col gap-2">
-        <label for="partnerGroupId">{{ 'label.partner.partnerGroup' | translate }}</label>
+        <label for="partnerGroupId">
+          {{ 'label.partner.partnerGroup' | translate }} *
+        </label>
         <p-select formControlName="partnerGroupId" [options]="allPartnerGroupsForSelect()"
-                  [disabled]="!isAdmin()"
                   optionLabel="name"
                   optionValue="value"
                   [group]="true"
                   [filter]="true"
-                  filterBy="name"
+                  filterBy="searchText"
                   [showClear]="true"
                   placeholder="{{ 'label.partner.selectPartnerGroup' | translate }}"
                   [appendTo]="'body'"
@@ -130,6 +258,9 @@
             </div>
           </ng-template>
         </p-select>
+        @if( formGroup.get("partnerGroupId")?.invalid && showValidationFailedError() && validationMode() === 'activate' ) {
+        <p-message severity="error" variant="simple">Partner Group is required to activate.</p-message>
+        }
       </div>
 
       <!-- Status Field - Only visible if user has close/archive permissions -->
@@ -172,7 +303,6 @@
                   optionValue="id"
                   [showClear]="true"
                   [appendTo]="'body'"
-                  [disabled]="!approvalFieldsEnabled()"
                   placeholder="{{ 'label.partner.selectDDRequired' | translate }}"
                   fluid="true" id="dueDiligenceRequired"
                   [ariaLabel]="'aria.selectDueDiligenceRequired' | translate" />
@@ -186,7 +316,6 @@
                   optionValue="id"
                   [showClear]="true"
                   [appendTo]="'body'"
-                  [disabled]="!approvalFieldsEnabled()"
                   placeholder="{{ 'label.partner.selectDDEACDone' | translate }}"
                   fluid="true" id="dueDiligenceApproval"
                   [ariaLabel]="'aria.selectDueDiligenceApproval' | translate" />
@@ -196,7 +325,6 @@
         <div class="flex flex-col gap-2">
         <label for="dueDiligenceApprovalDate">{{ 'label.partner.dueDiligenceApprovalDate' | translate }}</label>
         <p-datepicker formControlName="dueDiligenceApprovalDate"
-                      [disabled]="!approvalFieldsEnabled()"
                       fluid="true" id="dueDiligenceApprovalDate" />
       </div>
 
@@ -204,7 +332,6 @@
         <div class="flex flex-col gap-2">
           <label for="dueDiligenceExpiryDate">{{ 'label.partner.dueDiligenceExpiryDate' | translate }}</label>
           <p-datepicker formControlName="dueDiligenceExpiryDate"
-                        [disabled]="!approvalFieldsEnabled()"
                         fluid="true" id="dueDiligenceExpiryDate" />
         </div>
 
@@ -212,7 +339,6 @@
         <div class="flex flex-col gap-2">
           <label for="partnerApprovalDate">{{ 'label.partner.partnerApprovalDate' | translate }}</label>
           <p-datepicker formControlName="partnerApprovalDate"
-                        [disabled]="!approvalFieldsEnabled()"
                         fluid="true" id="partnerApprovalDate" />
         </div>
 
@@ -220,7 +346,6 @@
         <div class="flex flex-col gap-2">
           <label for="partnerApprovalReference">{{ 'label.partner.partnerApprovalReference' | translate }}</label>
           <input pInputText formControlName="partnerApprovalReference"
-                 [disabled]="!approvalFieldsEnabled()"
                  fluid="true" id="partnerApprovalReference" />
         </div>
 
@@ -232,27 +357,28 @@
                   optionValue="id"
                   [showClear]="true"
                   [appendTo]="'body'"
-                  [disabled]="!approvalFieldsEnabled()"
                   placeholder="{{ 'label.partner.selectLevyPotentiallyApplies' | translate }}"
                   fluid="true" id="partnerLevyStatus"
                   [ariaLabel]="'aria.selectPartnerLevyStatus' | translate" />
       </div>
 
       <!-- Reason for Levy - Only show when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied" -->
-        @if (shouldShowReasonForLevy()) {
+
         <div class="flex flex-col gap-2">
-          <label for="reasonForLevy">{{ 'label.partner.reasonForLevy' | translate }}</label>
+          @if (shouldShowReasonForLevy()) {
+          <label for="reasonForLevy">{{ 'label.partner.reasonForLevy' | translate }} *</label>
           <input pInputText formControlName="reasonForLevy"
-                 [disabled]="!approvalFieldsEnabled()"
                  fluid="true" id="reasonForLevy" />
+          @if( formGroup.get("reasonForLevy")?.invalid && showValidationFailedError() && shouldShowReasonForLevy() ) {
+          <p-message severity="error" variant="simple">{{ 'validation.reasonForLevyRequired' | translate }}</p-message>
+          }
+          }
         </div>
-        }
 
         <!-- Levy Treatment -->
         <div class="flex flex-col gap-2">
         <label for="levyTreatment">{{ 'label.partner.levyTreatment' | translate }}</label>
         <input pInputText formControlName="levyTreatment"
-               [disabled]="!approvalFieldsEnabled()"
                fluid="true" id="levyTreatment" />
         </div>
 
@@ -264,7 +390,6 @@
         <div class="flex items-center gap-3">
           <p-checkbox formControlName="keyGlobalPartner"
                       [binary]="true"
-                      [disabled]="!approvalFieldsEnabled()"
                       inputId="keyGlobalPartner">
           </p-checkbox>
           <label for="keyGlobalPartner">{{ 'label.partner.keyGlobalPartner' | translate }}</label>
@@ -274,7 +399,6 @@
         <div class="flex items-center gap-3">
           <p-checkbox formControlName="unAndStateEntity"
                       [binary]="true"
-                      [disabled]="!approvalFieldsEnabled()"
                       inputId="unAndStateEntity">
           </p-checkbox>
           <label for="unAndStateEntity">{{ 'label.partner.unAndStateEntity' | translate }}</label>
@@ -284,7 +408,6 @@
         <div class="flex items-center gap-3">
           <p-checkbox formControlName="unSecretariatPartner"
                       [binary]="true"
-                      [disabled]="!approvalFieldsEnabled()"
                       inputId="unSecretariatPartner">
           </p-checkbox>
           <label for="unSecretariatPartner">{{ 'label.partner.unSecretariatPartner' | translate }}</label>
@@ -294,7 +417,6 @@
         <div class="flex items-center gap-3">
           <p-checkbox formControlName="pooledFund"
                       [binary]="true"
-                      [disabled]="!approvalFieldsEnabled()"
                       inputId="pooledFund">
           </p-checkbox>
           <label for="pooledFund">{{ 'label.partner.pooledFund' | translate }}</label>
@@ -304,7 +426,6 @@
         <div class="flex items-center gap-3">
           <p-checkbox formControlName="canCreateNewOpportunities"
                       [binary]="true"
-                      [disabled]="!approvalFieldsEnabled()"
                       inputId="canCreateNewOpportunities">
           </p-checkbox>
           <label for="canCreateNewOpportunities">{{ 'label.partner.canCreateNewOpportunities' | translate }}</label>
@@ -316,7 +437,6 @@
       <div class="flex flex-col gap-2">
         <label for="reasonForNoNewOpportunity">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}@if (reasonFieldRequired()) { *}</label>
         <textarea pTextarea formControlName="reasonForNoNewOpportunity"
-                  [disabled]="!approvalFieldsEnabled()"
                   fluid="true" id="reasonForNoNewOpportunity" rows="2"></textarea>
         @if( formGroup.get("reasonForNoNewOpportunity")?.invalid && showValidationFailedError() && reasonFieldRequired() ) {
         <p-message severity="error" variant="simple">{{ 'validation.reasonRequired' | translate }}</p-message>
@@ -332,5 +452,13 @@
       }
     </div>
     }
+
+    <!-- Footer legend for required fields -->
+    <div class="text-sm text-gray-600 mt-4">
+      {{ 'label.requiredForActivation' | translate }}
+    </div>
+    </fieldset>
   </form>
+
+  }
 </div>

@@ -79,6 +79,7 @@
                 [showClear]="true"
                 [showToggleAll]="true"
                 (onChange)="onFilterChange()"
+                [disabled]="showMyOrgUnitOnly()"
                 class="w-full">
               </p-multiSelect>
             </div>
@@ -118,13 +119,22 @@
             [outlined]="false"
             (onClick)="clearFilters()">
           </p-button>
-          <p-button
-            icon="pi pi-upload"
-            [label]="'button.import' | translate"
-            severity="secondary"
-            (onClick)="openImportDialog()"
-            [loading]="importing()">
-          </p-button>
+          <div class="relative">
+            <p-button
+              #importBtn
+              icon="pi pi-upload"
+              [label]="'button.import' | translate"
+              severity="secondary"
+              (onClick)="importMenu.toggle($event)"
+              [loading]="importing()">
+            </p-button>
+            <p-menu 
+              #importMenu 
+              [model]="importMenuItems()" 
+              [popup]="true"
+              appendTo="body">
+            </p-menu>
+          </div>
           <p-button
             icon="pi pi-refresh"
             [label]="'button.refresh' | translate"

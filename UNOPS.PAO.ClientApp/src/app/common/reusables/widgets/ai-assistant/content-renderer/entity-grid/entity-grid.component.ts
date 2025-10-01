@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, signal, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, inject, signal, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EntityConfigurationService } from '../../../../../../features/internal/services/entity-configuration.service';
 import { ListviewCardComponent } from '../../../../../pages/components/listview/card/listview-card.component';
@@ -6,16 +6,18 @@ import { ListViewColumn, ListViewConfig } from '../../../../../pages/components/
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-entity-grid',
   standalone: true,
-  imports: [CommonModule, ListviewCardComponent],
+  imports: [CommonModule, ListviewCardComponent, TranslateModule],
   templateUrl: './entity-grid.component.html',
-  styleUrls: ['./entity-grid.component.css']
+  styleUrls: ['./entity-grid.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityGridComponent implements OnInit {
-  @Input() entityType!: string;
+  @Input() entityType: string = 'partner';
   @Input() gridData!: any[];
   @Output() cardClicked = new EventEmitter<{ entityType: string, entityId: string, rowData: any }>();
   
@@ -38,9 +40,12 @@ export class EntityGridComponent implements OnInit {
   });
 
   ngOnInit() {
-    console.log('🏗️ EntityGrid - Component initialized for', this.entityType, 'with', this.gridData?.length || 0, 'items');
-    console.log('🏗️ EntityGrid - Grid data sample:', this.gridData?.[0]);
-    console.log('🏗️ EntityGrid - All grid data:', this.gridData);
+    console.log('🏗️ EntityGrid - INITIALIZING NEW COMPONENT:', {
+      entityType: this.entityType,
+      itemCount: this.gridData?.length || 0,
+      componentId: Math.random().toString(36).substr(2, 9), // Add random ID to track instances
+      gridDataReference: this.gridData
+    });
     
     if (this.entityType) {
       this.loadColumns();
@@ -89,6 +94,74 @@ export class EntityGridComponent implements OnInit {
 
 
   private createFallbackColumns(): ListViewColumn[] {
+    // Use predefined fallback columns configuration
+    const fallbackColumns: ListViewColumn[] = [
+      {
+        "field": "logourl",
+        "label": "Logo",
+        "type": "avatar",
+        "sortable": false,
+        "width": undefined,
+        "ellipsis": false,
+        "firstLetterFallbackField": "name",
+        "helperText": undefined
+      },
+      {
+        "field": "name",
+        "label": "Name",
+        "type": "text",
+        "sortable": false,
+        "width": undefined,
+        "ellipsis": false,
+        "firstLetterFallbackField": undefined,
+        "helperText": "Partner organization name"
+      },
+      {
+        "field": "partnercategoryname",
+        "label": "Partner Category",
+        "type": "template",
+        "sortable": false,
+        "width": "15%",
+        "ellipsis": true,
+        "firstLetterFallbackField": undefined,
+        "helperText": "Partner category classification"
+      },
+      {
+        "field": "partnergroupname",
+        "label": "Partner Group",
+        "type": "template",
+        "sortable": false,
+        "width": "15%",
+        "ellipsis": true,
+        "firstLetterFallbackField": undefined,
+        "helperText": "Partner group classification"
+      },
+      {
+        "field": "shortname",
+        "label": "shortName",
+        "type": "template",
+        "sortable": true,
+        "width": undefined,
+        "ellipsis": false,
+        "firstLetterFallbackField": undefined,
+        "helperText": undefined
+      },
+      {
+        "field": "address1city",
+        "label": "Address1City",
+        "type": "template",
+        "sortable": true,
+        "width": undefined,
+        "ellipsis": false,
+        "firstLetterFallbackField": undefined,
+        "helperText": undefined
+      }
+    ];
+
+    console.log(`Created ${fallbackColumns.length} predefined fallback columns:`, fallbackColumns.map(c => c.label));
+    return fallbackColumns;
+
+    /* Original dynamic fallback columns logic - commented out but preserved
     if (!this.gridData || this.gridData.length === 0) {
       console.warn('No grid data available for creating fallback columns');
       return [];
@@ -117,6 +190,7 @@ export class EntityGridComponent implements OnInit {
 
     console.log(`Created ${columns.length} fallback columns:`, columns.map(c => c.label));
     return columns;
+    */
   }
 
   private formatHeader(key: string): string {
@@ -159,8 +233,10 @@ export class EntityGridComponent implements OnInit {
       case 'partnership':
         return `/partnerships/agreements/${entityId}`;
       default:
-        const routeSegment = entityType.toLowerCase().replace(/\s+/g, '-');
-        return `/${routeSegment}s/${entityId}`;
+        // TAD: Defaulting to partner for now
+        // const routeSegment = entityType.toLowerCase().replace(/\s+/g, '-');
+        // return `/${routeSegment}s/${entityId}`;
+        return `/partnerships/partners/${entityId}`;
     }
   }
 } 

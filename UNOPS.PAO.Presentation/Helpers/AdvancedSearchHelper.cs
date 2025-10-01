@@ -166,7 +166,7 @@ public static class AdvancedSearchHelper
         // Apply legacy field name mapping for backward compatibility
         parsedCriteria = MapLegacyFieldNames(parsedCriteria);
         
-        ValidateSearchCriteria(parsedCriteria, allowedFields);
+        ValidateSearchCriteria(parsedCriteria ?? new List<SearchCriteria>(), allowedFields);
         return parsedCriteria;
     }
 
@@ -185,10 +185,24 @@ public static class AdvancedSearchHelper
             "mailingStreet", "mailingStreet2", "mailingCity", "mailingStateProvince",
             "mailingPostalCode", "mailingCountry", "profilePictureUrl",
             
-            // Partner related fields
-            "partner.name", "partner.status", "partner.shortName", "partner.phone",
-            "partner.website", "partner.address1City", "partner.address1Country",
-            "partnerId", "partnerName", "partnerStatus", "partnerShortName"
+            // Partner related fields - search contacts by their partner
+            "partner.name", "partner.status", "partner.partnerShortDescription", "partner.partnerLongDescription",
+            "partner.keyGlobalPartner", "partner.unSecretariatPartner", "partner.pooledFund",
+            "partner.partnerApprovalStatus", "partner.partnerLevyStatus", "partner.canCreateNewOpportunities",
+            "partner.partnerGroupId", "partner.liaisonOfficeId", "partner.erpDimValue",
+            "partnerId", "partnerName", "partnerStatus", "partnerShortName",
+            
+            // Partner's related entities - search contacts by partner's related entities
+            "partner.partnerGroup.name", "partner.partnerGroup.code", "partner.partnerGroup.description",
+            "partner.liaisonOffice.name", "partner.liaisonOffice.code",
+            "partner.organizationUnitRelationships.organizationHierarchy.name",
+            
+            // Interaction related fields - search contacts by their interactions
+            "interactions.type", "interactions.subject", "interactions.description", 
+            "interactions.date", "interactions.fromDate", "interactions.toDate",
+            
+            // Audit fields (inherited from ModifiableDeletableEntity)
+            "createdDate", "lastModifiedDate", "createdBy", "lastModifiedBy", "isDeleted"
         };
     }
 
@@ -204,12 +218,24 @@ public static class AdvancedSearchHelper
             "id", "name", "status", 
             "partnerShortDescription", "partnerLongDescription",
             "partnerCategoryId", "liaisonOfficeId", "partnerFocalPointUserId",
-            "partnerGroupCode", "erpDimValue",
+            "partnerGroupId", "partnerGroupCode", "erpDimValue",
             "unAndStateEntity", "keyGlobalPartner", "unSecretariatPartner",
             "dueDiligenceRequired", "dueDiligenceApproval", "dueDiligenceApprovalDate", "dueDiligenceExpiryDate",
             "partnerApprovalStatus", "partnerApprovalDate", "partnerApprovalReference", "partnerApprovedBy",
             "partnerLevyStatus", "reasonForLevy", "levyTreatment",
             "pooledFund", "canCreateNewOpportunities", "reasonForNoNewOpportunity",
+            
+            // Related entity fields - for searching related objects
+            "partnerGroup.name", "partnerGroup.code", "partnerGroup.description",
+            "liaisonOffice.name", "liaisonOffice.code",
+            
+            // Contact fields - search partners by their contacts
+            "contacts.firstName", "contacts.lastName", "contacts.email", "contacts.title",
+            "contacts.department", "contacts.phone", "contacts.mobile", "contacts.description",
+            "contacts.assistant", "contacts.assistantEmail", "contacts.assistantPhone",
+            "contacts.mailingCity", "contacts.mailingStateProvince", "contacts.mailingCountry",
+            
+            "organizationUnitRelationships.organizationHierarchy.name",
             
             // Audit fields (inherited from ModifiableDeletableEntity)
             "createdDate", "lastModifiedDate", "createdBy", "lastModifiedBy", "isDeleted"
@@ -227,18 +253,35 @@ public static class AdvancedSearchHelper
             // Interaction direct fields
             "id", "contactId", "type", "date", "fromDate", "toDate", "description", "subject",
             
-            // Contact related fields
+            // Contact related fields - search interactions by their contact
             "contact.firstName", "contact.lastName", "contact.email", "contact.title",
-            "contact.department", "contact.phone", "contact.mobile",
+            "contact.department", "contact.phone", "contact.mobile", "contact.description",
+            "contact.salutation", "contact.middleName", "contact.suffix", "contact.status",
+            "contact.assistant", "contact.assistantPhone", "contact.assistantEmail",
+            "contact.mailingStreet", "contact.mailingStreet2", "contact.mailingCity", 
+            "contact.mailingStateProvince", "contact.mailingPostalCode", "contact.mailingCountry",
             "contactName", "contactFirstName", "contactLastName", "contactEmail",
             
-            // Partner related fields (NEW FORMAT)
-            "partner.name", "partner.status", "partner.shortName",
+            // Partner related fields (DIRECT) - search interactions by partner
+            "partner.name", "partner.status", "partner.partnerShortDescription", "partner.partnerLongDescription",
+            "partner.keyGlobalPartner", "partner.unSecretariatPartner", "partner.pooledFund",
+            "partner.partnerApprovalStatus", "partner.partnerLevyStatus", "partner.canCreateNewOpportunities",
+            "partner.partnerGroupId", "partner.liaisonOfficeId", "partner.erpDimValue",
             "partnerName", "partnerStatus",
             
-            // Partner related fields (OLD FORMAT - BACKWARD COMPATIBILITY)
+            // Partner's related entities - search interactions by partner's related entities
+            "partner.partnerGroup.name", "partner.partnerGroup.code", "partner.partnerGroup.description",
+            "partner.liaisonOffice.name", "partner.liaisonOffice.code",
+            "partner.organizationUnitRelationships.organizationHierarchy.name",
+            
+            // Partner related fields (VIA CONTACT - BACKWARD COMPATIBILITY)
             // These maintain compatibility with existing saved searches, filters, and bookmarks
-            "contact.partner.name", "contact.partner.status", "contact.partner.shortName"
+            "contact.partner.name", "contact.partner.status", "contact.partner.partnerShortDescription",
+            "contact.partner.keyGlobalPartner", "contact.partner.unSecretariatPartner",
+            "contact.partner.partnerGroup.name", "contact.partner.liaisonOffice.name",
+            
+            // Audit fields (inherited from ModifiableDeletableEntity)
+            "createdDate", "lastModifiedDate", "createdBy", "lastModifiedBy", "isDeleted"
         };
     }
 
@@ -287,7 +330,7 @@ public static class AdvancedSearchHelper
     /// </summary>
     /// <param name="criteria">The search criteria to process</param>
     /// <returns>Search criteria with updated field names</returns>
-    public static List<SearchCriteria> MapLegacyFieldNames(List<SearchCriteria> criteria)
+    public static List<SearchCriteria>? MapLegacyFieldNames(List<SearchCriteria>? criteria)
     {
         if (criteria == null || !criteria.Any())
         {

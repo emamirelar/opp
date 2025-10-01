@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Managers;
 //using UNOPS.PAO.ContextPermissions.Handlers;
@@ -12,6 +13,14 @@ using UNOPS.PAO.Identity.Security.Enums;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
+using UNOPS.PAO.UNOPSDomain.Entities;
+using Newtonsoft.Json;
+using System.Text;
+using System.Net.Http;
+using Google.Apis.Auth.OAuth2;
+using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.GoogleServices;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using static Google.Cloud.SecretManager.V1.Replication.Types;
 
 namespace UNOPS.PAO.Presentation.Controllers;
@@ -20,16 +29,41 @@ public class DocumentController : BaseController
 {
     private readonly IDocumentManager _manager;
     private readonly IManagerWrapper _managerWrapper;
+    private readonly IConfiguration _configuration;
+    private new readonly ILogger<DocumentController> _logger;
+    private readonly CloudRunHelper _cloudRunHelper;
 
     public DocumentController(
         IManagerWrapper managerWrapper, 
         IAuthorizationService authorizationService,
         ILogger<DocumentController> logger,
+        IConfiguration configuration,
         UserResolverService<int> userResolverService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = managerWrapper.DocumentManager;
         _managerWrapper = managerWrapper;
+        _configuration = configuration;
+        _logger = logger;
+        
+        // Initialize CloudRunHelper with credentials (same pattern as UNOPSGeminiManager)
+        var cloudRunHelperLogger = new LoggerFactory().CreateLogger<CloudRunHelper>();
+        _cloudRunHelper = new CloudRunHelper(cloudRunHelperLogger, GetCredentials());
+    }
+
+    // Get Google credentials from configuration (same as UNOPSGeminiManager)
+    private GoogleCredential GetCredentials()
+    {
+        var credentialParams = _configuration.GetSection("AISettings")
+            .Get<JsonCredentialParameters>();
+        if (credentialParams == null)
+            throw new Exception("AISettings configuration is missing.");
+    
+        var secretName = _configuration.GetValue<string>("AISettings:AIServiceAccountJSONSecretName");
+        
+        var basicProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
+        var secretValue = basicProvider.GetSecretVersion(secretName, "latest");
+        return GoogleCredential.FromJson(secretValue);
     }
 
     /// <summary>
@@ -50,9 +84,10 @@ public class DocumentController : BaseController
     [HttpGet(APIDictionary.Document + "/{entityName}/{entityId}")]
     public async Task<ActionResult> GetAll(string entityName, int entityId)
     {
-        return await HandleOperationAsync(async () => 
+        return await HandleOperationAsync(() => 
         {
-            return _manager.ListDocumentsAsync(EntityNames.ByName(entityName), entityId);
+            var result = _manager.ListDocumentsAsync(EntityNames.ByName(entityName), entityId);
+            return Task.FromResult(result);
         });
     }
 
@@ -90,12 +125,6 @@ public class DocumentController : BaseController
     /// Updates an existing document's metadata, description, and properties with permission validation.
     /// </summary>
     /// <param name="req">Document update request containing modified fields</param>
-    /// <param name="req.id">Document ID to update (required)</param>
-    /// <param name="req.title">Updated document title</param>
-    /// <param name="req.description">Updated document description</param>
-    /// <param name="req.documentType">Updated document type/category</param>
-    /// <param name="req.tags">Updated document tags for categorization</param>
-    /// <param name="req.isPublic">Updated public/private visibility setting</param>
     /// <example_uses>
     /// Update document 123's title to "New Contract"
     /// Change document 456's description
@@ -179,4 +208,95 @@ public class DocumentController : BaseController
         }
         return null;
     }
+
+    /// <summary>
+    /// Generates a Google Doc by summarizing the provided data using Gemini AI and converting the result to a Google Document.
+    /// </summary>
+    /// <param name="request">Request containing the data to be summarized and optional filename</param>
+    /// <example_uses>
+    /// Generate document from meeting notes
+    /// Create summary document from project data
+    /// Convert analysis results to Google Doc
+    /// Generate report from structured data
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to create a Google Doc with AI-generated summary content from provided data.</when_to_use>
+    /// <returns>JSON response containing the Google Doc creation result</returns>
+    [HttpPost(APIDictionary.DocumentGenerate)]
+    public async Task<ActionResult> GenerateGoogleDoc([FromBody] GenerateGoogleDocRequest request)
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            // Validate input
+            if (string.IsNullOrEmpty(request.Data))
+            {
+                throw new ArgumentException("Request data cannot be empty");
+            }
+            
+            _logger.LogInformation("Converting markdown content to Google Doc. Content length: {Length}", request.Data.Length);
+            
+            // Use the request data directly as markdown content (skip AI processing)
+            var markdownContent = request.Data;
+            
+            // Convert markdown to Google Doc
+            var filename = !string.IsNullOrEmpty(request.Filename) ? request.Filename : "Generated_Document";
+            var googleDocResult = await ConvertMarkdownToGoogleDoc(markdownContent, filename);
+            
+            return googleDocResult;
+        });
+    }
+
+
+    private async Task<object?> ConvertMarkdownToGoogleDoc(string markdownContent, string filename)
+    {
+        try
+        {
+            // Set up the external API endpoint
+            var convertEndpoint = "https://api.ai.dev.unops.org/v1/convert/markdown-to-google-doc";
+            
+            _logger.LogInformation("Converting markdown to Google Doc: {Filename}", filename);
+            
+            // Use CloudRunHelper to create authenticated HTTP client (same pattern as UNOPSGeminiManager)
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(convertEndpoint);
+            httpClient.Timeout = TimeSpan.FromSeconds(60); // Allow more time for document conversion
+            
+            // Prepare the multipart form data
+            var formData = new MultipartFormDataContent();
+            var fileContent = new StringContent(markdownContent, Encoding.UTF8, "text/markdown");
+            formData.Add(fileContent, "file", filename + ".md");
+            formData.Add(new StringContent("{}"), "data");
+            
+            // Make the request
+            var response = await httpClient.PostAsync("/v1/convert/markdown-to-google-doc", formData);
+            
+            _logger.LogInformation("Google Doc conversion response status: {StatusCode}", response.StatusCode);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var responseData = JsonConvert.DeserializeObject<object>(responseContent);
+                return responseData;
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Google Doc conversion failed: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                
+                return new
+                {
+                    error = $"Google Doc conversion failed: {response.StatusCode}",
+                    details = errorContent
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error converting markdown to Google Doc");
+            return new
+            {
+                error = "Error converting markdown to Google Doc",
+                details = ex.Message
+            };
+        }
+    }
+
 }

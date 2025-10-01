@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed, ViewChild } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../../../../common/services/language.service';
 import { Subscription } from 'rxjs';
 import { PartnerService } from '../../services/partner.service';
@@ -19,6 +19,8 @@ import { PermissionUtilityService } from '../../../../essentials/services/permis
 import { EntityPermissions } from '../../../../essentials/services/permission.service';
 import { EntityConfigurationService } from '../../services/entity-configuration.service';
 import { CachedDataService } from '../../../../common/services/cached-data.service';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 
 
 /**
@@ -48,6 +50,7 @@ import { CachedDataService } from '../../../../common/services/cached-data.servi
     PartnerNewComponent,
     TranslateModule,
     ListviewComponent,
+    MenuModule,
   ],
   providers: [DialogService]
 })
@@ -62,6 +65,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
   permissionUtilityService = inject(PermissionUtilityService);
   entityConfigurationService = inject(EntityConfigurationService);
   cachedDataService = inject(CachedDataService);
+  translateService = inject(TranslateService);
 
   newPartnerData = signal<Partner|null>(null);
 
@@ -88,13 +92,15 @@ export class PartnerComponent implements OnDestroy, OnInit {
     scrollable: true,
     scrollHeight: 'flex',
     entityName: 'Partner',
+    defaultSortField: 'lastModifiedDate',
+    defaultSortOrder: 'desc',
     sortableFields: [
-      { field: 'createdBy', label: 'Created By' },
-      { field: 'lastModifiedBy', label: 'Last Updated By' }
+      { field: 'createdDate', label: this.translateService.instant('label.column.createdDate') },
+      { field: 'lastModifiedDate', label: this.translateService.instant('label.column.lastUpdatedDate') }
     ],
     searchConfig: {
       useAdvancedSearch: true,
-      placeholder: 'Search partners...',
+      placeholder: this.translateService.instant('placeholder.searchPartners'),
       searchableFields: [
         { 
           field: 'name', 
@@ -185,9 +191,12 @@ export class PartnerComponent implements OnDestroy, OnInit {
   }));
 
   constructor(private languageService: LanguageService, private cdr: ChangeDetectorRef) {
-    
-    
     this.setNewPartnerFromAIAssistant();
+    
+    // Subscribe to language changes to update dynamic translations
+    this.langChangeSubscription = this.translateService.onLangChange.subscribe(() => {
+      this.updateDynamicTranslations();
+    });
   }
 
   ngOnInit() {
@@ -238,14 +247,14 @@ export class PartnerComponent implements OnDestroy, OnInit {
       
       this.router.navigate(['partnerships/partners', record.id.toString()]);
     } else {
-      console.error('Cannot navigate: record or record.id is undefined', record);
+      console.error(this.translateService.instant('error.cannotNavigateRecordUndefined'), record);
     }
   }
 
   handleOnRecordDelete(record: any) {
     this.partnerService.deletePartnerById(record.id).subscribe({
       next: () => {
-        this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
+        this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.partnerDeleteSuccess') });
         const listviewElement = document.querySelector('app-listview');
         if (listviewElement) {
           listviewElement.dispatchEvent(new CustomEvent('refresh-listview'));
@@ -258,6 +267,11 @@ export class PartnerComponent implements OnDestroy, OnInit {
   private refreshPartnerCacheHandler = () => {
     this.cachedDataService.refreshPartners();
   };
+
+  private updateDynamicTranslations() {
+    // Trigger change detection to update computed values that use translations
+    this.cdr.detectChanges();
+  }
 
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
@@ -275,7 +289,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
       
       this.router.navigate(['partnerships/partners', newRecordData.id.toString()]);
     } else {
-      console.error('Cannot navigate to created record: id is undefined', newRecordData);
+      console.error(this.translateService.instant('error.cannotNavigateCreatedRecordUndefined'), newRecordData);
     }
   }
 
@@ -289,7 +303,9 @@ export class PartnerComponent implements OnDestroy, OnInit {
    */
   openPartnerEditDialog(partnerData: Partner = {}) {
     const ref = this.dialogService.open(PartnerEditDialogComponent, {
-      header: partnerData.id ? 'Edit Partner' : 'New Partner',
+      header: partnerData.id ? 
+        this.translateService.instant('dialog.header.editPartner') : 
+        this.translateService.instant('dialog.header.newPartner'),
       width: '40vw',
       breakpoints: { '960px': '95vw' },
       closable: true,
@@ -311,6 +327,22 @@ export class PartnerComponent implements OnDestroy, OnInit {
     });
   }
 
+  // Import menu items - computed to support language changes
+  importMenuItems = computed<MenuItem[]>(() => [
+    {
+      label: this.translateService.instant('importMenu.selectFromGoogleDrive'),
+      icon: 'pi pi-google',
+      command: () => this.openGooglePickerImport(),
+      title: this.translateService.instant('importMenu.googleDriveTooltip')
+    },
+    {
+      label: this.translateService.instant('importMenu.manualEntry'),
+      icon: 'pi pi-link',
+      command: () => this.openManualEntryImport(),
+      title: this.translateService.instant('importMenu.manualEntryTooltip')
+    }
+  ]);
+
   /**
    * @uiButton import_partners
    * @description Opens the import dialog to bulk import partner organizations from Google Sheets or CSV files
@@ -320,8 +352,23 @@ export class PartnerComponent implements OnDestroy, OnInit {
    * @permissions PARTNER_CREATE
    */
   openImportDialog() {
+    // This method now shows the import menu instead of directly opening the picker
+    // The actual menu is handled in the template via p-menu
+  }
+
+  /**
+   * Open Google Picker for import (original flow)
+   */
+  openGooglePickerImport() {
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('partner');
+  }
+
+  /**
+   * Open manual entry dialog for import
+   */
+  openManualEntryImport() {
+    this.importDialogService.openManualEntryDialog('partner');
   }
 
   /**
@@ -355,7 +402,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
           if (!hasTagsColumn) {
             processedColumns.push({
               field: 'tags',
-              label: 'Status',
+              label: this.translateService.instant('label.column.status'),
               sortable: false,
               type: 'template',
               width: '15%',
@@ -514,7 +561,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
       },
       {
         field: 'tags',
-        label: 'Status',
+        label: this.translateService.instant('label.column.status'),
         sortable: false,
         type: 'template',
         width: '15%',

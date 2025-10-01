@@ -12,16 +12,47 @@
            <div class="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 text-sm text-gray-500">
              <span>{{ getTotalResultsCount() }} {{ 'search.totalResults' | translate }}</span>
              
-             <!-- Global Filter Information -->
-             @if(isGlobalFilterActive() && activeFilterLabels().length > 0) {
-               <div class="flex items-center space-x-2 px-3 py-2 rounded-lg" style="background-color: color-mix(in srgb, var(--p-primary-color) 10%, transparent); border: 1px solid color-mix(in srgb, var(--p-primary-color) 30%, transparent);">
+             <!-- Enhanced Global Filter Information with Toggle -->
+             @if(shouldShowFilterToggle()) {
+               <div class="flex items-center space-x-2 px-3 py-2 rounded-lg border transition-all duration-200"
+                    style="background-color: color-mix(in srgb, var(--p-primary-color) 10%, transparent); border-color: color-mix(in srgb, var(--p-primary-color) 30%, transparent);">
                  <i class="pi pi-filter text-sm" style="color: color-mix(in srgb, var(--p-primary-color) calc(100% * var(--tw-text-opacity, 1)), transparent);"></i>
-                 <span class="text-xs md:text-sm" style="color: color-mix(in srgb, var(--p-primary-color) 90%, transparent); font-weight: 500;">
-                   {{ 'search.filteredBy' | translate }}: 
-                   @for(label of activeFilterLabels(); track label; let isLast = $last) {
-                     <span>{{ label }}@if(!isLast) {<span>, </span>}</span>
-                   }
-                 </span>
+                <div class="flex-1">
+                  <div class="text-xs md:text-sm" style="color: color-mix(in srgb, var(--p-primary-color) 90%, transparent); font-weight: 500;">
+                    @if(isFilterTemporarilyDisabled()) {
+                      {{ 'search.globalFiltersOff' | translate }}
+                    } @else {
+                      {{ 'search.filteredBy' | translate }}: 
+                      @for(label of activeFilterLabels(); track label; let isLast = $last) {
+                        <span>{{ label }}@if(!isLast) {<span>, </span>}</span>
+                      }
+                    }
+                  </div>
+                  <div class="text-xs mt-1 opacity-90" style="color: color-mix(in srgb, var(--p-primary-color) 80%, transparent);">
+                    {{ getRecordCountText() }}
+                  </div>
+                </div>
+                 <div class="flex items-center space-x-1">
+                   <button 
+                     pButton 
+                     type="button"
+                     class="p-button-sm p-button-outlined"
+                     [class.p-button-success]="isFilterTemporarilyDisabled()"
+                     [class.p-button-secondary]="!isFilterTemporarilyDisabled()"
+                     (click)="toggleGlobalFilter()"
+                     [title]="getToggleButtonText()">
+                     <i class="pi" [class.pi-eye]="isFilterTemporarilyDisabled()" [class.pi-filter]="!isFilterTemporarilyDisabled()"></i>
+                     <span class="ml-1 hidden md:inline">{{ getToggleButtonText() }}</span>
+                   </button>
+                   <button 
+                     pButton 
+                     type="button"
+                     icon="pi pi-sliders-h"
+                     class="p-button-sm p-button-outlined p-button-secondary"
+                     (click)="openGlobalFiltersDialog()"
+                     [title]="'search.clickToModifyFilters' | translate">
+                   </button>
+                 </div>
                </div>
              }
            </div>
@@ -88,7 +119,7 @@
       
       <!-- Mobile Tab Dropdown (visible on mobile only) -->
       <div class="md:hidden border-b border-gray-200 bg-gray-50 p-4">
-        <label for="mobile-tab-select" class="block text-sm font-medium text-gray-700 mb-2">Select Category</label>
+        <label for="mobile-tab-select" class="block text-sm font-medium text-gray-700 mb-2">{{ 'search.selectCategory' | translate }}</label>
         <select 
           id="mobile-tab-select"
           [ngModel]="activeTabKey" 

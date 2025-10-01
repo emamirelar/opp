@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -51,6 +51,7 @@ import { AuthService } from '../../../../../essentials/services/auth.service';
 import { EntityTagsComponent } from '../../../../../common/components/entity-tags/entity-tags.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { BaseEngagementListComponent } from '../../base-engagement/base-engagement-list.component';
 
 /**
  * @uiEntity Partner
@@ -98,6 +99,7 @@ import { ConfirmationService } from 'primeng/api';
     RouterModule,
     ConfirmDialogModule,
     EntityTagsComponent,
+    BaseEngagementListComponent,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,
@@ -109,6 +111,16 @@ import { ConfirmationService } from 'primeng/api';
       height: 5rem !important;
       font-size: 2.5rem !important;
     }
+
+    .ai-panel .p-panel {
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+      border-radius: 0.5rem !important;
+    }
+    .ai-panel ::ng-deep .p-panel-content {
+      border-bottom-left-radius: 8px !important;
+      border-bottom-right-radius: 8px !important;
+    }
+
   `]
 })
 export class PartnerViewComponent implements OnInit {
@@ -154,6 +166,15 @@ export class PartnerViewComponent implements OnInit {
   entityTypePartner = EntityType.Partner;
   infoLoading = signal<boolean>(false);
 
+  // ViewChild reference for link list component
+  @ViewChild('linkListComponent') linkListComponent!: LinkListComponent;
+  
+  // ViewChild reference for document component
+  @ViewChild('appDocument') documentComponent!: DocumentComponent;
+  
+  // ViewChild reference for GDrive document component
+  @ViewChild('gdriveComponent') gdriveComponent!: GDriveDocumentComponent;
+
   //To be handled by permissions later so that only PRM Admin has this value set to true
   showAdditionalInfo = signal<boolean>(true);
 
@@ -177,8 +198,6 @@ export class PartnerViewComponent implements OnInit {
   }
 
   ngOnInit() {
-    console.log('PartnerView ngOnInit - showAiPanel value:', this.showAiPanel);
-
     // Check admin role
     this.authService.isAdmin().subscribe({
       next: (isAdmin) => {
@@ -192,7 +211,6 @@ export class PartnerViewComponent implements OnInit {
 
     // If recordId is provided via Input (AI layout), load data directly
     if (this.recordId && this.recordId !== '') {
-      console.log('Using input recordId:', this.recordId);
       this._loadRecordDetails();
       return;
     }
@@ -332,10 +350,14 @@ export class PartnerViewComponent implements OnInit {
 
     this.documentService.uploadUnopsFiles(formData).subscribe({
       next: (response: any) => {
-        this.feedbackDialogService.showSuccessToast({ detail: `File ${response.name} uploaded successfully!` });
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.upload.successMessage', { fileName: response.name })
+        });
       },
       error: (error) => {
-        this.feedbackDialogService.showErrorDialog({ detail: 'Unable to upload file!' });
+        this.feedbackDialogService.showErrorDialog({ 
+          detail: this.translateService.instant('partner.view.upload.errorMessage')
+        });
       },
     });
   }
@@ -353,10 +375,14 @@ export class PartnerViewComponent implements OnInit {
 
     this.documentService.linkUnopsFiles(req).subscribe({
       next: (response: any) => {
-        this.feedbackDialogService.showSuccessToast({ detail: `File ${response.name} uploaded successfully!` });
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.upload.successMessage', { fileName: response.name })
+        });
       },
       error: (error) => {
-        this.feedbackDialogService.showErrorDialog({ detail: 'Unable to upload file!' });
+        this.feedbackDialogService.showErrorDialog({ 
+          detail: this.translateService.instant('partner.view.upload.errorMessage')
+        });
       },
     });
   }
@@ -385,16 +411,18 @@ export class PartnerViewComponent implements OnInit {
     // Check if user has update permission
     if (!this.permissionService.canUpdate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit this partner',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('partner.view.error.editPermissionDenied'),
+        summary: this.translateService.instant('common.error.permissionDenied')
       });
       return;
     }
 
     const requestingSaveSignal = signal<boolean>(false);
+    const isSaving = signal<boolean>(false);
+    const isLoading = signal<boolean>(false);
 
     const ref = this.dialogService.open(PartnerEditDialogComponent, {
-      header: 'Edit Partner',
+      header: this.translateService.instant('partner.view.modal.editHeader'),
       width: '90vw',
       style: { maxWidth: '800px' },
       closable: true,
@@ -404,7 +432,9 @@ export class PartnerViewComponent implements OnInit {
       data: {
         mode: 'edit',
         record: this.recordData(),
-        requestingSaveSignal
+        requestingSaveSignal,
+        isSaving,
+        isLoading
       }
     });
 
@@ -426,7 +456,7 @@ export class PartnerViewComponent implements OnInit {
 
   /**
    * Check if current user can edit the partner
-   * Rules: 
+   * Rules:
    * - User must have update permissions
    * - If partner is approved, only admin users can edit
    * - If partner is not approved, regular users with permissions can edit
@@ -434,16 +464,16 @@ export class PartnerViewComponent implements OnInit {
   canEditPartner = computed(() => {
     const hasUpdatePermission = this.recordPermissions().permissions.canUpdate;
     const isApproved = this.recordData().partnerApprovalStatus === 'Approved';
-    
+
     if (!hasUpdatePermission) {
       return false;
     }
-    
+
     // If partner is approved, only admin can edit
     if (isApproved) {
       return this.isAdmin();
     }
-    
+
     // If partner is not approved, any user with update permission can edit
     return true;
   });
@@ -457,19 +487,15 @@ export class PartnerViewComponent implements OnInit {
    * @permissions canApprove
    */
   handleApprovalClick() {
-    console.log('Approval button clicked for partner:', this.recordData().name);
-    
     // Show confirmation dialog
     this.confirmationService.confirm({
-      message: `Are you sure you want to approve the partner "${this.recordData().name}"? This action cannot be undone.`,
-      header: 'Confirm Approval',
+      message: this.translateService.instant('partner.view.approval.confirmMessage', { partnerName: this.recordData().name }),
+      header: this.translateService.instant('partner.view.approval.confirmHeader'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        console.log('Approval confirmed, opening approval dialog');
         this.openApprovalDialog();
       },
       reject: () => {
-        console.log('Approval cancelled');
       }
     });
   }
@@ -479,7 +505,7 @@ export class PartnerViewComponent implements OnInit {
    */
   private openApprovalDialog() {
     const ref = this.dialogService.open(PartnerApprovalDialogComponent, {
-      header: 'Partner Approval',
+      header: this.translateService.instant('partner.view.approval.modalHeader'),
       width: '90vw',
       style: { maxWidth: '800px' },
       closable: true,
@@ -505,17 +531,24 @@ export class PartnerViewComponent implements OnInit {
    * @permissions canActivate
    */
   handleActivateClick() {
-    console.log('Activate button clicked for partner:', this.recordData().name);
-    
+    // Check if required fields are missing before proceeding
+    const partner = this.recordData();
+    const missingFields = this.checkRequiredFieldsForActivation(partner);
+
+    if (missingFields.length > 0) {
+      // Open edit dialog with activation validation mode
+      this.openEditDialogForActivation();
+      return;
+    }
+
     // Show confirmation dialog
     this.confirmationService.confirm({
-      message: this.translateService.instant('message.confirmPartnerActivation', { 
-        partnerName: this.recordData().name 
+      message: this.translateService.instant('message.confirmPartnerActivation', {
+        partnerName: this.recordData().name
       }),
       header: this.translateService.instant('message.confirmActivation'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        console.log('Activation confirmed, calling API');
         this.activatePartner();
       },
       reject: () => {
@@ -530,10 +563,9 @@ export class PartnerViewComponent implements OnInit {
   private activatePartner() {
     this.partnerService.activatePartner(this.recordId).subscribe({
       next: (result) => {
-        console.log('Partner activated successfully:', result);
-        this.feedbackDialogService.showSuccessToast({ 
-          detail: this.translateService.instant('message.partnerActivatedSuccessfully', { 
-            partnerName: this.recordData().name 
+        this.feedbackDialogService.showSuccessToast({
+          detail: this.translateService.instant('message.partnerActivatedSuccessfully', {
+            partnerName: this.recordData().name
           })
         });
         // Reload partner details to show updated status and permissions
@@ -541,7 +573,7 @@ export class PartnerViewComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error activating partner:', error);
-        this.feedbackDialogService.showErrorToast({ 
+        this.feedbackDialogService.showErrorToast({
           detail: this.translateService.instant('message.failedToActivatePartner')
         });
       }
@@ -599,12 +631,39 @@ export class PartnerViewComponent implements OnInit {
     this.showFullContent.set(!this.showFullContent());
   }
 
+  /**
+   * Opens the add link dialog by calling the link list component's openEditDialog method
+   */
+  openAddLinkDialog() {
+    if (this.linkListComponent) {
+      this.linkListComponent.openEditDialog();
+    }
+  }
+
+  /**
+   * Opens the upload document dialog by calling the document component's openUploadDialog method
+   */
+  openUploadDialog() {
+    if (this.documentComponent) {
+      this.documentComponent.openUploadDialog();
+    }
+  }
+
+  /**
+   * Opens the Google Drive picker by calling the GDrive component's openGoogleDrivePicker method
+   */
+  openGoogleDriveDialog() {
+    if (this.gdriveComponent) {
+      this.gdriveComponent.openGoogleDrivePicker();
+    }
+  }
+
 
 
   // Note: To document buttons/actions, add @uiButton JSDoc comments above existing methods
   // Example for documenting existing methods:
   // /**
-  //  * @uiButton edit_partner  
+  //  * @uiButton edit_partner
   //  * @description Switches to edit mode for partner information
   //  * @label Edit Partner
   //  * @icon pi pi-pencil
@@ -612,5 +671,73 @@ export class PartnerViewComponent implements OnInit {
   //  * @permissions PARTNER_UPDATE
   //  */
   // existingEditMethod() { ... }
+
+  /**
+   * Check if required fields for activation are missing
+   */
+  private checkRequiredFieldsForActivation(partner: any): string[] {
+    const missingFields: string[] = [];
+
+    if (!partner.name) {
+      missingFields.push('name');
+    }
+    if (!partner.partnerShortDescription) {
+      missingFields.push('partnerShortDescription');
+    }
+    if (!partner.partnerCategoryId) {
+      missingFields.push('partnerCategoryId');
+    }
+    if (!partner.partnerGroupId) {
+      missingFields.push('partnerGroupId');
+    }
+    if (!partner.liaisonOfficeId) {
+      missingFields.push('liaisonOfficeId');
+    }
+
+    return missingFields;
+  }
+
+  /**
+   * Opens the edit dialog in activation validation mode
+   */
+  private openEditDialogForActivation() {
+    const requestingSaveSignal = signal<boolean>(false);
+    const isSaving = signal<boolean>(false);
+    const isLoading = signal<boolean>(false);
+
+    const ref = this.dialogService.open(PartnerEditDialogComponent, {
+      header: this.translateService.instant('title.partnerTitles.completeRequiredFields'),
+      width: '90vw',
+      style: { maxWidth: '800px' },
+      closable: true,
+      templates: {
+        footer: PartnerEditDialogFooterComponent
+      },
+      data: {
+        mode: 'edit',
+        record: this.recordData(),
+        validationMode: 'activate',
+        requestingSaveSignal,
+        isSaving,
+        isLoading
+      }
+    });
+
+    ref.onClose.subscribe((result: any) => {
+      if (result === "saved" || (result && result.id)) {
+        // Partner was updated, refresh the data and try activation again
+        this._loadRecordDetails();
+      }
+    });
+  }
+
+
+  
+  /**
+   * Convert recordId string to number for use with BaseEngagementListComponent
+   */
+  get partnerIdAsNumber(): number | undefined {
+    return this.recordId ? parseInt(this.recordId, 10) : undefined;
+  }
 
 }

@@ -1,8 +1,10 @@
-<p-button
-  icon="pi pi-google"
-  label="{{ 'button.uploadDocument' | translate }}"
-  (onClick)="handleOnSelectDriveBtnClick()"
-/>
+@if (showUploadButton()) {
+  <p-button
+    icon="pi pi-google"
+    label="{{ 'button.uploadDocument' | translate }}"
+    (onClick)="handleOnSelectDriveBtnClick()"
+  />
+}
 
 @defer (when showAddLinkDialog) {
   <p-dialog

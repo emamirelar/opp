@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -150,16 +150,17 @@ export class ContactViewComponent implements OnInit, OnDestroy {
 
   readonly entityTypeContact = EntityType.Contact;
 
+  @ViewChild('linkListComponent') linkListComponent!: LinkListComponent;
+  @ViewChild('gdriveComponent') gdriveComponent!: GDriveDocumentComponent;
+
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
   }
 
   ngOnInit() {
-    console.log('ContactView ngOnInit - showAiPanel value:', this.showAiPanel);
     
     // If recordId is provided via Input (AI layout), load data directly
     if (this.recordId && this.recordId !== '') {
-      console.log('Using input recordId:', this.recordId);
       this._loadRecordDetails();
       return;
     }
@@ -352,11 +353,9 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   }
 
   onSummaryRefresh() {
-    console.log('Summary refreshed');
   }
 
   onSummaryLoaded(data: any) {
-    console.log('Summary loaded:', data);
   }
 
   onSummaryError(error: any) {
@@ -364,15 +363,31 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   }
 
   onNewsRefresh() {
-    console.log('News refreshed');
   }
 
   onNewsLoaded(data: any) {
-    console.log('News loaded:', data);
   }
 
   onNewsError(error: any) {
     console.error('News error:', error);
+  }
+
+  /**
+   * Opens the add link dialog by calling the link list component's openEditDialog method
+   */
+  openAddLinkDialog() {
+    if (this.linkListComponent) {
+      this.linkListComponent.openEditDialog();
+    }
+  }
+
+  /**
+   * Opens the Google Drive picker by calling the GDrive component's openGoogleDrivePicker method
+   */
+  openGoogleDriveDialog() {
+    if (this.gdriveComponent) {
+      this.gdriveComponent.openGoogleDrivePicker();
+    }
   }
 
 }

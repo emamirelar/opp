@@ -70,24 +70,25 @@ function getMappedInteractionData(messageData, relatedRecords = null) {
       Subject: messageData.subject,
       Description: messageData.currentMessageBody,
       EmailAddresses: uniqueEmails,
-      ContactId: contactIds.length > 0 ? contactIds[0] : 0, // Use first contact as primary contact
+      //ContactId: contactIds.length > 0 ? contactIds[0] : 0, // Use first contact as primary contact
       ContactIds: contactIds,
       PartnerIds: partnerIds,
       UserIds: userIds,
       Location: 'Email',
       GmailThreadId: threadId,
-      GmailMessageId: messageId
+      GmailMessageId: messageId,
+      ConfirmDuplicateCreation: false
     };
     Logger.log('Final interaction data: ' + JSON.stringify(interactionData));
     return interactionData;
 }
 
 /**
- * Creates or updates an Interaction based on email data
+ * Creates an Interaction based on email data
  * @param {Object} e - The event object containing parameters
- * @returns {Object} The created/updated Interaction
+ * @returns {Object} The created Interaction
  */
-function createOrUpdateInteraction(e) {
+function createInteractionClicked(e) {
   try {
     // Check if interaction already exists
     //const existingInteraction = findExistingInteraction(threadId);
@@ -99,33 +100,17 @@ function createOrUpdateInteraction(e) {
     // Create the interaction data with the IDs from passed related records
     const interactionData = getMappedInteractionData(messageData, relatedRecords);
 
-    if (messageData.existingInteraction) {
-      // Update existing interaction
-      const updatedInteraction = updateInteraction(messageData.existingInteraction.id, interactionData);
-      
-      return CardService.newActionResponseBuilder()
-        .setNotification(CardService.newNotification()
-        .setText('Interaction updated successfully!'))
-        .build();
-    } else {
-      // Create new interaction
-      const createdInteraction = createInteraction(interactionData);
-      
-      // Update messageData with the newly created interaction to prevent duplicates
-      messageData.existingInteraction = createdInteraction;
-      
-      Logger.log('Created interaction: ' + JSON.stringify(createdInteraction));
-      
-      // Rebuild the card with updated messageData
-      const updatedCard = buildOpportunityPlusCard(relatedRecords, messageData);
-      return updatedCard;
-       /*return CardService.newActionResponseBuilder()
-        .setNotification(CardService.newNotification()
-        .setText('Interaction created successfully!'))
-        .setNavigation(CardService.newNavigation().updateCard(updatedCard))
-        .build();*/
-    }
+    // Create new interaction
+    const createdInteraction = createInteraction(interactionData);
     
+    // Update messageData with the newly created interaction to prevent duplicates
+    messageData.existingInteraction = createdInteraction;
+    
+    Logger.log('Created interaction: ' + JSON.stringify(createdInteraction));
+    
+    // Rebuild the card with updated messageData
+    const updatedCard = buildOpportunityPlusCard(relatedRecords, messageData);
+    return updatedCard;
   } catch (error) {
     Logger.log('Error creating/updating interaction: ' + error);
     throw error;
@@ -208,32 +193,6 @@ function createInteraction(interactionData) {
     return JSON.parse(response.getContentText());
   } catch (error) {
     Logger.log('Error creating interaction: ' + error);
-    throw error;
-  }
-}
-
-/**
- * Updates an existing interaction
- * @param {string} interactionId - The ID of the interaction to update
- * @param {Object} interactionData - The updated interaction data
- * @returns {Object} The updated interaction
- */
-function updateInteraction(interactionId, interactionData) {
-  try {
-
-    interactionData.Id = interactionId;
-    const response = UrlFetchApp.fetch(`${INTERACTION_API_ENDPOINT}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${getAccessToken()}`,
-        'Content-Type': 'application/json'
-      },
-      payload: JSON.stringify(interactionData)
-    });
-    
-    return JSON.parse(response.getContentText());
-  } catch (error) {
-    Logger.log('Error updating interaction: ' + error);
     throw error;
   }
 }

@@ -19,6 +19,7 @@ export interface GlobalFilters {
   dateTo?: string | null;
   preferredLanguage?: string;
   theme?: string;
+  activityTimeframe?: string;
 }
 
 export interface UserPreference {

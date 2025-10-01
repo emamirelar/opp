@@ -7,12 +7,10 @@ namespace UNOPS.PAO.Domain.Entities;
 
 public class Link : ModifiableDeletableEntity
 {
-    public int Id { get; set; }
-    
     [Column(TypeName = "text")]
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public LinkEntityType Entity { get; set; }
     
     public int EntityId { get; set; }
-    public string Url { get; set; }
+    public required string Url { get; set; }
 } 

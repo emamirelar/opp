@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, inject, OnInit, OnChanges, SimpleChanges, effect, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, inject, OnInit, OnChanges, SimpleChanges, effect, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -11,10 +11,26 @@ import { InputIcon } from 'primeng/inputicon';
 import { TooltipModule } from 'primeng/tooltip';
 import { CalendarModule } from 'primeng/calendar';
 import { CheckboxModule } from 'primeng/checkbox';
+import { HttpClient } from '@angular/common/http';
 
 import { ListViewConfig, SearchCriteria, SearchParams, EntityType } from '../listview.model';
 import { SavedFilter } from '../../../../interfaces/saved-filter.interface';
 import { AdvancedSearchSavedFilterComponent } from './saved-filter/advanced-search-saved-filter.component';
+
+// Backend SearchFieldInfo interface to match the API response
+interface SearchFieldInfo {
+  field: string;
+  displayName: string;
+  fieldType: string;
+  isNavigationProperty?: boolean;
+  allowedOperators: string[];
+  dropdownOptions?: DropdownOption[];
+}
+
+interface DropdownOption {
+  value: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-listview-advanced-search',
@@ -44,8 +60,8 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   // Inputs
   @Input() config!: ListViewConfig;
   @Input() isLoading: boolean = false;
-  @Input() searchCriteria: SearchCriteria[] = [];
-  @Input() entityType?: EntityType; // Optional for SavedFilter functionality
+  @Input() filters: SearchCriteria[] = [];  // Changed from searchCriteria to filters
+  @Input() entityType?: EntityType; // Required for fetching search fields from API
   @Input() orderBy?: string; // For SavedFilter functionality
   @Input() ascending: boolean = true; // For SavedFilter functionality
   @Input() preselectedSavedFilterId: number | null = null; // For URL-based filter selection
@@ -57,6 +73,15 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   @Output() applySavedFilter = new EventEmitter<SavedFilter>();
   @Output() switchToSimple = new EventEmitter<void>();
   @Output() myOfficeFilterChanged = new EventEmitter<boolean>();
+
+  // Dependency injection
+  private http = inject(HttpClient);
+  private translate = inject(TranslateService);
+
+  // Dynamic search fields from API
+  searchFieldsFromAPI = signal<SearchFieldInfo[]>([]);
+  isLoadingSearchFields = signal<boolean>(false);
+  searchFieldsError = signal<string | null>(null);
 
   // UI state
   selectedSearchField: any = null;
@@ -70,6 +95,9 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   // Date-specific UI state
   selectedDate: Date | null = null;
   selectedSecondDate: Date | null = null; // For "between" operator
+
+  // Enum-specific UI state
+  selectedEnumValue: string = '';
 
   // Dropdown options
   logicalOperators = [
@@ -97,11 +125,41 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       { label: 'entityCards.operators.lessThan', value: '<' },
       { label: 'entityCards.operators.greaterThanOrEqual', value: '>=' },
       { label: 'entityCards.operators.lessThanOrEqual', value: '<=' }
+    ],
+    enum: [
+      { label: 'entityCards.operators.equals', value: 'eq' },
+      { label: 'entityCards.operators.notEquals', value: 'neq' }
     ]
   };
 
-  // Computed properties
-  searchableFields = computed(() => this.config?.searchConfig?.searchableFields || []);
+  // Signal to track current language for reactive translations
+  currentLang = signal(this.translate.currentLang || 'en');
+
+  // Computed properties - use dynamic fields from API, fallback to config if needed
+  searchableFields = computed(() => {
+    // Make computed reactive to language changes
+    const lang = this.currentLang();
+    const apiFields = this.searchFieldsFromAPI();
+    
+    if (apiFields.length > 0) {
+      // Convert SearchFieldInfo from API to SearchField format for compatibility
+      return apiFields.map(field => {
+        // Get translation or fallback to the displayName itself
+        const translatedLabel = this.translate.instant(field.displayName);
+        const label = translatedLabel !== field.displayName ? translatedLabel : field.displayName;
+        
+        return {
+          field: field.field,
+          label: label,
+          type: this.mapFieldTypeToSearchFieldType(field.fieldType),
+          operators: field.allowedOperators || ['like', 'eq', 'neq'],
+          dropdownOptions: field.dropdownOptions
+        };
+      });
+    }
+    // Fallback to config-based fields if API hasn't loaded yet
+    return this.config?.searchConfig?.searchableFields || [];
+  });
 
   // Dynamic comparison operators based on selected field type
   comparisonOperators = computed(() => {
@@ -121,10 +179,54 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   }
 
   /**
+   * Check if current field is an enum field with dropdown options
+   */
+  isDropdownField(): boolean {
+    if (!this.selectedSearchField) {
+      return false;
+    }
+    
+    return this.selectedSearchField.dropdownOptions && this.selectedSearchField.dropdownOptions.length > 0;
+  }
+
+  /**
+   * Get dropdown options for the current enum field
+   */
+  getDropdownOptions(): any[] {
+    return this.selectedSearchField.dropdownOptions.map((option: DropdownOption) => ({
+      label: option.label,
+      value: option.value
+    }));
+  }
+
+  /**
    * Check if "between" operator is selected
    */
   isBetweenOperator(): boolean {
     return this.selectedComparisonOperator === 'between';
+  }
+
+  /**
+   * Map backend field types to frontend SearchField types
+   */
+  private mapFieldTypeToSearchFieldType(backendType: string): 'string' | 'number' | 'date' | 'boolean' | 'enum' {
+    switch (backendType.toLowerCase()) {
+      case 'date':
+      case 'datetime':
+        return 'date';
+      case 'number':
+      case 'int':
+      case 'integer':
+      case 'decimal':
+        return 'number';
+      case 'boolean':
+      case 'bool':
+        return 'boolean';
+      case 'enum':
+        return 'enum';
+      default:
+        return 'string';
+    }
   }
 
   /**
@@ -169,6 +271,23 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       return this.allOperators.text;
     }
 
+    // If the field comes from API and has allowedOperators, use those
+    if (this.selectedSearchField.allowedOperators && Array.isArray(this.selectedSearchField.allowedOperators)) {
+      return this.selectedSearchField.allowedOperators.map((op: string) => {
+        // Find the operator definition from our allOperators
+        const allOpsFlat = [
+          ...this.allOperators.text,
+          ...this.allOperators.date, 
+          ...this.allOperators.number,
+          ...this.allOperators.enum
+        ];
+        
+        const found = allOpsFlat.find(opDef => opDef.value === op);
+        return found || { label: op, value: op };
+      });
+    }
+
+    // Fallback to field type-based operators
     const fieldType = this.getFieldType(this.selectedSearchField);
     return this.allOperators[fieldType] || this.allOperators.text;
   }
@@ -185,19 +304,90 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
+    // Load search fields from API if entityType is available
+    if (this.entityType) {
+      this.loadSearchFieldsFromAPI();
+    }
     this.selectFirstSearchField();
+
+    // Subscribe to language changes to update translations reactively
+    this.translate.onLangChange.subscribe(event => {
+      this.currentLang.set(event.lang);
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['config'] && this.config?.searchConfig?.searchableFields) {
       this.selectFirstSearchField();
     }
+    
+    // Load search fields if entityType changes
+    if (changes['entityType'] && this.entityType) {
+      this.loadSearchFieldsFromAPI();
+    }
+  }
+
+  /**
+   * Load search fields from the API based on entity type
+   */
+  private loadSearchFieldsFromAPI(): void {
+    if (!this.entityType) {
+      return;
+    }
+
+    this.isLoadingSearchFields.set(true);
+    this.searchFieldsError.set(null);
+
+    // Construct the API endpoint based on entity type
+    const entityTypeLower = this.entityType.toLowerCase();
+    
+    // For interactions, use singular form to match backend endpoint
+    // For partner categories and groups, use lowercase form
+    let entityPath = entityTypeLower;
+    if (entityTypeLower === 'interactions') {
+      entityPath = 'interaction';
+    } else if (entityTypeLower === 'partnercategory') {
+      entityPath = 'partnercategory';
+    } else if (entityTypeLower === 'partnergroup') {
+      entityPath = 'partnergroup';
+    }
+    const endpoint = `/api/${entityPath}/search-fields`;
+
+    this.http.get<SearchFieldInfo[]>(endpoint).subscribe({
+      next: (searchFields) => {
+        // Transform API response to include translation keys for displayName
+        const transformedFields = searchFields.map(field => ({
+          ...field,
+          displayName: this.translate.instant(field.displayName) || field.displayName
+        }));
+        
+        this.searchFieldsFromAPI.set(transformedFields);
+        this.isLoadingSearchFields.set(false);
+        
+        // Auto-select first field after loading
+        setTimeout(() => this.selectFirstSearchField(), 0);
+      },
+      error: (error) => {
+        console.error('Error loading search fields:', error);
+        this.searchFieldsError.set('Failed to load search fields');
+        this.isLoadingSearchFields.set(false);
+        
+        // Fallback to config fields if API fails
+        this.searchFieldsFromAPI.set([]);
+      }
+    });
   }
 
   /**
    * Get field type based on the selected field
    */
-  private getFieldType(field: any): 'text' | 'date' | 'number' {
+  private getFieldType(field: any): 'text' | 'date' | 'number' | 'enum' {
+    // First check if the field has fieldType from API
+    if (field.fieldType) {
+      return this.mapFieldTypeToSearchFieldType(field.fieldType) as 'text' | 'date' | 'number' | 'enum';
+    }
+    
+    // Legacy support for field.type
     if (field.type) {
       switch (field.type) {
         case 'date':
@@ -205,6 +395,8 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
         case 'number':
         case 'currency':
           return 'number';
+        case 'enum':
+          return 'enum';
         default:
           return 'text';
       }
@@ -248,13 +440,17 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.advancedSearchText = '';
     this.selectedDate = null;
     this.selectedSecondDate = null;
+    this.selectedEnumValue = '';
 
     // Reset operator to appropriate default for field type
     const fieldType = this.getFieldType(field);
+    
     if (fieldType === 'date') {
       this.selectedComparisonOperator = 'after';
     } else if (fieldType === 'number') {
       this.selectedComparisonOperator = 'is';
+    } else if (fieldType === 'enum') {
+      this.selectedComparisonOperator = 'eq';
     } else {
       this.selectedComparisonOperator = 'like';
     }
@@ -264,6 +460,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.advancedSearchText = '';
     this.selectedDate = null;
     this.selectedSecondDate = null;
+    this.selectedEnumValue = '';
   }
 
   /**
@@ -279,11 +476,17 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
    * Check if we can add a criterion (simplified for template use)
    */
   canAddCriterion(): boolean {
-    if (this.getFieldType(this.selectedSearchField) === 'date') {
+    const fieldType = this.getFieldType(this.selectedSearchField);
+    
+    if (fieldType === 'date') {
       if (this.isBetweenOperator()) {
         return this.selectedDate != null && this.selectedSecondDate != null;
       }
       return this.selectedDate != null;
+    }
+
+    if (fieldType === 'enum') {
+      return !!(this.selectedEnumValue && this.selectedEnumValue.trim().length > 0);
     }
 
     return !!(this.advancedSearchText && this.advancedSearchText.trim().length > 0);
@@ -318,6 +521,8 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       } else {
         value = this.formatDateValue(this.selectedDate!);
       }
+    } else if (fieldType === 'enum') {
+      value = this.selectedEnumValue.trim();
     } else {
       value = this.advancedSearchText.trim();
     }
@@ -332,6 +537,14 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       secondValue: secondValue
     };
 
+    if (fieldType === 'enum') {
+      if (criterion.operator === 'like') {
+        criterion.operator = 'eq';
+      } else if (criterion.operator === 'not like') {
+        criterion.operator = 'neq';
+      }
+    }
+
     // Clear saved filter dropdown when criteria are modified
     this.clearSavedFilterSelection();
 
@@ -342,6 +555,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.advancedSearchText = '';
     this.selectedDate = null;
     this.selectedSecondDate = null;
+    this.selectedEnumValue = '';
     this.selectedComparisonOperator = fieldType === 'date' ? 'after' : (fieldType === 'number' ? 'is' : 'like');
 
     // Automatically select the first search field again for convenience
@@ -401,24 +615,22 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   // ===== SavedFilter Event Handlers =====
 
   /**
-   * Handle saved filter applied event
+   * Handle saved filter applied event - CLEAN IMPLEMENTATION
    */
   onSavedFilterApplied(filter: SavedFilter): void {
-    // First, clear current search criteria
-    this.clearSearch.emit();
-
-    // Then emit the filter to parent for complete handling
+    // Simply emit the filter to parent - let parent handle everything
     this.applySavedFilter.emit(filter);
   }
 
   /**
-   * Handle applying criteria from saved filter
+   * Handle applying criteria from saved filter - CLEAN IMPLEMENTATION
+   * This is called AFTER the parent has already updated the state
+   * We just need to trigger a search with the current criteria
    */
   onApplyCriteria(criteria: SearchCriteria[]): void {
-    // Apply each criterion step by step to rebuild the search
-    criteria.forEach(criterion => {
-      this.search.emit(criterion);
-    });
+    // The parent has already updated the searchCriteria state
+    // This method is called after successful filter application
+    // No additional action needed - the API call is triggered by the parent
   }
 
   /**

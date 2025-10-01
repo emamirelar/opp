@@ -30,6 +30,7 @@ import { SavedFilter } from '../../../interfaces/saved-filter.interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserPreferenceService, GlobalFilters } from '../../../../services/user-preference.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
+import { GlobalFiltersDialogService } from '../../../../services/global-filters-dialog.service';
 
 interface ListViewState<T> {
   loading: boolean;
@@ -84,6 +85,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   private readonly globalFilterService = inject(GlobalFilterService);
   private readonly userPreferenceService = inject(UserPreferenceService);
   private readonly authService = inject(AuthService);
+  private readonly globalFiltersDialogService = inject(GlobalFiltersDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -150,6 +152,12 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   globalFilters = signal<GlobalFilters | null>(null);
   currentUserId = signal<string>('');
   activeFilterLabels = signal<string[]>([]);
+  
+  // Filter toggle state - tracks whether filters are temporarily disabled
+  isFilterTemporarilyDisabled = signal(false);
+  
+  // Record counts for display - we'll use the current totalRecordsCount for now
+  // In the future, we could make separate API calls to get unfiltered totals
 
   // Template references
   @ContentChild('actionsTemplate') actionsTemplate?: TemplateRef<any>;
@@ -240,7 +248,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   searchableFields: SearchField[] = [];
   searchValue: any = '';
   currentSortConfig: string = '';
-  preselectedSavedFilterId: number | null = null;
   operators = [
     { label: 'AND', value: 'AND' },
     { label: 'OR', value: 'OR' }
@@ -395,18 +402,8 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   private loadSearchCriteriaFromUrl(): void {
     const queryParams = this.route.snapshot.queryParams;
 
-    if (queryParams['savedFilterId']) {
-      const filterId = parseInt(queryParams['savedFilterId'], 10);
-      if (!isNaN(filterId)) {
-        this.preselectedSavedFilterId = filterId;
-        if (queryParams['advancedSearch'] === 'true') {
-          this.state.update(s => ({ ...s, isAdvancedSearchMode: true }));
-        }
-      }
-      return;
-    }
-
-    if (queryParams['advancedSearch'] === 'true' && queryParams['searchCriteria']) {
+    // Handle search criteria - automatically enable advanced search if present
+    if (queryParams['searchCriteria']) {
       try {
         const criteria = JSON.parse(queryParams['searchCriteria']) as SearchCriteria[];
         if (Array.isArray(criteria) && criteria.length > 0) {
@@ -425,6 +422,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
         this.clearSearchCriteriaFromUrl();
       }
     } else {
+      // No search criteria - default to simple search mode
       this.state.update(s => ({ ...s, isAdvancedSearchMode: false }));
     }
   }
@@ -435,7 +433,10 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
     if (searchCriteria.length > 0) {
       queryParams.searchCriteria = JSON.stringify(searchCriteria);
-      queryParams.advancedSearch = 'true';
+      // Remove savedFilterId when using direct search criteria
+      delete queryParams.savedFilterId;
+      // Remove advancedSearch as it's inferred from searchCriteria presence
+      delete queryParams.advancedSearch;
     } else {
       delete queryParams.searchCriteria;
       delete queryParams.advancedSearch;
@@ -728,7 +729,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
       this.exportService.exportToGoogleSheet(
         entityName,
-        this._dataUrl,
+        this.getApiEndpoint(),
         searchParams,
         sortField || this.config.defaultSortField,
         sortOrder || this.config.defaultSortOrder,
@@ -775,12 +776,16 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     }
 
     if (isAdvancedSearchMode && searchCriteria.length > 0) {
-      // For advanced search, only add searchCriteria (no advancedSearch flag)
-      params = params.set('searchCriteria', JSON.stringify(searchCriteria));
+      // For advanced search, pass filters as JSON
+      params = params.set('filters', JSON.stringify(searchCriteria));
     } else if (searchText?.trim()) {
-      // For simple search, only add searchText
-      params = params.set('searchText', searchText.trim());
+      // For simple search, pass query parameter
+      params = params.set('query', searchText.trim());
     }
+
+    // Add filterActive parameter based on current filter state
+    const filterActive = !this.isFilterTemporarilyDisabled();
+    params = params.set('filterActive', filterActive.toString());
 
     // Removed automatic orgUnitId parameter addition
     // const activeOrgUnitId = this.globalFilterService.getActiveOrgUnitId();
@@ -846,10 +851,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     }));
 
     this.totalRecordsChange.emit(totalCount);
-
-    if (pageIndex > 1) {
-      console.log(`Load more successful: page ${pageIndex}, loaded ${newRecords.length} new records, total: ${updatedData.length}/${totalCount}`);
-    }
 
     this.cdr.detectChanges();
   }
@@ -926,14 +927,54 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   }
 
   onApplySavedFilter(filter: SavedFilter): void {
-    const queryParams: any = { ...this.route.snapshot.queryParams };
-
-    queryParams.savedFilterId = filter.id;
-
     if (filter.isAdvancedSearch) {
-      queryParams.advancedSearch = 'true';
+      // Apply the search criteria from the saved filter
+      if (filter.searchCriteria) {
+        try {
+          let criteria: SearchCriteria[] = [];
+          
+          // Handle both string and array formats
+          if (typeof filter.searchCriteria === 'string') {
+            criteria = JSON.parse(filter.searchCriteria);
+          } else {
+            criteria = filter.searchCriteria;
+          }
+
+          // CLEAN IMPLEMENTATION: Clear and replace all criteria at once
+          this.state.update(s => ({
+            ...s,
+            isAdvancedSearchMode: true,
+            searchCriteria: [...criteria], // Replace (not append) all criteria
+            searchText: '', // Clear simple search
+            pageIndex: 1 // Reset to first page
+          }));
+
+          // Use the same URL structure as manual advanced search
+          this.syncSearchCriteriaToUrl();
+          
+        } catch (error) {
+          console.error('❌ Error parsing saved filter criteria:', error);
+        }
+      }
+    } else if (filter.searchText) {
+      // Apply simple search text
+      this.state.update(s => ({
+        ...s,
+        isAdvancedSearchMode: false,
+        searchText: filter.searchText || '',
+        searchCriteria: [], // Clear advanced search criteria
+        pageIndex: 1
+      }));
+      
+      // Clear URL parameters for simple search
+      const queryParams: any = { ...this.route.snapshot.queryParams };
+      delete queryParams.searchCriteria;
+      delete queryParams.advancedSearch;
+      delete queryParams.savedFilterId;
+      this.updateUrlParams(queryParams);
     }
 
+    // Apply sorting if specified
     if (filter.orderBy) {
       this.state.update(s => ({
         ...s,
@@ -942,10 +983,8 @@ export class ListviewComponent<T = any> implements AfterViewInit {
       }));
     }
 
-    this.updateUrlParams(queryParams);
-
+    // Reset pagination and trigger data load
     this.dataLoader.setPagination(0, this.state().pageSize);
-    this.preselectedSavedFilterId = null;
     this.loadData();
   }
 
@@ -1059,5 +1098,54 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     }
     
     this.activeFilterLabels.set(labels);
+  }
+
+  // Toggle filter functionality
+  toggleGlobalFilter(): void {
+    const currentlyDisabled = this.isFilterTemporarilyDisabled();
+    
+    if (currentlyDisabled) {
+      // Re-enable filters
+      this.isFilterTemporarilyDisabled.set(false);
+      this.globalFilterService.setFilterEnabled(true);
+    } else {
+      // Temporarily disable filters
+      this.isFilterTemporarilyDisabled.set(true);
+      this.globalFilterService.setFilterEnabled(false);
+    }
+    
+    // Reload data with new filter state
+    this.loadData();
+  }
+  
+  // Check if we should show filter controls
+  shouldShowFilterToggle(): boolean {
+    // Show toggle if there are active filters OR if filters are temporarily disabled
+    return this.isGlobalFilterActive() && (this.activeFilterLabels().length > 0 || this.isFilterTemporarilyDisabled());
+  }
+  
+  // Get display text for toggle button
+  getToggleButtonText(): string {
+    return this.isFilterTemporarilyDisabled() 
+      ? this.translateService.instant('search.applyFilter')
+      : this.translateService.instant('search.showAll');
+  }
+  
+  // Get record count display text
+  getRecordCountText(): string {
+    const currentCount = this.totalRecordsCount();
+    
+    if (this.isFilterTemporarilyDisabled() || !this.isGlobalFilterActive()) {
+      return this.translateService.instant('search.showingAllRecords', { total: currentCount });
+    } else {
+      // When filters are active, we show the filtered count
+      // For now, we don't have the unfiltered total, so we just show current count
+      return this.translateService.instant('search.showingAllRecords', { total: currentCount });
+    }
+  }
+
+  // Open global filters dialog
+  openGlobalFiltersDialog(): void {
+    this.globalFiltersDialogService.openDialog();
   }
 }

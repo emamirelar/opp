@@ -52,7 +52,6 @@ public class AppDbContext : AuditableDbContext<int, int>
 
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<SavedFilter> SavedFilters { get; set; }
-    public DbSet<Engagement> Engagements { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -133,8 +132,9 @@ public class AppDbContext : AuditableDbContext<int, int>
             });
 
         modelBuilder
-            .Entity<Contact>();
-        
+            .Entity<Contact>()
+            .Ignore(c => c.OrganizationUnitRelationships); // Handle manually through extension methods
+
         modelBuilder.Entity<EntityUserRole>(entity =>
         {
             entity.HasOne(e => e.UserRole)
@@ -327,16 +327,6 @@ public class AppDbContext : AuditableDbContext<int, int>
                 .HasColumnType("text");
         });
 
-        // Configure Engagement entity
-        modelBuilder.Entity<Engagement>(entity =>
-        {
-            // Configure relationship where Engagement.PartnerId references Partner.Id (not ErpDimValue)
-            // Note: If you need to reference ErpDimValue, you'll need to handle nullable values differently
-            entity.HasOne(e => e.Partner)
-                .WithMany()
-                .HasForeignKey(e => e.PartnerId)
-                .OnDelete(DeleteBehavior.SetNull);
-        });
 
         // Ignore GlobalFilters class - it's not an entity, just a plain class for JSON serialization
         modelBuilder.Ignore<GlobalFilters>();

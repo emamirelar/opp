@@ -4,7 +4,7 @@
 
 .table-container{
   @apply grow; /* dummy height given so that grid can takk full scrolling height */
-  border: 1px solid var(--p-unops-color-2blue-50);
+  // border: 1px solid var(--p-unops-color-2blue-50);
 }
 
 .no-data{

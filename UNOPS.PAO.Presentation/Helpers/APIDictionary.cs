@@ -10,6 +10,7 @@ public class APIDictionary
     // Document
     public const string Document = APIPrefix + "document";
     public const string DocumentType = APIPrefix + "document-type";
+    public const string DocumentGenerate = Document + "/generate-document";
 
     // Profile
     public const string Profile = APIPrefix + "profile";
@@ -42,6 +43,7 @@ public class APIDictionary
 
     // Interaction
     public const string Interaction = APIPrefix + "interactions";
+    public const string SingularInteraction = APIPrefix + "interaction";
 
     // Partner Tree
     
@@ -54,6 +56,12 @@ public class APIDictionary
     // Partner
     public const string Partner = APIPrefix + "partner";
     public const string PartnerContacts = Partner + "/{partnerId}/contacts";
+    
+    // Partner Category
+    public const string PartnerCategory = APIPrefix + "partnercategory";
+    
+    // Partner Group
+    public const string PartnerGroup = APIPrefix + "partnergroup";
     
     // Partner Analytics
     public const string PartnerAnalyticsMostActive = Partner + "/analytics/mostActive";

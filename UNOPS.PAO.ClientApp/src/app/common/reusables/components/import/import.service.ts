@@ -9,6 +9,7 @@ import { InteractionType } from '../../../../features/internal/models/interactio
 export interface AnalyzeFileRequest {
   type: string;
   fileId: string;
+  sheetName?: string; // Optional: Custom sheet name for manual entry
 }
 
 export interface CancelAnalysisRequest {
@@ -58,8 +59,12 @@ export class ImportService {
    */
   private getEntitySpecificEndpoint(type: string): string {
     // Extract entity type from the import type and map to correct APIDictionary paths
-    if (type.includes('partner')) {
+    if (type.includes('partner') && !type.includes('partnercategory') && !type.includes('partnergroup')) {
       return `${this.apiUrl}/partner`;  // Singular: /api/partner
+    } else if (type.includes('partnercategory')) {
+      return `${this.apiUrl}/partnercategory`;   // Singular: /api/partnercategory
+    } else if (type.includes('partnergroup')) {
+      return `${this.apiUrl}/partnergroup`;   // Singular: /api/partnergroup
     } else if (type.includes('contact')) {
       return `${this.apiUrl}/contact`;   // Singular: /api/contact
     } else if (type.includes('interaction')) {
@@ -92,12 +97,13 @@ export class ImportService {
    * @param fileId The Google Sheets ID
    * @param type The type of data being imported (e.g., 'bulk_contact_action')
    */
-  analyzeFile(fileId: string, type: string): Observable<ImportAnalysisResponse> {
-    console.log('🔍 ImportService.analyzeFile called with:', { fileId, type });
+  analyzeFile(fileId: string, type: string, sheetName?: string): Observable<ImportAnalysisResponse> {
+    console.log('🔍 ImportService.analyzeFile called with:', { fileId, type, sheetName });
     this.processingFile = true;
     const payload: AnalyzeFileRequest = {
       type,
-      fileId
+      fileId,
+      ...(sheetName && { sheetName }) // Only include sheetName if provided
     };
 
     // Determine the entity-specific endpoint based on the type
@@ -130,6 +136,7 @@ export class ImportService {
       records: EXAMPLE_CONTACTS,
     });*/
   }
+
 
   /**
    * Cancel an in-progress file analysis
@@ -176,9 +183,12 @@ export class ImportService {
       }
       });
       
+      // IMPORTANT: Always preserve _importRowId for error matching (don't delete even if falsy)
+      // This is crucial for matching failed records back to the dialog
+      
       // For all other properties, delete if empty string to avoid serialization issues
       Object.keys(processedRecord).forEach(prop => {
-        if (!specialProperties.includes(prop) && processedRecord[prop] === '') {
+        if (!specialProperties.includes(prop) && prop !== '_importRowId' && processedRecord[prop] === '') {
           delete processedRecord[prop];
         }
       });

@@ -26,8 +26,8 @@ import { PartnerCategoryGroup, PartnerGroup } from '../../models/partner-categor
 
       <!-- Accordion controls -->
       <div class="flex flex-wrap gap-2 mb-6">
-        <p-button icon="pi pi-plus" label="Expand all" (click)="expandAll()" />
-        <p-button icon="pi pi-minus" label="Collapse all" (click)="collapseAll()" />
+        <p-button icon="pi pi-plus" [label]="'button.expandAll' | translate" (click)="expandAll()" />
+        <p-button icon="pi pi-minus" [label]="'button.collapseAll' | translate" (click)="collapseAll()" />
       </div>
 
       <!-- Partner Tree Accordion -->
@@ -47,7 +47,7 @@ import { PartnerCategoryGroup, PartnerGroup } from '../../models/partner-categor
                 type="button"
                 class="p-2 text-primary hover:bg-primary-50 rounded-full transition-colors"
                 (click)="navigateToCategory(category); $event.stopPropagation()"
-                title="View category details">
+                [title]="'tooltip.viewCategoryDetails' | translate">
                 <i class="pi pi-external-link text-sm"></i>
               </button>
             </div>
@@ -68,7 +68,7 @@ import { PartnerCategoryGroup, PartnerGroup } from '../../models/partner-categor
             <!-- No groups message -->
             <div *ngIf="!category.children || category.children.length === 0" 
                  class="p-3 text-gray-500 text-center">
-              No partner groups available
+              {{ 'message.noPartnerGroups' | translate }}
             </div>
           </div>
         </p-accordionTab>

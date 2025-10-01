@@ -8,13 +8,13 @@
 <!--  </div>-->
 <!--</div>-->
 <div class="flex flex-col gap-8">
-  <div class="flex flex-col xl:flex-row gap-8">
-    <div class="flex flex-col gap-8" [ngClass]="showAiPanel ? 'xl:w-1/2' : 'w-full'">
-      <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} shadow-sm border border-solid border-gray-50 rounded-xl">
+  <div class="flex flex-col xl:flex-row gap-8 xl:items-stretch">
+    <div class="flex flex-col gap-8 h-full xl:sticky xl:top-0 xl:w-[60%]">
+      <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} unops-card unops-surface-elevated unops-rounded-lg unops-shadow-lg">
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
             <div class="flex items-center gap-2">
-              <span class="text-xl">Partner Information</span>
+              <span class="unops-text-headline-medium">{{ 'title.partnerInformation' | translate }}</span>
               <app-entity-tags [tags]="recordData().tags"></app-entity-tags>
             </div>
             <div class="flex items-center gap-2">
@@ -50,46 +50,79 @@
           <div class="flex flex-col gap-4 pb-2">
 
                 @if(recordData().partnerCategoryId){
-                  <div class="flex flex-col gap-2">
-                    <div class="text-sm">{{ 'label.partnerTree.partnerGroup' | translate }}</div>
-                    <div class="flex items-center gap-2">
-                      <a [routerLink]="['/admin/partner-tree', recordData().partnerCategoryId]" class="text-primary hover:underline font-semibold">
-                        {{recordData().partnerCategoryName}}
-                      </a>
+                  <div class="unops-p-lg unops-mb-md unops-rounded-lg" style="background-color: var(--unops-surface-cool); border: 1px solid var(--unops-neutral-200);">
+                    <div class="unops-text-body-large unops-text-secondary unops-mb-sm">{{ 'label.partnerTree.partnerGroup' | translate }}</div>
+                    <div class="flex items-center gap-3">
+                      <div class="unops-flex unops-items-center unops-gap-sm">
+                        <i class="pi pi-sitemap unops-text-secondary" style="font-size: 1.2rem;"></i>
+                        <a [routerLink]="['/admin/partner-tree', recordData().partnerCategoryId]" 
+                           class="unops-text-title-medium unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer" 
+                           style="font-weight: var(--unops-font-weight-bold); text-decoration: none; border-bottom: 2px solid transparent;"
+                           onmouseover="this.style.borderBottom='2px solid var(--unops-secondary)'; this.style.transform='translateY(-1px)'"
+                           onmouseout="this.style.borderBottom='2px solid transparent'; this.style.transform='translateY(0)'">
+                          {{recordData().partnerCategoryName}}
+                        </a>
+                      </div>
                       @if(recordData().partnerGroupId){
-                        <i class="pi pi-chevron-right" style="font-size: .7rem"></i>
-                            <a [routerLink]="['/admin/partner-tree', recordData().partnerGroupId]"  class="text-primary hover:underline font-semibold">
-                              {{recordData().partnerGroupName}}
-                            </a>
+                        <i class="pi pi-chevron-right unops-text-secondary" style="font-size: 1rem"></i>
+                        <div class="unops-flex unops-items-center unops-gap-sm">
+                          <i class="pi pi-folder unops-text-secondary" style="font-size: 1.2rem;"></i>
+                          <a [routerLink]="['/admin/partner-tree', recordData().partnerGroupId]"  
+                             class="unops-text-title-medium unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer"
+                             style="font-weight: var(--unops-font-weight-bold); text-decoration: none; border-bottom: 2px solid transparent;"
+                             onmouseover="this.style.borderBottom='2px solid var(--unops-secondary)'; this.style.transform='translateY(-1px)'"
+                             onmouseout="this.style.borderBottom='2px solid transparent'; this.style.transform='translateY(0)'">
+                            {{recordData().partnerGroupName}}
+                          </a>
+                        </div>
                       }
-
                     </div>
                   </div>
                 }
 
                 <!-- Address -->
                 @if(recordData().address1Street || recordData().address1Street2 || recordData().address1City || recordData().address1Country){
-                <div class="flex flex-col gap-2">
-                  <div class="text-base">
+                <div class="unops-mb-md">
+                  <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
+                    <i class="pi pi-map-marker unops-text-info" style="font-size: 1rem;"></i>
+                    {{ 'label.address' | translate }}
+                  </div>
+                  
+                  <!-- Primary Information: Country -->
+                  @if(recordData().address1Country) {
+                  <div class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                    <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.address.country' | translate }}</div>
+                    <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{recordData().address1Country}}</div>
+                  </div>
+                  }
+                  
+                  <!-- Other Address Information -->
+                  <div class="unops-flex unops-flex-col unops-gap-sm">
                     @if(recordData().address1Street){
-                    <div>{{recordData().address1Street}}</div>
-                    }
-                    @if(recordData().address1Street2) {
-                    <div>{{recordData().address1Street2}}</div>
-                    }
-                    @if(recordData().address1City || recordData().address1StateProvince || recordData().address1PostalCode){
-                    <div>
-                      {{recordData().address1City}}
-                      @if(recordData().address1StateProvince) {
-                      , {{recordData().address1StateProvince}}
-                      }
-                      @if(recordData().address1PostalCode) {
-                      {{recordData().address1PostalCode}}
-                      }
+                    <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.address.street' | translate }}</span>
+                      <span class="unops-text-body-medium unops-text-secondary">{{recordData().address1Street}}</span>
                     </div>
                     }
-                    @if(recordData().address1Country) {
-                    <div>{{recordData().address1Country}}</div>
+                    @if(recordData().address1Street2) {
+                    <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.address.street2' | translate }}</span>
+                      <span class="unops-text-body-medium unops-text-secondary">{{recordData().address1Street2}}</span>
+                    </div>
+                    }
+                    @if(recordData().address1City || recordData().address1StateProvince || recordData().address1PostalCode){
+                    <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.address.cityStatePostal' | translate }}</span>
+                      <span class="unops-text-body-medium unops-text-secondary text-right">
+                        {{recordData().address1City}}
+                        @if(recordData().address1StateProvince) {
+                        , {{recordData().address1StateProvince}}
+                        }
+                        @if(recordData().address1PostalCode) {
+                        {{recordData().address1PostalCode}}
+                        }
+                      </span>
+                    </div>
                     }
                   </div>
                 </div>
@@ -97,166 +130,255 @@
 
 
             @if(getPrimaryOrganizationUnit(recordData())){
-            <div class="flex flex-col gap-2">
-              <div class="text-sm">{{ 'label.partner.partnerOrgUnit' | translate }}</div>
-              <div>{{getPrimaryOrganizationUnit(recordData())?.name}}</div>
+            <div class="unops-mb-md">
+              <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
+                <i class="pi pi-building unops-text-warning" style="font-size: 1rem;"></i>
+                {{ 'label.partner.partnerOrgUnit' | translate }}
+              </div>
+              
+              <!-- Primary Information: Primary Organization Unit -->
+              <div class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.organization.primaryUnit' | translate }}</div>
+                <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{getPrimaryOrganizationUnit(recordData())?.name}}</div>
+              </div>
+              
+              <!-- Other Information -->
               @if(recordData().organizationUnitRelationships && recordData().organizationUnitRelationships!.length > 1) {
-                <div class="text-xs text-gray-500">
-                  +{{ recordData().organizationUnitRelationships!.length - 1 }} more
-                </div>
+              <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                <span class="unops-text-label-large unops-text-muted">{{ 'label.organization.additionalUnits' | translate }}</span>
+                <span class="unops-text-body-medium unops-text-secondary">{{ recordData().organizationUnitRelationships!.length - 1 }} {{ 'label.organization.more' | translate }}</span>
+              </div>
               }
             </div>
             }
 
-            @if(recordData().partnerFocalPointUserName){
-            <div class="flex flex-col gap-2">
-              <div class="text-sm">{{ 'label.partner.partnerFocalPoint' | translate }}</div>
-              <div>{{recordData().partnerFocalPointUserName}}</div>
+            @if(recordData().partnerFocalPointName || recordData().partnerFocalPointUserName || recordData().liaisonOfficeName || recordData().liaisonOfficeId){
+            <div class="unops-p-md unops-mb-md unops-rounded-md" style="background-color: var(--unops-surface-cool); border: 1px solid var(--unops-neutral-200);">
+              <div class="unops-flex unops-items-center unops-gap-sm unops-mb-sm">
+                <i class="pi pi-user unops-text-success" style="font-size: 1.2rem;"></i>
+                <div class="unops-text-body-large unops-text-secondary">{{ 'label.partner.partnerFocalPoint' | translate }}</div>
+              </div>
+              @if(recordData().partnerFocalPointName || recordData().partnerFocalPointUserName) {
+               <div class="unops-pl-lg unops-mb-sm">
+                 <a [href]="'mailto:' + recordData().partnerFocalPointUserName" 
+                    class="unops-text-body-large unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer"
+                    style="font-weight: var(--unops-font-weight-semibold); text-decoration: none; border-bottom: 1px solid transparent;"
+                    onmouseover="this.style.borderBottom='1px solid var(--unops-secondary)'"
+                    onmouseout="this.style.borderBottom='1px solid transparent'">
+                   {{recordData().partnerFocalPointName || recordData().partnerFocalPointUserName}}
+                 </a>
+               </div>
+              }
+              @if(recordData().liaisonOfficeName || recordData().liaisonOfficeId) {
+               <div class="unops-pl-lg">
+                 <div class="unops-text-label-large unops-text-muted unops-mb-xs">{{ 'label.partner.partnerLiaisonOffice' | translate }}</div>
+                 <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-medium);">{{recordData().liaisonOfficeName || recordData().liaisonOfficeId}}</div>
+               </div>
+              }
             </div>
             }
 
             @if(showAdditionalInfo() && showFullContent()) {
-              <!-- ========== GENERAL FIELDS ========== -->
-              @if(recordData().id){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.id' | translate }}</div>
-                <div>{{recordData().id}}</div>
-              </div>
-              }
-              @if(recordData().partnerShortDescription || recordData().shortName){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.partnerShortDescription' | translate }}</div>
-                <div>{{recordData().partnerShortDescription || recordData().shortName}}</div>
-              </div>
-              }
-              @if(recordData().partnerLongDescription){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.partnerLongDescription' | translate }}</div>
-                <div>{{recordData().partnerLongDescription}}</div>
-              </div>
-              }
-              @if(recordData().partnerCategoryName || recordData().partnerTree?.partnerCategoryName){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.partnerCategory' | translate }}</div>
-                <div>{{recordData().partnerCategoryName || recordData().partnerTree?.partnerCategoryName}}</div>
-              </div>
-              }
-              @if(recordData().liaisonOfficeId){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.partnerLiaisonOffice' | translate }}</div>
-                <div>{{recordData().liaisonOfficeId}}</div>
-              </div>
-              }
-              @if(recordData().partnerGroupName){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.partnerGroup' | translate }}</div>
-                <div>{{recordData().partnerGroupName}}</div>
-              </div>
-              }
-              @if(recordData().status){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.status' | translate }}</div>
-                <div>{{recordData().status}}</div>
-              </div>
-              }
-
-              <!-- ========== APPROVAL FIELDS ========== -->
-              @if(recordData().dueDiligenceRequired){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.dueDiligenceRequired' | translate }}</div>
-                <div>{{recordData().dueDiligenceRequired}}</div>
-              </div>
-              }
-              @if(recordData().dueDiligenceApproval){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.dueDiligenceApproval' | translate }}</div>
-                <div>{{recordData().dueDiligenceApproval}}</div>
-              </div>
-              }
-              @if(recordData().dueDiligenceApprovalDate){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.dueDiligenceApprovalDate' | translate }}</div>
-                <div>{{recordData().dueDiligenceApprovalDate | date}}</div>
-              </div>
-              }
-              @if(recordData().dueDiligenceExpiryDate){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.dueDiligenceExpiryDate' | translate }}</div>
-                <div>{{recordData().dueDiligenceExpiryDate | date}}</div>
-              </div>
-              }
-              @if(recordData().partnerApprovalDate){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.partnerApprovalDate' | translate }}</div>
-                <div>{{recordData().partnerApprovalDate | date}}</div>
-              </div>
-              }
-              @if(recordData().partnerApprovalReference){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.partnerApprovalReference' | translate }}</div>
-                <div>{{recordData().partnerApprovalReference}}</div>
-              </div>
-              }
-              @if(recordData().partnerLevyStatus){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.partnerLevyStatus' | translate }}</div>
-                <div>{{recordData().partnerLevyStatus}}</div>
-              </div>
-              }
-              @if(recordData().reasonForLevy){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.reasonForLevy' | translate }}</div>
-                <div>{{recordData().reasonForLevy}}</div>
-              </div>
-              }
-              @if(recordData().levyTreatment){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.levyTreatment' | translate }}</div>
-                <div>{{recordData().levyTreatment}}</div>
-              </div>
-              }
 
               <!-- ========== CHECKBOX FIELDS ========== -->
-              <div class="flex gap-2">
-                <label for="kgp">{{ "label.partner.keyGlobalPartner" | translate }}</label>
-                <p-checkbox [binary]="true"
-                            [disabled]="true"
-                            [ngModel]="recordData().keyGlobalPartner"
-                            inputId="kgp" />
+              <div class="unops-mb-lg">
+                <div class="unops-text-headline-small unops-text-secondary unops-mb-md unops-flex unops-items-center unops-gap-sm">
+                  <i class="pi pi-check-circle unops-text-info" style="font-size: 1rem;"></i>
+                  {{ 'title.partnerAttributes' | translate }}
+                </div>
+                
+                <!-- Primary Information: Key Global Partner -->
+                <div class="unops-p-md unops-rounded-md unops-mb-md" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                  <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ "label.partner.keyGlobalPartner" | translate }}</div>
+                  <div class="unops-flex unops-items-center unops-gap-sm">
+                    @if(recordData().keyGlobalPartner) {
+                      <i class="pi pi-check unops-text-success" style="font-size: 1.2rem;"></i>
+                      <span class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{ 'label.yes' | translate }}</span>
+                    } @else {
+                      <i class="pi pi-times unops-text-muted" style="font-size: 1.2rem;"></i>
+                      <span class="unops-text-body-large unops-text-muted" style="font-weight: var(--unops-font-weight-semibold);">{{ 'label.no' | translate }}</span>
+                    }
+                  </div>
+                </div>
+                
+                <!-- Other Attributes -->
+                <div class="unops-flex unops-flex-col unops-gap-sm">
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ "label.partner.unAndStateEntity" | translate }}</span>
+                    <div class="unops-flex unops-items-center unops-gap-sm">
+                      @if(recordData().unAndStateEntity) {
+                        <i class="pi pi-check unops-text-success" style="font-size: 1rem;"></i>
+                        <span class="unops-text-body-medium unops-text-secondary">{{ 'label.yes' | translate }}</span>
+                      } @else {
+                        <i class="pi pi-times unops-text-muted" style="font-size: 1rem;"></i>
+                        <span class="unops-text-body-medium unops-text-muted">{{ 'label.no' | translate }}</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ "label.partner.unSecretariatPartner" | translate }}</span>
+                    <div class="unops-flex unops-items-center unops-gap-sm">
+                      @if(recordData().unSecretariatPartner) {
+                        <i class="pi pi-check unops-text-success" style="font-size: 1rem;"></i>
+                        <span class="unops-text-body-medium unops-text-secondary">{{ 'label.yes' | translate }}</span>
+                      } @else {
+                        <i class="pi pi-times unops-text-muted" style="font-size: 1rem;"></i>
+                        <span class="unops-text-body-medium unops-text-muted">{{ 'label.no' | translate }}</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ "label.partner.pooledFund" | translate }}</span>
+                    <div class="unops-flex unops-items-center unops-gap-sm">
+                      @if(recordData().pooledFund) {
+                        <i class="pi pi-check unops-text-success" style="font-size: 1rem;"></i>
+                        <span class="unops-text-body-medium unops-text-secondary">{{ 'label.yes' | translate }}</span>
+                      } @else {
+                        <i class="pi pi-times unops-text-muted" style="font-size: 1rem;"></i>
+                        <span class="unops-text-body-medium unops-text-muted">{{ 'label.no' | translate }}</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ "label.partner.canCreateNewOpportunities" | translate }}</span>
+                    <div class="unops-flex unops-items-center unops-gap-sm">
+                      @if(recordData().canCreateNewOpportunities) {
+                        <i class="pi pi-check unops-text-success" style="font-size: 1rem;"></i>
+                        <span class="unops-text-body-medium unops-text-secondary">{{ 'label.yes' | translate }}</span>
+                      } @else {
+                        <i class="pi pi-times unops-text-muted" style="font-size: 1rem;"></i>
+                        <span class="unops-text-body-medium unops-text-muted">{{ 'label.no' | translate }}</span>
+                      }
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="flex gap-2">
-                <label for="unse">{{ "label.partner.unAndStateEntity" | translate }}</label>
-                <p-checkbox [binary]="true"
-                            [disabled]="true"
-                            [ngModel]="recordData().unAndStateEntity"
-                            inputId="unse" />
+
+              <!-- ========== APPROVAL FIELDS ========== -->
+              <div class="unops-mb-lg">
+                <div class="unops-text-headline-small unops-text-secondary unops-mb-md unops-flex unops-items-center unops-gap-sm">
+                  <i class="pi pi-shield unops-text-success" style="font-size: 1rem;"></i>
+                  {{ 'title.approvalCompliance' | translate }}
+                </div>
+                
+                <!-- Primary Information: Due Diligence Required -->
+                @if(recordData().dueDiligenceRequired){
+                <div class="unops-p-md unops-rounded-md unops-mb-md" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                  <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.partner.dueDiligenceRequired' | translate }}</div>
+                  <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{recordData().dueDiligenceRequired}}</div>
+                </div>
+                }
+                
+                <!-- Other Information -->
+                <div class="unops-flex unops-flex-col unops-gap-sm">
+                  @if(recordData().dueDiligenceApproval){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.partner.dueDiligenceApproval' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary" style="font-weight: var(--unops-font-weight-medium);">{{recordData().dueDiligenceApproval}}</span>
+                  </div>
+                  }
+                  @if(recordData().dueDiligenceApprovalDate){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.partner.dueDiligenceApprovalDate' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary">{{recordData().dueDiligenceApprovalDate | date}}</span>
+                  </div>
+                  }
+                  @if(recordData().dueDiligenceExpiryDate){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm" style="border: 1px solid var(--unops-warning); background: var(--unops-accent-yellow-soft);">
+                    <span class="unops-text-label-large unops-text-warning">{{ 'label.partner.dueDiligenceExpiryDate' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-warning" style="font-weight: var(--unops-font-weight-medium);">{{recordData().dueDiligenceExpiryDate | date}}</span>
+                  </div>
+                  }
+                  @if(recordData().partnerApprovalDate){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.partner.partnerApprovalDate' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary">{{recordData().partnerApprovalDate | date}}</span>
+                  </div>
+                  }
+                  @if(recordData().partnerApprovalReference){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.partner.partnerApprovalReference' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary">{{recordData().partnerApprovalReference}}</span>
+                  </div>
+                  }
+                  @if(recordData().partnerLevyStatus){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.partner.partnerLevyStatus' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary" style="font-weight: var(--unops-font-weight-medium);">{{recordData().partnerLevyStatus}}</span>
+                  </div>
+                  }
+                  @if(recordData().reasonForLevy){
+                  <div class="unops-flex unops-justify-between unops-items-start unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted" style="flex-shrink: 0; margin-right: var(--unops-spacing-md);">{{ 'label.partner.reasonForLevy' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary text-right">{{recordData().reasonForLevy}}</span>
+                  </div>
+                  }
+                  @if(recordData().levyTreatment){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.partner.levyTreatment' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary">{{recordData().levyTreatment}}</span>
+                  </div>
+                  }
+                </div>
               </div>
-              <div class="flex gap-2">
-                <label for="unsp">{{ "label.partner.unSecretariatPartner" | translate }}</label>
-                <p-checkbox [binary]="true"
-                            [disabled]="true"
-                            [ngModel]="recordData().unSecretariatPartner"
-                            inputId="unsp" />
+
+              <!-- ========== GENERAL FIELDS ========== -->
+              <div class="unops-mb-lg">
+                <div class="unops-text-headline-small unops-text-secondary unops-mb-md">{{ 'title.generalInformation' | translate }}</div>
+                
+                <!-- Primary Information: Status -->
+                @if(recordData().status){
+                <div class="unops-p-md unops-rounded-md unops-mb-md" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                  <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.partner.status' | translate }}</div>
+                  <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{recordData().status}}</div>
+                </div>
+                }
+                
+                <!-- Other Information -->
+                <div class="unops-flex unops-flex-col unops-gap-sm">
+                  @if(recordData().id){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.partner.id' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary">{{recordData().id}}</span>
+                  </div>
+                  }
+                  @if(recordData().partnerShortDescription || recordData().shortName){
+                  <div class="unops-flex unops-justify-between unops-items-start unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted" style="flex-shrink: 0; margin-right: var(--unops-spacing-md);">{{ 'label.partner.partnerShortDescription' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary text-right">{{recordData().partnerShortDescription || recordData().shortName}}</span>
+                  </div>
+                  }
+                  @if(recordData().partnerLongDescription){
+                  <div class="unops-flex unops-justify-between unops-items-start unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted" style="flex-shrink: 0; margin-right: var(--unops-spacing-md);">{{ 'label.partner.partnerLongDescription' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary text-right" style="line-height: 1.6;">{{recordData().partnerLongDescription}}</span>
+                  </div>
+                  }
+                </div>
               </div>
-              <div class="flex gap-2">
-                <label for="pf">{{ "label.partner.pooledFund" | translate }}</label>
-                <p-checkbox [binary]="true"
-                            [disabled]="true"
-                            [ngModel]="recordData().pooledFund"
-                            inputId="pf" />
+              <div class="unops-flex unops-flex-col unops-gap-sm unops-mb-lg">
+                @if(recordData().partnerCategoryName || recordData().partnerTree?.partnerCategoryName){
+                <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                  <span class="unops-text-label-large unops-text-muted">{{ 'label.partner.partnerCategory' | translate }}</span>
+                  <span class="unops-text-body-medium unops-text-secondary">{{recordData().partnerCategoryName || recordData().partnerTree?.partnerCategoryName}}</span>
+                </div>
+                }
+                @if(recordData().partnerGroupName){
+                <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                  <span class="unops-text-label-large unops-text-muted">{{ 'label.partner.partnerGroup' | translate }}</span>
+                  <span class="unops-text-body-medium unops-text-secondary">{{recordData().partnerGroupName}}</span>
+                </div>
+                }
               </div>
-              <div class="flex gap-2">
-                <label for="cno">{{ "label.partner.canCreateNewOpportunities" | translate }}</label>
-                <p-checkbox [binary]="true"
-                            [disabled]="true"
-                            [ngModel]="recordData().canCreateNewOpportunities"
-                            inputId="cno" />
-              </div>
+
               <!-- Reason for No New Opportunity -->
               @if(recordData().reasonForNoNewOpportunity){
-                <div class="flex flex-col gap-2">
-                  <div class="text-sm">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}</div>
-                  <div>{{recordData().reasonForNoNewOpportunity}}</div>
+                <div class="unops-card unops-p-md unops-rounded-md unops-mb-md" style="border: 1px solid var(--unops-warning); background: var(--unops-accent-orange-soft);">
+                  <div class="unops-flex unops-items-start unops-gap-sm unops-mb-sm">
+                    <i class="pi pi-exclamation-triangle unops-text-warning" style="font-size: 1.1rem; margin-top: 2px;"></i>
+                    <div class="unops-text-label-large unops-text-warning">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}</div>
+                  </div>
+                  <div class="unops-text-body-medium unops-pl-lg" style="color: var(--unops-warning-dark);">{{recordData().reasonForNoNewOpportunity}}</div>
                 </div>
                 }
 
@@ -293,36 +415,69 @@
 
           <p-divider></p-divider>
 
-          <span class="text-xl">{{ 'title.links' | translate }}</span>
+          <div class="flex justify-between items-center unops-mb-sm">
+            <div class="unops-text-headline-medium unops-text-secondary unops-flex unops-items-center unops-gap-sm">
+              <i class="pi pi-link unops-text-info" style="font-size: 1.1rem;"></i>
+              {{ 'title.links' | translate }}
+            </div>
+            @if (recordPermissions().permissions.canUpdate) {
+              <p-button
+                icon="pi pi-plus"
+                rounded
+                styleClass="p-button-text"
+                [label]="'button.addLink' | translate"
+                (onClick)="openAddLinkDialog()"
+                severity="primary" />
+            }
+          </div>
           @if (recordData().id && +(recordData().id!) > 0) {
-            <app-link-list [entityType]="entityTypePartner"
+            <app-link-list #linkListComponent
+                           [entityType]="entityTypePartner"
                            [entityId]="+(recordData().id!)"
+                           [showAddButton]="false"
                            [disabled]="!recordPermissions().permissions.canUpdate" />
           }
 
           <p-divider></p-divider>
 
-          <span class="text-xl">{{ 'title.doc' | translate }}</span>
+          <div class="flex justify-between items-center unops-mb-md">
+            <div class="unops-text-headline-medium unops-text-secondary unops-flex unops-items-center unops-gap-sm">
+              <i class="pi pi-file unops-text-success" style="font-size: 1.1rem;"></i>
+              {{ 'title.doc' | translate }}
+            </div>
+            @if (recordPermissions().permissions.canUpdate) {
+              <p-button
+                icon="pi pi-google"
+                rounded
+                styleClass="p-button-text"
+                [label]="'button.uploadDocument' | translate"
+                (onClick)="openGoogleDriveDialog()"
+                severity="primary" />
+            }
+          </div>
           <app-document #appDocument
                         [entityId]="recordId"
                         [entityName]="'partner'"
                         [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
+                        [showUploadButton]="false"
                         [disabled]="!recordPermissions().permissions.canUpdate">
             <div ngProjectAs="document-toolbar">
               @if(recordPermissions().permissions.canUpdate){
-                <app-document-gdrive [entityId]="recordId"
+                <app-document-gdrive #gdriveComponent
+                                     [entityId]="recordId"
                                      [entityName]="'partner'"
                                      [appDocumentRef]="appDocument"
+                                     [showUploadButton]="false"
                                      [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
               }
             </div>
           </app-document>
         </div>
       </p-panel>
-
-
     </div>
-    <div class="md:w-1/2 flex flex-col gap-8" *ngIf="showAiPanel">
+
+    
+    <div class="xl:w-[40%] flex flex-col gap-8" *ngIf="showAiPanel">
       <app-ai-panel
         [title]="'label.partner.summaryOfInteractions'"
         [entityId]="recordId"
@@ -344,6 +499,22 @@
         (onError)="onNewsError($event)"
         class="summary-news"
       />
+
+      <!-- Base Engagements Section -->
+      <p-panel class="ai-panel">
+        <ng-template #header>
+          <div class="flex gap-4 items-center w-full">
+            <i class="pi pi-link size-5 ml-1" style="color: var(--unops-primary);"></i>
+            <div class="text-xl">{{ 'title.relatedEngagements' | translate }}</div>
+          </div>
+        </ng-template>
+        
+        <div class="flex flex-col gap-4">
+          <div class="overflow-y-auto" style="height: 300px;">
+            <app-base-engagement-list [partnerId]="partnerIdAsNumber"></app-base-engagement-list>
+          </div>
+        </div>
+      </p-panel>
     </div>
   </div>
 </div>

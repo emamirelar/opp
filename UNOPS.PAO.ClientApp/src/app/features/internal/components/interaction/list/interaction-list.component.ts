@@ -19,6 +19,8 @@ import { InteractionIconService } from '../../../../../common/services/interacti
 import { InteractionPreviewComponent } from '../preview/interaction-preview.component';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { OverlayPanel } from 'primeng/overlaypanel';
+import { MenuModule } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
 
 /**
  * @uiEntity InteractionList
@@ -46,6 +48,7 @@ import { OverlayPanel } from 'primeng/overlaypanel';
     ListviewComponent,
     InteractionPreviewComponent,
     OverlayPanelModule,
+    MenuModule,
   ],
   providers: [
     DialogService
@@ -95,13 +98,15 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     entityName: 'Interaction',
     scrollable: true,
     scrollHeight: 'flex',
+    defaultSortField: 'lastModifiedDate',
+    defaultSortOrder: 'desc',
     sortableFields: [
-      { field: 'createdBy', label: 'Created By' },
-      { field: 'lastModifiedBy', label: 'Last Updated By' }
+      { field: 'createdDate', label: 'Created Date' },
+      { field: 'lastModifiedDate', label: 'Last Updated Date' }
     ],
     searchConfig: {
       useAdvancedSearch: true,
-      placeholder: 'Search interactions...',
+      placeholder: this.translateService.instant('placeholder.searchInteractions'),
       searchableFields: [
         {
           field: 'subject',
@@ -321,8 +326,8 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to create interactions',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('message.permissionDeniedCreateInteractions'),
+        summary: this.translateService.instant('message.permissionDenied')
       });
       return;
     }
@@ -332,7 +337,6 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
   handleOnOpenRecordDetails(record: any) {
     if (record && record.id !== undefined && record.id !== null) {
-      console.log('Navigating to interaction:', record.id);
       this.router.navigate(['partnerships/interactions', record.id.toString()]);
     } else {
       console.error('Cannot navigate: record or record.id is undefined', record);
@@ -343,15 +347,15 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     // Check if user has delete permission
     if (!this.permissionUtilityService.canDelete(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to delete interactions',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('message.permissionDeniedDeleteInteractions'),
+        summary: this.translateService.instant('message.permissionDenied')
       });
       return;
     }
 
     this.interactionService.delete(record.id!).subscribe({
       next: () => {
-        this.feedbackDialogService.showSuccessToast({ detail: 'Interaction deleted successfully!' });
+        this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.interactionDeleteSuccess') });
         // Refresh the listview
         const listviewElement = document.querySelector('app-listview');
         if (listviewElement) {
@@ -360,8 +364,8 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       },
       error: (error: any) => {
         this.feedbackDialogService.showErrorToast({
-          detail: 'Failed to delete interaction',
-          summary: 'Error'
+          detail: this.translateService.instant('message.interactionDeleteFailed'),
+          summary: this.translateService.instant('message.error')
         });
         console.error('Error deleting interaction:', error);
       }
@@ -370,7 +374,6 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
   _handleOnRecordCreation(newRecordData: Interaction) {
     if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
-      console.log('Navigating to newly created interaction:', newRecordData.id);
       this.router.navigate(['partnerships/interactions', newRecordData.id.toString()]);
     } else {
       console.error('Cannot navigate to created record: id is undefined', newRecordData);
@@ -388,7 +391,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     }
 
     const ref = this.dialogService.open(InteractionModalComponent, {
-      header: 'Edit Interaction',
+      header: this.translateService.instant('title.editInteraction'),
       width: '90%',
       height: '90%',
       modal: true,
@@ -400,7 +403,6 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Interaction updated:', result);
         // Refresh the listview
         const listviewElement = document.querySelector('app-listview');
         if (listviewElement) {
@@ -412,7 +414,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
   private openInteractionModal(record?: Interaction): void {
     const ref = this.dialogService.open(InteractionModalComponent, {
-      header: record ? 'Edit Interaction' : 'New Interaction',
+      header: record ? this.translateService.instant('title.editInteraction') : this.translateService.instant('title.newInteraction'),
       width: '90%',
       height: '90%',
       modal: true,
@@ -425,7 +427,6 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Interaction saved:', result);
         if (record) {
           // Update existing interaction
           const listviewElement = document.querySelector('app-listview');
@@ -444,6 +445,22 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     this.currentSearchText = searchParams.generalSearch || '';
   }
 
+  // Import menu items
+  importMenuItems = signal<MenuItem[]>([
+    {
+      label: this.translateService.instant('menu.selectFromGoogleDrive'),
+      icon: 'pi pi-google',
+      command: () => this.openGooglePickerImport(),
+      title: this.translateService.instant('tooltip.googleDriveImport')
+    },
+    {
+      label: this.translateService.instant('menu.manualEntry'),
+      icon: 'pi pi-link',
+      command: () => this.openManualEntryImport(),
+      title: this.translateService.instant('tooltip.manualEntryImport')
+    }
+  ]);
+
   /**
    * @uiButton import_interactions
    * @description Opens the import dialog to bulk import interaction records from Google Sheets or CSV files
@@ -453,17 +470,41 @@ export class InteractionListComponent implements OnInit, OnDestroy {
    * @permissions INTERACTION_CREATE
    */
   openImportDialog() {
+    // This method now shows the import menu instead of directly opening the picker
+    // The actual menu is handled in the template via p-menu
+  }
+
+  /**
+   * Open Google Picker for import (original flow)
+   */
+  openGooglePickerImport() {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to import interactions',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('message.permissionDeniedImportInteractions'),
+        summary: this.translateService.instant('message.permissionDenied')
       });
       return;
     }
     
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('interaction');
+  }
+
+  /**
+   * Open manual entry dialog for import
+   */
+  openManualEntryImport() {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: this.translateService.instant('message.permissionDeniedImportInteractions'),
+        summary: this.translateService.instant('message.permissionDenied')
+      });
+      return;
+    }
+
+    this.importDialogService.openManualEntryDialog('interaction');
   }
 
   /**

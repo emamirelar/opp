@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Button } from 'primeng/button';
 import { ListviewComponent } from '../../../../../../common/pages/components/listview/listview.component';
 import { ListViewColumn, ListViewConfig, SearchParams } from '../../../../../../common/pages/components/listview/listview.model';
@@ -72,6 +72,7 @@ export class PartnerViewInteractionsComponent implements OnInit {
   private feedbackDialogService = inject(FeedbackDialogService);
   public permissionUtilityService = inject(PermissionUtilityService);
   private interactionIconService = inject(InteractionIconService);
+  private translateService = inject(TranslateService);
 
   // Get partner ID from route
   partnerId = signal<string>('');
@@ -98,7 +99,7 @@ export class PartnerViewInteractionsComponent implements OnInit {
     dataLoadingStrategy:  'navigator-full',
     cluster: {
       maxItems: 3,
-      titleTemplate: 'Groupe de {count} interactions',
+      titleTemplate: this.translateService.instant('partner.interactions.timeline.clusterTitle', { count: '{count}' }),
       showStipes: true,
       fitOnDoubleClick: true
     },
@@ -139,35 +140,35 @@ export class PartnerViewInteractionsComponent implements OnInit {
     scrollHeight: 'flex',
     searchConfig: {
       useAdvancedSearch: true,
-      placeholder: 'Search partner interactions...',
+      placeholder: this.translateService.instant('partner.interactions.search.placeholder'),
       searchableFields: [
         {
           field: 'type',
-          label: 'Type',
+          label: this.translateService.instant('partner.interactions.search.type'),
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'subject',
-          label: 'Subject',
+          label: this.translateService.instant('partner.interactions.search.subject'),
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'description',
-          label: 'Description',
+          label: this.translateService.instant('partner.interactions.search.description'),
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         {
           field: 'date',
-          label: 'Date',
+          label: this.translateService.instant('partner.interactions.search.date'),
           type: 'date',
           operators: ['is', 'is not', 'after', 'before', 'between', '>', '<', '>=', '<=']
         },
         {
           field: 'contactName',
-          label: 'Contact Name',
+          label: this.translateService.instant('partner.interactions.search.contactName'),
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         }
@@ -311,14 +312,14 @@ export class PartnerViewInteractionsComponent implements OnInit {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to create interactions',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('partner.interactions.error.createPermissionDenied'),
+        summary: this.translateService.instant('common.error.permissionDenied')
       });
       return;
     }
 
     const ref = this.dialogService.open(InteractionModalComponent, {
-      header: 'New Interaction',
+      header: this.translateService.instant('partner.interactions.modal.newHeader'),
       width: '90%',
       height: '90%',
       modal: true,
@@ -326,13 +327,16 @@ export class PartnerViewInteractionsComponent implements OnInit {
       data: {
         initialData: {
           partnerId: this.partnerId() // Pre-fill partner ID
+        },
+        partnerContext: {
+          partnerId: this.partnerId(),
+          lockPartner: false // Allow partner selection but require at least one contact from current partner
         }
       }
     });
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Interaction created:', result);
         // Refresh the listview and timeline
         window.dispatchEvent(new CustomEvent('refresh-listview'));
 
@@ -366,14 +370,14 @@ export class PartnerViewInteractionsComponent implements OnInit {
     // Check if user has update permission
     if (!this.permissionUtilityService.canUpdate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit interactions',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('partner.interactions.error.editPermissionDenied'),
+        summary: this.translateService.instant('common.error.permissionDenied')
       });
       return;
     }
 
     const ref = this.dialogService.open(InteractionModalComponent, {
-      header: 'Edit Interaction',
+      header: this.translateService.instant('partner.interactions.modal.editHeader'),
       width: '90%',
       height: '90%',
       modal: true,
@@ -385,7 +389,6 @@ export class PartnerViewInteractionsComponent implements OnInit {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Interaction updated:', result);
         // Refresh the listview and timeline
         window.dispatchEvent(new CustomEvent('refresh-listview'));
 

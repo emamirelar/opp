@@ -11,6 +11,11 @@ using UNOPS.PAO.UNOPSBusiness.Specifications;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
+using UNOPS.PAO.UNOPSDomain.Entities;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using static UNOPS.PAO.UNOPSBusiness.Services.AdvancedSearchService;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -36,40 +41,28 @@ public class ContactController : BaseController
     private readonly IGeminiManager _geminiManager;
     private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
     private readonly AiContextualService _aiContextualService;
+    private readonly AdvancedSearchService _advancedSearchService;
 
     public ContactController(
         IManagerWrapper manager, 
         UserResolverService<int> userResolverService, 
         ILogger<ContactController> logger,
         IAuthorizationService authorizationService,
-        AiContextualService aiContextualService)
+        AiContextualService aiContextualService,
+        AdvancedSearchService advancedSearchService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.ContactManager;
         _geminiManager = manager.GeminiManager;
         _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
         _aiContextualService = aiContextualService;
+        _advancedSearchService = advancedSearchService;
     }
 
     /// <summary>
     /// Creates a new contact with comprehensive personal and professional details.
     /// </summary>
-    /// <param name="req">Contact creation request with required fields</param>
-    /// <param name="req.firstName">Contact's first name (optional)</param>
-    /// <param name="req.lastName">Contact's last name (required) - validation enforced</param>
-    /// <param name="req.email">Primary email address (required) - validation enforced for format and presence</param>
-    /// <param name="req.partnerId">Associated partner organization ID (required) - must be valid existing partner</param>
-    /// <param name="req.title">Job title/position (required) - validation enforced</param>
-    /// <param name="req.salutation">Title/salutation (Mr., Ms., Dr., etc.)</param>
-    /// <param name="req.middleName">Middle name or initial</param>
-    /// <param name="req.suffix">Name suffix (Jr., Sr., III, etc.)</param>
-    /// <param name="req.department">Department or division</param>
-    /// <param name="req.phone">Primary phone number</param>
-    /// <param name="req.mobile">Mobile phone number</param>
-    /// <param name="req.status">Contact status (defaults to 'Active')</param>
-    /// <param name="req.mailingStreet">Mailing address street</param>
-    /// <param name="req.mailingCity">Mailing address city</param>
-    /// <param name="req.mailingCountry">Mailing address country</param>
+    /// <param name="req">Contact creation request with required fields including firstName, lastName, email, partnerId, title, salutation, middleName, suffix, department, phone, mobile, status, mailingStreet, mailingCity, mailingCountry</param>
     /// <example_uses>
     /// Create a contact named John Doe with email john@unicef.org
     /// Add a new program manager contact for partner 123
@@ -188,6 +181,7 @@ public class ContactController : BaseController
     /// <param name="orderBy">Field to order results by (optional)</param>
     /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
     /// <param name="partnerId">Optional partner ID to filter contacts by specific partner</param>
+    /// <param name="export">Whether to export results as file instead of returning JSON (default: false)</param>
     /// <example_uses>
     /// Show me all contacts
     /// List all contacts in the system
@@ -206,7 +200,9 @@ public class ContactController : BaseController
         [FromQuery] int pageSize = 20,
         [FromQuery] string? orderBy = null,
         [FromQuery] bool ascending = true,
-        [FromQuery] int? partnerId = null)
+        [FromQuery] int? partnerId = null,
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
@@ -218,10 +214,11 @@ public class ContactController : BaseController
             var request = new ContactFilterRequest
             {
                 PageIndex = pageIndex,
-                PageSize = pageSize,
+                PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
                 OrderBy = orderBy,
                 Ascending = ascending,
-                PartnerId = partnerId
+                PartnerId = partnerId,
+                FilterActive = filterActive
             };
             
             _logger.LogInformation($"[CONTROLLER DEBUG] ContactFilterRequest - PartnerId: {request.PartnerId}");
@@ -238,7 +235,8 @@ public class ContactController : BaseController
     /// Performs simple text search across multiple contact fields (name, email, title, etc.).
     /// </summary>
     /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
-    /// <param name="searchText">Text to search across contact name, email, title, and other basic fields</param>
+    /// <param name="query">Text to search across contact name, email, title, and other basic fields</param>
+    /// <param name="export">Whether to export all results without pagination</param>
     /// <example_uses>
     /// Search for contacts named John
     /// Find contacts with @unicef.org email
@@ -252,48 +250,49 @@ public class ContactController : BaseController
     [AccessControlled(EntityTypes.Contact, "read")]
     public async Task<ActionResult> SearchContacts(
         [FromQuery] PaginationRequest request,
-        [FromQuery] string searchText)
+        [FromQuery] string query,
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
     {
         // Validate pagination parameters
         var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
         if (validationResult != null) return validationResult;
         
-        if (string.IsNullOrWhiteSpace(searchText))
+        if (string.IsNullOrWhiteSpace(query))
         {
             throw new BusinessException("Search text is required for contact search");
         }
 
-        return await HandleSearchOperationAsync(async () =>
+        // Use the enhanced search pattern (now includes PostgreSQL similarity search)
+        var paginationRequest = new PaginationRequest
         {
-            // Create a ContactFilterRequest with pagination/sorting info and search text
-            var contactFilterRequest = new ContactFilterRequest
-            {
-                PageIndex = request.PageIndex,
-                PageSize = request.PageSize,
-                OrderBy = request.OrderBy,
-                Ascending = request.Ascending,
-                SearchText = searchText
-            };
+            PageIndex = request.PageIndex,
+            PageSize = export ? int.MaxValue : request.PageSize, // Remove pagination limits for export
+            OrderBy = request.OrderBy,
+            Ascending = request.Ascending,
+            FilterActive = filterActive
+        };
 
-            return await SearchControllerHelper.ProcessSimpleTextSearch<ContactFilterRequest, ContactCompositeSpecification, PaginationResponse<ContactModel>>(
-                searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
-                contactFilterRequest,
-                "Contact",
-                filterRequest => new ContactCompositeSpecification(filterRequest),
-                async (userId, spec, pagination) => {
-                    // Use regular specification - global filters handled automatically by BaseRepository
-                    return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
-                },
-                CurrentUserId, _logger);
-        }, "contact simple search");
+        // Use AdvancedSearchService for unified text search with PostgreSQL similarity
+        var result = await _advancedSearchService.SearchWithQueryAsync<UNOPSContact, ContactModel>(
+            query, 
+            paginationRequest, 
+            User);
+
+        _logger.LogInformation("Contact search completed: Found {TotalCount} results for query: {Query}, export: {Export}", result.TotalCount, query, export);
+
+        return Ok(result);
     }
 
     /// <summary>
     /// Performs advanced search with structured criteria including relationships with partners, departments, and complex filters.
+    /// Enhanced with intelligent field value matching for AI agents and typo correction.
     /// </summary>
-    /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
-    /// <param name="searchCriteria">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
-    /// <param name="searchText">Optional additional text search to combine with criteria</param>
+    /// <param name="filters">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
+    /// <param name="pageIndex">Page number for pagination (default: 1)</param>
+    /// <param name="pageSize">Number of items per page (default: 20)</param>
+    /// <param name="orderBy">Field to order by (optional)</param>
+    /// <param name="ascending">Sort direction (default: true)</param>
     /// <example_uses>
     /// Find contacts from UNICEF partner organization
     /// Show contacts in Finance department created this month
@@ -313,44 +312,79 @@ public class ContactController : BaseController
     [HttpGet(APIDictionary.Contact + "/advanced-search")]
     [AccessControlled(EntityTypes.Contact, "read")]
     public async Task<ActionResult> AdvancedSearchContacts(
-        [FromQuery] PaginationRequest request,
-        [FromQuery] string searchCriteria,
-        [FromQuery] string? searchText = null)
+        [FromQuery] string filters,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = null,
+        [FromQuery] bool ascending = true,
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
     {
-        // Validate pagination parameters
-        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
-        if (validationResult != null) return validationResult;
-        
-        if (string.IsNullOrWhiteSpace(searchCriteria))
+        try
         {
-            throw new BusinessException("Search criteria is required for advanced contact search");
-        }
+            _logger.LogInformation("=== CONTACT ADVANCED SEARCH ENDPOINT ===");
+            _logger.LogInformation("Filters: {Filters}, Page: {PageIndex}, Size: {PageSize}", filters, pageIndex, pageSize);
 
-        return await HandleSearchOperationAsync(async () =>
-        {
-            // Create a ContactFilterRequest with pagination/sorting info and search criteria
-            var contactFilterRequest = new ContactFilterRequest
+            if (string.IsNullOrWhiteSpace(filters))
             {
-                PageIndex = request.PageIndex,
-                PageSize = request.PageSize,
-                OrderBy = request.OrderBy,
-                Ascending = request.Ascending,
-                SearchCriteria = searchCriteria,
-                SearchText = searchText,
-                AdvancedSearch = true // Set this internally since we know this is an advanced search
+                return BadRequest(new { error = "Search filters are required" });
+            }
+
+            // Parse filters from JSON
+            List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter> searchFilters;
+            try
+            {
+                searchFilters = System.Text.Json.JsonSerializer.Deserialize<List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>>(filters) ?? new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>();
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse search filters: {Filters}", filters);
+                return BadRequest(new { error = "Invalid filter format. Expected JSON array of filter objects." });
+            }
+
+            // Use AdvancedSearchService for structured filters with PostgreSQL similarity on "like" operators
+            var paginationRequest = new PaginationRequest
+            {
+                PageIndex = pageIndex,
+                PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
+                OrderBy = orderBy,
+                Ascending = ascending,
+                FilterActive = filterActive
             };
 
-            return await SearchControllerHelper.ProcessAdvancedSearch<ContactFilterRequest, ContactCompositeSpecification, PaginationResponse<ContactModel>>(
-                searchCriteria, searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending, 
-                contactFilterRequest,
-                "Contact",
-                filterRequest => new ContactCompositeSpecification(filterRequest),
-                async (userId, spec, pagination) => {
-                    // Use regular specification - global filters handled automatically by BaseRepository
-                    return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
-                },
-                CurrentUserId, _logger);
-        }, "contact advanced search");
+            var result = await _advancedSearchService.SearchWithFiltersAsync<UNOPSContact, ContactModel>(
+                searchFilters,
+                paginationRequest,
+                User);
+            
+            _logger.LogInformation("Advanced contact search completed: Found {TotalCount} results", result.TotalCount);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in advanced contact search");
+            return StatusCode(500, new { error = "Internal server error during contact search", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get supported search fields for contacts - helps frontend build dynamic search forms
+    /// </summary>
+    /// <returns>List of all supported search fields with their metadata</returns>
+    [HttpGet(APIDictionary.Contact + "/search-fields")]
+    [AccessControlled(EntityTypes.Contact, "read")]
+    public ActionResult<List<SearchFieldInfo>> GetContactSearchFields()
+    {
+        try
+        {
+            var fields = _manager.GetContactSearchFields();
+            return Ok(fields);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving contact search fields");
+            return StatusCode(500, new { error = "An error occurred while retrieving search fields" });
+        }
     }
 
     /// <summary>
@@ -382,16 +416,7 @@ public class ContactController : BaseController
     /// <summary>
     /// Updates an existing contact's information including personal details, contact methods, and professional information.
     /// </summary>
-    /// <param name="req">Contact update request containing modified fields</param>
-    /// <param name="req.id">Contact ID to update (required)</param>
-    /// <param name="req.firstName">Updated first name</param>
-    /// <param name="req.lastName">Updated last name</param>
-    /// <param name="req.email">Updated email address</param>
-    /// <param name="req.title">Updated job title</param>
-    /// <param name="req.phone">Updated phone number</param>
-    /// <param name="req.mobile">Updated mobile number</param>
-    /// <param name="req.department">Updated department</param>
-    /// <param name="req.status">Updated status</param>
+    /// <param name="req">Contact update request containing modified fields including id, firstName, lastName, email, title, phone, mobile, department, status</param>
     /// <example_uses>
     /// Update contact 123's email to newemail@unicef.org
     /// Change contact 456's title to Senior Manager
@@ -447,9 +472,9 @@ public class ContactController : BaseController
     /// <returns>List of contacts belonging to the specified partner organization</returns>
     [HttpGet(APIDictionary.PartnerContacts)]
     [AccessControlled(EntityTypes.Contact, "read")]
-    public async Task<ActionResult> PartnerContacts(int partnerId)
+    public Task<ActionResult> PartnerContacts(int partnerId)
     {
-        return Ok(_manager.GetPartnerContacts(partnerId));
+        return Task.FromResult<ActionResult>(Ok(_manager.GetPartnerContacts(partnerId)));
     }
 
     /// <summary>
@@ -527,7 +552,6 @@ public class ContactController : BaseController
     /// Scans and processes uploaded files for contact data extraction using AI-powered analysis.
     /// </summary>
     /// <param name="req">File scan request containing the file to be processed</param>
-    /// <param name="req.File">File to scan for contact data (required)</param>
     /// <example_uses>
     /// Scan business cards for contact information
     /// Upload contact forms for processing
@@ -548,7 +572,17 @@ public class ContactController : BaseController
                 throw new BusinessException("No valid file detected.");
             }
 
-            string fileType = _geminiManager.FindFileType(req.File);
+            if (_geminiManager == null)
+            {
+                throw new BusinessException("Gemini manager not available");
+            }
+
+            if (req == null)
+            {
+                throw new BusinessException("Request cannot be null");
+            }
+
+            string fileType = _geminiManager.FindFileType(req.File) ?? "";
 
             if (string.IsNullOrEmpty(fileType)) 
             {
@@ -570,8 +604,6 @@ public class ContactController : BaseController
     /// Analyzes uploaded files and extracts structured contact data using AI-powered data analysis.
     /// </summary>
     /// <param name="request">Analysis request containing file and analysis parameters</param>
-    /// <param name="request.entityType">Should be set to 'Contact' for contact data analysis</param>
-    /// <param name="request.analysisType">Type of analysis to perform on contact data</param>
     /// <example_uses>
     /// Analyze contact directories for structured data extraction
     /// Extract contact information from uploaded forms
@@ -600,9 +632,6 @@ public class ContactController : BaseController
     /// Bulk uploads multiple contact records using AI-assisted data processing and validation.
     /// </summary>
     /// <param name="req">Bulk upload request containing contact data</param>
-    /// <param name="req.Type">Should be set to 'Contact' for contact bulk upload</param>
-    /// <param name="req.Data">Array of contact data objects to upload</param>
-    /// <param name="req.Options">Upload options and validation settings</param>
     /// <example_uses>
     /// Bulk upload 500 contacts from Excel
     /// Import multiple contacts from CSV file
@@ -683,90 +712,113 @@ public class ContactController : BaseController
     }
 
     /// <summary>
-    /// Performs semantic search on contacts using AI embeddings to find similar contacts based on natural language queries.
+    /// Detects duplicates for an existing contact record after save operations
     /// </summary>
-    /// <param name="query">Natural language search query</param>
-    /// <param name="threshold">Similarity threshold (0.0 to 1.0, default: 0.7)</param>
-    /// <param name="limit">Maximum number of results to return (default: 10)</param>
-    /// <example_uses>
-    /// Find contacts similar to John Doe
-    /// Search for program managers in healthcare
-    /// Find technical leads in engineering
-    /// Search for contacts in the education sector
-    /// Find executives similar to CEO
-    /// </example_uses>
-    /// <when_to_use>Use this when the user wants to find contacts using natural language queries or semantic similarity.</when_to_use>
-    /// <returns>List of similar contacts with similarity scores</returns>
-    [HttpGet(APIDictionary.Contact + "/deepSearch")]
+    /// <param name="req">Contact data to check for duplicates</param>
+    /// <returns>Duplicate detection results</returns>
+    [HttpPost(APIDictionary.Contact + "/detect-duplicates")]
     [AccessControlled(EntityTypes.Contact, "read")]
-    public async Task<ActionResult> DeepSearch(
-        [FromQuery] string query,
-        [FromQuery] float threshold = 0.7f,
-        [FromQuery] int limit = 10)
+    public async Task<ActionResult> DetectDuplicatesForContact([FromBody] dynamic req)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(query))
+            // Proper null check for dynamic type
+            if (req is null)
             {
-                return BadRequest(new { error = "Search query is required" });
+                return BadRequest("Invalid request.");
             }
 
-            if (threshold < 0.0f || threshold > 1.0f)
+            // Convert the dynamic request to a proper object for duplicate detection
+            object requestData;
+            if (req is JsonElement jsonElement)
             {
-                return BadRequest(new { error = "Threshold must be between 0.0 and 1.0" });
+                // Deserialize JsonElement to JObject for proper handling
+                var jsonString = jsonElement.GetRawText();
+                requestData = JObject.Parse(jsonString);
+            }
+            else if (req is JObject)
+            {
+                requestData = req;
+            }
+            else
+            {
+                // Try to serialize and deserialize to ensure proper format
+                var jsonString = JsonConvert.SerializeObject(req);
+                requestData = JObject.Parse(jsonString);
             }
 
-            if (limit <= 0 || limit > 100)
-            {
-                return BadRequest(new { error = "Limit must be between 1 and 100" });
-            }
-
-            // Generate embedding for the search query
-            var embedding = await _aiContextualService.CreateEmbeddingForText(query);
-            
-            // Perform semantic search
-            var searchResults = await _aiContextualService.ExecuteEmbeddingSearchMultiple(
+            var duplicateResult = await _aiContextualService.DetectDuplicateForSingleRecordAsync(
                 "Contact", 
-                embedding, 
-                threshold, 
-                limit
+                requestData, 
+                0.5 // Standard sensitivity for post-save detection
             );
-
-            // Get the actual contact data for the found IDs
-            var contacts = new List<object>();
-            foreach (var result in searchResults)
+            
+            // Extract ID from the converted request data
+            int? recordId = null;
+            if (requestData is JObject jObj && jObj.ContainsKey("id"))
             {
-                try
-                {
-                    var contact = await _manager.GetContactAsync(User, result.EntityId);
-                    if (contact != null)
-                    {
-                        contacts.Add(new
-                        {
-                            contact = contact,
-                            similarityScore = result.Score,
-                            searchType = result.SearchType
-                        });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to retrieve contact {ContactId} from search results", result.EntityId);
-                }
+                int.TryParse(jObj["id"]?.ToString(), out int id);
+                recordId = id > 0 ? id : null;
             }
 
-            return Ok(new
-            {
-                query = query,
-                threshold = threshold,
-                totalResults = searchResults.Count,
-                results = contacts
+            return Ok(new {
+                success = true,
+                entityType = "Contact",
+                recordId = recordId,
+                duplicateInfo = duplicateResult?.HasDuplicates == true ? new {
+                    totalDuplicates = duplicateResult.TotalDuplicates,
+                    highConfidence = duplicateResult.HighConfidence,
+                    mediumConfidence = duplicateResult.MediumConfidence,
+                    lowConfidence = duplicateResult.LowConfidence,
+                    topDuplicate = duplicateResult.TopDuplicate != null ? new {
+                        entityId = duplicateResult.TopDuplicate.EntityId,
+                        entityType = duplicateResult.TopDuplicate.EntityType,
+                        score = duplicateResult.TopDuplicate.Score,
+                        matchReason = duplicateResult.TopDuplicate.MatchReason,
+                        searchType = duplicateResult.TopDuplicate.SearchType,
+                        matchedData = duplicateResult.TopDuplicate.MatchedData != null ? 
+                            JsonConvert.SerializeObject(duplicateResult.TopDuplicate.MatchedData) : null
+                    } : null,
+                    duplicates = duplicateResult.AllDuplicates != null ? 
+                        JsonConvert.SerializeObject(duplicateResult.AllDuplicates) : null
+                } : null
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error performing deep search for contacts with query: {Query}", query);
-            return StatusCode(500, new { error = "An error occurred while performing the semantic search" });
+            // Extract ID for logging
+            var idForLogging = "unknown";
+            try
+            {
+                if (req is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+                {
+                    var jsonString = jsonElement.GetRawText();
+                    var jObj = JObject.Parse(jsonString);
+                    if (jObj.ContainsKey("id"))
+                    {
+                        idForLogging = jObj["id"]?.ToString() ?? "unknown";
+                    }
+                }
+                else if (req is JObject jObj && jObj.ContainsKey("id"))
+                {
+                    idForLogging = jObj["id"]?.ToString() ?? "unknown";
+                }
+            }
+            catch
+            {
+                // Ignore errors in ID extraction for logging
+            }
+
+            _logger.LogWarning(ex, "Post-save duplicate detection failed for Contact ID {ContactId}", idForLogging);
+            // Return success with no duplicates rather than failing - this is a background operation
+            return Ok(new {
+                success = true,
+                entityType = "Contact",
+                recordId = (object)null,
+                duplicateInfo = (object)null,
+                warning = "Duplicate detection temporarily unavailable"
+            });
         }
     }
+
 }

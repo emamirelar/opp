@@ -3,7 +3,7 @@ import { SearchField } from '../../../services/search-parser.service';
 /**
  * Supported entity types for saved filters and advanced search functionality
  */
-export type EntityType = 'Partner' | 'Interaction' | 'Contact';
+export type EntityType = 'Partner' | 'Interaction' | 'Contact' | 'PartnerCategory' | 'PartnerGroup';
 
 export interface ListViewColumn {
   label: string;
@@ -241,7 +241,7 @@ export interface SearchCriteria {
   logicalOperator?: 'AND' | 'OR';  // The logical operator connecting this criterion with the next one
   // Support for date range filters (like "between")
   secondValue?: string;  // For "between" operator, this holds the end date
-  fieldType?: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars' | 'template' | 'interactionIcon';  // Field type to determine input type
+  fieldType?: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars' | 'template' | 'interactionIcon' | 'enum';  // Field type to determine input type
 }
 
 export interface SearchParams {

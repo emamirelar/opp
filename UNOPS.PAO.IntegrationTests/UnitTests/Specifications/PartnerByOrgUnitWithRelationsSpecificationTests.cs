@@ -172,6 +172,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Id = 1, 
                 Type = Domain.Enums.InteractionType.Email,
                 Date = DateTime.Now,
+                Subject = "Test interaction subject",
                 Description = "Test interaction"
             };
             
@@ -281,6 +282,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Id = 1, 
                 Type = Domain.Enums.InteractionType.Email,
                 Date = DateTime.Now,
+                Subject = "Test interaction subject",
                 Description = "Test interaction",
                 InteractionContacts = new List<InteractionContact>
                 {
@@ -500,6 +502,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Id = 1,
                 Type = Domain.Enums.InteractionType.Email,
                 Date = DateTime.Now,
+                Subject = "Interaction 1 subject",
                 Description = "Interaction 1",
                 InteractionContacts = new List<InteractionContact>
                 {
@@ -516,6 +519,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Id = 2,
                 Type = Domain.Enums.InteractionType.Email,
                 Date = DateTime.Now,
+                Subject = "Interaction 2 subject",
                 Description = "Interaction 2",
                 InteractionContacts = new List<InteractionContact>
                 {
@@ -533,6 +537,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Id = 3,
                 Type = Domain.Enums.InteractionType.Email,
                 Date = DateTime.Now,
+                Subject = "Interaction 3 subject",
                 Description = "Interaction 3",
                 InteractionContacts = new List<InteractionContact>
                 {

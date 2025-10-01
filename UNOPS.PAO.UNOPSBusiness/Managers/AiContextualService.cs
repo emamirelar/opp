@@ -55,8 +55,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         private readonly GoogleCredential _credentials;
         protected readonly PubSubPublisher _pubSubPublisher;
         private readonly string _connectionString;
+        private readonly IAiPromptCacheService _aiPromptCacheService;
 
-        public AiContextualService(IConfiguration configuration, UNOPSAppDbContext context, GoogleCredential credentials)
+        public AiContextualService(IConfiguration configuration, UNOPSAppDbContext context, GoogleCredential credentials, IAiPromptCacheService aiPromptCacheService = null)
         {
             _configuration = configuration;
             _context = context;
@@ -64,11 +65,137 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             _credentials = credentials;
             _promptRepository = new DataRepository<AiPrompt>(context);
             _pubSubPublisher = new PubSubPublisher(configuration);
+            _aiPromptCacheService = aiPromptCacheService; // Optional dependency for backward compatibility
             var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
             var location = _configuration.GetValue<string>("AISettings:Location");
             var model = _configuration.GetValue<string>("AISettings:EmbeddingModelName");
             _endpoint = $"projects/{projectId}/locations/{location}/publishers/google/models/{model}";
             _predictionClient = PredictionServiceClient.Create(); // gRPC Client
+        }
+
+        /// <summary>
+        /// Replaces placeholders in text with actual values from JSON data
+        /// </summary>
+        /// <param name="text">Text containing placeholders like {partnerName}, {userInfo}</param>
+        /// <param name="jsonData">JSON data containing the replacement values</param>
+        /// <returns>Text with placeholders replaced</returns>
+        private string ProcessPlaceholders(string text, string jsonData)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(jsonData))
+                return text ?? string.Empty;
+
+            try
+            {
+                var dataObject = JsonConvert.DeserializeObject<JObject>(jsonData);
+                var result = text;
+
+                if (result == "{promptData}")
+                {
+                    return jsonData;
+                }
+                
+                // Debug logging
+                Console.WriteLine($"[DEBUG] Processing placeholders in text: {text.Substring(0, Math.Min(100, text.Length))}...");
+                Console.WriteLine($"[DEBUG] JSON data: {jsonData.Substring(0, Math.Min(500, jsonData.Length))}...");
+                
+                // Find all placeholders in format {propertyName} or {object.property}
+                var placeholderPattern = @"\{([^}]+)\}";
+                var matches = Regex.Matches(text, placeholderPattern);
+                
+                Console.WriteLine($"[DEBUG] Found {matches.Count} placeholders to process");
+                
+                foreach (Match match in matches)
+                {
+                    var placeholder = match.Value; // e.g., "{partner.name}"
+                    var propertyPath = match.Groups[1].Value; // e.g., "partner.name"
+                    
+                    var value = GetNestedPropertyValue(dataObject, propertyPath);
+                    
+                    if (value != null)
+                    {
+                        Console.WriteLine($"[DEBUG] Replacing '{placeholder}' with '{value.Substring(0, Math.Min(50, value.Length))}{(value.Length > 50 ? "..." : "")}'");
+                        result = result.Replace(placeholder, value);
+                    }
+                    else
+                    {
+                        // Log warning for unresolved placeholders but don't fail
+                        Console.WriteLine($"[WARNING] Placeholder '{placeholder}' not found in JSON data");
+                        // Replace with empty string to avoid showing placeholder in output
+                        result = result.Replace(placeholder, "");
+                    }
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing placeholders: {ex.Message}");
+                return text; // Return original text if processing fails
+            }
+        }
+
+        /// <summary>
+        /// Gets nested property value from JObject using dot notation (e.g., "partner.name")
+        /// </summary>
+        private string GetNestedPropertyValue(JObject dataObject, string propertyPath)
+        {
+            try
+            {
+                var pathParts = propertyPath.Split('.');
+                JToken current = dataObject;
+                
+                foreach (var part in pathParts)
+                {
+                    if (current == null) return null;
+                    
+                    // Handle arrays - if current is an array, try to get first element
+                    if (current is JArray array && array.Count > 0)
+                    {
+                        current = array[0];
+                    }
+                    
+                    // Look for property (case-insensitive)
+                    if (current is JObject obj)
+                    {
+                        var property = obj.Properties()
+                            .FirstOrDefault(p => string.Equals(p.Name, part, StringComparison.OrdinalIgnoreCase));
+                        
+                        if (property != null)
+                        {
+                            current = property.Value;
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                
+                // Handle the final value
+                if (current != null)
+                {
+                    // If it's an object or array, serialize it as JSON
+                    if (current is JObject || current is JArray)
+                    {
+                        return current.ToString(Formatting.None);
+                    }
+                    else
+                    {
+                        return current.ToString();
+                    }
+                }
+                
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting nested property '{propertyPath}': {ex.Message}");
+                return null;
+            }
         }
 
         public async Task<string> CreateEmbeddingForText(string text)
@@ -130,25 +257,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 var embeddingResult = await ExecuteEmbeddingSearch(entityName, vectorEmbedding, embeddingThreshold, "1=1");
                 return embeddingResult;
             }
-            
-            // Step 3: If we have search text but no embedding, generate embedding and search
-            if (!string.IsNullOrEmpty(searchText))
-            {
-                var generatedEmbedding = await CreateEmbeddingForText(searchText);
-                if (!string.IsNullOrEmpty(generatedEmbedding))
-                {
-                    var embeddingResult = await ExecuteEmbeddingSearch(entityName, generatedEmbedding, embeddingThreshold, "1=1");
-                    
-                    // If embedding search also fails but we have a vector, log for future searches
-                    if ((embeddingResult == null || embeddingResult is DBNull))
-                    {
-                        Console.WriteLine($"No match found for '{searchText}' in '{entityName}', but embedding created for future searches.");
-                    }
-                    
-                    return embeddingResult;
-                }
-            }
-            
+
             return null;
         }
 
@@ -280,7 +389,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return results;
         }
 
-        public async Task<string> ReadFileData(string fileId)
+        public async Task<string> ReadFileData(string fileId, string sheetName = null)
         {
             try
             {
@@ -290,7 +399,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     ApplicationName = "GoogleSheetsReader",
                 });
                 var spreadsheet = service.Spreadsheets.Get(fileId).Execute();
-                var firstSheetName = spreadsheet.Sheets[0].Properties.Title;
+                var firstSheetName = sheetName ?? spreadsheet.Sheets[0].Properties.Title;
 
                 // Read values
                 var request = service.Spreadsheets.Values.Get(fileId, firstSheetName);
@@ -349,7 +458,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         return prompts.Select(entity => new AiPrompt
         {
             Type = entity.Type,
-            Prompt = entity.Prompt ?? string.Empty, // Ensure null safety
+            SystemInstructions = entity.SystemInstructions ?? string.Empty, 
+            UserPrompt = entity.UserPrompt,
             ContentConfig = entity.ContentConfig,
             GenerationConfig = entity.GenerationConfig,
             ToolsConfig = entity.ToolsConfig,
@@ -357,28 +467,84 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             Location = entity.Location,
             Project = entity.Project,
             Model = entity.Model,
-            PromptFunction = entity.PromptFunction,
-            Name = entity.Name
+            DataRetrievalMethod = entity.DataRetrievalMethod, 
+            Name = entity.Name,
+            Feature = entity.Feature,
+            UseCache = entity.UseCache,
+            CacheInvalidationMinutes = entity.CacheInvalidationMinutes
         }).ToList();
     }
 
-    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string entityId = null, bool bypassCache = false)
     {
-        string promptTemplate = promptData.Prompt;
-        string finalPrompt = promptTemplate.Replace("{promptData}", relatedJsonData);
-        var promptList = new
+        try
         {
-            role = "user",
-            parts = new[] { new { text = finalPrompt } }
-        };
-        return await CallGeminiApi(promptList, promptData);
+            // Step 1: Process placeholders to create fully formed instructions/prompts
+            // Use new SystemInstructions field
+            var systemInstructionsTemplate = promptData.SystemInstructions ?? string.Empty;
+                
+            var fullyFormedSystemInstructions = ProcessPlaceholders(systemInstructionsTemplate, relatedJsonData);
+            
+            var fullyFormedUserPrompt = !string.IsNullOrEmpty(promptData.UserPrompt) 
+                ? ProcessPlaceholders(promptData.UserPrompt, relatedJsonData)
+                : relatedJsonData; // Default to raw data if no user prompt specified
+            
+            // Step 2: Check cache if enabled and not bypassed
+            if (!bypassCache && promptData.UseCache && !string.IsNullOrEmpty(entityId) && !string.IsNullOrEmpty(promptData.Type) && _aiPromptCacheService != null)
+            {
+                var cachedEntry = await _aiPromptCacheService.GetCachedEntryAsync(promptData.Type, entityId);
+                if (cachedEntry != null)
+                {
+                    // Check if the current fully formed instructions/prompts match the cached ones
+                    if (cachedEntry.SystemInstructions == fullyFormedSystemInstructions && 
+                        cachedEntry.UserPrompt == fullyFormedUserPrompt)
+                    {
+                        Console.WriteLine($"[CACHE HIT] Returning cached result for prompt {promptData.Type}, entity {entityId}");
+                        return cachedEntry.Result;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[CACHE MISS] Instructions/prompts changed for prompt {promptData.Type}, entity {entityId}");
+                        // Instructions/prompts have changed, invalidate cache entry
+                        await _aiPromptCacheService.InvalidateCache(promptData.Type, entityId);
+                    }
+                }
+            }
+            
+            // Step 3: Call Gemini API with fully formed content
+            var userContent = new
+            {
+                role = "user",
+                parts = new[] { new { text = fullyFormedUserPrompt } }
+            };
+            
+            var result = await CallGeminiApi(userContent, promptData, fullyFormedSystemInstructions);
+            
+            // Step 4: Cache the result if caching is enabled and not bypassed
+            if (!bypassCache && promptData.UseCache && !string.IsNullOrEmpty(entityId) && !string.IsNullOrEmpty(promptData.Type) && _aiPromptCacheService != null)
+            {
+                await _aiPromptCacheService.SetCachedResultAsync(
+                    promptData.Type, 
+                    entityId, 
+                    fullyFormedSystemInstructions,
+                    fullyFormedUserPrompt, 
+                    result, 
+                    promptData.CacheInvalidationMinutes);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error in FetchResultFromGemini: {ex.Message}", ex);
+        }
     }
 
     // Common function to handle Gemini API calls
-    public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData)
+    public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData, string systemInstructions = null)
     {
         string accessToken = await GetAccessTokenAsync();
-        var requestBody = await GetRequestBody(prompt, promptData);
+        var requestBody = await GetRequestBody(prompt, promptData, systemInstructions);
         string url = await GetURL(promptData);
         string jsonRequest = JsonConvert.SerializeObject(requestBody);
         return await CallGeminiApiAsync(url, jsonRequest, accessToken);
@@ -431,7 +597,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             await _pubSubPublisher.PublishMessageAsync(new List<MyPubSubMessage> { message });
         }
 
-        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPrompt promptData)
+        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPrompt promptData, string systemInstructions = null)
         {
             dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
             dynamic generationConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
@@ -468,6 +634,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             dynamic safetySettings = string.IsNullOrEmpty(promptData.SafetySettings)
                             ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.SafetySettings);
 
+            // Handle user content
             if (prompt is string)
             {
                 contentConfig.parts[0].text = prompt.ToString();
@@ -479,7 +646,10 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
             var requestBody = new
             {
-                contents = contentConfig,
+                contents = new[] { contentConfig }, // Wrap in array for proper format
+                system_instruction = !string.IsNullOrEmpty(systemInstructions) 
+                    ? new { parts = new[] { new { text = systemInstructions } } }
+                    : null, // Add system instructions if provided
                 generationConfig = generationConfig,
                 tools = new[] { toolsConfig },
                 safetySettings = new[] { safetySettings }
@@ -666,46 +836,50 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 // Check for internal duplicates within the file first
                 var internalDuplicateResult = await DetectInternalDuplicatesAsync(entityName, recordsList, 0.8);
                 
-                // If internal duplicates are found, create error notification
+                // Add internal duplicate warning to each record if found
                 if (internalDuplicateResult.HasInternalDuplicates)
                 {
-                    var errorNotification = new Notification
+                    // Add internal duplicate information to affected records
+                    foreach (var group in internalDuplicateResult.DuplicateGroups)
                     {
-                        UserId = userId,
-                        Message = !string.IsNullOrEmpty(fileId) 
-                            ? $"Internal duplicates found in the uploaded file (Sheet ID: {fileId}). Please fix the duplicates before proceeding."
-                            : "Internal duplicates found in the uploaded file. Please fix the duplicates before proceeding.",
-                        Category = promptData.Type,
-                        ResponseType = "InternalDuplicatesFound",
-                        RecordData = JsonConvert.SerializeObject(new
+                        // Mark master record
+                        if (group.MasterIndex < recordsList.Count)
                         {
-                            intent = "InternalDuplicatesFound",
-                            fileId = fileId, // Include sheet ID in the data
-                            internalDuplicates = new
+                            var masterRecord = recordsList[group.MasterIndex];
+                            if (masterRecord is JObject masterObj)
                             {
-                                totalGroups = internalDuplicateResult.TotalDuplicateGroups,
-                                totalDuplicateRecords = internalDuplicateResult.TotalDuplicateRecords,
-                                totalRecords = internalDuplicateResult.TotalRecords,
-                                cleanRecords = internalDuplicateResult.CleanRecords,
-                                duplicateGroups = internalDuplicateResult.DuplicateGroups.Select(group => new
+                                masterObj["internalDuplicateWarning"] = new JObject
                                 {
-                                    masterRowNumber = group.MasterIndex + 2, // +2 because: +1 for 0-based index, +1 for header row
-                                    duplicateRowNumbers = group.DuplicateIndices.Select(idx => idx + 2).ToList(),
-                                    matchReasons = group.MatchReasons
-                                }).ToList()
+                                    ["isMaster"] = true,
+                                    ["duplicateCount"] = group.DuplicateIndices.Count,
+                                    ["duplicateRows"] = JArray.FromObject(group.DuplicateIndices.Select(idx => idx + 2).ToList()),
+                                    ["message"] = $"This record has {group.DuplicateIndices.Count} duplicate(s) in rows {string.Join(", ", group.DuplicateIndices.Select(idx => idx + 2))}"
+                                };
                             }
-                        }),
-                        IsRead = false,
-                        Status = NotificationStatus.Done,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                    await _context.Notifications.AddAsync(errorNotification);
-                    await _context.SaveChangesAsync();
-                    return finalResponse; // Return without database duplicate detection
+                        }
+                        
+                        // Mark duplicate records
+                        foreach (var duplicateIndex in group.DuplicateIndices)
+                        {
+                            if (duplicateIndex < recordsList.Count)
+                            {
+                                var duplicateRecord = recordsList[duplicateIndex];
+                                if (duplicateRecord is JObject duplicateObj)
+                                {
+                                    duplicateObj["internalDuplicateWarning"] = new JObject
+                                    {
+                                        ["isMaster"] = false,
+                                        ["masterRow"] = group.MasterIndex + 2,
+                                        ["matchReasons"] = JArray.FromObject(group.MatchReasons),
+                                        ["message"] = $"This record is a duplicate of the record in row {group.MasterIndex + 2}"
+                                    };
+                                }
+                            }
+                        }
+                    }
                 }
                 
-                // If no internal duplicates, proceed with database duplicate detection
+                // Always proceed with database duplicate detection
                 var recordsWithDuplicates = await DetectDuplicatesAsync(entityName, recordsList, 0.65);
                 finalResponse = recordsWithDuplicates.Select(r => (object)r).ToList();
             }
@@ -713,14 +887,19 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             if (isAsync)
             {
                 // Create a single notification for the entire batch
+                var hasInternalDuplicates = finalResponse.Any(r => r is JObject obj && obj["internalDuplicateWarning"] != null);
                 var notification = new Notification
                 {
                     UserId = userId,
                     Message = !string.IsNullOrEmpty(fileId) 
-                        ? $"Batch processed successfully with duplicate detection (Sheet ID: {fileId})"
-                        : "Batch processed successfully with duplicate detection",
+                        ? (hasInternalDuplicates 
+                            ? $"Batch processed successfully with warnings - Internal duplicates found in file (Sheet ID: {fileId}). Please review and fix duplicates."
+                            : $"Batch processed successfully with duplicate detection (Sheet ID: {fileId})")
+                        : (hasInternalDuplicates 
+                            ? "Batch processed successfully with warnings - Internal duplicates found in file. Please review and fix duplicates."
+                            : "Batch processed successfully with duplicate detection"),
                     Category = promptData.Type,
-                    ResponseType = "Success",
+                    ResponseType = hasInternalDuplicates ? "SuccessWithWarnings" : "Success",
                     RecordData = JsonConvert.SerializeObject(finalResponse),
                     IsRead = false,
                     Status = NotificationStatus.Done,
@@ -740,17 +919,32 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         public async Task<dynamic> GetDependentDropdownValues(dynamic dependents, dynamic responseObject, AiPrompt promptData)
         {
             var interactionType = false;
+            if (promptData?.Type?.Contains("interaction", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                interactionType = true;
+            }
+            bool partnerType = false;
+            if (promptData?.Type?.Contains("partner", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                partnerType = true;
+            }
+            // Ensure date is set for interactions if missing or empty
+            if (interactionType)
+            {
+                var dateValue = responseObject["date"];
+                if (dateValue == null || 
+                    string.IsNullOrWhiteSpace(dateValue?.ToString()) ||
+                    (dateValue is JValue jValue && (jValue.Value == null || string.IsNullOrWhiteSpace(jValue.Value?.ToString()))))
+                {
+                    responseObject["date"] = DateTime.UtcNow.ToString("yyyy-MM-dd");
+                }
+            }
             if (!string.IsNullOrWhiteSpace(dependents))
             {
                 var dependentsList = JsonConvert.DeserializeObject<List<string>>(dependents);
 
                 if (dependentsList.Count > 0)
                 {
-                    if (promptData?.Type?.Contains("interaction", StringComparison.OrdinalIgnoreCase) == true)
-                    {
-                        interactionType = true;
-                    }
-                    
                     foreach (var dependent in dependentsList)
                     {
                         var text = responseObject[dependent];
@@ -759,7 +953,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                             // Special case: OrganizationUnitRelationships (many-to-many)
                             if (dependent == "organizationUnitRelationships")
                             {
-                                await HandleOrganizationUnitRelationships(responseObject, text);
+                                string entityType = "Partner"; // Default to Partner
+                                if (interactionType)
+                                    entityType = "Interaction";
+                                    
+                                await HandleOrganizationUnitRelationships(responseObject, text, entityType, dependent);
                                 continue;
                             }
                             
@@ -811,11 +1009,19 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                                     }
                                                 }
                                             }
+                                            else
+                                            {
+                                                // Log warning for array items that couldn't be resolved
+                                                Console.WriteLine($"[WARNING] Could not find ID for '{dependent}' array item with value '{textValue}'. Skipping this item.");
+                                                // Don't add anything to the array for unresolved items
+                                            }
                                         }
                                     }
                                 }
                                 
                                 responseObject[dependent] = idsArray;
+                                string nameField = dependent.Replace("Id", "Name");
+                                responseObject[nameField] = await GetEntityNameFromId(idsArray, dependent);
                             }
                             else
                             {
@@ -830,7 +1036,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 // Check if 'text' is already a numeric value (long/int)
                                 if (text is long longValue)
                                 {
-                                    // It is already an ID, just continue
+                                    // It is already an ID, set name and continue
+                                    string nameField = dependent.Replace("Id", "Name");
+                                    responseObject[nameField] = await GetEntityNameFromId((int)longValue, dependent);
                                     if (interactionType && dependent == "contactIds")
                                     {
                                         await HandleInteractionContactLogic(responseObject, longValue);
@@ -838,7 +1046,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                     continue;
                                 } else if (text is int intValue)
                                 {
-                                    // It is already an ID, just continue
+                                    // It is already an ID, set name and continue
+                                    string nameField = dependent.Replace("Id", "Name");
+                                    responseObject[nameField] = await GetEntityNameFromId(intValue, dependent);
                                     if (interactionType && dependent == "contactIds")
                                     {
                                         await HandleInteractionContactLogic(responseObject, intValue);
@@ -847,6 +1057,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 }
                                 else if (int.TryParse(text?.ToString(), out id))
                                 {
+                                    // It is already an ID, set name and continue
+                                    string nameField = dependent.Replace("Id", "Name");
+                                    responseObject[nameField] = await GetEntityNameFromId(id, dependent);
                                     if (interactionType && dependent == "contactIds")
                                     {
                                         await HandleInteractionContactLogic(responseObject, id);
@@ -858,6 +1071,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 entityId = await GetEntityIdFromText(text?.ToString(), dependent);
                                 if (entityId == null || entityId is DBNull)
                                 {
+                                    // Set the field to null if no ID was found
+                                    Console.WriteLine($"[WARNING] Could not find ID for '{dependent}' with value '{text}'. Setting field to null.");
+                                    responseObject[dependent] = null;
                                     continue;
                                 }
                                 else
@@ -871,11 +1087,21 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                             existingArray.Add(entityId);
                                         }
                                     }
+                                else
+                                {
+                                    // Handle as single value
+                                    responseObject[dependent] = entityId;
+                                    // Convert entityId to int for name lookup
+                                    string nameField = dependent.Replace("Id", "Name");
+                                    if (int.TryParse(entityId.ToString(), out int idForNameLookup))
+                                    {
+                                        responseObject[nameField] = await GetEntityNameFromId(idForNameLookup, dependent);
+                                    }
                                     else
                                     {
-                                        // Handle as single value
-                                        responseObject[dependent] = entityId;
+                                        responseObject[nameField] = null;
                                     }
+                                }
                                 }
                                 
                                 // Special handling for interactions
@@ -961,6 +1187,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         private async Task<dynamic> GetEntityIdFromText(string text, string dependent)
         {
+            Console.WriteLine($"[DEBUG] GetEntityIdFromText called with text='{text}', dependent='{dependent}'");
+            
             // Convert dependent to entity name - remove "Id"/"Ids" and capitalize first letter only
             string baseEntityName = dependent.EndsWith("Ids", StringComparison.OrdinalIgnoreCase) ? 
                 dependent.Substring(0, dependent.Length - 3) : 
@@ -983,7 +1211,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 whereCondition = "\"Type\" = 'OrgUnit'";
             }
             // Special case for User/UserIds - should look at UserProfile table (which has searchable Name field)
-            else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase))
+            else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase)
+                || (entityName.Equals("PartnerFocalPointUser", StringComparison.OrdinalIgnoreCase)))
             {
                 entityName = "UserProfile";
                 // UserProfile can be searched by Name field directly
@@ -1015,32 +1244,484 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 entityName = entityName.Pluralize();
             }
             
-            return await RetrieveEntityId(entityName, null, text, 0.3f, 0.7f, whereCondition);
+            Console.WriteLine($"[DEBUG] Looking up '{text}' in entity '{entityName}' with where condition: '{whereCondition}'");
+            var result = await RetrieveEntityId(entityName, null, text, 0.3f, 0.7f, whereCondition);
+            Console.WriteLine($"[DEBUG] GetEntityIdFromText result: {(result != null && !(result is DBNull) ? result.ToString() : "NOT FOUND")}");
+            
+            return result;
+        }
+
+        /// <summary>
+        /// Gets entity name from ID using direct DbSet queries
+        /// </summary>
+        /// <param name="id">The entity ID to lookup</param>
+        /// <param name="dependent">The dependent field name (e.g., "partnerGroupId", "partnerCategoryId")</param>
+        /// <returns>The entity name if found, null otherwise</returns>
+        public async Task<string> GetEntityNameFromId(int id, string dependent)
+        {
+            try
+            {
+                string name = null;
+                
+                // Convert dependent to entity name using the same logic as GetEntityIdFromText
+                string baseEntityName = dependent.EndsWith("Ids", StringComparison.OrdinalIgnoreCase) ? 
+                    dependent.Substring(0, dependent.Length - 3) : 
+                    dependent.Replace("Id", "", StringComparison.OrdinalIgnoreCase);
+                
+                // Capitalize only the first letter, preserving existing capitalization
+                string entityName = string.IsNullOrEmpty(baseEntityName) ? 
+                    baseEntityName : 
+                    char.ToUpper(baseEntityName[0]) + baseEntityName.Substring(1);
+                
+                // Apply the same mapping logic as GetEntityIdFromText
+                if (dependent.Equals("organizationUnitRelationships", StringComparison.OrdinalIgnoreCase)
+                        || dependent.Equals("organizationHierarchyIds", StringComparison.OrdinalIgnoreCase)
+                        || entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
+                {
+                    name = await _context.OrganizationHierarchies
+                        .Where(x => x.Id == id && x.Type == OrganizationUnitType.OrgUnit)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
+                }
+                else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase) 
+                         || dependent.Equals("partnerfocalpointuserid", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("createdby", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("lastmodifiedby", StringComparison.OrdinalIgnoreCase))
+                {
+                    name = await _context.UserProfile
+                        .Where(x => x.UserId == id && !x.IsDeleted)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
+                }
+                else if (entityName.Equals("Contact", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("contactIds", StringComparison.OrdinalIgnoreCase))
+                {
+                    name = await _context.Contacts
+                        .Where(x => x.Id == id && !x.IsDeleted)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
+                }
+                else if (entityName.Equals("Partner", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("partnerIds", StringComparison.OrdinalIgnoreCase))
+                {
+                    name = await _context.Partners
+                        .Where(x => x.Id == id && !x.IsDeleted)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
+                }
+                else if (entityName.Equals("Interaction", StringComparison.OrdinalIgnoreCase)
+                         || dependent.Equals("interactionIds", StringComparison.OrdinalIgnoreCase))
+                {
+                    name = await _context.Interactions
+                        .Where(x => x.Id == id && !x.IsDeleted)
+                        .Select(x => x.Subject)
+                        .FirstOrDefaultAsync();
+                }
+                else if (dependent.Equals("partnerGroupId", StringComparison.OrdinalIgnoreCase)
+                    || dependent.Equals("partnerCategoryId", StringComparison.OrdinalIgnoreCase))
+                {
+                    name = await _context.PartnerTrees
+                        .Where(x => x.Id == id)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
+                }
+                else if (dependent.Equals("liaisonofficeid", StringComparison.OrdinalIgnoreCase)
+                         || entityName.Equals("Office", StringComparison.OrdinalIgnoreCase))
+                {
+                    name = await _context.LiaisonOffices
+                        .Where(x => x.Id == id)
+                        .Select(x => x.Name)
+                        .FirstOrDefaultAsync();
+                }
+                else
+                {
+                    // For other entities, try to find by convention using the pluralized entity name
+                    // This is a fallback that might work for entities following standard naming conventions
+                    Console.WriteLine($"[DEBUG] No specific mapping found for dependent '{dependent}', entityName '{entityName}'");
+                }
+
+                return name;
+            }
+            catch (Exception ex)
+            {
+                // Log the error but return null instead of throwing
+                Console.WriteLine($"Error getting entity name for {dependent} ID {id}: {ex.Message}");
+                Console.WriteLine($"Exception details: {ex}");
+                return null;
+            }
+        }
+
+
+        /// <summary>
+        /// Gets entity names from array of IDs using the same mapping strategy as GetEntityIdFromText but in reverse
+        /// </summary>
+        /// <param name="ids">The entity IDs to lookup (can be JArray or int[])</param>
+        /// <param name="dependent">The dependent field name (e.g., "partnerGroupId", "partnerCategoryId")</param>
+        /// <returns>Comma-separated string of entity names if found, null otherwise</returns>
+        public async Task<string> GetEntityNameFromId(dynamic ids, string dependent)
+        {
+            try
+            {
+                // Handle different input types
+                int[] idArray = null;
+                
+                if (ids is JArray jArray)
+                {
+                    // Convert JArray to int array
+                    idArray = jArray.Select(token => 
+                    {
+                        if (int.TryParse(token.ToString(), out int id))
+                            return id;
+                        return 0; // Default for invalid values
+                    }).Where(id => id > 0).ToArray();
+
+                    var names = new List<string>();
+                    for (int i = 0; i < idArray.Length; i++)
+                    {
+                        var entityName = await GetEntityNameFromId(idArray[i], dependent);
+                        if (!string.IsNullOrEmpty(entityName))
+                        {
+                            names.Add(entityName);
+                        }
+                    }
+
+                    return names.Count > 0 ? string.Join(", ", names) : null;
+                }
+                else if (ids is int[] intArray)
+                {
+                    idArray = intArray;
+                }
+                else if (ids is List<int> intList)
+                {
+                    var names = new List<string>();
+                    for (int i = 0; i < intList.Count; i++)
+                    {
+                        var entityName = await GetEntityNameFromId(intList[i], dependent);
+                        if (!string.IsNullOrEmpty(entityName))
+                        {
+                            names.Add(entityName);
+                        }
+                    }
+
+                    return names.Count > 0 ? string.Join(", ", names) : null;
+                }
+                else if (ids is int singleId)
+                {
+                    // Single ID case - use existing method
+                    return await GetEntityNameFromId(singleId, dependent);
+                }
+                else if (ids != null)
+                {
+                    // Try to parse as single ID
+                    if (int.TryParse(ids.ToString(), out int parsedId))
+                    {
+                        return await GetEntityNameFromId(parsedId, dependent);
+                    }
+                }
+
+                if (idArray == null || idArray.Length == 0)
+                {
+                    Console.WriteLine($"[DEBUG] GetEntityNameFromId: No valid IDs found in input for dependent='{dependent}'");
+                    return null;
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                // Log the error but return null instead of throwing
+                Console.WriteLine($"Error getting entity names for {dependent} IDs: {ex.Message}");
+                Console.WriteLine($"Exception details: {ex}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Executes the database query to lookup entity name by ID
+        /// </summary>
+        /// <param name="tableName">The table to query</param>
+        /// <param name="nameField">The field containing the name (can be a computed field)</param>
+        /// <param name="id">The ID to lookup</param>
+        /// <param name="whereCondition">Additional WHERE conditions</param>
+        /// <returns>The entity name if found, null otherwise</returns>
+        private async Task<string> ExecuteNameLookupQuery(string tableName, string nameField, int id, string whereCondition)
+        {
+            try
+            {
+                var sql = $"SELECT {nameField} as EntityName FROM \"{tableName}\" WHERE \"Id\" = @id AND ({whereCondition}) LIMIT 1";
+                
+                Console.WriteLine($"[DEBUG] Executing query: {sql}");
+                Console.WriteLine($"[DEBUG] Parameters: id={id}");
+                
+                var parameters = new[] 
+                {
+                    new NpgsqlParameter("@id", NpgsqlTypes.NpgsqlDbType.Integer) { Value = id }
+                };
+
+                var connection = _context.Database.GetDbConnection();
+                if (connection.State != ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = sql;
+                command.Parameters.AddRange(parameters);
+
+                var result = await command.ExecuteScalarAsync();
+                Console.WriteLine($"[DEBUG] Query result: '{result}'");
+                return result?.ToString();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing name lookup query for table {tableName}, ID {id}: {ex.Message}");
+                Console.WriteLine($"Exception details: {ex}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Executes the database query to lookup entity names by array of IDs
+        /// </summary>
+        /// <param name="tableName">The table to query</param>
+        /// <param name="nameField">The field containing the name (can be a computed field)</param>
+        /// <param name="ids">The array of IDs to lookup</param>
+        /// <param name="whereCondition">Additional WHERE conditions</param>
+        /// <returns>Comma-separated string of entity names if found, null otherwise</returns>
+        private async Task<string> ExecuteNameLookupQuery(string tableName, string nameField, int[] ids, string whereCondition)
+        {
+            try
+            {
+                if (ids == null || ids.Length == 0)
+                    return null;
+
+                // Handle single ID case by calling the single ID method
+                if (ids.Length == 1)
+                {
+                    return await ExecuteNameLookupQuery(tableName, nameField, ids[0], whereCondition);
+                }
+
+                // Create parameterized query for multiple IDs
+                var parameterPlaceholders = string.Join(",", ids.Select((id, index) => $"@id{index}"));
+                var sql = $"SELECT {nameField} as EntityName FROM \"{tableName}\" WHERE \"Id\" IN ({parameterPlaceholders}) AND ({whereCondition}) ORDER BY \"Id\"";
+                
+                Console.WriteLine($"[DEBUG] Executing multi-ID query: {sql}");
+                Console.WriteLine($"[DEBUG] Parameters: ids=[{string.Join(",", ids)}]");
+                
+                var parameters = ids.Select((id, index) => 
+                    new NpgsqlParameter($"@id{index}", NpgsqlTypes.NpgsqlDbType.Integer) { Value = id })
+                    .ToArray();
+
+                var connection = _context.Database.GetDbConnection();
+                if (connection.State != ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = sql;
+                command.Parameters.AddRange(parameters);
+
+                var names = new List<string>();
+                using var reader = await command.ExecuteReaderAsync();
+                
+                while (await reader.ReadAsync())
+                {
+                    var name = reader["EntityName"]?.ToString();
+                    if (!string.IsNullOrEmpty(name))
+                    {
+                        names.Add(name);
+                    }
+                }
+
+                var result = names.Count > 0 ? string.Join(", ", names) : null;
+                Console.WriteLine($"[DEBUG] Multi-ID query result: '{result}'");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing name lookup query for table {tableName}, IDs [{string.Join(",", ids)}]: {ex.Message}");
+                Console.WriteLine($"Exception details: {ex}");
+                return null;
+            }
         }
         
-        private async Task HandleOrganizationUnitRelationships(dynamic responseObject, dynamic orgUnitText)
+        private async Task HandleOrganizationUnitRelationships(dynamic responseObject, dynamic orgUnitText, string entityType = "Partner", string dependent = "organizationUnitRelationships")
         {
-            var orgUnitIds = new JArray();
+            var orgUnitRelationships = new JArray();
+            var orgUnitCodes = new List<string>(); // For collecting codes for the Name field
+            
+            // Handle different types of orgUnitText input
+            string[] orgUnitNames = null;
             
             if (orgUnitText is JArray orgUnitArray)
             {
                 // Handle array of org unit names
-                foreach (var orgUnitName in orgUnitArray)
+                orgUnitNames = orgUnitArray.Select(item => ExtractOrgUnitName(item)).Where(name => !string.IsNullOrEmpty(name)).ToArray();
+            }
+            else if (orgUnitText is JValue jValue)
+            {
+                // Handle JValue (like {ITG}) - extract the actual value
+                var extractedName = ExtractOrgUnitName(jValue);
+                if (!string.IsNullOrEmpty(extractedName))
                 {
-                    var orgUnitId = await GetEntityIdFromText(orgUnitName?.ToString(), "organizationUnitRelationships");
-                    if (orgUnitId != null && !(orgUnitId is DBNull))
-                        orgUnitIds.Add(orgUnitId);
+                    orgUnitNames = new[] { extractedName };
                 }
             }
             else if (orgUnitText != null)
             {
-                // Handle single org unit name
-                var orgUnitId = await GetEntityIdFromText(orgUnitText.ToString(), "organizationUnitRelationships");
-                if (orgUnitId != null && !(orgUnitId is DBNull))
-                    orgUnitIds.Add(orgUnitId);
+                // Handle single org unit name as string or other types
+                var extractedName = ExtractOrgUnitName(orgUnitText);
+                if (!string.IsNullOrEmpty(extractedName))
+                {
+                    orgUnitNames = (string[]?)(new[] { extractedName });
+                }
             }
             
-            responseObject["organizationUnitRelationships"] = orgUnitIds;
+            var detectedOrgUnitNamesList = new List<string>();
+            // Process each org unit name
+            if (orgUnitNames != null && orgUnitNames.Length > 0)
+            {
+                foreach (var orgUnitTextValue in orgUnitNames)
+                {
+                    Console.WriteLine($"[DEBUG] Processing org unit text: '{orgUnitTextValue}'");
+                    
+                    try
+                    {
+                        // First resolve the text to an ID
+                        var orgUnitId = await GetEntityIdFromText(orgUnitTextValue, "organizationHierarchyIds");
+                        
+                        if (orgUnitId != null && !(orgUnitId is DBNull))
+                        {
+                            Console.WriteLine($"[DEBUG] Resolved '{orgUnitTextValue}' to org unit ID: {orgUnitId}");
+                            
+                            // Then get the full object by ID
+                            var orgUnitData = await GetOrganizationUnitRelationshipDataById(Convert.ToInt32(orgUnitId), entityType);
+                            if (orgUnitData != null)
+                            {
+                                orgUnitRelationships.Add(orgUnitData);
+                                
+                                // Extract the code for the Name field
+                                var orgHierarchy = orgUnitData["organizationHierarchy"];
+                                if (orgHierarchy != null && orgHierarchy["code"] != null)
+                                {
+                                    var code = orgHierarchy["code"].ToString();
+                                    if (!string.IsNullOrEmpty(code))
+                                    {
+                                        orgUnitCodes.Add(code);
+                                    }
+                                    var orgUnitName = orgHierarchy["name"]?.ToString();
+                                    if (!string.IsNullOrEmpty(orgUnitName))
+                                    {
+                                        detectedOrgUnitNamesList.Add(orgUnitName);
+                                    }
+                                }
+                                
+                                Console.WriteLine($"[DEBUG] Successfully added org unit relationship for ID {orgUnitId} ('{orgUnitTextValue}')");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"[WARNING] No org unit object found for resolved ID {orgUnitId} ('{orgUnitTextValue}')");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[WARNING] Could not resolve org unit text '{orgUnitTextValue}' to an ID");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[ERROR] Error processing org unit '{orgUnitTextValue}': {ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[WARNING] No valid org unit names found in: '{orgUnitText}'");
+            }
+            
+            // Set the relationships array
+            responseObject[dependent] = orgUnitRelationships;
+            
+            // Set the Name field with comma-separated names
+            var nameField = dependent.Replace("Id", "Name");
+            responseObject[nameField] = detectedOrgUnitNamesList.Count > 0 ? string.Join(", ", detectedOrgUnitNamesList) : null;
+        }
+        
+        /// <summary>
+        /// Extract org unit name from various input types (JValue, string, etc.)
+        /// </summary>
+        private string ExtractOrgUnitName(dynamic input)
+        {
+            try
+            {
+                if (input == null) return null;
+                
+                if (input is JValue jValue)
+                {
+                    // For JValue, get the actual value
+                    var value = jValue.Value?.ToString();
+                    Console.WriteLine($"[DEBUG] Extracted from JValue: '{value}'");
+                    return value;
+                }
+                else if (input is JToken jToken)
+                {
+                    // For other JToken types
+                    var value = jToken.ToString();
+                    Console.WriteLine($"[DEBUG] Extracted from JToken: '{value}'");
+                    return value;
+                }
+                else
+                {
+                    // For other types, convert to string
+                    var value = input.ToString();
+                    Console.WriteLine($"[DEBUG] Extracted from other type: '{value}'");
+                    return value;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to extract org unit name from '{input}': {ex.Message}");
+                return null;
+            }
+        }
+        
+        private async Task<JObject> GetOrganizationUnitRelationshipDataById(int orgUnitId, string entityType = "Partner")
+        {
+            try
+            {
+                // Get the organization hierarchy data by exact ID
+                var orgHierarchy = await _context.OrganizationHierarchies
+                    .Where(oh => oh.Id == orgUnitId)
+                    .Select(oh => new
+                    {
+                        id = oh.Id,
+                        code = oh.Code,
+                        name = oh.Name,
+                        type = oh.Type,
+                        description = oh.Description,
+                        parentId = oh.ParentId
+                    })
+                    .FirstOrDefaultAsync();
+                    
+                if (orgHierarchy == null)
+                {
+                    Console.WriteLine($"[WARNING] No organization hierarchy found for ID {orgUnitId}");
+                    return null;
+                }
+                    
+                var relationshipData = new JObject
+                {
+                    ["organizationHierarchyId"] = orgHierarchy.id,
+                    ["organizationHierarchy"] = JObject.FromObject(orgHierarchy),
+                    ["entityId"] = 0,
+                    ["entityType"] = entityType
+                };
+                
+                Console.WriteLine($"[DEBUG] Created relationship data for org unit ID {orgUnitId} ('{orgHierarchy.name}')");
+                return relationshipData;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error getting organization unit relationship data by ID {orgUnitId}: {ex.Message}");
+                return null;
+            }
         }
         
         private async Task AddEmailToResponse(dynamic responseObject, dynamic entityId)
@@ -1122,6 +1803,23 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     if (!partnerArray.Any(p => p.ToString() == contact.PartnerId.ToString()))
                     {
                         partnerArray.Add(contact.PartnerId);
+                        
+                        // Get existing partner names or create new list
+                        var partnerNamesList = new List<string>();
+                        var existingPartnerNames = responseObject["partnerNames"]?.ToString();
+                        if (!string.IsNullOrEmpty(existingPartnerNames))
+                        {
+                            partnerNamesList.AddRange(existingPartnerNames.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries));
+                        }
+                        
+                        // Add new partner name
+                        var newPartnerName = await GetEntityNameFromId(contact.PartnerId, "partnerIds");
+                        if (!string.IsNullOrEmpty(newPartnerName))
+                        {
+                            partnerNamesList.Add(newPartnerName);
+                        }
+                        
+                        responseObject["partnerNames"] = partnerNamesList.Count > 0 ? string.Join(", ", partnerNamesList) : null;
                     }
                 }
             }
@@ -1381,11 +2079,46 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 {
                     var record = records[i];
 
+                    // Extract record ID if it exists to exclude from duplicate detection
+                    int? recordId = null;
+                    if (record is JObject recordJObj && recordJObj.ContainsKey("id"))
+                    {
+                        if (int.TryParse(recordJObj["id"]?.ToString(), out int recordId1) && recordId1 > 0)
+                        {
+                            recordId = recordId1;
+                        }
+                    }
+                    else if (record is ExpandoObject expObj)
+                    {
+                        var dict = (IDictionary<string, object>)expObj;
+                        if (dict.ContainsKey("id") && int.TryParse(dict["id"]?.ToString(), out int recordId2) && recordId2 > 0)
+                        {
+                            recordId = recordId2;
+                        }
+                    }
+                    else
+                    {
+                        // Try reflection for strongly typed objects
+                        var idProperty = record.GetType().GetProperty("Id") ?? record.GetType().GetProperty("id");
+                        if (idProperty != null)
+                        {
+                            var idValue = idProperty.GetValue(record);
+                            if (idValue != null)
+                            {
+                                if (int.TryParse(idValue.ToString(), out int recordId3) && recordId3 > 0)
+                                {
+                                    recordId = recordId3;
+                                }
+                            }
+                        }
+                    }
+
                     // Use the simplified detect_duplicate_records function (field-based only)
                     var duplicateResult = await DetectDuplicateForRecordAsync(
                         pluralizedEntityName, 
                         record, 
-                        (float)fieldMatchThreshold
+                        (float)fieldMatchThreshold,
+                        recordId
                     );
                     
                     // Convert record to JObject for safe property assignment
@@ -1467,7 +2200,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         private async Task<ComprehensiveDuplicateResult> DetectDuplicateForRecordAsync(
             string entityName, 
             dynamic recordData, 
-            float fieldMatchThreshold = 0.5f)
+            float fieldMatchThreshold = 0.5f,
+            int? excludeRecordId = null)
          {
              try
              {
@@ -1495,7 +2229,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                      await connection.OpenAsync();
 
                  using var command = connection.CreateCommand();
-                command.CommandText = "SELECT public.detect_duplicate_records(@entityType, @entityData, @fieldMatchThreshold, @debugMode)";
+                command.CommandText = "SELECT public.detect_duplicate_records(@entityType, @entityData, @fieldMatchThreshold, @debugMode, @excludeRecordId)";
 
                 // Create parameters for the simplified function call (entity_data as TEXT)
                  var parameters = new[] 
@@ -1503,7 +2237,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     new NpgsqlParameter("@entityType", NpgsqlTypes.NpgsqlDbType.Text) { Value = singularEntityName },
                     new NpgsqlParameter("@entityData", NpgsqlTypes.NpgsqlDbType.Text) { Value = jsonData },
                     new NpgsqlParameter("@fieldMatchThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = fieldMatchThreshold },
-                    new NpgsqlParameter("@debugMode", NpgsqlTypes.NpgsqlDbType.Boolean) { Value = false }
+                    new NpgsqlParameter("@debugMode", NpgsqlTypes.NpgsqlDbType.Boolean) { Value = false },
+                    new NpgsqlParameter("@excludeRecordId", NpgsqlTypes.NpgsqlDbType.Integer) { Value = excludeRecordId.HasValue ? (object)excludeRecordId.Value : DBNull.Value }
                  };
 
                  command.Parameters.AddRange(parameters);
@@ -1515,15 +2250,31 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     var jsonResult = result.ToString();
                     var parsedResult = JsonConvert.DeserializeObject<dynamic>(jsonResult);
                     
+                    var duplicatesArray = (JArray)parsedResult.duplicates;
+                    DuplicateMatch topDuplicate = null;
+                    
+                    if (duplicatesArray?.Count > 0)
+                    {
+                        var firstDuplicate = duplicatesArray[0];
+                        topDuplicate = new DuplicateMatch
+                        {
+                            EntityId = (int)(firstDuplicate["entityId"] ?? 0),
+                            EntityType = (string)(firstDuplicate["entityType"] ?? ""),
+                            Score = (double)(firstDuplicate["score"] ?? 0.0),
+                            MatchReason = (string)(firstDuplicate["matchReason"] ?? ""),
+                            SearchType = (string)(firstDuplicate["searchType"] ?? ""),
+                            MatchedData = firstDuplicate["matchedData"]
+                        };
+                    }
+                    
                     return new ComprehensiveDuplicateResult
                     {
-                        HasDuplicates = parsedResult.duplicates != null && ((JArray)parsedResult.duplicates).Count > 0,
+                        HasDuplicates = duplicatesArray != null && duplicatesArray.Count > 0,
                         TotalDuplicates = parsedResult.summary?.totalDuplicates ?? 0,
                         HighConfidence = parsedResult.summary?.highConfidence ?? 0,
                         MediumConfidence = parsedResult.summary?.mediumConfidence ?? 0,
                         LowConfidence = parsedResult.summary?.lowConfidence ?? 0,
-                        TopDuplicate = ((JArray)parsedResult.duplicates)?.Count > 0 ? 
-                            JsonConvert.DeserializeObject<DuplicateMatch>(((JArray)parsedResult.duplicates)[0].ToString()) : null,
+                        TopDuplicate = topDuplicate,
                         AllDuplicates = parsedResult.duplicates
                     };
                 }
@@ -1601,10 +2352,37 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 // Convert the request object to the format expected by duplicate detection
                 var convertedData = ConvertRequestObjectForDuplicateDetection(recordData);
                 
+                // Extract record ID if it exists to exclude from duplicate detection
+                int? recordId = null;
+                if (recordData is JObject recordDataJObj && recordDataJObj.ContainsKey("id"))
+                {
+                    if (int.TryParse(recordDataJObj["id"]?.ToString(), out int recordDataId1) && recordDataId1 > 0)
+                    {
+                        recordId = recordDataId1;
+                    }
+                }
+                else
+                {
+                    // Try reflection for strongly typed objects
+                        var idProperty = recordData.GetType().GetProperty("Id") ?? recordData.GetType().GetProperty("id");
+                        if (idProperty != null)
+                        {
+                            var idValue = idProperty.GetValue(recordData);
+                            if (idValue != null)
+                            {
+                                if (int.TryParse(idValue.ToString(), out int recordDataId2) && recordDataId2 > 0)
+                                {
+                                    recordId = recordDataId2;
+                                }
+                            }
+                        }
+                }
+
                 return await DetectDuplicateForRecordAsync(
                     pluralizedEntityName, 
                     convertedData, 
-                    (float)fieldMatchThreshold
+                    (float)fieldMatchThreshold,
+                    recordId
                 );
             }
             catch (Exception ex)

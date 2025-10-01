@@ -2,8 +2,8 @@
 
 public class WorkflowActionModel
 {
-    public string EntityName { get; set; }
+    public required string EntityName { get; set; }
     public int Id { get; set; }
-    public string NewStage { get; set; }
-    public string Comment { get; set; }
+    public required string NewStage { get; set; }
+    public required string Comment { get; set; }
 }

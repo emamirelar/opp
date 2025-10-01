@@ -13,7 +13,8 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Request, Query
 from google.adk.sessions import DatabaseSessionService
 
-from ai_assistant.utils.api_config_manager import config_manager
+from ai_assistant.utils.config import get_config, get_database_url, get_gemini_adhoc_model, get_application_name
+
 
 # Vertex AI imports for title generation
 import vertexai
@@ -152,7 +153,7 @@ async def get_session_title(
 
         # Fallback to current method using session service
         logger.info("📋 Using fallback method: session conversation history")
-        db_url = config_manager.get_database_url()
+        db_url = get_database_url()
         session_service = DatabaseSessionService(db_url=db_url)
         logger.info(f"🔧 Created session service with DB: {db_url[:50]}...")
 
@@ -197,7 +198,7 @@ async def get_session_title(
                         for j in range(i + 1, len(conversation_history)):
                             next_message = conversation_history[j]
                             if (hasattr(next_message, 'author') and
-                                next_message.author in ["user_request_agent", "response_formatter_agent", "task_planner_agent", "api_caller_agent"]):
+                                next_message.author in ["task_executor_agent", "response_formatter_agent", "api_caller_agent"]):
                                 if hasattr(next_message, 'content') and next_message.content and hasattr(next_message.content, 'parts'):
                                     assistant_parts = []
                                     for part in next_message.content.parts:
@@ -283,8 +284,8 @@ The response should just be the title, no explanations.
 """
         
         # Call Gemini with specific parameters for title generation
-        from ai_assistant.utils.api_config_manager import config_manager
-        gemini_model = config_manager.get_gemini_adhoc_model()
+        from ai_assistant.utils.config import get_gemini_adhoc_model
+        gemini_model = get_gemini_adhoc_model()
         title = call_gemini_direct(
             prompt=title_prompt,
             model_name=gemini_model,
@@ -320,7 +321,7 @@ async def _get_title_from_action_log(session_id: str, user_id: int) -> str:
     """
     try:
         # Check if action logging is enabled
-        config = config_manager.framework_config
+        config = get_config()
         action_logging_config = config.get('action_logging', {})
         
         if not action_logging_config.get('enabled', False):
@@ -365,7 +366,7 @@ Based on these AI interaction summaries from a conversation session, generate a 
 Response should be just the title, no explanations.
 """
             
-            gemini_model = config_manager.get_gemini_adhoc_model()
+            gemini_model = get_gemini_adhoc_model()
             title = call_gemini_direct(
                 prompt=title_prompt,
                 model_name=gemini_model,
@@ -401,12 +402,12 @@ def call_gemini_direct(prompt: str, model_name: str = "gemini-1.5-flash", max_to
     """
     try:
         # Get configuration from config manager
-        config = config_manager.framework_config
+        config = get_config()
         google_cloud_config = config.get('google_cloud', {})
         
         # Get project ID and location from config
-        project_id = google_cloud_config.get('project', os.getenv("GOOGLE_CLOUD_PROJECT_ID"))
-        location = google_cloud_config.get('location', os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"))
+        project_id = google_cloud_config.get('project')
+        location = google_cloud_config.get('location')
 
         
         if not project_id:
@@ -478,19 +479,40 @@ def call_gemini_direct(prompt: str, model_name: str = "gemini-1.5-flash", max_to
 
 
 @router.get("/user-sessions")
+@router.post("/user-sessions")  # Support POST method
+@router.get("/get-user-sessions")  # Add alias for C# compatibility
+@router.post("/get-user-sessions")  # Support POST method for C# compatibility
 async def get_user_sessions(
-    app_name: str = Query(..., description="Application name"),
-    user_id: str = Query(..., description="User ID to retrieve sessions for")
+    request: Request,
+    app_name: str = Query(None, description="Application name"),
+    user_id: str = Query(None, description="User ID to retrieve sessions for")
 ):
     """
     Get all sessions for a specific user from the ADK session service
     """
     try:
         logger.info("="*50)
+        
+        # Handle cases where parameters are not provided in query string (POST requests from ASP.NET)
+        if not app_name:
+            app_name = get_application_name()
+            logger.info(f"📋 Using app_name from config: {app_name}")
+        
+        if not user_id:
+            # Try to extract user_id from request headers (set by ASP.NET authentication)
+            headers = dict(request.headers)
+            user_id = headers.get('x-user-id') or headers.get('x-unops-user-id')
+            if not user_id:
+                # For now, use a default user_id for testing
+                user_id = "1"
+                logger.info(f"📋 No user_id provided, using default: {user_id}")
+            else:
+                logger.info(f"📋 Extracted user_id from headers: {user_id}")
+        
         logger.info(f"📋 Getting user sessions for app: {app_name}, user: {user_id}")
         
         # Create session service
-        db_url = config_manager.get_database_url()
+        db_url = get_database_url()
         session_service = DatabaseSessionService(db_url=db_url)
         logger.info(f"🔧 Created session service with DB: {db_url[:50]}...")
         
@@ -550,7 +572,7 @@ async def get_session_with_chats(
         logger.info(f"📋 Getting session with chats for app: {app_name}, user: {user_id}, session: {session_id}")
         
         # Create session service
-        db_url = config_manager.get_database_url()
+        db_url = get_database_url()
         session_service = DatabaseSessionService(db_url=db_url)
         logger.info(f"🔧 Created session service with DB: {db_url[:50]}...")
         
@@ -777,7 +799,7 @@ async def get_session_with_chats(
                         except:
                             timestamp_dt = None
                     
-                    # Handle assistant response messages (response_formatter_agent and user_request_agent)
+                    # Handle assistant response messages (response_formatter_agent and TaskExecutorAgent)
                     if author in ["response_formatter_agent"] and invocation_id:
                         # Store only the latest assistant message per invocation_id
                         if invocation_id not in response_formatter_messages or (
@@ -804,7 +826,7 @@ async def get_session_with_chats(
                             "_sort_timestamp": timestamp_dt if timestamp_dt else datetime.min
                         }
                         chat_items.append(chat_item)
-                    # Skip other agent messages (task_planner_agent, api_caller_agent, etc.)
+                    # Skip other agent messages (api_caller_agent, etc.)
             
             # Add filtered assistant response messages to chat_items
             logger.info(f"🔍 Found {len(response_formatter_messages)} unique assistant responses across invocations")
@@ -849,7 +871,7 @@ async def get_session_data(
         logger.info(f"📋 Getting session data for app: {app_name}, user: {user_id}, session: {session_id}")
         
         # Create session service
-        db_url = config_manager.get_database_url()
+        db_url = get_database_url()
         session_service = DatabaseSessionService(db_url=db_url)
         logger.info(f"🔧 Created session service with DB: {db_url[:50]}...")
         

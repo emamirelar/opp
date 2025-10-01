@@ -60,7 +60,6 @@ export interface DuplicateDetectionResponse {
             class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
             (click)="viewRecord(data.duplicateInfo!.topDuplicate!.entityId)">
             <i class="pi pi-external-link mr-2"></i>
-            {{ 'DUPLICATE_DETECTION.viewRecord' | translate }}
           </button>
         </div>
       </div>

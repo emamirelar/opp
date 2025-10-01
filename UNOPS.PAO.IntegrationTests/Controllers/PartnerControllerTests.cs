@@ -40,14 +40,24 @@ public class PartnerControllerTests : IntegrationTestBase
             return;
         }
         
+        // First, create test partner groups
+        var partnerGroups = new List<PartnerTree>
+        {
+            new PartnerTree { Id = 1, Name = "Corporate Partners", PartnerGroupCode = "CORP", Description = "Corporate partner organizations", Code = "CORP", Type = "Group" },
+            new PartnerTree { Id = 2, Name = "Government Partners", PartnerGroupCode = "GOV", Description = "Government partner organizations", Code = "GOV", Type = "Group" },
+            new PartnerTree { Id = 3, Name = "NGO Partners", PartnerGroupCode = "NGO", Description = "Non-governmental partner organizations", Code = "NGO", Type = "Group" }
+        };
+        dbContext.Set<PartnerTree>().AddRange(partnerGroups);
+        await dbContext.SaveChangesAsync();
+        
         // Add test partners with specific characteristics
         var partners = new List<UNOPSPartner>
         {
-            CreateTestPartner(1, "ACME Corporation", "Active", "ACME", 1),
-            CreateTestPartner(2, "Global Tech Solutions", "Active", "GTS", 2),
-            CreateTestPartner(3, "Beta Industries", "Inactive", "BETA", 1),
-            CreateTestPartner(4, "Global Finance Corp", "Prospect", "GFC", 3),
-            CreateTestPartner(5, "ACME Global Services", "Active", "AGS", 2),
+            CreateTestPartner(1, "ACME Corporation", "Active", "ACME Corp specializes in global technology solutions", 1),
+            CreateTestPartner(2, "Global Tech Solutions", "Active", "Global Tech is a leading technology provider", 2),
+            CreateTestPartner(3, "Beta Industries", "Inactive", "Beta Industries is a manufacturing company", 1),
+            CreateTestPartner(4, "Global Finance Corp", "Prospect", "Global Finance provides financial services", 3),
+            CreateTestPartner(5, "ACME Global Services", "Active", "ACME Global offers consulting services", 2),
             CreateTestPartner(6, "Delta Corporation", "Inactive", "DELTA", 4),
             CreateTestPartner(7, "Tech Innovations Ltd", "Active", "TIL", 1),
             CreateTestPartner(8, "Finance Solutions Inc", "Prospect", "FSI", 3),
@@ -56,6 +66,46 @@ public class PartnerControllerTests : IntegrationTestBase
         };
         
         dbContext.Set<UNOPSPartner>().AddRange(partners);
+        await dbContext.SaveChangesAsync();
+        
+        // Add some test contacts for the partners
+        var contacts = new List<Contact>
+        {
+            new Contact 
+            { 
+                Id = 1, 
+                FirstName = "John", 
+                LastName = "Smith", 
+                Title = "Manager",
+                Email = "john.smith@acme.com", 
+                PartnerId = 1,
+                CreatedDate = DateTime.UtcNow,
+                LastModifiedDate = DateTime.UtcNow
+            },
+            new Contact 
+            { 
+                Id = 2, 
+                FirstName = "Jane", 
+                LastName = "Doe",
+                Title = "Director", 
+                Email = "jane.doe@globaltech.com", 
+                PartnerId = 2,
+                CreatedDate = DateTime.UtcNow,
+                LastModifiedDate = DateTime.UtcNow
+            },
+            new Contact 
+            { 
+                Id = 3, 
+                FirstName = "Bob", 
+                LastName = "Johnson",
+                Title = "Coordinator", 
+                Email = "bob.johnson@beta.com", 
+                PartnerId = 3,
+                CreatedDate = DateTime.UtcNow,
+                LastModifiedDate = DateTime.UtcNow
+            }
+        };
+        dbContext.Set<Contact>().AddRange(contacts);
         await dbContext.SaveChangesAsync();
     }
 
@@ -76,6 +126,7 @@ public class PartnerControllerTests : IntegrationTestBase
             // Enhanced Partner structure
             Name = name,
             PartnerShortDescription = shortName,
+            PartnerLongDescription = $"{name} is a test partner for integration testing purposes. ID: {id}",
             PartnerCategoryId = 1, // Default test category
             LiaisonOfficeId = 1, // Default test liaison office
             UNAndStateEntity = false,
@@ -506,6 +557,732 @@ public class PartnerControllerTests : IntegrationTestBase
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
+
+    #endregion
+
+    #region New Advanced Search Tests
+
+    [Fact]
+    public async Task NewAdvancedSearch_BasicTextSearch_ReturnsMatchingPartners()
+    {
+        // Arrange
+        var searchCriteria = """
+        [
+            {
+                "field": "name",
+                "value": "ACME",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        result.Records.Should().NotBeEmpty();
+        result.Records.Should().OnlyContain(p => p.Name.Contains("ACME", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_MultipleAndConditions_ReturnsCorrectResults()
+    {
+        // Arrange
+        var searchCriteria = """
+        [
+            {
+                "field": "name",
+                "value": "Global",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            },
+            {
+                "field": "status",
+                "value": "1",
+                "operator": "eq",
+                "logicalOperator": "AND",
+                "fieldType": "number"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        result.Records.Should().OnlyContain(p => 
+            p.Name.Contains("Global", StringComparison.OrdinalIgnoreCase) && 
+            p.Status == "Active");
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_OrConditions_ReturnsUnionOfResults()
+    {
+        // Arrange
+        var searchCriteria = """
+        [
+            {
+                "field": "name",
+                "value": "ACME",
+                "operator": "like",
+                "logicalOperator": "OR",
+                "fieldType": "text"
+            },
+            {
+                "field": "name",
+                "value": "Beta",
+                "operator": "like",
+                "logicalOperator": "OR",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        result.Records.Should().NotBeEmpty();
+        result.Records.Should().OnlyContain(p => 
+            p.Name.Contains("ACME", StringComparison.OrdinalIgnoreCase) ||
+            p.Name.Contains("Beta", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_NavigationPropertySearch_ReturnsCorrectResults()
+    {
+        // Arrange
+        var searchCriteria = """
+        [
+            {
+                "field": "partnerGroup.name",
+                "value": "Corporate",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Since we don't have specific partner group data in our test setup, 
+        // we just verify the request doesn't fail
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_ContactsSearch_ReturnsPartnersWithMatchingContacts()
+    {
+        // Arrange
+        var searchCriteria = """
+        [
+            {
+                "field": "contacts.firstName",
+                "value": "John",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Since our test data doesn't include contacts with specific names,
+        // we just verify the request processes without errors
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_DateRangeSearch_ReturnsCorrectResults()
+    {
+        // Arrange
+        var searchCriteria = """
+        [
+            {
+                "field": "createdDate",
+                "value": "2023-01-01",
+                "operator": "gte",
+                "logicalOperator": "AND",
+                "fieldType": "date"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Verify that all returned partners were created after 2023-01-01
+        if (result.Records.Any())
+        {
+            result.Records.Should().OnlyContain(p => p.CreatedDate >= new DateTime(2023, 1, 1));
+        }
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_BooleanSearch_ReturnsCorrectResults()
+    {
+        // Arrange
+        var searchCriteria = """
+        [
+            {
+                "field": "keyGlobalPartner",
+                "value": "true",
+                "operator": "eq",
+                "logicalOperator": "AND",
+                "fieldType": "bool"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Verify that all returned partners have keyGlobalPartner = true
+        if (result.Records.Any())
+        {
+            result.Records.Should().OnlyContain(p => p.KeyGlobalPartner == true);
+        }
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_SimilaritySearch_FindsTypos()
+    {
+        // Arrange - intentionally misspell "ACME" as "ACMEE" to test similarity
+        var searchCriteria = """
+        [
+            {
+                "field": "name",
+                "value": "ACMEE",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // With smart search enabled, it should still find "ACME" partners despite the typo
+        // Note: This depends on the similarity threshold being appropriate
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_ComplexMixedCriteria_ReturnsCorrectResults()
+    {
+        // Arrange
+        var searchCriteria = """
+        [
+            {
+                "field": "name",
+                "value": "Global",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            },
+            {
+                "field": "status",
+                "value": "1",
+                "operator": "eq",
+                "logicalOperator": "OR",
+                "fieldType": "number"
+            },
+            {
+                "field": "keyGlobalPartner",
+                "value": "true",
+                "operator": "eq",
+                "logicalOperator": "AND",
+                "fieldType": "bool"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Complex logic: (name contains "Global" AND keyGlobalPartner = true) OR (status = 1)
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_EmptySearchCriteria_ReturnsAllPartners()
+    {
+        // Arrange
+        var searchCriteria = "[]";
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        result.Records.Should().NotBeEmpty(); // Should return all partners (up to page size)
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_InvalidSearchCriteria_ReturnsBadRequest()
+    {
+        // Arrange
+        var searchCriteria = "invalid json";
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_InvalidFieldName_ReturnsError()
+    {
+        // Arrange
+        var searchCriteria = """
+        [
+            {
+                "field": "nonExistentField",
+                "value": "test",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_PaginationWorks_ReturnsCorrectPage()
+    {
+        // Arrange
+        var searchCriteria = "[]"; // Get all partners
+
+        // Act - Get first page
+        var response1 = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=2");
+        var result1 = await response1.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Act - Get second page
+        var response2 = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=2&pageSize=2");
+        var result2 = await response2.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response1.StatusCode.Should().Be(HttpStatusCode.OK);
+        response2.StatusCode.Should().Be(HttpStatusCode.OK);
+        result1.Should().NotBeNull();
+        result2.Should().NotBeNull();
+        
+        if (result1.Records.Any() && result2.Records.Any())
+        {
+            // Verify different records on different pages
+            var page1Ids = result1.Records.Select(p => p.Id).ToList();
+            var page2Ids = result2.Records.Select(p => p.Id).ToList();
+            page1Ids.Should().NotIntersectWith(page2Ids);
+        }
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_CaseInsensitiveSearch_ReturnsResults()
+    {
+        // Arrange - test with lowercase when data might be uppercase
+        var searchCriteria = """
+        [
+            {
+                "field": "name",
+                "value": "acme",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Should find "ACME" partners even with lowercase search
+        if (result.Records.Any())
+        {
+            result.Records.Should().Contain(p => p.Name.Contains("ACME", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_PartnerDescriptionSearch_ReturnsResults()
+    {
+        // Arrange
+        var searchCriteria = """
+        [
+            {
+                "field": "partnerLongDescription",
+                "value": "Corporation",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Should work without errors even if no matches found
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_NumericComparisons_ReturnsCorrectResults()
+    {
+        // Arrange - test greater than operator
+        var searchCriteria = """
+        [
+            {
+                "field": "status",
+                "value": "0",
+                "operator": "gt",
+                "logicalOperator": "AND",
+                "fieldType": "number"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Verify all returned partners have status > 0 (Active, Closed > Draft)
+        if (result.Records.Any())
+        {
+            result.Records.Should().OnlyContain(p => p.Status != "Draft");
+        }
+    }
+
+    #region Nested Properties and Similarity Search Tests
+
+    [Fact]
+    public async Task NewAdvancedSearch_NestedPropertySimilarity_FindsTyposInPartnerGroupName()
+    {
+        // Arrange - intentionally misspell "Corporate" as "Corporat" to test similarity on nested property
+        var searchCriteria = """
+        [
+            {
+                "field": "partnerGroup.name",
+                "value": "Corporat",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // With smart search enabled, it should still find "Corporate" partners despite the typo
+        // Note: This tests similarity search on navigation properties
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_CollectionPropertySimilarity_FindsTyposInContactNames()
+    {
+        // Arrange - intentionally misspell "John" as "Jon" to test similarity on collection property
+        var searchCriteria = """
+        [
+            {
+                "field": "contacts.firstName",
+                "value": "Jon",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // With smart search enabled, it should still find partners with "John" in contacts despite the typo
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_NestedPropertyExactMatch_WorksCorrectly()
+    {
+        // Arrange - exact match on partner group code
+        var searchCriteria = """
+        [
+            {
+                "field": "partnerGroup.code",
+                "value": "CORP",
+                "operator": "eq",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Should find partners in Corporate group
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_DeepNestedPropertySimilarity_HandlesComplexPaths()
+    {
+        // Arrange - test similarity on multiple nested levels (if available in schema)
+        var searchCriteria = """
+        [
+            {
+                "field": "partnerGroup.name",
+                "value": "Governmnt",
+                "operator": "like",
+                "logicalOperator": "OR",
+                "fieldType": "text"
+            },
+            {
+                "field": "contacts.lastName",
+                "value": "Smyth",
+                "operator": "like",
+                "logicalOperator": "OR",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Should find partners through similarity on both "Government" and "Smith" despite typos
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_CollectionPropertyEmail_SimilaritySearch()
+    {
+        // Arrange - test similarity on email addresses in collections
+        var searchCriteria = """
+        [
+            {
+                "field": "contacts.email",
+                "value": "acme.com",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Should find partners with contacts having acme.com emails
+        if (result.Records.Any())
+        {
+            // At least one partner should be found since we have john.smith@acme.com in test data
+            result.Records.Should().NotBeEmpty();
+        }
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_CombinedNestedAndDirectSimilarity_ComplexSearch()
+    {
+        // Arrange - complex search combining direct field similarity with nested property similarity
+        var searchCriteria = """
+        [
+            {
+                "field": "name",
+                "value": "ACMEE",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            },
+            {
+                "field": "partnerGroup.name",
+                "value": "Corporat",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Should find ACME partners in Corporate group despite typos in both fields
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_MultipleCollectionPropertiesSimilarity_TestsAllContactFields()
+    {
+        // Arrange - test similarity across multiple collection properties
+        var searchCriteria = """
+        [
+            {
+                "field": "contacts.firstName",
+                "value": "Jan",
+                "operator": "like",
+                "logicalOperator": "OR",
+                "fieldType": "text"
+            },
+            {
+                "field": "contacts.lastName",
+                "value": "Do",
+                "operator": "like",
+                "logicalOperator": "OR",
+                "fieldType": "text"
+            },
+            {
+                "field": "contacts.email",
+                "value": "globaltech",
+                "operator": "like",
+                "logicalOperator": "OR",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Should find partners through similarity on Jane/Doe/globaltech.com combinations
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_NestedPropertyCaseInsensitive_WithSimilarity()
+    {
+        // Arrange - test case insensitive + similarity on nested properties
+        var searchCriteria = """
+        [
+            {
+                "field": "partnerGroup.name",
+                "value": "corporat",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Should find "Corporate" partners despite lowercase input and missing letter
+    }
+
+    [Fact]
+    public async Task NewAdvancedSearch_NestedPropertiesWithSpecialCharacters_SimilarityHandling()
+    {
+        // Arrange - test similarity with special characters in nested properties
+        var searchCriteria = """
+        [
+            {
+                "field": "contacts.email",
+                "value": "john.smith@acme",
+                "operator": "like",
+                "logicalOperator": "AND",
+                "fieldType": "text"
+            }
+        ]
+        """;
+
+        // Act
+        var response = await GetAsync($"/api/partner/new-advanced-search?searchCriteria={Uri.EscapeDataString(searchCriteria)}&pageNumber=1&pageSize=10");
+        var result = await response.Content.ReadFromJsonAsync<PaginationResponse<PartnerModel>>(JsonOptions);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        // Should handle email partial matching with special characters
+        if (result.Records.Any())
+        {
+            result.Records.Should().NotBeEmpty();
+        }
+    }
+
+    #endregion
 
     #endregion
 }

@@ -1,0 +1,100 @@
+
+<div class="phone-input-container">
+  @if(label) {
+    <label [for]="inputId" class="block mb-2">
+      {{ label }}
+      @if(required) {
+        <span class="text-red-500">*</span>
+      }
+    </label>
+  }
+
+  <!-- Phone tags display -->
+  @if(phoneNumbers().length > 0) {
+    <div class="phone-tags-container flex flex-wrap gap-2 mb-2">
+      @for(phone of phoneNumbers(); track phone.formatted; let i = $index) {
+        <p-chip
+          [label]="getCountryFlagEmoji(phone) + '&nbsp;' + phone.formatted"
+          class="bg-blue-100 text-blue-800"
+          [removable]="!disabled"
+          (onRemove)="removePhone(i, $event)"
+          (click)="editPhone(i)"
+          styleClass="phone-tag cursor-pointer hover:opacity-80"
+        >
+        </p-chip>
+      }
+    </div>
+  }
+
+  <!-- Phone input -->
+  <div class="relative">
+    <input
+      pInputText
+      [id]="inputId"
+      [formControl]="phoneControl"
+      [disabled]="disabled"
+      [placeholder]="placeholder"
+      (blur)="onBlur()"
+      (paste)="onPaste($event)"
+      (keydown.enter)="onEnterKey($any($event))"
+      [class.p-invalid]="touched() && (hasErrors() || hasInvalidNumbers())"
+      class="w-full"
+      type="tel"
+    />
+
+    <!-- Clear button -->
+    @if(showClear && inputValue() && !disabled) {
+      <button type="button"
+              (click)="clearInput()"
+              class="absolute right-3.5 top-3.5 text-gray-400 hover:text-gray-600">
+        <i class="pi pi-times w-5 h-5"></i>
+      </button>
+    }
+  </div>
+
+  <!-- Helper text -->
+  @if(helperText) {
+    <small class="text-gray-500 text-xs mt-1 block">
+      {{ helperText }}
+    </small>
+  }
+
+  <!-- Error messages -->
+  @if(touched() && validationErrors()) {
+    <div class="field-error mt-1">
+      @if(validationErrors()?.['required']) {
+        <small class="p-error text-red-600 block">
+          {{ requiredMessage || 'This field is required' }}
+        </small>
+      }
+      @if(validationErrors()?.['invalidPhone']) {
+        <small class="p-error text-red-600 block">
+          @if(hasInvalidNumbers() && invalidNumbersInInput().length > 0) {
+            {{ invalidPhoneMessage || 'Invalid phone number format' }}: {{ getInvalidNumbersText() }}
+          } @else {
+            {{ invalidPhoneMessage || 'Invalid phone number format' }}
+          }
+        </small>
+      }
+      @if(validationErrors()?.['minPhones']) {
+        <small class="p-error text-red-600 block">
+          Minimum {{ validationErrors()?.['minPhones'].min }} phone number(s) required
+        </small>
+      }
+      @if(validationErrors()?.['maxPhones']) {
+        <small class="p-error text-red-600 block">
+          Maximum {{ validationErrors()?.['maxPhones'].max }} phone number(s) allowed
+        </small>
+      }
+    </div>
+  }
+
+  <!-- Add button (optional) -->
+  @if(showAddButton && inputValue() && !disabled) {
+    <button type="button"
+            (click)="processInput()"
+            class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+      Add
+    </button>
+  }
+</div>

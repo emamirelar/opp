@@ -50,13 +50,18 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
                               from org in orgJoin.DefaultIfEmpty()
                               select new { UserProfile = up, OrgHierarchy = org };
 
+        var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
+        var orgUnitId = await _context.OrganizationHierarchies
+            .Where(o => o.Code == currentUserOrgUnit)
+            .Select(o => o.Id)
+            .FirstOrDefaultAsync();
+
         // Apply "Show My Org Unit Only" filter if requested
         if (request.ShowMyOrgUnitOnly)
         {
-            var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             if (!string.IsNullOrEmpty(currentUserOrgUnit))
             {
-                userProfileQuery = userProfileQuery.Where(x => x.UserProfile.OrgUnit == currentUserOrgUnit);
+                userProfileQuery = userProfileQuery.Where(x => x.OrgHierarchy != null && orgUnitId == x.OrgHierarchy.Id);
             }
         }
 

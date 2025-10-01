@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal, computed, Type } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, OnInit, OnDestroy, signal, computed, Type } from '@angular/core';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -13,6 +13,7 @@ import { BlockUIModule } from 'primeng/blockui';
 import { StepperModule } from 'primeng/stepper';
 import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
 import { NgClass, JsonPipe, TitleCasePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { ImportDialogService } from './import-dialog.service';
 import { PaginatorModule } from 'primeng/paginator';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -99,9 +100,39 @@ interface ImportColumn extends ListViewColumn {
         max-width: 100px;
       }
     }
+    
+    /* Import error styling */
+    .import-error {
+      background-color: #fef2f2 !important;
+      border-left: 4px solid #ef4444 !important;
+    }
+    
+    .import-error td {
+      background-color: #fef2f2 !important;
+    }
+    
+    /* Validation error styling - slightly different from import errors */
+    .p-error:not(.import-error) {
+      background-color: #fef3cd !important;
+      border-left: 4px solid #f59e0b !important;
+    }
+    
+    .p-error:not(.import-error) td {
+      background-color: #fef3cd !important;
+    }
+    
+    /* Style for internal duplicate badge in banner only */
+    .internal-duplicate-badge {
+      background-color: #f97316;
+      color: white;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
   `]
 })
-export class ImportDialogComponent implements OnInit {
+export class ImportDialogComponent implements OnInit, OnDestroy {
   feedbackDialogService = inject(FeedbackDialogService);
   importDialogService = inject(ImportDialogService);
   componentResolverService = inject(ComponentResolverService);
@@ -126,6 +157,11 @@ export class ImportDialogComponent implements OnInit {
   showDuplicateWarning = signal<boolean>(false);
   duplicateWarningMessage = signal<string>('');
 
+  // Internal duplicate warning properties
+  internalDuplicateRows = signal<any[]>([]);
+  showInternalDuplicateWarning = signal<boolean>(false);
+  internalDuplicateWarningMessage = signal<string>('');
+
   // Pagination properties
   first = signal(0);
   rows = signal(10);
@@ -138,6 +174,7 @@ export class ImportDialogComponent implements OnInit {
 
   // Contact-specific columns
   contactColumns: ImportColumn[] = [
+    { field: 'id', header: 'contact.id', required: false, label: 'ID', type: 'text', sortable: false },
     { field: 'salutation', header: 'contact.salutation', required: false, label: 'Salutation', type: 'text', sortable: false },
     { field: 'firstName', header: 'contact.firstName', required: false, label: 'First Name', type: 'text', sortable: false },
     { field: 'middleName', header: 'contact.middleName', required: false, label: 'Middle Name', type: 'text', sortable: false },
@@ -146,7 +183,7 @@ export class ImportDialogComponent implements OnInit {
     { field: 'title', header: 'contact.title', required: true, label: 'Title', type: 'text', sortable: false },
     { field: 'pronouns', header: 'contact.pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
     { field: 'birthDate', header: 'contact.birthDate', required: false, label: 'Birth Date', type: 'text', sortable: false },
-    { field: 'partnerId', header: 'contact.partnerId', required: true, label: 'Partner ID', type: 'text', sortable: false },
+    { field: 'partnerName', header: 'contact.partner', required: true, label: 'Partner', type: 'text', sortable: false },
     { field: 'email', header: 'contact.email', required: true, label: 'Email', type: 'text', sortable: false },
     { field: 'phone', header: 'contact.phone', required: false, label: 'Phone', type: 'text', sortable: false },
     { field: 'mobile', header: 'contact.mobile', required: false, label: 'Mobile', type: 'text', sortable: false },
@@ -169,16 +206,17 @@ export class ImportDialogComponent implements OnInit {
 
   // Partner-specific columns (all fields from Partner.cs, filtered by permissions)
   allPartnerColumns: ImportColumn[] = [
+    { field: 'id', header: 'partner.id', required: false, label: 'ID', type: 'text', sortable: false },
     // Essential Fields
-    { field: 'name', header: 'partner.name', required: true, label: 'Name', type: 'text', sortable: false },
-    { field: 'partnerShortDescription', header: 'partner.shortName', required: false, label: 'Short Name', type: 'text', sortable: false },
-    { field: 'partnerLongDescription', header: 'partner.longDescription', required: false, label: 'Long Description', type: 'text', sortable: false },
+    { field: 'name', header: 'partner.partnerName', required: true, label: 'Partner Name', type: 'text', sortable: false },
+    { field: 'partnerShortDescription', header: 'partner.shortName', required: false, label: 'Partner Short Description', type: 'text', sortable: false },
+    { field: 'partnerLongDescription', header: 'partner.longDescription', required: false, label: 'Partner Long Description', type: 'text', sortable: false },
     
     // Classification & Organization
-    { field: 'partnerCategoryId', header: 'partner.partnerCategory', required: false, label: 'Partner Category', type: 'text', sortable: false },
-    { field: 'partnerGroupId', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'number', sortable: false },
-    { field: 'liaisonOfficeId', header: 'partner.liaisonOffice', required: false, label: 'Liaison Office', type: 'text', sortable: false },
-    { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPoint', required: false, label: 'Partner Focal Point', type: 'text', sortable: false },
+    { field: 'partnerGroupName', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'text', sortable: false },
+    { field: 'liaisonOfficeName', header: 'partner.partnerLiaisonOffice', required: false, label: 'Partner Liaison Office', type: 'text', sortable: false },
+    { field: 'partnerFocalPointUserName', header: 'partner.partnerFocalPointUser', required: false, label: 'Focal Point User', type: 'text', sortable: false },
+    { field: 'organizationHierarchyNames', header: 'partner.partnerOrgUnit', required: false, label: 'Partner Org Unit', type: 'text', sortable: false },
     // Status & Operational
     { field: 'status', header: 'partner.status', required: false, label: 'Status', type: 'text', sortable: false },
   ];
@@ -188,17 +226,18 @@ export class ImportDialogComponent implements OnInit {
 
   // Interaction-specific columns
   interactionColumns: ImportColumn[] = [
+    { field: 'id', header: 'interaction.id', required: false, label: 'ID', type: 'text', sortable: false },
     { field: 'type', header: 'interaction.type', required: true, label: 'Type', type: 'text', sortable: false },
     { field: 'date', header: 'interaction.date', required: true, label: 'Date', type: 'text', sortable: false },
     { field: 'subject', header: 'interaction.subject', required: true, label: 'Subject', type: 'text', sortable: false },
     { field: 'description', header: 'interaction.description', required: false, label: 'Description', type: 'text', sortable: false },
     { field: 'location', header: 'interaction.location', required: false, label: 'Location', type: 'text', sortable: false },
-    { field: 'contactIds', header: 'interaction.contactIds', required: false, label: 'Contact IDs', type: 'text', sortable: false },
-    { field: 'partnerIds', header: 'interaction.partnerIds', required: false, label: 'Partner IDs', type: 'text', sortable: false },
-    { field: 'userIds', header: 'interaction.userIds', required: false, label: 'User IDs', type: 'text', sortable: false },
+    { field: 'contactNames', header: 'interaction.contacts', required: false, label: 'Contacts', type: 'text', sortable: false },
+    { field: 'partnerNames', header: 'interaction.partners', required: false, label: 'Partners', type: 'text', sortable: false },
+    { field: 'userNames', header: 'interaction.users', required: false, label: 'Users', type: 'text', sortable: false },
     { field: 'emailAddresses', header: 'interaction.emailAddresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
     { field: 'phoneNumbers', header: 'interaction.phoneNumbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
-    { field: 'organizationHierarchyIds', header: 'interaction.organizationUnitIds', required: false, label: 'Organization Unit IDs', type: 'text', sortable: false }
+    { field: 'organizationHierarchyNames', header: 'interaction.organizationUnit', required: false, label: 'Organization Unit', type: 'text', sortable: false }
   ];
 
   // User Role-specific columns
@@ -240,11 +279,37 @@ export class ImportDialogComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    // Clear any previous import errors to prevent state leakage
+    this.importDialogService.clearImportErrorDetails();
+    console.log('🧹 Cleared import errors on component init');
+    
     // Set the table columns based on the current import type (with permissions)
     await this.updateColumnsForEntityType();
     
     // Immediately check data on init
     this.checkAndProcessData();
+    
+    // Listen for duplicate info updates from edit dialogs
+    this.setupDuplicateInfoEventListener();
+    
+    // Listen for data changes (e.g., after filtering failed records)
+    effect(() => {
+      const serviceData = this.importDialogService.data();
+      const serviceSelection = this.importDialogService.selectedRows();
+      
+      // Sync component selection with service selection
+      if (serviceSelection.length !== this.selectedRows().length) {
+        console.log('🔄 Syncing component selection with service:', serviceSelection.length, 'records');
+        this.selectedRows.set([...serviceSelection]);
+      }
+      
+      // Update pagination when data changes
+      if (serviceData.length !== this.totalRecords()) {
+        console.log('🔄 Updating total records:', this.totalRecords(), '->', serviceData.length);
+        this.totalRecords.set(serviceData.length);
+        this.updatePaginatedData();
+      }
+    });
   }
 
   // Update the table columns based on the current import type and user permissions
@@ -444,8 +509,80 @@ export class ImportDialogComponent implements OnInit {
     return this.validationErrors().get(actualRowIndex) || [];
   }
 
+  hasImportErrors(rowIndex: number): boolean {
+    const rowData = this.paginatedData()[rowIndex];
+    if (!rowData) return false;
+    
+    const recordId = rowData._importRowId || rowData.id || (this.first() + rowIndex);
+    return this.importDialogService.hasImportError(recordId);
+  }
+
+  getImportErrors(rowIndex: number): string[] {
+    const rowData = this.paginatedData()[rowIndex];
+    if (!rowData) return [];
+    
+    const recordId = rowData._importRowId || rowData.id || (this.first() + rowIndex);
+    const errorInfo = this.importDialogService.getImportError(recordId);
+    
+    if (!errorInfo) return [];
+    
+    const errors = [];
+    
+    // Add main error message
+    if (errorInfo.message) {
+      errors.push(errorInfo.message);
+    }
+    
+    // Add additional details if available
+    if (errorInfo.details && typeof errorInfo.details === 'string') {
+      errors.push(`Details: ${errorInfo.details}`);
+    } else if (errorInfo.details && Array.isArray(errorInfo.details)) {
+      errors.push(...errorInfo.details.map((d: any) => `Details: ${d}`));
+    }
+    
+    // Add exception type for technical users
+    if (errorInfo.exceptionType && errorInfo.exceptionType !== 'Exception') {
+      errors.push(`Type: ${errorInfo.exceptionType}`);
+    }
+    
+    return errors;
+  }
+
+  getFailedImportCount(): number {
+    return this.importDialogService.importErrors().size;
+  }
+
   hasMissingRequiredRows(): boolean {
     return this.rowsWithMissingRequired().length > 0;
+  }
+
+
+  /**
+   * Get display row number for a record (1-based, accounting for header)
+   */
+  getDisplayRowNumber(record: any): number {
+    const data = this.importDialogService.data();
+    const index = data.findIndex(r => r._importRowId === record._importRowId);
+    return index + 2; // +1 for 0-based index, +1 for header row
+  }
+
+  /**
+   * Get display name for a record (name or first few chars of key field)
+   */
+  getRecordDisplayName(record: any): string {
+    // Try to get the most descriptive field based on entity type
+    const entityType = this.currentImportType().toLowerCase();
+    
+    switch (entityType) {
+      case 'partner':
+        return record.name || record.partnerName || record.shortName || `Partner #${this.getDisplayRowNumber(record)}`;
+      case 'contact':
+        return record.name || `${record.firstName || ''} ${record.lastName || ''}`.trim() || record.email || `Contact #${this.getDisplayRowNumber(record)}`;
+      case 'interaction':
+        return record.subject || record.type || `Interaction #${this.getDisplayRowNumber(record)}`;
+      default:
+        return record.name || record.title || record.description || `Record #${this.getDisplayRowNumber(record)}`;
+    }
   }
 
   /**
@@ -455,8 +592,32 @@ export class ImportDialogComponent implements OnInit {
     const processedData = [...data];
     const duplicateRows: any[] = [];
     const nonDuplicateRows: any[] = [];
+    const internalDuplicateRows: any[] = [];
 
     processedData.forEach((record, index) => {
+      
+      // Check for internal duplicate warnings first
+      if (record.internalDuplicateWarning) {
+        const internalWarning = record.internalDuplicateWarning;
+        
+        record.internalDuplicateInfo = {
+          hasInternalDuplicate: true,
+          isMaster: internalWarning.isMaster,
+          duplicateCount: internalWarning.duplicateCount,
+          duplicateRows: internalWarning.duplicateRows,
+          masterRow: internalWarning.masterRow,
+          matchReasons: internalWarning.matchReasons,
+          message: internalWarning.message,
+          tooltip: internalWarning.message
+        };
+        
+        internalDuplicateRows.push(record);
+      } else {
+        record.internalDuplicateInfo = {
+          hasInternalDuplicate: false,
+          tooltip: this.translateService.instant('importDialog.tooltips.noInternalDuplicates')
+        };
+      }
       
       // Check if record has duplicateDetection from the new AI service
       const duplicateDetection = record.duplicateDetection;
@@ -471,7 +632,7 @@ export class ImportDialogComponent implements OnInit {
           mediumConfidence: duplicateDetection.mediumConfidence,
           lowConfidence: duplicateDetection.lowConfidence,
           topDuplicate: duplicateDetection.topDuplicate,
-          tooltip: `${duplicateDetection.totalDuplicates} duplicate(s) found`
+          tooltip: this.translateService.instant('importDialog.tooltips.duplicatesFound', { count: duplicateDetection.totalDuplicates })
         };
         
         duplicateRows.push(record);
@@ -494,7 +655,7 @@ export class ImportDialogComponent implements OnInit {
             matchReason: 'Legacy similarity match',
             entityType: this.getEntityTypeFromImportType()
           },
-          tooltip: `Duplicate found (${similarityPercentage}% similarity)`
+          tooltip: this.translateService.instant('importDialog.tooltips.duplicateFoundWithSimilarity', { percentage: similarityPercentage })
         };
         
         duplicateRows.push(record);
@@ -508,7 +669,7 @@ export class ImportDialogComponent implements OnInit {
           mediumConfidence: 0,
           lowConfidence: 0,
           topDuplicate: null,
-          tooltip: 'Unique record'
+          tooltip: this.translateService.instant('importDialog.tooltips.uniqueRecord')
         };
         nonDuplicateRows.push(record);
       }
@@ -517,15 +678,26 @@ export class ImportDialogComponent implements OnInit {
     // Update signals
     this.duplicateRows.set(duplicateRows);
     this.nonDuplicateRows.set(nonDuplicateRows);
+    this.internalDuplicateRows.set(internalDuplicateRows);
     
     // Show warning if duplicates found
     if (duplicateRows.length > 0) {
       this.showDuplicateWarning.set(true);
       this.duplicateWarningMessage.set(
-        `${duplicateRows.length} duplicate(s) found and auto-deselected. Review and manually select if needed.`
+        this.translateService.instant('importDialog.messages.duplicatesFoundAndDeselected', { count: duplicateRows.length })
       );
     } else {
       this.showDuplicateWarning.set(false);
+    }
+
+    // Show warning if internal duplicates found
+    if (internalDuplicateRows.length > 0) {
+      this.showInternalDuplicateWarning.set(true);
+      this.internalDuplicateWarningMessage.set(
+        this.translateService.instant('importDialog.messages.internalDuplicatesFound', { count: internalDuplicateRows.length })
+      );
+    } else {
+      this.showInternalDuplicateWarning.set(false);
     }
 
     return processedData;
@@ -768,7 +940,9 @@ export class ImportDialogComponent implements OnInit {
         // Make sure id is present and formatted appropriately
         if (dialogRecord.id !== undefined && dialogRecord.id !== null) {
           // Ensure id is a string since the component expects a string recordId
-          dialogRecord.recordId = String(dialogRecord.id); 
+          dialogRecord.recordId = String(dialogRecord.id);
+          // Also set it in the dialog config data for proper initialization
+          dialogRecord.id = dialogRecord.id;
         }
       }
       
@@ -798,7 +972,8 @@ export class ImportDialogComponent implements OnInit {
         data: {
           mode: 'edit',
           record: dialogRecord,
-          requestingSaveSignal: signal<boolean>(false)
+          requestingSaveSignal: signal<boolean>(false),
+          isImportEdit: true
         }
       });
       
@@ -835,6 +1010,17 @@ export class ImportDialogComponent implements OnInit {
             
             // Update paginated data and trigger change detection
             this.updatePaginatedData();
+            
+            const selectedRows = this.selectedRows();
+            const selectedIndex = selectedRows.findIndex(item => item._importRowId === importRowId);
+            if (selectedIndex !== -1) {
+              const updatedSelectedRows = [...selectedRows];
+              updatedSelectedRows[selectedIndex] = updatedData[rowIndex];
+              this.selectedRows.set(updatedSelectedRows);
+              // Also update the service
+              this.importDialogService.setSelectedRows(updatedSelectedRows);
+              console.log(`✅ Updated selected row ${importRowId} with edited data for import`);
+            }
             
             // Check for missing required fields
             this.checkRowForMissingFields(updatedData[rowIndex]);
@@ -934,13 +1120,13 @@ export class ImportDialogComponent implements OnInit {
 
     switch (importType) {
       case 'Contact':
-        return `Mandatory fields for contacts: ${requiredFields}`;
+        return this.translateService.instant('importDialog.banners.mandatoryFieldsForContacts', { fields: requiredFields });
       case 'Partner':
-        return `Mandatory fields for partners: ${requiredFields}`;
+        return this.translateService.instant('importDialog.banners.mandatoryFieldsForPartners', { fields: requiredFields });
       case 'Interaction':
-        return `Mandatory fields for interactions: ${requiredFields}`;
+        return this.translateService.instant('importDialog.banners.mandatoryFieldsForInteractions', { fields: requiredFields });
       default:
-        return `Mandatory fields: ${requiredFields}`;
+        return this.translateService.instant('importDialog.banners.mandatoryFields', { fields: requiredFields });
     }
   }
 
@@ -1128,5 +1314,91 @@ export class ImportDialogComponent implements OnInit {
     return shortTextFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
   }
 
+  /**
+   * Check if field is a date field that should be formatted
+   */
+  isDateField(fieldName: string): boolean {
+    const dateFields = ['date', 'createdDate', 'modifiedDate', 'lastModifiedDate', 'approvalDate', 'expiryDate'];
+    return dateFields.some(field => fieldName.toLowerCase().includes(field.toLowerCase()));
+  }
 
+  /**
+   * Format date value for display
+   */
+  formatDateValue(value: any): string {
+    if (!value) return '';
+    
+    try {
+      // Try to parse the date if it's a string
+      const date = typeof value === 'string' ? new Date(value) : value;
+      
+      // Check if it's a valid date
+      if (date instanceof Date && !isNaN(date.getTime())) {
+        // Use Angular DatePipe for consistent formatting
+        const datePipe = new DatePipe('en-US');
+        return datePipe.transform(date, 'medium') || value;
+      }
+      
+      return value;
+    } catch (error) {
+      // If parsing fails, return original value
+      return value;
+    }
+  }
+
+  /**
+   * Set up event listener for duplicate info updates from edit dialogs
+   */
+  private setupDuplicateInfoEventListener(): void {
+    this.duplicateInfoUpdateListener = this.handleDuplicateInfoUpdate.bind(this);
+    window.addEventListener('update-duplicate-info', this.duplicateInfoUpdateListener as EventListener);
+  }
+
+  /**
+   * Handle duplicate info update event from edit dialogs
+   */
+  private handleDuplicateInfoUpdate(event: Event): void {
+    const customEvent = event as CustomEvent;
+    const { importRowId, duplicateInfo } = customEvent.detail;
+    
+    console.log('Received duplicate info update for row:', importRowId, duplicateInfo);
+    
+    // Find and update the record in the import data
+    const allData = this.importDialogService.data();
+    const recordIndex = allData.findIndex(item => item._importRowId === importRowId);
+    
+    if (recordIndex !== -1) {
+      // Create a new array with the updated record
+      const updatedData = [...allData];
+      updatedData[recordIndex] = {
+        ...updatedData[recordIndex],
+        duplicateInfo: duplicateInfo
+      };
+      
+      // Update the service data
+      this.importDialogService.data.set(updatedData);
+      
+      // Update paginated data to refresh the UI
+      this.updatePaginatedData();
+      
+      console.log('✅ Updated duplicate info for import record:', importRowId);
+    } else {
+      console.warn('Could not find record with importRowId:', importRowId);
+    }
+  }
+
+  /**
+   * Store reference to the event listener for cleanup
+   */
+  private duplicateInfoUpdateListener: ((event: Event) => void) | null = null;
+
+  /**
+   * Clean up event listeners when component is destroyed
+   */
+  ngOnDestroy(): void {
+    if (this.duplicateInfoUpdateListener) {
+      window.removeEventListener('update-duplicate-info', this.duplicateInfoUpdateListener as EventListener);
+      this.duplicateInfoUpdateListener = null;
+    }
+  }
 }

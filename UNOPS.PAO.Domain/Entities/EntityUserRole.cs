@@ -7,7 +7,7 @@ public class EntityUserRole : ModifiableDeletableEntity
 {
     public int UserId { get; set; }
     public int RoleId { get; set; }
-    public IdentityUserRole<int> UserRole { get; set; }
+    public required IdentityUserRole<int> UserRole { get; set; }
     public int EntityId { get; set; }
-    public string EntityType { get; set; }
+    public required string EntityType { get; set; }
 }

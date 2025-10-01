@@ -16,7 +16,7 @@
       @if (hasUnsavedChanges() && !autoSaving()) {
         <span class="ml-auto text-xs bg-yellow-100 text-yellow-800 px-3 py-2 rounded-full flex items-center gap-2">
           <i class="pi pi-exclamation-circle mr-1"></i>
-          Unsaved changes
+          {{ 'entityManager.status.unsavedChanges' | translate }}
         </span>
       }
     </div>
@@ -28,12 +28,12 @@
   <div *ngIf="entities().length > 0" class="bg-white rounded-lg shadow entity-manager-tabs">
     <!-- Mobile Entity Selector Dropdown -->
     <div class="block md:hidden p-4">
-      <h3 class="text-sm font-medium text-gray-700 mb-2">Select Entity</h3>
+      <h3 class="text-sm font-medium text-gray-700 mb-2">{{ 'entityManager.sections.selectEntity' | translate }}</h3>
       <p-dropdown
         [options]="entityTabs()"
         [ngModel]="getSelectedEntityForDropdown()"
         (onChange)="onEntityDropdownChange($event)"
-        placeholder="Choose an entity"
+        [placeholder]="'entityManager.sections.chooseEntity' | translate"
         optionLabel="translatedLabel"
         optionValue="value"
         styleClass="w-full">
@@ -61,14 +61,14 @@
     @if (autoSaving()) {
       <div class="flex items-center gap-2 text-sm text-blue-600">
         <i class="pi pi-spin pi-spinner"></i>
-        <span>Auto-saving...</span>
+        <span>{{ 'entityManager.status.autoSaving' | translate }}</span>
       </div>
     }
 
     @if (!permissionsLoading() && hasAccessToManage()) {
       <p-button
       icon="pi pi-cog"
-      label="Entity Settings"
+      [label]="'entityManager.buttons.entitySettings' | translate"
       rounded
       text
       (onClick)="openEntityConfigurationDialog()"
@@ -79,7 +79,7 @@
 
       <p-button
         icon="pi pi-plus"
-        label="Add Field"
+        [label]="'entityManager.buttons.addField' | translate"
         rounded
         (onClick)="openAddFieldDialog()"
         [disabled]="!selectedEntityName() || canViewOnly() || fieldSaving()"
@@ -109,7 +109,7 @@
     <div *ngIf="showListViewFieldsOnTop()" class="mb-6">
       <h3 class="text-md font-medium text-indigo-800 mb-3 flex items-center">
         <i class="pi pi-list mr-2"></i>
-        List View Fields ({{ getListViewFields().length }})
+        {{ 'entityManager.sections.listViewFields' | translate }} ({{ getListViewFields().length }})
       </h3>
 
       <div class="space-y-2"
@@ -129,7 +129,7 @@
               </span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-xs text-indigo-600">Order: {{ field.listViewOrder }}</span>
+              <span class="text-xs text-indigo-600">{{ 'entityManager.fields.order' | translate }}: {{ field.listViewOrder }}</span>
             </div>
           </div>
         </div>
@@ -145,7 +145,7 @@
       <div class="flex flex-col available-fields-section">
         <!-- Header -->
         <div class="flex items-center gap-3 mb-4">
-          <div class="text-lg font-semibold text-gray-900">Available Fields</div>
+          <div class="text-lg font-semibold text-gray-900">{{ 'entityManager.sections.availableFields' | translate }}</div>
           <span class="bg-primary text-white text-xs font-semibold py-1 px-2 rounded-full">
             {{ getAvailableFields().length }}
           </span>
@@ -158,8 +158,8 @@
             <div class="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mx-auto mb-4">
               <span class="material-symbols-outlined text-gray-400 text-2xl">check_circle</span>
             </div>
-            <p class="text-gray-500 font-medium">All fields are in list view</p>
-            <p class="text-sm text-gray-400">Great! All your fields are configured for display</p>
+            <p class="text-gray-500 font-medium">{{ 'entityManager.messages.allFieldsInListView' | translate }}</p>
+            <p class="text-sm text-gray-400">{{ 'entityManager.messages.fieldsConfigured' | translate }}</p>
           </div>
 
           <!-- Field Cards -->
@@ -177,8 +177,8 @@
                 <div class="flex items-center gap-2 flex-1 min-w-0">
                   <div class="font-semibold text-gray-900 text-base leading-tight truncate">{{ field.fieldName }}</div>
                   <span class="text-xs font-medium bg-gray-100 text-gray-700 px-2 py-1 rounded-md">{{ field.dataType }}</span>
-                  <span *ngIf="field.isRequired" class="text-xs font-medium bg-red-100 text-red-700 px-2 py-1 rounded-md">Required</span>
-                  <span *ngIf="field.isActive" class="text-xs font-medium bg-green-100 text-green-700 px-2 py-1 rounded-md">Active</span>
+                  <span *ngIf="field.isRequired" class="text-xs font-medium bg-red-100 text-red-700 px-2 py-1 rounded-md">{{ 'entityManager.fields.required' | translate }}</span>
+                  <span *ngIf="field.isActive" class="text-xs font-medium bg-green-100 text-green-700 px-2 py-1 rounded-md">{{ 'entityManager.fields.active' | translate }}</span>
                 </div>
                 <div class="flex-shrink-0 ml-3">
                   <p-button
@@ -187,7 +187,7 @@
                     severity="success"
                     text
                     rounded
-                    tooltip="Add to List View"
+                    [pTooltip]="'entityManager.buttons.addToListView' | translate"
                     tooltipPosition="left"
                     (onClick)="moveFieldToListView(field.id); $event.stopPropagation()"
                     [disabled]="canViewOnly() || autoSaving() || fieldSaving()">
@@ -209,9 +209,9 @@
         <!-- Card Preview Section -->
         <div *ngIf="showCardPreview()" class="mb-6 card-preview-section ">
           <div class="flex items-center gap-3 mb-4">
-            <div class="text-lg font-semibold text-gray-900">Card Preview</div>
+            <div class="text-lg font-semibold text-gray-900">{{ 'entityManager.sections.cardPreview' | translate }}</div>
             <span class="bg-blue-100 text-blue-800 text-xs font-semibold py-1 px-2 rounded-full">
-              Live Preview
+              {{ 'entityManager.sections.livePreview' | translate }}
             </span>
           </div>
         <div class="rounded-xl p-8 bg-yellow-50 border border-yellow-100 border-solid">
@@ -231,12 +231,12 @@
 
         </div>
 
-        <!-- État d'erreur/pas de données -->
+        <!-- Error state/no data -->
         <div *ngIf="getListViewFields().length > 0 && !sampleData() && !configLoading()" class="mb-6 preview-error-state">
           <div class="flex items-center gap-3 mb-4">
-            <div class="text-lg font-semibold text-gray-900">Card Preview</div>
+            <div class="text-lg font-semibold text-gray-900">{{ 'entityManager.sections.cardPreview' | translate }}</div>
             <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold py-1 px-2 rounded-full">
-              No Sample Data
+              {{ 'entityManager.messages.noSampleData' | translate }}
             </span>
           </div>
 
@@ -245,15 +245,15 @@
               <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <span class="material-symbols-outlined text-yellow-600 text-xl">preview</span>
               </div>
-              <p class="text-yellow-800 font-medium mb-1">Preview not available</p>
-              <p class="text-xs text-yellow-600">Sample data could not be loaded for {{ selectedEntityName() }}</p>
+              <p class="text-yellow-800 font-medium mb-1">{{ 'entityManager.messages.previewNotAvailable' | translate }}</p>
+              <p class="text-xs text-yellow-600">{{ 'entityManager.messages.sampleDataNotLoaded' | translate }} {{ selectedEntityName() }}</p>
             </div>
           </div>
         </div>
 
         <!-- Header -->
         <div class="flex items-center gap-3 mb-4">
-          <div class="text-lg font-semibold text-gray-900">List View Fields</div>
+          <div class="text-lg font-semibold text-gray-900">{{ 'entityManager.sections.listViewFields' | translate }}</div>
           <span class="bg-primary text-white text-xs font-semibold py-1 px-2 rounded-full">
             {{ getListViewFields().length }}
           </span>
@@ -272,8 +272,8 @@
               <div class="w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <span class="material-symbols-outlined text-indigo-500 text-2xl">add_circle</span>
               </div>
-              <p class="text-indigo-700 font-medium mb-1">No fields in list view</p>
-              <p class="text-sm text-indigo-600">Drag fields from the left or click the arrow buttons to add them</p>
+              <p class="text-indigo-700 font-medium mb-1">{{ 'entityManager.messages.noFieldsInListView' | translate }}</p>
+              <p class="text-sm text-indigo-600">{{ 'entityManager.messages.dragFieldsToAdd' | translate }}</p>
             </div>
 
             <!-- Field Cards with Drag & Drop -->
@@ -305,7 +305,7 @@
                       severity="danger"
                       text
                       rounded
-                      tooltip="Remove from List View"
+                      [pTooltip]="'entityManager.buttons.removeFromListView' | translate"
                       tooltipPosition="left"
                       (onClick)="removeFieldFromListView(field.id); $event.stopPropagation()"
                       [disabled]="canViewOnly() || autoSaving() || fieldSaving()">
@@ -330,15 +330,15 @@
   <div *ngIf="selectedEntityName() && configLoading()" class="flex items-center justify-center h-64">
     <div class="text-center">
       <p-progressSpinner styleClass="w-16 h-16 mb-4"></p-progressSpinner>
-      <p class="text-gray-600">Loading {{ selectedEntityName() }} configuration...</p>
+      <p class="text-gray-600">{{ 'entityManager.messages.loadingConfiguration' | translate }} {{ selectedEntityName() }}...</p>
     </div>
   </div>
 
   <!-- No Entity Selected -->
   <div *ngIf="!selectedEntityName() && !loading()" class="text-center py-12">
     <i class="pi pi-database text-gray-400 text-6xl mb-4"></i>
-    <h3 class="text-lg font-medium text-gray-900 mb-2">Select an Entity</h3>
-    <p class="text-gray-600">Choose an entity from the tabs above to configure its fields</p>
+    <h3 class="text-lg font-medium text-gray-900 mb-2">{{ 'entityManager.messages.selectAnEntity' | translate }}</h3>
+    <p class="text-gray-600">{{ 'entityManager.messages.chooseEntityToConfig' | translate }}</p>
   </div>
 
 <!-- Save Confirmation Toast -->
@@ -360,37 +360,37 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" *ngIf="editingField()">
     <!-- Left Column: Basic Field Configuration -->
     <div>
-      <div class="text-md font-medium text-gray-900 mb-4">Basic Configuration</div>
+      <div class="text-md font-medium text-gray-900 mb-4">{{ 'entityManager.dialogs.basicConfiguration' | translate }}</div>
 
       <div class="space-y-4">
 
         <!-- Field Name -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Field Name <span class="text-red-500">*</span></label>
-          <input type="text" pInputText [(ngModel)]="editingField()!.fieldName" class="w-full" placeholder="Enter field name" [disabled]="canViewOnly()">
-          <small class="text-gray-500 mt-1 block">The internal name of the field (e.g., firstName, email, phoneNumber)</small>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'entityManager.dialogs.fieldName' | translate }} <span class="text-red-500">*</span></label>
+          <input type="text" pInputText [(ngModel)]="editingField()!.fieldName" class="w-full" [placeholder]="'entityManager.dialogs.enterFieldName' | translate" [disabled]="canViewOnly()">
+          <small class="text-gray-500 mt-1 block">{{ 'entityManager.dialogs.fieldNameHelper' | translate }}</small>
         </div>
 
         <!-- Data Type -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Data Type <span class="text-red-500">*</span></label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'entityManager.dialogs.dataType' | translate }} <span class="text-red-500">*</span></label>
           <p-dropdown
             [options]="dataTypeOptions"
             [(ngModel)]="editingField()!.dataType"
             optionLabel="label"
             optionValue="value"
-            placeholder="Select data type"
+            [placeholder]="'entityManager.dialogs.selectDataType' | translate"
             [appendTo]="'body'"
             styleClass="w-full"
             [disabled]="canViewOnly()">
           </p-dropdown>
-          <small class="text-gray-500 mt-1 block">The type of data this field will store</small>
+          <small class="text-gray-500 mt-1 block">{{ 'entityManager.dialogs.dataTypeHelper' | translate }}</small>
         </div>
 
         <!-- Description -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-          <textarea pInputTextarea [(ngModel)]="editingField()!.description" rows="3" class="w-full" placeholder="Optional description of the field's purpose" [disabled]="canViewOnly()"></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'entityManager.dialogs.description' | translate }}</label>
+          <textarea pInputTextarea [(ngModel)]="editingField()!.description" rows="3" class="w-full" [placeholder]="'entityManager.dialogs.descriptionPlaceholder' | translate" [disabled]="canViewOnly()"></textarea>
         </div>
 
         <!-- Helper Text
@@ -404,11 +404,11 @@
         <div class="space-y-2">
           <div class="flex items-center">
             <p-checkbox [(ngModel)]="editingField()!.isRequired" binary="true" [disabled]="canViewOnly()"></p-checkbox>
-            <label class="ml-2 text-sm text-gray-700">Required Field</label>
+            <label class="ml-2 text-sm text-gray-700">{{ 'entityManager.dialogs.requiredField' | translate }}</label>
           </div>
           <div class="flex items-center">
             <p-checkbox [(ngModel)]="editingField()!.isActive" binary="true" [disabled]="canViewOnly()"></p-checkbox>
-            <label class="ml-2 text-sm text-gray-700">Active</label>
+            <label class="ml-2 text-sm text-gray-700">{{ 'entityManager.dialogs.active' | translate }}</label>
           </div>
         </div>
       </div>
@@ -416,18 +416,18 @@
 
     <!-- Right Column: List View Configuration -->
     <div *ngIf="editingField()!.showInListView">
-      <div class="text-md font-medium text-gray-900 mb-4">List View Configuration</div>
+      <div class="text-md font-medium text-gray-900 mb-4">{{ 'entityManager.dialogs.listViewConfiguration' | translate }}</div>
 
       <div class="space-y-4">
         <!-- Custom Label -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Custom Label</label>
-          <input type="text" pInputText [(ngModel)]="editingField()!.listViewLabel" placeholder="Leave empty for default" class="w-full" [disabled]="canViewOnly()">
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'entityManager.dialogs.customLabel' | translate }}</label>
+          <input type="text" pInputText [(ngModel)]="editingField()!.listViewLabel" [placeholder]="'entityManager.dialogs.leaveEmptyForDefault' | translate" class="w-full" [disabled]="canViewOnly()">
         </div>
 
         <!-- Column Type -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Column Type</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'entityManager.dialogs.columnType' | translate }}</label>
           <p-dropdown
             [options]="getListViewTypeOptions()"
             [(ngModel)]="editingField()!.listViewType"
@@ -506,15 +506,15 @@
 
         <!-- First Letter Fallback Field (for multiple-avatars type) -->
         <div *ngIf="editingField()!.listViewType === 'multiple-avatars'">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Fallback Field for Initials</label>
-          <input type="text" pInputText [(ngModel)]="editingField()!.firstLetterFallbackField" placeholder="e.g., firstName" class="w-full" [disabled]="canViewOnly()">
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'entityManager.dialogs.fallbackField' | translate }}</label>
+          <input type="text" pInputText [(ngModel)]="editingField()!.firstLetterFallbackField" [placeholder]="'entityManager.dialogs.fallbackFieldPlaceholder' | translate" class="w-full" [disabled]="canViewOnly()">
         </div>
 
         <!-- Additional Options -->
         <div class="space-y-2">
           <div class="flex items-center">
             <p-checkbox [(ngModel)]="editingField()!.listViewSortable" binary="true" [disabled]="canViewOnly()"></p-checkbox>
-            <label class="ml-2 text-sm text-gray-700">Sortable</label>
+            <label class="ml-2 text-sm text-gray-700">{{ 'entityManager.dialogs.sortable' | translate }}</label>
           </div>
 
         </div>
@@ -527,7 +527,7 @@
       <!-- Delete button only shows for existing fields -->
       <p-button
         *ngIf="editingField()?.id"
-        label="Delete"
+        [label]="'entityManager.buttons.delete' | translate"
         severity="danger"
         text
         icon="pi pi-trash"
@@ -540,13 +540,13 @@
 
       <div class="flex gap-2">
         <p-button
-          label="Cancel"
+          [label]="'entityManager.buttons.cancel' | translate"
           severity="secondary"
           tabindex="2"
           (onClick)="closeFieldEditDialog()">
         </p-button>
         <p-button
-          label="Save"
+          [label]="'entityManager.buttons.save' | translate"
           severity="success"
           autofocus
           tabindex="1"
@@ -564,7 +564,7 @@
   [(visible)]="showEntityConfigDialog"
   [modal]="true"
   [style]="{width: '600px'}"
-  [header]="'Edit Entity Configuration' + (entityConfigForm()?.entityName ? ' ' + entityConfigForm()!.entityName : '')"
+  [header]="('entityManager.dialogs.editEntityConfiguration' | translate) + (entityConfigForm()?.entityName ? ' ' + entityConfigForm()!.entityName : '')"
   [closable]="true"
   [draggable]="false"
   [resizable]="false">
@@ -574,28 +574,28 @@
 
     <!-- Description -->
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+      <label class="block text-sm font-medium text-gray-700 mb-1">{{ 'entityManager.dialogs.description' | translate }}</label>
       <textarea
         pInputTextarea
         [(ngModel)]="entityConfigForm()!.description"
         rows="3"
         class="w-full"
-        placeholder="Enter a description for this entity..."
+        [placeholder]="'entityManager.dialogs.entityDescriptionPlaceholder' | translate"
         [disabled]="canViewOnly()">
       </textarea>
-      <small class="text-gray-500 mt-1 block">Optional description explaining the purpose of this entity</small>
+      <small class="text-gray-500 mt-1 block">{{ 'entityManager.dialogs.entityDescriptionHelper' | translate }}</small>
     </div>
 
   </div>
 
   <ng-template pTemplate="footer">
     <p-button
-      label="Cancel"
+      [label]="'entityManager.buttons.cancel' | translate"
       severity="secondary"
       (onClick)="closeEntityConfigurationDialog()">
     </p-button>
     <p-button
-      label="Save"
+      [label]="'entityManager.buttons.save' | translate"
       severity="success"
       (onClick)="saveEntityConfiguration()"
       [disabled]="!isEntityConfigValid() || canViewOnly() || configSaving()"

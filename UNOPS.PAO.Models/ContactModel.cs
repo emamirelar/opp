@@ -28,6 +28,20 @@ public class ContactModel
     public string? ProfilePictureUrl { get; set; }
     public string? Status { get; set; }
     
+    /// <summary>
+    /// Full name constructed from FirstName, MiddleName, and LastName
+    /// </summary>
+    public string FullName 
+    { 
+        get 
+        {
+            var parts = new[] { FirstName, MiddleName, LastName }
+                .Where(part => !string.IsNullOrWhiteSpace(part))
+                .ToArray();
+            return parts.Length > 0 ? string.Join(" ", parts) : "";
+        }
+    }
+    
     public PartnerSummaryModel? Partner { get; set; }
     public List<DocumentModel>? Documents { get; set; }
 
@@ -56,6 +70,11 @@ public class ContactModel
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? LastModifiedBy { get; set; }
+
+    /// <summary>
+    /// Organization Unit Relationships for this contact
+    /// </summary>
+    public List<OrganizationUnitRelationshipModel>? OrganizationUnitRelationships { get; set; }
 }
 
 /// <summary>

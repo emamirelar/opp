@@ -12,7 +12,8 @@ node("app-build") {
     def environment, PROJECT_ID, REPO_NAME, IMAGE_NAME_MAIN, IMAGE_NAME_AI, IMAGE_TAG
     def SERVICE_NAME_MAIN, SERVICE_NAME_AI, REGION, SQL_CONN_STRING, VPC_CONNECTOR
     def SECRETS_MAIN, ENV_VARS_AI, CREDENTIALS_ID, DOCKERFILE_MAIN, PORT_MAIN, PORT_AI
-    def AI_MIN_INSTANCES, AI_MAX_INSTANCES, AI_MEMORY
+    def AI_MIN_INSTANCES, AI_MAX_INSTANCES, AI_MEMORY, INVOKER_SERVICE_ACCOUNTS_MAIN, INVOKER_SERVICE_ACCOUNTS_AI
+    def MAIN_MIN_INSTANCES, MAIN_MAX_INSTANCES, MAIN_MEMORY, MAIN_CPU
     
     try {
         stage('Checkout Code') {
@@ -65,10 +66,20 @@ node("app-build") {
             AI_MIN_INSTANCES = envConfig.ai_min_instances
             AI_MAX_INSTANCES = envConfig.ai_max_instances
             AI_MEMORY = envConfig.ai_memory
+            MAIN_MIN_INSTANCES = envConfig.main_min_instances
+            MAIN_MAX_INSTANCES = envConfig.main_max_instances
+            MAIN_MEMORY = envConfig.main_memory
+            MAIN_CPU = envConfig.main_cpu
+            INVOKER_SERVICE_ACCOUNTS_MAIN = envConfig.invoker_service_accounts_main
+            INVOKER_SERVICE_ACCOUNTS_AI = envConfig.invoker_service_accounts_ai
             
             echo "Configuration loaded for environment: ${environment}"
             echo "Project ID: ${PROJECT_ID}"
             echo "Branch: ${currentBranch}"
+            echo "Main Service Scaling: ${MAIN_MIN_INSTANCES}-${MAIN_MAX_INSTANCES} instances, ${MAIN_MEMORY} memory"
+            echo "AI Service Scaling: ${AI_MIN_INSTANCES}-${AI_MAX_INSTANCES} instances, ${AI_MEMORY} memory"
+            echo "Main Service Invoker Accounts: ${INVOKER_SERVICE_ACCOUNTS_MAIN}"
+            echo "AI Service Invoker Accounts: ${INVOKER_SERVICE_ACCOUNTS_AI}"
         }
 
         stage('Ensure Artifact Registry Exists') {
@@ -139,6 +150,10 @@ node("app-build") {
                                     --vpc-egress private-ranges-only \\
                                     --set-env-vars ASPNETCORE_ENVIRONMENT=${environment} \\
                                     --set-secrets ${SECRETS_MAIN} \\
+                                    --min-instances ${MAIN_MIN_INSTANCES} \\
+                                    --max-instances ${MAIN_MAX_INSTANCES} \\
+                                    --memory ${MAIN_MEMORY} \\
+                                    --cpu ${MAIN_CPU} \\
                                     --timeout=900 \\
                                     --quiet; then
                                 echo "Main application deployment successful on attempt \$attempt"
@@ -157,6 +172,18 @@ node("app-build") {
                             echo "Main application deployment failed after 3 attempts"
                             exit 1
                         fi
+                        
+                        # Configure IAM policies for main service
+                        echo "Setting up Cloud Run invoker permissions for main service..."
+                        IFS=',' read -ra ADDR <<< "${INVOKER_SERVICE_ACCOUNTS_MAIN}"
+                        for service_account in "\${ADDR[@]}"; do
+                            echo "Granting Cloud Run invoker role to \$service_account for main service..."
+                            gcloud run services add-iam-policy-binding ${SERVICE_NAME_MAIN} \\
+                                --member="serviceAccount:\$service_account" \\
+                                --role="roles/run.invoker" \\
+                                --region=${REGION} \\
+                                --project=${PROJECT_ID} || echo "Warning: Failed to set IAM policy for main service"
+                        done
                         
                         # Cleanup
                         rm -f "\${UNIQUE_CREDS_FILE}"
@@ -182,6 +209,9 @@ node("app-build") {
                         cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
                         gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
                         gcloud config set project ${PROJECT_ID}
+                        
+                        # Copy AIService directory into the build directory
+                        cp -r AIService UNOPS.PAO.AIService/
                         
                         # Navigate to AI service directory
                         cd UNOPS.PAO.AIService
@@ -225,6 +255,18 @@ node("app-build") {
                             echo "AI service deployment failed after 3 attempts"
                             exit 1
                         fi
+                        
+                        # Configure IAM policies for AI service
+                        echo "Setting up Cloud Run invoker permissions for AI service..."
+                        IFS=',' read -ra ADDR <<< "${INVOKER_SERVICE_ACCOUNTS_AI}"
+                        for service_account in "\${ADDR[@]}"; do
+                            echo "Granting Cloud Run invoker role to \$service_account for AI service..."
+                            gcloud run services add-iam-policy-binding ${SERVICE_NAME_AI} \\
+                                --member="serviceAccount:\$service_account" \\
+                                --role="roles/run.invoker" \\
+                                --region=${REGION} \\
+                                --project=${PROJECT_ID} || echo "Warning: Failed to set IAM policy for AI service"
+                        done
                         
                         # Cleanup
                         rm -f "\${UNIQUE_CREDS_FILE}"
