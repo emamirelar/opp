@@ -145,6 +145,7 @@ node("app-build") {
                                     --region ${REGION} \\
                                     --port ${PORT_MAIN} \\
                                     --platform managed \\
+                                    --use-http2 \\
                                     --set-cloudsql-instances ${SQL_CONN_STRING} \\
                                     --vpc-connector ${VPC_CONNECTOR} \\
                                     --vpc-egress private-ranges-only \\
