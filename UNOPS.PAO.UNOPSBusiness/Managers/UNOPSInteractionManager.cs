@@ -1208,38 +1208,36 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
             // Get current user and their organization unit
             var currentUser = GetCurrentUserOrSystemContext();
-            if (currentUser != null)
+            var userIdClaim = currentUser?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            int? userId = int.TryParse(userIdClaim, out var id) ? id : null;
+
+            if (userId != null && userId.HasValue)
             {
-                // Get user email from claims
-                var emailClaim = currentUser.FindFirst(ClaimTypes.Email) ?? currentUser.FindFirst("email");
-                if (emailClaim != null && !string.IsNullOrEmpty(emailClaim.Value))
+                // Get user profile by email to find their org unit
+                var userProfile = await context.UserProfile
+                    .FirstOrDefaultAsync(up => up.UserId == userId.Value);
+
+                if (userProfile?.OrgUnit != null)
                 {
-                    // Get user profile by email to find their org unit
-                    var userProfile = await context.UserProfile
-                        .FirstOrDefaultAsync(up => up.UserEmail.ToLower() == emailClaim.Value.ToLower());
+                    // Find the organization hierarchy by org unit code
+                    var orgHierarchy = await context.OrganizationHierarchies
+                        .FirstOrDefaultAsync(oh => oh.Code == userProfile.OrgUnit && 
+                                                    oh.Type == Domain.Enums.OrganizationUnitType.OrgUnit);
 
-                    if (userProfile?.OrgUnit != null)
+                    if (orgHierarchy != null)
                     {
-                        // Find the organization hierarchy by org unit code
-                        var orgHierarchy = await context.OrganizationHierarchies
-                            .FirstOrDefaultAsync(oh => oh.Code == userProfile.OrgUnit && 
-                                                      oh.Type == Domain.Enums.OrganizationUnitType.OrgUnit);
-
-                        if (orgHierarchy != null)
+                        // Create organization unit relationship for the interaction
+                        var newRelationship = new OrganizationUnitRelationship
                         {
-                            // Create organization unit relationship for the interaction
-                            var newRelationship = new OrganizationUnitRelationship
-                            {
-                                OrganizationHierarchyId = orgHierarchy.Id,
-                                EntityId = entity.Id,
-                                EntityType = nameof(Interaction),
-                                Name = $"Interaction-{entity.Id}-{orgHierarchy.Code}",
-                                Status = EntityStatus.Active
-                            };
+                            OrganizationHierarchyId = orgHierarchy.Id,
+                            EntityId = entity.Id,
+                            EntityType = nameof(Interaction),
+                            Name = $"Interaction-{entity.Id}-{orgHierarchy.Code}",
+                            Status = EntityStatus.Active
+                        };
                             
-                            context.OrganizationUnitRelationships.Add(newRelationship);
-                            await context.SaveChangesAsync();
-                        }
+                        context.OrganizationUnitRelationships.Add(newRelationship);
+                        await context.SaveChangesAsync();
                     }
                 }
             }
