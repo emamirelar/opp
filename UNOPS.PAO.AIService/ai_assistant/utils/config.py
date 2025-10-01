@@ -127,143 +127,6 @@ class ConfigLoader:
         """Get the current environment"""
         return self._environment
 
-
-    def get_database_url(self) -> str:
-        """Get the database URL - supports both direct URL and secret-based configuration"""
-        database_config = self._config.get('database', {})
-        
-        # Check if URL is directly provided (for local development)
-        if 'url' in database_config and database_config['url']:
-            return database_config['url']
-        
-        # Check if secret_name is provided (for cloud environments)
-        if 'secret_name' in database_config:
-            google_cloud_config = self._config.get('google_cloud', {})
-            project_id = google_cloud_config.get('project')
-            
-            if not project_id:
-                raise ConfigurationError("No project configured for Google Cloud - required for secret retrieval")
-            
-            secret_name = database_config['secret_name']
-            try:
-                database_connection_string = self.get_secret_from_secret_manager(secret_name, project_id)
-                if database_connection_string:
-                    # Convert .NET connection string format to PostgreSQL URL format
-                    database_url = self._parse_connection_string_to_url(database_connection_string)
-                    return database_url
-                else:
-                    raise ConfigurationError(f"Retrieved empty database URL from secret: {secret_name}")
-            except Exception as e:
-                raise ConfigurationError(f"Failed to retrieve database URL from secret '{secret_name}': {e}")
-        
-        # If neither URL nor secret_name is provided
-        raise ConfigurationError("No database configuration found. Please provide either 'url' (for local) or 'secret_name' (for cloud) in database config.")
-    
-    def _parse_connection_string_to_url(self, connection_string: str) -> str:
-        """
-        Parse .NET-style connection string to PostgreSQL URL format.
-        
-        Input format: Username=user;Password=pass;Host=host;Port=port;Database=db;
-        Output format: postgresql://user:pass@host:port/db
-        """
-        try:
-            # Parse connection string parameters
-            params = {}
-            for pair in connection_string.split(';'):
-                if '=' in pair:
-                    key, value = pair.split('=', 1)
-                    params[key.strip()] = value.strip()
-            
-            # Extract required parameters
-            username = params.get('Username') or params.get('User ID') or params.get('UserId')
-            password = params.get('Password')
-            host = params.get('Host') or params.get('Server')
-            port = params.get('Port', '5432')
-            database = params.get('Database') or params.get('Initial Catalog')
-            
-            # Validate required parameters
-            missing_params = []
-            if not username:
-                missing_params.append('Username/User ID')
-            if not password:
-                missing_params.append('Password')
-            if not host:
-                missing_params.append('Host/Server')
-            if not database:
-                missing_params.append('Database/Initial Catalog')
-            
-            if missing_params:
-                raise ConfigurationError(f"Missing required connection string parameters: {', '.join(missing_params)}")
-            
-            # URL-encode password if it contains special characters
-            import urllib.parse
-            encoded_password = urllib.parse.quote(password, safe='')
-            
-            # Construct PostgreSQL URL
-            postgresql_url = f"postgresql://{username}:{encoded_password}@{host}:{port}/{database}"
-            
-            logger.info(f"Successfully converted connection string to PostgreSQL URL format")
-            return postgresql_url
-            
-        except Exception as e:
-            raise ConfigurationError(f"Failed to parse connection string: {e}. Connection string format should be: Username=user;Password=pass;Host=host;Port=port;Database=db;")
-    
-
-    def get_oauth_config(self) -> Dict[str, str]:
-        """Get OAuth configuration from google_cloud section"""
-        try:
-            google_cloud_config = self._config.get("google_cloud", {})
-            oauth_config = google_cloud_config.get("oauth", {})
-            
-            return {
-                "client_id": oauth_config.get("client_id", ""),
-                "target_principal": oauth_config.get("target_principal", "")
-            }
-        except Exception as e:
-            print(f"⚠️ Warning: Could not load OAuth config, using defaults: {e}")
-            return {}
-    
-
-    def get_identity_toolkit_api_key(self) -> str:
-        """Get Identity Toolkit API key from Google Secret Manager with caching"""
-        try:
-            google_cloud_config = self._config.get("google_cloud", {})
-            oauth_config = google_cloud_config.get("oauth", {})
-            
-            # Get the secret name from configuration
-            secret_name = oauth_config.get("identity_toolkit_api_key_secret")
-            if not secret_name:
-                raise ConfigurationError("No identity_toolkit_api_key_secret configured in OAuth settings")
-            
-            # Get project ID from configuration
-            project_id = google_cloud_config.get("project")
-            if not project_id:
-                raise ConfigurationError("No project configured for Google Cloud")
-            
-            # Retrieve the secret from Secret Manager
-            api_key = self.get_secret_from_secret_manager(secret_name, project_id)
-            
-            if api_key:
-                return api_key
-            else:
-                raise ConfigurationError(f"Failed to retrieve Identity Toolkit API key from secret: {secret_name}")
-                
-        except Exception as e:
-            raise ConfigurationError(f"Could not load Identity Toolkit API key from secret: {e}")
-
-
-    def get_secret_from_secret_manager(self, secret_name: str, project_id: Optional[str] = None) -> Optional[str]:
-        """Get secret value from Google Secret Manager"""
-        try:
-            client = secretmanager.SecretManagerServiceClient()
-            name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
-            
-            response = client.access_secret_version(request={"name": name})
-            secret_value = response.payload.data.decode("UTF-8")
-            return secret_value
-            
-        except Exception as e:
-            raise ConfigurationError(f"Failed to retrieve secret {secret_name}: {e}")
     
 
 
@@ -289,28 +152,70 @@ def get_application_name() -> str:
     config = get_config()
     return config.get('branding', {}).get('application_name', 'AI Agent')
 
+
 def get_database_url() -> str:
     """Get the database URL"""
-    global _config_loader
-    if _config_loader is None:
-        raise ConfigurationError("Configuration not loaded. Call get_config() first.")
-    return _config_loader.get_database_url()
+    config = get_config()
+    return config.get('database', {}).get('url')
+
 
 def get_oauth_config() -> Dict[str, str]:
     """Get OAuth configuration from the config loader"""
-    global _config_loader
-    if _config_loader is None:
-        # Auto-initialize with default path
-        set_config_directory(CONFIG_DIR)
-    return _config_loader.get_oauth_config()
+    config = get_config()
+    try:
+        google_cloud_config = config.get("google_cloud", {})
+        oauth_config = google_cloud_config.get("oauth", {})
+        
+        return {
+            "client_id": oauth_config.get("client_id", ""),
+            "target_principal": oauth_config.get("target_principal", "")
+        }
+    except Exception as e:
+        print(f"⚠️ Warning: Could not load OAuth config, using defaults: {e}")
+        return {}
+
+
+def _get_secret_from_secret_manager(secret_name: str, project_id: Optional[str] = None) -> Optional[str]:
+    """Get secret value from Google Secret Manager"""
+    try:
+        client = secretmanager.SecretManagerServiceClient()
+        name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+        
+        response = client.access_secret_version(request={"name": name})
+        secret_value = response.payload.data.decode("UTF-8")
+        return secret_value
+        
+    except Exception as e:
+        raise ConfigurationError(f"Failed to retrieve secret {secret_name}: {e}")
+
 
 def get_identity_toolkit_api_key() -> str:
     """Get Identity Toolkit API key from the config loader"""
-    global _config_loader
-    if _config_loader is None:
-        # Auto-initialize with default path
-        set_config_directory(CONFIG_DIR)
-    return _config_loader.get_identity_toolkit_api_key()
+    config = get_config()
+    try:
+        google_cloud_config = config.get("google_cloud", {})
+        oauth_config = google_cloud_config.get("oauth", {})
+        
+        # Get the secret name from configuration
+        secret_name = oauth_config.get("identity_toolkit_api_key_secret")
+        if not secret_name:
+            raise ConfigurationError("No identity_toolkit_api_key_secret configured in OAuth settings")
+        
+        # Get project ID from configuration
+        project_id = google_cloud_config.get("project")
+        if not project_id:
+            raise ConfigurationError("No project configured for Google Cloud")
+        
+        # Retrieve the secret from Secret Manager
+        api_key = _get_secret_from_secret_manager(secret_name, project_id)
+        
+        if api_key:
+            return api_key
+        else:
+            raise ConfigurationError(f"Failed to retrieve Identity Toolkit API key from secret: {secret_name}")
+            
+    except Exception as e:
+        raise ConfigurationError(f"Could not load Identity Toolkit API key from secret: {e}")
 
 
 def get_api_base_url() -> str:

@@ -137,8 +137,9 @@
       <!-- Quick Actions Toolbar - Show panel only when user has create permissions -->
       <div *ngIf="!permissionsLoading() && hasAnyCreatePermission()" class="bg-unops-surface-primary rounded-unops-lg shadow-unops-sm border border-unops-neutral-200 mb-unops-xl">
         <div class="px-unops-xl py-unops-lg">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-unops-lg">
+          <!-- Desktop Layout: Horizontal -->
+          <div class="hidden md:flex items-center justify-between">
+            <div class="flex items-center space-x-unops-lg">
               <h2 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
                 {{ 'dashboard.quickActions' | translate }}
               </h2>
@@ -204,6 +205,63 @@
                 {{ useDummyData() ? 'Dummy Data' : 'Test Data' }}
               </button>
               -->
+            </div>
+          </div>
+
+          <!-- Mobile Layout: Vertical Stack -->
+          <div class="md:hidden space-y-unops-md">
+            <!-- Quick Actions Label -->
+            <h2 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
+              Quick Actions
+            </h2>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col space-y-unops-sm">
+              <button 
+                *ngIf="partnerPermissions().permissions.canCreate"
+                pButton 
+                type="button" 
+                class="p-button-sm unops-button-primary flex items-center justify-center w-full"
+                (click)="openNewPartnerModal()">
+                <i class="material-symbols-outlined text-unops-lg mr-unops-xs">corporate_fare</i>
+                New Partner
+              </button>
+              <button 
+                *ngIf="contactPermissions().permissions.canCreate"
+                pButton 
+                type="button" 
+                class="p-button-sm unops-button-primary flex items-center justify-center w-full"
+                (click)="openNewContactModal()">
+                <i class="material-symbols-outlined text-unops-lg mr-unops-xs">contacts</i>
+                New Contact
+              </button>
+              <button 
+                *ngIf="interactionPermissions().permissions.canCreate"
+                pButton 
+                type="button" 
+                class="p-button-sm unops-button-primary flex items-center justify-center w-full"
+                (click)="openNewInteractionModal()">
+                <i class="material-symbols-outlined text-unops-lg mr-unops-xs">chat</i>
+                New Interaction
+              </button>
+            </div>
+            
+            <!-- Last Updated and Refresh -->
+            <div class="flex items-center justify-between pt-unops-sm border-t border-unops-neutral-200">
+              <div class="text-unops-body-small text-unops-neutral-500">
+                Last updated {{ lastUpdatedTime() }}
+              </div>
+              <button 
+                pButton 
+                type="button" 
+                icon="pi pi-refresh" 
+                class="p-button-outlined p-button-sm unops-icon-button"
+                [loading]="loading()"
+                (click)="refreshDashboard()"
+                pTooltip="{{ 'dashboard.refresh' | translate }}"
+                tooltipPosition="bottom"
+                [tooltipOptions]="{ showDelay: 300, hideDelay: 150, positionStyle: 'absolute' }">
+              </button>
             </div>
           </div>
         </div>

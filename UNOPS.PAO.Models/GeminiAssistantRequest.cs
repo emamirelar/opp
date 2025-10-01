@@ -17,4 +17,5 @@ public class GeminiAssistantRequest
     public string? ExtractedText { get; set; }
     public string? ScreenUrl { get; set; }
     public string? State { get; set; }
+    public bool Streaming { get; set; } = false;
 }

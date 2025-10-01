@@ -103,7 +103,7 @@ class ChatRequest(BaseModel):
     state: Any = ""
 
 
-@router.post("/chat")
+@router.api_route("/chat", methods=["POST", "HEAD"])
 async def chat_endpoint(
     request: Request,
     # Form fields (for multipart requests)
@@ -119,8 +119,21 @@ async def chat_endpoint(
 ):
     """
     Custom chat endpoint that handles both JSON and multipart form data with files
+    Supports HEAD method for interceptor header capture
     """
     try:
+        # Handle HEAD requests for interceptor support
+        if request.method == "HEAD":
+            from fastapi import Response
+            response = Response()
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, HEAD, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            return response
+        
         # Determine request type and parse data
         content_type = request.headers.get("content-type", "")
         is_multipart = "multipart/form-data" in content_type
@@ -278,9 +291,9 @@ async def _handle_streaming_response(runner, request_data, session_id, user_mess
         try:
             stream_mode = StreamingMode.SSE
             
-            # Send an immediate ping to establish the stream
-            ping_data = f"data: {{'ping': 'stream_started', 'timestamp': {time.time()}}}\n\n"
-            yield ping_data
+            # # Send an immediate ping to establish the stream
+            # ping_data = f'data: {{"ping": "stream_started", "timestamp": {time.time()}}}\n\n'
+            # yield ping_data
             
             async for event in runner.run_async(
                 user_id=request_data.user_id,
