@@ -1834,5 +1834,22 @@
 	"validation.required": "Este campo es obligatorio",
 	"validation.shortNameRequired": "El nombre corto debe ser ingresado.",
 	"validation.statusRequired": "El estado debe ser ingresado.",
-	"validation.titleRequired": "El título debe ser ingresado."
+	"validation.titleRequired": "El título debe ser ingresado.",
+	"documentType.partner.partnerNationalStrategicPlan": "Plan estratégico del socio/nacional",
+	"documentType.partner.conceptNote": "Nota conceptual",
+	"documentType.partner.actionPlan": "Plan de acción",
+	"documentType.partner.missionReport": "Informe de misión",
+	"documentType.partner.draftWorkingDocument": "Documento de trabajo/borrador",
+	"documentType.partner.presentation": "Presentación",
+	"documentType.partner.factsheet": "Hoja informativa",
+	"documentType.partner.reportsProducedByPartner": "Informes producidos por el socio",
+	"documentType.partner.other": "Otro",
+	"documentType.contact.cvBio": "CV/Bio",
+	"documentType.contact.talkingPoints": "Puntos de conversación",
+	"documentType.contact.backgroundNote": "Nota de contexto",
+	"documentType.contact.other": "Otro",
+	"documentType.interaction.minutes": "Acta",
+	"documentType.interaction.actionPlanNextSteps": "Plan de acción/próximos pasos",
+	"documentType.interaction.supportingMaterials": "Materiales de apoyo",
+	"documentType.interaction.other": "Otro"
 }
