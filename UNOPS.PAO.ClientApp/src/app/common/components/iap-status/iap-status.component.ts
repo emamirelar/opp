@@ -1,28 +1,29 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../essentials/services/auth.service';
 
 @Component({
   selector: 'app-iap-status',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   template: `
     <div class="iap-status">
       <div class="status-section">
-        <h3>Authentication Status</h3>
-        <div><strong>IAP Authenticated:</strong> {{isIapAuthenticated}}</div>
-        <div><strong>Regular Auth:</strong> {{isLoggedIn}}</div>
+        <h3>{{ 'iapStatus.authenticationStatus' | translate }}</h3>
+        <div><strong>{{ 'iapStatus.iapAuthenticated' | translate }}:</strong> {{isIapAuthenticated}}</div>
+        <div><strong>{{ 'iapStatus.regularAuth' | translate }}:</strong> {{isLoggedIn}}</div>
       </div>
       
       <div class="status-section">
-        <h3>Cookie Information</h3>
-        <div *ngIf="devCookie"><strong>Dev Cookie:</strong> {{devCookie}}</div>
-        <div *ngIf="!devCookie"><strong>Dev Cookie:</strong> Not found</div>
-        <div><strong>All Cookies:</strong> <span class="cookie-text">{{allCookies}}</span></div>
+        <h3>{{ 'iapStatus.cookieInformation' | translate }}</h3>
+        <div *ngIf="devCookie"><strong>{{ 'iapStatus.devCookie' | translate }}:</strong> {{devCookie}}</div>
+        <div *ngIf="!devCookie"><strong>{{ 'iapStatus.devCookie' | translate }}:</strong> {{ 'iapStatus.notFound' | translate }}</div>
+        <div><strong>{{ 'iapStatus.allCookies' | translate }}:</strong> <span class="cookie-text">{{allCookies}}</span></div>
       </div>
       
       <div class="status-section" *ngIf="authInfo">
-        <h3>User Information</h3>
+        <h3>{{ 'iapStatus.userInformation' | translate }}</h3>
         <div *ngFor="let key of getObjectKeys(authInfo)">
           <strong>{{key}}:</strong> {{authInfo[key]}}
         </div>

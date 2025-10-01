@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -134,6 +134,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   private permissionService = inject(PermissionService);
   private configurationService = inject(ConfigurationService);
   private cdr = inject(ChangeDetectorRef);
+  private translateService = inject(TranslateService);
 
   // Signals for reactive state
   prompts = signal<AiPrompt[]>([]);
@@ -192,7 +193,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   
   // Computed values
   dialogTitle = computed(() => 
-    this.currentPrompt() ? 'Edit AI Prompt' : 'Create AI Prompt'
+    this.currentPrompt() ? this.translateService.instant('aiPrompt.dialog.editTitle') : this.translateService.instant('aiPrompt.dialog.createTitle')
   );
 
   isEditMode = computed(() => !!this.currentPrompt());
@@ -312,8 +313,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
           this.permissionsLoading.set(false);
           this.messageService.add({
             severity: 'error',
-            summary: 'Access Error',
-            detail: 'Unable to verify permissions for AI prompt management'
+            summary: this.translateService.instant('aiPrompt.messages.accessError'),
+            detail: this.translateService.instant('aiPrompt.messages.unableToVerifyPermissions')
           });
           this.cdr.detectChanges();
         }
@@ -331,8 +332,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         console.error('Error loading Gemini models:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load Gemini models'
+          summary: this.translateService.instant('aiPrompt.messages.error'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToLoadModels')
         });
       }
     });
@@ -382,8 +383,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         console.error('Error loading prompts:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load AI prompts'
+          summary: this.translateService.instant('aiPrompt.messages.error'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToLoadPrompts')
         });
         this.loading.set(false);
       }
@@ -451,8 +452,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     if (prompt && !permissions.permissions.canUpdate) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Permission Denied',
-        detail: 'You do not have permission to edit AI prompts'
+        summary: this.translateService.instant('aiPrompt.messages.permissionDenied'),
+        detail: this.translateService.instant('aiPrompt.messages.noEditPermission')
       });
       return;
     }
@@ -460,8 +461,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     if (!prompt && !permissions.permissions.canCreate) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Permission Denied',
-        detail: 'You do not have permission to create AI prompts'
+        summary: this.translateService.instant('aiPrompt.messages.permissionDenied'),
+        detail: this.translateService.instant('aiPrompt.messages.noCreatePermission')
       });
       return;
     }
@@ -716,8 +717,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.messageService.add({
           severity: 'success',
-          summary: 'Success',
-          detail: this.currentPrompt() ? 'Prompt updated successfully' : 'Prompt created successfully'
+          summary: this.translateService.instant('aiPrompt.messages.success'),
+          detail: this.currentPrompt() ? this.translateService.instant('aiPrompt.messages.updatedSuccessfully') : this.translateService.instant('aiPrompt.messages.createdSuccessfully')
         });
         this.closeDialog();
         this.loadPrompts();
@@ -726,8 +727,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         console.error('Error saving prompt:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to save prompt'
+          summary: this.translateService.instant('aiPrompt.messages.error'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToSave')
         });
       },
       complete: () => {
@@ -750,8 +751,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     if (!this.canRunTest()) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Warning',
-        detail: 'Please fill in all required fields and test data before testing'
+        summary: this.translateService.instant('aiPrompt.messages.warning'),
+        detail: this.translateService.instant('aiPrompt.messages.fillRequiredFields')
       });
       return;
     }
@@ -861,8 +862,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     if (!permissions.permissions.canDelete) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Permission Denied',
-        detail: 'You do not have permission to delete AI prompts'
+        summary: this.translateService.instant('aiPrompt.messages.permissionDenied'),
+        detail: this.translateService.instant('aiPrompt.messages.noDeletePermission')
       });
       return;
     }
@@ -870,12 +871,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     const featureName = prompt.name || 'Unknown';
     
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete the AI prompt "${prompt.type}"? 
-
-⚠️ This prompt is currently being used by the ${featureName} feature. Deleting it will affect the functionality of this feature.
-
-Be extra cautious while deleting as there could be several dependencies within the application.`,
-      header: 'Confirm Delete - Feature Impact Warning',
+      message: this.translateService.instant('aiPrompt.confirmation.deleteMessage', { type: prompt.type, featureName: featureName }),
+      header: this.translateService.instant('aiPrompt.confirmation.deleteHeader'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.deletePrompt(prompt);
@@ -888,8 +885,8 @@ Be extra cautious while deleting as there could be several dependencies within t
       next: () => {
         this.messageService.add({
           severity: 'success',
-          summary: 'Success',
-          detail: 'AI Prompt deleted successfully'
+          summary: this.translateService.instant('aiPrompt.messages.success'),
+          detail: this.translateService.instant('aiPrompt.messages.deletedSuccessfully')
         });
         this.loadPrompts();
       },
@@ -897,8 +894,8 @@ Be extra cautious while deleting as there could be several dependencies within t
         console.error('Error deleting prompt:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to delete AI prompt'
+          summary: this.translateService.instant('aiPrompt.messages.error'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToDelete')
         });
       }
     });
@@ -920,8 +917,8 @@ Be extra cautious while deleting as there could be several dependencies within t
     if (!permissions.permissions.canUpdate) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Permission Denied',
-        detail: 'You do not have permission to upgrade AI prompts'
+        summary: this.translateService.instant('aiPrompt.messages.permissionDenied'),
+        detail: this.translateService.instant('aiPrompt.messages.noUpgradePermission')
       });
       return;
     }
@@ -937,13 +934,13 @@ Be extra cautious while deleting as there could be several dependencies within t
           if (result.alreadyLatest) {
             this.messageService.add({
               severity: 'info',
-              summary: 'Already Up to Date',
-              detail: result.message + ' If you think there is a newer model that is not integrated with Opportunity+, please contact system support.'
+              summary: this.translateService.instant('aiPrompt.messages.alreadyUpToDate'),
+              detail: result.message + ' ' + this.translateService.instant('aiPrompt.messages.contactSupport')
             });
           } else {
             this.messageService.add({
               severity: 'success',
-              summary: 'Upgrade Complete',
+              summary: this.translateService.instant('aiPrompt.messages.upgradeComplete'),
               detail: result.message
             });
             // Reload prompts to show updated models
@@ -952,14 +949,14 @@ Be extra cautious while deleting as there could be several dependencies within t
         } else if (result) {
           this.messageService.add({
             severity: 'error',
-            summary: 'Upgrade Failed',
+            summary: this.translateService.instant('aiPrompt.messages.upgradeFailed'),
             detail: result.message
           });
         } else {
           this.messageService.add({
             severity: 'error',
-            summary: 'Upgrade Failed',
-            detail: 'No response received from server'
+            summary: this.translateService.instant('aiPrompt.messages.upgradeFailed'),
+            detail: this.translateService.instant('aiPrompt.messages.noResponseFromServer')
           });
         }
       },
@@ -968,8 +965,8 @@ Be extra cautious while deleting as there could be several dependencies within t
         console.error('Error upgrading Gemini models:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to upgrade Gemini models'
+          summary: this.translateService.instant('aiPrompt.messages.error'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToUpgrade')
         });
       }
     });
@@ -991,8 +988,8 @@ Be extra cautious while deleting as there could be several dependencies within t
     if (!permissions.permissions.canRead) {
       this.messageService.add({
         severity: 'warn',
-        summary: 'Permission Denied',
-        detail: 'You do not have permission to export AI prompts'
+        summary: this.translateService.instant('aiPrompt.messages.permissionDenied'),
+        detail: this.translateService.instant('aiPrompt.messages.noExportPermission')
       });
       return;
     }
@@ -1020,16 +1017,16 @@ Be extra cautious while deleting as there could be several dependencies within t
         
         this.messageService.add({
           severity: 'success',
-          summary: 'Export Complete',
-          detail: 'AI prompts exported successfully as SQL script file'
+          summary: this.translateService.instant('aiPrompt.messages.exportComplete'),
+          detail: this.translateService.instant('aiPrompt.messages.exportedSuccessfully')
         });
       },
       error: (error) => {
         console.error('Error exporting AI prompts as SQL:', error);
         this.messageService.add({
           severity: 'error',
-          summary: 'Export Failed',
-          detail: 'Failed to export AI prompts as SQL'
+          summary: this.translateService.instant('aiPrompt.messages.exportFailed'),
+          detail: this.translateService.instant('aiPrompt.messages.failedToExport')
         });
       },
       complete: () => {
@@ -1256,7 +1253,7 @@ Be extra cautious while deleting as there could be several dependencies within t
    */
   formatJsonData(jsonData: string | undefined): string {
     if (!jsonData) {
-      return 'No data available';
+      return this.translateService.instant('aiPrompt.messages.noDataAvailable');
     }
 
     try {

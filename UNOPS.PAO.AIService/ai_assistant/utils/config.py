@@ -33,6 +33,8 @@ def _find_aiservice_config_dir() -> str:
     
     # Possible locations to check for AIService folder
     possible_paths = [
+         # Jenkins deployment: AIService copied into UNOPS.PAO.AIService directory
+        current_dir.parent.parent / "AIService" / "config",  # /app/AIService/config
         # Same level as current directory (for deployment scenarios)
         current_dir / "AIService" / "config",
         # One level up from current directory (development scenario)

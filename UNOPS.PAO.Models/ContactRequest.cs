@@ -36,4 +36,8 @@ public class ContactRequest : ExtensibleModel
     /// Flag to bypass duplicate detection when user confirms creation despite duplicates
     /// </summary>
     public bool ConfirmDuplicateCreation { get; set; } = false;
+    /// <summary>
+    /// Organization Unit IDs that this contact should be associated with
+    /// </summary>
+    public List<int>? OrganizationHierarchyIds { get; set; }
 }

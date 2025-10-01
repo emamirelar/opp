@@ -30,8 +30,9 @@ public class MappingProfile : Profile
             .MaxDepth(2)
             .ForMember(dest => dest.Partner, opt => opt.MapFrom(src => src.Partner != null ? new PartnerSummaryModel { Id = src.Partner.Id, Name = src.Partner.Name } : null));
         CreateMap<ContactModel, Contact>()
-            .ForMember(dest => dest.Partner, opt => opt.Ignore());
-        
+            .ForMember(dest => dest.Partner, opt => opt.Ignore())
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
+
         // AI Prompt mappings
         CreateMap<AiPrompt, AiPromptModel>();
         CreateMap<AiPromptModel, AiPrompt>();

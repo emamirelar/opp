@@ -141,7 +141,7 @@
           <div class="hidden md:flex items-center justify-between">
             <div class="flex items-center space-x-unops-lg">
               <h2 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
-                Quick Actions
+                {{ 'dashboard.quickActions' | translate }}
               </h2>
               <div class="flex items-center space-x-unops-md">
                 <button 
@@ -151,7 +151,7 @@
                   class="p-button-sm unops-button-primary flex items-center"
                   (click)="openNewPartnerModal()">
                   <i class="material-symbols-outlined text-unops-lg mr-unops-xs">corporate_fare</i>
-                  New Partner
+                  {{ 'dashboard.newPartner' | translate }}
                 </button>
                 <button 
                   *ngIf="contactPermissions().permissions.canCreate"
@@ -160,7 +160,7 @@
                   class="p-button-sm unops-button-primary flex items-center"
                   (click)="openNewContactModal()">
                   <i class="material-symbols-outlined text-unops-lg mr-unops-xs">contacts</i>
-                  New Contact
+                  {{ 'dashboard.newContact' | translate }}
                 </button>
                 <button 
                   *ngIf="interactionPermissions().permissions.canCreate"
@@ -169,13 +169,13 @@
                   class="p-button-sm unops-button-primary flex items-center"
                   (click)="openNewInteractionModal()">
                   <i class="material-symbols-outlined text-unops-lg mr-unops-xs">chat</i>
-                  New Interaction
+                  {{ 'dashboard.newInteraction' | translate }}
                 </button>
               </div>
             </div>
             <div class="flex items-center space-x-unops-md">
               <div class="text-unops-body-small text-unops-neutral-500">
-                Last updated {{ lastUpdatedTime() }}
+                {{ 'dashboard.lastUpdated' | translate }} {{ lastUpdatedTime() }}
               </div>
               <button 
                 pButton 
@@ -270,7 +270,7 @@
       <!-- Minimal Last Updated Section - Show when no create permissions -->
       <div *ngIf="!permissionsLoading() && !hasAnyCreatePermission()" class="flex items-center justify-end space-x-unops-md mb-unops-xl">
         <div class="text-unops-body-small text-unops-neutral-500">
-          Last updated {{ lastUpdatedTime() }}
+          {{ 'dashboard.lastUpdated' | translate }} {{ lastUpdatedTime() }}
         </div>
         <button 
           pButton 
@@ -300,10 +300,10 @@
                 </div>
                 <div>
                     <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
-                        All Actions Required
+                        {{ 'dashboard.allActionsRequired' | translate }}
                     </h3>
                       <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
-                        {{ getTotalDraftActions() }} items need your attention
+                        {{ getTotalDraftActions() }} {{ 'dashboard.itemsNeedAttention' | translate }}
                       </p>
                   </div>
                   </div>
@@ -313,7 +313,7 @@
                     icon="pi pi-times" 
                     class="p-button-outlined p-button-sm"
                     (click)="collapsePanel()"
-                    pTooltip="Collapse"
+                    pTooltip="{{ 'dashboard.collapse' | translate }}"
                     tooltipPosition="bottom">
                   </button>
                 </div>
@@ -360,7 +360,7 @@
                               } @else {
                                 <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
                               }
-                              <span class="text-unops-label-small text-unops-neutral-500">{{ getDraftActionEntityType(item) }}</span>
+                              <span class="text-unops-label-small text-unops-neutral-500">{{ ('dashboard.' + getDraftActionEntityType(item).toLowerCase()) | translate }}</span>
                             </div>
                             <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-2 mt-0 line-clamp-2">
                               {{ getDraftActionDisplayName(item) }}
@@ -376,7 +376,7 @@
                           </div>
                           <div class="ml-unops-sm">
                             <span class="inline-flex items-center px-unops-sm py-1 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-warning/10 text-unops-warning">
-                              Draft
+                              {{ 'dashboard.draft' | translate }}
                             </span>
                           </div>
                         </div>
@@ -389,10 +389,10 @@
                     <i class="material-symbols-outlined text-unops-2xl text-unops-neutral-400">check_circle</i>
                   </div>
                   <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-unops-sm">
-                    All caught up!
+                    {{ 'dashboard.allCaughtUp' | translate }}
                   </h4>
                   <p class="font-unops-body text-unops-body-medium text-unops-neutral-500">
-                      No actions require your attention at this time.
+                      {{ 'dashboard.noActionsRequired' | translate }}
                   </p>
                 </div>
               }
@@ -409,10 +409,10 @@
                 </div>
                 <div>
                     <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
-                        All Recent Activity
+                        {{ 'dashboard.allRecentActivity' | translate }}
                     </h3>
                       <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
-                        Latest updates from {{ dashboardData()!.orgUnitName }}
+                        {{ 'dashboard.latestUpdatesFrom' | translate }} {{ dashboardData()!.orgUnitName }}
                       </p>
                   </div>
                   </div>
@@ -422,7 +422,7 @@
                     icon="pi pi-times" 
                     class="p-button-outlined p-button-sm"
                     (click)="collapsePanel()"
-                    pTooltip="Collapse"
+                    pTooltip="{{ 'dashboard.collapse' | translate }}"
                     tooltipPosition="bottom">
                   </button>
                 </div>
@@ -483,7 +483,7 @@
                                       'bg-unops-success/10 text-unops-success': update.type === 'Contact', 
                                       'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
                                     }">
-                                {{ update.type }}
+                                {{ ('dashboard.' + update.type.toLowerCase()) | translate }}
                               </span>
                               <span class="text-unops-body-small text-unops-neutral-600">by {{ update.lastModifiedBy }}</span>
                             </div>
@@ -506,10 +506,10 @@
                 </div>
                 <div>
                     <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
-                        My Workspace - All Items
+                        {{ 'dashboard.myWorkspaceAllItems' | translate }}
                     </h3>
                       <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
-                        All your partners, contacts, and quick actions
+                        {{ 'dashboard.allPartnersContactsActions' | translate }}
                       </p>
                   </div>
                   </div>
@@ -519,7 +519,7 @@
                     icon="pi pi-times" 
                     class="p-button-outlined p-button-sm"
                     (click)="collapsePanel()"
-                    pTooltip="Collapse"
+                    pTooltip="{{ 'dashboard.collapse' | translate }}"
                     tooltipPosition="bottom">
                   </button>
                 </div>
@@ -531,7 +531,7 @@
                     <div>
                       <h4 class="font-unops-body text-unops-body-large font-unops-semibold text-unops-neutral-900 mb-unops-md flex items-center">
                         <i class="material-symbols-outlined text-unops-lg text-unops-accent-teal mr-unops-sm">corporate_fare</i>
-                        My Partners ({{ dashboardData()!.myPartners.length }})
+                        {{ 'dashboard.myPartners' | translate }} ({{ dashboardData()!.myPartners.length }})
                       </h4>
                       <div class="grid grid-cols-1 gap-unops-sm">
                   @for (partner of dashboardData()!.myPartners; track partner.id) {
@@ -552,7 +552,7 @@
                                     'bg-unops-warning/10 text-unops-warning': partner.status === 'Pending',
                                     'bg-unops-neutral-200 text-unops-neutral-600': !partner.status || partner.status === 'Unknown'
                                   }">
-                              {{ partner.status || 'Unknown' }}
+                              {{ partner.status || ('dashboard.unknownStatus' | translate) }}
                             </span>
                           </div>
                           }
@@ -565,7 +565,7 @@
                 <div>
                       <h4 class="font-unops-body text-unops-body-large font-unops-semibold text-unops-neutral-900 mb-unops-md flex items-center">
                         <i class="material-symbols-outlined text-unops-lg text-unops-accent-lime mr-unops-sm">contacts</i>
-                        My Contacts ({{ dashboardData()!.myContacts.length }})
+                        {{ 'dashboard.myContacts' | translate }} ({{ dashboardData()!.myContacts.length }})
                       </h4>
                       <div class="grid grid-cols-1 gap-unops-sm">
                   @for (contact of dashboardData()!.myContacts; track contact.id) {
@@ -577,7 +577,7 @@
                             {{ contact.firstName }} {{ contact.lastName }}
                               </div>
                               <div class="text-unops-body-small text-unops-neutral-600">
-                            {{ contact.title || 'No Title' }}
+                            {{ contact.title || ('dashboard.noTitle' | translate) }}
                         </div>
                             </div>
                             <span class="inline-flex items-center px-unops-sm py-1 rounded-unops-sm text-unops-label-small font-unops-medium"
@@ -586,7 +586,7 @@
                                     'bg-unops-warning/10 text-unops-warning': contact.status === 'Pending',
                                     'bg-unops-neutral-200 text-unops-neutral-600': !contact.status || contact.status === 'Unknown'
                                   }">
-                              {{ contact.status || 'Unknown' }}
+                              {{ contact.status || ('dashboard.unknownStatus' | translate) }}
                             </span>
                           </div>
                           }
@@ -607,10 +607,10 @@
                     </div>
                     <div>
                       <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
-                        All Recent Interactions & Communications
+                        {{ 'dashboard.allRecentInteractions' | translate }}
                       </h3>
                       <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
-                        {{ summary().totalMyInteractions }} interactions • Latest activity
+                        {{ summary().totalMyInteractions }} {{ 'dashboard.interactionsLatestActivity' | translate }}
                       </p>
                     </div>
                   </div>
@@ -620,7 +620,7 @@
                     icon="pi pi-times" 
                     class="p-button-outlined p-button-sm"
                     (click)="collapsePanel()"
-                    pTooltip="Collapse"
+                    pTooltip="{{ 'dashboard.collapse' | translate }}"
                     tooltipPosition="bottom">
                   </button>
                 </div>
@@ -669,13 +669,13 @@
                             <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">chat</i>
                           }
                           <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-accent-orange/10 text-unops-accent-orange">
-                            {{ interaction.type || 'Unknown' }}
+                            {{ interaction.type || ('dashboard.unknownStatus' | translate) }}
                           </span>
                         </div>
                         
                         <!-- Content -->
                         <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-2 mt-0 line-clamp-2">
-                          {{ interaction.subject || 'Untitled Interaction' }}
+                          {{ interaction.subject || ('dashboard.untitledInteraction' | translate) }}
                         </h4>
                         @if (interaction.description) {
                           <p class="text-unops-body-small text-unops-neutral-600 mb-2 line-clamp-2">
@@ -693,7 +693,7 @@
                                 'bg-unops-warning/10 text-unops-warning': interaction.status === 'Pending',
                                 'bg-unops-neutral-200 text-unops-neutral-600': !interaction.status || interaction.status === 'Unknown'
                               }">
-                          {{ interaction.status || 'Unknown' }}
+                          {{ interaction.status || ('dashboard.unknownStatus' | translate) }}
                         </span>
                       </div>
                     }
@@ -704,17 +704,17 @@
                       <i class="material-symbols-outlined text-unops-2xl text-unops-neutral-400">chat</i>
                     </div>
                     <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-unops-sm">
-                      No interactions yet
+                      {{ 'dashboard.noInteractionsYet' | translate }}
                     </h4>
                     <p class="font-unops-body text-unops-body-medium text-unops-neutral-500 mb-unops-sm">
-                      Start logging your communications and meetings
+                      {{ 'dashboard.startLoggingCommunications' | translate }}
                     </p>
                     <button 
                       *ngIf="!permissionsLoading() && interactionPermissions().permissions.canCreate"
                       pButton 
                       type="button" 
                       icon="pi pi-plus" 
-                      label="Log First Interaction"
+                      label="{{ 'dashboard.logFirstInteraction' | translate }}"
                       class="p-button-sm unops-button-primary"
                       (click)="openNewInteractionModal()">
                     </button>
@@ -758,7 +758,7 @@
                           } @else {
                             <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
                           }
-                          <span class="text-unops-label-small text-unops-neutral-500">{{ getDraftActionEntityType(item) }}</span>
+                          <span class="text-unops-label-small text-unops-neutral-500">{{ ('dashboard.' + getDraftActionEntityType(item).toLowerCase()) | translate }}</span>
                         </div>
                         <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
                           {{ getDraftActionDisplayName(item) }}
@@ -769,7 +769,7 @@
                       </div>
                       <div class="ml-unops-sm">
                         <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-warning/10 text-unops-warning">
-                          Draft
+                          {{ 'dashboard.draft' | translate }}
                         </span>
                       </div>
                     </div>
@@ -821,7 +821,7 @@
                                 'bg-unops-success/10 text-unops-success': update.type === 'Contact', 
                                 'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
                               }">
-                          {{ update.type }}
+                          {{ ('dashboard.' + update.type.toLowerCase()) | translate }}
                         </span>
                         <span class="text-unops-body-small text-unops-neutral-600 truncate">by {{ update.lastModifiedBy }}</span>
                       </div>
@@ -852,7 +852,7 @@
                 <div>
                   <h4 class="font-unops-body text-unops-body-small font-unops-semibold text-unops-neutral-900 mb-unops-xs flex items-center">
                     <i class="material-symbols-outlined text-unops-sm text-unops-accent-teal mr-unops-xs">corporate_fare</i>
-                    Partners ({{ dashboardData()!.myPartners.length }})
+                    {{ 'dashboard.partners' | translate }} ({{ dashboardData()!.myPartners.length }})
                   </h4>
                   <div class="space-y-unops-xs mb-unops-sm">
                     @for (partner of getTruncatedPartners(); track partner.id) {
@@ -864,7 +864,7 @@
                             {{ partner.name }}
                           </div>
                           <div class="text-unops-label-small text-unops-neutral-600 line-clamp-1">
-                            {{ partner.status || 'Unknown' }} • {{ getDisplayDate(partner) }}
+                            {{ partner.status || ('dashboard.unknownStatus' | translate) }} • {{ getDisplayDate(partner) }}
                           </div>
                         </div>
                       </div>
@@ -878,7 +878,7 @@
                 <div>
                   <h4 class="font-unops-body text-unops-body-small font-unops-semibold text-unops-neutral-900 mb-unops-xs flex items-center">
                     <i class="material-symbols-outlined text-unops-sm text-unops-accent-lime mr-unops-xs">contacts</i>
-                    Contacts ({{ dashboardData()!.myContacts.length }})
+                    {{ 'dashboard.contacts' | translate }} ({{ dashboardData()!.myContacts.length }})
                   </h4>
                   <div class="space-y-unops-xs">
                     @for (contact of getTruncatedContacts(); track contact.id) {
@@ -890,7 +890,7 @@
                             {{ contact.firstName }} {{ contact.lastName }}
                           </div>
                           <div class="text-unops-label-small text-unops-neutral-600 line-clamp-1">
-                            {{ contact.title || 'No Title' }}
+                            {{ contact.title || ('dashboard.noTitle' | translate) }}
                           </div>
                         </div>
                       </div>
@@ -934,16 +934,16 @@
                       <i class="material-symbols-outlined text-unops-sm text-unops-accent-orange">chat</i>
                     }
                     <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-accent-orange/10 text-unops-accent-orange">
-                      {{ interaction.type || 'Unknown' }}
+                      {{ interaction.type || ('dashboard.unknownStatus' | translate) }}
                     </span>
                   </div>
                   
                   <!-- Content -->
                   <h4 class="font-unops-body text-unops-body-small font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
-                    {{ interaction.subject || 'Untitled Interaction' }}
+                    {{ interaction.subject || ('dashboard.untitledInteraction' | translate) }}
                   </h4>
                   <p class="text-unops-label-small text-unops-neutral-600 mb-1 line-clamp-1">
-                    {{ interaction.description || 'No description' }}
+                    {{ interaction.description || ('dashboard.noDescription' | translate) }}
                   </p>
                   <div class="text-unops-label-small text-unops-neutral-500 mb-unops-xs">
                     {{ formatDate(interaction.date) }}
@@ -956,7 +956,7 @@
                           'bg-unops-warning/10 text-unops-warning': interaction.status === 'Pending',
                           'bg-unops-neutral-200 text-unops-neutral-600': !interaction.status || interaction.status === 'Unknown'
                         }">
-                    {{ interaction.status || 'Unknown' }}
+                    {{ interaction.status || ('dashboard.unknownStatus' | translate) }}
                   </span>
                 </div>
               }

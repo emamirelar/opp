@@ -120,46 +120,16 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     return this.router.url.startsWith('/ai');
   });
   
-  // Example prompts for welcome message - Gemini style business-specific
-  examplePrompts = [
-    { 
-      text: 'Find qualified partners for infrastructure projects in West Africa', 
-      icon: 'pi pi-search',
-      category: 'Partner Search'
-    },
-    { 
-      text: 'Create a proposal summary for a climate resilience project', 
-      icon: 'pi pi-file-edit',
-      category: 'Proposal Writing'
-    },
-    { 
-      text: 'Analyze partnership trends in renewable energy sector', 
-      icon: 'pi pi-chart-line',
-      category: 'Data Analysis'
-    },
-    { 
-      text: 'Draft an engagement strategy for local NGOs', 
-      icon: 'pi pi-users',
-      category: 'Engagement'
-    },
-    { 
-      text: 'Review compliance requirements for new partnerships', 
-      icon: 'pi pi-shield',
-      category: 'Compliance'
-    },
-    { 
-      text: 'Generate a partnership impact report template', 
-      icon: 'pi pi-file-pdf',
-      category: 'Reporting'
-    }
-  ];
+  // Example prompts for welcome message - initialized after translation service is available
+  examplePrompts: { text: string, icon: string, category: string }[] = [];
 
   constructor(
     public aiAssistantService: AiAssistantService,
     private router: Router,
     private globalFilterService: GlobalFilterService,
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private translateService: TranslateService
   ) {
     effect(() => {
       const chatHistory = this.aiAssistantService.chatHistory();
@@ -195,6 +165,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   ngOnInit(): void {
     this.message.set('');
     this.loadUserInfo();
+    this.initializeExamplePrompts();
     
     if (this.viewContainerRef) {
       this.aiAssistantService.setViewContainerRef(this.viewContainerRef);
@@ -250,8 +221,6 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     
     this.cdr.detectChanges();
   }
-
-  // Legacy streaming code removed - now using DynamicContentService
 
   ngAfterViewInit(): void {
     // Mark view as initialized and process any buffered chunks
@@ -808,7 +777,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     if (validSessions.length === 0) {
       // Show placeholder when no sessions exist
       const menuItems: MenuItem[] = [{
-        label: 'No chat history available',
+        label: this.translateService.instant('aiAssistant.noChatsAvailable'),
         icon: 'pi pi-inbox',
         disabled: true,
         styleClass: 'text-gray-500'
@@ -837,11 +806,11 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       },
       // Add chat sessions
       ...sortedSessions.map(session => ({
-        label: (session as any).title || 'Untitled Chat',
+        label: (session as any).title || this.translateService.instant('aiAssistant.untitledChat'),
         icon: session.id === currentSessionId ? 'pi pi-check' : 'pi pi-comment',
         command: () => this.switchToSession(session.id!),
         styleClass: session.id === currentSessionId ? 'font-bold bg-blue-50' : '',
-        title: (session as any).title || 'Untitled Chat' // Tooltip
+        title: (session as any).title || this.translateService.instant('aiAssistant.untitledChat') // Tooltip
       }))
     ];
 
@@ -1114,7 +1083,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     try {
       return atob(data);
     } catch (error) {
-      return 'Unable to decode text content';
+      return this.translateService.instant('aiAssistant.unableToDecodeText');
     }
   }
 
@@ -1130,16 +1099,16 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   getFileTypeName(mimeType: string): string {
-    if (!mimeType) return 'File';
+    if (!mimeType) return this.translateService.instant('aiAssistant.fileTypes.file');
     
-    if (mimeType.includes('word')) return 'Word Document';
-    if (mimeType.includes('excel') || mimeType.includes('sheet')) return 'Excel Spreadsheet';
-    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'PowerPoint Presentation';
-    if (mimeType.includes('zip')) return 'Archive';
-    if (mimeType.includes('json')) return 'JSON File';
-    if (mimeType.includes('xml')) return 'XML File';
+    if (mimeType.includes('word')) return this.translateService.instant('aiAssistant.fileTypes.wordDocument');
+    if (mimeType.includes('excel') || mimeType.includes('sheet')) return this.translateService.instant('aiAssistant.fileTypes.excelSpreadsheet');
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return this.translateService.instant('aiAssistant.fileTypes.powerpointPresentation');
+    if (mimeType.includes('zip')) return this.translateService.instant('aiAssistant.fileTypes.archive');
+    if (mimeType.includes('json')) return this.translateService.instant('aiAssistant.fileTypes.jsonFile');
+    if (mimeType.includes('xml')) return this.translateService.instant('aiAssistant.fileTypes.xmlFile');
     
-    return mimeType.split('/')[1]?.toUpperCase() || 'File';
+    return mimeType.split('/')[1]?.toUpperCase() || this.translateService.instant('aiAssistant.fileTypes.file');
   }
 
   getFileName(mimeType: string): string {
@@ -1287,7 +1256,8 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
               const name = userInfoData.name || email || 'User';
               this.userName.set(name);
             } else {
-              this.userName.set('User');
+              console.warn('No user info data received from API');
+              this.userName.set(this.translateService.instant('aiAssistant.user'));
             }
           },
           error: (error) => {
