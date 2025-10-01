@@ -9,7 +9,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MenuModule } from 'primeng/menu';
 import { Menu } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AiAssistantData } from './ai-assistant.data';
 import { signal, computed } from '@angular/core';
 import { LayoutService } from '../../../layouts/services/layout.service';
@@ -108,46 +108,16 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     return this.router.url.startsWith('/ai');
   });
   
-  // Example prompts for welcome message - Gemini style business-specific
-  examplePrompts = [
-    { 
-      text: 'Find qualified partners for infrastructure projects in West Africa', 
-      icon: 'pi pi-search',
-      category: 'Partner Search'
-    },
-    { 
-      text: 'Create a proposal summary for a climate resilience project', 
-      icon: 'pi pi-file-edit',
-      category: 'Proposal Writing'
-    },
-    { 
-      text: 'Analyze partnership trends in renewable energy sector', 
-      icon: 'pi pi-chart-line',
-      category: 'Data Analysis'
-    },
-    { 
-      text: 'Draft an engagement strategy for local NGOs', 
-      icon: 'pi pi-users',
-      category: 'Engagement'
-    },
-    { 
-      text: 'Review compliance requirements for new partnerships', 
-      icon: 'pi pi-shield',
-      category: 'Compliance'
-    },
-    { 
-      text: 'Generate a partnership impact report template', 
-      icon: 'pi pi-file-pdf',
-      category: 'Reporting'
-    }
-  ];
+  // Example prompts for welcome message - initialized after translation service is available
+  examplePrompts: { text: string, icon: string, category: string }[] = [];
 
   constructor(
     public aiAssistantData: AiAssistantData,
     private router: Router,
     private globalFilterService: GlobalFilterService,
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private translateService: TranslateService
   ) {
     effect(() => {
       const chatHistory = this.aiAssistantData.chatHistory();
@@ -193,6 +163,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.message.set('');
     this.loadUserInfo();
+    this.initializeExamplePrompts();
     
     if (this.viewContainerRef) {
       this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
@@ -221,6 +192,41 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     // Content will render directly from streamingTypes arrays in template
     
     this.cdr.detectChanges();
+  }
+
+  private initializeExamplePrompts(): void {
+    this.examplePrompts = [
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.partnersInfrastructure'), 
+        icon: 'pi pi-search',
+        category: this.translateService.instant('aiAssistant.exampleCategories.partnerSearch')
+      },
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.proposalClimate'), 
+        icon: 'pi pi-file-edit',
+        category: this.translateService.instant('aiAssistant.exampleCategories.proposalWriting')
+      },
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.trendsRenewable'), 
+        icon: 'pi pi-chart-line',
+        category: this.translateService.instant('aiAssistant.exampleCategories.dataAnalysis')
+      },
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.strategyNgos'), 
+        icon: 'pi pi-users',
+        category: this.translateService.instant('aiAssistant.exampleCategories.engagement')
+      },
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.complianceReview'), 
+        icon: 'pi pi-shield',
+        category: this.translateService.instant('aiAssistant.exampleCategories.compliance')
+      },
+      { 
+        text: this.translateService.instant('aiAssistant.examplePrompts.impactReport'), 
+        icon: 'pi pi-file-pdf',
+        category: this.translateService.instant('aiAssistant.exampleCategories.reporting')
+      }
+    ];
   }
 
   // Removed handleProgressiveRender - no longer needed
@@ -933,7 +939,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     if (validSessions.length === 0) {
       // Show placeholder when no sessions exist
       const menuItems: MenuItem[] = [{
-        label: 'No chat history available',
+        label: this.translateService.instant('aiAssistant.noChatsAvailable'),
         icon: 'pi pi-inbox',
         disabled: true,
         styleClass: 'text-gray-500'
@@ -962,11 +968,11 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       },
       // Add chat sessions
       ...sortedSessions.map(session => ({
-        label: (session as any).title || 'Untitled Chat',
+        label: (session as any).title || this.translateService.instant('aiAssistant.untitledChat'),
         icon: session.id === currentSessionId ? 'pi pi-check' : 'pi pi-comment',
         command: () => this.switchToSession(session.id!),
         styleClass: session.id === currentSessionId ? 'font-bold bg-blue-50' : '',
-        title: (session as any).title || 'Untitled Chat' // Tooltip
+        title: (session as any).title || this.translateService.instant('aiAssistant.untitledChat') // Tooltip
       }))
     ];
 
@@ -1330,7 +1336,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     try {
       return atob(data);
     } catch (error) {
-      return 'Unable to decode text content';
+      return this.translateService.instant('aiAssistant.unableToDecodeText');
     }
   }
 
@@ -1346,16 +1352,16 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   }
 
   getFileTypeName(mimeType: string): string {
-    if (!mimeType) return 'File';
+    if (!mimeType) return this.translateService.instant('aiAssistant.fileTypes.file');
     
-    if (mimeType.includes('word')) return 'Word Document';
-    if (mimeType.includes('excel') || mimeType.includes('sheet')) return 'Excel Spreadsheet';
-    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'PowerPoint Presentation';
-    if (mimeType.includes('zip')) return 'Archive';
-    if (mimeType.includes('json')) return 'JSON File';
-    if (mimeType.includes('xml')) return 'XML File';
+    if (mimeType.includes('word')) return this.translateService.instant('aiAssistant.fileTypes.wordDocument');
+    if (mimeType.includes('excel') || mimeType.includes('sheet')) return this.translateService.instant('aiAssistant.fileTypes.excelSpreadsheet');
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return this.translateService.instant('aiAssistant.fileTypes.powerpointPresentation');
+    if (mimeType.includes('zip')) return this.translateService.instant('aiAssistant.fileTypes.archive');
+    if (mimeType.includes('json')) return this.translateService.instant('aiAssistant.fileTypes.jsonFile');
+    if (mimeType.includes('xml')) return this.translateService.instant('aiAssistant.fileTypes.xmlFile');
     
-    return mimeType.split('/')[1]?.toUpperCase() || 'File';
+    return mimeType.split('/')[1]?.toUpperCase() || this.translateService.instant('aiAssistant.fileTypes.file');
   }
 
   getFileName(mimeType: string): string {
@@ -1534,7 +1540,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
               this.userName.set(name);
             } else {
               console.warn('No user info data received from API');
-              this.userName.set('User');
+              this.userName.set(this.translateService.instant('aiAssistant.user'));
             }
           },
           error: (error) => {

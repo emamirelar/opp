@@ -6,11 +6,12 @@ import { ListViewColumn, ListViewConfig } from '../../../../../pages/components/
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-entity-grid',
   standalone: true,
-  imports: [CommonModule, ListviewCardComponent],
+  imports: [CommonModule, ListviewCardComponent, TranslateModule],
   templateUrl: './entity-grid.component.html',
   styleUrls: ['./entity-grid.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

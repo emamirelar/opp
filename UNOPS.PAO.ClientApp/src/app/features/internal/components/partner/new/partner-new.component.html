@@ -8,7 +8,7 @@
 <p-blockui [blocked]="partnerService.isLoading()" />
 
   @if( showValidationFailedError() === true ){
-    <p-message severity="error" icon="pi pi-info-circle" class="block gap-2">Please fill all the required details.</p-message>
+    <p-message severity="error" icon="pi pi-info-circle" class="block gap-2">{{ 'validation.pleaseFullAllRequired' | translate }}</p-message>
   }
 
   <form class="w-full flex flex-col gap-8" [formGroup]="formGroup">
@@ -23,7 +23,7 @@
           <input pInputText fluid="true" formControlName="name" />
           @if( formGroup.get("name")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">Name must be entered.</p-message>
+            <p-message severity="error" variant="simple">{{ 'validation.nameRequired' | translate }}</p-message>
           }
         </div>
 
@@ -32,7 +32,7 @@
           <input pInputText fluid="true" formControlName="shortName" />
           @if( formGroup.get("shortName")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">Short Name must be entered.</p-message>
+            <p-message severity="error" variant="simple">{{ 'validation.shortNameRequired' | translate }}</p-message>
           }
         </div>
 
@@ -46,11 +46,11 @@
             fluid="true"
             [showClear]="true"
             [appendTo]="'body'"
-            placeholder="Select a Status"
+            [placeholder]="'placeholder.selectStatus' | translate"
           />
           @if( formGroup.get("status")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">Status must be entered.</p-message>
+            <p-message severity="error" variant="simple">{{ 'validation.statusRequired' | translate }}</p-message>
           }
         </div>
 
@@ -63,10 +63,10 @@
                     fluid="true"
                     [showClear]="true"
                     [appendTo]="'body'"
-                    placeholder="Select New Engagement" />
+                    [placeholder]="'placeholder.selectNewEngagement' | translate" />
           @if( formGroup.get("newEngagement")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">New Engagement must be entered.</p-message>
+            <p-message severity="error" variant="simple">{{ 'validation.newEngagementRequired' | translate }}</p-message>
           }
         </div>
 
@@ -91,10 +91,10 @@
                     fluid="true"
                     [showClear]="true"
                     [appendTo]="'body'"
-                    placeholder="Select Pooled Fund" />
+                    [placeholder]="'placeholder.selectPooledFund' | translate" />
           @if( formGroup.get("pooledFund")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">Pooled Fund must be entered.</p-message>
+            <p-message severity="error" variant="simple">{{ 'validation.pooledFundRequired' | translate }}</p-message>
           }
         </div>
 
@@ -107,10 +107,10 @@
                     fluid="true"
                     [showClear]="true"
                     [appendTo]="'body'"
-                    placeholder="Select DD Required" />
+                    [placeholder]="'placeholder.selectDDRequired' | translate" />
           @if( formGroup.get("ddRequired")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">DD Required must be entered.</p-message>
+            <p-message severity="error" variant="simple">{{ 'validation.ddRequiredRequired' | translate }}</p-message>
           }
         </div>
 
@@ -123,10 +123,10 @@
                     fluid="true"
                     [showClear]="true"
                     [appendTo]="'body'"
-                    placeholder="Select DD/EAC Done" />
+                    [placeholder]="'placeholder.selectDDEACDone' | translate" />
           @if( formGroup.get("ddeacDone")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">DD/EAC Done must be entered.</p-message>
+            <p-message severity="error" variant="simple">{{ 'validation.ddeacDoneRequired' | translate }}</p-message>
           }
         </div>
 
@@ -146,10 +146,10 @@
                     fluid="true"
                     [showClear]="true"
                     [appendTo]="'body'"
-                    placeholder="Select Levy Potentially Applies" />
+                    [placeholder]="'placeholder.selectLevyPotentiallyApplies' | translate" />
           @if( formGroup.get("levyPotentiallyApplies")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">Levy Potentially Applies must be entered.</p-message>
+            <p-message severity="error" variant="simple">{{ 'validation.levyPotentiallyAppliesRequired' | translate }}</p-message>
           }
         </div>
 
@@ -162,7 +162,7 @@
                     fluid="true"
                     [showClear]="true"
                     [appendTo]="'body'"
-                    placeholder="Select Reason For Levy Not Applying" />
+                    [placeholder]="'placeholder.selectReasonForLevyNotApplying' | translate" />
         </div>
 
         <div class="flex flex-col gap-2">
@@ -174,7 +174,7 @@
                     [showClear]="true"
                     [appendTo]="'body'"
                     fluid="true"
-                    placeholder="Select Levy Treatment" />
+                    [placeholder]="'placeholder.selectLevyTreatment' | translate" />
         </div>
 
         <div class="flex gap-2 items-center">

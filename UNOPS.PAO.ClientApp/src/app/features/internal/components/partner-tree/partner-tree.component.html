@@ -1,13 +1,13 @@
 <div class="flex flex-col gap-8">
   <div class="flex gap-4 items-center">
-    <div class="text-3xl font-bold">Partner Tree</div>
+    <div class="text-3xl font-bold">{{ 'title.partnerTree' | translate }}</div>
     <div class="grow"></div>
     @if (updatedRecords.length > 0) {
-      <p-button icon="pi pi-refresh" label="Revert Changes" outlined severity="warn" (onClick)="handleOnRevertClick()"/>
-      <p-button icon="pi pi-check" label="Save Updates" severity="success" (onClick)="handleOnSaveClick()" [disabled]="hasInvalidRecords()"/>
+      <p-button icon="pi pi-refresh" [label]="'button.revertChanges' | translate" outlined severity="warn" (onClick)="handleOnRevertClick()"/>
+      <p-button icon="pi pi-check" [label]="'button.saveUpdates' | translate" severity="success" (onClick)="handleOnSaveClick()" [disabled]="hasInvalidRecords()"/>
     }
     @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
-      <p-button icon="pi pi-plus" label="New Partner Level" (onClick)="onCreateNewPartnerLevel()"/>
+      <p-button icon="pi pi-plus" [label]="'button.newPartnerLevel' | translate" (onClick)="onCreateNewPartnerLevel()"/>
     }
   </div>
   <div class="bg-white shadow-sm border border-gray-100 rounded-xl overflow-hidden">
@@ -103,7 +103,7 @@
           <td [ttEditableColumn]="rowData.partnerCategoryEditable ? 'partnerCategory' : null" [ttEditableColumnField]="rowData" class="py-4 px-6">
             <p-treeTableCellEditor>
               <ng-template pTemplate="input">
-                <p-select *ngIf="rowData.partnerCategoryEditable" [options]="parentOptions" [(ngModel)]="rowData['partnerCategory']" optionLabel="name" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Category" class="w-full" [appendTo]="'body'" [ngClass]="{'ng-invalid ng-dirty': !rowData['partnerCategory']}" required>
+                <p-select *ngIf="rowData.partnerCategoryEditable" [options]="parentOptions" [(ngModel)]="rowData['partnerCategory']" optionLabel="name" [filter]="true" filterBy="name" [showClear]="true" [placeholder]="'placeholder.selectPartnerCategory' | translate" class="w-full" [appendTo]="'body'" [ngClass]="{'ng-invalid ng-dirty': !rowData['partnerCategory']}" required>
                   <ng-template let-item pTemplate="item">
                     <div>{{ item.name }}</div>
                   </ng-template>
@@ -120,7 +120,7 @@
           <td [ttEditableColumn]="rowData.partnerGroupEditable ? 'partnerGroup' : null" [ttEditableColumnField]="rowData" class="py-4 px-6">
             <p-treeTableCellEditor>
               <ng-template pTemplate="input">
-                <p-select *ngIf="rowData.partnerGroupEditable" [options]="getFilteredPartnerGroupOptions(rowData)" [(ngModel)]="rowData['partnerGroup']" optionLabel="name" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Group" class="w-full" [appendTo]="'body'" [ngClass]="{'ng-invalid ng-dirty': !rowData['partnerGroup']}" required>
+                <p-select *ngIf="rowData.partnerGroupEditable" [options]="getFilteredPartnerGroupOptions(rowData)" [(ngModel)]="rowData['partnerGroup']" optionLabel="name" [filter]="true" filterBy="name" [showClear]="true" [placeholder]="'placeholder.selectPartnerGroup' | translate" class="w-full" [appendTo]="'body'" [ngClass]="{'ng-invalid ng-dirty': !rowData['partnerGroup']}" required>
                   <ng-template let-item pTemplate="item">
                     <div>{{ item.name }}</div>
                   </ng-template>

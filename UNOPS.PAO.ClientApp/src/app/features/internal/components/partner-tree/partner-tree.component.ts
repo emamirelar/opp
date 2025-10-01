@@ -5,7 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ColumnDefinition, FeatureBaseComponent } from '../../../../common/reusables/feature-base/feature-base.component';
 import { PartnerTreeService } from '../../services/partner-tree.service';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
@@ -83,6 +83,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   entityPermissionsData = this.permissionUtilityService.createEntityPermissions('PartnerTree');
   entityPermissions = this.entityPermissionsData.entityPermissions;
   permissionsLoading = this.entityPermissionsData.permissionsLoading;
+  override translateService = inject(TranslateService);
 
   constructor(public override router: Router) {
     super();
@@ -142,22 +143,22 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     // Validate required fields
     if (event.field) {
       if (event.field.name === '' && event.column.field === 'name') {
-        this.feedbackDialogService.showErrorToast({ detail: 'Name is required' });
+        this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('message.nameRequired') });
         return;
       }
 
       if (this.isPartnerCategoryEditable(event.field) && event.field.partnerCategory === '' && event.column.field === 'partnerCategory') {
-        this.feedbackDialogService.showErrorToast({ detail: 'Partner Category is required' });
+        this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('message.partnerCategoryRequired') });
         return;
       }
 
       if (event.field.partnerGroup === '' && event.column.field === 'partnerGroup') {
-        this.feedbackDialogService.showErrorToast({ detail: 'Partner Group is required' });
+        this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('message.partnerGroupRequired') });
         return;
       }
 
       if (event.field.code === '' && event.column.field === 'code') {
-        this.feedbackDialogService.showErrorToast({ detail: 'Code is required' });
+        this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('message.codeRequired') });
         return;
       }
     }
@@ -286,7 +287,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     // Check permission before opening modal
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({ 
-        detail: 'You do not have permission to create partner trees' 
+        detail: this.translateService.instant('message.noPermissionCreatePartnerTrees') 
       });
       return;
     }
@@ -300,7 +301,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     };
 
     const ref = this.dialogService.open(PartnerTreeItemComponent, {
-      header: 'New Partner Level',
+      header: this.translateService.instant('title.newPartnerLevel'),
       width: '50rem',
       closable: true,
       data: {
@@ -329,7 +330,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     };
 
     const ref = this.dialogService.open(PartnerTreeItemComponent, {
-      header: 'New Partner Level',
+      header: this.translateService.instant('title.newPartnerLevel'),
       width: '50rem',
       closable: true,
       data: {
@@ -359,7 +360,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       !record.code || record.code.trim() === '');
 
     if (invalidRecords.length > 0) {
-      this.feedbackDialogService.showErrorToast({ detail: 'Name, and Code are required for all records' });
+      this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('message.nameCodeRequired') });
       return;
     }
 
@@ -389,7 +390,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
 
     this.service.updatePartnerTreeLevel(recordsToSave).subscribe({
       next: (data: any) => {
-        this.feedbackDialogService.showSuccessToast({ detail: 'Updated successfully!' });
+        this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.updatedSuccessfully') });
         this.loadPartnerTreeData();
       }
     });
@@ -405,13 +406,13 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     // Check permission before opening modal
     if (!this.permissionUtilityService.canUpdate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({ 
-        detail: 'You do not have permission to edit partner trees' 
+        detail: this.translateService.instant('message.noPermissionEditPartnerTrees') 
       });
       return;
     }
 
     const ref = this.dialogService.open(PartnerTreeItemComponent, {
-      header: 'View Partner Level',
+      header: this.translateService.instant('title.viewPartnerLevel'),
       width: '50rem',
       closable: true,
       data: {
