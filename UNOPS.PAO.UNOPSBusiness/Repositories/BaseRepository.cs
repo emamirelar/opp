@@ -1203,13 +1203,17 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
         if (isDeletedProperty != null && isDeletedProperty.PropertyType == typeof(bool))
         {
             var parameter = Expression.Parameter(typeof(TEntity), "x");
-            var idProperty = Expression.Property(parameter, "Id");
-            var idEquals = Expression.Equal(idProperty, Expression.Constant(id));
-            var isDeletedProp = Expression.Property(parameter, "IsDeleted");
-            var notDeleted = Expression.Not(isDeletedProp);
-            var combined = Expression.AndAlso(idEquals, notDeleted);
-            var lambda = Expression.Lambda<Func<TEntity, bool>>(combined, parameter);
-            return await set.SingleOrDefaultAsync(lambda);
+            var idProperty = GetIdProperty(typeof(TEntity));
+            if (idProperty != null)
+            {
+                var idAccess = Expression.Property(parameter, idProperty);
+                var idEquals = Expression.Equal(idAccess, Expression.Constant(id));
+                var isDeletedProp = Expression.Property(parameter, "IsDeleted");
+                var notDeleted = Expression.Not(isDeletedProp);
+                var combined = Expression.AndAlso(idEquals, notDeleted);
+                var lambda = Expression.Lambda<Func<TEntity, bool>>(combined, parameter);
+                return await set.SingleOrDefaultAsync(lambda);
+            }
         }
         
         return await set.SingleOrDefaultAsync(x => x.Id == id);
