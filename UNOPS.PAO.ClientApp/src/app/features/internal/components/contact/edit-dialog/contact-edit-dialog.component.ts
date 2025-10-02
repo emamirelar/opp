@@ -165,6 +165,10 @@ export class ContactEditDialogComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Always refresh partners cache to ensure dropdowns have latest data
+    // This is especially important after creating new contacts/partners
+    this.cachedDataService.refreshPartners();
+
     this.record = this.dialogConfig.data?.record;
     const partnerContext = this.dialogConfig.data?.partnerContext;
     

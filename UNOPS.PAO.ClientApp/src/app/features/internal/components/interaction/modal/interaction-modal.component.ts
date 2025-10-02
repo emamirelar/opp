@@ -376,6 +376,11 @@ export class InteractionModalComponent {
   }
 
   ngOnInit() {
+    // Always refresh contacts and partners cache to ensure dropdowns have latest data
+    // This is especially important after creating new contacts/partners
+    this.cachedDataService.refreshContacts();
+    this.cachedDataService.refreshPartners();
+
     // If recordId is provided via Input (AI layout), load data directly
     if (this.recordId && this.recordId !== '') {
       this.loadInteractionById(Number(this.recordId));
