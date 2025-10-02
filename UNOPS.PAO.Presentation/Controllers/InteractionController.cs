@@ -171,7 +171,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         public async Task<ActionResult> ListAllInteractions(
             [FromQuery] int pageIndex = 1,
             [FromQuery] int pageSize = 20,
-            [FromQuery] string? orderBy = null,
+            [FromQuery] string? orderBy = "Subject",
             [FromQuery] bool ascending = true,
             [FromQuery] int? partnerId = null,
             [FromQuery] int? contactId = null,
@@ -199,7 +199,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                 {
                     PageIndex = pageIndex,
                     PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
-                    OrderBy = orderBy,
+                    OrderBy = orderBy ?? "Subject",
                     Ascending = ascending,
                     PartnerId = partnerId,
                     ContactId = contactId,
@@ -268,8 +268,8 @@ namespace UNOPS.PAO.Presentation.Controllers
             {
                 PageIndex = request.PageIndex,
                 PageSize = export ? int.MaxValue : request.PageSize, // Remove pagination limits for export
-                OrderBy = request.OrderBy,
-                Ascending = request.Ascending,
+                OrderBy = request.OrderBy ?? "Subject",
+                Ascending = request.Ascending ?? true,
                 FilterActive = filterActive
             };
 
@@ -359,7 +359,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         [FromQuery] string filters,
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = null,
+        [FromQuery] string? orderBy = "Subject",
         [FromQuery] bool ascending = true,
         [FromQuery] int? partnerId = null,
         [FromQuery] int? contactId = null,
@@ -429,7 +429,7 @@ namespace UNOPS.PAO.Presentation.Controllers
             {
                 PageIndex = pageIndex,
                 PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
-                OrderBy = orderBy,
+                OrderBy = orderBy ?? "Subject",
                 Ascending = ascending,
                 FilterActive = filterActive
             };

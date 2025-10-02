@@ -100,9 +100,10 @@ export class ContactListComponent implements OnInit, OnDestroy {
     entityName: 'Contact',
     scrollable: true,
     scrollHeight: 'flex',
-    defaultSortField: 'lastModifiedDate',
-    defaultSortOrder: 'desc',
+    defaultSortField: 'firstName',
+    defaultSortOrder: 'asc',
     sortableFields: [
+      { field: 'firstName', label: 'First Name' },
       { field: 'createdDate', label: 'Created Date' },
       { field: 'lastModifiedDate', label: 'Last Updated Date' }
     ],

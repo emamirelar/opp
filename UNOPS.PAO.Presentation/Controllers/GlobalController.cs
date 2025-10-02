@@ -344,7 +344,7 @@ public class GlobalController : BaseController
     /// <when_to_use>Use this when the user performs any search operation across the system - it automatically chooses between text search for exact matches and semantic search for conceptual queries.</when_to_use>
     /// <returns>Comprehensive search results with relevance scoring and entity details</returns>
     [HttpGet(APIDictionary.GlobalSearch)]
-    public async Task<ActionResult> IntelligentGlobalSearch([FromQuery] string q, [FromQuery] bool debug = false, [FromQuery] bool fullResults = false, [FromQuery] bool filterActive = true)
+    public async Task<ActionResult> IntelligentGlobalSearch([FromQuery] string q, [FromQuery] bool debug = false, [FromQuery] bool fullResults = false, [FromQuery] bool filterActive = true, [FromQuery] string? orderBy = null, [FromQuery] bool ascending = true)
     {
         try
         {

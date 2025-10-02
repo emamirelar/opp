@@ -110,6 +110,13 @@ export class ContactViewInteractionsComponent implements OnInit {
     entityName: 'Interaction',
     scrollable: true,
     scrollHeight: 'flex',
+    defaultSortField: 'subject',
+    defaultSortOrder: 'asc',
+    sortableFields: [
+      { field: 'subject', label: 'Subject' },
+      { field: 'createdDate', label: 'Created Date' },
+      { field: 'lastModifiedDate', label: 'Last Updated Date' }
+    ],
     searchConfig: {
       useAdvancedSearch: true,
       placeholder: this.translateService.instant('search.interactionsPlaceholder'),

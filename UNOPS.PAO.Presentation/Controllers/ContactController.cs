@@ -201,7 +201,7 @@ public class ContactController : BaseController
     public async Task<ActionResult> ListAllContacts(
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = null,
+        [FromQuery] string? orderBy = "FirstName",
         [FromQuery] bool ascending = true,
         [FromQuery] int? partnerId = null,
         [FromQuery] bool export = false,
@@ -218,7 +218,7 @@ public class ContactController : BaseController
             {
                 PageIndex = pageIndex,
                 PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
-                OrderBy = orderBy,
+                OrderBy = orderBy ?? "FirstName",
                 Ascending = ascending,
                 PartnerId = partnerId,
                 FilterActive = filterActive
@@ -272,8 +272,8 @@ public class ContactController : BaseController
         {
             PageIndex = request.PageIndex,
             PageSize = export ? int.MaxValue : request.PageSize, // Remove pagination limits for export
-            OrderBy = request.OrderBy,
-            Ascending = request.Ascending,
+            OrderBy = request.OrderBy ?? "FirstName",
+            Ascending = request.Ascending ?? true,
             FilterActive = filterActive
         };
 
@@ -355,7 +355,7 @@ public class ContactController : BaseController
         [FromQuery] string filters,
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = null,
+        [FromQuery] string? orderBy = "FirstName",
         [FromQuery] bool ascending = true,
         [FromQuery] int? partnerId = null,
         [FromQuery] bool export = false,
@@ -402,7 +402,7 @@ public class ContactController : BaseController
             {
                 PageIndex = pageIndex,
                 PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
-                OrderBy = orderBy,
+                OrderBy = orderBy ?? "FirstName",
                 Ascending = ascending,
                 FilterActive = filterActive
             };

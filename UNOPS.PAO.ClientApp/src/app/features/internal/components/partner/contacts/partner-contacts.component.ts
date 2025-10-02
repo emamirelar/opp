@@ -151,6 +151,13 @@ export class PartnerContactsComponent implements OnInit {
     defaultViewMode: 'card',
     enableSearch: true,
     entityName: 'Contact',
+    defaultSortField: 'firstName',
+    defaultSortOrder: 'asc',
+    sortableFields: [
+      { field: 'firstName', label: 'First Name' },
+      { field: 'createdDate', label: 'Created Date' },
+      { field: 'lastModifiedDate', label: 'Last Updated Date' }
+    ],
     searchConfig: {
       useAdvancedSearch: true,
       placeholder: this.translateService.instant('search.contactsPlaceholder'),
