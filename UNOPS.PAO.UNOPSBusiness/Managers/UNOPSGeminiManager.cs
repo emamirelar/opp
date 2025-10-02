@@ -1419,7 +1419,6 @@ public class UNOPSGeminiManager : IGeminiManager
                             PartnerIds = interactionRequest.PartnerIds,
                             UserIds = interactionRequest.UserIds,
                             EmailAddresses = interactionRequest.EmailAddresses,
-                            PhoneNumbers = interactionRequest.PhoneNumbers,
                             OrganizationHierarchyIds = interactionRequest.OrganizationHierarchyIds
                         };
 

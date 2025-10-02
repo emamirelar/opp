@@ -35,7 +35,6 @@ import { PanelModule } from 'primeng/panel';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
 import {Divider} from 'primeng/divider';
-import { PhoneInputComponent } from '../../../../../common/components/phone-input/phone-input.component';
 import { TooltipModule } from 'primeng/tooltip';
 
 // Interface for duplicate detection response
@@ -98,7 +97,6 @@ interface DuplicateDetectionResponse {
     AiTranscribeComponent,
     PanelModule,
     Divider,
-    PhoneInputComponent,
     AutoCompleteModule,
     TooltipModule,
   ],
@@ -292,14 +290,12 @@ export class InteractionModalComponent {
       partnerIds: [[]],
       userIds: [[]],
       emailAddresses: [[]],
-      phoneNumbers: [[]],
       location: [''],
       subject: ['', Validators.required],
       createdBy: [null],
 
       previousContactIds: [[]],
       previousEmails: [[]],
-      previousPhones: [[]],
       previousUserIds: [[]],
       // Organization Unit - Array for backend compatibility
       organizationHierarchyIds: [[]],
@@ -314,7 +310,6 @@ export class InteractionModalComponent {
 
     this.setupContactIdsChangeListener();
     this.setupEmailChangeListener();
-    this.setupPhoneNumberChangeListener();
     this.setupUserIdsChangeListener();
     this.setupPartnerIdsChangeListener();
     this.setupOrganizationUnitSyncListener();
@@ -528,14 +523,12 @@ export class InteractionModalComponent {
       partnerIds: record.partnerIds || [],
       userIds: userIds,
       emailAddresses: lowercaseEmails,
-      phoneNumbers: record.phoneNumbers || [],
       location: record.location,
       subject: record.subject,
       createdBy: record.createdBy,
       organizationHierarchyIds: organizationHierarchyIds,
       previousContactIds: record.contactIds || [],
       previousEmails: lowercaseEmails,
-      previousPhones: record.phoneNumbers || [],
       previousUserIds: userIds
     });
 
@@ -1085,19 +1078,6 @@ export class InteractionModalComponent {
       });
   }
 
-  private setupPhoneNumberChangeListener() {
-    this.formGroup.get('phoneNumbers')?.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
-      )
-      .subscribe((newPhones: string[]) => {
-        // Phone validation is now handled by PhoneInputComponent
-        // Just track previous phones for consistency
-        this.formGroup.get('previousPhones')?.setValue(newPhones);
-      });
-  }
-
   private setupOrganizationUnitSyncListener() {
     // Sync between selectedOrgUnitId (UI) and organizationHierarchyIds (backend array)
 
@@ -1174,10 +1154,6 @@ export class InteractionModalComponent {
         this.setOrganizationHierarchyId(data.organizationHierarchyIds[0]);
       }
     }
-  }
-
-  get showPhoneNumbers() {
-    return this.formGroup.get('type')?.value != 'Email';
   }
 
   /**

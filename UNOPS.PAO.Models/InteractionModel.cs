@@ -16,7 +16,6 @@ public class InteractionModel
     public string? ContactName { get; set; }
     public string Status { get; set; }
     public virtual List<string>? EmailAddresses { get; set; } = new List<string>();
-    public virtual List<string>? PhoneNumbers { get; set; } = new List<string>();
     public List<int>? ContactIds { get; set; } = new List<int>();
     [JsonIgnore]
     public virtual ICollection<InteractionContactModel>? InteractionContacts { get; set; }
