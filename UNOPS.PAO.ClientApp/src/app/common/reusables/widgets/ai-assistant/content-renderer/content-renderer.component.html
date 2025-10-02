@@ -9,6 +9,11 @@
     <markdown [data]="getStringMessage()"></markdown>
   </div>
   
+  <!-- Single thought content (for dynamic service) -->
+  <div *ngSwitchCase="'thought'" class="content-thought">
+    <markdown [data]="getStringMessage()"></markdown>
+  </div>
+  
   <!-- Grid/Table content -->
   <div *ngSwitchCase="'grid'" class="fade-in-content content-grid">
     <div class="content-type-header">
@@ -59,6 +64,34 @@
       <span class="content-type-label">{{ getContentTypeLabel() }}</span>
     </div>
     <pre><code [class]="'language-' + (item.language || 'javascript')">{{ getStringMessage() }}</code></pre>
+  </div>
+  
+  <!-- Function Call content -->
+  <div *ngSwitchCase="'functionCall'" class="content-function-call">
+    <div class="content-type-header">
+      <span class="content-type-label">Function Call</span>
+    </div>
+    <pre class="function-call-content"><code>{{ getStringMessage() }}</code></pre>
+  </div>
+  
+  <!-- Function Response content -->
+  <div *ngSwitchCase="'functionResponse'" class="content-function-response">
+    <div class="content-type-header">
+      <span class="content-type-label">Function Response</span>
+    </div>
+    <pre class="function-response-content"><code>{{ getStringMessage() }}</code></pre>
+  </div>
+  
+  <!-- Chart content (generic chart type) -->
+  <div *ngSwitchCase="'chart'" class="fade-in-content content-chart">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
+    <app-chart-js 
+      [chartType]="getChartType()"
+      [chartConfig]="getChartConfig()"
+      [chartData]="getChartData()">
+    </app-chart-js>
   </div>
   
   <!-- Plain text fallback without typewriter effect -->

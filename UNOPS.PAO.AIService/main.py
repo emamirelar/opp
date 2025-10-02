@@ -87,10 +87,12 @@ async def lifespan(app_instance: FastAPI):
 
 
 def add_routers_and_endpoints(app: FastAPI):
+    """Add all routers and endpoints to the FastAPI app"""
+    # ROUTE on just /
     app.include_router(chat_router)
     app.include_router(session_router)
 
-    """Add all routers and endpoints to the FastAPI app"""
+    # ROUTE on /api/ai-assistant
     app.include_router(chat_router, prefix='/api/ai-assistant')
     app.include_router(session_router, prefix='/api/ai-assistant')
     

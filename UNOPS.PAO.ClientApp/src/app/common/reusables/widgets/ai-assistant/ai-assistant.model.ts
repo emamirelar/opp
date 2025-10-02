@@ -10,16 +10,6 @@ export interface ChatMessage {
   sources?: Source[];
   isFromHistory?: boolean; // Flag to indicate if message is loaded from history
   inlineData?: InlineData[]; // Support for inline data like images
-  // Streaming support - separate arrays for each chunk type
-  streamingTypes?: {
-    thoughts: any[];
-    functionCall: any[];
-    functionResponse: any[];
-    markdown: any[];
-    mermaid: any[];
-    chart: any[];
-    [key: string]: any[]; // Allow for additional types
-  };
 }
 
 export interface InlineData {
@@ -34,7 +24,7 @@ export interface Source {
 }
 
 export interface ResultItem {
-  type: 'markdown' | 'mermaid' | 'code' | 'text' | 'grid' | 'card' | 'chartjs' | 'thought' | 'functionCall' | 'functionResponse' | 'chart';
+  type: 'markdown' | 'mermaid' | 'code' | 'text' | 'grid' | 'card' | 'chartjs' | 'thought' | 'thoughts' | 'functionCall' | 'functionResponse' | 'chart';
   message: string | any[] | any; // string for text/markdown/code/thought, array for grid/card data, object for chartjs
   language?: string; // for code blocks
   entity?: string; // for grid/card data

@@ -23,7 +23,7 @@ export class LanguageService {
   constructor(public translationService: TranslateService) {
     this.translationService.addLangs(['en', 'fr', 'span', 'pt']);
     this.translationService.setDefaultLang('en');
-    this.currentLanguage = { code: 'en', name: 'EN' }; // Temporary until server responds
+    this.currentLanguage = { code: 'en', name: 'English' }; // Temporary until server responds
   }
 
   initializeLanguage(): Promise<void> {
@@ -37,8 +37,8 @@ export class LanguageService {
         })
       ).subscribe({
         next: (response) => {
-          const preferredLanguage = this.getLanguages().find(lang => lang.code === response.language) 
-            || { code: 'en', name: 'EN' };
+          const preferredLanguage = this.getLanguages().find(lang => lang.code === response.language)
+            || { code: 'en', name: 'English' };
           
           // Set the language from server (or localStorage fallback)
           localStorage.setItem(this.languageKey, JSON.stringify(preferredLanguage));
@@ -61,7 +61,7 @@ export class LanguageService {
 
   getCurrentLanguage(): Language {
     const saved = localStorage.getItem(this.languageKey);
-    return saved ? JSON.parse(saved) : { code: 'en', name: 'EN' };
+    return saved ? JSON.parse(saved) : { code: 'en', name: 'English' };
   }
 
   switchLanguage(language: Language) {
@@ -101,8 +101,18 @@ export class LanguageService {
   }
 
   getLanguages(): Language[] {
+    const languageNames: { [key: string]: string } = {
+      'en': 'English',
+      'fr': 'Français',
+      'span': 'Español',
+      'pt': 'Português'
+    };
+
     return this.translationService
       .getLangs()
-      .map((lang) => ({ name: lang.toUpperCase(), code: lang,  }));
+      .map((lang) => ({
+        name: languageNames[lang] || lang.toUpperCase(),
+        code: lang
+      }));
   }
 }

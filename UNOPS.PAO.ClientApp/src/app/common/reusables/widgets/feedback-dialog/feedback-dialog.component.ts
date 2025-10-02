@@ -1,19 +1,22 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { Dialog } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { FeedbackConfig } from '../../../pages/interfaces/feedback';
 import { FeedbackDialogService } from '../../../pages/services/feedback-dialog.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-feedback-dialog',
   templateUrl: './feedback-dialog.component.html',
-  imports: [ToastModule, Dialog],
+  imports: [ToastModule, Dialog, TranslateModule, ButtonModule],
   styleUrls: ['./feedback-dialog.component.css'],
 })
 export class FeedbackDialogComponent {
   dialogConfig: FeedbackConfig | null = null;
   visible = false;
+  translateService = inject(TranslateService);
 
   constructor(private messageService: MessageService, private feedbackService: FeedbackDialogService) {}
 
@@ -26,5 +29,9 @@ export class FeedbackDialogComponent {
 
   onDialogClose() {
     this.feedbackService.hideErrorDialog();
+  }
+
+  refreshPage() {
+    window.location.reload();
   }
 }
