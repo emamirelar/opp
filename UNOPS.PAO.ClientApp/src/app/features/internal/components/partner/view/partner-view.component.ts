@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input, ViewChild, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -8,7 +9,7 @@ import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { DocumentService } from '../../../services/document.service';
 import { ParentEntityType } from '../../../overrides/interfaces/types';
 import { DocumentLinkModel } from '../../../overrides/interfaces/types';
@@ -139,6 +140,7 @@ export class PartnerViewComponent implements OnInit {
   permissionService = inject(PermissionUtilityService);
   authService = inject(AuthService);
   confirmationService = inject(ConfirmationService);
+  private destroyRef = inject(DestroyRef);
 
   // Permission management using utility service
   private permissionUtils = this.permissionService.createInstancePermissions('Partner');
@@ -199,7 +201,7 @@ export class PartnerViewComponent implements OnInit {
 
   ngOnInit() {
     // Check admin role
-    this.authService.isAdmin().subscribe({
+    this.authService.isAdmin().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (isAdmin) => {
         this.isAdmin.set(isAdmin);
       },
@@ -216,13 +218,13 @@ export class PartnerViewComponent implements OnInit {
     }
 
     // Otherwise, use the route-based logic (normal navigation)
-    this.activatedRoute.paramMap.subscribe({
+    this.activatedRoute.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';
 
         if (this.recordId != '') {
           // Check if data is already available from the resolver
-          this.activatedRoute.parent?.data.subscribe(data => {
+          this.activatedRoute.parent?.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
             if (data['partnerData']) {
               const partnerData = data['partnerData'];
               this.recordData.set(partnerData);
@@ -249,7 +251,7 @@ export class PartnerViewComponent implements OnInit {
       }
     });
 
-    this.activatedRoute.queryParamMap.subscribe({
+    this.activatedRoute.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (paramMap) => {
         if (this.recordId != '' && paramMap.get('show-contacts')?.toLowerCase() == 'true') {
           this._handleOnViewContacts();
@@ -263,7 +265,7 @@ export class PartnerViewComponent implements OnInit {
   _loadRecordDetails() {
     //fetch record details
     this.infoLoading.set(true);
-    this.partnerService.getPartnerById(this.recordId).subscribe({
+    this.partnerService.getPartnerById(this.recordId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data: any) => {
         this.recordData.set(data);
 
@@ -348,12 +350,16 @@ export class PartnerViewComponent implements OnInit {
       formData.append('documentTypeId', '1');
     }
 
-    this.documentService.uploadUnopsFiles(formData).subscribe({
+    this.documentService.uploadUnopsFiles(formData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
-        this.feedbackDialogService.showSuccessToast({ detail: `File ${response.name} uploaded successfully!` });
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.upload.successMessage', { fileName: response.name })
+        });
       },
       error: (error) => {
-        this.feedbackDialogService.showErrorDialog({ detail: 'Unable to upload file!' });
+        this.feedbackDialogService.showErrorDialog({ 
+          detail: this.translateService.instant('partner.view.upload.errorMessage')
+        });
       },
     });
   }
@@ -369,12 +375,16 @@ export class PartnerViewComponent implements OnInit {
       parentEntityId: parseInt(this.recordId),
     };
 
-    this.documentService.linkUnopsFiles(req).subscribe({
+    this.documentService.linkUnopsFiles(req).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
-        this.feedbackDialogService.showSuccessToast({ detail: `File ${response.name} uploaded successfully!` });
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.upload.successMessage', { fileName: response.name })
+        });
       },
       error: (error) => {
-        this.feedbackDialogService.showErrorDialog({ detail: 'Unable to upload file!' });
+        this.feedbackDialogService.showErrorDialog({ 
+          detail: this.translateService.instant('partner.view.upload.errorMessage')
+        });
       },
     });
   }
@@ -403,8 +413,8 @@ export class PartnerViewComponent implements OnInit {
     // Check if user has update permission
     if (!this.permissionService.canUpdate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit this partner',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('partner.view.error.editPermissionDenied'),
+        summary: this.translateService.instant('common.error.permissionDenied')
       });
       return;
     }
@@ -414,7 +424,7 @@ export class PartnerViewComponent implements OnInit {
     const isLoading = signal<boolean>(false);
 
     const ref = this.dialogService.open(PartnerEditDialogComponent, {
-      header: 'Edit Partner',
+      header: this.translateService.instant('partner.view.modal.editHeader'),
       width: '90vw',
       style: { maxWidth: '800px' },
       closable: true,
@@ -430,7 +440,7 @@ export class PartnerViewComponent implements OnInit {
       }
     });
 
-    ref.onClose.subscribe((result) => {
+    ref.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result) {
         this._loadRecordDetails();
       }
@@ -481,8 +491,8 @@ export class PartnerViewComponent implements OnInit {
   handleApprovalClick() {
     // Show confirmation dialog
     this.confirmationService.confirm({
-      message: `Are you sure you want to approve the partner "${this.recordData().name}"? This action cannot be undone.`,
-      header: 'Confirm Approval',
+      message: this.translateService.instant('partner.view.approval.confirmMessage', { partnerName: this.recordData().name }),
+      header: this.translateService.instant('partner.view.approval.confirmHeader'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.openApprovalDialog();
@@ -497,7 +507,7 @@ export class PartnerViewComponent implements OnInit {
    */
   private openApprovalDialog() {
     const ref = this.dialogService.open(PartnerApprovalDialogComponent, {
-      header: 'Partner Approval',
+      header: this.translateService.instant('partner.view.approval.modalHeader'),
       width: '90vw',
       style: { maxWidth: '800px' },
       closable: true,
@@ -506,7 +516,7 @@ export class PartnerViewComponent implements OnInit {
       }
     });
 
-    ref.onClose.subscribe((result) => {
+    ref.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result) {
         // Reload partner details to show updated approval status
         this._loadRecordDetails();
@@ -553,7 +563,7 @@ export class PartnerViewComponent implements OnInit {
    * Calls the activate API endpoint
    */
   private activatePartner() {
-    this.partnerService.activatePartner(this.recordId).subscribe({
+    this.partnerService.activatePartner(this.recordId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (result) => {
         this.feedbackDialogService.showSuccessToast({
           detail: this.translateService.instant('message.partnerActivatedSuccessfully', {
@@ -715,7 +725,7 @@ export class PartnerViewComponent implements OnInit {
       }
     });
 
-    ref.onClose.subscribe((result: any) => {
+    ref.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result: any) => {
       if (result === "saved" || (result && result.id)) {
         // Partner was updated, refresh the data and try activation again
         this._loadRecordDetails();
@@ -730,6 +740,15 @@ export class PartnerViewComponent implements OnInit {
    */
   get partnerIdAsNumber(): number | undefined {
     return this.recordId ? parseInt(this.recordId, 10) : undefined;
+  }
+
+  /**
+   * Format date for audit information display
+   */
+  formatDate(date: Date | string | null | undefined): string {
+    if (!date) return 'Not available';
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();
   }
 
   /**

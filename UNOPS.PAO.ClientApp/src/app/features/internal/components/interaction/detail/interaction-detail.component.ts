@@ -23,7 +23,7 @@ import { InteractionService } from '../../../services/interaction.service';
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
 import { InteractionType } from '../../../models/interaction-type.enum';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
-import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { InteractionIconService } from '../../../../../common/services/interaction-icon.service';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { GeminiService } from '../../../services/gemini.service';
@@ -120,7 +120,7 @@ export class InteractionDetailComponent implements OnInit {
   private loadInteraction() {
     const id = this.route.snapshot.params['id'];
     if (!id) {
-      this.error.set('No interaction ID provided');
+      this.error.set(this.translateService.instant('interaction.detail.error.noIdProvided'));
       this.loading.set(false);
       return;
     }
@@ -129,20 +129,20 @@ export class InteractionDetailComponent implements OnInit {
     this.interactionService.getById(Number(id)).subscribe({
       next: (response) => {
         if (response.status === 404) {
-          this.error.set(`Interaction with ID ${id} not found`);
+          this.error.set(this.translateService.instant('interaction.detail.error.notFound', { id }));
         } else if (response.body) {
           this.interaction.set(response.body);
           this.error.set(null);
         } else {
-          this.error.set('Invalid response from server');
+          this.error.set(this.translateService.instant('interaction.detail.error.invalidResponse'));
         }
         this.loading.set(false);
       },
       error: (error) => {
         console.error('Error loading interaction:', error);
         const errorMessage = error.status === 404
-          ? `Interaction with ID ${id} not found`
-          : `Failed to load interaction (${error.status || 'Network Error'})`;
+          ? this.translateService.instant('interaction.detail.error.notFound', { id })
+          : this.translateService.instant('interaction.detail.error.loadFailed', { status: error.status || this.translateService.instant('common.error.networkError') });
         this.error.set(errorMessage);
         this.loading.set(false);
       }
@@ -153,14 +153,14 @@ export class InteractionDetailComponent implements OnInit {
     const currentInteraction = this.interaction();
     if (!currentInteraction || !this.canEdit()) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit this interaction',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('interaction.detail.error.editPermissionDenied'),
+        summary: this.translateService.instant('common.error.permissionDenied')
       });
       return;
     }
 
     const ref = this.dialogService.open(InteractionModalComponent, {
-      header: 'Edit Interaction',
+      header: this.translateService.instant('interaction.detail.modal.editHeader'),
       closable: true,
       width: '90%',
       height: '90%',
@@ -175,7 +175,7 @@ export class InteractionDetailComponent implements OnInit {
       if (result) {
         this.loadInteraction();
         this.feedbackDialogService.showSuccessToast({
-          detail: 'Interaction updated successfully'
+          detail: this.translateService.instant('interaction.detail.success.updated')
         });
       }
     });
@@ -185,29 +185,29 @@ export class InteractionDetailComponent implements OnInit {
     const currentInteraction = this.interaction();
     if (!currentInteraction || !this.canDelete()) {
       this.feedbackDialogService.showErrorToast({
-        detail: this.translateService.instant('message.noPermissionToDeleteInteraction'),
-        summary: this.translateService.instant('message.permissionDenied')
+        detail: this.translateService.instant('interaction.detail.error.deletePermissionDenied'),
+        summary: this.translateService.instant('common.error.permissionDenied')
       });
       return;
     }
 
     // Show confirmation dialog
     this.confirmationService.confirm({
-      message: this.translateService.instant('message.deleteInteractionConfirmation'),
-      header: this.translateService.instant('message.confirmDelete'),
+      message: this.translateService.instant('interaction.detail.confirmation.deleteMessage'),
+      header: this.translateService.instant('interaction.detail.confirmation.deleteHeader'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.interactionService.delete(currentInteraction.id!).subscribe({
           next: () => {
             this.feedbackDialogService.showSuccessToast({
-              detail: this.translateService.instant('message.interactionDeletedSuccessfully')
+              detail: this.translateService.instant('interaction.detail.success.deleted')
             });
             this.router.navigate(['/partnerships/interactions']);
           },
           error: (error) => {
             console.error('Error deleting interaction:', error);
             this.feedbackDialogService.showErrorToast({
-              detail: this.translateService.instant('message.failedToDeleteInteraction')
+              detail: this.translateService.instant('interaction.detail.error.deleteFailed')
             });
           }
         });
@@ -268,7 +268,7 @@ export class InteractionDetailComponent implements OnInit {
   // Helper methods to resolve IDs to names
   getContactName(contactId: number): string {
     const contact = this.interaction()?.contacts?.find(c => Number(c.id) === contactId);
-    return contact ? `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || `Contact #${contactId}` : `Contact #${contactId}`;
+    return contact ? `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || this.translateService.instant('interaction.detail.fallback.contact', { id: contactId }) : this.translateService.instant('interaction.detail.fallback.contact', { id: contactId });
   }
 
   getContactProfilePicture(contactId: number): string | null {
@@ -285,14 +285,14 @@ export class InteractionDetailComponent implements OnInit {
   }
 
   getPartnerName(partnerId: number): string {
-    const partner = this.allPartners().find(p => p.id === partnerId);
-    return partner?.name || `Partner #${partnerId}`;
+    const partner = this.allPartners().find(p => p.id?.toString() === partnerId?.toString());
+    return partner?.name || this.translateService.instant('interaction.detail.fallback.partner', { id: partnerId });
   }
 
   getUserName(userId: number | undefined): string {
-    if (!userId) return 'Unknown User';
+    if (!userId) return this.translateService.instant('interaction.detail.fallback.unknownUser');
     const user = this.allUsers().find(u => u.id === userId);
-    return user?.name || `User #${userId}`;
+    return user?.name || this.translateService.instant('interaction.detail.fallback.user', { id: userId });
   }
 
   getPartnerLogo(partnerId: number): string | null {
@@ -302,7 +302,7 @@ export class InteractionDetailComponent implements OnInit {
 
   getPartnerInitials(partnerId: number): string {
     const partner = this.interaction()?.partners?.find(p => Number(p.id) === partnerId);
-    const name = partner?.name || partner?.partnerDescription || `Partner #${partnerId}`;
+    const name = partner?.name || partner?.partnerDescription || this.translateService.instant('interaction.detail.fallback.partner', { id: partnerId });
     return name.split(' ')
       .filter((word: string) => word.length > 0)
       .map((word: string) => word[0].toUpperCase())

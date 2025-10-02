@@ -10,8 +10,8 @@ import { BlockUIModule } from 'primeng/blockui';
 
 import { DocumentService } from '../../../../services/document.service';
 import { Documentype } from '../../../../interfaces/document.interface';
-import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { FeedbackDialogService } from '../../../../services/feedback-dialog.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-upload-document',
@@ -31,6 +31,7 @@ export class UploadDocumentComponent {
 
   feedbackService = inject(FeedbackDialogService);
   documentService = inject(DocumentService);
+  translateService = inject(TranslateService);
 
   get scrollHeightValue() {
     return this.files.length > 0 ? 'flex' : undefined;
@@ -90,7 +91,7 @@ export class UploadDocumentComponent {
     let canUploadFileds = this.validateFiles();
     if (canUploadFileds !== true) {
       this.feedbackService.showInfoToast({
-        detail: 'Please select a document type.',
+        detail: this.translateService.instant('message.selectDocumentType'),
       });
       return;
     }
@@ -106,7 +107,7 @@ export class UploadDocumentComponent {
     this.documentService.uploadFile(formData).subscribe({
       next: () => {
         this.feedbackService.showSuccessToast({
-          detail: `Document uploaded successfully!`,
+          detail: this.translateService.instant('message.documentUploadSuccess'),
         });
         this.onUploadSuccess.emit();
       },

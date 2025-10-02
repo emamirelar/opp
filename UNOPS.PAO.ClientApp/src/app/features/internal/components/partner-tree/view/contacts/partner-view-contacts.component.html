@@ -1,7 +1,7 @@
 <p-panel>
   <ng-template pTemplate="header">
     <div class="flex justify-between items-center w-full">
-      <div class="font-semibold text-xl">Contacts</div>
+      <div class="font-semibold text-xl">{{ 'title.contacts' | translate }}</div>
       <div>
         <p-button
           icon="pi pi-window-maximize"
@@ -9,7 +9,7 @@
           [rounded]="true"
           (onClick)="openFullScreenContacts()"
           tooltipPosition="left"
-          pTooltip="View all contacts">
+          pTooltip="{{ 'tooltip.viewAllContacts' | translate }}">
         </p-button>
       </div>
     </div>
@@ -25,7 +25,7 @@
       <!-- Grouped by letter view -->
       <div class="flex flex-col bg-white rounded-lg p-4 gap-2">
         @if (contacts.length === 0) {
-          <div class="text-center py-4">No contacts found</div>
+          <div class="text-center py-4">{{ 'message.noContactsFound' | translate }}</div>
         } @else {
           <!-- Alphabetical sections -->
           @for (group of groupedContacts; track group.letter) {

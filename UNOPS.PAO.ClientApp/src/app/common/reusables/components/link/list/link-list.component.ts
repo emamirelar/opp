@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, model, output, signal, ViewChild, ElementRef } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal, ViewChild, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Link, EntityType } from '../../../../models/link.model';
 import { ButtonModule } from 'primeng/button';
@@ -21,7 +21,8 @@ import {InfiniteScrollDirective} from 'ngx-infinite-scroll';
     LinkEditDialogComponent,
     InfiniteScrollDirective,
   ],
-  templateUrl: './link-list.component.html'
+  templateUrl: './link-list.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LinkListComponent {
   linkDataService = inject(LinkDataService);

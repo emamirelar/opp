@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, ChangeDetectionStrategy, inject, OnInit, OnChanges, output, Output, signal } from '@angular/core';
 import { PartnerTreeService } from '../../../services/partner-tree.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { PanelModule } from 'primeng/panel';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
@@ -56,6 +56,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
 
   partnerTreeService = inject(PartnerTreeService);
   feedbackDialogService = inject(FeedbackDialogService);
+  translateService = inject(TranslateService);
 
   // RBAC permissions
   permissionUtilityService = inject(PermissionUtilityService);
@@ -201,7 +202,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
     // Check permission before deleting
     if (!this.permissionUtilityService.canDelete(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to delete this partner tree'
+        detail: this.translateService.instant('messages.error.noDeletePermission')
       });
       return;
     }
@@ -214,7 +215,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
         if (this.record?.id) {
           this.partnerTreeService.deletePartnerLevel(this.record.id.toString()).subscribe({
             next: (data: any) => {
-              this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
+              this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('messages.success.recordDeleted') });
 
               // Force refresh of cached partner data
               this.cachedDataService.refreshPartners();
@@ -223,13 +224,13 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
               this.dialogRef.close({ success: true, deleted: true, data: data });
             },
             error: (error: any) => {
-              this.feedbackDialogService.showErrorToast({ detail: 'Failed to delete record' });
+              this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('messages.error.failedToDelete') });
             }
           });
         }
       },
       error: (error: any) => {
-        this.feedbackDialogService.showErrorToast({ detail: 'Failed to update record status' });
+        this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('messages.error.failedToUpdateStatus') });
       }
     });
   }
@@ -256,11 +257,11 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
 
       this.partnerTreeService.updatePartnerTreeLevel([payload]).subscribe({
         next: (results: PartnerTree[]) => {
-          this.feedbackDialogService.showSuccessToast({ detail: 'Record activated successfully!' });
+          this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('messages.success.recordActivated') });
           this.dialogRef.close(results[0]);
         },
         error: (error: any) => {
-          this.feedbackDialogService.showErrorToast({ detail: 'Failed to activate record' });
+          this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('messages.error.failedToActivate') });
         }
       });
     }
@@ -273,14 +274,14 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
 
     if (isNewRecord && !this.permissionUtilityService.canCreate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to create partner trees'
+        detail: this.translateService.instant('messages.error.noCreatePermission')
       });
       return;
     }
 
     if (!isNewRecord && !this.permissionUtilityService.canUpdate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to update this partner tree'
+        detail: this.translateService.instant('messages.error.noUpdatePermission')
       });
       return;
     }
@@ -308,22 +309,22 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
         // Update existing record
         this.partnerTreeService.updatePartnerTreeLevel([payload]).subscribe({
           next: (results: PartnerTree[]) => {
-            this.feedbackDialogService.showSuccessToast({ detail: 'Record updated successfully!' });
+            this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('messages.success.recordUpdated') });
             this.dialogRef.close(results[0]);
           },
           error: (error: any) => {
-            this.feedbackDialogService.showErrorToast({ detail: 'Failed to update record' });
+            this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('messages.error.failedToUpdate') });
           }
         });
       } else {
         // Create new record
         this.partnerTreeService.createPartnerTreeLevel(payload).subscribe({
           next: (result: PartnerTree) => {
-            this.feedbackDialogService.showSuccessToast({ detail: 'Record created successfully!' });
+            this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('messages.success.recordCreated') });
             this.dialogRef.close(result);
           },
           error: (error: any) => {
-            this.feedbackDialogService.showErrorToast({ detail: 'Failed to create record' });
+            this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('messages.error.failedToCreate') });
           }
         });
       }

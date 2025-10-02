@@ -38,6 +38,7 @@ using UNOPS.PAO.Presentation;
 public class ContactController : BaseController
 {
     private readonly IContactManager _manager;
+    private readonly ISecureSpecificationFactory _secureSpecificationFactory;
     private readonly IGeminiManager _geminiManager;
     private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
     private readonly AiContextualService _aiContextualService;
@@ -45,6 +46,7 @@ public class ContactController : BaseController
 
     public ContactController(
         IManagerWrapper manager, 
+        ISecureSpecificationFactory secureSpecificationFactory,
         UserResolverService<int> userResolverService, 
         ILogger<ContactController> logger,
         IAuthorizationService authorizationService,
@@ -53,6 +55,7 @@ public class ContactController : BaseController
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.ContactManager;
+        _secureSpecificationFactory = secureSpecificationFactory;
         _geminiManager = manager.GeminiManager;
         _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
         _aiContextualService = aiContextualService;
@@ -198,7 +201,7 @@ public class ContactController : BaseController
     public async Task<ActionResult> ListAllContacts(
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = null,
+        [FromQuery] string? orderBy = "FirstName",
         [FromQuery] bool ascending = true,
         [FromQuery] int? partnerId = null,
         [FromQuery] bool export = false,
@@ -215,7 +218,7 @@ public class ContactController : BaseController
             {
                 PageIndex = pageIndex,
                 PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
-                OrderBy = orderBy,
+                OrderBy = orderBy ?? "FirstName",
                 Ascending = ascending,
                 PartnerId = partnerId,
                 FilterActive = filterActive
@@ -251,6 +254,7 @@ public class ContactController : BaseController
     public async Task<ActionResult> SearchContacts(
         [FromQuery] PaginationRequest request,
         [FromQuery] string query,
+        [FromQuery] int? partnerId = null,
         [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {
@@ -268,10 +272,46 @@ public class ContactController : BaseController
         {
             PageIndex = request.PageIndex,
             PageSize = export ? int.MaxValue : request.PageSize, // Remove pagination limits for export
-            OrderBy = request.OrderBy,
-            Ascending = request.Ascending,
+            OrderBy = request.OrderBy ?? "FirstName",
+            Ascending = request.Ascending ?? true,
             FilterActive = filterActive
         };
+
+        // Apply base entity filtering first if partnerId is provided
+        if (partnerId.HasValue)
+        {
+            // Add partnerId as a filter to the search request
+            var baseFilters = new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>
+            {
+                new UNOPS.PAO.UNOPSBusiness.Services.SearchFilter
+                {
+                    field = "PartnerId",
+                    @operator = "eq",
+                    value = partnerId.Value.ToString(),
+                    logicalOperator = "AND",
+                    fieldType = "int"
+                }
+            };
+
+            // Create unified search request with query and base entity filters
+            var searchRequest = new UNOPS.PAO.UNOPSBusiness.Services.UnifiedSearchRequest
+            {
+                Query = query,
+                Filters = baseFilters,
+                PageIndex = paginationRequest.PageIndex,
+                PageSize = paginationRequest.PageSize,
+                OrderBy = paginationRequest.OrderBy,
+                Ascending = paginationRequest.Ascending ?? true,
+                FilterActive = paginationRequest.FilterActive
+            };
+
+            // Use AdvancedSearchService for unified text search with entity pre-filtering
+            var searchResult = await _advancedSearchService.SearchAsync<UNOPSContact, ContactModel>(
+                searchRequest,
+                User);
+
+            return Ok(searchResult);
+        }
 
         // Use AdvancedSearchService for unified text search with PostgreSQL similarity
         var result = await _advancedSearchService.SearchWithQueryAsync<UNOPSContact, ContactModel>(
@@ -315,8 +355,9 @@ public class ContactController : BaseController
         [FromQuery] string filters,
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = null,
+        [FromQuery] string? orderBy = "FirstName",
         [FromQuery] bool ascending = true,
+        [FromQuery] int? partnerId = null,
         [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {
@@ -342,12 +383,26 @@ public class ContactController : BaseController
                 return BadRequest(new { error = "Invalid filter format. Expected JSON array of filter objects." });
             }
 
+            // Apply base entity filtering first if partnerId is provided
+            if (partnerId.HasValue)
+            {
+                // Add the entity filter to the existing search filters
+                searchFilters.Add(new UNOPS.PAO.UNOPSBusiness.Services.SearchFilter
+                {
+                    field = "PartnerId",
+                    @operator = "eq",
+                    value = partnerId.Value.ToString(),
+                    logicalOperator = "AND",
+                    fieldType = "int"
+                });
+            }
+
             // Use AdvancedSearchService for structured filters with PostgreSQL similarity on "like" operators
             var paginationRequest = new PaginationRequest
             {
                 PageIndex = pageIndex,
                 PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
-                OrderBy = orderBy,
+                OrderBy = orderBy ?? "FirstName",
                 Ascending = ascending,
                 FilterActive = filterActive
             };

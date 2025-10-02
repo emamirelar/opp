@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -16,6 +16,7 @@ import { TranslateModule } from '@ngx-translate/core';
     ReactiveFormsModule,
     TranslateModule
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="p-6">
       <form [formGroup]="manualEntryForm" (ngSubmit)="onSubmit()">
@@ -28,10 +29,10 @@ import { TranslateModule } from '@ngx-translate/core';
             </div>
             <div class="ml-3">
               <p class="text-sm font-medium">
-                Important: Make sure your Google Sheet is publicly accessible
+                {{ 'manualEntryDialog.banner.title' | translate }}
               </p>
               <p class="mt-1 text-sm">
-                Set your Google Sheet sharing to "Anyone with the link can view" to ensure the import can access your data.
+                {{ 'manualEntryDialog.banner.message' | translate }}
               </p>
             </div>
           </div>
@@ -40,22 +41,22 @@ import { TranslateModule } from '@ngx-translate/core';
         <!-- Google Sheet URL -->
         <div class="mb-4">
           <label for="sheetUrl" class="block text-sm font-medium text-gray-700 mb-2">
-            Google Sheet URL <span class="text-red-500">*</span>
+            {{ 'manualEntryDialog.form.googleSheetUrl' | translate }} <span class="text-red-500">*</span>
           </label>
           <input
             pInputText
             id="sheetUrl"
             formControlName="url"
-            placeholder="https://docs.google.com/spreadsheets/d/your-sheet-id/edit..."
+            placeholder="{{ 'manualEntryDialog.form.urlPlaceholder' | translate }}"
             class="w-full"
             [class.p-invalid]="manualEntryForm.get('url')?.invalid && manualEntryForm.get('url')?.touched"
           />
           <small class="text-gray-500 mt-1 block">
-            Paste the full URL of your Google Sheet
+            {{ 'manualEntryDialog.form.urlHelp' | translate }}
           </small>
           @if (manualEntryForm.get('url')?.invalid && manualEntryForm.get('url')?.touched) {
             <small class="text-red-500 mt-1 block">
-              Please enter a valid Google Sheet URL
+              {{ 'manualEntryDialog.form.urlValidation' | translate }}
             </small>
           }
         </div>
@@ -63,22 +64,22 @@ import { TranslateModule } from '@ngx-translate/core';
         <!-- Sheet Name -->
         <div class="mb-6">
           <label for="sheetName" class="block text-sm font-medium text-gray-700 mb-2">
-            Sheet Name <span class="text-red-500">*</span>
+            {{ 'manualEntryDialog.form.sheetName' | translate }} <span class="text-red-500">*</span>
           </label>
           <input
             pInputText
             id="sheetName"
             formControlName="sheetName"
-            placeholder="Sheet1"
+            placeholder="{{ 'manualEntryDialog.form.sheetNamePlaceholder' | translate }}"
             class="w-full"
             [class.p-invalid]="manualEntryForm.get('sheetName')?.invalid && manualEntryForm.get('sheetName')?.touched"
           />
           <small class="text-gray-500 mt-1 block">
-            Enter the exact name of the sheet tab within your Google Sheets document
+            {{ 'manualEntryDialog.form.sheetNameHelp' | translate }}
           </small>
           @if (manualEntryForm.get('sheetName')?.invalid && manualEntryForm.get('sheetName')?.touched) {
             <small class="text-red-500 mt-1 block">
-              Please enter a sheet name
+              {{ 'manualEntryDialog.form.sheetNameValidation' | translate }}
             </small>
           }
         </div>
@@ -87,14 +88,14 @@ import { TranslateModule } from '@ngx-translate/core';
         <div class="flex justify-end gap-3">
           <p-button
             type="button"
-            label="Cancel"
+            label="{{ 'button.cancel' | translate }}"
             severity="secondary"
             [outlined]="true"
             (click)="onCancel()"
           />
           <p-button
             type="submit"
-            label="Import"
+            label="{{ 'button.import' | translate }}"
             icon="pi pi-file-import"
             [disabled]="manualEntryForm.invalid"
             [loading]="isSubmitting()"

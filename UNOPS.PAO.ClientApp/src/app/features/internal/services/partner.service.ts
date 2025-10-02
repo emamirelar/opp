@@ -3,6 +3,9 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import {Partner} from '../models/partner.model';
 import { ImportDialogService } from '../../../common/reusables/components/import/dialog/import-dialog.service';
+import { PaginationResponse } from '../../../common/models/pagination-response.model';
+import { DuplicateDetectionResponse, ApprovalRequest, PartnerContactsResponse } from '../../../common/models/api-responses.model';
+import { Contact } from '../models/contact.model';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +14,7 @@ export class PartnerService {
   http = inject(HttpClient);
   private importDialogService = inject(ImportDialogService);
 
-  private partnerData = signal([]);
+  private partnerData = signal<Partner[]>([]);
   allPartners = this.partnerData.asReadonly();
   isLoading = signal(false);
 
@@ -25,8 +28,8 @@ export class PartnerService {
 
   getAllPartners() {
     this.isLoading.set(true);
-    this.http.get(`/api/partner`).subscribe({
-      next: (data: any) => {
+    this.http.get<PaginationResponse<Partner>>(`/api/partner`).subscribe({
+      next: (data) => {
         this.partnerData.set(data.records);
         this.isLoading.set(false);
       },
@@ -53,9 +56,9 @@ export class PartnerService {
    * Creates a partner with duplicate detection handling
    * Returns either the created partner or duplicate detection response
    */
-  createPartner( requestJson: object ): Observable<any> {
+  createPartner( requestJson: Partner ): Observable<Partner | DuplicateDetectionResponse> {
     this.isLoading.set( true );
-    return this.http.post<any>(this.apiUrl, requestJson).pipe(tap(
+    return this.http.post<Partner | DuplicateDetectionResponse>(this.apiUrl, requestJson).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -66,10 +69,10 @@ export class PartnerService {
     }));
   }
 
-  updatePartnerById( requestJson: any ){
+  updatePartnerById( requestJson: Partner ){
 
     this.isLoading.set( true );
-    return this.http.put(this.apiUrl, requestJson).pipe(tap(
+    return this.http.put<Partner>(this.apiUrl, requestJson).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -80,9 +83,9 @@ export class PartnerService {
     }));
   }
 
-  deletePartnerById(id: any) {
+  deletePartnerById(id: string | number) {
     this.isLoading.set(true);
-    return this.http.delete(`${this.apiUrl}/${id}`).pipe(tap(
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);
@@ -93,9 +96,9 @@ export class PartnerService {
       }));
   }
 
-  getAllContactsById(recordId: string) {
+  getAllContactsById(recordId: string): Observable<Contact[]> {
     this.isLoading.set(true);
-    return this.http.get(`${this.apiUrl}/${recordId}/contacts`).pipe(tap(
+    return this.http.get<Contact[]>(`${this.apiUrl}/${recordId}/contacts`).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);
@@ -110,9 +113,9 @@ export class PartnerService {
     return `${this.apiUrl}/${recordId}/logo`;
   }
   
-  approvePartner(requestJson: any) {
+  approvePartner(requestJson: ApprovalRequest) {
     this.isLoading.set(true);
-    return this.http.post(`${this.apiUrl}/${requestJson.id}/approve`, requestJson).pipe(tap(
+    return this.http.post<Partner>(`${this.apiUrl}/${requestJson.id}/approve`, requestJson).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);
@@ -125,7 +128,7 @@ export class PartnerService {
 
   activatePartner(id: string) {
     this.isLoading.set(true);
-    return this.http.post(`${this.apiUrl}/${id}/activate`, {}).pipe(tap(
+    return this.http.post<Partner>(`${this.apiUrl}/${id}/activate`, {}).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);
@@ -139,7 +142,7 @@ export class PartnerService {
   /**
    * Detects duplicates for partner records using the centralized ImportDialogService method
    */
-  detectDuplicates(partnerData: any): Observable<any> {
+  detectDuplicates(partnerData: Partner): Observable<DuplicateDetectionResponse | null> {
     // Use the centralized duplicate detection method from ImportDialogService
     return this.importDialogService.detectDuplicatesForEntity(partnerData, 'partner');
   }

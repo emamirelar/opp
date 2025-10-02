@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -10,7 +10,8 @@ import { TranslateService } from '@ngx-translate/core';
   standalone: true,
   imports: [CommonModule, ButtonModule],
   templateUrl: './picture.component.html',
-  providers: [DialogService]
+  providers: [DialogService],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PictureComponent {
   @Input() imageUrl: string | null = null;

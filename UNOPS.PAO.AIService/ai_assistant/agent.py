@@ -234,7 +234,6 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
         )
     """
 
-    # print(tool_context)
     
     try:
         # Prepare the final URL using the dedicated function
@@ -270,18 +269,36 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
                     final_url += separator + query_params
             
             # Make GET request
-            response = requests.get(final_url, headers=request_headers, timeout=api_timeout, verify=False)
+            print(f"🌐 Making GET request to: {final_url}")
+            
+            try:
+                response = requests.get(final_url, headers=request_headers, timeout=api_timeout, verify=False)
+                if response.status_code != 200:
+                    print(f"❌ GET request failed - Status: {response.status_code}, Error: {response.text[:200]}")
+            except requests.exceptions.RequestException as e:
+                print(f"❌ GET request failed with exception: {e}")
+                raise
             
         elif method.upper() == 'POST':
             # Make POST request with JSON body
-            response = requests.post(final_url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
+            print(f"🌐 Making POST request to: {final_url}")
+            
+            try:
+                response = requests.post(final_url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
+                if response.status_code != 200:
+                    print(f"❌ POST request failed - Status: {response.status_code}, Error: {response.text[:200]}")
+            except requests.exceptions.RequestException as e:
+                print(f"❌ POST request failed with exception: {e}")
+                raise
             
         elif method.upper() == 'PUT':
             # Make PUT request with JSON body
+            print(f"🌐 Making PUT request to: {final_url}")
             response = requests.put(final_url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
             
         elif method.upper() == 'DELETE':
             # Make DELETE request
+            print(f"🌐 Making DELETE request to: {final_url}")
             response = requests.delete(final_url, headers=request_headers, timeout=api_timeout, verify=False)
             
         else:
@@ -410,7 +427,6 @@ Respond in WELL-FORMED MARKDOWN making proper use of different heading levels, b
 instruction = instruction_template.format(
     entities_metadata=format_entities_metadata_as_markdown(entities_metadata)
 )
-# print(instruction)
 
 
 root_agent = LlmAgent(

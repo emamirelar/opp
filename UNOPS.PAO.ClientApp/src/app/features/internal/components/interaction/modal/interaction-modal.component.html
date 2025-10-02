@@ -13,33 +13,12 @@
           {{ 'title.interactionTitles.participants' | translate }}
         </div>
 
-        <div [class]="showPhoneNumbers ? 'col-span-12 md:col-span-6 flex flex-col gap-2' : 'col-span-full flex flex-col gap-2'">
-          <label for="emails" class="block">{{ 'label.interaction.emailAddresses' | translate }}</label>
-          <p-autocomplete id="emails"
-                          formControlName="emailAddresses"
-                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
-                          multiple
-                          fluid
-                          [typeahead]="false" />
-        </div>
-
-        @if( showPhoneNumbers ){
-        <div class="col-span-12 md:col-span-6 flex flex-col gap-2">
-          <app-phone-input
-            formControlName="phoneNumbers"
-            [label]="'label.interaction.phoneNumbers' | translate"
-            [disabled]="!recordPermissions()?.permissions?.canUpdate"
-            [showClear]="true"
-            [autoProcess]="true"
-            [helperText]="'You can paste multiple numbers'"
-            [invalidPhoneMessage]="'message.invalidPhoneNumberFormat' | translate">
-          </app-phone-input>
-        </div>
-
-        }
-
         <div class="col-span-full flex flex-col gap-2">
-          <label for="contacts">{{ 'label.interaction.relatedTo' | translate }} *</label>
+          <label for="contacts" class="block">
+            {{ 'label.interaction.relatedTo' | translate }} *
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.relatedTo' | translate"></i>
+          </label>
           <p-multiselect id="contacts"
                          formControlName="contactIds"
                          [options]="availableContacts()"
@@ -49,9 +28,10 @@
                          [lazy]="true"
                          [virtualScroll]="true"
                          [virtualScrollItemSize]="32"
+                         [appendTo]="'body'"
                          display="chip"
                          multiple
-                         fluid
+                         fluid="true"
                          [maxSelectedLabels]="4000"
                          placeholder="{{ 'label.interaction.selectContacts' | translate }}"
                          ariaLabel="contacts">
@@ -73,9 +53,26 @@
           }
         </div>
 
+        <div class="col-span-full flex flex-col gap-2">
+          <label for="emails" class="block">
+            {{ 'label.interaction.emailAddresses' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.emailAddresses' | translate"></i>
+          </label>
+
+          <p-autocomplete id="emails"
+                          formControlName="emailAddresses"
+                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
+                          multiple
+                          fluid="true"
+                          [typeahead]="false" />
+        </div>
+
         <div class="col-span-full partners-display flex flex-col gap-2">
-          <label for="partners">
+          <label for="partners" class="block">
             {{ 'label.interaction.partners' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.partners' | translate"></i>
             @if(getPartnerContext()?.partnerId) {
               <span class="text-xs text-blue-600 ml-2">({{ 'label.interaction.requiresPartnerContact' | translate }})</span>
             }
@@ -95,7 +92,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="users">{{ 'label.interaction.users' | translate }}</label>
+          <label for="users" class="block">
+            {{ 'label.interaction.users' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.users' | translate"></i>
+          </label>
           <p-multiselect id="users"
                          formControlName="userIds"
                          [options]="availableUsers()"
@@ -136,7 +137,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="subject">{{ 'label.interaction.subject' | translate }} *</label>
+          <label for="subject" class="block">
+            {{ 'label.interaction.subject' | translate }} *
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.subject' | translate"></i>
+          </label>
           <input pInputText
                  fluid="true"
                  formControlName="subject"
@@ -148,13 +153,17 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="description">{{ 'label.interaction.description' | translate }}</label>
+          <label for="description" class="block">
+            {{ 'label.interaction.description' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.description' | translate"></i>
+          </label>
           <p-editor
             id="description"
             formControlName="description"
             [readonly]="!recordPermissions()?.permissions?.canUpdate"
             [style]="{ height: '300px' }"
-            placeholder="Enter interaction description...">
+            [placeholder]="'placeholder.interaction.description' | translate">
           </p-editor>
         </div>
 
@@ -179,7 +188,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="type">{{ 'label.interaction.type' | translate }} *</label>
+          <label for="type" class="block">
+            {{ 'label.interaction.type' | translate }} *
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.type' | translate"></i>
+          </label>
           <p-select id="type"
                     [options]="typeOptions"
                     [appendTo]="'body'"
@@ -202,7 +215,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="date">{{ 'label.interaction.date' | translate }} *</label>
+          <label for="date" class="block">
+            {{ 'label.interaction.date' | translate }} *
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.date' | translate"></i>
+          </label>
           <p-calendar id="date"
                       formControlName="date"
                       [disabled]="!recordPermissions()?.permissions?.canUpdate"
@@ -214,7 +231,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="location">{{ 'label.interaction.location' | translate }}</label>
+          <label for="location">
+            {{ 'label.interaction.location' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.location' | translate"></i>
+          </label>
           <input pInputText
                  fluid="true"
                  formControlName="location"
@@ -223,7 +244,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="organizationUnit">{{ 'label.interaction.organizationUnit' | translate }}</label>
+          <label for="organizationUnit">
+            {{ 'label.interaction.organizationUnit' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.organizationUnit' | translate"></i>
+          </label>
           <p-select id="organizationUnit"
                     formControlName="selectedOrgUnitId"
                     [options]="allOrgUnits()"
@@ -241,7 +266,11 @@
         </div>
 
         <div class="col-span-full flex flex-col gap-2">
-          <label for="createdBy">{{ 'label.interaction.createdBy' | translate }}</label>
+          <label for="createdBy">
+            {{ 'label.interaction.createdBy' | translate }}
+            <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+               [pTooltip]="'tooltip.interaction.createdBy' | translate"></i>
+          </label>
           <p-select id="createdBy"
                     formControlName="createdBy"
                     [options]="availableCreatedByUsers()"
@@ -276,6 +305,8 @@
         <!-- Documents Section -->
         <div class="text-2xl col-span-full">
           {{ 'title.doc' | translate }}
+          <i class="pi pi-info-circle text-gray-400 cursor-help ml-1"
+             [pTooltip]="'tooltip.interaction.document' | translate"></i>
         </div>
 
         <div class="col-span-full">

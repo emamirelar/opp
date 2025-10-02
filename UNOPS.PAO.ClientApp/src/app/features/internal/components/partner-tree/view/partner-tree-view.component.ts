@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ViewChild, inject } from '@angular/core';
 import { Router, RouterModule, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Tab, TabList, Tabs } from 'primeng/tabs';
 import { TooltipModule } from 'primeng/tooltip';
 import { filter, Subscription } from 'rxjs';
@@ -9,7 +9,7 @@ import { PartnerTree } from '../../../models/partner-tree.model';
 import { PartnerTreeViewNavigationComponent } from './navigation/partner-tree-view-navigation.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from '../item/partner-tree-item.component';
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 
@@ -130,6 +130,7 @@ export class PartnerTreeViewComponent implements OnInit, OnDestroy {
   private feedbackDialogService = inject(FeedbackDialogService);
   private permissionUtilityService = inject(PermissionUtilityService);
   private cachedDataService = inject(CachedDataService);
+  private translateService = inject(TranslateService);
 
   // RBAC permissions
   recordPermissionsData = this.permissionUtilityService.createInstancePermissions('PartnerTree');
@@ -191,11 +192,11 @@ export class PartnerTreeViewComponent implements OnInit, OnDestroy {
     // Create tabs based on recordId
     this.tabs = [
       {
-        label: 'Details',
+        label: this.translateService.instant('title.details'),
         route: `/admin/partner-tree/${this.recordId}`
       },
       {
-        label: 'Dashboard',
+        label: this.translateService.instant('title.dashboard'),
         route: `/admin/partner-tree/${this.recordId}/data`
       }
     ];
@@ -223,13 +224,13 @@ export class PartnerTreeViewComponent implements OnInit, OnDestroy {
     // Check permission before opening modal
     if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit this partner tree'
+        detail: this.translateService.instant('partnerTree.view.error.editPermissionDenied')
       });
       return;
     }
 
     const ref = this.dialogService.open(PartnerTreeItemComponent, {
-      header: 'Edit Partner Level',
+      header: this.translateService.instant('partnerTree.view.modal.editHeader'),
       width: '50rem',
       closable: true,
       data: {
@@ -243,7 +244,9 @@ export class PartnerTreeViewComponent implements OnInit, OnDestroy {
         this.cachedDataService.partnerTreeService.getPartnerTreeDataById(result.id!.toString()).subscribe({
           next: (data: any) => {
             this.recordData = data.data;
-            this.feedbackDialogService.showSuccessToast({ detail: 'Partner tree updated successfully!' });
+            this.feedbackDialogService.showSuccessToast({ 
+              detail: this.translateService.instant('partnerTree.view.success.updateMessage')
+            });
 
             // Reload the current route to refresh all child components
             this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
@@ -251,7 +254,9 @@ export class PartnerTreeViewComponent implements OnInit, OnDestroy {
             });
           },
           error: (error) => {
-            this.feedbackDialogService.showErrorToast({ detail: 'Failed to update partner tree' });
+            this.feedbackDialogService.showErrorToast({ 
+              detail: this.translateService.instant('partnerTree.view.error.updateFailedMessage')
+            });
           }
         });
       }

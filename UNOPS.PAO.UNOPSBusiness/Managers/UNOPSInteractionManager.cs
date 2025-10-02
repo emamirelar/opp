@@ -599,9 +599,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         PatchNonNullProperties(model, entity);
 
-        // Update emails/phones
+        // Update emails
         entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
-        entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
         //Update CreatedBy value selected by the User on the Interaction edit page
         if (model.CreatedBy.HasValue)
         {
@@ -886,9 +885,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         PatchNonNullProperties(model, entity);
 
-        // Update emails/phones
+        // Update emails
         entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
-        entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
 
         // Handle OrganizationHierarchyIds if provided
         if (model.OrganizationHierarchyIds != null)
@@ -1061,9 +1059,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 uploadDate = d.CreatedDate.ToString("yyyy-MM-dd")
             }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
 
-            // Email and phone information
+            // Email information
             emailAddresses = entity.EmailAddresses ?? new List<string>(),
-            phoneNumbers = entity.PhoneNumbers ?? new List<string>(),
 
             // Computed names for easy access
             contactNames = string.Join(", ", entity.InteractionContacts?.Select(ic => $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim()) ?? new List<string>()),
@@ -1078,8 +1075,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 totalUsers = entity.InteractionUsers?.Count ?? 0,
                 totalDocuments = entity.Documents?.Count ?? 0,
                 hasDocuments = entity.Documents?.Any() ?? false,
-                hasEmailAddresses = entity.EmailAddresses?.Any() ?? false,
-                hasPhoneNumbers = entity.PhoneNumbers?.Any() ?? false
+                hasEmailAddresses = entity.EmailAddresses?.Any() ?? false
             },
 
             // Audit information
@@ -1211,38 +1207,36 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
             // Get current user and their organization unit
             var currentUser = GetCurrentUserOrSystemContext();
-            if (currentUser != null)
+            var userIdClaim = currentUser?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            int? userId = int.TryParse(userIdClaim, out var id) ? id : null;
+
+            if (userId != null && userId.HasValue)
             {
-                // Get user email from claims
-                var emailClaim = currentUser.FindFirst(ClaimTypes.Email) ?? currentUser.FindFirst("email");
-                if (emailClaim != null && !string.IsNullOrEmpty(emailClaim.Value))
+                // Get user profile by email to find their org unit
+                var userProfile = await context.UserProfile
+                    .FirstOrDefaultAsync(up => up.UserId == userId.Value);
+
+                if (userProfile?.OrgUnit != null)
                 {
-                    // Get user profile by email to find their org unit
-                    var userProfile = await context.UserProfile
-                        .FirstOrDefaultAsync(up => up.UserEmail.ToLower() == emailClaim.Value.ToLower());
+                    // Find the organization hierarchy by org unit code
+                    var orgHierarchy = await context.OrganizationHierarchies
+                        .FirstOrDefaultAsync(oh => oh.Code == userProfile.OrgUnit && 
+                                                    oh.Type == Domain.Enums.OrganizationUnitType.OrgUnit);
 
-                    if (userProfile?.OrgUnit != null)
+                    if (orgHierarchy != null)
                     {
-                        // Find the organization hierarchy by org unit code
-                        var orgHierarchy = await context.OrganizationHierarchies
-                            .FirstOrDefaultAsync(oh => oh.Code == userProfile.OrgUnit && 
-                                                      oh.Type == Domain.Enums.OrganizationUnitType.OrgUnit);
-
-                        if (orgHierarchy != null)
+                        // Create organization unit relationship for the interaction
+                        var newRelationship = new OrganizationUnitRelationship
                         {
-                            // Create organization unit relationship for the interaction
-                            var newRelationship = new OrganizationUnitRelationship
-                            {
-                                OrganizationHierarchyId = orgHierarchy.Id,
-                                EntityId = entity.Id,
-                                EntityType = nameof(Interaction),
-                                Name = $"Interaction-{entity.Id}-{orgHierarchy.Code}",
-                                Status = EntityStatus.Active
-                            };
+                            OrganizationHierarchyId = orgHierarchy.Id,
+                            EntityId = entity.Id,
+                            EntityType = nameof(Interaction),
+                            Name = $"Interaction-{entity.Id}-{orgHierarchy.Code}",
+                            Status = EntityStatus.Active
+                        };
                             
-                            context.OrganizationUnitRelationships.Add(newRelationship);
-                            await context.SaveChangesAsync();
-                        }
+                        context.OrganizationUnitRelationships.Add(newRelationship);
+                        await context.SaveChangesAsync();
                     }
                 }
             }

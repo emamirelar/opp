@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { ExportGoogleSheetService } from '../../../reusables/components/export/export-google-sheet.service';
-import { FeedbackDialogService } from '../../../reusables/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
 import { switchMap, tap, catchError, map } from 'rxjs/operators';
 import { ConfirmationService } from 'primeng/api';
 import { SearchParams } from './listview.model';

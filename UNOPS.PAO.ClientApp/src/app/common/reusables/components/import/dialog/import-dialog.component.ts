@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject, OnInit, OnDestroy, signal, computed, Type } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, OnInit, OnDestroy, signal, computed, Type, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -11,7 +12,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { MessageModule } from 'primeng/message';
 import { BlockUIModule } from 'primeng/blockui';
 import { StepperModule } from 'primeng/stepper';
-import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../services/feedback-dialog.service';
 import { NgClass, JsonPipe, TitleCasePipe } from '@angular/common';
 import { DatePipe } from '@angular/common';
 import { ImportDialogService } from './import-dialog.service';
@@ -139,6 +140,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
   importService = inject(ImportService);
   translateService = inject(TranslateService);
   userManagementService = inject(UserManagementService);
+  private destroyRef = inject(DestroyRef);
   // Make Math available to the template
   Math = Math;
 
@@ -615,7 +617,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
       } else {
         record.internalDuplicateInfo = {
           hasInternalDuplicate: false,
-          tooltip: 'No internal duplicates'
+          tooltip: this.translateService.instant('importDialog.tooltips.noInternalDuplicates')
         };
       }
       
@@ -632,7 +634,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
           mediumConfidence: duplicateDetection.mediumConfidence,
           lowConfidence: duplicateDetection.lowConfidence,
           topDuplicate: duplicateDetection.topDuplicate,
-          tooltip: `${duplicateDetection.totalDuplicates} duplicate(s) found`
+          tooltip: this.translateService.instant('importDialog.tooltips.duplicatesFound', { count: duplicateDetection.totalDuplicates })
         };
         
         duplicateRows.push(record);
@@ -655,7 +657,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
             matchReason: 'Legacy similarity match',
             entityType: this.getEntityTypeFromImportType()
           },
-          tooltip: `Duplicate found (${similarityPercentage}% similarity)`
+          tooltip: this.translateService.instant('importDialog.tooltips.duplicateFoundWithSimilarity', { percentage: similarityPercentage })
         };
         
         duplicateRows.push(record);
@@ -669,7 +671,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
           mediumConfidence: 0,
           lowConfidence: 0,
           topDuplicate: null,
-          tooltip: 'Unique record'
+          tooltip: this.translateService.instant('importDialog.tooltips.uniqueRecord')
         };
         nonDuplicateRows.push(record);
       }
@@ -684,7 +686,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
     if (duplicateRows.length > 0) {
       this.showDuplicateWarning.set(true);
       this.duplicateWarningMessage.set(
-        `${duplicateRows.length} duplicate(s) found and auto-deselected. Review and manually select if needed.`
+        this.translateService.instant('importDialog.messages.duplicatesFoundAndDeselected', { count: duplicateRows.length })
       );
     } else {
       this.showDuplicateWarning.set(false);
@@ -694,7 +696,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
     if (internalDuplicateRows.length > 0) {
       this.showInternalDuplicateWarning.set(true);
       this.internalDuplicateWarningMessage.set(
-        `${internalDuplicateRows.length} record(s) have internal duplicates within the file. Please review and fix duplicates in your source file.`
+        this.translateService.instant('importDialog.messages.internalDuplicatesFound', { count: internalDuplicateRows.length })
       );
     } else {
       this.showInternalDuplicateWarning.set(false);
@@ -978,7 +980,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
       });
       
       // Handle dialog close event to update the row in the table
-      dialogRef.onClose.subscribe(result => {
+      dialogRef.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
         
         
         if (result && (result._updated || typeof result === 'object')) {
@@ -1120,13 +1122,13 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
 
     switch (importType) {
       case 'Contact':
-        return `Mandatory fields for contacts: ${requiredFields}`;
+        return this.translateService.instant('importDialog.banners.mandatoryFieldsForContacts', { fields: requiredFields });
       case 'Partner':
-        return `Mandatory fields for partners: ${requiredFields}`;
+        return this.translateService.instant('importDialog.banners.mandatoryFieldsForPartners', { fields: requiredFields });
       case 'Interaction':
-        return `Mandatory fields for interactions: ${requiredFields}`;
+        return this.translateService.instant('importDialog.banners.mandatoryFieldsForInteractions', { fields: requiredFields });
       default:
-        return `Mandatory fields: ${requiredFields}`;
+        return this.translateService.instant('importDialog.banners.mandatoryFields', { fields: requiredFields });
     }
   }
 

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { LanguageService } from '../../../common/services/language.service';
 import { Subscription } from 'rxjs';
 import { DialogModule } from 'primeng/dialog';
-import { FeedbackDialogService } from '../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../services/feedback-dialog.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 export interface ColumnDefinition {

@@ -146,7 +146,38 @@ export interface ListViewConfig {
    * @default false
    */
   forceMobileMode?: boolean;
-  
+
+  /**
+   * Virtual scroll configuration for improved performance with large datasets
+   * Uses Angular CDK Virtual Scrolling
+   */
+  virtualScroll?: {
+    /**
+     * Whether to enable virtual scrolling
+     * @default true
+     */
+    enabled?: boolean;
+
+    /**
+     * Height of each item in pixels (used for scroll calculations)
+     * Estimate the average card height including gap
+     * @default 180
+     */
+    itemSize?: number;
+
+    /**
+     * Minimum buffer size in pixels before loading more items
+     * @default 400
+     */
+    minBufferPx?: number;
+
+    /**
+     * Maximum buffer size in pixels
+     * @default 800
+     */
+    maxBufferPx?: number;
+  };
+
   /**
    * Search metadata configuration for displaying search result details
    * Used in global search and other search-enabled views

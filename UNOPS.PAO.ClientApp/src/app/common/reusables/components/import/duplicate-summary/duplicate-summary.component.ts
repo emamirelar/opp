@@ -1,9 +1,9 @@
-import { Component, Input, computed } from '@angular/core';
+import { Component, Input, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { BadgeModule } from 'primeng/badge';
 import { ProgressBarModule } from 'primeng/progressbar';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { DividerModule } from 'primeng/divider';
 
 @Component({
@@ -17,35 +17,36 @@ import { DividerModule } from 'primeng/divider';
     TranslateModule,
     DividerModule
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (duplicateRows && duplicateRows.length > 0) {
       <div class="duplicate-summary-compact">
         <div class="summary-stats">
           <div class="stat-item">
             <span class="stat-value">{{ duplicateRows.length }}</span>
-            <span class="stat-label">Duplicates</span>
+            <span class="stat-label">{{ 'import.duplicateSummary.duplicates' | translate }}</span>
           </div>
           <div class="stat-separator">|</div>
           <div class="stat-item">
             <span class="stat-value">{{ uniqueRecords() }}</span>
-            <span class="stat-label">Unique</span>
+            <span class="stat-label">{{ 'import.duplicateSummary.unique' | translate }}</span>
           </div>
           <div class="stat-separator">|</div>
           <div class="stat-item">
             <span class="stat-value">{{ duplicatePercentage() }}%</span>
-            <span class="stat-label">Duplicate Rate</span>
+            <span class="stat-label">{{ 'import.duplicateSummary.duplicateRate' | translate }}</span>
           </div>
         </div>
         
         <div class="confidence-summary">
           @if (highConfidenceCount() > 0) {
-            <span class="confidence-badge high">{{ highConfidenceCount() }} High</span>
+            <span class="confidence-badge high">{{ highConfidenceCount() }} {{ 'import.duplicateSummary.confidence.high' | translate }}</span>
           }
           @if (mediumConfidenceCount() > 0) {
-            <span class="confidence-badge medium">{{ mediumConfidenceCount() }} Medium</span>
+            <span class="confidence-badge medium">{{ mediumConfidenceCount() }} {{ 'import.duplicateSummary.confidence.medium' | translate }}</span>
           }
           @if (lowConfidenceCount() > 0) {
-            <span class="confidence-badge low">{{ lowConfidenceCount() }} Low</span>
+            <span class="confidence-badge low">{{ lowConfidenceCount() }} {{ 'import.duplicateSummary.confidence.low' | translate }}</span>
           }
         </div>
         
@@ -61,6 +62,8 @@ import { DividerModule } from 'primeng/divider';
 export class DuplicateSummaryComponent {
   @Input() duplicateRows: any[] = [];
   @Input() totalRecords: number = 0;
+  
+  private translateService = inject(TranslateService);
 
   uniqueRecords = computed(() => this.totalRecords - this.duplicateRows.length);
   
@@ -123,9 +126,9 @@ export class DuplicateSummaryComponent {
   recommendationTitle = computed(() => {
     const severity = this.recommendationSeverity();
     switch (severity) {
-      case 'high-risk': return 'High Risk of Duplicates';
-      case 'medium-risk': return 'Moderate Duplicate Risk';
-      default: return 'Low Duplicate Risk';
+      case 'high-risk': return this.translateService.instant('import.duplicateSummary.risk.high.title');
+      case 'medium-risk': return this.translateService.instant('import.duplicateSummary.risk.medium.title');
+      default: return this.translateService.instant('import.duplicateSummary.risk.low.title');
     }
   });
 
@@ -135,11 +138,11 @@ export class DuplicateSummaryComponent {
     
     switch (severity) {
       case 'high-risk': 
-        return `${highCount} high-confidence duplicates detected. Review carefully before importing.`;
+        return this.translateService.instant('import.duplicateSummary.risk.high.message', { count: highCount });
       case 'medium-risk': 
-        return 'Some potential duplicates found. Consider reviewing before import.';
+        return this.translateService.instant('import.duplicateSummary.risk.medium.message');
       default: 
-        return 'Most duplicates are low confidence. Safe to proceed with import.';
+        return this.translateService.instant('import.duplicateSummary.risk.low.message');
     }
   });
 }

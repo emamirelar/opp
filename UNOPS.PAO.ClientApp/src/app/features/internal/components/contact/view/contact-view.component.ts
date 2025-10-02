@@ -10,7 +10,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule } from 'primeng/checkbox';
 
 
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { DocumentService } from '../../../services/document.service';
 import { ParentEntityType } from '../../../overrides/interfaces/types';
 import { DocumentLinkModel } from '../../../overrides/interfaces/types';

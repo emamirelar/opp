@@ -3,11 +3,11 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../../../../../common/services/language.service';
 import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
@@ -32,6 +32,7 @@ import { AiTranscribeComponent } from '../../../../../common/reusables/component
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogService } from 'primeng/dynamicdialog';
 import { DuplicateConfirmationDialogComponent, DuplicateDetectionResponse } from '../duplicate-confirmation-dialog/duplicate-confirmation-dialog.component';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-contact-edit-dialog',
@@ -55,7 +56,8 @@ import { DuplicateConfirmationDialogComponent, DuplicateDetectionResponse } from
     CheckboxModule,
     FormsModule,
     AiTranscribeComponent,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    TooltipModule
   ],
   templateUrl: './contact-edit-dialog.component.html',
   standalone: true,
@@ -127,6 +129,7 @@ export class ContactEditDialogComponent implements OnInit {
   contactService = inject(ContactService);
   partnerService = inject(PartnerService);
   languageService = inject(LanguageService);
+  translateService = inject(TranslateService);
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
   private dialogService = inject(DialogService);
@@ -162,6 +165,10 @@ export class ContactEditDialogComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Always refresh partners cache to ensure dropdowns have latest data
+    // This is especially important after creating new contacts/partners
+    this.cachedDataService.refreshPartners();
+
     this.record = this.dialogConfig.data?.record;
     const partnerContext = this.dialogConfig.data?.partnerContext;
     
@@ -283,7 +290,7 @@ export class ContactEditDialogComponent implements OnInit {
         payload['id'] = this.record['id'];
         this.contactService.updateContactById(payload).subscribe({
           next: (data: any) => {
-            this.feedbackDialogService.showSuccessToast({ detail: 'Record updated successfully!' });
+            this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.recordUpdatedSuccessfully') });
             
             // Trigger duplicate detection for the updated record
             this.triggerDuplicateDetectionAfterSave(payload);
@@ -292,7 +299,7 @@ export class ContactEditDialogComponent implements OnInit {
             setTimeout(() => this.dialogRef.close("saved"));
           },
           error: (error: any) => {
-            this.feedbackDialogService.showErrorToast({ detail: 'Failed to update record' });
+            this.feedbackDialogService.showErrorToast({ detail: this.translateService.instant('message.failedToUpdateRecord') });
           }
         });
       } else {
@@ -398,7 +405,7 @@ export class ContactEditDialogComponent implements OnInit {
       
       // Show success message for legacy format
       if (!data.data) {
-        this.feedbackDialogService.showSuccessToast({ detail: 'Contact data transcribed successfully!' });
+        this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.contactDataTranscribedSuccessfully') });
       }
     }
   }
@@ -416,20 +423,20 @@ export class ContactEditDialogComponent implements OnInit {
         } else if (response.action === 'created' || response.success) {
           // Contact created successfully
           this.feedbackDialogService.showSuccessToast({ 
-            detail: response.message || 'Contact created successfully!' 
+            detail: response.message || this.translateService.instant('message.contactCreatedSuccessfully') 
           });
           setTimeout(() => this.dialogRef.close(response.data || response));
         } else {
           // Fallback for successful creation (old format)
           this.feedbackDialogService.showSuccessToast({ 
-            detail: 'Contact created successfully!' 
+            detail: this.translateService.instant('message.contactCreatedSuccessfully') 
           });
           setTimeout(() => this.dialogRef.close(response));
         }
       },
       error: (error: any) => {
         this.feedbackDialogService.showErrorToast({ 
-          detail: 'Failed to create contact. Please try again.' 
+          detail: this.translateService.instant('message.failedToCreateContact') 
         });
         console.error('Contact creation error:', error);
       }
@@ -442,7 +449,7 @@ export class ContactEditDialogComponent implements OnInit {
   private showDuplicateConfirmationDialog(duplicateResponse: DuplicateDetectionResponse, originalPayload: any): void {
     const dialogRef = this.dialogService.open(DuplicateConfirmationDialogComponent, {
       data: duplicateResponse,
-      header: 'Duplicate Contact Detected',
+      header: this.translateService.instant('title.duplicateContactDetected'),
       width: '500px',
       modal: true,
       breakpoints: {
@@ -484,7 +491,7 @@ export class ContactEditDialogComponent implements OnInit {
       } else {
         // User cancelled - do nothing, stay on the form
         this.feedbackDialogService.showInfoToast({ 
-          detail: 'Contact creation cancelled.' 
+          detail: this.translateService.instant('message.contactCreationCancelled') 
         });
       }
     });
@@ -641,8 +648,8 @@ export class ContactEditDialogComponent implements OnInit {
         topDuplicate: parsedTopDuplicate,
         duplicates: parsedDuplicates,
         tooltip: duplicateInfo.totalDuplicates > 0 
-          ? `${duplicateInfo.totalDuplicates} duplicate(s) found` 
-          : 'Unique record'
+          ? this.translateService.instant('message.duplicatesFound', { count: duplicateInfo.totalDuplicates })
+          : this.translateService.instant('message.uniqueRecord')
       };
 
       // Update the record's duplicate info
@@ -659,7 +666,7 @@ export class ContactEditDialogComponent implements OnInit {
         lowConfidence: 0,
         topDuplicate: null,
         duplicates: null,
-        tooltip: 'Unique record'
+        tooltip: this.translateService.instant('message.uniqueRecord')
       };
       
       this.updateRecordInImportDialog(noDuplicateInfo, updatedRecord);

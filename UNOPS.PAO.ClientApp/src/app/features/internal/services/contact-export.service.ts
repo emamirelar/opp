@@ -4,7 +4,7 @@ import { switchMap, tap, catchError } from 'rxjs/operators';
 import { Contact } from '../models/contact.model';
 import { ContactService } from './contact.service';
 import { ExportGoogleSheetService } from '../../../common/reusables/components/export/export-google-sheet.service';
-import { FeedbackDialogService } from '../../../common/reusables/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../common/services/feedback-dialog.service';
 import { ConfirmationService } from 'primeng/api';
 
 @Injectable({

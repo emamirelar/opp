@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Button } from 'primeng/button';
 import { DialogService } from 'primeng/dynamicdialog';
 import { InteractionModalComponent } from '../../../interaction/modal/interaction-modal.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import {ListViewColumn, ListViewConfig, SearchParams} from '@common/pages/components/listview/listview.model';
 import {ListviewComponent} from '@common/pages/components/listview/listview.component';
-import {FeedbackDialogService} from '@common/pages/services/feedback-dialog.service';
+import {FeedbackDialogService} from '../../../../../../common/services/feedback-dialog.service';
 import {PermissionUtilityService} from '@essentials/services/permission-utility.service';
 import {SearchField} from '@common/services/search-parser.service';
 import {EntityConfigurationService} from '@features/internal/services/entity-configuration.service';
@@ -62,6 +62,7 @@ export class ContactViewInteractionsComponent implements OnInit {
   private feedbackDialogService = inject(FeedbackDialogService);
   public permissionUtilityService = inject(PermissionUtilityService);
   private interactionIconService = inject(InteractionIconService);
+  private translateService = inject(TranslateService);
 
   // Permission handling for interactions
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Interaction');
@@ -104,14 +105,22 @@ export class ContactViewInteractionsComponent implements OnInit {
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
     enableSorting: true,
-    enableSearch: false,
+    enableSearch: true,
     enableExport: this.entityPermissions().permissions.canCreate || this.entityPermissions().permissions.canUpdate,
     entityName: 'Interaction',
     scrollable: true,
     scrollHeight: 'flex',
+    defaultSortField: 'subject',
+    defaultSortOrder: 'asc',
+    sortableFields: [
+      { field: 'subject', label: 'Subject' },
+      { field: 'createdDate', label: 'Created Date' },
+      { field: 'lastModifiedDate', label: 'Last Updated Date' }
+    ],
     searchConfig: {
       useAdvancedSearch: true,
-      placeholder: 'Search contact interactions...',
+      placeholder: this.translateService.instant('search.interactionsPlaceholder'),
+      entityType: 'Interaction' as const,
       searchableFields: [
         {
           field: 'type',

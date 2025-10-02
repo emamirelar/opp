@@ -19,7 +19,7 @@ import { ContactService } from '../../../../features/internal/services/contact.s
 import { InteractionService } from '../../../../features/internal/services/interaction.service';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { PermissionService } from '../../../../essentials/services/permission.service';
-import { FeedbackDialogService } from '../../services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerEditDialogComponent } from '../../../../features/internal/components/partner/edit-dialog/partner-edit-dialog.component';
 import { ContactEditDialogComponent } from '../../../../features/internal/components/contact/edit-dialog/contact-edit-dialog.component';
@@ -28,6 +28,7 @@ import { Partner } from '../../../../features/internal/models/partner.model';
 import { Contact } from '../../../../features/internal/models/contact.model';
 import { Interaction } from '../../../../features/internal/models/interaction.model';
 import { DashboardCardComponent, DashboardCardConfig, DashboardCardFilter } from '../../../components/dashboard-card';
+import { DynamicContentTestComponent } from '../../../../features/internal/components/dynamic-content-test/dynamic-content-test.component';
 // import { InteractionType } from '../../../../features/internal/models/interaction-type.enum'; // Uncomment for dummy data testing
 
 interface DashboardData {
@@ -201,6 +202,9 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   // Mobile detection
   isMobile = signal<boolean>(false);
+
+  // Dynamic content test mode
+  showDynamicContentTest = signal<boolean>(false);
 
   // UNCOMMENT BELOW TO ENABLE DUMMY DATA TESTING FOR "VIEW ALL" FUNCTIONALITY
   // useDummyData = signal(false);
@@ -1087,6 +1091,10 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
   refreshDashboard() {
     this.loadDashboardData();
+  }
+
+  toggleDynamicContentTest() {
+    this.showDynamicContentTest.set(!this.showDynamicContentTest());
   }
 
   formatDate(dateString: string | Date | null | undefined): string {

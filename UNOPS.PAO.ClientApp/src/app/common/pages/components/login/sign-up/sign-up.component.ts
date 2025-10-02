@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { ButtonModule } from 'primeng/button';
 import { PasswordModule } from 'primeng/password';
 import { DialogModule } from 'primeng/dialog';
-import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../services/feedback-dialog.service';
 import { PanelModule } from 'primeng/panel';
 import { CommonModule } from '@angular/common';
 import { InputIconModule } from 'primeng/inputicon';

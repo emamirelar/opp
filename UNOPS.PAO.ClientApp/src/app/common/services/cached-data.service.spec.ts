@@ -240,21 +240,21 @@ describe('CachedDataService', () => {
 
     it('should transform partner category groups for select dropdown', () => {
       const selectData = service.getPartnerGroupsForSelect();
-      
+
       expect(selectData).toEqual([
         {
           name: 'Category 1',
           value: 'CAT1',
           items: [
-            { name: 'Group 1', value: 'GRP1' },
-            { name: 'Group 2', value: 'GRP2' }
+            { name: 'Group 1', value: 'GRP1', searchText: 'category 1 group 1' },
+            { name: 'Group 2', value: 'GRP2', searchText: 'category 1 group 2' }
           ]
         },
         {
           name: 'Category 2',
           value: 'CAT2',
           items: [
-            { name: 'Group 3', value: 'GRP3' }
+            { name: 'Group 3', value: 'GRP3', searchText: 'category 2 group 3' }
           ]
         }
       ]);

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect, computed, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect, computed, ViewChild, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
@@ -33,9 +34,9 @@ import { AutoCompleteModule } from 'primeng/autocomplete';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PanelModule } from 'primeng/panel';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
-import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import {Divider} from 'primeng/divider';
-import { PhoneInputComponent } from '../../../../../common/components/phone-input/phone-input.component';
+import { TooltipModule } from 'primeng/tooltip';
 
 // Interface for duplicate detection response
 interface DuplicateDetectionResponse {
@@ -97,8 +98,8 @@ interface DuplicateDetectionResponse {
     AiTranscribeComponent,
     PanelModule,
     Divider,
-    PhoneInputComponent,
     AutoCompleteModule,
+    TooltipModule,
   ],
   providers: [
     DialogService,
@@ -139,8 +140,8 @@ export class InteractionModalComponent {
     
     // Check if at least one selected contact belongs to the current partner
     const hasPartnerContact = selectedContactIds.some(contactId => {
-      const contact = allContacts.find(c => c.id === contactId);
-      return contact && contact.partnerId === partnerIdNum;
+      const contact = allContacts.find(c => c.id?.toString() === contactId?.toString());
+      return contact && contact.partner?.id?.toString() === partnerIdNum?.toString();
     });
 
     if (!hasPartnerContact) {
@@ -155,7 +156,7 @@ export class InteractionModalComponent {
 
   // Helper method to get partner name by ID
   private getPartnerName(partnerId: number): string {
-    const partner = this.allPartners().find(p => p.id === partnerId);
+    const partner = this.allPartners().find(p => p.id?.toString() === partnerId?.toString());
     return partner?.name || 'Unknown Partner';
   }
 
@@ -268,6 +269,7 @@ export class InteractionModalComponent {
   // Permission management using utility service
   private permissionUtils: any;
   recordPermissions: any;
+  private destroyRef = inject(DestroyRef);
 
   constructor(
     private fb: FormBuilder,
@@ -290,14 +292,12 @@ export class InteractionModalComponent {
       partnerIds: [[]],
       userIds: [[]],
       emailAddresses: [[]],
-      phoneNumbers: [[]],
       location: [''],
       subject: ['', Validators.required],
       createdBy: [null],
 
       previousContactIds: [[]],
       previousEmails: [[]],
-      previousPhones: [[]],
       previousUserIds: [[]],
       // Organization Unit - Array for backend compatibility
       organizationHierarchyIds: [[]],
@@ -312,7 +312,6 @@ export class InteractionModalComponent {
 
     this.setupContactIdsChangeListener();
     this.setupEmailChangeListener();
-    this.setupPhoneNumberChangeListener();
     this.setupUserIdsChangeListener();
     this.setupPartnerIdsChangeListener();
     this.setupOrganizationUnitSyncListener();
@@ -374,6 +373,11 @@ export class InteractionModalComponent {
   }
 
   ngOnInit() {
+    // Always refresh contacts and partners cache to ensure dropdowns have latest data
+    // This is especially important after creating new contacts/partners
+    this.cachedDataService.refreshContacts();
+    this.cachedDataService.refreshPartners();
+
     // If recordId is provided via Input (AI layout), load data directly
     if (this.recordId && this.recordId !== '') {
       this.loadInteractionById(Number(this.recordId));
@@ -463,7 +467,7 @@ export class InteractionModalComponent {
 
   private loadInteractionById(id: number) {
     this.isLoadingExistingData.set(true);
-    this.interactionService.getById(id).subscribe({
+    this.interactionService.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         if (response.body) {
           this.record = response.body;
@@ -526,14 +530,12 @@ export class InteractionModalComponent {
       partnerIds: record.partnerIds || [],
       userIds: userIds,
       emailAddresses: lowercaseEmails,
-      phoneNumbers: record.phoneNumbers || [],
       location: record.location,
       subject: record.subject,
       createdBy: record.createdBy,
       organizationHierarchyIds: organizationHierarchyIds,
       previousContactIds: record.contactIds || [],
       previousEmails: lowercaseEmails,
-      previousPhones: record.phoneNumbers || [],
       previousUserIds: userIds
     });
 
@@ -549,7 +551,7 @@ export class InteractionModalComponent {
     if (userIds.length > 0) {
       // Use setTimeout to ensure form is fully initialized before triggering user search
       setTimeout(() => {
-        this.userSearchService.searchUsers('', 50, userIds).subscribe({
+        this.userSearchService.searchUsers('', 50, userIds).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (users) => {
             this.userSearchResults.set(users);
 
@@ -569,7 +571,7 @@ export class InteractionModalComponent {
 
     // Ensure Created By single-select field has selected user available
     if (record.createdBy) {
-      this.userSearchService.searchUsers('', 50, [record.createdBy]).subscribe({
+      this.userSearchService.searchUsers('', 50, [record.createdBy]).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (users) => {
           this.createdBySearchResults.set(users);
         },
@@ -693,7 +695,7 @@ export class InteractionModalComponent {
 
       if (formValue.id) {
         // Update existing interaction
-        this.interactionService.update(formValue).subscribe({
+        this.interactionService.update(formValue).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: () => {
             this.showSuccessMessage('message.interactionUpdated');
             
@@ -742,7 +744,7 @@ export class InteractionModalComponent {
     }, () => {
       const interactionId = this.formGroup.get('id')?.value;
       if (interactionId) {
-        this.interactionService.delete(interactionId).subscribe({
+        this.interactionService.delete(interactionId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: () => {
             this.showSuccessMessage('message.interactionDeletedSuccessfully');
             this.dialogRef.close('deleted');
@@ -774,19 +776,19 @@ export class InteractionModalComponent {
   // Helper: Get emails for contact IDs (only valid matches) - always lowercase
   private getEmailsForContactIds(contactIds: number[]): string[] {
     return contactIds
-      .map(id => this.availableContacts().find(c => c.id === id)?.email)
+      .map(id => this.availableContacts().find(c => c.id?.toString() === id?.toString())?.email)
       .filter((email): email is string => email !== undefined)
       .map(email => email.toLowerCase());
   }
 
   // Helper: Get contact IDs for emails (only valid matches) - case insensitive comparison
-  private getContactIdsForEmails(emails: string[]): number[] {
+  private getContactIdsForEmails(emails: string[]): (string | number)[] {
     return emails
       .map(email => {
         const lowerEmail = email.toLowerCase();
         return this.availableContacts().find(c => c.email?.toLowerCase() === lowerEmail)?.id;
       })
-      .filter((id): id is number => id !== undefined);
+      .filter((id): id is string => id !== undefined && id !== null) as (string | number)[];
   }
 
   // Helper: Get emails for user IDs (only valid matches) - always lowercase
@@ -828,7 +830,7 @@ export class InteractionModalComponent {
       return;
     }
 
-    this.userProfileService.getCurrentUserProfile().subscribe({
+    this.userProfileService.getCurrentUserProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         const userProfile = response.userInfoWithOrgSettings;
 
@@ -857,7 +859,7 @@ export class InteractionModalComponent {
           this.formGroup.patchValue({ createdBy: userProfile.userId });
 
           // Ensure the created by user is available in the dropdown
-          this.userSearchService.searchUsers('', 50, [userProfile.userId]).subscribe({
+          this.userSearchService.searchUsers('', 50, [userProfile.userId]).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
             next: (users) => {
               this.createdBySearchResults.set(users);
             },
@@ -889,7 +891,7 @@ export class InteractionModalComponent {
       return;
     }
 
-    this.userSearchService.searchUsers(searchTerm, 50, selectedUserIds).subscribe({
+    this.userSearchService.searchUsers(searchTerm, 50, selectedUserIds).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (users) => {
         this.userSearchResults.set(users);
       },
@@ -917,7 +919,7 @@ export class InteractionModalComponent {
       return;
     }
 
-    this.userSearchService.searchUsers(searchTerm, 50, selectedUserIds).subscribe({
+    this.userSearchService.searchUsers(searchTerm, 50, selectedUserIds).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (users) => {
         this.createdBySearchResults.set(users);
       },
@@ -933,7 +935,8 @@ export class InteractionModalComponent {
     this.formGroup.get('contactIds')?.valueChanges
       .pipe(
         debounceTime(300),
-        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((newContactIds: number[]) => {
         this.updatePartnerIdsBasedOnContacts();
@@ -971,7 +974,8 @@ export class InteractionModalComponent {
     this.formGroup.get('userIds')?.valueChanges
       .pipe(
         debounceTime(300),
-        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((newUserIds: number[]) => {
         // Update user names
@@ -1006,7 +1010,8 @@ export class InteractionModalComponent {
     this.formGroup.get('emailAddresses')?.valueChanges
       .pipe(
         debounceTime(300),
-        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((newEmails: string[]) => {
 
@@ -1043,7 +1048,7 @@ export class InteractionModalComponent {
 
         // Step 1: Add new contact IDs for newly added emails (if valid)
         const contactIdsToAdd = validContactIdsForNewEmails.filter(
-          id => !currentContactIds.includes(id)
+          id => !currentContactIds.map(String).includes(String(id))
         );
 
         // Step 2: Remove contact IDs for newly removed emails (if valid)
@@ -1083,24 +1088,11 @@ export class InteractionModalComponent {
       });
   }
 
-  private setupPhoneNumberChangeListener() {
-    this.formGroup.get('phoneNumbers')?.valueChanges
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
-      )
-      .subscribe((newPhones: string[]) => {
-        // Phone validation is now handled by PhoneInputComponent
-        // Just track previous phones for consistency
-        this.formGroup.get('previousPhones')?.setValue(newPhones);
-      });
-  }
-
   private setupOrganizationUnitSyncListener() {
     // Sync between selectedOrgUnitId (UI) and organizationHierarchyIds (backend array)
 
     // When UI FormControl changes, update the array FormControl
-    this.formGroup.get('selectedOrgUnitId')?.valueChanges.subscribe(value => {
+    this.formGroup.get('selectedOrgUnitId')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
       const newArray = value ? [value] : [];
       this.formGroup.get('organizationHierarchyIds')?.setValue(newArray, { emitEvent: false });
       this.selectedOrgUnitSignal.set(value);
@@ -1109,7 +1101,7 @@ export class InteractionModalComponent {
     });
 
     // When array FormControl changes (from backend data), update UI FormControl
-    this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
+    this.formGroup.get('organizationHierarchyIds')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(value => {
       const array = value || [];
       const firstElement = array.length > 0 ? array[0] : null;
       this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
@@ -1130,9 +1122,10 @@ export class InteractionModalComponent {
 
     // Get unique partnerIds from the selected contacts
     const relatedPartnerIds = this.availableContacts()
-      .filter(contact => selectedContactIds.includes(contact.id))
-      .map(contact => contact.partnerId)
-      .filter((partnerId, index, self) => self.indexOf(partnerId) === index); // Remove duplicates
+      .filter(contact => contact.id && selectedContactIds.map(String).includes(String(contact.id)))
+      .map(contact => contact.partner?.id)
+      .filter((partnerId): partnerId is string => partnerId !== undefined && partnerId !== null)
+      .filter((partnerId, index, self) => self.indexOf(partnerId) === index) as (string | number)[]; // Remove duplicates
 
     // Update partnerIds without triggering valueChanges
     this.formGroup.get('partnerIds')?.setValue(relatedPartnerIds, { emitEvent: false });
@@ -1174,24 +1167,21 @@ export class InteractionModalComponent {
     }
   }
 
-  get showPhoneNumbers() {
-    return this.formGroup.get('type')?.value != 'Email';
-  }
-
   /**
    * Creates an interaction with duplicate detection workflow
    */
   private createInteractionWithDuplicateDetection(formValue: any): void {
-    this.interactionService.create(formValue).subscribe({
+    this.interactionService.create(formValue).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         // Check if response indicates duplicate detection
-        if (response.body?.confirmationRequired && response.body?.action === "duplicateConfirmation") {
+        const body: any = response.body;
+        if (body?.confirmationRequired && body?.action === "duplicateConfirmation") {
           // Show duplicate confirmation dialog
-          this.showDuplicateConfirmationDialog(response.body, formValue);
+          this.showDuplicateConfirmationDialog(body, formValue);
         } else {
           // Normal creation success
           this.showSuccessMessage('message.interactionCreated');
-          this.dialogRef.close(response.body?.data || response.body || response);
+          this.dialogRef.close(body?.data || body || response);
         }
       },
       error: (error) => {
@@ -1222,7 +1212,7 @@ export class InteractionModalComponent {
       }
     });
 
-    dialogRef.onClose.subscribe((confirmed: boolean) => {
+    dialogRef.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed: boolean) => {
       if (confirmed) {
         // User confirmed - create interaction anyway
         const confirmedFormValue = {
@@ -1230,10 +1220,11 @@ export class InteractionModalComponent {
           confirmDuplicateCreation: true
         };
 
-        this.interactionService.create(confirmedFormValue).subscribe({
+        this.interactionService.create(confirmedFormValue).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (response) => {
             this.showSuccessMessage('message.interactionCreated');
-            this.dialogRef.close(response.body?.data || response.body || response);
+            const body: any = response.body;
+            this.dialogRef.close(body?.data || body || response);
           },
           error: (error) => {
             this.showErrorMessage('message.errorCreatingInteraction', error);
@@ -1257,7 +1248,8 @@ export class InteractionModalComponent {
     this.formGroup.get('partnerIds')?.valueChanges
       .pipe(
         debounceTime(300),
-        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((newPartnerIds: number[]) => {
         this.updatePartnerNames(newPartnerIds);
@@ -1275,7 +1267,9 @@ export class InteractionModalComponent {
     const contactNames = contactIds
       .map(id => {
         const contact = availableContacts.find((c: any) => c.id === id);
-        return contact ? contact.name : null;
+        if (!contact) return null;
+        const fullName = [contact.firstName, contact.lastName].filter(Boolean).join(' ');
+        return fullName || null;
       })
       .filter(name => name !== null)
       .join(', ');
@@ -1298,7 +1292,7 @@ export class InteractionModalComponent {
     // First, try to find partners in the cache
     partnerIds.forEach(id => {
       const partner = allPartners.find((p: any) => p.id === id);
-      if (partner) {
+      if (partner && partner.name) {
         foundPartners.push(partner.name);
       } else {
         missingPartnerIds.push(id);
@@ -1322,7 +1316,7 @@ export class InteractionModalComponent {
       )
     );
 
-    forkJoin(loadObservables).subscribe({
+    forkJoin(loadObservables).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (loadedPartnerNames) => {
         // Combine found partners with loaded partners
         const validLoadedNames = loadedPartnerNames.filter(name => name !== null) as string[];
@@ -1403,7 +1397,7 @@ export class InteractionModalComponent {
     }
     
     // Call the interaction service to detect duplicates (uses the updated SQL with ID exclusion)
-    this.interactionService.detectDuplicates(duplicateCheckPayload).subscribe({
+    this.interactionService.detectDuplicates(duplicateCheckPayload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         // If this is an import edit, update the duplicate information
         if (this.dialogConfig.data.isImportEdit) {

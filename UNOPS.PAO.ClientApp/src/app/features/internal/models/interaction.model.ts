@@ -24,7 +24,6 @@ export interface Interaction {
   contactIds: number[];
   partnerIds: number[];
   emailAddresses: string[];
-  phoneNumbers: string[];
   location: string;
   subject: string;
   // Organization Unit Relationships

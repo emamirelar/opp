@@ -3,9 +3,9 @@ import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { FeedbackDialogService } from '../../../../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../../../../common/services/feedback-dialog.service';
 import { DrivePickerService } from '../../../../drive-picker.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 declare const google: any;
 
@@ -28,7 +28,7 @@ export class DriveDocumentUploadComponent  {
   private _driveIntegrationServiceSubscription;
   selectedDriveFiles: any[] = [];
 
-  constructor(private feedbackService: FeedbackDialogService, public driveService: DrivePickerService) {
+  constructor(private feedbackService: FeedbackDialogService, public driveService: DrivePickerService, private translateService: TranslateService) {
     this._driveIntegrationServiceSubscription = this.driveService.onFilesSelectedEmitter.subscribe({
       next: (event: any) => {
         this.onSelect(event)
@@ -42,20 +42,20 @@ export class DriveDocumentUploadComponent  {
 
   onSelect(event: any) {
     this.selectedDriveFiles.push(...event.files);
-    this.feedbackService.showInfoToast({detail: `${event.files.length} file(s) ready for upload.`});
+    this.feedbackService.showInfoToast({detail: this.translateService.instant('messages.filesReadyForUpload', {count: event.files.length})});
     this.fileSelected.emit(event);
   }
 
   onRemove(fileIndex: number) {
     this.selectedDriveFiles.splice(fileIndex, 1);
 
-    this.feedbackService.showInfoToast({detail: 'File removed successfully!'});
+    this.feedbackService.showInfoToast({detail: this.translateService.instant('messages.success.fileRemoved')});
     this.fileRemoved.emit(event);
   }
 
   clearFiles() {
     this.selectedDriveFiles = [];
-    this.feedbackService.showInfoToast({detail: 'All files have been cleared!'});
+    this.feedbackService.showInfoToast({detail: this.translateService.instant('messages.success.allFilesCleared')});
     this.filesCleared.emit();
   }
 }

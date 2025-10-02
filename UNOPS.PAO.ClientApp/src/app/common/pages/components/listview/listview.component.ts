@@ -734,7 +734,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
         sortField || this.config.defaultSortField,
         sortOrder || this.config.defaultSortOrder,
         customTransform
-      ).subscribe();
+      ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     }
   }
 
@@ -804,14 +804,31 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     
     if (isAdvancedSearchMode && searchCriteria.length > 0) {
       // Advanced search with criteria
-      return `${this._dataUrl}/advanced-search`;
+      return this.buildSearchUrl('advanced-search');
     } else if (searchText?.trim()) {
       // Simple text search
-      return `${this._dataUrl}/search`;
+      return this.buildSearchUrl('search');
     } else {
       // List all (no search)
       return this._dataUrl;
     }
+  }
+
+  /**
+   * Builds search URL by properly handling existing query parameters
+   */
+  private buildSearchUrl(searchType: 'search' | 'advanced-search'): string {
+    const url = new URL(this._dataUrl, window.location.origin);
+    
+    // Extract the base path and add the search endpoint
+    const basePath = url.pathname;
+    const searchPath = `${basePath}/${searchType}`;
+    
+    // Preserve existing query parameters
+    const searchParams = url.searchParams.toString();
+    
+    // Construct the final URL
+    return searchParams ? `${searchPath}?${searchParams}` : searchPath;
   }
 
   private handleDataResponse(data: any): void {
@@ -1015,22 +1032,22 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   // Load global filter information
   private loadGlobalFilterInfo(): void {
     // Get current user ID
-    this.authService.user().subscribe({
+    this.authService.user().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (claims) => {
         const userIdClaim = claims.find(c => c.type === 'userId');
         if (userIdClaim) {
           this.currentUserId.set(userIdClaim.value);
-          
+
           // Load user's global filters
           this.userPreferenceService.getGlobalFilters(userIdClaim.value)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
               next: (filters) => {
                 this.globalFilters.set(filters);
-                
+
                 // Update global filter active status
                 this.isGlobalFilterActive.set(this.hasOtherActiveFilters());
-                
+
                 // Update filter labels now that we have org unit name from backend
                 this.updateActiveFilterLabels();
               },

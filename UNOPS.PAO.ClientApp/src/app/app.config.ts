@@ -31,7 +31,7 @@ import { SecurityContext } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ConfirmationService } from 'primeng/api';
-import { FeedbackDialogService } from './common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from './common/services/feedback-dialog.service';
 import { authInterceptor } from './essentials/interceptors/auth.interceptor';
 import { serverErrorInterceptor } from './essentials/interceptors/server-error.interceptor';
 import { AuthService } from './essentials/services/auth.service';

@@ -39,7 +39,7 @@ import { UserPreferenceService } from '../../../../services/user-preference.serv
 import { GlobalFiltersDialogService } from '../../../../services/global-filters-dialog.service';
 import { TourControlComponent } from '../../../components/tour-control/tour-control.component';
 import { ConfigurationService } from '../../../../essentials/services/configuration.service';
-import { AiAssistantData } from '../../../reusables/widgets/ai-assistant/ai-assistant.data';
+import { AiAssistantService } from '../../../../features/internal/services/ai-assistant.service';
 import { FormsModule } from '@angular/forms';
 
 interface UserInfo {
@@ -159,7 +159,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private router: Router,
     private globalFilterService: GlobalFilterService,
     private configurationService: ConfigurationService,
-    private aiAssistantData: AiAssistantData
+    private aiAssistantService: AiAssistantService
   ) {
     // Check if we're in development mode
     this.isDevelopment = this.checkIfDevelopment();
@@ -1075,7 +1075,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   startNewChat(): void {
-    this.aiAssistantData.clearConversation();
+    this.aiAssistantService.clearConversation();
     this.router.navigate(['/ai'], { replaceUrl: true });
     this.isNewChatDisabled = true;
     setTimeout(() => this.isNewChatDisabled = false, 1000);
@@ -1083,13 +1083,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   openChatSession(session: any): void {
     this.router.navigate(['/ai', session.id], { replaceUrl: true });
-    this.aiAssistantData.switchToSession(session.id).subscribe({
+    this.aiAssistantService.switchToSession(session.id).subscribe({
       error: (error) => console.error('Failed to switch session:', error)
     });
   }
 
   isSelectedChatSession(session: any): boolean {
-    const currentSessionId = this.aiAssistantData.currentSessionId();
+    const currentSessionId = this.aiAssistantService.currentSessionId();
     return currentSessionId === session.id;
   }
 

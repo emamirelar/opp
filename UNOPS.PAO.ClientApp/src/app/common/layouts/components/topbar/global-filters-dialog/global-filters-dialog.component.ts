@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -35,6 +36,7 @@ export class GlobalFiltersDialogComponent implements OnInit {
   private globalFilterService = inject(GlobalFilterService);
   private cdr = inject(ChangeDetectorRef);
   private translateService = inject(TranslateService);
+  private destroyRef = inject(DestroyRef);
 
   visible = false;
   currentUserId = '';
@@ -74,7 +76,7 @@ export class GlobalFiltersDialogComponent implements OnInit {
 
   private async loadCurrentUser() {
     try {
-      const claims = await this.authService.user().toPromise();
+      const claims = await this.authService.user().pipe(takeUntilDestroyed(this.destroyRef)).toPromise();
       const userIdClaim = claims?.find(c => c.type === 'userId');
       if (userIdClaim) {
         this.currentUserId = userIdClaim.value;
@@ -117,7 +119,7 @@ export class GlobalFiltersDialogComponent implements OnInit {
     if (!this.currentUserId) return;
 
     try {
-      const filters = await this.userPreferenceService.getGlobalFilters(this.currentUserId).toPromise();
+      const filters = await this.userPreferenceService.getGlobalFilters(this.currentUserId).pipe(takeUntilDestroyed(this.destroyRef)).toPromise();
       
       if (filters) {
         // Load org unit - don't default to user's org unit, start with null (show everything)
@@ -164,9 +166,9 @@ export class GlobalFiltersDialogComponent implements OnInit {
       
       // Increment key to force org unit selector re-render
       this.orgUnitSelectorKey++;
-      
+
       // Now fetch fresh filters from backend
-      const filters = await this.userPreferenceService.getGlobalFilters(this.currentUserId).toPromise();
+      const filters = await this.userPreferenceService.getGlobalFilters(this.currentUserId).pipe(takeUntilDestroyed(this.destroyRef)).toPromise();
       
       if (filters) {
         // Load org unit - don't default to user's org unit, start with null (show everything)
@@ -306,7 +308,7 @@ export class GlobalFiltersDialogComponent implements OnInit {
       }
 
       // Save the filters (backend will fallback to user's default org unit if orgUnitId is null)
-      await this.userPreferenceService.updateGlobalFilters(this.currentUserId, filters).toPromise();
+      await this.userPreferenceService.updateGlobalFilters(this.currentUserId, filters).pipe(takeUntilDestroyed(this.destroyRef)).toPromise();
       
       // Clear loading state and close dialog immediately
       this.saving = false;
@@ -336,7 +338,7 @@ export class GlobalFiltersDialogComponent implements OnInit {
     
     try {
       // Reset filters on the server (backend now resets to show everything)
-      await this.userPreferenceService.resetGlobalFilters(this.currentUserId).toPromise();
+      await this.userPreferenceService.resetGlobalFilters(this.currentUserId).pipe(takeUntilDestroyed(this.destroyRef)).toPromise();
       
       // Immediately clear loading state
       this.resetting = false;

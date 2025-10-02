@@ -1,4 +1,6 @@
-import {Component, ViewChild, ElementRef, Input, ViewContainerRef, inject, effect, OnInit, OnDestroy, NgZone, ChangeDetectorRef, Output, EventEmitter} from '@angular/core';
+import {Component, ViewChild, ElementRef, Input, ViewContainerRef, inject, effect, OnInit, OnDestroy, AfterViewInit, NgZone, ChangeDetectorRef, Output, EventEmitter} from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -9,21 +11,19 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MenuModule } from 'primeng/menu';
 import { Menu } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { TranslatePipe } from '@ngx-translate/core';
-import { AiAssistantData } from './ai-assistant.data';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { signal, computed } from '@angular/core';
 import { LayoutService } from '../../../layouts/services/layout.service';
 import { AiAssistantScanComponent } from './scan/ai-assistant-scan.component';
 import { SafeUrlPipe } from './safe-url.pipe';
-import { ContentRendererComponent } from './content-renderer/content-renderer.component';
 import { Router } from '@angular/router';
-
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../essentials/services/auth.service';
 import { AiAssistantService } from '../../../../features/internal/services/ai-assistant.service';
 import { SuggestionsResponse, SuggestionItem } from './ai-assistant.model';
 import { Observable, map, catchError, of } from 'rxjs';
+import { DynamicContentService } from './dynamic-content.service';
 
 @Component({
   selector: 'app-ai-assistant-panel',
@@ -42,11 +42,12 @@ import { Observable, map, catchError, of } from 'rxjs';
     TranslatePipe,
     AiAssistantScanComponent,
     SafeUrlPipe,
-    ContentRendererComponent
+    // ContentRendererComponent - removed, now created dynamically
   ]
 })
-export class AiAssistantPanelComponent implements OnInit, OnDestroy {
+export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('chatContainer') private chatContainer!: ElementRef;
+  @ViewChild('dynamicContentContainer', { read: ViewContainerRef }) private dynamicContentContainer!: ViewContainerRef;
   @ViewChild('scanComponent') private scanComponent!: AiAssistantScanComponent;
   @ViewChild('sessionMenu') private sessionMenu!: Menu;
   @Input() viewContainerRef!: ViewContainerRef;
@@ -73,7 +74,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   layoutService = inject(LayoutService);
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
-  private aiAssistantService = inject(AiAssistantService);
+  private dynamicContentService = inject(DynamicContentService);
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
   isRecording = signal(false);
@@ -85,11 +86,6 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   // Dynamic dots for generating message
   generatingDots = signal(1);
   private generatingInterval?: number;
-  
-  // Sequential content display
-  contentDisplayState = signal<{[messageIndex: number]: number}>({});
-  
-  // No longer needed - content renders directly from arrays
   
   // User info for personalized greeting
   userName = signal<string>('');
@@ -103,54 +99,31 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   // Resize listener reference for cleanup
   private resizeListener?: () => void;
   
+  // Subject for managing subscriptions
+  private destroy$ = new Subject<void>();
+  
+  // Buffer for chunks that arrive before ViewChild is available
+  private chunkBuffer: any[] = [];
+  private viewInitialized = false;
+  
   // Check if AI is currently in fullscreen mode (on AI route)
   isInFullscreenMode = computed(() => {
     return this.router.url.startsWith('/ai');
   });
   
-  // Example prompts for welcome message - Gemini style business-specific
-  examplePrompts = [
-    { 
-      text: 'Find qualified partners for infrastructure projects in West Africa', 
-      icon: 'pi pi-search',
-      category: 'Partner Search'
-    },
-    { 
-      text: 'Create a proposal summary for a climate resilience project', 
-      icon: 'pi pi-file-edit',
-      category: 'Proposal Writing'
-    },
-    { 
-      text: 'Analyze partnership trends in renewable energy sector', 
-      icon: 'pi pi-chart-line',
-      category: 'Data Analysis'
-    },
-    { 
-      text: 'Draft an engagement strategy for local NGOs', 
-      icon: 'pi pi-users',
-      category: 'Engagement'
-    },
-    { 
-      text: 'Review compliance requirements for new partnerships', 
-      icon: 'pi pi-shield',
-      category: 'Compliance'
-    },
-    { 
-      text: 'Generate a partnership impact report template', 
-      icon: 'pi pi-file-pdf',
-      category: 'Reporting'
-    }
-  ];
+  // Example prompts for welcome message - initialized after translation service is available
+  examplePrompts: { text: string, icon: string, category: string }[] = [];
 
   constructor(
-    public aiAssistantData: AiAssistantData,
+    public aiAssistantService: AiAssistantService,
     private router: Router,
     private globalFilterService: GlobalFilterService,
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private translateService: TranslateService
   ) {
     effect(() => {
-      const chatHistory = this.aiAssistantData.chatHistory();
+      const chatHistory = this.aiAssistantService.chatHistory();
       if (chatHistory.length > 0) {
         this.scrollToBottom(!this.firstScroll());
       }
@@ -161,53 +134,70 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
 
     // Build session menu items whenever sessions or current session change
     effect(() => {
-      const sessions = this.aiAssistantData.userSessions();
-      const currentSessionId = this.aiAssistantData.currentSessionId();
+      const sessions = this.aiAssistantService.userSessions();
+      const currentSessionId = this.aiAssistantService.currentSessionId();
       this.buildSessionMenuItems();
     });
 
     // Manage dots animation based on loading state
     effect(() => {
-      const isLoading = this.aiAssistantData.isLoading();
+      const isLoading = this.aiAssistantService.isLoading();
       if (isLoading) {
         this.startGeneratingDotsAnimation();
       } else {
         this.stopGeneratingDotsAnimation();
       }
     });
-
-    // Initialize content display for new messages
-    effect(() => {
-      const chatHistory = this.aiAssistantData.chatHistory();
-      chatHistory.forEach((message, messageIndex) => {
-        if (!message.isUser && message.result && message.result.length > 0) {
-          const displayState = this.contentDisplayState();
-          if (!(messageIndex in displayState)) {
-            this.initializeContentDisplay(messageIndex, true);
-          }
-        }
-      });
-    });
   }
 
   ngOnInit(): void {
     this.message.set('');
     this.loadUserInfo();
+    // this.initializeExamplePrompts();
     
     if (this.viewContainerRef) {
-      this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
+      this.aiAssistantService.setViewContainerRef(this.viewContainerRef);
     }
     
     // Load smart suggestions
     this.loadSmartSuggestions();
     
     // Listen for chat history changes to scroll to bottom for new messages
-    this.aiAssistantData.chatHistoryChanged$.subscribe(() => {
+    this.aiAssistantService.chatHistoryChanged$.subscribe(() => {
       // Use a small delay to ensure the DOM has updated
       setTimeout(() => {
         this.scrollToBottom(true); // Use smooth scroll for new messages
       }, 100);
     });
+
+    // Listen for streaming chunks and process them with dynamic content service
+    this.aiAssistantService.streamingChunk$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((chunk: any) => {
+        if (chunk) {
+          if (this.viewInitialized && this.dynamicContentContainer) {
+            // ViewChild is available
+            this.dynamicContentService.setViewContainer(this.dynamicContentContainer);
+            
+            // Check if there are buffered chunks that need to be processed first
+            if (this.chunkBuffer.length > 0) {
+              // Process all buffered chunks first
+              this.chunkBuffer.forEach((bufferedChunk, index) => {
+                this.dynamicContentService.processChunk(bufferedChunk);
+              });
+              
+              // Clear the buffer
+              this.chunkBuffer = [];
+            }
+            
+            // Now process the current chunk
+            this.dynamicContentService.processChunk(chunk);
+          } else {
+            // ViewChild not yet available, buffer the chunk
+            this.chunkBuffer.push(chunk);
+          }
+        }
+      });
 
     // Listen for window resize to update mobile detection
     if (typeof window !== 'undefined') {
@@ -216,189 +206,36 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       };
       window.addEventListener('resize', this.resizeListener);
     }
-
-    // Remove progressive rendering event subscription to prevent loops
-    // Content will render directly from streamingTypes arrays in template
     
     this.cdr.detectChanges();
   }
 
-  // Removed handleProgressiveRender - no longer needed
-
-  // Enhanced cache for getStreamingTypeEntries to prevent card re-renders
-  private streamingEntriesCache: {chunkType: string, items: any[]}[] = [];
-  private lastStreamingTypesStructureHash: string = '';
-  private chunkTypeWrapperCache: Map<string, {chunkType: string, items: any[]}> = new Map();
-
-  /**
-   * Convert streamingTypes object to array for template iteration
-   * This method creates stable references for completed cards to prevent re-renders
-   */
-  getStreamingTypeEntries(streamingTypes: any): {chunkType: string, items: any[]}[] {
-    if (!streamingTypes) return [];
+  ngAfterViewInit(): void {
+    // Mark view as initialized and process any buffered chunks
+    this.viewInitialized = true;
     
-    // Create a structural hash that only considers true structural changes:
-    // - Presence/absence of chunk types
-    // - Number of items per chunk type  
-    // - Arrival order (to maintain rendering order)
-    // Deliberately excludes completion status changes to avoid unnecessary rebuilds
-    const structuralData = Object.keys(streamingTypes).sort().map(key => {
-      const items = streamingTypes[key] || [];
-      return {
-        key,
-        length: items.length,
-        firstItemArrivalOrder: items[0]?.arrivalOrder || 0
-      };
-    });
-    
-    const currentStructureHash = JSON.stringify(structuralData);
-    
-    // Return cached result if structure hasn't changed
-    if (currentStructureHash === this.lastStreamingTypesStructureHash && this.streamingEntriesCache.length > 0) {
-      console.log('🎯 Using cached streaming entries - structure unchanged');
-      return this.streamingEntriesCache;
-    }
-    
-    console.log('🔄 Rebuilding streaming entries - structure changed');
-    console.log('🔍 Structure hash details:', {
-      oldHash: this.lastStreamingTypesStructureHash,
-      newHash: currentStructureHash,
-      structuralData: structuralData
-    });
-    
-    // Build entries but preserve wrapper objects for completed card types
-    const activeChunkTypes = Object.keys(streamingTypes)
-      .filter(chunkType => streamingTypes[chunkType] && streamingTypes[chunkType].length > 0);
-    
-    const entriesWithOrder = activeChunkTypes.map(chunkType => {
-      const items = streamingTypes[chunkType];
-      const firstItem = items[0];
-      
-      // Check if this chunk type has completed cards
-      const hasCompletedCards = chunkType === 'card' && items.some((item: any) => item.completed === true);
-      
-      // AGGRESSIVE CACHING: For card types, always try to reuse cached wrapper if it exists
-      if (chunkType === 'card' && this.chunkTypeWrapperCache.has(chunkType)) {
-        const cached = this.chunkTypeWrapperCache.get(chunkType)!;
+    if (this.chunkBuffer.length > 0) {
+      // Set the view container once
+      if (this.dynamicContentContainer) {
+        this.dynamicContentService.setViewContainer(this.dynamicContentContainer);
         
-        // For cards, reuse wrapper if:
-        // 1. Items array is the same reference, OR
-        // 2. Items have the same length and first item has same renderingId (safety check)
-        const sameReference = cached.items === items;
-        const sameStructure = cached.items.length === items.length && 
-                            cached.items[0]?.renderingId === items[0]?.renderingId;
+        // Process all buffered chunks
+        this.chunkBuffer.forEach((chunk, index) => {
+          this.dynamicContentService.processChunk(chunk);
+        });
         
-        if (sameReference || (hasCompletedCards && sameStructure)) {
-          console.log(`🔒 AGGRESSIVELY reusing cached wrapper for ${chunkType} cards:`, {
-            sameReference: sameReference,
-            sameStructure: sameStructure,
-            hasCompletedCards: hasCompletedCards,
-            cachedItemsRef: cached.items,
-            currentItemsRef: items,
-            itemsRefEqual: cached.items === items
-          });
-          
-          // Update items reference but keep the same wrapper object
-          cached.items = items;
-          
-          return {
-            ...cached,
-            arrivalOrder: firstItem?.arrivalOrder ?? 999999
-          };
-        }
-      }
-      
-      // Create new wrapper object only if we absolutely must
-      const newWrapper = {
-        chunkType: chunkType,
-        items: items // Use direct reference to prevent unnecessary copying
-      };
-      
-      // Cache wrappers for any card types (not just completed ones)
-      if (chunkType === 'card') {
-        this.chunkTypeWrapperCache.set(chunkType, newWrapper);
-        console.log(`💾 Cached new wrapper for ${chunkType} cards:`, {
-          hasCompletedCards: hasCompletedCards,
-          itemCount: items.length
-        });
-      }
-      
-      return {
-        ...newWrapper,
-        arrivalOrder: firstItem?.arrivalOrder ?? 999999
-      };
-    })
-    // Sort by the order chunks first appeared (chronological order)
-    .sort((a, b) => a.arrivalOrder - b.arrivalOrder);
-      
-    const result = entriesWithOrder.map(entry => ({
-      chunkType: entry.chunkType,
-      items: entry.items
-    }));
-    
-    // Update cache
-    this.streamingEntriesCache = result;
-    this.lastStreamingTypesStructureHash = currentStructureHash;
-    
-    // Clean up wrapper cache for chunk types that no longer exist
-    const currentChunkTypes = new Set(activeChunkTypes);
-    for (const cachedChunkType of this.chunkTypeWrapperCache.keys()) {
-      if (!currentChunkTypes.has(cachedChunkType)) {
-        this.chunkTypeWrapperCache.delete(cachedChunkType);
-        console.log(`🗑️ Cleaned up cache for removed chunk type: ${cachedChunkType}`);
+        // Clear the buffer
+        this.chunkBuffer = [];
       }
     }
-      
-    console.log('🎨 Template entries (in chronological order):', result.map((e, i) => `${i}: ${e.chunkType} (${e.items.length} items)`));
-    return result;
   }
-
-  /**
-   * TrackBy function for chunk type pairs to prevent unnecessary re-creation of wrapper divs
-   */
-  trackByChunkType(index: number, chunkTypePair: {chunkType: string, items: any[]}): string {
-    return chunkTypePair.chunkType;
-  }
-
-  // Store stable references by renderingId to ensure cards don't get recreated
-  private stableItemRefs: Map<string, any> = new Map();
-
-  /**
-   * TrackBy function for progressive content to prevent unnecessary re-renders
-   * AGGRESSIVE: Use renderingId only, ignore all other changes for completed cards
-   */
-  trackByRenderingId = (index: number, item: any): string => {
-    const renderingId = item?.renderingId || `fallback-${index}`;
-    
-    // Ensure stableItemRefs is initialized
-    if (!this.stableItemRefs) {
-      this.stableItemRefs = new Map();
-    }
-    
-    // For cards, aggressively cache the first version we see
-    if (item?.type === 'card') {
-      if (!this.stableItemRefs.has(renderingId)) {
-        this.stableItemRefs.set(renderingId, item);
-        console.log('🎯 CACHING FIRST card reference:', {
-          renderingId: renderingId,
-          completed: item.completed,
-          objectRef: item
-        });
-      } else {
-        console.log('🎯 REUSING CACHED card reference:', {
-          renderingId: renderingId,
-          newCompleted: item.completed,
-          cachedCompleted: this.stableItemRefs.get(renderingId)?.completed,
-          sameObjectRef: this.stableItemRefs.get(renderingId) === item
-        });
-      }
-    }
-    
-    return renderingId;
-  };
 
   ngOnDestroy(): void {
     this.stopGeneratingDotsAnimation();
+    
+    // Complete the destroy subject to unsubscribe from all observables
+    this.destroy$.next();
+    this.destroy$.complete();
     
     // Clean up window resize listener
     if (typeof window !== 'undefined' && this.resizeListener) {
@@ -486,16 +323,10 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
         this.isProcessingFile.set(true);
         this.processFiles([imageFiles[0]]);
         
-        console.log(`📋 Pasted image: ${imageFiles[0].name || 'clipboard-image'} (${imageFiles[0].type})`);
-        
         // Clear any existing message text since we're sending an image
         if (this.message().trim() === '') {
           // Optionally show a placeholder message that an image was pasted
-          // this.message.set('🖼️ Image pasted');
         }
-      } else if (files.length > 0) {
-        // Non-image files detected
-        console.log(`📋 Non-image files detected in clipboard, skipping file processing`);
       }
     }
     
@@ -647,9 +478,10 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     const currentFiles = this.selectedFiles();
 
     if (currentMessage.trim() || currentFiles.length > 0) {
-      // Clear streaming cache for new message
-      this.streamingEntriesCache = [];
-      this.lastStreamingTypesStructureHash = '';
+      // IMPORTANT: Clear all dynamic components and buffer before sending a new message
+      // This prevents old components from interfering with new streaming content
+      this.dynamicContentService.clearAllComponents();
+      this.chunkBuffer = [];
       
       this.ngZone.run(() => {
         this.message.set('');
@@ -670,7 +502,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
         user_email: localStorage.getItem('user_email')
       };
 
-      this.aiAssistantData.sendMessage(currentMessage, chatFiles, state).subscribe({
+      this.aiAssistantService.sendMessage(currentMessage, chatFiles, state).subscribe({
         next: () => {
           this.ngZone.run(() => {
             this.selectedFiles.set([]);
@@ -774,7 +606,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   }
 
   public isWaitingResponse(): boolean {
-    return this.aiAssistantData.isLoading();
+    return this.aiAssistantService.isLoading();
   }
 
   public async startRecording(): Promise<void> {
@@ -838,7 +670,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
 
   // Title editing methods
   startEditingTitle(): void {
-    this.editingTitle.set(this.aiAssistantData.sessionTitle());
+    this.editingTitle.set(this.aiAssistantService.sessionTitle());
     this.isEditingTitle.set(true);
     // Focus the input after the view updates
     setTimeout(() => {
@@ -852,8 +684,8 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
 
   saveTitle(): void {
     const newTitle = this.editingTitle().trim();
-    if (newTitle && newTitle !== this.aiAssistantData.sessionTitle()) {
-      this.aiAssistantData.updateTitle(newTitle).subscribe({
+    if (newTitle && newTitle !== this.aiAssistantService.sessionTitle()) {
+      this.aiAssistantService.updateTitle(newTitle).subscribe({
         next: () => {
           this.isEditingTitle.set(false);
         },
@@ -874,13 +706,13 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
 
   // Star and Archive methods
   toggleStar(): void {
-    this.aiAssistantData.toggleStar().subscribe({
+    this.aiAssistantService.toggleStar().subscribe({
       error: (error) => console.error('Failed to toggle star:', error)
     });
   }
 
   toggleArchive(): void {
-    this.aiAssistantData.toggleArchive().subscribe({
+    this.aiAssistantService.toggleArchive().subscribe({
       error: (error) => console.error('Failed to toggle archive:', error)
     });
   }
@@ -899,7 +731,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
 
   // Get suggested user responses from the most recent message
   getLatestSuggestedUserResponses(): string[] {
-    const chatHistory = this.aiAssistantData.chatHistory();
+    const chatHistory = this.aiAssistantService.chatHistory();
     if (chatHistory.length === 0) return [];
     
     // Get the most recent AI message (not user message)
@@ -917,7 +749,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   toggleSessionMenu(event: Event): void {
     // Refresh sessions when opening dropdown
     if (!this.sessionMenu.visible) {
-      this.aiAssistantData.loadUserSessions().subscribe({
+      this.aiAssistantService.loadUserSessions().subscribe({
         error: (error) => console.error('Failed to load sessions:', error)
       });
     }
@@ -925,15 +757,15 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   }
 
   private buildSessionMenuItems(): void {
-    const sessions = this.aiAssistantData.userSessions();
-    const currentSessionId = this.aiAssistantData.currentSessionId();
+    const sessions = this.aiAssistantService.userSessions();
+    const currentSessionId = this.aiAssistantService.currentSessionId();
     
     const validSessions = sessions.filter(session => session.id);
     
     if (validSessions.length === 0) {
       // Show placeholder when no sessions exist
       const menuItems: MenuItem[] = [{
-        label: 'No chat history available',
+        label: this.translateService.instant('aiAssistant.noChatsAvailable'),
         icon: 'pi pi-inbox',
         disabled: true,
         styleClass: 'text-gray-500'
@@ -962,11 +794,11 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       },
       // Add chat sessions
       ...sortedSessions.map(session => ({
-        label: (session as any).title || 'Untitled Chat',
+        label: (session as any).title || this.translateService.instant('aiAssistant.untitledChat'),
         icon: session.id === currentSessionId ? 'pi pi-check' : 'pi pi-comment',
         command: () => this.switchToSession(session.id!),
         styleClass: session.id === currentSessionId ? 'font-bold bg-blue-50' : '',
-        title: (session as any).title || 'Untitled Chat' // Tooltip
+        title: (session as any).title || this.translateService.instant('aiAssistant.untitledChat') // Tooltip
       }))
     ];
 
@@ -976,7 +808,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   switchToSession(sessionId: string): void {
     this.sessionMenu.hide();
     this.ngZone.run(() => {
-      this.aiAssistantData.switchToSession(sessionId).subscribe({
+      this.aiAssistantService.switchToSession(sessionId).subscribe({
         error: (error) => console.error('Failed to switch session:', error)
       });
     });
@@ -995,7 +827,6 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     }
     
     if (!textToCopy) {
-      console.warn('No text content to copy');
       return;
     }
 
@@ -1003,9 +834,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       // Use the modern clipboard API
       navigator.clipboard.writeText(textToCopy).then(() => {
         // Could show a toast notification here
-        console.log('Message copied to clipboard');
       }).catch(err => {
-        console.error('Failed to copy text: ', err);
         this.fallbackCopyTextToClipboard(textToCopy);
       });
     } else {
@@ -1029,14 +858,9 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     textArea.select();
     
     try {
-      const successful = document.execCommand('copy');
-      if (successful) {
-        console.log('Message copied to clipboard (fallback)');
-      } else {
-        console.error('Failed to copy text using fallback method');
-      }
+      document.execCommand('copy');
     } catch (err) {
-      console.error('Failed to copy text: ', err);
+      // Silent error handling for clipboard operations
     }
     
     document.body.removeChild(textArea);
@@ -1069,7 +893,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
 
   // Open AI assistant in fullscreen mode
   openFullscreen(): void {
-    const currentSessionId = this.aiAssistantData.currentSessionId();
+    const currentSessionId = this.aiAssistantService.currentSessionId();
     
     // Navigate within the same browser tab to the AI route
     if (currentSessionId) {
@@ -1096,101 +920,13 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
 
   // Clear conversation
   clearConversation(): void {
-    // Clear the streaming entries cache when starting a new conversation
-    this.streamingEntriesCache = [];
-    this.lastStreamingTypesStructureHash = '';
-    this.chunkTypeWrapperCache.clear();
-    this.stableItemRefs.clear();
+    // Clear dynamic components
+    this.dynamicContentService.clearAllComponents();
     
-    console.log('🗑️ Cleared all caches and stable references for new conversation');
+    // Clear any buffered chunks as well
+    this.chunkBuffer = [];
     
-    this.aiAssistantData.clearConversation();
-  }
-
-  // Sequential content display methods (modified to show all content immediately)
-  shouldShowContentItem(messageIndex: number, itemIndex: number): boolean {
-    // Always show all content immediately - no typewriting effect
-    return true;
-  }
-
-  // Check if sources should be displayed (modified to show immediately)
-  shouldShowSources(messageIndex: number): boolean {
-    // Always show sources immediately - no delayed display
-    return true;
-  }
-
-  onContentItemComplete(messageIndex: number, itemIndex: number): void {
-    // Since we removed typewriting effect, just scroll to bottom immediately
-    this.scrollToBottom();
-    const chatHistory = this.aiAssistantData.chatHistory();
-    
-    // Find the most recent AI message index
-    let mostRecentAiMessageIndex = -1;
-    for (let i = chatHistory.length - 1; i >= 0; i--) {
-      const message = chatHistory[i];
-      if (message && !message.isUser && message.result && message.result.length > 0) {
-        mostRecentAiMessageIndex = i;
-        break;
-      }
-    }
-    
-    // Only apply sequential logic to the most recent AI message
-    if (messageIndex !== mostRecentAiMessageIndex) {
-      return;
-    }
-    
-    const message = chatHistory[messageIndex];
-    const totalItems = message.result ? message.result.length : 0;
-    
-    this.contentDisplayState.update(state => {
-      const newState = { ...state };
-      const currentVisible = newState[messageIndex] || 0;
-      
-      // Show the next item after a brief delay for sequential effect
-      setTimeout(() => {
-        this.contentDisplayState.update(s => {
-          const nextVisible = Math.max(currentVisible, itemIndex + 2);
-          
-          // If this is the last item, add extra count to trigger sources display
-          const finalVisible = (itemIndex + 1 >= totalItems) ? totalItems + 1 : nextVisible;
-          
-          return {
-            ...s,
-            [messageIndex]: finalVisible
-          };
-        });
-      }, 200); // 200ms delay between items
-      
-      return newState;
-    });
-  }
-
-  // Initialize content display for new messages
-  private initializeContentDisplay(messageIndex: number, hasContent: boolean): void {
-    if (hasContent) {
-      const chatHistory = this.aiAssistantData.chatHistory();
-      
-      // Find the most recent AI message index
-      let mostRecentAiMessageIndex = -1;
-      for (let i = chatHistory.length - 1; i >= 0; i--) {
-        const message = chatHistory[i];
-        if (message && !message.isUser && message.result && message.result.length > 0) {
-          mostRecentAiMessageIndex = i;
-          break;
-        }
-      }
-      
-      this.contentDisplayState.update(state => ({
-        ...state,
-        [messageIndex]: messageIndex === mostRecentAiMessageIndex ? 1 : 999 // Show first item for new, all items for old
-      }));
-    }
-  }
-
-  // Check if a message is the most recent AI message (simplified since no typewriter effect)
-  isNewMessage(messageIndex: number): boolean {
-    // No longer needed for typewriter effect, but keeping for compatibility
-    return false;
+    this.aiAssistantService.clearConversation();
   }
 
   // Handler for cardClicked event from content-renderer/entity-grid
@@ -1256,10 +992,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   private navigateToEntity(entityType: string, entityId: string, rowData: any): void {
     const route = this.buildEntityRoute(entityType, entityId, rowData);
     if (route) {
-      console.log('🔗 AI Assistant - Navigating to entity:', route);
       this.router.navigate([route]);
-    } else {
-      console.warn('🔗 AI Assistant - Could not build route for entity:', entityType, entityId);
     }
   }
 
@@ -1322,7 +1055,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading file:', error);
+      // Silent error handling for file download
     }
   }
 
@@ -1330,7 +1063,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     try {
       return atob(data);
     } catch (error) {
-      return 'Unable to decode text content';
+      return this.translateService.instant('aiAssistant.unableToDecodeText');
     }
   }
 
@@ -1346,16 +1079,16 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   }
 
   getFileTypeName(mimeType: string): string {
-    if (!mimeType) return 'File';
+    if (!mimeType) return this.translateService.instant('aiAssistant.fileTypes.file');
     
-    if (mimeType.includes('word')) return 'Word Document';
-    if (mimeType.includes('excel') || mimeType.includes('sheet')) return 'Excel Spreadsheet';
-    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'PowerPoint Presentation';
-    if (mimeType.includes('zip')) return 'Archive';
-    if (mimeType.includes('json')) return 'JSON File';
-    if (mimeType.includes('xml')) return 'XML File';
+    if (mimeType.includes('word')) return this.translateService.instant('aiAssistant.fileTypes.wordDocument');
+    if (mimeType.includes('excel') || mimeType.includes('sheet')) return this.translateService.instant('aiAssistant.fileTypes.excelSpreadsheet');
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return this.translateService.instant('aiAssistant.fileTypes.powerpointPresentation');
+    if (mimeType.includes('zip')) return this.translateService.instant('aiAssistant.fileTypes.archive');
+    if (mimeType.includes('json')) return this.translateService.instant('aiAssistant.fileTypes.jsonFile');
+    if (mimeType.includes('xml')) return this.translateService.instant('aiAssistant.fileTypes.xmlFile');
     
-    return mimeType.split('/')[1]?.toUpperCase() || 'File';
+    return mimeType.split('/')[1]?.toUpperCase() || this.translateService.instant('aiAssistant.fileTypes.file');
   }
 
   getFileName(mimeType: string): string {
@@ -1387,7 +1120,6 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       const reencoded = btoa(decoded);
       return reencoded === str;
     } catch (err) {
-      console.error('Base64 decode error:', err);
       return false;
     }
   }
@@ -1410,12 +1142,8 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       sampleInvalidPositions: this.findInvalidCharPositions(data, 10)
     };
     
-    console.log('Base64 Analysis:', analysis);
-    
     // Try to clean and test the data
     const cleaned = this.cleanBase64Data(data);
-    console.log('Cleaned data valid:', this.isValidBase64(cleaned));
-    console.log('Original length:', data.length, 'Cleaned length:', cleaned.length);
     
     return analysis;
   }
@@ -1455,38 +1183,13 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     const cleaned = this.cleanBase64Data(inline.data);
     const dataUrl = `data:${inline.mimeType};base64,${cleaned}`;
     
-    console.log('Testing cleaned image:', {
-      originalLength: inline.data.length,
-      cleanedLength: cleaned.length,
-      validAfterCleaning: this.isValidBase64(cleaned)
-    });
-    
     // Create a test image to see if it loads
     const img = new Image();
-    img.onload = () => {
-      console.log('✅ Cleaned image loads successfully!');
-      console.log('Image dimensions:', img.width, 'x', img.height);
-    };
-    img.onerror = () => console.error('❌ Cleaned image still fails to load');
     img.src = dataUrl;
   }
 
   onImageError(event: any, inline: any): void {
-    const dataUrl = `data:${inline.mimeType};base64,${inline.data}`;
-    console.error('Image failed to load:', {
-      mimeType: inline.mimeType,
-      dataLength: inline.data?.length,
-      dataPrefix: inline.data?.substring(0, 50),
-      constructedUrl: dataUrl.substring(0, 100),
-      isValidBase64: this.isValidBase64(inline.data),
-      event: event
-    });
-    
-    // Test if data URL is valid
-    const testImg = new Image();
-    testImg.onload = () => console.log('✅ Data URL is valid, image can load');
-    testImg.onerror = () => console.error('❌ Data URL is invalid');
-    testImg.src = dataUrl;
+    // Silent error handling for image loading failures
   }
 
   openImageModal(inline: any): void {
@@ -1534,17 +1237,15 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
               this.userName.set(name);
             } else {
               console.warn('No user info data received from API');
-              this.userName.set('User');
+              this.userName.set(this.translateService.instant('aiAssistant.user'));
             }
           },
           error: (error) => {
-            console.error('Error loading user info:', error);
             this.userName.set('User');
           }
         });
       },
       error: (error) => {
-        console.error('Error getting user claims:', error);
         this.userName.set('User');
       }
     });
@@ -1554,7 +1255,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
    * Regenerate the last AI response
    */
   regenerateMessage(messageIndex: number): void {
-    const chatHistory = this.aiAssistantData.chatHistory();
+    const chatHistory = this.aiAssistantService.chatHistory();
     const message = chatHistory[messageIndex];
     
     if (!message || message.isUser) {
@@ -1570,21 +1271,25 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     if (userMessageIndex >= 0) {
       const userMessage = chatHistory[userMessageIndex];
       
+      // Clear dynamic components and buffer before regenerating
+      this.dynamicContentService.clearAllComponents();
+      this.chunkBuffer = [];
+      
       // Remove all messages after the user message
       const newHistory = chatHistory.slice(0, userMessageIndex + 1);
-      this.aiAssistantData.chatHistory.set(newHistory);
+      this.aiAssistantService.chatHistory.set(newHistory);
       
       // Resend the user message
-      this.aiAssistantData.sendMessage(
+      this.aiAssistantService.sendMessage(
         userMessage.text || '',
         userMessage.files || [],
         this.buildMessageState()
       ).subscribe({
         next: () => {
-          console.log('Message regenerated successfully');
+          // Message regenerated successfully
         },
         error: (error) => {
-          console.error('Error regenerating message:', error);
+          // Error regenerating message
         }
       });
     }

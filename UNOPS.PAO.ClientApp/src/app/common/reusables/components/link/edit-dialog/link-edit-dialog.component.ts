@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -21,7 +21,8 @@ import { Textarea } from 'primeng/textarea';
     TranslateModule,
     Textarea
   ],
-  templateUrl: './link-edit-dialog.component.html'
+  templateUrl: './link-edit-dialog.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LinkEditDialogComponent implements OnInit {
   private linkDataService = inject(LinkDataService);

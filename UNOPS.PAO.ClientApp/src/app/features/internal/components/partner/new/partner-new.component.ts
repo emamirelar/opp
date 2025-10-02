@@ -14,7 +14,7 @@ import {
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
@@ -121,6 +121,7 @@ export class PartnerNewComponent implements OnChanges, OnInit {
   feedbackDialogService = inject(FeedbackDialogService);
   partnerService = inject(PartnerService);
   languageService = inject(LanguageService);
+  translateService = inject(TranslateService);
   cdr = inject( ChangeDetectorRef);
 
   private langChangeSubscription: Subscription = new Subscription();
@@ -172,7 +173,7 @@ export class PartnerNewComponent implements OnChanges, OnInit {
       this.partnerService.createPartner(this._getRequestPayload()).subscribe({
         next: (data: any) => {
           this.isSaving.set(false);
-          this.feedbackDialogService.showSuccessToast({ detail: 'Record created successfully!' });
+          this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.partnerCreatedSuccessfully') });
           this.onRecordCreationSuccess.emit(data);
           this.hide();
         },

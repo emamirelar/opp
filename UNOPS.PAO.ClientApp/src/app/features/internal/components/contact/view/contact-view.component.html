@@ -7,7 +7,7 @@
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
             <div class="flex items-center gap-2">
-              <span class="unops-text-headline-medium">Contact Information</span>
+              <span class="unops-text-headline-medium">{{ 'label.contact.information' | translate }}</span>
             </div>
             <div class="flex items-center gap-2">
               @if (recordPermissions().permissions.canUpdate) {
@@ -57,13 +57,13 @@
             <div class="unops-mb-md">
               <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
                 <i class="pi pi-phone unops-text-info" style="font-size: 1rem;"></i>
-                Contact Information
+                {{ 'label.contact.information' | translate }}
               </div>
               
               <!-- Primary Information: Email -->
               @if(recordData().email) {
                 <div class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
-                  <div class="unops-text-label-large unops-text-muted unops-mb-sm">Email</div>
+                  <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.contact.email' | translate }}</div>
                   <a [href]="'mailto:' + recordData().email" 
                      class="unops-text-body-large unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer"
                      style="font-weight: var(--unops-font-weight-semibold); text-decoration: none; border-bottom: 1px solid transparent;"
@@ -78,13 +78,13 @@
               <div class="unops-flex unops-flex-col unops-gap-sm">
                 @if(recordData().phone){
                   <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                    <span class="unops-text-label-large unops-text-muted">Phone ({{ 'office' | translate }})</span>
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.phone' | translate }} ({{ 'office' | translate }})</span>
                     <span class="unops-text-body-medium unops-text-secondary">{{recordData().phone}}</span>
                   </div>
                 }
                 @if(recordData().mobile){
                   <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                    <span class="unops-text-label-large unops-text-muted">Mobile</span>
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.mobile' | translate }}</span>
                     <span class="unops-text-body-medium unops-text-secondary">{{recordData().mobile}}</span>
                   </div>
                 }
@@ -106,7 +106,7 @@
                 <!-- Primary Information: Assistant Name -->
                 @if(recordData().assistant) {
                   <div class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
-                    <div class="unops-text-label-large unops-text-muted unops-mb-sm">Assistant Name</div>
+                    <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.contact.assistantName' | translate }}</div>
                     <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{recordData().assistant}}</div>
                   </div>
                 }
@@ -115,13 +115,13 @@
                 <div class="unops-flex unops-flex-col unops-gap-sm">
                   @if(recordData().assistantPhone){
                     <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                      <span class="unops-text-label-large unops-text-muted">Assistant Phone</span>
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.assistantPhone' | translate }}</span>
                       <span class="unops-text-body-medium unops-text-secondary">{{recordData().assistantPhone}}</span>
                     </div>
                   }
                   @if(recordData().assistantEmail){
                     <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                      <span class="unops-text-label-large unops-text-muted">Assistant Email</span>
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.assistantEmail' | translate }}</span>
                       <a [href]="'mailto:' + recordData().assistantEmail" 
                          class="unops-text-body-medium unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer"
                          style="text-decoration: none; border-bottom: 1px solid transparent;"
@@ -140,13 +140,13 @@
               <div class="unops-mb-md">
                 <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
                   <i class="pi pi-map-marker unops-text-info" style="font-size: 1rem;"></i>
-                  Address
+                  {{ 'label.contact.mailingAddress' | translate }}
                 </div>
                 
                 <!-- Primary Information: Country -->
                 @if(recordData().mailingCountry) {
                   <div class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
-                    <div class="unops-text-label-large unops-text-muted unops-mb-sm">Country</div>
+                    <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.contact.country' | translate }}</div>
                     <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{recordData().mailingCountry}}</div>
                   </div>
                 }
@@ -155,19 +155,19 @@
                 <div class="unops-flex unops-flex-col unops-gap-sm">
                   @if(recordData().mailingStreet){
                     <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                      <span class="unops-text-label-large unops-text-muted">Street</span>
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.street' | translate }}</span>
                       <span class="unops-text-body-medium unops-text-secondary">{{recordData().mailingStreet}}</span>
                     </div>
                   }
                   @if(recordData().mailingStreet2) {
                     <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                      <span class="unops-text-label-large unops-text-muted">Street 2</span>
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.street2' | translate }}</span>
                       <span class="unops-text-body-medium unops-text-secondary">{{recordData().mailingStreet2}}</span>
                     </div>
                   }
                   @if(recordData().mailingCity || recordData().mailingStateProvince || recordData().mailingPostalCode){
                     <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                      <span class="unops-text-label-large unops-text-muted">City, State & Postal Code</span>
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.cityStatePostal' | translate }}</span>
                       <span class="unops-text-body-medium unops-text-secondary text-right">
                         {{recordData().mailingCity}}
                         @if(recordData().mailingStateProvince) {
@@ -187,7 +187,7 @@
 
             <!-- Additional Details Section -->
             <div class="unops-mb-lg">
-              <div class="unops-text-headline-small unops-text-secondary unops-mb-md">General Information</div>
+              <div class="unops-text-headline-small unops-text-secondary unops-mb-md">{{ 'label.contact.generalInformation' | translate }}</div>
               
               <!-- Primary Information: Status -->
               @if(recordData().status){
@@ -219,7 +219,7 @@
                 }
                 @if(recordData().description){
                   <div class="unops-flex unops-justify-between unops-items-start unops-p-sm unops-rounded-sm unops-border-light">
-                    <span class="unops-text-label-large unops-text-muted" style="flex-shrink: 0; margin-right: var(--unops-spacing-md);">Notes</span>
+                    <span class="unops-text-label-large unops-text-muted" style="flex-shrink: 0; margin-right: var(--unops-spacing-md);">{{ 'label.contact.notes' | translate }}</span>
                     <span class="unops-text-body-medium unops-text-secondary text-right" style="line-height: 1.6;">{{recordData().description}}</span>
                   </div>
                 }

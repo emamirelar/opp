@@ -170,6 +170,12 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
+    public async IAsyncEnumerable<string> ChatWithGeminiStreaming(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null)
+    {
+        throw new NotImplementedException();
+        yield break; // This line will never be reached, but is required for compilation
+    }
+
     public async Task<string> GenerateTitle(string sessionId)
     {
         throw new NotImplementedException();

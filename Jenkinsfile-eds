@@ -162,20 +162,26 @@ node("app-build") {
                 gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
                 gcloud config set project ${PROJECT_ID}
                 
+                # Copy the entire ExternalDataService directory to build context
+                echo "Copying ExternalDataService directory to build context..."
+                if [ -d "ExternalDataService" ]; then
+                    cp -r ExternalDataService UNOPS.PAO.ExternalDataService/
+                    echo "✓ ExternalDataService directory copied to build context"
+                    ls -la UNOPS.PAO.ExternalDataService/ExternalDataService/
+                    echo "Config files:"
+                    ls -la UNOPS.PAO.ExternalDataService/ExternalDataService/config/
+                else
+                    echo "⚠️  ExternalDataService directory not found"
+                fi
+                
                 # Navigate to External Data Service submodule directory
                 cd UNOPS.PAO.ExternalDataService
                 
                 # Verify the service can find the configuration files
                 echo "Checking configuration path setup..."
                 echo "Current directory: \$(pwd)"
-                echo "Looking for: ../ExternalDataService/appsettings.Development.json"
-                if [ -f "../ExternalDataService/appsettings.Development.json" ]; then
-                    echo "✓ Found appsettings.Development.json"
-                    cat "../ExternalDataService/appsettings.Development.json" | head -10
-                else
-                    echo "⚠️  appsettings.Development.json not found at expected location"
-                    find .. -name "appsettings.Development.json" -type f
-                fi
+                echo "Configuration files in build context:"
+                ls -la config/ || echo "No config directory found"
 
                 # Build and push External Data Service image
                 echo "Building Docker image..."

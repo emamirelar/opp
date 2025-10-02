@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, ElementRef, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, ElementRef, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Button } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
@@ -21,6 +21,7 @@ import { TooltipModule } from 'primeng/tooltip';
     DialogModule,
     TooltipModule
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col">
       <div *ngIf="!uploadedFile()" class="flex justify-end">

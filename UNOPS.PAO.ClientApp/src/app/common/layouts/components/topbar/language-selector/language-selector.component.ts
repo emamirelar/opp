@@ -35,7 +35,7 @@ export class LanguageSelectorComponent implements OnInit, OnDestroy {
   }
 
   get currentLanguage(): Language {
-    return this.languageService.currentLanguage;
+    return this.languageService.currentLanguage();
   }
 
   ngOnInit() {

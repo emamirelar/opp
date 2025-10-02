@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import {Button} from 'primeng/button';
@@ -7,6 +7,7 @@ import {Button} from 'primeng/button';
   selector: 'app-go-back',
   standalone: true,
   imports: [TranslateModule, Button],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <p-button
       type="button"

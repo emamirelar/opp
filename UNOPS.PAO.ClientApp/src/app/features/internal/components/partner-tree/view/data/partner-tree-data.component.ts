@@ -8,7 +8,7 @@ import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
-import { FeedbackDialogService } from '../../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../../common/services/feedback-dialog.service';
 
 import { TranslateModule } from '@ngx-translate/core';
 import { LookerstudioComponent } from '../../../../../../common/reusables/components/lookerstudio/lookerstudio.component';

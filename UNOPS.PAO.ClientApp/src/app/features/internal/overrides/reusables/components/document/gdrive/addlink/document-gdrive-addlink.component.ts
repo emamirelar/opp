@@ -9,7 +9,7 @@ import { BlockUIModule } from 'primeng/blockui';
 
 import { DrivePickerService } from '../../../../drive-picker.service';
 import { DocumentService } from '../../../../../../../../common/services/document.service';
-import { FeedbackDialogService } from '../../../../../../../../common/reusables/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../../../../common/services/feedback-dialog.service';
 import { DocumentLinkModel, Documentype } from '../../../../../../../../common/interfaces/document.interface';
 import { TranslateModule } from '@ngx-translate/core';
 

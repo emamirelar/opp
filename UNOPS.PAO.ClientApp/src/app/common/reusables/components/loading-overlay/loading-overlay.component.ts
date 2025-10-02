@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { BehaviorSubject } from 'rxjs';
@@ -7,6 +7,7 @@ import { BehaviorSubject } from 'rxjs';
   selector: 'app-loading-overlay',
   standalone: true,
   imports: [CommonModule, ProgressSpinnerModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div 
       *ngIf="loading$ | async" 

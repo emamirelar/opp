@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input, ViewChild, ElementRef, OnDestroy, AfterViewInit, OnChanges, SimpleChanges, Output, EventEmitter, signal, inject, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, ViewChild, ElementRef, OnDestroy, AfterViewInit, OnChanges, SimpleChanges, Output, EventEmitter, signal, inject, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Timeline, DataSet } from 'vis-timeline/standalone';
 import { HttpClient } from '@angular/common/http';
 import {TranslatePipe} from '@ngx-translate/core';
 import { InteractionIconService } from '../../../services/interaction-icon.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 export interface TimelineItem {
   id: string | number;
@@ -105,6 +106,7 @@ export interface CacheGap {
 export class TimelineComponent implements OnDestroy, AfterViewInit, OnChanges {
   private http = inject(HttpClient);
   private interactionIconService = inject(InteractionIconService);
+  private destroyRef = inject(DestroyRef);
 
   @ViewChild('timelineContainer', { static: false }) timelineContainer!: ElementRef;
   @ViewChild('navigatorContainer', { static: false }) navigatorContainer!: ElementRef;
@@ -254,7 +256,7 @@ export class TimelineComponent implements OnDestroy, AfterViewInit, OnChanges {
     const fullDataUrl = this.buildFullDataUrl();
 
     this.isLoading.set(true);
-    this.http.get<any>(fullDataUrl).subscribe({
+    this.http.get<any>(fullDataUrl).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         const records = response.records || response;
         if (Array.isArray(records)) {
@@ -287,7 +289,7 @@ export class TimelineComponent implements OnDestroy, AfterViewInit, OnChanges {
   private loadDataFromUrl() {
     if (!this.dataUrl) return;
 
-    this.http.get<any>(this.dataUrl).subscribe({
+    this.http.get<any>(this.dataUrl).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: any) => {
         const records = response.records || response;
         if (Array.isArray(records)) {

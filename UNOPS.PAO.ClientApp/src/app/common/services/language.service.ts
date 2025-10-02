@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { MenuItem } from 'primeng/api';
 import { AuthService } from '../../essentials/services/auth.service';
-import { switchMap, catchError, of, Observable, tap } from 'rxjs';
+import { switchMap, catchError, of, Observable } from 'rxjs';
 
 export interface Language {
   code: string;
@@ -16,14 +16,14 @@ export interface Language {
 export class LanguageService {
   private languageKey = 'selected_language_cookie';
   languages: Language[] = [];
-  currentLanguage: Language;
+  private currentLanguageSignal = signal<Language>({ code: 'en', name: 'English' });
+  currentLanguage = this.currentLanguageSignal.asReadonly();
   private http = inject(HttpClient);
   private authService = inject(AuthService);
 
   constructor(public translationService: TranslateService) {
     this.translationService.addLangs(['en', 'fr', 'span', 'pt']);
     this.translationService.setDefaultLang('en');
-    this.currentLanguage = { code: 'en', name: 'EN' }; // Temporary until server responds
   }
 
   initializeLanguage(): Promise<void> {
@@ -37,20 +37,18 @@ export class LanguageService {
         })
       ).subscribe({
         next: (response) => {
-          const preferredLanguage = this.getLanguages().find(lang => lang.code === response.language) 
-            || { code: 'en', name: 'EN' };
-          
-          // Set the language from server (or localStorage fallback)
+          const preferredLanguage = this.getLanguages().find(lang => lang.code === response.language)
+            || { code: 'en', name: 'English' };
+
           localStorage.setItem(this.languageKey, JSON.stringify(preferredLanguage));
-          this.currentLanguage = preferredLanguage;
+          this.currentLanguageSignal.set(preferredLanguage);
           this.translationService.use(preferredLanguage.code).subscribe(() => {
             resolve();
           });
         },
         error: (error) => {
-          // Final fallback to localStorage
           const fallbackLanguage = this.getCurrentLanguage();
-          this.currentLanguage = fallbackLanguage;
+          this.currentLanguageSignal.set(fallbackLanguage);
           this.translationService.use(fallbackLanguage.code).subscribe(() => {
             resolve();
           });
@@ -61,12 +59,12 @@ export class LanguageService {
 
   getCurrentLanguage(): Language {
     const saved = localStorage.getItem(this.languageKey);
-    return saved ? JSON.parse(saved) : { code: 'en', name: 'EN' };
+    return saved ? JSON.parse(saved) : { code: 'en', name: 'English' };
   }
 
   switchLanguage(language: Language) {
     localStorage.setItem(this.languageKey, JSON.stringify(language));
-    this.currentLanguage = language;
+    this.currentLanguageSignal.set(language);
     this.translationService.use(language.code);
     
     // Update user language preference in the database
@@ -101,8 +99,18 @@ export class LanguageService {
   }
 
   getLanguages(): Language[] {
+    const languageNames: { [key: string]: string } = {
+      'en': 'English',
+      'fr': 'Français',
+      'span': 'Español',
+      'pt': 'Português'
+    };
+
     return this.translationService
       .getLangs()
-      .map((lang) => ({ name: lang.toUpperCase(), code: lang,  }));
+      .map((lang) => ({
+        name: languageNames[lang] || lang.toUpperCase(),
+        code: lang
+      }));
   }
 }
