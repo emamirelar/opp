@@ -47,9 +47,14 @@ export class ExportGoogleSheetService {
         this.sheetsApiReady = true;
         this.driveApiReady = true;
         
+        console.log('Google APIs initialized successfully');
+        console.log('API Key (first 10 chars):', this.apiKey?.substring(0, 10));
+        console.log('Client ID (first 10 chars):', this.clientId?.substring(0, 10));
+        
         // Initialize the token client for OAuth
         this.initTokenClient();
       }).catch((error: any) => {
+        console.error('Google API initialization error:', error);
         this.feedbackDialogService.showErrorToast({
           detail: 'Error initializing Google APIs: ' + error.message
         });
@@ -147,9 +152,15 @@ export class ExportGoogleSheetService {
       return this.authenticate();
     }
     
-    // Set the token for GAPI even if it's valid
+    // Set both the token AND ensure API key is properly configured
     if (this.oauthToken) {
-      gapi.client.setToken({ access_token: this.oauthToken });
+      console.log('Setting OAuth token for GAPI client');
+      gapi.client.setToken({ 
+        access_token: this.oauthToken
+      });
+      
+      // Ensure API key is also set (redundant but ensures consistency)
+      gapi.client.setApiKey(this.apiKey);
     }
     
     return of(undefined);
@@ -159,6 +170,9 @@ export class ExportGoogleSheetService {
     if (!this.sheetsApiReady || !this.driveApiReady) {
       return throwError(() => new Error('Google APIs not loaded. Please try again.'));
     }
+
+    console.log('Creating spreadsheet with name:', fileName);
+    console.log('Data rows count:', data.length);
 
     // Create a new spreadsheet
     return from(gapi.client.sheets.spreadsheets.create({
@@ -174,8 +188,11 @@ export class ExportGoogleSheetService {
       }
     })).pipe(
       catchError(error => {
+        console.error('Error creating spreadsheet:', error);
+        
         // Handle 401 Unauthorized errors by attempting to re-authenticate
         if (error && error.status === 401) {
+          console.log('Got 401 error, attempting re-authentication');
           // Clear existing token and force re-authentication
           this.oauthToken = undefined;
           localStorage.removeItem('google_oauth_token_export');
@@ -191,6 +208,8 @@ export class ExportGoogleSheetService {
         const spreadsheetId = response.result.spreadsheetId;
         const spreadsheetUrl = response.result.spreadsheetUrl;
 
+        console.log('Spreadsheet created successfully:', spreadsheetId);
+
         // Extract headers from the first object
         let headers: string[] = [];
         if (data.length > 0) {
@@ -203,6 +222,8 @@ export class ExportGoogleSheetService {
           ...data.map(item => headers.map(header => item[header as keyof T] ?? ''))
         ];
 
+        console.log('Updating spreadsheet with data, headers:', headers);
+
         // Update the spreadsheet with data
         return from(gapi.client.sheets.spreadsheets.values.update({
           spreadsheetId: spreadsheetId,
@@ -214,8 +235,11 @@ export class ExportGoogleSheetService {
         })).pipe(
           map(() => ({ id: spreadsheetId, url: spreadsheetUrl })),
           catchError(error => {
+            console.error('Error updating spreadsheet data:', error);
+            
             // If we get an error here, try to handle 401 errors by re-authenticating
             if (error && error.status === 401) {
+              console.log('Got 401 error during data update, attempting re-authentication');
               // Clear existing token and force re-authentication
               this.oauthToken = undefined;
               localStorage.removeItem('google_oauth_token_export');
