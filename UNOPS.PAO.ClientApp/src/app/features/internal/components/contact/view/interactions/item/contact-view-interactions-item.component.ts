@@ -32,7 +32,7 @@ export class ContactViewInteractionsItemComponent {
           bgColor: 'bg-purple-50',
           textColor: 'text-purple-800'
         };
-      case InteractionType.Phone.toLowerCase():
+      case InteractionType.Call.toLowerCase():
         return {
           icon: 'pi pi-phone',
           bgColor: 'bg-green-50',

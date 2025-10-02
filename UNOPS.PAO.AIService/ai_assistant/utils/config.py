@@ -153,10 +153,85 @@ def get_application_name() -> str:
     return config.get('branding', {}).get('application_name', 'AI Agent')
 
 
+def _parse_connection_string_to_url(connection_string: str) -> str:
+    """
+    Parse .NET-style connection string to PostgreSQL URL format.
+    
+    Input format: Username=user;Password=pass;Host=host;Port=port;Database=db;
+    Output format: postgresql://user:pass@host:port/db
+    """
+    try:
+        # Parse connection string parameters
+        params = {}
+        for pair in connection_string.split(';'):
+            if '=' in pair:
+                key, value = pair.split('=', 1)
+                params[key.strip()] = value.strip()
+        
+        # Extract required parameters
+        username = params.get('Username') or params.get('User ID') or params.get('UserId')
+        password = params.get('Password')
+        host = params.get('Host') or params.get('Server')
+        port = params.get('Port', '5432')
+        database = params.get('Database') or params.get('Initial Catalog')
+        
+        # Validate required parameters
+        missing_params = []
+        if not username:
+            missing_params.append('Username/User ID')
+        if not password:
+            missing_params.append('Password')
+        if not host:
+            missing_params.append('Host/Server')
+        if not database:
+            missing_params.append('Database/Initial Catalog')
+        
+        if missing_params:
+            raise ConfigurationError(f"Missing required connection string parameters: {', '.join(missing_params)}")
+        
+        # URL-encode password if it contains special characters
+        import urllib.parse
+        encoded_password = urllib.parse.quote(password, safe='')
+        
+        # Construct PostgreSQL URL
+        postgresql_url = f"postgresql://{username}:{encoded_password}@{host}:{port}/{database}"
+        
+        logger.info(f"Successfully converted connection string to PostgreSQL URL format")
+        return postgresql_url
+        
+    except Exception as e:
+        raise ConfigurationError(f"Failed to parse connection string: {e}. Connection string format should be: Username=user;Password=pass;Host=host;Port=port;Database=db;")
+
+
 def get_database_url() -> str:
     """Get the database URL"""
     config = get_config()
-    return config.get('database', {}).get('url')
+    database_config = config.get('database', {})
+    
+    # For local development, use direct URL
+    if 'url' in database_config:
+        return database_config['url']
+    
+    # For dev/test/qa environments, get from secrets manager
+    if 'secret_name' in database_config:
+        secret_name = database_config['secret_name']
+        
+        # Get project ID from configuration
+        google_cloud_config = config.get("google_cloud", {})
+        project_id = google_cloud_config.get("project")
+        if not project_id:
+            raise ConfigurationError("No project configured for Google Cloud")
+        
+        # Retrieve the connection string from Secret Manager
+        connection_string = _get_secret_from_secret_manager(secret_name, project_id)
+        
+        if not connection_string:
+            raise ConfigurationError(f"Failed to retrieve database connection string from secret: {secret_name}")
+        
+        # Parse .NET connection string to PostgreSQL URL format
+        return _parse_connection_string_to_url(connection_string)
+    
+    raise ConfigurationError("Database configuration must contain either 'url' (for local) or 'secret_name' (for cloud environments)")
 
 
 def get_oauth_config() -> Dict[str, str]:

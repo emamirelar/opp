@@ -29,13 +29,33 @@ public static class PAOUserEndpointRouteBuilderExtensions
             var signInManager = sp.GetRequiredService<SignInManager<TUser>>();
 
             var googleSettings = configuration.GetSection("GoogleAuthSettings");
+            var appConfig = configuration.GetSection("AppConfig");
 
             signInManager.AuthenticationScheme = IdentityConstants.ApplicationScheme;
+
+            // Get Google Client ID from Secret Manager
+            string? googleClientId = null;
+            try
+            {
+                var clientIdSecretName = googleSettings.GetSection("ClientIdSecretName").Value;
+                var projectId = appConfig.GetSection("ProjectId").Value;
+                
+                // Fallback to direct configuration if secret retrieval fails
+                if (string.IsNullOrEmpty(googleClientId))
+                {
+                    googleClientId = googleSettings.GetSection("clientId").Value;
+                }
+            }
+            catch
+            {
+                // Fallback to direct configuration on any error
+                googleClientId = googleSettings.GetSection("clientId").Value;
+            }
 
             var payload = await GoogleJsonWebSignature.ValidateAsync(req.IdToken,
                 new GoogleJsonWebSignature.ValidationSettings
                 {
-                    Audience = new List<string> { googleSettings.GetSection("clientId").Value ?? string.Empty }
+                    Audience = new List<string> { googleClientId ?? string.Empty }
                 });
 
             if (payload == null)

@@ -599,9 +599,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         PatchNonNullProperties(model, entity);
 
-        // Update emails/phones
+        // Update emails
         entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
-        entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
         //Update CreatedBy value selected by the User on the Interaction edit page
         if (model.CreatedBy.HasValue)
         {
@@ -883,9 +882,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         PatchNonNullProperties(model, entity);
 
-        // Update emails/phones
+        // Update emails
         entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
-        entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
 
         // Handle OrganizationHierarchyIds if provided
         if (model.OrganizationHierarchyIds != null)
@@ -1058,9 +1056,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 uploadDate = d.CreatedDate.ToString("yyyy-MM-dd")
             }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
 
-            // Email and phone information
+            // Email information
             emailAddresses = entity.EmailAddresses ?? new List<string>(),
-            phoneNumbers = entity.PhoneNumbers ?? new List<string>(),
 
             // Computed names for easy access
             contactNames = string.Join(", ", entity.InteractionContacts?.Select(ic => $"{ic.Contact.FirstName} {ic.Contact.LastName}".Trim()) ?? new List<string>()),
@@ -1075,8 +1072,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 totalUsers = entity.InteractionUsers?.Count ?? 0,
                 totalDocuments = entity.Documents?.Count ?? 0,
                 hasDocuments = entity.Documents?.Any() ?? false,
-                hasEmailAddresses = entity.EmailAddresses?.Any() ?? false,
-                hasPhoneNumbers = entity.PhoneNumbers?.Any() ?? false
+                hasEmailAddresses = entity.EmailAddresses?.Any() ?? false
             },
 
             // Audit information
