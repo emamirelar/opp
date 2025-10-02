@@ -551,7 +551,6 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
                 PartnerIds = existingInteraction.PartnerIds,
                 UserIds = existingInteraction.Users?.Select(u => u.Id).ToList() ?? new List<int>(),
                 EmailAddresses = existingInteraction.EmailAddresses,
-                PhoneNumbers = existingInteraction.PhoneNumbers,
                 Location = existingInteraction.Location,
                 GmailThreadId = existingInteraction.GmailThreadId,
                 GmailMessageId = existingInteraction.GmailMessageId
