@@ -740,4 +740,13 @@ export class PartnerViewComponent implements OnInit {
     return this.recordId ? parseInt(this.recordId, 10) : undefined;
   }
 
+  /**
+   * Format date for audit information display
+   */
+  formatDate(date: Date | string | null | undefined): string {
+    if (!date) return 'Not available';
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();
+  }
+
 }

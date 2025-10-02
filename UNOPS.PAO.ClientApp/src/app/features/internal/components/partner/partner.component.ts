@@ -92,9 +92,10 @@ export class PartnerComponent implements OnDestroy, OnInit {
     scrollable: true,
     scrollHeight: 'flex',
     entityName: 'Partner',
-    defaultSortField: 'lastModifiedDate',
-    defaultSortOrder: 'desc',
+    defaultSortField: 'name',
+    defaultSortOrder: 'asc',
     sortableFields: [
+      { field: 'name', label: this.translateService.instant('label.partner.name') },
       { field: 'createdDate', label: this.translateService.instant('label.column.createdDate') },
       { field: 'lastModifiedDate', label: this.translateService.instant('label.column.lastUpdatedDate') }
     ],

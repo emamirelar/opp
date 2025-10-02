@@ -173,7 +173,7 @@ public class PartnerController : BaseController
     /// </summary>
     /// <param name="pageIndex">Page number (1-based, default: 1)</param>
     /// <param name="pageSize">Number of items per page (default: 20)</param>
-    /// <param name="orderBy">Field to order results by (default: 'createdDate')</param>
+    /// <param name="orderBy">Field to order results by (default: 'Name' for alphabetic sorting)</param>
     /// <param name="ascending">Sort direction - true for ascending, false for descending (default: false for newest first)</param>
     /// <example_uses>
     /// Show me all partners
@@ -189,9 +189,9 @@ public class PartnerController : BaseController
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> ListAllPartners(
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = "CreatedDate",
+        [FromQuery] string? orderBy = "Name",
         [FromQuery] int? partnerGroupId = null,
-        [FromQuery] bool ascending = false,
+        [FromQuery] bool ascending = true,
         [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {
@@ -206,7 +206,7 @@ public class PartnerController : BaseController
             {
                 PageIndex = pageIndex,
                 PageSize = export ? int.MaxValue : pageSize, // Remove pagination limits for export
-                OrderBy = orderBy ?? "createdDate",
+                OrderBy = orderBy ?? "Name",
                 Ascending = ascending,
                 PartnerGroupId = partnerGroupId,
                 FilterActive = filterActive
@@ -251,8 +251,8 @@ public class PartnerController : BaseController
         [FromQuery] string query,
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = "CreatedDate", 
-        [FromQuery] bool ascending = false,
+        [FromQuery] string? orderBy = "Name", 
+        [FromQuery] bool ascending = true,
         [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {
@@ -323,8 +323,8 @@ public class PartnerController : BaseController
         [FromQuery] string filters,
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? orderBy = "CreatedDate",
-        [FromQuery] bool ascending = false,
+        [FromQuery] string? orderBy = "Name",
+        [FromQuery] bool ascending = true,
         [FromQuery] bool export = false,
         [FromQuery] bool filterActive = true)
     {

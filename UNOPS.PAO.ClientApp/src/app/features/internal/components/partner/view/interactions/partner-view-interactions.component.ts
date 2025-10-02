@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Button } from 'primeng/button';
+import { HttpClient } from '@angular/common/http';
 import { ListviewComponent } from '../../../../../../common/pages/components/listview/listview.component';
 import { ListViewColumn, ListViewConfig, SearchParams } from '../../../../../../common/pages/components/listview/listview.model';
 import { PermissionUtilityService } from '../../../../../../essentials/services/permission-utility.service';
@@ -16,6 +17,21 @@ import { InteractionIconService } from '../../../../../../common/services/intera
 import { TimelineComponent, TimelineConfig } from '../../../../../../common/reusables/components/timeline/timeline.component';
 import { TabViewModule } from 'primeng/tabview';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+
+// Backend SearchFieldInfo interface to match the API response
+interface SearchFieldInfo {
+  field: string;
+  displayName: string;
+  fieldType: string;
+  isNavigationProperty?: boolean;
+  allowedOperators: string[];
+  dropdownOptions?: DropdownOption[];
+}
+
+interface DropdownOption {
+  value: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-partner-view-interactions',
@@ -67,6 +83,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 export class PartnerViewInteractionsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private http = inject(HttpClient);
   private dialogService = inject(DialogService);
   private entityConfigurationService = inject(EntityConfigurationService);
   private feedbackDialogService = inject(FeedbackDialogService);
@@ -85,6 +102,11 @@ export class PartnerViewInteractionsComponent implements OnInit {
   // Dynamic interaction columns loaded from API
   columns = signal<ListViewColumn[]>([]);
   columnsLoading = signal(true);
+
+  // Dynamic search fields from API
+  searchFieldsFromAPI = signal<SearchFieldInfo[]>([]);
+  isLoadingSearchFields = signal<boolean>(false);
+  searchFieldsError = signal<string | null>(null);
 
   // Timeline configuration with navigator, clustering, and lazy loading
   timelineConfig = computed<TimelineConfig>(() => ({
@@ -126,55 +148,79 @@ export class PartnerViewInteractionsComponent implements OnInit {
     return `/api/interactions?partnerId=${id}`;
   });
 
-  // Configure listview behavior with computed permissions
+  // Configure listview behavior with computed permissions and dynamic search fields
   listviewConfig = computed<ListViewConfig>(() => ({
     enableSelection: true,
     enablePagination: true,
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
     enableSorting: true,
-    enableSearch: false,
+    enableSearch: true,
     enableExport: this.entityPermissions().permissions.canCreate || this.entityPermissions().permissions.canUpdate,
     entityName: 'Interaction',
     scrollable: true,
     scrollHeight: 'flex',
+    defaultSortField: 'subject',
+    defaultSortOrder: 'asc',
+    sortableFields: [
+      { field: 'subject', label: 'Subject' },
+      { field: 'createdDate', label: 'Created Date' },
+      { field: 'lastModifiedDate', label: 'Last Updated Date' }
+    ],
     searchConfig: {
       useAdvancedSearch: true,
       placeholder: this.translateService.instant('partner.interactions.search.placeholder'),
-      searchableFields: [
-        {
-          field: 'type',
-          label: this.translateService.instant('partner.interactions.search.type'),
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        {
-          field: 'subject',
-          label: this.translateService.instant('partner.interactions.search.subject'),
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        {
-          field: 'description',
-          label: this.translateService.instant('partner.interactions.search.description'),
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        {
-          field: 'date',
-          label: this.translateService.instant('partner.interactions.search.date'),
-          type: 'date',
-          operators: ['is', 'is not', 'after', 'before', 'between', '>', '<', '>=', '<=']
-        },
-        {
-          field: 'contactName',
-          label: this.translateService.instant('partner.interactions.search.contactName'),
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        }
-      ] as SearchField[]
+      entityType: 'Interaction' as const,
+      searchableFields: this.getSearchableFields()
     }
   }));
+
+  // Convert API search fields to SearchField format
+  private getSearchableFields(): SearchField[] {
+    const apiFields = this.searchFieldsFromAPI();
+    
+    if (apiFields.length > 0) {
+      return apiFields.map(field => {
+        // Get translation or fallback to the displayName itself
+        const translatedLabel = this.translateService.instant(field.displayName);
+        const label = translatedLabel !== field.displayName ? translatedLabel : field.displayName;
+        
+        return {
+          field: field.field,
+          label: label,
+          type: this.mapFieldTypeToSearchFieldType(field.fieldType),
+          operators: field.allowedOperators || ['like', 'eq', 'neq'],
+          dropdownOptions: field.dropdownOptions
+        };
+      });
+    }
+    
+    // Fallback to empty array if API hasn't loaded yet
+    return [];
+  }
+
+  // Map backend field types to frontend search field types
+  private mapFieldTypeToSearchFieldType(backendType: string): 'string' | 'number' | 'date' | 'boolean' {
+    switch (backendType.toLowerCase()) {
+      case 'text':
+      case 'string':
+      case 'enum':
+      case 'dropdown':
+        return 'string';
+      case 'number':
+      case 'int':
+      case 'decimal':
+        return 'number';
+      case 'date':
+      case 'datetime':
+        return 'date';
+      case 'bool':
+      case 'boolean':
+        return 'boolean';
+      default:
+        return 'string';
+    }
+  }
 
   ngOnInit() {
     // Get partner ID from route params
@@ -190,6 +236,37 @@ export class PartnerViewInteractionsComponent implements OnInit {
 
     // Load dynamic columns from API
     this.loadInteractionColumns();
+    
+    // Load dynamic search fields from API
+    this.loadSearchFields();
+  }
+
+  private loadSearchFields(): void {
+    this.isLoadingSearchFields.set(true);
+    this.searchFieldsError.set(null);
+
+    const endpoint = '/api/interaction/search-fields';
+
+    this.http.get<SearchFieldInfo[]>(endpoint).subscribe({
+      next: (searchFields) => {
+        // Transform API response to include translation keys for displayName
+        const transformedFields = searchFields.map(field => ({
+          ...field,
+          displayName: this.translateService.instant(field.displayName) || field.displayName
+        }));
+        
+        this.searchFieldsFromAPI.set(transformedFields);
+        this.isLoadingSearchFields.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading interaction search fields:', error);
+        this.searchFieldsError.set('Failed to load search fields');
+        this.isLoadingSearchFields.set(false);
+        
+        // Fallback to empty array if API fails
+        this.searchFieldsFromAPI.set([]);
+      }
+    });
   }
 
   private loadInteractionColumns() {

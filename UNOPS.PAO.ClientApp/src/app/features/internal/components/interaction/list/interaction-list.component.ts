@@ -98,9 +98,10 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     entityName: 'Interaction',
     scrollable: true,
     scrollHeight: 'flex',
-    defaultSortField: 'lastModifiedDate',
-    defaultSortOrder: 'desc',
+    defaultSortField: 'subject',
+    defaultSortOrder: 'asc',
     sortableFields: [
+      { field: 'subject', label: 'Subject' },
       { field: 'createdDate', label: 'Created Date' },
       { field: 'lastModifiedDate', label: 'Last Updated Date' }
     ],
