@@ -9,6 +9,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -1156,6 +1157,18 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     public async Task<IEnumerable<TEntity>> GetAllAsync(string[] includes)
     {
         var set = ApplyIncludes(_dbSet, includes);
+        
+        // Apply soft delete filtering if the entity supports it
+        var isDeletedProperty = typeof(TEntity).GetProperty("IsDeleted");
+        if (isDeletedProperty != null && isDeletedProperty.PropertyType == typeof(bool))
+        {
+            var parameter = Expression.Parameter(typeof(TEntity), "x");
+            var isDeletedProp = Expression.Property(parameter, "IsDeleted");
+            var notDeleted = Expression.Not(isDeletedProp);
+            var isDeletedLambda = Expression.Lambda<Func<TEntity, bool>>(notDeleted, parameter);
+            set = set.Where(isDeletedLambda);
+        }
+        
         return await set.ToListAsync();
     }
 
@@ -1164,7 +1177,18 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     public IEnumerable<TEntity> GetAll(string[] includes)
     {
         var set = ApplyIncludes(_dbSet, includes);
-        // Removed global filter application - filtering is now handled explicitly in managers
+        
+        // Apply soft delete filtering if the entity supports it
+        var isDeletedProperty = typeof(TEntity).GetProperty("IsDeleted");
+        if (isDeletedProperty != null && isDeletedProperty.PropertyType == typeof(bool))
+        {
+            var parameter = Expression.Parameter(typeof(TEntity), "x");
+            var isDeletedProp = Expression.Property(parameter, "IsDeleted");
+            var notDeleted = Expression.Not(isDeletedProp);
+            var isDeletedLambda = Expression.Lambda<Func<TEntity, bool>>(notDeleted, parameter);
+            set = set.Where(isDeletedLambda);
+        }
+        
         return set.AsEnumerable();
     }
 
@@ -1173,6 +1197,21 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     public async Task<TEntity?> GetByIdAsync(int id, string[] includes)
     {
         var set = ApplyIncludes(_dbSet, includes);
+        
+        // Apply soft delete filtering if the entity supports it
+        var isDeletedProperty = typeof(TEntity).GetProperty("IsDeleted");
+        if (isDeletedProperty != null && isDeletedProperty.PropertyType == typeof(bool))
+        {
+            var parameter = Expression.Parameter(typeof(TEntity), "x");
+            var idProperty = Expression.Property(parameter, "Id");
+            var idEquals = Expression.Equal(idProperty, Expression.Constant(id));
+            var isDeletedProp = Expression.Property(parameter, "IsDeleted");
+            var notDeleted = Expression.Not(isDeletedProp);
+            var combined = Expression.AndAlso(idEquals, notDeleted);
+            var lambda = Expression.Lambda<Func<TEntity, bool>>(combined, parameter);
+            return await set.SingleOrDefaultAsync(lambda);
+        }
+        
         return await set.SingleOrDefaultAsync(x => x.Id == id);
     }
 
@@ -1201,6 +1240,17 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
         var lambda = Expression.Lambda<Func<TEntity, object>>(Expression.Convert(property, typeof(object)), parameter);
 
         IQueryable<TEntity> query = _dbSet;
+
+        // Apply soft delete filtering if the entity supports it
+        var isDeletedProperty = typeof(TEntity).GetProperty("IsDeleted");
+        if (isDeletedProperty != null && isDeletedProperty.PropertyType == typeof(bool))
+        {
+            var isDeletedParam = Expression.Parameter(typeof(TEntity), "x");
+            var isDeletedProp = Expression.Property(isDeletedParam, "IsDeleted");
+            var notDeleted = Expression.Not(isDeletedProp);
+            var isDeletedLambda = Expression.Lambda<Func<TEntity, bool>>(notDeleted, isDeletedParam);
+            query = query.Where(isDeletedLambda);
+        }
 
         if (ascending)
         {
