@@ -260,6 +260,12 @@ export class PartnerComponent implements OnDestroy, OnInit {
         if (listviewElement) {
           listviewElement.dispatchEvent(new CustomEvent('refresh-listview'));
         }
+      },
+      error: (error: any) => {
+        this.feedbackDialogService.showErrorToast({
+          detail: this.translateService.instant('message.failedToDeleteRecord'),
+          summary: error.message || this.translateService.instant('message.anErrorOccurred')
+        });
       }
     });
   }

@@ -763,28 +763,28 @@ export class PartnerViewComponent implements OnInit {
     // Check if user has delete permission
     if (!this.permissionService.canDelete(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: this.translateService.instant('message.noPermissionToDeletePartner'),
-        summary: this.translateService.instant('message.permissionDenied')
+        detail: this.translateService.instant('partner.detail.error.deletePermissionDenied'),
+        summary: this.translateService.instant('common.error.permissionDenied')
       });
       return;
     }
 
     this.confirmationService.confirm({
-      message: this.translateService.instant('message.deletePartnerConfirmation'),
-      header: this.translateService.instant('message.confirmDelete'),
+      message: this.translateService.instant('partner.detail.confirmation.deleteMessage'),
+      header: this.translateService.instant('partner.detail.confirmation.deleteHeader'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.partnerService.deletePartnerById(this.recordId).subscribe({
           next: () => {
             this.feedbackDialogService.showSuccessToast({
-              detail: this.translateService.instant('message.partnerDeletedSuccessfully')
+              detail: this.translateService.instant('partner.detail.success.deleted')
             });
             this.router.navigate(['/partnerships/partners']);
           },
           error: (error) => {
             console.error('Error deleting partner:', error);
             this.feedbackDialogService.showErrorToast({
-              detail: this.translateService.instant('message.failedToDeletePartner')
+              detail: this.translateService.instant('partner.detail.error.deleteFailed')
             });
           }
         });

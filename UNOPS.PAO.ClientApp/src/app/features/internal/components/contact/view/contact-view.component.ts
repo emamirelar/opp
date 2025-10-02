@@ -406,28 +406,28 @@ export class ContactViewComponent implements OnInit, OnDestroy {
     // Check if user has delete permission
     if (!this.permissionUtilityService.canDelete(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: this.translateService.instant('message.noPermissionToDeleteContact'),
-        summary: this.translateService.instant('message.permissionDenied')
+        detail: this.translateService.instant('contact.detail.error.deletePermissionDenied'),
+        summary: this.translateService.instant('common.error.permissionDenied')
       });
       return;
     }
 
     this.confirmationService.confirm({
-      message: this.translateService.instant('message.deleteContactConfirmation'),
-      header: this.translateService.instant('message.confirmDelete'),
+      message: this.translateService.instant('contact.detail.confirmation.deleteMessage'),
+      header: this.translateService.instant('contact.detail.confirmation.deleteHeader'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.contactService.deleteContactById(this.recordId).subscribe({
           next: () => {
             this.feedbackDialogService.showSuccessToast({
-              detail: this.translateService.instant('message.contactDeletedSuccessfully')
+              detail: this.translateService.instant('contact.detail.success.deleted')
             });
             this.router.navigate(['/partnerships/contacts']);
           },
           error: (error) => {
             console.error('Error deleting contact:', error);
             this.feedbackDialogService.showErrorToast({
-              detail: this.translateService.instant('message.failedToDeleteContact')
+              detail: this.translateService.instant('contact.detail.error.deleteFailed')
             });
           }
         });
