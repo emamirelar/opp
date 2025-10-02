@@ -9,7 +9,7 @@ import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
-import { FeedbackDialogService } from '../../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../../common/services/feedback-dialog.service';
 import { DocumentService } from '../../../../services/document.service';
 import { DocumentComponent } from '../../../../../../common/reusables/components/document/document.component';
 import { GDriveDocumentComponent } from '../../../../overrides/reusables/components/document/gdrive/document-gdrive.component';

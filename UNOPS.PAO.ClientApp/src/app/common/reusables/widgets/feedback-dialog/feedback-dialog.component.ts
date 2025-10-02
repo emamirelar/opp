@@ -2,8 +2,8 @@ import { Component, inject } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { Dialog } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
-import { FeedbackConfig } from '../../../pages/interfaces/feedback';
-import { FeedbackDialogService } from '../../../pages/services/feedback-dialog.service';
+import { FeedbackConfig } from '../../../interfaces/feedback';
+import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 

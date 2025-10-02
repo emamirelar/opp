@@ -9,7 +9,7 @@ import { PartnerTree } from '../../../models/partner-tree.model';
 import { PartnerTreeViewNavigationComponent } from './navigation/partner-tree-view-navigation.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from '../item/partner-tree-item.component';
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 

@@ -82,11 +82,23 @@ export class FeedbackDialogService {
         this.errorDialogState.next(options);
     }
 
+    showConfirmDialog(options: FeedbackConfig, callback: () => void) {
+        this.errorDialogState.next({ onConfirm: callback, ...options });
+    }
+
     hideErrorDialog() {
         this.errorDialogState.next(null);
     }
 
+    hideDialog() {
+        this.hideErrorDialog();
+    }
+
     getErrorDialogState() {
         return this.errorDialogState.asObservable();
+    }
+
+    getDialogState() {
+        return this.getErrorDialogState();
     }
 }

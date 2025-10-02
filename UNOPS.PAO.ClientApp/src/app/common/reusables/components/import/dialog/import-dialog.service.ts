@@ -6,7 +6,7 @@ import { Observable, Subject, forkJoin, of, timer } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { WritableSignal } from '@angular/core';
 import { ImportService } from '../import.service';
-import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../services/feedback-dialog.service';
 import { ImportGoogleSheetService } from '../import-google-sheet.service';
 import { catchError, finalize, mergeMap, map, timeout } from 'rxjs/operators';
 import { ConfirmationService } from 'primeng/api';

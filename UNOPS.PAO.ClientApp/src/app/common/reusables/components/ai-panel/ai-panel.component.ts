@@ -9,8 +9,10 @@ import {
   output,
   signal,
   ChangeDetectionStrategy,
-  ChangeDetectorRef
+  ChangeDetectorRef,
+  DestroyRef
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PanelModule } from 'primeng/panel';
@@ -337,6 +339,7 @@ export interface AiDataService {
 export class AiPanelComponent implements OnInit, OnDestroy, DoCheck {
   private translateService = inject(TranslateService);
   private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
   private destroy$ = new Subject<void>();
   private currentAbortController: AbortController | null = null;
   private lastEntityId = '';
@@ -454,7 +457,8 @@ export class AiPanelComponent implements OnInit, OnDestroy, DoCheck {
 
     this.aiService().get(currentEntityId, currentPromptType)
       .pipe(
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
         next: (data: string) => {

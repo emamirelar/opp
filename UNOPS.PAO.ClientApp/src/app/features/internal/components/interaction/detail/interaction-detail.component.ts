@@ -23,7 +23,7 @@ import { InteractionService } from '../../../services/interaction.service';
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
 import { InteractionType } from '../../../models/interaction-type.enum';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
-import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { InteractionIconService } from '../../../../../common/services/interaction-icon.service';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { GeminiService } from '../../../services/gemini.service';
@@ -285,7 +285,7 @@ export class InteractionDetailComponent implements OnInit {
   }
 
   getPartnerName(partnerId: number): string {
-    const partner = this.allPartners().find(p => p.id === partnerId);
+    const partner = this.allPartners().find(p => p.id?.toString() === partnerId?.toString());
     return partner?.name || this.translateService.instant('interaction.detail.fallback.partner', { id: partnerId });
   }
 

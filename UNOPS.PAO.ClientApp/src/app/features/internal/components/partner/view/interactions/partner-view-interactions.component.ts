@@ -7,7 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { ListviewComponent } from '../../../../../../common/pages/components/listview/listview.component';
 import { ListViewColumn, ListViewConfig, SearchParams } from '../../../../../../common/pages/components/listview/listview.model';
 import { PermissionUtilityService } from '../../../../../../essentials/services/permission-utility.service';
-import { FeedbackDialogService } from '../../../../../../common/reusables/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../../common/services/feedback-dialog.service';
 import { EntityConfigurationService } from '../../../../services/entity-configuration.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { InteractionModalComponent } from '../../../interaction/modal/interaction-modal.component';

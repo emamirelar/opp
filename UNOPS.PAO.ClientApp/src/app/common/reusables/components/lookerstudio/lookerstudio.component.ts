@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 
@@ -6,7 +6,8 @@ import { CommonModule } from '@angular/common';
   selector: 'app-lookerstudio',
   imports: [CommonModule],
   templateUrl: './lookerstudio.component.html',
-  styleUrl: './lookerstudio.component.scss'
+  styleUrl: './lookerstudio.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LookerstudioComponent implements OnChanges, OnInit {
   @Input() dashboardId: string = '';

@@ -19,7 +19,7 @@ import { ContactService } from '../../../../features/internal/services/contact.s
 import { InteractionService } from '../../../../features/internal/services/interaction.service';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { PermissionService } from '../../../../essentials/services/permission.service';
-import { FeedbackDialogService } from '../../services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerEditDialogComponent } from '../../../../features/internal/components/partner/edit-dialog/partner-edit-dialog.component';
 import { ContactEditDialogComponent } from '../../../../features/internal/components/contact/edit-dialog/contact-edit-dialog.component';

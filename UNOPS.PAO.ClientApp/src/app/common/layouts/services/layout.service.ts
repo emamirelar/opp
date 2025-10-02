@@ -1,5 +1,5 @@
 import { Injectable, effect, signal, computed } from '@angular/core';
-import { Subject } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 export interface layoutConfig {
     preset?: string;
@@ -52,21 +52,21 @@ export class LayoutService {
 
     layoutState = signal<LayoutState>(this._state);
 
-    private configUpdate = new Subject<layoutConfig>();
+    private configUpdateSignal = signal<layoutConfig | undefined>(undefined);
 
-    private overlayOpen = new Subject<any>();
+    private overlayOpenSignal = signal<any>(undefined);
 
-    private menuSource = new Subject<MenuChangeEvent>();
+    private menuSourceSignal = signal<MenuChangeEvent | undefined>(undefined);
 
-    private resetSource = new Subject();
+    private resetSourceSignal = signal<boolean>(false);
 
-    menuSource$ = this.menuSource.asObservable();
+    menuSource$ = toObservable(this.menuSourceSignal);
 
-    resetSource$ = this.resetSource.asObservable();
+    resetSource$ = toObservable(this.resetSourceSignal);
 
-    configUpdate$ = this.configUpdate.asObservable();
+    configUpdate$ = toObservable(this.configUpdateSignal);
 
-    overlayOpen$ = this.overlayOpen.asObservable();
+    overlayOpen$ = toObservable(this.overlayOpenSignal);
 
     theme = computed(() => (this.layoutConfig()?.darkTheme ? 'light' : 'dark'));
 
@@ -178,7 +178,7 @@ export class LayoutService {
             this.layoutState.update((prev) => ({ ...prev, overlayMenuActive: !this.layoutState().overlayMenuActive }));
 
             if (this.layoutState().overlayMenuActive) {
-                this.overlayOpen.next(null);
+                this.overlayOpenSignal.set(null);
             }
         }
 
@@ -188,7 +188,7 @@ export class LayoutService {
             this.layoutState.update((prev) => ({ ...prev, staticMenuMobileActive: !this.layoutState().staticMenuMobileActive }));
 
             if (this.layoutState().staticMenuMobileActive) {
-                this.overlayOpen.next(null);
+                this.overlayOpenSignal.set(null);
             }
         }
     }
@@ -220,14 +220,14 @@ export class LayoutService {
 
     onConfigUpdate() {
         this._config = { ...this.layoutConfig() };
-        this.configUpdate.next(this.layoutConfig());
+        this.configUpdateSignal.set(this.layoutConfig());
     }
 
     onMenuStateChange(event: MenuChangeEvent) {
-        this.menuSource.next(event);
+        this.menuSourceSignal.set(event);
     }
 
     reset() {
-        this.resetSource.next(true);
+        this.resetSourceSignal.set(true);
     }
 }

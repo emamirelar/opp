@@ -10,7 +10,7 @@ import { BlockUIModule } from 'primeng/blockui';
 
 import { DocumentService } from '../../../../services/document.service';
 import { Documentype } from '../../../../interfaces/document.interface';
-import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../services/feedback-dialog.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({

@@ -1,8 +1,8 @@
 import { NgClass } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
-import { FeedbackDialogService } from '../../services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -10,6 +10,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   imports: [NgClass, TableModule, ButtonModule, TranslateModule],
   templateUrl: './document-list.component.html',
   styleUrl: './document-list.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DocumentListComponent {
   @Input() documents: any[] = [];

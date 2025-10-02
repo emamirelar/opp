@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed, ViewChild, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIf } from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
@@ -18,7 +19,7 @@ import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.com
 import {BusinessCardScannerComponent} from './business-card-scanner/business-card-scanner.component';
 import {ListviewComponent} from '../../../../../common/pages/components/listview/listview.component';
 import {ContactService} from '../../../services/contact.service';
-import {FeedbackDialogService} from '../../../../../common/pages/services/feedback-dialog.service';
+import {FeedbackDialogService} from '../../../../../common/services/feedback-dialog.service';
 import {ListViewColumn, ListViewConfig, SearchParams} from '../../../../../common/pages/components/listview/listview.model';
 import {Contact} from '../../../models/contact.model';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
@@ -75,6 +76,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   entityConfigurationService = inject(EntityConfigurationService);
   translateService = inject(TranslateService);
   cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
 
   // Permission management using utility service
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Contact');
@@ -197,6 +199,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
     this.loadContactColumns();
 
     this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(params => {
         if (params['openNewDialog'] === 'true') {
           const state = history.state;
@@ -209,6 +212,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   private loadContactColumns() {
     this.columnsLoading.set(true);
     this.entityConfigurationService.getEntityListViewConfiguration('Contact')
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (columns) => {
           // Convert backend columns to frontend format and add template functions
@@ -344,7 +348,12 @@ export class ContactListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.contactService.deleteContactById(record.id).subscribe({
+    if (!record.id) {
+      console.error('Cannot delete contact: ID is missing');
+      return;
+    }
+
+    this.contactService.deleteContactById(record.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.feedbackDialogService.showSuccessToast({ detail: 'message.recordDeletedSuccessfully' });
         // Trigger a refresh for the listview
@@ -406,7 +415,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       }
     });
 
-    const refSub = ref.onClose.subscribe((result) => {
+    const refSub = ref.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result) {
         this._handleOnRecordCreation(result);
       }

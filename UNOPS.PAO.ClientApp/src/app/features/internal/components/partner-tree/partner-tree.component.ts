@@ -19,7 +19,7 @@ import { PartnerTree } from '../../models/partner-tree.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from './item/partner-tree-item.component';
 import { PermissionUtilityService } from '../../../../essentials/services/permission-utility.service';
-import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../common/services/feedback-dialog.service';
 import { EntityConfigurationService } from '../../services/entity-configuration.service';
 import { ListViewColumn } from '../../../../common/pages/components/listview/listview.model';
 

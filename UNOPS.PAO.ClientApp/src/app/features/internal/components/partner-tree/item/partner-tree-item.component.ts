@@ -7,7 +7,7 @@ import { PanelModule } from 'primeng/panel';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
