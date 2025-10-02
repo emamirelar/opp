@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { FeedbackDialogService } from '../../../../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../../../../common/services/feedback-dialog.service';
 import { DrivePickerService } from '../../../../drive-picker.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 

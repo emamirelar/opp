@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject, OnInit, OnDestroy, signal, computed, Type } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, OnInit, OnDestroy, signal, computed, Type, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -11,7 +12,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { MessageModule } from 'primeng/message';
 import { BlockUIModule } from 'primeng/blockui';
 import { StepperModule } from 'primeng/stepper';
-import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../services/feedback-dialog.service';
 import { NgClass, JsonPipe, TitleCasePipe } from '@angular/common';
 import { DatePipe } from '@angular/common';
 import { ImportDialogService } from './import-dialog.service';
@@ -139,6 +140,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
   importService = inject(ImportService);
   translateService = inject(TranslateService);
   userManagementService = inject(UserManagementService);
+  private destroyRef = inject(DestroyRef);
   // Make Math available to the template
   Math = Math;
 
@@ -978,7 +980,7 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
       });
       
       // Handle dialog close event to update the row in the table
-      dialogRef.onClose.subscribe(result => {
+      dialogRef.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
         
         
         if (result && (result._updated || typeof result === 'object')) {

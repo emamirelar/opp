@@ -734,7 +734,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
         sortField || this.config.defaultSortField,
         sortOrder || this.config.defaultSortOrder,
         customTransform
-      ).subscribe();
+      ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     }
   }
 
@@ -1032,22 +1032,22 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   // Load global filter information
   private loadGlobalFilterInfo(): void {
     // Get current user ID
-    this.authService.user().subscribe({
+    this.authService.user().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (claims) => {
         const userIdClaim = claims.find(c => c.type === 'userId');
         if (userIdClaim) {
           this.currentUserId.set(userIdClaim.value);
-          
+
           // Load user's global filters
           this.userPreferenceService.getGlobalFilters(userIdClaim.value)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
               next: (filters) => {
                 this.globalFilters.set(filters);
-                
+
                 // Update global filter active status
                 this.isGlobalFilterActive.set(this.hasOtherActiveFilters());
-                
+
                 // Update filter labels now that we have org unit name from backend
                 this.updateActiveFilterLabels();
               },

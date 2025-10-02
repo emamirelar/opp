@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 
 import { ListviewExportService } from './listview-export.service';
 import { ExportGoogleSheetService } from '../../../reusables/components/export/export-google-sheet.service';
-import { FeedbackDialogService } from '../../../reusables/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
 import { SearchParams } from './listview.model';
 
 describe('ListviewExportService', () => {

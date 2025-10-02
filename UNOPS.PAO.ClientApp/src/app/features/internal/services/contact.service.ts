@@ -1,8 +1,10 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap, map } from 'rxjs';
 import { Contact } from '../models/contact.model';
 import { ImportDialogService } from '../../../common/reusables/components/import/dialog/import-dialog.service';
+import { PaginationResponse } from '../../../common/models/pagination-response.model';
+import { DuplicateDetectionResponse, ContactQueryParams } from '../../../common/models/api-responses.model';
 
 export interface ContactsParams {
   page: number;
@@ -20,16 +22,16 @@ export class ContactService {
   private importDialogService = inject(ImportDialogService);
 
   public readonly apiUrl = `/api/contact`;
-  private contactData = signal<any[]>([]);
+  private contactData = signal<Contact[]>([]);
   allContacts = this.contactData.asReadonly();
 
   isLoading = signal(false);
 
   constructor() { }
 
-  getAll(params: any): Observable<any> {
+  getAll(params: ContactQueryParams): Observable<HttpResponse<PaginationResponse<Contact>>> {
     this.isLoading.set(true);
-    return this.http.get<any>(this.apiUrl, { observe: 'response', params })
+    return this.http.get<PaginationResponse<Contact>>(this.apiUrl, { observe: 'response', params })
       .pipe(
         tap({
           next: () => this.isLoading.set(false),
@@ -52,8 +54,8 @@ export class ContactService {
 
   getAllContacts() {
     this.isLoading.set(true);
-    this.http.get(this.apiUrl).subscribe({
-      next: (data: any) => {
+    this.http.get<PaginationResponse<Contact>>(this.apiUrl).subscribe({
+      next: (data) => {
         this.contactData.set(data.records);
         this.isLoading.set(false);
       },
@@ -72,7 +74,7 @@ export class ContactService {
   getContacts(params: ContactsParams): Observable<{ data: Contact[], total: number }> {
     this.isLoading.set(true);
 
-    const queryParams: any = {
+    const queryParams: ContactQueryParams = {
       page: params.page,
       pageSize: params.pageSize
     };
@@ -86,9 +88,9 @@ export class ContactService {
       queryParams.sortOrder = params.sortOrder || 'asc';
     }
 
-    return this.http.get<any>(`${this.apiUrl}`, { params: queryParams })
+    return this.http.get<PaginationResponse<Contact>>(`${this.apiUrl}`, { params: queryParams })
       .pipe(
-        map((response: any) => ({
+        map((response) => ({
           data: response.records || [],
           total: response.totalCount || 0
         })),
@@ -114,9 +116,9 @@ export class ContactService {
    * Creates a contact with duplicate detection handling
    * Returns either the created contact or duplicate detection response
    */
-  createContact( contact: Contact ): Observable<any> {
+  createContact( contact: Contact ): Observable<Contact | DuplicateDetectionResponse> {
     this.isLoading.set( true );
-    return this.http.post<any>(this.apiUrl, contact).pipe(tap(
+    return this.http.post<Contact | DuplicateDetectionResponse>(this.apiUrl, contact).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -130,7 +132,7 @@ export class ContactService {
   updateContactById( contact: Contact ): Observable<Contact> {
 
     this.isLoading.set( true );
-    return this.http.put(this.apiUrl, contact).pipe(tap(
+    return this.http.put<Contact>(this.apiUrl, contact).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -141,9 +143,9 @@ export class ContactService {
     }));
   }
 
-  deleteContactById(id: any) {
+  deleteContactById(id: string | number) {
     this.isLoading.set(true);
-    return this.http.delete(`${this.apiUrl}/${id}`).pipe(tap(
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);
@@ -157,7 +159,7 @@ export class ContactService {
   /**
    * Detects duplicates for contact records using the centralized ImportDialogService method
    */
-  detectDuplicates(contactData: any): Observable<any> {
+  detectDuplicates(contactData: Contact): Observable<DuplicateDetectionResponse | null> {
     // Use the centralized duplicate detection method from ImportDialogService
     return this.importDialogService.detectDuplicatesForEntity(contactData, 'contact');
   }

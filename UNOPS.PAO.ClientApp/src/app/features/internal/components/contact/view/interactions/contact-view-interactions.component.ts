@@ -7,7 +7,7 @@ import { InteractionModalComponent } from '../../../interaction/modal/interactio
 import { Router, ActivatedRoute } from '@angular/router';
 import {ListViewColumn, ListViewConfig, SearchParams} from '@common/pages/components/listview/listview.model';
 import {ListviewComponent} from '@common/pages/components/listview/listview.component';
-import {FeedbackDialogService} from '@common/pages/services/feedback-dialog.service';
+import {FeedbackDialogService} from '../../../../../../common/services/feedback-dialog.service';
 import {PermissionUtilityService} from '@essentials/services/permission-utility.service';
 import {SearchField} from '@common/services/search-parser.service';
 import {EntityConfigurationService} from '@features/internal/services/entity-configuration.service';

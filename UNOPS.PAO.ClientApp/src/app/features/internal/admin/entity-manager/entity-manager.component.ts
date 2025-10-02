@@ -1,4 +1,5 @@
-import { Component, OnInit, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, ChangeDetectorRef, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -99,6 +100,7 @@ export class EntityManagerComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private translateService = inject(TranslateService);
   private interactionIconService = inject(InteractionIconService);
+  private destroyRef = inject(DestroyRef);
 
   // Auto-save timer for debounced saving
   private autoSaveTimer?: ReturnType<typeof setTimeout>;
@@ -330,7 +332,7 @@ export class EntityManagerComponent implements OnInit {
 
   private loadPermissions() {
     this.permissionsLoading.set(true);
-    this.entityConfigService.getEntityPermissions().subscribe({
+    this.entityConfigService.getEntityPermissions().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (permissions) => {
         this.permissions.set(permissions);
         this.permissionsLoading.set(false);
@@ -361,7 +363,7 @@ export class EntityManagerComponent implements OnInit {
 
   private loadEntities() {
     this.entitiesLoading.set(true);
-    this.entityConfigService.getEntities().subscribe({
+    this.entityConfigService.getEntities().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (entities) => {
         // Filter out PartnerTree from the entities list
         const filteredEntities = entities.filter(entity => entity.entityName !== 'PartnerTree');
@@ -431,7 +433,7 @@ export class EntityManagerComponent implements OnInit {
 
   private loadEntityConfiguration(entityName: string) {
     this.configLoading.set(true);
-    this.entityConfigService.getEntityConfiguration(entityName).subscribe({
+    this.entityConfigService.getEntityConfiguration(entityName).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (config) => {
         this.currentEntityConfig.set(config);
         this.originalEntityConfig.set(JSON.parse(JSON.stringify(config)));
@@ -747,7 +749,7 @@ export class EntityManagerComponent implements OnInit {
         const currentEntityName = this.selectedEntityName();
         const isSameEntity = baseEntityType.toLowerCase() === currentEntityName.toLowerCase();
         
-        this.getRelatedEntityFields(baseEntityType).subscribe(options => {
+        this.getRelatedEntityFields(baseEntityType).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(options => {
           const selectedOption = options.find(opt => opt.value === value);
           
           // Generate template path instead of fieldPath
@@ -957,7 +959,7 @@ export class EntityManagerComponent implements OnInit {
       fields: allFields
     };
 
-    this.entityConfigService.saveEntityConfiguration(entityName, saveRequest).subscribe({
+    this.entityConfigService.saveEntityConfiguration(entityName, saveRequest).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response: EntityConfigurationDetailsResponse) => {
         // Check if this was a new field being created
         const isNewField = !field.id || field.id <= 0;
@@ -1067,7 +1069,7 @@ export class EntityManagerComponent implements OnInit {
   private loadSampleData() {
     const entityName = this.selectedEntityName();
     if (entityName) {
-      this.entityConfigService.getSampleData(entityName).subscribe({
+      this.entityConfigService.getSampleData(entityName).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           this.sampleData.set(data);
           this.updateTemplateAvailableFields(); // Update available fields for autocompletion
@@ -1175,7 +1177,7 @@ export class EntityManagerComponent implements OnInit {
       fields: allFields
     };
 
-    this.entityConfigService.saveEntityConfiguration(entityName, saveRequest).subscribe({
+    this.entityConfigService.saveEntityConfiguration(entityName, saveRequest).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.hasUnsavedChanges.set(false);
         this.autoSaving.set(false);
@@ -1472,7 +1474,7 @@ export class EntityManagerComponent implements OnInit {
 
     this.configSaving.set(true);
 
-    this.entityConfigService.updateEntityConfiguration(form.id, form).subscribe({
+    this.entityConfigService.updateEntityConfiguration(form.id, form).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         // Update the working config
         this.workingEntityConfig.set(form);
@@ -1627,7 +1629,7 @@ export class EntityManagerComponent implements OnInit {
 
     this.saving.set(true);
 
-    const sub = this.entityConfigService.exportEntityConfigurationAsSql().subscribe({
+    const sub = this.entityConfigService.exportEntityConfigurationAsSql().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob) => {
 
         if (blob.size === 0) {

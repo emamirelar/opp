@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Injectable, signal, computed } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -11,39 +11,40 @@ export class GlobalFilterService {
     SELECTED_ORG_UNIT: 'globalFilter_selectedOrgUnitId'
   };
 
-  private filterEnabledSubject = new BehaviorSubject<boolean>(this.loadFilterEnabled());
-  private selectedOrgUnitIdSubject = new BehaviorSubject<number | null>(this.loadSelectedOrgUnitId());
-  private filtersChangedSubject = new BehaviorSubject<void>(undefined);
+  private filterEnabledSignal = signal<boolean>(this.loadFilterEnabled());
+  private selectedOrgUnitIdSignal = signal<number | null>(this.loadSelectedOrgUnitId());
+  private filtersChangedSignal = signal<void>(undefined);
 
-  filterEnabled$ = this.filterEnabledSubject.asObservable();
-  selectedOrgUnitId$ = this.selectedOrgUnitIdSubject.asObservable();
-  filtersChanged$ = this.filtersChangedSubject.asObservable();
+  filterEnabled = this.filterEnabledSignal.asReadonly();
+  selectedOrgUnitId = this.selectedOrgUnitIdSignal.asReadonly();
+  filtersChanged = this.filtersChangedSignal.asReadonly();
 
-  // Combined observable that emits the org unit ID only when filter is enabled
-  activeOrgUnitId$: Observable<number | null> = combineLatest([
-    this.filterEnabled$,
-    this.selectedOrgUnitId$
-  ]).pipe(
-    map(([enabled, orgUnitId]) => enabled ? orgUnitId : null)
+  filterEnabled$ = toObservable(this.filterEnabled);
+  selectedOrgUnitId$ = toObservable(this.selectedOrgUnitId);
+  filtersChanged$ = toObservable(this.filtersChanged);
+
+  activeOrgUnitId = computed(() =>
+    this.filterEnabled() ? this.selectedOrgUnitId() : null
   );
+
+  activeOrgUnitId$: Observable<number | null> = toObservable(this.activeOrgUnitId);
 
   constructor() {}
 
   setFilterEnabled(enabled: boolean): void {
-    this.filterEnabledSubject.next(enabled);
+    this.filterEnabledSignal.set(enabled);
     this.saveFilterEnabled(enabled);
-    this.filtersChangedSubject.next();
+    this.filtersChangedSignal.set(undefined);
   }
 
   setSelectedOrgUnitId(orgUnitId: number | null): void {
-    this.selectedOrgUnitIdSubject.next(orgUnitId);
+    this.selectedOrgUnitIdSignal.set(orgUnitId);
     this.saveSelectedOrgUnitId(orgUnitId);
-    this.filtersChangedSubject.next();
+    this.filtersChangedSignal.set(undefined);
   }
 
-  // Method to trigger a refresh when global filters are saved
   triggerFiltersChanged(): void {
-    this.filtersChangedSubject.next();
+    this.filtersChangedSignal.set(undefined);
   }
 
   // Method to clear all filters (used during reset)
@@ -54,15 +55,15 @@ export class GlobalFilterService {
   }
 
   isFilterEnabled(): boolean {
-    return this.filterEnabledSubject.value;
+    return this.filterEnabled();
   }
 
   getSelectedOrgUnitId(): number | null {
-    return this.selectedOrgUnitIdSubject.value;
+    return this.selectedOrgUnitId();
   }
 
   getActiveOrgUnitId(): number | null {
-    return this.isFilterEnabled() ? this.getSelectedOrgUnitId() : null;
+    return this.activeOrgUnitId();
   }
 
   private loadFilterEnabled(): boolean {

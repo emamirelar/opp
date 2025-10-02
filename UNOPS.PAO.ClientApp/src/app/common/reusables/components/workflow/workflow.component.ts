@@ -7,7 +7,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 
-import { FeedbackDialogService } from '../../../pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
 
 @Component({
   selector: 'app-workflow',

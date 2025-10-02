@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, inject, Input, computed } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, inject, Input, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { FileUploadModule } from 'primeng/fileupload';
@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { ImageCropperComponent, ImageCroppedEvent, LoadedImage } from 'ngx-image-cropper';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { PictureEditorDataLoaderService } from './picture-editor-data-loader.service';
-import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../services/feedback-dialog.service';
 
 @Component({
   selector: 'app-picture-editor',
@@ -24,7 +24,8 @@ import { FeedbackDialogService } from '../../../services/feedback-dialog.service
     FormsModule,
     ImageCropperComponent
   ],
-  providers: [PictureEditorDataLoaderService]
+  providers: [PictureEditorDataLoaderService],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PictureEditorComponent implements OnInit {
 

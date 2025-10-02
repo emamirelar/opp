@@ -5,7 +5,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../../../../common/services/language.service';
 import { Subscription } from 'rxjs';
 import { PartnerService } from '../../services/partner.service';
-import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../common/services/feedback-dialog.service';
 import { PartnerNewComponent } from './new/partner-new.component';
 import { Partner } from '../../models/partner.model';
 import { ListviewComponent } from '../../../../common/pages/components/listview/listview.component';

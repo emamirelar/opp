@@ -2,6 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { PartnerCategoryGroup, PartnerGroup } from '../../features/internal/models/partner-category-group.model';
 import { PartnerTreeService } from '../../features/internal/services/partner-tree.service';
+import { DropdownOption, UserData } from '../models/api-responses.model';
+import { Contact } from '../../features/internal/models/contact.model';
+import { Partner } from '../../features/internal/models/partner.model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,83 +16,83 @@ export class CachedDataService {
   isLoading = signal(false);
 
   //Projects
-  private allProjectData = signal([]);
+  private allProjectData = signal<DropdownOption[]>([]);
   allProjects = this.allProjectData.asReadonly();
 
   //SDGs
-  private allSDGsData = signal([]);
+  private allSDGsData = signal<DropdownOption[]>([]);
   allSDGs = this.allSDGsData.asReadonly();
 
   //Countries
-  private allCountryData = signal([]);
+  private allCountryData = signal<DropdownOption[]>([]);
   allCountries = this.allCountryData.asReadonly();
 
   //Currencies
-  private allCurrencyData = signal([]);
+  private allCurrencyData = signal<DropdownOption[]>([]);
   allCurrencies = this.allCurrencyData.asReadonly();
 
   //Eligible Entities
-  private allEligibleEntitiesData = signal([]);
+  private allEligibleEntitiesData = signal<DropdownOption[]>([]);
   allEligibleEntities = this.allEligibleEntitiesData.asReadonly();
 
   //Eligible Entities
-  private allApplicationTypeData = signal([]);
+  private allApplicationTypeData = signal<DropdownOption[]>([]);
   allApplicationTypes = this.allApplicationTypeData.asReadonly();
 
   //Selection Methodology
-  private allSelectionMethodologyData = signal([]);
+  private allSelectionMethodologyData = signal<DropdownOption[]>([]);
   allSelectionMethodologies = this.allSelectionMethodologyData.asReadonly();
 
   //Selection Methodology
-  private allSaluationsData = signal([]);
+  private allSaluationsData = signal<DropdownOption[]>([]);
   allSalutations = this.allSaluationsData.asReadonly();
 
-  private allStatusData = signal([]);
+  private allStatusData = signal<DropdownOption[]>([]);
   allStatus = this.allStatusData.asReadonly();
 
-  private allPartnersData = signal<any[]>([]);
+  private allPartnersData = signal<Partner[]>([]);
   allPartners = this.allPartnersData.asReadonly();
 
-  private allPartnerStatusData = signal([]);
+  private allPartnerStatusData = signal<DropdownOption[]>([]);
   allPartnerStatus = this.allPartnerStatusData.asReadonly();
 
-  private allPartnerNewEngagementData = signal([]);
+  private allPartnerNewEngagementData = signal<DropdownOption[]>([]);
   allPartnerNewEngagement = this.allPartnerNewEngagementData.asReadonly();
 
-  private allYesNoData = signal([]);
+  private allYesNoData = signal<DropdownOption[]>([]);
   allYesNo = this.allYesNoData.asReadonly();
 
-  private allDueDiligenceRequiredData = signal([]);
+  private allDueDiligenceRequiredData = signal<DropdownOption[]>([]);
   allDueDiligenceRequired = this.allDueDiligenceRequiredData.asReadonly();
 
-  private allDueDiligenceApprovalData = signal([]);
+  private allDueDiligenceApprovalData = signal<DropdownOption[]>([]);
   allDueDiligenceApproval = this.allDueDiligenceApprovalData.asReadonly();
 
-  private allPartnerLevyAppliesData = signal([]);
+  private allPartnerLevyAppliesData = signal<DropdownOption[]>([]);
   allPartnerLevyApplies = this.allPartnerLevyAppliesData.asReadonly();
 
-  private allPartnerReasonForLevyNotData = signal([]);
+  private allPartnerReasonForLevyNotData = signal<DropdownOption[]>([]);
   allPartnerReasonForLevyNot = this.allPartnerReasonForLevyNotData.asReadonly();
 
-  private allPartnerLevyTreatmentData = signal([]);
+  private allPartnerLevyTreatmentData = signal<DropdownOption[]>([]);
   allPartnerLevyTreatment = this.allPartnerLevyTreatmentData.asReadonly();
 
-  private allPartnerScopesData = signal([]);
+  private allPartnerScopesData = signal<DropdownOption[]>([]);
   allPartnerScope = this.allPartnerScopesData.asReadonly();
 
-  private allPronounsData = signal([]);
+  private allPronounsData = signal<DropdownOption[]>([]);
   allPronouns = this.allPronounsData.asReadonly();
 
-  private allPartnerLevelTypesData = signal([]);
+  private allPartnerLevelTypesData = signal<DropdownOption[]>([]);
   allPartnerLevelTypes = this.allPartnerLevelTypesData.asReadonly();
 
-  private allOrganizationUnitsData = signal([]);
+  private allOrganizationUnitsData = signal<DropdownOption[]>([]);
   allOrganizationUnits = this.allOrganizationUnitsData.asReadonly();
 
-  private allPartnerCategoriesData = signal([]);
+  private allPartnerCategoriesData = signal<DropdownOption[]>([]);
   allPartnerCategories = this.allPartnerCategoriesData.asReadonly();
 
-  private allLiaisonOfficesData = signal<any[]>([]);
+  private allLiaisonOfficesData = signal<DropdownOption[]>([]);
   allLiaisonOffices = this.allLiaisonOfficesData.asReadonly();
 
   // Add signal for partner category and group structure
@@ -118,13 +121,13 @@ export class CachedDataService {
     id: category.partnerCategoryId
   })) || []);
 
-  private allContactsData = signal<any[]>([]);
+  private allContactsData = signal<Contact[]>([]);
   allContacts = this.allContactsData.asReadonly();
 
-  private allUsersData = signal<any[]>([]);
+  private allUsersData = signal<UserData[]>([]);
   allUsers  = this.allUsersData.asReadonly();
 
-  private currentUserData = signal<any>({});
+  private currentUserData = signal<UserData>({});
   currentUser = this.currentUserData.asReadonly();
 
   constructor() {
@@ -188,8 +191,8 @@ export class CachedDataService {
     if( ( this.allProjectData() == undefined ) || ( this.allProjectData().length <= 0 ) )
     {
       this.isLoading.set( true );
-      this.http.get('/api/unops/project').subscribe({
-        next: (data: any) => {
+      this.http.get<DropdownOption[]>('/api/unops/project').subscribe({
+        next: (data) => {
           this.allProjectData.set( data );
           this.isLoading.set( false );
         },
@@ -204,8 +207,8 @@ export class CachedDataService {
     if( ( this.allSDGsData() == undefined ) || ( this.allSDGsData().length <= 0 ) )
     {
       this.isLoading.set( true );
-      this.http.get('/api/values/sdg').subscribe({
-        next: (data: any) => {
+      this.http.get<DropdownOption[]>('/api/values/sdg').subscribe({
+        next: (data) => {
           this.allSDGsData.set( data );
           this.isLoading.set( false );
         },
@@ -220,8 +223,8 @@ export class CachedDataService {
     if( ( this.allApplicationTypeData() == undefined ) || ( this.allApplicationTypeData().length <= 0 ) )
     {
       this.isLoading.set( true );
-      this.http.get('/api/values/country').subscribe({
-        next: (data: any) => {
+      this.http.get<DropdownOption[]>('/api/values/country').subscribe({
+        next: (data) => {
           this.allCountryData.set( data );
           this.isLoading.set( false );
         },
@@ -236,8 +239,8 @@ export class CachedDataService {
     if( ( this.allApplicationTypeData() == undefined ) || ( this.allApplicationTypeData().length <= 0 ) )
     {
       this.isLoading.set( true );
-      this.http.get('/api/values/currency').subscribe({
-        next: (data: any) => {
+      this.http.get<DropdownOption[]>('/api/values/currency').subscribe({
+        next: (data) => {
           this.allCurrencyData.set( data );
           this.isLoading.set( false );
         },
@@ -249,7 +252,7 @@ export class CachedDataService {
   }
 
   loadSalutations(){
-    let salutations:any = [{
+    const salutations: DropdownOption[] = [{
       id: 'Mr.',
       name: 'Mr.'
     }, {
@@ -269,7 +272,7 @@ export class CachedDataService {
   }
 
   loadStatus(){
-    let statuses:any = [{
+    const statuses: DropdownOption[] = [{
       id: 'Active',
       name: 'Active'
     }, {
@@ -280,7 +283,7 @@ export class CachedDataService {
   }
 
   loadPartnerStatus() {
-    let partnerStatuses: any = [{
+    const partnerStatuses: DropdownOption[] = [{
       id: 'Active',
       name: 'Active'
     }, {
@@ -294,7 +297,7 @@ export class CachedDataService {
   }
 
   loadPartnerNewEngagement() {
-    let partnerNewEngagements: any = [{
+    const partnerNewEngagements: DropdownOption[] = [{
       id: 'Allowed',
       name: 'Allowed'
     }, {
@@ -305,7 +308,7 @@ export class CachedDataService {
   }
 
   loadYesNo() {
-    let yesNo: any = [{
+    const yesNo: DropdownOption[] = [{
       id: 'Yes',
       name: 'Yes'
     }, {
@@ -316,7 +319,7 @@ export class CachedDataService {
   }
 
   loadDueDiligenceRequiredData() {
-    let dueDiligenceRequired: any = [{
+    const dueDiligenceRequired: DropdownOption[] = [{
       id: 'Required',
       name: 'Required'
     }, {
@@ -327,7 +330,7 @@ export class CachedDataService {
   }
 
   loadDueDiligenceApprovalData() {
-    let dueDiligenceApproval: any = [{
+    const dueDiligenceApproval: DropdownOption[] = [{
       id: 'Approved',
       name: 'Approved'
     }, {
@@ -338,7 +341,7 @@ export class CachedDataService {
   }
 
   loadPartnerLevyAppliesData() {
-    let partnerLevyApplies: any = [{
+    const partnerLevyApplies: DropdownOption[] = [{
       id: 'DoesNotApply',
       name: 'Does Not Apply'
     }, {
@@ -352,7 +355,7 @@ export class CachedDataService {
   }
 
   loadPartnerReasonForLevyNotData() {
-    let partnerReasonForLevyNot: any = [{
+    const partnerReasonForLevyNot: DropdownOption[] = [{
       id: '3a) Vertical Fund',
       name: '3a) Vertical Fund'
     }, {
@@ -378,7 +381,7 @@ export class CachedDataService {
   }
 
   loadPartnerLevyTreatmentData() {
-    let partnerLevyTreatment: any = [{
+    const partnerLevyTreatment: DropdownOption[] = [{
       id: 'Please consult funding source',
       name: 'Please consult funding source'
     }, {
@@ -395,7 +398,7 @@ export class CachedDataService {
   }
 
   loadPartnerScopeData() {
-    let partnerScopes: any = [{
+    const partnerScopes: DropdownOption[] = [{
       id: 'Global',
       name: 'Global'
     }, {
@@ -409,7 +412,7 @@ export class CachedDataService {
   }
 
   loadPronouns() {
-    let pronouns:any = [{
+    const pronouns: DropdownOption[] = [{
       id: 'He/Him',
       name: 'He/Him'
     }, {
@@ -432,7 +435,7 @@ export class CachedDataService {
   }
 
   loadPartnerLevelTypeData() {
-    let partnerLevelTypes:any = [
+    const partnerLevelTypes: DropdownOption[] = [
       {
         id: 'Level_1',
         name: 'Level 1'
@@ -457,8 +460,8 @@ export class CachedDataService {
     if( ( this.allEligibleEntitiesData() == undefined ) || ( this.allEligibleEntitiesData().length <= 0 ) )
     {
       this.isLoading.set( true );
-      this.http.get('/api/values/eligible-entity').subscribe({
-        next: (data: any) => {
+      this.http.get<DropdownOption[]>('/api/values/eligible-entity').subscribe({
+        next: (data) => {
           this.allEligibleEntitiesData.set( data );
           this.isLoading.set( false );
         },
@@ -473,8 +476,8 @@ export class CachedDataService {
     if( ( this.allApplicationTypeData() == undefined ) || ( this.allApplicationTypeData().length <= 0 ) )
     {
       this.isLoading.set( true );
-      this.http.get('/api/values/application-type').subscribe({
-        next: (data: any) => {
+      this.http.get<DropdownOption[]>('/api/values/application-type').subscribe({
+        next: (data) => {
           this.allApplicationTypeData.set( data );
           this.isLoading.set( false );
         },
@@ -489,8 +492,8 @@ export class CachedDataService {
     if( ( this.allApplicationTypeData() == undefined ) || ( this.allApplicationTypeData().length <= 0 ) )
     {
       this.isLoading.set( true );
-      this.http.get('/api/values/selection-methodology').subscribe({
-        next: (data: any) => {
+      this.http.get<DropdownOption[]>('/api/values/selection-methodology').subscribe({
+        next: (data) => {
           this.allSelectionMethodologyData.set( data );
           this.isLoading.set( false );
         },
@@ -508,8 +511,8 @@ export class CachedDataService {
       this.allPartnersData.set([]);
 
       this.isLoading.set(true);
-      this.http.get('/api/values/partners').subscribe({
-        next: (data: any) => {
+      this.http.get<Partner[]>('/api/values/partners').subscribe({
+        next: (data) => {
           // Ensure data is an array
           this.allPartnersData.set(Array.isArray(data) ? data : []);
           this.isLoading.set(false);
@@ -546,8 +549,8 @@ export class CachedDataService {
   loadOrganizationUnits() {
     if ((this.allOrganizationUnitsData() == undefined) || (this.allOrganizationUnitsData().length <= 0)) {
       this.isLoading.set(true);
-      this.http.get('/api/values/organization-units').subscribe({
-        next: (data: any) => {
+      this.http.get<DropdownOption[]>('/api/values/organization-units').subscribe({
+        next: (data) => {
           this.allOrganizationUnitsData.set(data);
           this.isLoading.set(false);
         },
@@ -581,8 +584,8 @@ export class CachedDataService {
       this.allContactsData.set([]);
 
       this.isLoading.set(true);
-      this.http.get('/api/values/contacts').subscribe({
-        next: (data: any) => {
+      this.http.get<Contact[]>('/api/values/contacts').subscribe({
+        next: (data) => {
           // Ensure data is an array
           this.allContactsData.set(Array.isArray(data) ? data : []);
           this.isLoading.set(false);
@@ -612,8 +615,8 @@ export class CachedDataService {
         activeOnly: true
       };
 
-      this.http.post('/api/values/users/paged', initialRequest).subscribe({
-        next: (response: any) => {
+      this.http.post<{ records: UserData[] }>('/api/values/users/paged', initialRequest).subscribe({
+        next: (response) => {
           // Set only the records from the paginated response
           this.allUsersData.set(response.records || []);
           this.isLoading.set(false);
@@ -656,8 +659,8 @@ export class CachedDataService {
       // Default to empty array before API response
       this.allLiaisonOfficesData.set([]);
       this.isLoading.set(true);
-      this.http.get('/api/values/liaison-offices').subscribe({
-        next: (data: any) => {
+      this.http.get<DropdownOption[]>('/api/values/liaison-offices').subscribe({
+        next: (data) => {
           this.allLiaisonOfficesData.set(Array.isArray(data) ? data : []);
           this.isLoading.set(false);
         },

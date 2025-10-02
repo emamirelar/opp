@@ -7,6 +7,7 @@ import { PaginationResponse } from '../../../common/models/pagination-response.m
 import {PaginationParams, toHttpParams} from '../../../common/models/pagination-params.model';
 import { InteractionFilterParams } from '../models/interaction-filter-params.model';
 import { map } from 'rxjs/operators';
+import { DuplicateDetectionResponse } from '../../../common/models/api-responses.model';
 
 @Injectable({
   providedIn: 'root'
@@ -35,8 +36,8 @@ export class InteractionService {
    * Creates an interaction with duplicate detection handling
    * Returns either the created interaction or duplicate detection response
    */
-  create(interaction: Interaction): Observable<HttpResponse<any>> {
-    return this.http.post<any>(this.apiUrl, interaction, { observe: 'response' });
+  create(interaction: Interaction): Observable<HttpResponse<Interaction | DuplicateDetectionResponse>> {
+    return this.http.post<Interaction | DuplicateDetectionResponse>(this.apiUrl, interaction, { observe: 'response' });
   }
 
   update(interaction: Interaction): Observable<HttpResponse<Interaction>> {
@@ -50,7 +51,7 @@ export class InteractionService {
   /**
    * Detects duplicates for interaction records using the centralized ImportDialogService method
    */
-  detectDuplicates(interactionData: any): Observable<any> {
+  detectDuplicates(interactionData: Interaction): Observable<DuplicateDetectionResponse | null> {
     // Use the centralized duplicate detection method from ImportDialogService
     return this.importDialogService.detectDuplicatesForEntity(interactionData, 'interaction');
   }

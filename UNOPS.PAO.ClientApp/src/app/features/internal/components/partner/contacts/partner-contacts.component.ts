@@ -26,7 +26,7 @@ import { ContactService } from '../../../services/contact.service';
 import { EntityConfigurationService } from '../../../services/entity-configuration.service';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { PermissionService, EntityPermissions } from '../../../../../essentials/services/permission.service';
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { ContactEditDialogComponent } from '../../contact/edit-dialog/contact-edit-dialog.component';
 import { Contact } from '../../../models/contact.model';
 

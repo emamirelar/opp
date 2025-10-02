@@ -1,7 +1,7 @@
 import { NgFor, NgIf } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FileUploadModule } from 'primeng/fileupload';
-import { FeedbackDialogService } from '../../services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -10,7 +10,8 @@ import { TranslateModule } from '@ngx-translate/core';
   templateUrl: './document-upload.component.html',
   styleUrl: './document-upload.component.scss',
   imports: [FileUploadModule, TranslateModule],
-  providers: [FileUploadModule]
+  providers: [FileUploadModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 
 export class DocumentUploadComponent {

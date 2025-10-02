@@ -11,7 +11,7 @@ import { ListviewComponent } from '../../../../../common/pages/components/listvi
 import { ListViewColumn, ListViewConfig, SearchParams } from '../../../../../common/pages/components/listview/listview.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
-import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { SearchField } from '../../../../../common/services/search-parser.service';
 import { EntityConfigurationService } from '../../../services/entity-configuration.service';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';

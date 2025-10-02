@@ -1,4 +1,4 @@
-import { Component, Input, computed, signal } from '@angular/core';
+import { Component, Input, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TooltipModule } from 'primeng/tooltip';
 import { BadgeModule } from 'primeng/badge';
@@ -37,6 +37,7 @@ export interface DuplicateDetectionInfo {
     DividerModule,
     TranslateModule
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="duplicate-indicator-container">
       @if (duplicateInfo?.hasDuplicates) {

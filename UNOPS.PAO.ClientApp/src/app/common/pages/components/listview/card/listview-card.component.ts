@@ -46,7 +46,7 @@ import { InteractionIconService } from '../../../../services/interaction-icon.se
     .animate-fadeIn {
       animation: fadeIn 0.3s ease-out;
     }
-    
+
     .search-highlight {
       background-color: #fef3c7;
       background-image: linear-gradient(120deg, #fef3c7 0%, #fde047 100%);
@@ -88,7 +88,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
   // Computed values
   hasActionsTemplate = computed(() => !!this.actionsTemplate);
-  
+
   // Search metadata support
   showSearchMetadata = signal<boolean>(false);
   searchMetadataEnabled = computed(() => this.config()?.searchMetadata?.enabled || false);
@@ -101,6 +101,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     const pageSize = this.config()?.pageSize || 20;
     return Math.min(Math.max(Math.floor(pageSize / 5), 2), 4);
   });
+
 
   // Array constructor for template access
   Array = Array;
@@ -196,7 +197,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     if (changes['columns'] && !changes['columns'].firstChange && this.hasViewInitialized) {
       this.scheduleObserveSentinel();
     }
-    
+
     // Initialize search metadata visibility
     if (changes['config'] && this.searchMetadataEnabled()) {
       this.showSearchMetadata.set(this.searchMetadataDefaultVisible());
@@ -250,8 +251,8 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
         });
       },
       {
-        // Root margin: start loading when element is 200px away from being visible
-        rootMargin: '200px',
+        // Root margin: start loading when element is 600px away from being visible
+        rootMargin: '800px',
         // Threshold: trigger when any part of the element is visible
         threshold: 0
       }
@@ -279,7 +280,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     if (this.intersectionObserver && this.loadMoreSentinel?.nativeElement) {
       // Unobserve previous element first
       this.intersectionObserver.disconnect();
-      // Observe the new sentinel element
+      // Observe the sentinel element
       this.intersectionObserver.observe(this.loadMoreSentinel.nativeElement);
     }
   }
@@ -380,8 +381,9 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
   /**
    * Track by function for @for loops - uses id field or index as fallback
+   * Arrow function to preserve 'this' context when used with cdkVirtualFor
    */
-  trackByFn(index: number, item: T): any {
+  trackByFn = (index: number, item: T): any => {
     if (!item) {
       return index;
     }
@@ -391,7 +393,22 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
     // Use id if available, otherwise fall back to index
     return id !== null && id !== undefined ? id : index;
-  }
+  };
+
+  /**
+   * Track by function for grouped data (2-column layout)
+   * Tracks the first item's ID in each group
+   */
+  trackByGroup = (index: number, group: T[]): any => {
+    if (!group || group.length === 0) {
+      return index;
+    }
+
+    const firstItem = group[0];
+    const id = this.getFieldValue(firstItem, 'id');
+
+    return id !== null && id !== undefined ? id : index;
+  };
 
   /**
    * Safely get the avatar image URL from the item
@@ -584,22 +601,22 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     if (!obj || typeof obj !== 'object') {
       return undefined;
     }
-    
+
     // Try direct access first (case sensitive) using hasOwnProperty to check own properties only
     if (Object.prototype.hasOwnProperty.call(obj, prop)) {
       return obj[prop];
     }
-    
+
     // Search case insensitive among own properties only (not inherited ones)
     const ownKeys = Object.getOwnPropertyNames(obj);
-    const matchingKey = ownKeys.find(key => 
+    const matchingKey = ownKeys.find(key =>
       key.toLowerCase() === prop.toLowerCase()
     );
-    
+
     if (matchingKey) {
       return obj[matchingKey];
     }
-    
+
     return undefined;
   }
 
@@ -607,7 +624,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
    * Get nested property value from an object using dot notation (case insensitive)
    */
   private getNestedProperty(obj: any, path: string): any {
-    return path.split('.').reduce((current, prop) => 
+    return path.split('.').reduce((current, prop) =>
       current ? this.getCaseInsensitiveProperty(current, prop) : undefined, obj);
   }
 
@@ -668,7 +685,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   }
 
   // Search metadata helper methods
-  
+
   /**
    * Toggle search metadata visibility
    */
@@ -727,7 +744,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   getSearchTypeBadgeClasses(metadata: any): string {
     const type = this.getSearchType(metadata);
     const baseClasses = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium';
-    
+
     switch (type.toLowerCase()) {
       case 'exact':
         return `${baseClasses} bg-green-100 text-green-700`;
@@ -758,7 +775,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
    */
   highlightSearchTerms(text: string, searchQuery: string): string {
     if (!text || !searchQuery) return text;
-    
+
     const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     return text.replace(regex, '<span class="search-highlight">$1</span>');
   }

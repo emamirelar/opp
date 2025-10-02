@@ -1,4 +1,4 @@
-import { Component, Input, computed, inject } from '@angular/core';
+import { Component, Input, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { BadgeModule } from 'primeng/badge';
@@ -17,6 +17,7 @@ import { DividerModule } from 'primeng/divider';
     TranslateModule,
     DividerModule
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (duplicateRows && duplicateRows.length > 0) {
       <div class="duplicate-summary-compact">

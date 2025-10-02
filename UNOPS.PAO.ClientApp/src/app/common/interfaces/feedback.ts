@@ -5,4 +5,5 @@ export interface FeedbackConfig {
     closable?: boolean;
     sticky?: boolean;
     showRefreshButton?: boolean;
+    onConfirm?: () => void;
 }
