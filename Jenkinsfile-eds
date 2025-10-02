@@ -162,15 +162,16 @@ node("app-build") {
                 gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
                 gcloud config set project ${PROJECT_ID}
                 
-                # Copy configuration files into the ExternalDataService directory for Docker build context
-                echo "Copying configuration files into ExternalDataService directory..."
-                if [ -d "ExternalDataService/config" ]; then
-                    cp -r ExternalDataService/config UNOPS.PAO.ExternalDataService/
-                    echo "✓ Configuration files copied to build context"
-                    ls -la UNOPS.PAO.ExternalDataService/config/
+                # Copy the entire ExternalDataService directory to build context
+                echo "Copying ExternalDataService directory to build context..."
+                if [ -d "ExternalDataService" ]; then
+                    cp -r ExternalDataService UNOPS.PAO.ExternalDataService/
+                    echo "✓ ExternalDataService directory copied to build context"
+                    ls -la UNOPS.PAO.ExternalDataService/ExternalDataService/
+                    echo "Config files:"
+                    ls -la UNOPS.PAO.ExternalDataService/ExternalDataService/config/
                 else
-                    echo "⚠️  ExternalDataService/config directory not found"
-                    mkdir -p UNOPS.PAO.ExternalDataService/config
+                    echo "⚠️  ExternalDataService directory not found"
                 fi
                 
                 # Navigate to External Data Service submodule directory
