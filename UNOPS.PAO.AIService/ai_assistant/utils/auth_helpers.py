@@ -111,6 +111,8 @@ def get_impersonated_credentials(
 
     """
     default_creds, project = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
+    print(f"Using service account: {default_creds.service_account_email if hasattr(default_creds, 'service_account_email') else 'N/A'}")
+    print(f"Project context: {project}")
 
     # Create impersonated credentials for the target service account
     impersonated_creds = impersonated_credentials.Credentials(
@@ -120,6 +122,7 @@ def get_impersonated_credentials(
         lifetime=lifetime,
         subject=subject
     )
+    print(f"Impersonating service account: {impersonated_creds.service_account_email if hasattr(impersonated_creds, 'service_account_email') else 'N/A'}")
 
     return impersonated_creds
 
