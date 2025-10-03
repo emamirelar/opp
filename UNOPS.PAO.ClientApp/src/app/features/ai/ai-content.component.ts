@@ -2,17 +2,17 @@ import { Component, inject, signal, OnInit, computed, ViewContainerRef, effect, 
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { AiAssistantPanelComponent } from '../../common/reusables/widgets/ai-assistant/ai-assistant-panel.component';
-import { AiAssistantService } from '../internal/services/ai-assistant.service';
+import { AiAssistantPanelComponent } from '@shared/reusables/widgets/ai-assistant/ai-assistant-panel.component';
+import { AiAssistantService } from '@ai/services/ai-assistant.service';
 
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService } from 'primeng/api';
-import { PartnerViewComponent } from '../internal/components/partner/view/partner-view.component';
-import { ContactViewComponent } from '../internal/components/contact/view/contact-view.component';
-import { InteractionModalComponent } from '../internal/components/interaction/modal/interaction-modal.component';
+import { PartnerViewComponent } from '@partnerships/partners/components/partner/view/partner-view.component';
+import { ContactViewComponent } from '@partnerships/contacts/components/contact/view/contact-view.component';
+import { InteractionModalComponent } from '@partnerships/interactions/components/interaction/modal/interaction-modal.component';
 
 import { TranslateModule } from '@ngx-translate/core';
 
