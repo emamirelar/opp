@@ -307,22 +307,6 @@
   --surface-border: var(--unops-neutral-200);
 }
 
-/* Dark theme support */
-.app-dark {
-  /* Adjust colors for dark mode while maintaining UNOPS brand identity */
-  --unops-surface-primary: var(--unops-neutral-900);
-  --unops-surface-secondary: var(--unops-neutral-800);
-  --unops-surface-elevated: var(--unops-neutral-800);
-  
-  --p-content-background: var(--unops-neutral-900);
-  --p-surface-0: var(--unops-neutral-900);
-  
-  --text-color: var(--unops-neutral-50);
-  --text-color-secondary: var(--unops-neutral-300);
-  --surface-card: var(--unops-neutral-800);
-  --surface-border: var(--unops-neutral-700);
-}
-
 /* ===================================== */
 /* UTILITY CLASSES */
 /* ===================================== */

@@ -1,9 +1,0 @@
-<button (click)="toggleDarkMode()"
-	type="button"
-	aria-label="Toggle Dark Mode"
-	class="layout-topbar-action p-button-rounded p-button-text">
-	<i [class]="layoutService.isDarkTheme() ? 'pi pi-moon' : 'pi pi-sun'"></i>
-	<span>
-		{{ layoutService.isDarkTheme() ? "{{ 'button.lightMode' | translate }}" : "{{ 'button.darkMode' | translate }}" }}
-	</span>
-</button>

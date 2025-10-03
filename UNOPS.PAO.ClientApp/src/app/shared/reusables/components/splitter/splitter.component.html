@@ -1,0 +1,84 @@
+<div 
+  #container
+  class="splitter"
+  [class.splitter-horizontal]="layout === 'horizontal'"
+  [class.splitter-vertical]="layout === 'vertical'"
+  [class.splitter-resizing]="resizing"
+  [ngClass]="styleClass"
+  [ngStyle]="style"
+>
+  <!-- Dynamic panels with gutters -->
+  <ng-container *ngFor="let panel of visiblePanels(); let i = index; trackBy: trackByPanelId">
+    <!-- Panel -->
+    <div 
+      #panel
+      class="splitter-panel"
+      [class.splitter-panel-resizable]="panel.resizable !== false"
+      [attr.data-panel-id]="panel.id"
+      [ngStyle]="{
+        'flex-basis': 'calc(' + computedSizes()[i] + '% - ' + ((visiblePanels().length - 1) * gutterSize) / visiblePanels().length + 'px)',
+        'min-width': layout === 'horizontal' && panel.minSize ? panel.minSize + '%' : null,
+        'max-width': layout === 'horizontal' && panel.maxSize ? panel.maxSize + '%' : null,
+        'min-height': layout === 'vertical' && panel.minSize ? panel.minSize + '%' : null,
+        'max-height': layout === 'vertical' && panel.maxSize ? panel.maxSize + '%' : null
+      }"
+    >
+      <!-- Panel content -->
+      <ng-container [ngTemplateOutlet]="panel.template" [ngTemplateOutletContext]="{ $implicit: panel.data, panel: panel }"></ng-container>
+      
+      <!-- Default content if no template -->
+      <ng-container *ngIf="!panel.template">
+        <div class="splitter-panel-content">
+          &nbsp; <!-- Empty space to show the panel -->
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- Gutter (resizer) - only between panels, not after the last one, and only when both adjacent panels have non-zero size -->
+    <div 
+      *ngIf="i < visiblePanels().length - 1 && shouldShowGutter(i)"
+      #gutter
+      class="splitter-gutter"
+      [class.splitter-gutter-horizontal]="layout === 'horizontal'"
+      [class.splitter-gutter-vertical]="layout === 'vertical'"
+      [ngClass]="resizerStyleClass"
+      [ngStyle]="getGutterStyle()"
+      (mousedown)="onGutterMouseDown($event, i)"
+      (touchstart)="onGutterTouchStart($event, i)"
+      [attr.tabindex]="0"
+      [attr.role]="'separator'"
+      [attr.aria-orientation]="layout"
+      [attr.aria-label]="'Resize panels'"
+    >
+      <div class="splitter-gutter-handle"></div>
+    </div>
+  </ng-container>
+
+  <!-- Empty state when no panels -->
+  <div *ngIf="visiblePanels().length === 0" class="splitter-empty">
+    <div class="splitter-empty-message">
+      No panels to display
+    </div>
+  </div>
+</div>
+
+<!-- Panel management controls (optional, can be styled as needed) -->
+<div class="splitter-controls" *ngIf="false">
+  <button 
+    *ngFor="let panel of panels; trackBy: trackByPanelId"
+    type="button"
+    class="splitter-control-btn"
+    [class.active]="panel.visible !== false"
+    (click)="togglePanel(panel.id)"
+  >
+    {{ panel.id }}
+  </button>
+  
+  <button 
+    type="button"
+    class="splitter-control-btn splitter-add-btn"
+    (click)="addSamplePanel()"
+  >
+    + Add Panel
+  </button>
+</div>

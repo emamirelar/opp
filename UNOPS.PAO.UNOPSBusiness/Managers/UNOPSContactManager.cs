@@ -450,6 +450,9 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var entity = await contactRepository.GetByIdAsync(id);
         if (entity == null) return;
 
+        // Soft delete associated OrganizationUnitRelationship records
+        await SoftDeleteOrganizationUnitRelationshipsAsync(id, "Contact");
+
         await contactRepository.Delete(entity);
     }
 
@@ -955,6 +958,9 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     {
         var entity = await contactRepository.GetByIdAsync(id);
         if (entity == null) return;
+
+        // Soft delete associated OrganizationUnitRelationship records
+        await SoftDeleteOrganizationUnitRelationshipsAsync(id, "Contact");
 
         await contactRepository.Delete(entity);
     }
@@ -1687,5 +1693,27 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             _logger?.LogError(ex, "Error retrieving contact search fields");
             return new List<SearchFieldInfo>();
         }
+    }
+
+    /// <summary>
+    /// Soft deletes OrganizationUnitRelationship records for a given entity
+    /// </summary>
+    private async Task SoftDeleteOrganizationUnitRelationshipsAsync(int entityId, string entityType)
+    {
+        var relationships = await _context.OrganizationUnitRelationships
+            .Where(r => r.EntityId == entityId && r.EntityType == entityType && !r.IsDeleted)
+            .ToListAsync();
+
+        // Get current user ID from claims
+        var currentUser = GetCurrentUserOrSystemContext();
+        var userIdClaim = currentUser?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = int.TryParse(userIdClaim, out var id) ? id : 0;
+
+        foreach (var relationship in relationships)
+        {
+            relationship.SetDeleteAuditData(userId);
+        }
+
+        await _context.SaveChangesAsync();
     }
 }

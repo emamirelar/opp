@@ -19,7 +19,8 @@ def exchange_google_id_token_for_gcip_id_token(google_open_id_connect_token: str
     'requestUri': "http://localhost",
     'postBody':'id_token=' + google_open_id_connect_token + '&providerId=google.com',
     'returnSecureToken': True,
-    'returnIdpCredential': True
+    'returnIdpCredential': True,
+    'tenantId': 'Personnel-ylvvz'
   }
   print(f"🔐 Exchanging Google ID token for GCIP ID token: {data}")
   resp = requests.post(url, data)
@@ -59,7 +60,8 @@ def exchange_google_access_token_for_gcip_id_token(google_access_token: str) -> 
     'requestUri': "http://localhost",
     'postBody':'access_token=' + google_access_token + '&providerId=google.com',
     'returnSecureToken': True,
-    'returnIdpCredential': True
+    'returnIdpCredential': True,
+    'tenantId': 'Personnel-ylvvz'
   }
   print(f"🔐 Exchanging Google access token for GCIP ID token: {data}")
   resp = requests.post(url, data)
@@ -109,6 +111,8 @@ def get_impersonated_credentials(
 
     """
     default_creds, project = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
+    print(f"Using service account: {default_creds.service_account_email if hasattr(default_creds, 'service_account_email') else 'N/A'}")
+    print(f"Project context: {project}")
 
     # Create impersonated credentials for the target service account
     impersonated_creds = impersonated_credentials.Credentials(
@@ -118,6 +122,8 @@ def get_impersonated_credentials(
         lifetime=lifetime,
         subject=subject
     )
+    print(f"Impersonating service account: {impersonated_creds.service_account_email if hasattr(impersonated_creds, 'service_account_email') else 'N/A'}")
+    
 
     return impersonated_creds
 
@@ -156,14 +162,21 @@ def get_service_account_oidc_token(
           target_principal=target_principal,
           subject=subject
         )
+
         if use_idp or subject:
+            id_token_creds = impersonated_credentials.IDTokenCredentials(
+               target_credentials=impersonated_creds,
+                target_audience=audience,
+                include_email=True
+            )
             request = Request()
-            impersonated_creds.refresh(request)
-            access_token = impersonated_creds.token
-            if(access_token):
-                return exchange_google_access_token_for_gcip_id_token(access_token)
+            id_token_creds.refresh(request)
+            id_token = id_token_creds.token
+            if(id_token):
+                return exchange_google_id_token_for_gcip_id_token(id_token)
             else:
-                raise Exception(f"Could not get access token for for target principal: {target_principal} with subject: {subject} and target scopes: {target_scopes}")
+                raise Exception(f"Could not get ID token for target principal: {target_principal} with subject: {subject} and target scopes: {target_scopes}")
+        
         # This only issues id token for target_principal. DWD is not supported.
         id_token_creds = impersonated_credentials.IDTokenCredentials(
             target_credentials=impersonated_creds,
@@ -336,7 +349,11 @@ def build_request_headers(
                         is_google_api = any(google_path in url for google_path in [
                             '/google-drive/', '/convert/url', '/convert/markdown-to-google-doc'
                         ])
-                    
+
+                    # TEMPORARY: Test fix for opportunityplus IAP with Identity Platform
+                    is_opportunityplus_api = '/api/' in url if url else False
+                    print(f"🔍 [AUTH-HEADERS-DEBUG] url parameter: {url}")
+                    print(f"🔍 [AUTH-HEADERS-DEBUG] is_opportunityplus_api: {is_opportunityplus_api}")  
                     print(f"🔍 [AUTH-HEADERS] target_audience: {target_audience}")
                     print(f"🔍 [AUTH-HEADERS] target_principal: {target_principal}")
                     print(f"🔍 [AUTH-HEADERS] is_google_api: {is_google_api}")
@@ -352,6 +369,14 @@ def build_request_headers(
                             subject=None
                         )
                         print(f"🔍 [AUTH-HEADERS] Using service account token for Google API")
+                    elif is_opportunityplus_api:
+                        # Use GCIP token exchange for IAP with Identity Platform
+                        idp_token = get_service_account_oidc_token(
+                        target_audience,
+                        target_principal,
+                        use_idp=True,
+                        subject=user_email
+                        )
                     else:
                         # For IAP APIs, use proper Google Cloud ID token (not Firebase/GCIP)
                         # Generate service account token first, then modify claims for impersonation
