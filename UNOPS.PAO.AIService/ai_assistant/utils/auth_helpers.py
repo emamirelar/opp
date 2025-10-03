@@ -123,6 +123,7 @@ def get_impersonated_credentials(
         subject=subject
     )
     print(f"Impersonating service account: {impersonated_creds.service_account_email if hasattr(impersonated_creds, 'service_account_email') else 'N/A'}")
+    
 
     return impersonated_creds
 
@@ -161,14 +162,21 @@ def get_service_account_oidc_token(
           target_principal=target_principal,
           subject=subject
         )
+
         if use_idp or subject:
+            id_token_creds = impersonated_credentials.IDTokenCredentials(
+               target_credentials=impersonated_creds,
+                target_audience=audience,
+                include_email=True
+            )
             request = Request()
-            impersonated_creds.refresh(request)
-            access_token = impersonated_creds.token
-            if(access_token):
-                return exchange_google_access_token_for_gcip_id_token(access_token)
+            id_token_creds.refresh(request)
+            id_token = id_token_creds.token
+            if(id_token):
+                return exchange_google_id_token_for_gcip_id_token(id_token)
             else:
-                raise Exception(f"Could not get access token for for target principal: {target_principal} with subject: {subject} and target scopes: {target_scopes}")
+                raise Exception(f"Could not get ID token for target principal: {target_principal} with subject: {subject} and target scopes: {target_scopes}")
+        
         # This only issues id token for target_principal. DWD is not supported.
         id_token_creds = impersonated_credentials.IDTokenCredentials(
             target_credentials=impersonated_creds,
