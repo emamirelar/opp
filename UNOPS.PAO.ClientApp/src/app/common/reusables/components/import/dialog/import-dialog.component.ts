@@ -234,11 +234,10 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
     { field: 'subject', header: 'interaction.subject', required: true, label: 'Subject', type: 'text', sortable: false },
     { field: 'description', header: 'interaction.description', required: false, label: 'Description', type: 'text', sortable: false },
     { field: 'location', header: 'interaction.location', required: false, label: 'Location', type: 'text', sortable: false },
-    { field: 'contactNames', header: 'interaction.contacts', required: false, label: 'Contacts', type: 'text', sortable: false },
+    { field: 'contactNames', header: 'interaction.contacts', required: true, label: 'Contacts', type: 'text', sortable: false },
     { field: 'partnerNames', header: 'interaction.partners', required: false, label: 'Partners', type: 'text', sortable: false },
     { field: 'userNames', header: 'interaction.users', required: false, label: 'Users', type: 'text', sortable: false },
     { field: 'emailAddresses', header: 'interaction.emailAddresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
-    { field: 'phoneNumbers', header: 'interaction.phoneNumbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
     { field: 'organizationHierarchyNames', header: 'interaction.organizationUnit', required: false, label: 'Organization Unit', type: 'text', sortable: false }
   ];
 
