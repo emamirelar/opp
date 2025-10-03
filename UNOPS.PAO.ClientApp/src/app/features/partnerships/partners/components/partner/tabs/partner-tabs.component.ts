@@ -45,6 +45,7 @@ import { ResponsiveTabsComponent, ResponsiveTabItem } from '@shared/reusables/co
             [uploadUrl]="getUploadLogoUrl()"
             [altText]="'partner.tabs.logoAltText' | translate"
             [size]="isMobile() ? 'extra-small' : 'small'"
+            [disabled]="!recordData.permissions?.canUpdate"
             (imageChanged)="_loadRecordDetails()"
           />
           <div class="flex flex-col">
