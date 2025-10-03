@@ -222,6 +222,17 @@ export class DocumentComponent implements OnInit {
     return iconCls;
   }
 
+  /**
+   * Preview a document by opening it in a new tab
+   * @param document The document to preview
+   */
+  previewDocument(document: any) {
+    if (!document || !document.link) {
+      return;
+    }
+    window.open(document.link, '_blank');
+  }
+
   private handleOnDocumentPreview() {
     //exit
     if (this.selectedDocument == null) {

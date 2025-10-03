@@ -22,7 +22,16 @@
         <td class="w-[70%]">
           <div class="flex items-center gap-1">
             <i [class]="getDocumentIconCls(document)"></i>
-            {{ document.name }}
+            @if (!document.isPending && document.link && canPreview()) {
+              <span 
+                class="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
+                (click)="previewDocument(document)"
+                [title]="'button.preview' | translate">
+                {{ document.name }}
+              </span>
+            } @else {
+              <span>{{ document.name }}</span>
+            }
           </div>
         </td>
         <td class="w-[30%]">
