@@ -40,7 +40,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "Status != 2 && Status != 4", "CanDelete": "Status == 3"}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "Status != 2 && Status != 4", "CanDelete": "PartnerApprovalStatus != 1"}'
 );
 
 -- Partnerships User role permissions for Partner

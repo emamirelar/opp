@@ -44,6 +44,15 @@
                           class="edit-button partner-edit-button"
                           (onClick)="handleEditClick()"></p-button>
               }
+              @if (recordData().permissions?.canDelete) {
+                <p-button icon="pi pi-trash"
+                          [rounded]="true"
+                          [text]="true"
+                          [size]="'small'"
+                          severity="danger"
+                          class="delete-button partner-delete-button"
+                          (onClick)="deletePartner()"></p-button>
+              }
             </div>
           </div>
         </ng-template>

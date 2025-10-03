@@ -1,3 +1,5 @@
+<p-confirmDialog></p-confirmDialog>
+
 <!-- Width tracker - measures the exact component width -->
 <div #widthTracker class="w-full h-px opacity-0 pointer-events-none relative"></div>
 
@@ -18,6 +20,15 @@
                           [size]="'small'"
                           class="edit-button contact-edit-button"
                           (onClick)="handleEditClick()"></p-button>
+              }
+              @if (recordPermissions().permissions.canDelete) {
+                <p-button icon="pi pi-trash"
+                          [rounded]="true"
+                          [text]="true"
+                          [size]="'small'"
+                          severity="danger"
+                          class="delete-button contact-delete-button"
+                          (onClick)="deleteContact()"></p-button>
               }
             </div>
           </div>
