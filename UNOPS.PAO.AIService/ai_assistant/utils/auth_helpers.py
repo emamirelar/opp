@@ -5,7 +5,7 @@ import requests
 from google.auth import default, impersonated_credentials
 from google.auth.transport.requests import Request
 
-SIGN_IN_WITH_IDP_API = 'https://identitytoolkit.googleapis.com/v1/tenants/Personnel-ylvvz/accounts:signInWithIdp'
+SIGN_IN_WITH_IDP_API = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp'
 
 def exchange_google_id_token_for_gcip_id_token(google_open_id_connect_token: str) -> str:
   from .config import get_identity_toolkit_api_key
@@ -19,7 +19,8 @@ def exchange_google_id_token_for_gcip_id_token(google_open_id_connect_token: str
     'requestUri': "http://localhost",
     'postBody':'id_token=' + google_open_id_connect_token + '&providerId=google.com',
     'returnSecureToken': True,
-    'returnIdpCredential': True
+    'returnIdpCredential': True,
+    'tenantId': 'Personnel-ylvvz'
   }
   print(f"🔐 Exchanging Google ID token for GCIP ID token: {data}")
   resp = requests.post(url, data)
@@ -59,7 +60,8 @@ def exchange_google_access_token_for_gcip_id_token(google_access_token: str) -> 
     'requestUri': "http://localhost",
     'postBody':'access_token=' + google_access_token + '&providerId=google.com',
     'returnSecureToken': True,
-    'returnIdpCredential': True
+    'returnIdpCredential': True,
+    'tenantId': 'Personnel-ylvvz'
   }
   print(f"🔐 Exchanging Google access token for GCIP ID token: {data}")
   resp = requests.post(url, data)
