@@ -35,7 +35,7 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
   aiAssistantOutsideClickListener: any;
   breadcrumbs: string[] = [];
   private defaultAiAssistantSize = 30; // Default size when active (30%)
-  private minAiAssistantSize = 20; // Minimum size when active (20%)
+  private minAiAssistantPixels = 380; // Minimum width in pixels for AI assistant panel
 
   // Mobile detection
   isMobile: boolean = false;
@@ -115,7 +115,8 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
           this._splitterSizes = [];
           this._minSplitterSizes = [];
           
-          // No need to reinitialize panels - they're always present, just sizes change
+          // Reinitialize panels to update minSize property based on active state
+          this.initializeSplitterPanels();
           
           // Update localStorage
           localStorage.setItem('aiAssistantActive', isActive.toString());
@@ -145,13 +146,20 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
       this.closeAiAssistantOnMobile();
     }
     
-    // If mobile state changed, recalculate splitter sizes
+    // If mobile state changed or window resized, recalculate splitter sizes
     if (wasMobile !== this.isMobile) {
       this._lastAiAssistantActive = null;
       this._splitterSizes = [];
       this._minSplitterSizes = [];
       
       // Use setTimeout to defer change detection to avoid timing issues
+      setTimeout(() => {
+        this.cdr.markForCheck();
+      });
+    } else if (!this.isMobile) {
+      // On desktop, recalculate minimum sizes when window resizes (for pixel-based constraints)
+      this._minSplitterSizes = [];
+      
       setTimeout(() => {
         this.cdr.markForCheck();
       });
@@ -200,6 +208,16 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
       ];
     } else {
       // Normal layout with both main content and AI assistant panels
+      // Only set minimum size if AI assistant is active
+      const isActive = this.layoutService.layoutState().aiAssistantActive;
+      let minAiAssistantSize: number | undefined = undefined;
+      
+      if (isActive) {
+        // Calculate minimum percentage for AI assistant based on 380px requirement
+        const containerWidth = window.innerWidth - 250; // Approximate available width (minus sidebar)
+        minAiAssistantSize = Math.max(20, (this.minAiAssistantPixels / containerWidth) * 100);
+      }
+      
       this._splitterPanels = [
         {
           id: 'main-content',
@@ -213,6 +231,7 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
           template: this.aiAssistantTemplate,
           resizable: true,
           visible: true, // Always visible in DOM - visibility controlled by size calculations
+          minSize: minAiAssistantSize, // Only set minimum size when active
           data: { title: 'AI Assistant' }
         }
       ];
@@ -304,30 +323,37 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
     // Update the assistant state based on panel size (0 means hidden)
     const isActive = event.sizes.length >= 2 && event.sizes[1] > 0;
     const wasActive = this.layoutService.layoutState().aiAssistantActive ?? false;
+    const panelSize = event.sizes.length >= 2 ? event.sizes[1] : 0;
     
-    // Only update if the active state actually changed
+    // Always update the layout state to trigger responsive recalculations
+    // This ensures components can react to panel size changes, not just active/inactive changes
+    this.layoutService.layoutState.update((prev) => ({ 
+      ...prev, 
+      aiAssistantActive: isActive,
+      aiAssistantPanelSize: panelSize
+    }));
+    
+    // Clear cache to force recalculation when state changes
     if (isActive !== wasActive) {
-      this.layoutService.layoutState.update((prev) => ({ ...prev, aiAssistantActive: isActive }));
-      
-      // Clear cache to force recalculation
       this._lastAiAssistantActive = null;
       this._splitterSizes = [];
       this._minSplitterSizes = [];
       
-      // No need to reinitialize panels since they're always present now
-      
       localStorage.setItem('aiAssistantActive', isActive.toString());
-      
-      // Use setTimeout to avoid triggering change detection during event handling
-      setTimeout(() => {
-        this.cdr.markForCheck();
-      });
     }
+    
+    // Always save panel size for responsive calculations
+    localStorage.setItem('aiAssistantPanelSize', panelSize.toString());
     
     // Only save splitter state if AI assistant is active (to preserve last active size)
     if (isActive) {
       localStorage.setItem('aiAssistantSplitterState', JSON.stringify(event.sizes));
     }
+    
+    // Use setTimeout to avoid triggering change detection during event handling
+    setTimeout(() => {
+      this.cdr.markForCheck();
+    });
   }
 
   // No longer needed - panels are always present, only sizes change
@@ -411,13 +437,16 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
     
     // Desktop behavior with AI assistant active
     // Try to restore saved size, with minimum constraint
+    const containerWidth = window.innerWidth - 250; // Approximate available width (minus sidebar)
+    const minAiAssistantPercentage = Math.max(20, (this.minAiAssistantPixels / containerWidth) * 100);
+    
     const savedState = localStorage.getItem('aiAssistantSplitterState');
     if (savedState) {
       try {
         const sizes = JSON.parse(savedState);
         if (Array.isArray(sizes) && sizes.length === 2) {
-          // Ensure AI assistant panel is at least 20% if active
-          const aiSize = Math.max(sizes[1], this.minAiAssistantSize);
+          // Ensure AI assistant panel meets the minimum pixel requirement
+          const aiSize = Math.max(sizes[1], minAiAssistantPercentage);
           const mainSize = 100 - aiSize;
           return [mainSize, aiSize];
         }
@@ -444,7 +473,12 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
     }
     
     // Desktop behavior with AI assistant active
-    return [50, this.minAiAssistantSize];
+    // Calculate minimum percentage based on 380px requirement
+    const containerWidth = window.innerWidth - 250; // Approximate available width (minus sidebar)
+    const minAiAssistantPercentage = Math.max(20, (this.minAiAssistantPixels / containerWidth) * 100);
+    const maxMainContentPercentage = 100 - minAiAssistantPercentage;
+    
+    return [0, minAiAssistantPercentage]; // Main content can shrink to 0, AI assistant has pixel-based minimum
   }
 
   toggleAiAssistant() {
@@ -461,7 +495,8 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
     this._splitterSizes = [];
     this._minSplitterSizes = [];
     
-    // No need to reinitialize panels - they're always present, just sizes change
+    // Reinitialize panels to update minSize property based on new active state
+    this.initializeSplitterPanels();
     
     localStorage.setItem('aiAssistantActive', newActiveState.toString());
     
@@ -483,7 +518,8 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
     this._splitterSizes = [];
     this._minSplitterSizes = [];
     
-    // No need to reinitialize panels - they're always present, just sizes change
+    // Reinitialize panels to update minSize property based on new active state
+    this.initializeSplitterPanels();
     
     // Update localStorage to reflect closed state
     localStorage.setItem('aiAssistantActive', 'false');

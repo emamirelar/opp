@@ -15,6 +15,7 @@ interface DynamicComponentInfo {
 interface ChunkData {
   type: string;
   content: any;
+  entityType?: string;
   partial: boolean;
   invocationId: string;
   renderingId?: string;
@@ -28,6 +29,7 @@ export class DynamicContentService {
   private viewContainer!: ViewContainerRef;
   private componentFactory: any;
   private activeComponents = new Map<string, DynamicComponentInfo>();
+  private cardClickCallback?: (event: any) => void;
 
   constructor(
     private componentFactoryResolver: ComponentFactoryResolver,
@@ -40,6 +42,10 @@ export class DynamicContentService {
 
   setViewContainer(viewContainer: ViewContainerRef): void {
     this.viewContainer = viewContainer;
+  }
+
+  setCardClickCallback(callback: (event: any) => void): void {
+    this.cardClickCallback = callback;
   }
 
   processChunk(chunk: any): void {
@@ -63,7 +69,6 @@ export class DynamicContentService {
 
         const safeRenderingId = chunkData.renderingId || `${chunkData.type}-${Date.now()}`;
         const existingComponent = this.findExistingComponent(chunkData.type, safeRenderingId, chunkData.partial);
-
 
         if (existingComponent) {
           this.updateComponent(existingComponent, chunkData.content, !chunkData.partial);
@@ -115,38 +120,48 @@ export class DynamicContentService {
     }
     
     if (part.functionResponse) {
-      // Handle function response - especially invoke_api_tool
-      if (part.functionResponse.name === 'invoke_api_tool' && part.functionResponse.response?.result) {
+      // Handle function response - especially invoke_app_api
+      if (part.functionResponse.name === 'invoke_app_api' && part.functionResponse.response) {
         try {
-          const parsedResult = JSON.parse(part.functionResponse.response.result);
+          // For invoke_app_api, the response is already parsed, not a JSON string
+          const parsedResult = part.functionResponse.response;
+          
           let cardData = parsedResult;
           
-          if (parsedResult.response?.records) {
-            cardData = parsedResult.response.records;
+          // The invoke_app_api returns: { status: "success", response: actualData, api_call: "..." }
+          // So we need to extract the actual response data
+          if (parsedResult.response) {
+            cardData = parsedResult.response;
+            
+            // If the response has records property, use that
+            if (parsedResult.response.records) {
+              cardData = parsedResult.response.records;
+            }
           } else if (parsedResult.records) {
             cardData = parsedResult.records;
           }
           
-          // Determine entity type
-          let entityType = 'partner';
+          // Determine entity type (title case to match switch cases in AI content component)
+          let entityType = 'Partner';
           if (parsedResult.api_call?.includes('/api/partner')) {
-            entityType = 'partner';
+            entityType = 'Partner';
           } else if (parsedResult.api_call?.includes('/api/contact')) {
-            entityType = 'contact';
+            entityType = 'Contact';
           } else if (parsedResult.api_call?.includes('/api/interaction')) {
-            entityType = 'interaction';
+            entityType = 'Interaction';
           }
           
           return {
             type: 'card',
             content: cardData,
+            entityType: entityType, // Pass the detected entity type
             partial: false, // Function responses are always complete
             invocationId: chunk.invocationId,
             renderingId: `${renderingIdBase}-card`,
             timestamp: chunk.timestamp || Date.now()
           };
           } catch (error) {
-            // Failed to parse function response - don't render anything
+            // Failed to process function response - don't render anything
           }
       }
       
@@ -191,11 +206,10 @@ export class DynamicContentService {
   }
 
   private createComponent(chunkData: ChunkData, renderingId: string): void {
-    
-    
     const resultItem: ResultItem = {
       type: this.mapTypeToResultItemType(chunkData.type),
       message: chunkData.content,
+      entity: chunkData.entityType, // Pass the entity type to the ResultItem
       partial: chunkData.partial,
       renderingId: renderingId,
       completed: !chunkData.partial,
@@ -212,6 +226,11 @@ export class DynamicContentService {
     componentRef.setInput('isNewMessage', true);
     componentRef.setInput('renderingId', renderingId);
     componentRef.setInput('isProgressive', chunkData.partial);
+
+    // Wire up cardClicked event if callback is provided
+    if (this.cardClickCallback) {
+      componentRef.instance.cardClicked.subscribe(this.cardClickCallback);
+    }
 
     // Force Angular change detection to ensure UI updates
     componentRef.changeDetectorRef.detectChanges();

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, OnChanges, Output, TemplateRef, computed, ElementRef, inject, ViewChild, AfterViewInit, OnDestroy, SimpleChanges, input, signal, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, OnChanges, Output, TemplateRef, computed, ElementRef, inject, ViewChild, AfterViewInit, OnDestroy, SimpleChanges, input, signal, effect, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CardModule } from 'primeng/card';
@@ -57,6 +57,29 @@ import { InteractionIconService } from '../../../../services/interaction-icon.se
       text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
+
+    /* Responsive card content transitions */
+    .card-content-transition {
+      transition: all 0.2s ease-in-out;
+    }
+
+    /* Ensure proper text truncation in small cards */
+    .truncate {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Responsive avatar sizing */
+    :host ::ng-deep p-avatar.p-avatar-normal {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+
+    :host ::ng-deep p-avatar.p-avatar-large {
+      width: 3.5rem;
+      height: 3.5rem;
+    }
   `]
 })
 export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit, OnDestroy {
@@ -79,13 +102,22 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   // Scroll detection
   private elementRef = inject(ElementRef);
   private interactionIconService = inject(InteractionIconService);
+  private cdr = inject(ChangeDetectorRef);
 
   // Custom template references
   @ContentChild('cardActionsTemplate') actionsTemplate?: TemplateRef<any>;
 
   // ViewChild for intersection observer sentinel
   @ViewChild('loadMoreSentinel') loadMoreSentinel?: ElementRef<HTMLDivElement>;
+  
+  // ViewChild reference for width tracking
+  @ViewChild('widthTracker', { static: false }) widthTracker?: ElementRef;
 
+  // Width tracking for responsive layout
+  componentWidth = signal<number>(0);
+  private widthTrackingInterval?: ReturnType<typeof setInterval>;
+  private resizeObserver?: ResizeObserver;
+  
   // Computed values
   hasActionsTemplate = computed(() => !!this.actionsTemplate);
 
@@ -124,6 +156,213 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   private lastLoadMoreTime = 0;
   private readonly LOAD_MORE_DEBOUNCE_MS = 500; // Prevent rapid calls
 
+  // Computed responsive grid classes based on component width
+  responsiveGridClasses = computed(() => {
+    const width = this.componentWidth();
+    const forceMobileMode = this.config()?.forceMobileMode;
+    
+    // If forceMobileMode is enabled, always use single column
+    if (forceMobileMode) {
+      return 'grid grid-cols-1 gap-6';
+    }
+    
+    // Determine number of columns based on component width
+    if (width >= 1400) {
+      return 'grid grid-cols-1 gap-6 xl:grid-cols-3'; // 3 columns on very wide screens
+    } else if (width >= 1000) {
+      return 'grid grid-cols-1 gap-6 lg:grid-cols-2'; // 2 columns on wide screens
+    } else if (width >= 700) {
+      return 'grid grid-cols-1 gap-6 md:grid-cols-2'; // 2 columns on medium screens
+    } else {
+      return 'grid grid-cols-1 gap-6'; // 1 column on small screens
+    }
+  });
+
+  // Computed card size category for responsive content
+  cardSize = computed(() => {
+    const width = this.componentWidth();
+    const forceMobileMode = this.config()?.forceMobileMode;
+    
+    if (forceMobileMode) {
+      return 'medium'; // Changed from 'small' to ensure content shows
+    }
+    
+    // Fallback for when width is not yet calculated (mobile initial load)
+    if (width === 0 || width < 100) {
+      return 'medium'; // Default to medium to ensure content shows
+    }
+    
+    // Determine number of columns and card width based on grid layout
+    let cardWidth: number;
+    let columns: number;
+    
+    if (width >= 1400) {
+      columns = 3;
+      cardWidth = (width - 48) / 3; // 3 columns with gaps (24px * 2)
+    } else if (width >= 1000) {
+      columns = 2;
+      cardWidth = (width - 24) / 2; // 2 columns with gaps (24px * 1)
+    } else if (width >= 700) {
+      columns = 2;
+      cardWidth = (width - 24) / 2; // 2 columns with gaps (24px * 1)
+    } else {
+      columns = 1;
+      cardWidth = width - 24; // 1 column with margins
+    }
+    
+    // Categorize card size considering both card width and viewport context
+    // Key principle: Larger viewports (more columns) should show more content per card,
+    // even if individual cards are smaller. This prevents the jarring experience where
+    // expanding the viewport results in less content being shown.
+    
+    // For single column layouts (mobile), be generous with content
+    if (columns === 1) {
+      if (cardWidth < 250) {
+        return 'medium'; // Even very narrow mobile gets medium content
+      } else if (cardWidth < 400) {
+        return 'medium'; // Normal mobile - moderate content
+      } else {
+        return 'large'; // Wide mobile - full content
+      }
+    }
+    
+    // For 2-column layouts, be more generous since viewport is larger
+    else if (columns === 2) {
+      if (cardWidth < 280) {
+        return 'small'; // Very narrow cards in 2-column
+      } else if (cardWidth < 350) {
+        return 'medium'; // Normal cards in 2-column - show avatars/tags
+      } else {
+        return 'large'; // Wide cards in 2-column - full content
+      }
+    }
+    
+    // For 3-column layouts, always show substantial content since it's a large viewport
+    else { // columns === 3
+      if (cardWidth < 280) {
+        return 'medium'; // Even narrow cards in 3-column get medium treatment
+      } else {
+        return 'large'; // Most 3-column cards get full content
+      }
+    }
+  });
+
+  // Computed properties for responsive content visibility
+  shouldShowAvatar = computed(() => {
+    const size = this.cardSize();
+    const width = this.componentWidth();
+    const isMobile = width < 700;
+    
+    // On mobile, be more conservative with avatars to prioritize text content
+    if (isMobile) {
+      return size === 'large'; // Only show avatars on large mobile cards
+    }
+    
+    return size === 'medium' || size === 'large'; // Show avatars on medium and large cards for desktop
+  });
+
+  shouldShowTags = computed(() => {
+    const size = this.cardSize();
+    const width = this.componentWidth();
+    const isMobile = width < 700;
+    
+    // On mobile, be more conservative with tags to prioritize text content
+    if (isMobile) {
+      return size === 'large'; // Only show tags on large mobile cards
+    }
+    
+    return size === 'medium' || size === 'large'; // Show tags on medium and large cards for desktop
+  });
+
+  shouldShowSecondaryFields = computed(() => {
+    const size = this.cardSize();
+    // On mobile (single column), show secondary fields even on small cards
+    const width = this.componentWidth();
+    const isMobile = width < 700;
+    
+    if (isMobile) {
+      return true; // Always show secondary fields on mobile
+    }
+    
+    return size === 'medium' || size === 'large'; // Show on medium and large cards for desktop
+  });
+
+  shouldShowDescriptionField = computed(() => {
+    const size = this.cardSize();
+    return size === 'large'; // Only show description on large cards
+  });
+
+  shouldShowMetadataField = computed(() => {
+    const size = this.cardSize();
+    // On mobile (single column), show metadata even on small cards
+    const width = this.componentWidth();
+    const isMobile = width < 700;
+    
+    if (isMobile) {
+      return true; // Always show metadata on mobile
+    }
+    
+    return size === 'medium' || size === 'large'; // Show metadata on medium and large cards for desktop
+  });
+
+  // Title should always be visible regardless of card size
+  shouldShowTitle = computed(() => {
+    return true; // Always show the title/entity name
+  });
+
+  // Computed CSS classes for responsive font sizes
+  titleFontClasses = computed(() => {
+    const size = this.cardSize();
+    switch (size) {
+      case 'small':
+        return 'font-semibold text-base text-gray-900 leading-tight';
+      case 'medium':
+        return 'font-semibold text-lg text-gray-900 leading-tight';
+      case 'large':
+      default:
+        return 'font-semibold text-xl text-gray-900 leading-tight';
+    }
+  });
+
+  subtitleFontClasses = computed(() => {
+    const size = this.cardSize();
+    switch (size) {
+      case 'small':
+        return 'text-xs text-gray-600';
+      case 'medium':
+        return 'text-sm text-gray-600';
+      case 'large':
+      default:
+        return 'text-sm text-gray-600';
+    }
+  });
+
+  cardPaddingClasses = computed(() => {
+    const size = this.cardSize();
+    switch (size) {
+      case 'small':
+        return 'p-3';
+      case 'medium':
+        return 'p-4';
+      case 'large':
+      default:
+        return 'p-5';
+    }
+  });
+
+  contentGapClasses = computed(() => {
+    const size = this.cardSize();
+    switch (size) {
+      case 'small':
+        return 'gap-2';
+      case 'medium':
+        return 'gap-3';
+      case 'large':
+      default:
+        return 'gap-4';
+    }
+  });
+  
   // Add computed property to check if safe to render content
   canRenderContent = computed(() => {
     const hasColumns = this.columns() && this.columns().length > 0;
@@ -159,19 +398,16 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     return interactionIconColumn && !avatarColumn;
   });
 
-  // Computed property to get ordered card fields (excluding avatar and interaction icons shown as avatar)
+  // Computed property to get ordered card fields (including all columns for content)
   orderedCardFields = computed(() => {
     const columns = this.columns();
     if (!columns || columns.length === 0) {
       return [];
     }
 
-    // Filter out avatar columns and interaction icon columns when they're shown as avatars
-    return columns.filter(col => {
-      if (col.type === 'avatar') return false;
-      if (col.type === 'interactionIcon' && this.shouldShowInteractionAvatar()) return false;
-      return true;
-    });
+    // Include all columns - avatar and interaction icon columns can still provide title/content
+    // We'll handle the display logic separately in the template
+    return columns;
   });
 
   // Computed property to get all card fields at once
@@ -211,6 +447,14 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     this.hasViewInitialized = true;
     this.setupIntersectionObserver();
     this.observeLoadMoreSentinel();
+    
+    // Initialize width tracking
+    this.initializeWidthTracking();
+    
+    // Expose debug method globally for mobile testing
+    if (typeof window !== 'undefined') {
+      (window as any).debugCardComponent = () => this.debugCardState();
+    }
   }
 
   /**
@@ -220,6 +464,16 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     this.hasViewInitialized = false;
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
+    }
+    
+    // Clean up ResizeObserver
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+    
+    // Clean up polling interval
+    if (this.widthTrackingInterval) {
+      clearInterval(this.widthTrackingInterval);
     }
   }
 
@@ -485,6 +739,49 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
     // Otherwise, return empty string (no tooltip)
     return '';
+  }
+
+  /**
+   * Get entity name from avatar field for title display
+   */
+  getEntityNameFromAvatarField(item: any, avatarColumn: ListViewColumn): string {
+    if (!item || !avatarColumn) {
+      return '';
+    }
+
+    // First, try the firstLetterFallbackField if it exists
+    if (avatarColumn.firstLetterFallbackField) {
+      const fallbackValue = this.getFieldValue(item, avatarColumn.firstLetterFallbackField);
+      if (fallbackValue && typeof fallbackValue === 'string' && fallbackValue.trim()) {
+        return fallbackValue.trim();
+      }
+    }
+
+    // Try common entity name fields
+    const commonNameFields = ['name', 'title', 'displayName', 'entityName', 'organizationName', 'companyName'];
+    for (const fieldName of commonNameFields) {
+      const value = this.getFieldValue(item, fieldName);
+      if (value && typeof value === 'string' && value.trim() && !value.startsWith('http')) {
+        return value.trim();
+      }
+    }
+
+    // Try to extract from the avatar field itself if it's not a URL
+    const avatarFieldValue = this.getFieldValue(item, avatarColumn.field);
+    if (avatarFieldValue && typeof avatarFieldValue === 'string' && !avatarFieldValue.startsWith('http')) {
+      return avatarFieldValue.trim();
+    }
+
+    // Fallback to first non-URL string field in the item
+    const itemKeys = Object.keys(item);
+    for (const key of itemKeys) {
+      const value = item[key];
+      if (value && typeof value === 'string' && value.trim() && !value.startsWith('http') && !key.toLowerCase().includes('url') && !key.toLowerCase().includes('image')) {
+        return value.trim();
+      }
+    }
+
+    return 'Unknown Entity';
   }
 
   /**
@@ -787,5 +1084,267 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   getItemTags(item: T): any[] | null {
     const itemAsAny = item as any;
     return itemAsAny?.tags && Array.isArray(itemAsAny.tags) ? itemAsAny.tags : null;
+  }
+
+  /**
+   * Check if a field likely contains tag information that would duplicate the dedicated tags
+   */
+  isFieldLikelyTagField(column: ListViewColumn, item: T): boolean {
+    if (!column) return false;
+    
+    // Get existing tags for comparison
+    const existingTags = this.getItemTags(item);
+    if (!existingTags || existingTags.length === 0) {
+      return false; // No tags to duplicate
+    }
+    
+    // Extract tag values for comparison
+    const tagValues = existingTags.map(tag => {
+      // Handle different tag object structures
+      const tagValue = tag.tag || tag.name || tag.value || tag.label || tag;
+      return tagValue.toString().toLowerCase().trim();
+    }).filter(Boolean);
+    
+    if (tagValues.length === 0) {
+      return false;
+    }
+    
+    // Check if field name suggests it contains tags
+    const fieldName = column.field.toLowerCase();
+    const tagRelatedFields = [
+      'tags', 'status', 'state', 'category', 'type', 'label', 'badge', 
+      'active', 'approved', 'pending', 'approval', 'partnerstatus', 
+      'partnerapprovalstatus', 'partnerstate'
+    ];
+    
+    const isTagRelatedField = tagRelatedFields.some(tagField => fieldName.includes(tagField));
+    
+    
+    // Get the field value
+    const fieldValue = this.getFieldValue(item, column.field);
+    if (!fieldValue) {
+      return isTagRelatedField; // If no value but tag-related field name, assume it's a tag field
+    }
+    
+    // Convert field value to string and normalize
+    const fieldValueStr = fieldValue.toString().toLowerCase().trim();
+    
+    // Check if field value matches any tag value
+    const valueMatchesTag = tagValues.some(tagValue => {
+      // Exact match
+      if (tagValue === fieldValueStr) {
+        return true;
+      }
+      
+      // Partial match (tag contains field value or vice versa)
+      if (tagValue.includes(fieldValueStr) || fieldValueStr.includes(tagValue)) {
+        return true;
+      }
+      
+      return false;
+    });
+    
+    // Check if field contains multiple tag values (like "Active • Approved" or "Active, Approved")
+    const containsMultipleTags = tagValues.filter(tagValue => 
+      fieldValueStr.includes(tagValue)
+    ).length >= 2;
+    
+    // Check if field value is a combination of tag values with separators
+    const commonSeparators = ['•', ',', ';', '|', ' - ', ' / '];
+    const fieldContainsTagCombination = commonSeparators.some(separator => {
+      if (fieldValueStr.includes(separator.toLowerCase())) {
+        const parts = fieldValueStr.split(separator.toLowerCase()).map((p: string) => p.trim());
+        return parts.length > 1 && parts.every((part: string) => 
+          tagValues.some(tagValue => tagValue === part || tagValue.includes(part) || part.includes(tagValue))
+        );
+      }
+      return false;
+    });
+    
+    // Return true if it's a tag-related field OR if the value matches tags
+    const result = isTagRelatedField || valueMatchesTag || containsMultipleTags || fieldContainsTagCombination;
+    
+    
+    return result;
+  }
+
+  /**
+   * Check if we should show a metadata field, considering tag duplication
+   */
+  shouldShowMetadataFieldWithoutDuplication(column: ListViewColumn | null, item: T): boolean {
+    if (!column || !this.shouldShowMetadataField()) {
+      return false;
+    }
+    
+    // If we're showing dedicated tags, don't show fields that duplicate tag information
+    if (this.shouldShowTags() && this.getItemTags(item) && this.isFieldLikelyTagField(column, item)) {
+      return false;
+    }
+    
+    return this.hasFieldValue(item, column);
+  }
+
+  /**
+   * Check if we should show a secondary field, considering tag duplication
+   */
+  shouldShowSecondaryFieldWithoutDuplication(column: ListViewColumn | null, item: T): boolean {
+    if (!column) {
+      return false;
+    }
+    
+    // If we're showing dedicated tags, don't show fields that duplicate tag information
+    if (this.shouldShowTags() && this.getItemTags(item) && this.isFieldLikelyTagField(column, item)) {
+      return false;
+    }
+    
+    return this.hasFieldValue(item, column);
+  }
+
+  /**
+   * Check if we should show a description field, considering tag duplication
+   */
+  shouldShowDescriptionFieldWithoutDuplication(column: ListViewColumn | null, item: T): boolean {
+    if (!column || !this.shouldShowDescriptionField()) {
+      return false;
+    }
+    
+    // If we're showing dedicated tags, don't show fields that duplicate tag information
+    if (this.shouldShowTags() && this.getItemTags(item) && this.isFieldLikelyTagField(column, item)) {
+      return false;
+    }
+    
+    return this.hasFieldValue(item, column);
+  }
+
+  /**
+   * Window resize event handler
+   */
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    setTimeout(() => {
+      this.updateComponentWidth();
+    }, 100);
+  }
+
+  /**
+   * Initialize width tracking
+   */
+  private initializeWidthTracking() {
+    // Initial width measurement with multiple attempts
+    this.attemptWidthMeasurement();
+
+    // Use ResizeObserver for more efficient width tracking if available
+    if (typeof ResizeObserver !== 'undefined' && this.widthTracker?.nativeElement) {
+      this.resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const width = entry.contentRect.width;
+          if (width > 0) {
+            const currentWidth = this.componentWidth();
+            if (currentWidth !== width) {
+              this.componentWidth.set(width);
+              this.cdr.detectChanges();
+            }
+          }
+        }
+      });
+      
+      this.resizeObserver.observe(this.widthTracker.nativeElement);
+    } else {
+      // Fallback to polling for older browsers
+      this.startWidthPolling();
+    }
+  }
+
+  /**
+   * Attempt width measurement with multiple retries
+   */
+  private attemptWidthMeasurement() {
+    // Try multiple times with increasing delays to ensure element is rendered
+    const attempts = [0, 50, 100, 250, 500];
+    
+    attempts.forEach((delay, index) => {
+      setTimeout(() => {
+        this.updateComponentWidth();
+        
+        // If we got a width, stop trying
+        if (this.componentWidth() > 0 && index < attempts.length - 1) {
+          return;
+        }
+      }, delay);
+    });
+  }
+
+  /**
+   * Start width polling as fallback
+   */
+  private startWidthPolling() {
+    this.widthTrackingInterval = setInterval(() => {
+      this.updateComponentWidth();
+    }, 1000); // Check every second as fallback
+  }
+
+  /**
+   * Update component width
+   */
+  private updateComponentWidth() {
+    if (!this.widthTracker?.nativeElement) {
+      return;
+    }
+    
+    const element = this.widthTracker.nativeElement;
+    const width = element.offsetWidth || element.clientWidth || 0;
+    
+    if (width > 0) {
+      const currentWidth = this.componentWidth();
+      if (currentWidth !== width) {
+        this.componentWidth.set(width);
+        // Trigger change detection
+        this.cdr.detectChanges();
+      }
+    }
+  }
+
+  /**
+   * Debug method to check current width and responsive grid (can be called from browser console)
+   */
+  debugCardState() {
+    return this.getCurrentWidth();
+  }
+
+  /**
+   * Debug method to check current width and responsive grid (can be called from browser console)
+   */
+  getCurrentWidth() {
+    const width = this.componentWidth();
+    let cardWidth: number;
+    let columns: number;
+    
+    if (width >= 1400) {
+      columns = 3;
+      cardWidth = (width - 48) / 3;
+    } else if (width >= 1000) {
+      columns = 2;
+      cardWidth = (width - 24) / 2;
+    } else if (width >= 700) {
+      columns = 2;
+      cardWidth = (width - 24) / 2;
+    } else {
+      columns = 1;
+      cardWidth = width - 24;
+    }
+    
+    return {
+      componentWidth: this.componentWidth(),
+      columns: columns,
+      calculatedCardWidth: cardWidth,
+      cardSize: this.cardSize(),
+      responsiveGridClasses: this.responsiveGridClasses(),
+      forceMobileMode: this.config()?.forceMobileMode,
+      shouldShowAvatar: this.shouldShowAvatar(),
+      shouldShowTags: this.shouldShowTags(),
+      shouldShowSecondaryFields: this.shouldShowSecondaryFields(),
+      shouldShowDescriptionField: this.shouldShowDescriptionField(),
+      shouldShowMetadataField: this.shouldShowMetadataField()
+    };
   }
 }

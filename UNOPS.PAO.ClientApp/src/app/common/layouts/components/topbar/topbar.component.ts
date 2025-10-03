@@ -981,13 +981,18 @@ export class TopbarComponent implements OnInit, OnDestroy {
   onAIAssistantToggle() {
     // Check if user is on mobile
     if (this.isMobile) {
-      // On mobile, store current route and navigate to /ai
-      if (!this.router.url.startsWith('/ai')) {
+      // On mobile, check if we're already on the AI page
+      if (this.router.url.startsWith('/ai')) {
+        // If already on AI page, navigate back to previous route (acts like closing)
+        const previousRoute = sessionStorage.getItem('ai-assistant-previous-route') || '/';
+        this.router.navigate([previousRoute], { replaceUrl: true });
+      } else {
+        // If not on AI page, store current route and navigate to /ai (acts like opening)
         this.previousRoute = this.router.url;
         // Store in session storage for the AI assistant panel to access
         sessionStorage.setItem('ai-assistant-previous-route', this.previousRoute);
+        this.router.navigate(['/ai']);
       }
-      this.router.navigate(['/ai']);
     } else {
       // On desktop, toggle the sidebar panel
       this.layoutService.onAIAssistantToggle();

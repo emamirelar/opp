@@ -142,6 +142,46 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     return false;
   });
 
+  // Computed property for responsive search panel classes
+  readonly searchPanelClasses = computed(() => {
+    const { componentWidth } = this.state();
+    
+    // Use component width to determine layout instead of screen breakpoints
+    const isWideLayout = componentWidth >= 700; // custom breakpoint for search panel
+    
+    return {
+      container: isWideLayout 
+        ? 'w-full flex flex-row gap-2 items-center rounded-lg bg-white p-4 shadow-sm'
+        : 'w-full flex flex-col gap-2 rounded-lg bg-white p-4 shadow-sm',
+      searchField: isWideLayout 
+        ? 'flex-1 w-64 flex-none'
+        : 'flex-1',
+      advancedButtonMobile: isWideLayout 
+        ? 'hidden'
+        : 'mobile-advanced-search flex-shrink-0',
+      advancedButtonDesktop: isWideLayout 
+        ? 'inline-flex advanced-search'
+        : 'hidden',
+      sortContainer: isWideLayout 
+        ? 'flex items-center gap-2 ml-auto'
+        : 'flex items-center gap-2'
+    };
+  });
+
+  // Computed property for responsive advanced search classes
+  readonly advancedSearchClasses = computed(() => {
+    const { componentWidth } = this.state();
+    
+    // Use component width to determine layout instead of screen breakpoints
+    const isWideLayout = componentWidth >= 700; // custom breakpoint for search panel
+    
+    return {
+      title: isWideLayout 
+        ? 'text-md font-semibold block'
+        : 'text-md font-semibold hidden'
+    };
+  });
+
   // Search handling
   private readonly searchSubject = new Subject<string>();
   private readonly loadDataSubject = new Subject<void>();

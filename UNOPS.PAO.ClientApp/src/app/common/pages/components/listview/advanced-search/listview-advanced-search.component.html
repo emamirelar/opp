@@ -7,7 +7,7 @@
         (onClick)="switchToSimpleSearch()"
         [pTooltip]="'search.backToSimple' | translate"
       ></p-button>
-      <div class="text-md font-semibold">{{ 'search.advanced' | translate }}</div>
+      <div [class]="advancedSearchClasses?.title || 'text-md font-semibold hidden lg:block'">{{ 'search.advanced' | translate }}</div>
     </div>
     <div class="flex items-center gap-2">
       @if (entityType) {

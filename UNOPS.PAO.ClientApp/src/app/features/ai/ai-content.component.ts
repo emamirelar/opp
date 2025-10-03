@@ -48,11 +48,10 @@ import { TranslateModule } from '@ngx-translate/core';
     TranslateModule
   ],
   template: `
-    <div class="ai-content-wrapper h-full w-full flex">
+    <div class="ai-content-wrapper h-full w-full flex font-unops-body">
       <!-- Main AI Assistant Area -->
       <div class="ai-main-area flex-1 flex flex-col" 
-           [class.with-right-panel]="rightPanelVisible"
-           [style.margin-right]="rightPanelVisible ? rightPanelWidth + 'px' : '0px'">
+           [class.with-right-panel]="rightPanelVisible">
         
         <app-ai-assistant-panel 
           [hideHeader]="false"
@@ -75,38 +74,42 @@ import { TranslateModule } from '@ngx-translate/core';
            [style.display]="rightPanelVisible ? 'flex' : 'none'">
         
         <div class="right-panel-content">
-          <div class="right-panel-header" *ngIf="rightPanelVisible">
+          <div class="right-panel-header unops-surface-secondary" *ngIf="rightPanelVisible">
             <div class="panel-title">
-              <h4>{{ getEntityDisplayName() }}</h4>
-              <span class="panel-subtitle">{{ rightPanelEntityType | titlecase }} • ID: {{ rightPanelEntityId }}</span>
+              <h4 class="unops-text-headline-medium unops-text-secondary">{{ getEntityDisplayName() }}</h4>
+              <span class="panel-subtitle unops-text-body-medium unops-text-muted">{{ rightPanelEntityType | titlecase }} • ID: {{ rightPanelEntityId }}</span>
             </div>
-            <div class="panel-actions">
-              <button type="button" 
-                      class="panel-action-btn" 
-                      (click)="openRightPanelInNewTab()" 
-                      pTooltip="Open in new tab"
-                      tooltipPosition="left">
-                <i class="pi pi-external-link"></i>
-              </button>
-              <button type="button" 
-                      class="panel-action-btn" 
-                      (click)="closeRightPanel()" 
-                      pTooltip="Close panel"
-                      tooltipPosition="left">
-                <i class="pi pi-times"></i>
-              </button>
+            <div class="panel-actions unops-flex unops-items-center unops-gap-sm">
+              <p-button 
+                icon="pi pi-external-link"
+                [text]="true"
+                [rounded]="true"
+                size="small"
+                (onClick)="openRightPanelInNewTab()" 
+                pTooltip="Open in new tab"
+                tooltipPosition="left">
+              </p-button>
+              <p-button 
+                icon="pi pi-times"
+                [text]="true"
+                [rounded]="true"
+                size="small"
+                (onClick)="closeRightPanel()" 
+                pTooltip="Close panel"
+                tooltipPosition="left">
+              </p-button>
             </div>
           </div>
           
-          <ng-container *ngIf="rightPanelType === 'component' && rightPanelComponent">
+          <div class="entity-content-container" *ngIf="rightPanelType === 'component' && rightPanelComponent">
             <ng-container [ngSwitch]="rightPanelEntityType">
-              <app-partner-view *ngSwitchCase="'Partner'" [recordId]="rightPanelEntityId || ''" [showAiPanel]="false"></app-partner-view>
-              <app-contact-view *ngSwitchCase="'Contact'" [recordId]="rightPanelEntityId || ''" [showAiPanel]="false"></app-contact-view>
+              <app-partner-view *ngSwitchCase="'Partner'" [recordId]="rightPanelEntityId || ''"></app-partner-view>
+              <app-contact-view *ngSwitchCase="'Contact'" [recordId]="rightPanelEntityId || ''"></app-contact-view>
               <app-interaction-modal *ngSwitchCase="'Interaction'" [recordId]="rightPanelEntityId || ''"></app-interaction-modal>
             </ng-container>
-          </ng-container>
+          </div>
           
-          <ng-container *ngIf="rightPanelType === 'component' && !rightPanelComponent">
+          <div class="entity-content-container" *ngIf="rightPanelType === 'component' && !rightPanelComponent">
             <!-- <div class="coming-soon-container">
               <div class="coming-soon-icon">
                 <i class="pi pi-cog pi-spin"></i>
@@ -123,8 +126,8 @@ import { TranslateModule } from '@ngx-translate/core';
               </div>
             </div> -->
             <!-- TAD: Defaulting to partner for now -->
-            <app-partner-view [recordId]="rightPanelEntityId || ''" [showAiPanel]="false"></app-partner-view>
-          </ng-container>
+            <app-partner-view [recordId]="rightPanelEntityId || ''"></app-partner-view>
+          </div>
           
           <ng-container *ngIf="rightPanelType === 'url'">
             <iframe [src]="rightPanelUrl" width="100%" height="100%" frameborder="0"></iframe>
@@ -140,32 +143,38 @@ import { TranslateModule } from '@ngx-translate/core';
   styles: [`
     .ai-content-wrapper {
       position: relative;
-      background: var(--surface-ground);
+      background: var(--unops-surface-secondary);
       height: 100%;
+      gap: var(--unops-spacing-lg);
     }
 
     .ai-main-area {
-      transition: margin-right 0.3s ease;
+      transition: margin-right var(--unops-duration-medium) var(--unops-easing-smooth);
     }
 
     .ai-right-panel {
-      position: fixed;
-      top: 105px; /* Account for topbar height */
-      right: 0;
-      bottom: 0;
+      position: relative;
       flex-direction: column;
-      background: var(--surface-card);
-      border-left: 1px solid var(--surface-border);
-      transition: all 0.3s ease;
-      z-index: 1000;
+      background: var(--unops-surface-elevated);
+      border-left: 1px solid var(--unops-neutral-200);
+      border-top-right-radius: var(--unops-radius-lg);
+      border-bottom-right-radius: var(--unops-radius-lg);
+      transition: all var(--unops-duration-medium) var(--unops-easing-smooth);
+      overflow: hidden;
+      will-change: flex-basis;
     }
 
-    .ai-right-panel.panel-visible {
-      transform: translateX(0);
+    .ai-right-panel.resizing {
+      transition: none;
     }
 
-    .ai-right-panel:not(.panel-visible) {
-      transform: translateX(100%);
+    .ai-right-panel.resizing .right-panel-content {
+      pointer-events: none;
+    }
+
+    :host ::ng-deep body.resizing {
+      user-select: none;
+      cursor: ew-resize !important;
     }
 
     .right-panel-content {
@@ -175,46 +184,35 @@ import { TranslateModule } from '@ngx-translate/core';
       overflow: hidden;
     }
 
+    .entity-content-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--unops-spacing-lg);
+      width: 100%;
+    }
+
     .right-panel-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem;
-      border-bottom: 1px solid var(--surface-border);
-      background: var(--surface-section);
+      padding: var(--unops-spacing-lg);
+      border-bottom: 1px solid var(--unops-neutral-200);
+      background: var(--unops-surface-secondary);
     }
 
     .panel-title h4 {
       margin: 0;
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: var(--text-color);
+      font-size: var(--unops-font-size-headline-medium);
+      font-weight: var(--unops-font-weight-semibold);
+      color: var(--unops-neutral-900);
+      font-family: var(--unops-font-body);
     }
 
     .panel-subtitle {
-      font-size: 0.875rem;
-      color: var(--text-color-secondary);
-      margin-top: 0.25rem;
-    }
-
-    .panel-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .panel-action-btn {
-      background: transparent;
-      border: 1px solid var(--surface-border);
-      border-radius: var(--border-radius);
-      padding: 0.5rem;
-      cursor: pointer;
-      color: var(--text-color);
-      transition: all 0.2s;
-    }
-
-    .panel-action-btn:hover {
-      background: var(--surface-hover);
-      border-color: var(--primary-color);
+      font-size: var(--unops-font-size-body-medium);
+      color: var(--unops-neutral-600);
+      margin-top: var(--unops-spacing-xs);
+      font-family: var(--unops-font-body);
     }
 
     .resize-handle {
@@ -222,15 +220,26 @@ import { TranslateModule } from '@ngx-translate/core';
       left: 0;
       top: 0;
       bottom: 0;
-      width: 4px;
-      background: var(--surface-border);
-      cursor: ew-resize;
-      transition: background 0.2s;
+      width: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: col-resize;
+      transition: all var(--unops-duration-fast) var(--unops-easing-smooth);
     }
 
-    .resize-handle:hover,
-    .ai-right-panel.resizing .resize-handle {
-      background: var(--primary-color);
+    .resize-handle::after {
+      content: '';
+      width: 2px;
+      height: 50px;
+      background-color: var(--unops-neutral-300);
+      border-radius: 1px;
+      transition: background-color var(--unops-duration-fast) var(--unops-easing-smooth);
+    }
+
+    .resize-handle:hover::after,
+    .ai-right-panel.resizing .resize-handle::after {
+      background-color: var(--unops-primary);
     }
 
     .coming-soon-container {
@@ -239,26 +248,27 @@ import { TranslateModule } from '@ngx-translate/core';
       align-items: center;
       justify-content: center;
       height: 100%;
-      padding: 2rem;
+      padding: var(--unops-spacing-2xl);
       text-align: center;
     }
 
     .coming-soon-icon {
-      font-size: 3rem;
-      color: var(--primary-color);
-      margin-bottom: 1rem;
+      font-size: var(--unops-font-size-display-medium);
+      color: var(--unops-primary);
+      margin-bottom: var(--unops-spacing-lg);
     }
 
     .entity-info {
-      margin-top: 1rem;
+      margin-top: var(--unops-spacing-lg);
       text-align: left;
     }
 
     .info-item {
-      margin-bottom: 0.5rem;
-      padding: 0.5rem;
-      background: var(--surface-section);
-      border-radius: var(--border-radius);
+      margin-bottom: var(--unops-spacing-sm);
+      padding: var(--unops-spacing-md);
+      background: var(--unops-surface-cool);
+      border-radius: var(--unops-radius-md);
+      border: 1px solid var(--unops-neutral-200);
     }
 
     :host ::ng-deep .ai-main-area app-ai-assistant-panel {
@@ -272,6 +282,7 @@ import { TranslateModule } from '@ngx-translate/core';
     :host {
       display: block;
       height: 100%;
+      font-family: var(--unops-font-body);
     }
   `]
 })
@@ -295,6 +306,8 @@ export class AiContentComponent implements OnInit, OnDestroy {
   private startX = 0;
   private startWidth = 600;
   private document = window.document;
+  private animationFrameId?: number;
+  private pendingWidth?: number;
 
   private entityComponentMap: Record<string, any> = {
     partner: PartnerViewComponent,
@@ -348,6 +361,14 @@ export class AiContentComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Clean up resize handling
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+    this.document.removeEventListener('mousemove', this.onResizing);
+    this.document.removeEventListener('mouseup', this.stopResizing);
+    this.document.body.classList.remove('resizing');
+    
     // Clean up any subscriptions if needed
     this.rightPanelVisible = false;
     this.rightPanelType = null;
@@ -385,11 +406,24 @@ export class AiContentComponent implements OnInit, OnDestroy {
 
   onResizing = (event: MouseEvent) => {
     if (!this.resizing) return;
+    
     const dx = event.clientX - this.startX;
     let newWidth = this.startWidth - dx;
     newWidth = Math.max(500, Math.min(newWidth, window.innerWidth * 0.6));
-    this.rightPanelWidth = newWidth;
-    this.cdr.detectChanges();
+    
+    // Store the pending width and schedule an update
+    this.pendingWidth = newWidth;
+    
+    if (!this.animationFrameId) {
+      this.animationFrameId = requestAnimationFrame(() => {
+        if (this.pendingWidth !== undefined) {
+          this.rightPanelWidth = this.pendingWidth;
+          this.pendingWidth = undefined;
+          this.cdr.detectChanges();
+        }
+        this.animationFrameId = undefined;
+      });
+    }
   };
 
   stopResizing = () => {
@@ -397,6 +431,19 @@ export class AiContentComponent implements OnInit, OnDestroy {
     this.document.removeEventListener('mousemove', this.onResizing);
     this.document.removeEventListener('mouseup', this.stopResizing);
     this.document.body.classList.remove('resizing');
+    
+    // Cancel any pending animation frame and apply final width
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = undefined;
+    }
+    
+    // Apply any pending width change
+    if (this.pendingWidth !== undefined) {
+      this.rightPanelWidth = this.pendingWidth;
+      this.pendingWidth = undefined;
+      this.cdr.detectChanges();
+    }
   };
 
   onCardClicked(event: { entityType: string, entityId: string, rowData: any }) {

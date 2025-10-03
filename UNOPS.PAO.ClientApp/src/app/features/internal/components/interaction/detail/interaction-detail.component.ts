@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, AfterViewInit, OnDestroy, signal, computed, WritableSignal, ViewChild, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -53,7 +53,7 @@ import { GeminiService } from '../../../services/gemini.service';
   styleUrl: './interaction-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class InteractionDetailComponent implements OnInit {
+export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private interactionService = inject(InteractionService);
@@ -65,11 +65,56 @@ export class InteractionDetailComponent implements OnInit {
   public interactionIconService = inject(InteractionIconService);
   private cachedDataService = inject(CachedDataService);
   public geminiService = inject(GeminiService);
+  private cdr = inject(ChangeDetectorRef);
+
+  @ViewChild('widthTracker', { static: false }) widthTracker?: ElementRef;
 
   interaction: WritableSignal<Interaction | null> = signal(null);
   loading = signal(true);
   error = signal<string | null>(null);
   showFullDescription = signal<boolean>(false);
+
+  // Width tracking for responsive layout
+  componentWidth = signal<number>(0);
+  private widthTrackingInterval?: ReturnType<typeof setInterval>;
+  private resizeObserver?: ResizeObserver;
+
+  // Computed responsive layout classes based on component width
+  // Note: Interaction detail uses 60% left, 40% right layout (same as partner/contact)
+  responsiveLayoutClasses = computed(() => {
+    const width = this.componentWidth();
+    
+    // Use component width to determine layout
+    // For container widths >= 700px, use side-by-side layout
+    // For container widths < 700px, use stacked layout
+    // Default to stacked layout when width is 0 (measuring)
+    const useSideBySideLayout = width >= 700;
+    
+    if (useSideBySideLayout) {
+      return {
+        container: 'flex flex-col gap-8',
+        mainLayout: 'flex flex-row gap-8 items-stretch',
+        leftColumn: 'flex flex-col gap-8 w-[60%] h-full sticky top-0',
+        rightColumn: 'flex flex-col gap-8 w-[40%]'
+      };
+    } else {
+      return {
+        container: 'flex flex-col gap-8',
+        mainLayout: 'flex flex-col gap-8',
+        leftColumn: 'flex flex-col gap-8 w-full h-full',
+        rightColumn: 'flex flex-col gap-8 w-full'
+      };
+    }
+  });
+
+  // Debug method to check current width and layout (can be called from browser console)
+  getCurrentWidth() {
+    return {
+      componentWidth: this.componentWidth(),
+      useSideBySideLayout: this.componentWidth() >= 700,
+      layoutClasses: this.responsiveLayoutClasses()
+    };
+  }
 
   // Cached data access
   allContacts = this.cachedDataService.allContacts;
@@ -115,6 +160,22 @@ export class InteractionDetailComponent implements OnInit {
   ngOnInit() {
     this.permissionUtils.loadPermissions(this.router);
     this.loadInteraction();
+  }
+
+  ngAfterViewInit() {
+    // Start width tracking after the view is fully initialized
+    setTimeout(() => {
+      this.startWidthTracking();
+    }, 100);
+  }
+
+  ngOnDestroy() {
+    if (this.widthTrackingInterval) {
+      clearInterval(this.widthTrackingInterval);
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
   }
 
   private loadInteraction() {
@@ -332,5 +393,73 @@ export class InteractionDetailComponent implements OnInit {
 
   onSummaryError(error: Error) {
     console.error('AI Summary error:', error);
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    setTimeout(() => {
+      this.updateComponentWidth();
+    }, 10);
+  }
+
+  private startWidthTracking() {
+    // Initial width measurement with multiple attempts
+    this.attemptWidthMeasurement();
+
+    // Use ResizeObserver for more efficient width tracking if available
+    if (typeof ResizeObserver !== 'undefined' && this.widthTracker?.nativeElement) {
+      this.resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const width = entry.contentRect.width;
+          if (width > 0) {
+            const currentWidth = this.componentWidth();
+            if (currentWidth !== width) {
+              this.componentWidth.set(width);
+              this.cdr.detectChanges();
+            }
+          }
+        }
+      });
+      
+      this.resizeObserver.observe(this.widthTracker.nativeElement);
+    } else {
+      // Fallback to polling for older browsers
+      this.widthTrackingInterval = setInterval(() => {
+        this.updateComponentWidth();
+      }, 100);
+    }
+  }
+
+  private attemptWidthMeasurement(attempts: number = 0) {
+    if (attempts > 10) {
+      return;
+    }
+
+    if (this.updateComponentWidth()) {
+      // Width measurement successful
+    } else {
+      // Try again after a short delay
+      setTimeout(() => {
+        this.attemptWidthMeasurement(attempts + 1);
+      }, 50);
+    }
+  }
+
+  private updateComponentWidth(): boolean {
+    if (typeof window !== 'undefined' && this.widthTracker?.nativeElement) {
+      const element = this.widthTracker.nativeElement;
+      const width = element.offsetWidth || element.clientWidth || 0;
+      
+      if (width > 0) {
+        const currentWidth = this.componentWidth();
+        if (currentWidth !== width) {
+          this.componentWidth.set(width);
+          // Trigger change detection
+          this.cdr.detectChanges();
+        }
+        return true;
+      }
+    }
+    return false;
   }
 }

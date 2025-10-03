@@ -1,29 +1,30 @@
 <div *ngIf="aiAssistantService.isLoadingSession()" class="absolute inset-0 z-50 flex items-center justify-center bg-white bg-opacity-60">
   <i class="pi pi-spin pi-spinner text-4xl text-[var(--primary-color)]"></i>
 </div>
-<div class="h-full flex flex-col min-h-0 bg-transparent rounded-unops-xl overflow-hidden w-full font-unops-body"
-     [ngClass]="{'rounded-none': hideHeader}">
+<div class="h-full flex flex-col min-h-0 bg-transparent overflow-hidden w-full font-unops-body" 
+     [style.height]="'100dvh'"
+     [ngClass]="{'mobile-keyboard-active': isMobileKeyboardActive()}">
   
-  <!-- Header section with a clean design like Google Chat -->
-  <div *ngIf="!hideHeader" class="flex items-center justify-between p-unops-md border-b border-unops-neutral-200 bg-unops-surface-primary shadow-unops-sm">
-    <div class="flex items-center gap-3 flex-1">
-      <div class="flex items-center justify-center w-8 h-8 rounded-full">
-        <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="w-5 h-5" />
+  <!-- Header section with UNOPS design system -->
+  <div *ngIf="!hideHeader" class="unops-flex unops-items-center unops-justify-between unops-p-lg unops-surface-elevated unops-shadow-sm">
+    <div class="unops-flex unops-items-center unops-gap-md unops-flex-1">
+      <div class="unops-flex unops-items-center unops-justify-center unops-w-8 unops-h-8 unops-rounded-full">
+        <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="unops-w-5 unops-h-5" />
       </div>
 
-      <div class="flex-1 min-w-0">
+      <div class="unops-flex-1 unops-min-w-0">
         <!-- Session title - only show when there's an active session -->
         <div *ngIf="aiAssistantService.currentSessionId()">
           <!-- Editable title -->
           <div *ngIf="!isEditingTitle()" 
-               class="text-unops-lg font-unops-semibold text-unops-neutral-900 cursor-pointer hover:bg-unops-neutral-100 px-unops-sm py-unops-xs rounded-unops-sm truncate transition-colors duration-unops-fast"
+               class="unops-text-body-large unops-font-semibold unops-text-secondary cursor-pointer hover:unops-surface-cool unops-p-sm unops-rounded-sm unops-truncate unops-transition"
                (click)="startEditingTitle()"
                [pTooltip]="'aiAssistant.clickToEditTitle' | translate">
             {{ aiAssistantService.sessionTitle() }}
           </div>
           
           <!-- Title editing input -->
-          <div *ngIf="isEditingTitle()" class="flex items-center gap-2">
+          <div *ngIf="isEditingTitle()" class="unops-flex unops-items-center unops-gap-sm">
             <input 
               #titleInput
               type="text"
@@ -32,7 +33,7 @@
               (keydown.enter)="saveTitle()"
               (keydown.escape)="cancelEditingTitle()"
               (blur)="saveTitle()"
-              class="flex-1 px-unops-sm py-unops-xs text-unops-lg font-unops-semibold bg-transparent border border-unops-primary rounded-unops-sm focus:outline-none focus:ring-1 focus:ring-unops-primary transition-all duration-unops-fast"
+              class="unops-flex-1 unops-p-sm unops-text-body-large unops-font-semibold unops-bg-transparent unops-border unops-border-primary unops-rounded-sm focus:unops-outline-none focus:unops-ring-1 focus:unops-ring-primary unops-transition"
               [placeholder]="'aiAssistant.enterTitle' | translate">
             <p-button
               icon="pi pi-check"
@@ -55,15 +56,15 @@
       </div>
     </div>
     
-    <div class="flex items-center gap-1">
+    <div class="unops-flex unops-items-center unops-gap-xs">
       <!-- Session-specific buttons - only show when there's an active session -->
-      <div *ngIf="aiAssistantService.currentSessionId()" class="flex items-center gap-1">
+      <div *ngIf="aiAssistantService.currentSessionId()" class="unops-flex unops-items-center unops-gap-xs">
         <p-button 
           [icon]="aiAssistantService.sessionStarred() ? 'pi pi-star-fill' : 'pi pi-star'"
           [text]="true"
           [rounded]="true"
           size="small"
-          [ngClass]="{'text-yellow-500': aiAssistantService.sessionStarred()}"
+          [ngClass]="{'unops-text-warning': aiAssistantService.sessionStarred()}"
           pTooltip="{{ 'aiAssistant.toggleStar' | translate }}"
           (onClick)="toggleStar()"
           tooltipPosition="left">
@@ -170,23 +171,23 @@
     </div>
 
     <!-- Welcome state - UNOPS styled (only on first page load) -->
-    <div *ngIf="aiAssistantService.chatHistory().length === 0 && aiAssistantService.isFirstPageLoad()" class="flex flex-col items-center justify-center h-full text-center px-unops-lg py-unops-xl max-w-3xl mx-auto ai-welcome-screen">
+    <div *ngIf="aiAssistantService.chatHistory().length === 0 && aiAssistantService.isFirstPageLoad()" class="flex flex-col items-center justify-start unops-mobile:justify-center min-h-full text-center px-unops-md unops-tablet:px-unops-lg py-unops-lg unops-tablet:py-unops-xl max-w-3xl mx-auto ai-welcome-screen">
       <!-- AI Assistant Icon -->
-      <div class="mb-unops-xl">
-        <div class="w-20 h-20 mx-auto mb-unops-lg rounded-full bg-gradient-to-br from-unops-primary to-unops-secondary flex items-center justify-center shadow-unops-lg">
-          <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="w-10 h-10" />
+      <div class="mb-unops-lg unops-tablet:mb-unops-xl">
+        <div class="w-16 h-16 unops-tablet:w-20 unops-tablet:h-20 mx-auto mb-unops-md unops-tablet:mb-unops-lg rounded-full bg-gradient-to-br from-unops-primary to-unops-secondary flex items-center justify-center shadow-unops-lg">
+          <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="w-8 h-8 unops-tablet:w-10 unops-tablet:h-10" />
         </div>
       </div>
 
       <!-- Personalized Greeting -->
-      <div class="mb-unops-2xl">
-        <h1 class="text-unops-display-medium unops-tablet:text-unops-display-large font-unops-regular text-unops-neutral-900 mb-unops-lg leading-tight">
+      <div class="mb-unops-xl unops-tablet:mb-unops-2xl">
+        <h1 class="text-unops-display-small unops-tablet:text-unops-display-medium unops-desktop:text-unops-display-large font-unops-regular text-unops-neutral-900 mb-unops-md unops-tablet:mb-unops-lg leading-tight">
           {{ 'aiAssistant.hello' | translate }} {{ userName() || ('aiAssistant.user' | translate) }}
         </h1>
-        <p class="text-unops-xl unops-tablet:text-unops-2xl text-unops-neutral-600 font-unops-light max-w-2xl leading-relaxed mb-unops-lg">
+        <p class="text-unops-lg unops-tablet:text-unops-xl unops-desktop:text-unops-2xl text-unops-neutral-600 font-unops-light max-w-2xl leading-relaxed mb-unops-md unops-tablet:mb-unops-lg">
           {{ 'aiAssistant.welcomeMessage' | translate }}
         </p>
-        <p class="text-unops-base text-unops-neutral-500 font-unops-regular max-w-xl leading-relaxed">
+        <p class="text-unops-sm unops-tablet:text-unops-base text-unops-neutral-500 font-unops-regular max-w-2xl leading-relaxed">
           {{ 'aiAssistant.welcomeDescription' | translate }}
         </p>
       </div>
@@ -224,7 +225,7 @@
     </div>
 
     <!-- New Chat blank state (when user manually starts new chat) -->
-    <div *ngIf="aiAssistantService.chatHistory().length === 0 && !aiAssistantService.isFirstPageLoad()" class="flex flex-col items-center justify-center h-full text-center px-unops-lg py-unops-xl max-w-2xl mx-auto ai-new-chat-screen">
+    <div *ngIf="aiAssistantService.chatHistory().length === 0 && !aiAssistantService.isFirstPageLoad()" class="flex flex-col items-center justify-start unops-mobile:justify-center min-h-full text-center px-unops-md unops-tablet:px-unops-lg py-unops-lg unops-tablet:py-unops-xl max-w-2xl mx-auto ai-new-chat-screen">
       <div class="mb-unops-2xl">
         <div class="w-16 h-16 mx-auto mb-unops-lg rounded-full bg-unops-primary-container flex items-center justify-center shadow-unops-md">
           <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="w-8 h-8" />
@@ -345,7 +346,7 @@
       </div>
 
       <!-- Model message with copy button -->
-      <div *ngIf="!message.isUser" class="max-w-[85%] unops-mobile:max-w-[90%] group">
+      <div *ngIf="!message.isUser" class="w-full group">
         <!-- AI Indicator (butterfly icon) -->
         <div class="flex justify-start mb-unops-xs">
           <div class="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-unops-primary to-unops-secondary shadow-unops-sm">
@@ -537,7 +538,7 @@
         </div>
         
         <!-- Generating bubble -->
-        <div class="rounded-2xl p-4 break-words bg-white dark:bg-gray-100 text-gray-900 dark:text-gray-800 rounded-bl-sm border border-gray-200 dark:border-gray-300 shadow-sm generating-message">
+        <div class="rounded-2xl p-4 break-words bg-white dark:bg-gray-100 text-gray-900 dark:text-gray-800 rounded-bl-sm generating-message">
           <div class="flex items-center gap-2">
             <span class="text-base font-medium">{{ 'aiAssistant.generating' | translate }}{{ getGeneratingDotsText() }}</span>
           </div>

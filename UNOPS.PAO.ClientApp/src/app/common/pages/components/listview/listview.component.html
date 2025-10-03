@@ -49,45 +49,47 @@
   @if (config.enableSearch) {
     <!-- Autocomplete Search Input (default mode) -->
     @if (!isAdvancedSearch()) {
-      <div class="w-full flex gap-2 items-center   rounded-lg bg-white p-4 shadow-sm flex-wrap">
-        <p-iconfield iconPosition="left" class="w-full lg:w-64">
-          <p-inputicon class="pi pi-search" />
-          <input pInputText type="text"
-            [(ngModel)]="searchValue"
-            [placeholder]="'search.placeholder' | translate"
-            (keyup.enter)="onSearch()"
-            class="w-full lg:w-64 quick-search"
-          />
-          @if (searchValue && searchValue.length > 0) {
-            <p-inputicon class="pi pi-times cursor-pointer" (click)="clearSearch()" />
+      <div [class]="searchPanelClasses().container">
+        <!-- Search Row -->
+        <div class="flex gap-2 items-center flex-1">
+          <p-iconfield iconPosition="left" [class]="searchPanelClasses().searchField">
+            <p-inputicon class="pi pi-search" />
+            <input pInputText type="text"
+              [(ngModel)]="searchValue"
+              [placeholder]="'search.placeholder' | translate"
+              (keyup.enter)="onSearch()"
+              class="w-full quick-search"
+            />
+            @if (searchValue && searchValue.length > 0) {
+              <p-inputicon class="pi pi-times cursor-pointer" (click)="clearSearch()" />
+            }
+          </p-iconfield>
+
+          <!-- Advanced Search Button -->
+          @if (config.searchConfig?.useAdvancedSearch) {
+            <!-- Mobile: Icon only -->
+            <p-button
+              icon="pi pi-filter"
+              [class]="searchPanelClasses().advancedButtonMobile"
+              text rounded
+              [pTooltip]="'search.advanced' | translate"
+              (onClick)="switchToAdvancedSearch()"
+            ></p-button>
+            <!-- Desktop: Icon + Label -->
+            <p-button
+              [label]="'search.advanced' | translate"
+              icon="pi pi-filter"
+              [class]="searchPanelClasses().advancedButtonDesktop"
+              text rounded
+              (onClick)="switchToAdvancedSearch()"
+            ></p-button>
           }
-        </p-iconfield>
-
-
-
-        <!-- Advanced Search Button -->
-        @if (config.searchConfig?.useAdvancedSearch) {
-          <!-- Mobile: Icon only -->
-          <p-button
-            icon="pi pi-filter"
-            class="lg:hidden mobile-advanced-search"
-            text rounded
-            [pTooltip]="'search.advanced' | translate"
-            (onClick)="switchToAdvancedSearch()"
-          ></p-button>
-          <!-- Desktop: Icon + Label -->
-          <p-button
-            [label]="'search.advanced' | translate"
-            icon="pi pi-filter"
-            class="hidden lg:inline-flex advanced-search"
-            text rounded
-            (onClick)="switchToAdvancedSearch()"
-          ></p-button>
-        }
+        </div>
 
         <!-- Sort Dropdown -->
         @if (config.enableSorting && sortableFields().length > 0) {
-          <div class="flex items-center gap-2 ml-auto">
+          <div [class]="searchPanelClasses().sortContainer">
+            <i class="pi pi-sort-alt text-gray-600"></i>
             <p-select
               [options]="sortOptions()"
               [(ngModel)]="currentSortConfig"
@@ -96,9 +98,7 @@
               optionValue="value"
               appendTo="body"
               [placeholder]="'label.selectSort' | translate"
-              class="w-48"
-              [showClear]="true"
-              (onClear)="clearSort()"
+              class="w-64"
             />
           </div>
         }
@@ -114,6 +114,7 @@
         [entityType]="entityType()"
         [orderBy]="currentSortField()"
         [ascending]="currentSortOrder() === 'asc'"
+        [advancedSearchClasses]="advancedSearchClasses()"
         (search)="onAdvancedSearch($event)"
         (removeCriterion)="onRemoveSearchCriterion($event)"
         (clearSearch)="onClearAdvancedSearch()"

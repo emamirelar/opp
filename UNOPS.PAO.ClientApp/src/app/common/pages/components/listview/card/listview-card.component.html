@@ -132,10 +132,13 @@
 </ng-template>
 
 <div class="flex flex-col gap-4 ">
+  <!-- Width tracker - measures the exact component width -->
+  <div #widthTracker class="w-full h-px opacity-0 pointer-events-none relative"></div>
+  
   @if (loading()) {
-    <div class="grid grid-cols-1 gap-6" [class.lg:grid-cols-2]="!config().forceMobileMode">
+    <div [class]="responsiveGridClasses()">
       @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-          <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse">
+          <div [class]="'bg-white border border-gray-100 rounded-xl animate-pulse ' + cardPaddingClasses()">
             <div class="flex gap-4">
               <!-- Avatar skeleton -->
               <div class="flex-shrink-0">
@@ -191,9 +194,9 @@
 
   <!-- Card grid -->
   @if (!loading() && !error() && data() && data().length > 0 && canRenderContent()) {
-      <div class="grid grid-cols-1 gap-6" [class.lg:grid-cols-2]="!config().forceMobileMode">
+      <div [class]="responsiveGridClasses()">
         @for (item of data(); track trackByFn($index, item)) {
-            <div class="group relative bg-white cursor-pointer shadow-sm border border-gray-100 hover:shadow-lg rounded-xl p-5 transition-all duration-200 ease-out hover:-translate-y-1 overflow-hidden"
+            <div [class]="'group relative bg-white cursor-pointer shadow-sm border border-gray-100 hover:shadow-lg rounded-xl transition-all duration-200 ease-out hover:-translate-y-1 overflow-hidden ' + cardPaddingClasses()"
                  (click)="onCardClick(item)"
                  style="will-change: transform; transform: translateZ(0); contain: layout style paint;">
 
@@ -201,37 +204,38 @@
           <div class="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-purple-50/0 transition-all duration-300 rounded-xl"></div>
 
               <!-- Card content -->
-              <div class="relative z-10 flex gap-4">
-                <!-- Avatar/Icon section with enhanced styling -->
-                @if (avatarColumn()) {
+              <div [class]="'relative z-10 flex ' + contentGapClasses()">
+                <!-- Avatar/Icon section with enhanced styling - conditionally shown based on card size -->
+                @if (shouldShowAvatar() && avatarColumn()) {
                   <div class="flex-shrink-0">
                     @if (getFieldValue(item, avatarColumn()!.field)) {
                       <div class="relative">
                         <p-avatar [image]="getAvatarUrl(item, avatarColumn()!.field)"
                                   shape="circle"
-                                  size="large"
+                                  [size]="cardSize() === 'medium' ? 'normal' : 'large'"
                                   ></p-avatar>
                       </div>
                     } @else {
                       <div class="relative">
                         <p-avatar [label]="getField1Initial(item)"
                                   shape="circle"
-                                  size="large"
+                                  [size]="cardSize() === 'medium' ? 'normal' : 'large'"
                                   styleClass="bg-primary text-white"
                                   ></p-avatar>
                       </div>
                     }
                   </div>
-                } @else if (shouldShowInteractionAvatar() && interactionIconColumn()) {
+                } @else if (shouldShowAvatar() && shouldShowInteractionAvatar() && interactionIconColumn()) {
                   <div class="flex-shrink-0">
                     <div
-                      class="w-12 h-12 rounded-full flex items-center justify-center border border-solid"
+                      [class]="cardSize() === 'medium' ? 'w-10 h-10' : 'w-12 h-12'"
+                      class="rounded-full flex items-center justify-center border border-solid"
                       [style]="{
                         'background': 'linear-gradient(135deg, ' + getInteractionColor(item, interactionIconColumn()!) + '15 0%, ' + getInteractionColor(item, interactionIconColumn()!) + '25 100%)',
                         'color': getInteractionColor(item, interactionIconColumn()!),
                         'border-color': getInteractionColor(item, interactionIconColumn()!) + '30'
                       }">
-                      <span class="material-symbols-outlined text-2xl font-medium">
+                      <span [class]="'material-symbols-outlined font-medium ' + (cardSize() === 'medium' ? 'text-xl' : 'text-2xl')">
                         {{ getInteractionMaterialIconFilled(item, interactionIconColumn()!) }}
                       </span>
                     </div>
@@ -239,9 +243,9 @@
                 }
 
                 <!-- Content section -->
-                <div class="flex flex-col flex-1 min-w-0">
-                  <!-- Tags Section -->
-                  @if (getItemTags(item)) {
+                <div class="flex flex-col flex-1 min-w-0 card-content-transition">
+                  <!-- Tags Section - conditionally shown based on card size -->
+                  @if (shouldShowTags() && getItemTags(item)) {
                     <div class="flex flex-wrap gap-1 mb-2">
                       @for (tag of getItemTags(item)!; track tag.tag) {
                         <span [class]="'px-2 py-1 text-xs rounded-full whitespace-nowrap ' + tag.color">{{ tag.tag }}</span>
@@ -251,49 +255,55 @@
                   <!-- Header with title and metadata -->
                   <div class="flex items-start justify-between mb-1">
                     @if (cardFields().field1) {
-                      <div class="font-semibold text-lg text-gray-900 leading-tight flex-1 min-w-0">
-                        <ng-container [ngTemplateOutlet]="fieldTemplate"
-                                      [ngTemplateOutletContext]="{ item: item, column: cardFields().field1, context: 'field1' }">
-                        </ng-container>
+                      <div [class]="titleFontClasses() + ' flex-1 min-w-0 truncate'">
+                        @if (cardFields().field1!.type === 'avatar') {
+                          <!-- For avatar fields, show the text content as title, not the avatar -->
+                          <span [title]="getFieldTooltip(item, cardFields().field1!)">{{ getEntityNameFromAvatarField(item, cardFields().field1!) }}</span>
+                        } @else {
+                          <!-- For non-avatar fields, use the normal template -->
+                          <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                        [ngTemplateOutletContext]="{ item: item, column: cardFields().field1!, context: 'field1' }">
+                          </ng-container>
+                        }
                       </div>
                     }
-                    @if (cardFields().field5 && hasFieldValue(item, cardFields().field5)) {
+                    @if (shouldShowMetadataFieldWithoutDuplication(cardFields().field5, item)) {
                       <div class="text-gray-500 text-xs ml-3 max-w-[25%] font-medium bg-gray-50 px-2 py-1 rounded-md truncate flex-shrink-0">
                         <ng-container [ngTemplateOutlet]="fieldTemplate"
-                                      [ngTemplateOutletContext]="{ item: item, column: cardFields().field5, context: 'field5' }">
+                                      [ngTemplateOutletContext]="{ item: item, column: cardFields().field5!, context: 'field5' }">
                         </ng-container>
                       </div>
                     }
                   </div>
 
-                  <!-- Subtitle/metadata row -->
-                  @if (cardFields().field2 || cardFields().field3) {
-                    <div class="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap overflow-hidden">
-                      @if (cardFields().field2) {
+                  <!-- Subtitle/metadata row - conditionally shown based on card size -->
+                  @if (shouldShowSecondaryFields() && (shouldShowSecondaryFieldWithoutDuplication(cardFields().field2, item) || shouldShowSecondaryFieldWithoutDuplication(cardFields().field3, item))) {
+                    <div [class]="'flex items-center gap-2 whitespace-nowrap overflow-hidden ' + subtitleFontClasses()">
+                      @if (shouldShowSecondaryFieldWithoutDuplication(cardFields().field2, item)) {
                         <div class="flex items-center gap-1 min-w-0">
                           <ng-container [ngTemplateOutlet]="fieldTemplate"
-                                        [ngTemplateOutletContext]="{ item: item, column: cardFields().field2, context: 'field2' }">
+                                        [ngTemplateOutletContext]="{ item: item, column: cardFields().field2!, context: 'field2' }">
                           </ng-container>
                         </div>
                       }
-                      @if (cardFields().field2 && cardFields().field3 && hasFieldValue(item, cardFields().field2) && hasFieldValue(item, cardFields().field3)) {
+                      @if (shouldShowSecondaryFieldWithoutDuplication(cardFields().field2, item) && shouldShowSecondaryFieldWithoutDuplication(cardFields().field3, item)) {
                         <span class="w-1 h-1 bg-gray-400 rounded-full flex-shrink-0"></span>
                       }
-                      @if (cardFields().field3) {
+                      @if (shouldShowSecondaryFieldWithoutDuplication(cardFields().field3, item)) {
                         <div class="flex items-center gap-1 min-w-0">
                           <ng-container [ngTemplateOutlet]="fieldTemplate"
-                                        [ngTemplateOutletContext]="{ item: item, column: cardFields().field3, context: 'field3' }">
+                                        [ngTemplateOutletContext]="{ item: item, column: cardFields().field3!, context: 'field3' }">
                           </ng-container>
                         </div>
                       }
                     </div>
                   }
 
-                  <!-- Description/content area -->
-                  @if (cardFields().field4) {
+                  <!-- Description/content area - only shown on large cards -->
+                  @if (shouldShowDescriptionFieldWithoutDuplication(cardFields().field4, item)) {
                     <div class="text-sm text-gray-600 leading-relaxed line-clamp-2">
                       <ng-container [ngTemplateOutlet]="fieldTemplate"
-                                    [ngTemplateOutletContext]="{ item: item, column: cardFields().field4, context: 'field4' }">
+                                    [ngTemplateOutletContext]="{ item: item, column: cardFields().field4!, context: 'field4' }">
                       </ng-container>
                     </div>
                   }
@@ -377,9 +387,9 @@
 
     <!-- Load more skeletons - match the grid layout -->
     @if (isLoadingMore()) {
-      <div class="grid grid-cols-1 gap-6" [class.lg:grid-cols-2]="!config().forceMobileMode">
+      <div [class]="responsiveGridClasses()">
         @for (i of Array(loadMoreSkeletonsCount()).fill(0); track $index) {
-          <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse shadow-sm">
+          <div [class]="'bg-white border border-gray-100 rounded-xl animate-pulse shadow-sm ' + cardPaddingClasses()">
             <div class="flex gap-4">
               <!-- Avatar skeleton -->
               <div class="flex-shrink-0">
