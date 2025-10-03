@@ -338,7 +338,7 @@ def build_request_headers(
                         ])
 
                     # TEMPORARY: Test fix for opportunityplus IAP with Identity Platform
-                    is_opportunityplus_api = 'opportunityplus.dev' in url if url else False
+                    is_opportunityplus_api = '/api/' in url if url else False
                     print(f"🔍 [AUTH-HEADERS-DEBUG] url parameter: {url}")
                     print(f"🔍 [AUTH-HEADERS-DEBUG] is_opportunityplus_api: {is_opportunityplus_api}")  
                     print(f"🔍 [AUTH-HEADERS] target_audience: {target_audience}")
