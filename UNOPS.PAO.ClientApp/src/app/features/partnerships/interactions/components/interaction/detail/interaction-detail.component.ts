@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, AfterViewInit, OnDestroy, signal, computed, WritableSignal, ViewChild, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, AfterViewInit, OnDestroy, OnChanges, SimpleChanges, signal, computed, WritableSignal, ViewChild, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -53,7 +53,7 @@ import { GeminiService } from '@ai/services/gemini.service';
   styleUrl: './interaction-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDestroy {
+export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private interactionService = inject(InteractionService);
@@ -159,7 +159,17 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
 
   ngOnInit() {
     this.permissionUtils.loadPermissions(this.router);
-    this.loadInteraction();
+    
+    // Subscribe to route parameter changes to handle navigation updates
+    this.route.paramMap.subscribe(paramMap => {
+      const newId = paramMap.get('id');
+      if (newId) {
+        this.loadInteraction(newId);
+      } else {
+        this.error.set(this.translateService.instant('interaction.detail.error.noIdProvided'));
+        this.loading.set(false);
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -167,6 +177,11 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
     setTimeout(() => {
       this.startWidthTracking();
     }, 100);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // This component gets ID from route parameters, not from @Input
+    // So ngOnChanges won't trigger - route parameter subscription handles this
   }
 
   ngOnDestroy() {
@@ -178,19 +193,21 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
     }
   }
 
-  private loadInteraction() {
-    const id = this.route.snapshot.params['id'];
-    if (!id) {
+  private loadInteraction(id?: string) {
+    const interactionId = id || this.route.snapshot.params['id'];
+    if (!interactionId) {
       this.error.set(this.translateService.instant('interaction.detail.error.noIdProvided'));
       this.loading.set(false);
       return;
     }
 
     this.loading.set(true);
-    this.interactionService.getById(Number(id)).subscribe({
+    this.error.set(null); // Clear any previous errors
+    
+    this.interactionService.getById(Number(interactionId)).subscribe({
       next: (response) => {
         if (response.status === 404) {
-          this.error.set(this.translateService.instant('interaction.detail.error.notFound', { id }));
+          this.error.set(this.translateService.instant('interaction.detail.error.notFound', { id: interactionId }));
         } else if (response.body) {
           this.interaction.set(response.body);
           this.error.set(null);
@@ -202,7 +219,7 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
       error: (error) => {
         console.error('Error loading interaction:', error);
         const errorMessage = error.status === 404
-          ? this.translateService.instant('interaction.detail.error.notFound', { id })
+          ? this.translateService.instant('interaction.detail.error.notFound', { id: interactionId })
           : this.translateService.instant('interaction.detail.error.loadFailed', { status: error.status || this.translateService.instant('common.error.networkError') });
         this.error.set(errorMessage);
         this.loading.set(false);
@@ -234,7 +251,8 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        this.loadInteraction();
+        // Reload the current interaction using its ID
+        this.loadInteraction(currentInteraction.id?.toString());
         this.feedbackDialogService.showSuccessToast({
           detail: this.translateService.instant('interaction.detail.success.updated')
         });

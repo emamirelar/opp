@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, AfterViewInit, output, signal, computed, Input, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, OnChanges, AfterViewInit, output, signal, computed, Input, ViewChild, ElementRef, HostListener, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CachedDataService } from '@shared/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -94,7 +94,7 @@ import { PermissionUtilityService } from '@core/services/permission-utility.serv
     }
   `]
 })
-export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
   documentService = inject(DocumentService);
@@ -207,6 +207,12 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['recordId']) {
+      this._loadRecordDetails();
+    }
+  }
+
   ngOnInit() {
     
     // If recordId is provided via Input (AI layout), load data directly
@@ -219,8 +225,8 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';
-
-        if (this.recordId != '') {
+          
+          if (this.recordId != '') {
           // Check if data is already available from the resolver
           this.activatedRoute.parent?.data.subscribe(data => {
             if (data['contactData']) {
@@ -239,8 +245,8 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy {
               this.infoLoading.set(false);
             } else {
               // Fallback to loading details directly if resolver data isn't available
-              this._loadRecordDetails();
-            }
+            this._loadRecordDetails();
+          }
           });
           
           // Load permissions for this specific contact
