@@ -59,14 +59,6 @@
   }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .chart-container {
-    background: var(--surface-ground);
-    border: 1px solid var(--surface-border);
-  }
-}
-
 /* Loading state */
 .chart-container.loading {
   display: flex;
