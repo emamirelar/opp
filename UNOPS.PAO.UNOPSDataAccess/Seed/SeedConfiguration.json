@@ -94,6 +94,15 @@
       "type": "sql",
       "path": "OrganizationUnits.sql",
       "description": "Organization units data import"
+    },
+    {
+      "order": 12,
+      "name": "Contacts",
+      "type": "seeder",
+      "className": "ContactSeeder",
+      "methodName": "SeedContactsAsync",
+      "filePath": "Seeders/ContactSeeder.cs",
+      "description": "Contacts data seeding"
     }
   ]
 }
