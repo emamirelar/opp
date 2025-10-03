@@ -336,7 +336,11 @@ def build_request_headers(
                         is_google_api = any(google_path in url for google_path in [
                             '/google-drive/', '/convert/url', '/convert/markdown-to-google-doc'
                         ])
-                    
+
+                    # TEMPORARY: Test fix for opportunityplus IAP with Identity Platform
+                    is_opportunityplus_api = 'opportunityplus.dev' in url if url else False
+                    print(f"🔍 [AUTH-HEADERS-DEBUG] url parameter: {url}")
+                    print(f"🔍 [AUTH-HEADERS-DEBUG] is_opportunityplus_api: {is_opportunityplus_api}")  
                     print(f"🔍 [AUTH-HEADERS] target_audience: {target_audience}")
                     print(f"🔍 [AUTH-HEADERS] target_principal: {target_principal}")
                     print(f"🔍 [AUTH-HEADERS] is_google_api: {is_google_api}")
@@ -352,6 +356,14 @@ def build_request_headers(
                             subject=None
                         )
                         print(f"🔍 [AUTH-HEADERS] Using service account token for Google API")
+                    elif is_opportunityplus_api:
+                        # Use GCIP token exchange for IAP with Identity Platform
+                        idp_token = get_service_account_oidc_token(
+                        target_audience,
+                        target_principal,
+                        use_idp=True,
+                        subject=user_email
+                        )
                     else:
                         # For IAP APIs, use proper Google Cloud ID token (not Firebase/GCIP)
                         # Generate service account token first, then modify claims for impersonation
