@@ -146,6 +146,10 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
             
             try:
                 response = requests.get(final_url, headers=request_headers, timeout=api_timeout, verify=False)
+                print(f"📊 Response status: {response.status_code}")
+                print(f"📊 Response headers: {dict(response.headers)}")
+                print(f"📊 Content-Type: {response.headers.get('content-type', 'Not specified')}")
+                print(f"📊 Response body (first 500 chars): {response.text[:500]}")
                 if response.status_code != 200:
                     print(f"❌ GET request failed - Status: {response.status_code}, Error: {response.text[:200]}")
             except requests.exceptions.RequestException as e:
@@ -158,6 +162,11 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
             
             try:
                 response = requests.post(final_url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
+                print(f"📊 Response status: {response.status_code}")
+                print(f"📊 Response headers: {dict(response.headers)}")
+                print(f"📊 Content-Type: {response.headers.get('content-type', 'Not specified')}")
+                print(f"📊 Response body (first 500 chars): {response.text[:500]}")
+    
                 if response.status_code != 200:
                     print(f"❌ POST request failed - Status: {response.status_code}, Error: {response.text[:200]}")
             except requests.exceptions.RequestException as e:
