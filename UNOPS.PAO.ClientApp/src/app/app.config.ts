@@ -130,6 +130,8 @@ export const appConfig: ApplicationConfig = {
           zIndex: true,
           rtl: false,
           ltr: true,
+          colorScheme: 'light',
+          darkModeSelector: '.fake-dark-mode',
         },
       },
     }),

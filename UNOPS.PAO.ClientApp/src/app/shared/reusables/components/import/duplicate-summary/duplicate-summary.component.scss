@@ -332,28 +332,3 @@
     transform: translateY(0);
   }
 }
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .duplicate-summary-card {
-    background: linear-gradient(135deg, #1f2937, #111827);
-    border-color: #374151;
-  }
-  
-  .stat-item, .confidence-bar-item {
-    background: #fff7ed;
-    border-color: #374151;
-  }
-  
-  .confidence-title, .recommendation-title {
-    color: #f3f4f6;
-  }
-  
-  .stat-label, .confidence-label, .recommendation-message {
-    color: #9ca3af;
-  }
-  
-  .recommendation-icon {
-    background: #374151;
-  }
-}
