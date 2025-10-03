@@ -47,10 +47,6 @@ export class ExportGoogleSheetService {
         this.sheetsApiReady = true;
         this.driveApiReady = true;
         
-        console.log('Google APIs initialized successfully');
-        console.log('API Key (first 10 chars):', this.apiKey?.substring(0, 10));
-        console.log('Client ID (first 10 chars):', this.clientId?.substring(0, 10));
-        
         // Initialize the token client for OAuth
         this.initTokenClient();
       }).catch((error: any) => {

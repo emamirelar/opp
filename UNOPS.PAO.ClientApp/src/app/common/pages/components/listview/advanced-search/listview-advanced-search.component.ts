@@ -65,6 +65,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   @Input() orderBy?: string; // For SavedFilter functionality
   @Input() ascending: boolean = true; // For SavedFilter functionality
   @Input() preselectedSavedFilterId: number | null = null; // For URL-based filter selection
+  @Input() advancedSearchClasses?: { title: string }; // Responsive classes from parent
 
   // Outputs
   @Output() search = new EventEmitter<SearchCriteria>();

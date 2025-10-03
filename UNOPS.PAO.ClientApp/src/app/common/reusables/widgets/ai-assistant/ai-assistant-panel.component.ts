@@ -65,6 +65,18 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     return false;
   });
 
+  // Mobile keyboard detection
+  private initialViewportHeight = signal(0);
+  isMobileKeyboardActive = computed(() => {
+    if (typeof window !== 'undefined' && this.isMobile()) {
+      const currentHeight = window.visualViewport?.height || window.innerHeight;
+      const initialHeight = this.initialViewportHeight();
+      // Consider keyboard active if viewport height decreased by more than 150px
+      return initialHeight > 0 && (initialHeight - currentHeight) > 150;
+    }
+    return false;
+  });
+
   firstScroll = signal(true);
   message = signal('');
   selectedFiles = signal<{ file: File, name: string, content: string }[]>([]);
@@ -98,6 +110,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   
   // Resize listener reference for cleanup
   private resizeListener?: () => void;
+  private visualViewportListener?: () => void;
   
   // Subject for managing subscriptions
   private destroy$ = new Subject<void>();
@@ -178,6 +191,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
           if (this.viewInitialized && this.dynamicContentContainer) {
             // ViewChild is available
             this.dynamicContentService.setViewContainer(this.dynamicContentContainer);
+            this.dynamicContentService.setCardClickCallback(this.onCardClicked.bind(this));
             
             // Check if there are buffered chunks that need to be processed first
             if (this.chunkBuffer.length > 0) {
@@ -201,10 +215,24 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
 
     // Listen for window resize to update mobile detection
     if (typeof window !== 'undefined') {
+      // Initialize viewport height for keyboard detection
+      this.initialViewportHeight.set(window.visualViewport?.height || window.innerHeight);
+      
       this.resizeListener = () => {
         this.cdr.markForCheck();
       };
       window.addEventListener('resize', this.resizeListener);
+      
+      // Listen for visual viewport changes (keyboard show/hide)
+      if (window.visualViewport) {
+        const visualViewportListener = () => {
+          this.cdr.markForCheck();
+        };
+        window.visualViewport.addEventListener('resize', visualViewportListener);
+        
+        // Store the listener for cleanup
+        this.visualViewportListener = visualViewportListener;
+      }
     }
     
     this.cdr.detectChanges();
@@ -218,6 +246,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       // Set the view container once
       if (this.dynamicContentContainer) {
         this.dynamicContentService.setViewContainer(this.dynamicContentContainer);
+        this.dynamicContentService.setCardClickCallback(this.onCardClicked.bind(this));
         
         // Process all buffered chunks
         this.chunkBuffer.forEach((chunk, index) => {
@@ -241,6 +270,11 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     if (typeof window !== 'undefined' && this.resizeListener) {
       window.removeEventListener('resize', this.resizeListener);
     }
+    
+    // Clean up visual viewport listener
+    if (typeof window !== 'undefined' && window.visualViewport && this.visualViewportListener) {
+      window.visualViewport.removeEventListener('resize', this.visualViewportListener);
+    }
   }
 
   // Handle closing the AI Assistant
@@ -248,9 +282,9 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     // Check if we're on the AI route
     if (this.router.url.startsWith('/ai')) {
       if (this.isMobile()) {
-        // On mobile, navigate back to the previous route
+        // On mobile, navigate back to the previous route immediately
         const previousRoute = this.getPreviousRoute();
-        this.router.navigate([previousRoute]);
+        this.router.navigate([previousRoute], { replaceUrl: true });
       } else {
         // On desktop, navigate back to home and open AI assistant in popup mode
         this.router.navigate(['/']);
@@ -931,12 +965,15 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
 
   // Handler for cardClicked event from content-renderer/entity-grid
   onCardClicked(event: { entityType: string, entityId: string, rowData: any }): void {
-    if (this.mode === 'overlay') {
-      // In overlay mode, navigate to the entity page
-      this.navigateToEntity(event.entityType, event.entityId, event.rowData);
-    } else {
-      // In fullscreen mode, emit for right panel (removed entity panel service)
+    // Check if we're on a mobile device
+    const isMobile = this.layoutService.isMobile();
+    
+    if (this.isInFullscreenMode() && !isMobile) {
+      // In fullscreen mode on non-mobile devices, emit for right panel
       this.cardClicked.emit(event);
+    } else {
+      // In overlay/sidebar mode OR on mobile devices (even in fullscreen), navigate to the entity page
+      this.navigateToEntity(event.entityType, event.entityId, event.rowData);
     }
   }
 

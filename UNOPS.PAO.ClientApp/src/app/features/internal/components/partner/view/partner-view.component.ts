@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input, ViewChild, DestroyRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, AfterViewInit, output, signal, computed, Input, ViewChild, DestroyRef, ElementRef, HostListener } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
@@ -124,7 +124,7 @@ import { BaseEngagementListComponent } from '../../base-engagement/base-engageme
 
   `]
 })
-export class PartnerViewComponent implements OnInit {
+export class PartnerViewComponent implements OnInit, AfterViewInit {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
   documentService = inject(DocumentService);
@@ -152,15 +152,6 @@ export class PartnerViewComponent implements OnInit {
   // Input property for recordId when used in AI layout
   @Input() recordId: string = '';
 
-  // Input property to control AI panel visibility
-  private _showAiPanel: boolean = true;
-  @Input()
-  get showAiPanel(): boolean {
-    return this._showAiPanel;
-  }
-  set showAiPanel(value: boolean | null | undefined) {
-    this._showAiPanel = value === false ? false : true; // Default to true unless explicitly false
-  }
 
   showValidationFailedError = signal<boolean>(false);
   recordData = signal<Partner>({});
@@ -177,11 +168,19 @@ export class PartnerViewComponent implements OnInit {
   // ViewChild reference for GDrive document component
   @ViewChild('gdriveComponent') gdriveComponent!: GDriveDocumentComponent;
 
+  // ViewChild reference for width tracking
+  @ViewChild('widthTracker', { static: false }) widthTracker?: ElementRef;
+
   //To be handled by permissions later so that only PRM Admin has this value set to true
   showAdditionalInfo = signal<boolean>(true);
 
   // See More functionality for Partner Information
   showFullContent = signal<boolean>(false);
+
+  // Width tracking for responsive layout
+  componentWidth = signal<number>(0);
+  private widthTrackingInterval?: ReturnType<typeof setInterval>;
+  private resizeObserver?: ResizeObserver;
 
   // Computed values for See More functionality
   shouldShowSeeMoreButton = computed(() => {
@@ -192,11 +191,60 @@ export class PartnerViewComponent implements OnInit {
     return this.showAdditionalInfo() && this.showFullContent();
   });
 
+  // Computed responsive layout classes based on component width
+  responsiveLayoutClasses = computed(() => {
+    const width = this.componentWidth();
+    
+    // Use component width to determine layout
+    // For container widths >= 700px, use side-by-side layout
+    // For container widths < 700px, use stacked layout
+    // Default to stacked layout when width is 0 (measuring)
+    const useSideBySideLayout = width >= 700;
+    
+    if (useSideBySideLayout) {
+      return {
+        container: 'flex flex-col gap-8',
+        mainLayout: 'flex flex-row gap-8 items-stretch',
+        leftColumn: 'flex flex-col gap-8 h-full sticky top-0 w-[60%]',
+        rightColumn: 'w-[40%] flex flex-col gap-8'
+      };
+    } else {
+      return {
+        container: 'flex flex-col gap-8',
+        mainLayout: 'flex flex-col gap-8',
+        leftColumn: 'flex flex-col gap-8 h-full w-full',
+        rightColumn: 'w-full flex flex-col gap-8'
+      };
+    }
+  });
+
+  // Debug method to check current width and layout (can be called from browser console)
+  getCurrentWidth() {
+    return {
+      componentWidth: this.componentWidth(),
+      useSideBySideLayout: this.componentWidth() >= 700,
+      layoutClasses: this.responsiveLayoutClasses()
+    };
+  }
+
   // Helper method to get primary organization unit
   getPrimaryOrganizationUnit = getPrimaryOrganizationUnit;
 
+  ngAfterViewInit() {
+    // Start width tracking after the view is fully initialized
+    setTimeout(() => {
+      this.startWidthTracking();
+    }, 100);
+  }
+
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
+    if (this.widthTrackingInterval) {
+      clearInterval(this.widthTrackingInterval);
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
   }
 
   ngOnInit() {
@@ -250,6 +298,8 @@ export class PartnerViewComponent implements OnInit {
         }
       }
     });
+
+    // Width tracking will be initialized in ngAfterViewInit
 
     this.activatedRoute.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (paramMap) => {
@@ -749,6 +799,82 @@ export class PartnerViewComponent implements OnInit {
     if (!date) return 'Not available';
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     return dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    console.log('Partner View - Window resize detected');
+    setTimeout(() => {
+      this.updateComponentWidth();
+    }, 10);
+  }
+
+  private startWidthTracking() {
+    console.log('Partner View - Starting width tracking'); // Debug log
+    
+    // Initial width measurement with multiple attempts
+    this.attemptWidthMeasurement();
+
+    // Use ResizeObserver for more efficient width tracking if available
+    if (typeof ResizeObserver !== 'undefined' && this.widthTracker?.nativeElement) {
+      this.resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const width = entry.contentRect.width;
+          if (width > 0) {
+            const currentWidth = this.componentWidth();
+            if (currentWidth !== width) {
+              console.log('Partner View - ResizeObserver width changed from', currentWidth, 'to', width);
+              this.componentWidth.set(width);
+              this.cdr.detectChanges();
+            }
+          }
+        }
+      });
+      
+      this.resizeObserver.observe(this.widthTracker.nativeElement);
+      console.log('Partner View - ResizeObserver initialized');
+    } else {
+      // Fallback to polling for older browsers
+      console.log('Partner View - Using polling fallback');
+      this.widthTrackingInterval = setInterval(() => {
+        this.updateComponentWidth();
+      }, 100);
+    }
+  }
+
+  private attemptWidthMeasurement(attempts: number = 0) {
+    if (attempts > 10) {
+      console.warn('Partner View - Failed to measure width after 10 attempts');
+      return;
+    }
+
+    if (this.updateComponentWidth()) {
+      console.log('Partner View - Width measurement successful');
+    } else {
+      // Try again after a short delay
+      setTimeout(() => {
+        this.attemptWidthMeasurement(attempts + 1);
+      }, 50);
+    }
+  }
+
+  private updateComponentWidth(): boolean {
+    if (typeof window !== 'undefined' && this.widthTracker?.nativeElement) {
+      const element = this.widthTracker.nativeElement;
+      const width = element.offsetWidth || element.clientWidth || 0;
+      
+      if (width > 0) {
+        const currentWidth = this.componentWidth();
+        if (currentWidth !== width) {
+          console.log('Partner View - Width changed from', currentWidth, 'to', width);
+          this.componentWidth.set(width);
+          // Trigger change detection
+          this.cdr.detectChanges();
+        }
+        return true;
+      }
+    }
+    return false;
   }
 
 }

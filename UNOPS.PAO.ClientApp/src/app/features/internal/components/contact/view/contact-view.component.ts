@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, AfterViewInit, output, signal, computed, Input, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
@@ -91,7 +91,7 @@ import { PermissionUtilityService } from '../../../../../essentials/services/per
     }
   `]
 })
-export class ContactViewComponent implements OnInit, OnDestroy {
+export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
   documentService = inject(DocumentService);
@@ -124,6 +124,47 @@ export class ContactViewComponent implements OnInit, OnDestroy {
     return this.showAdditionalInfo() && this.showFullContent();
   });
 
+  // Width tracking for responsive layout
+  componentWidth = signal<number>(0);
+  private widthTrackingInterval?: ReturnType<typeof setInterval>;
+  private resizeObserver?: ResizeObserver;
+
+  // Computed responsive layout classes based on component width
+  responsiveLayoutClasses = computed(() => {
+    const width = this.componentWidth();
+    
+    // Use component width to determine layout
+    // For container widths >= 700px, use side-by-side layout
+    // For container widths < 700px, use stacked layout
+    // Default to stacked layout when width is 0 (measuring)
+    const useSideBySideLayout = width >= 700;
+    
+    if (useSideBySideLayout) {
+      return {
+        container: 'flex flex-col gap-8',
+        mainLayout: 'flex flex-row gap-8 items-stretch',
+        leftColumn: 'flex flex-col gap-8 h-full sticky top-0 w-[60%]',
+        rightColumn: 'w-[40%] flex flex-col gap-8'
+      };
+    } else {
+      return {
+        container: 'flex flex-col gap-8',
+        mainLayout: 'flex flex-col gap-8',
+        leftColumn: 'flex flex-col gap-8 h-full w-full',
+        rightColumn: 'w-full flex flex-col gap-8'
+      };
+    }
+  });
+
+  // Debug method to check current width and layout (can be called from browser console)
+  getCurrentWidth() {
+    return {
+      componentWidth: this.componentWidth(),
+      useSideBySideLayout: this.componentWidth() >= 700,
+      layoutClasses: this.responsiveLayoutClasses()
+    };
+  }
+
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
 
@@ -136,15 +177,6 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   // Input property for recordId when used in AI layout
   @Input() recordId: string = '';
   
-  // Input property to control AI panel visibility
-  private _showAiPanel: boolean = true;
-  @Input() 
-  get showAiPanel(): boolean {
-    return this._showAiPanel;
-  }
-  set showAiPanel(value: boolean | null | undefined) {
-    this._showAiPanel = value === false ? false : true; // Default to true unless explicitly false
-  }
   
   recordData = signal<Contact>({});
 
@@ -152,9 +184,23 @@ export class ContactViewComponent implements OnInit, OnDestroy {
 
   @ViewChild('linkListComponent') linkListComponent!: LinkListComponent;
   @ViewChild('gdriveComponent') gdriveComponent!: GDriveDocumentComponent;
+  @ViewChild('widthTracker', { static: false }) widthTracker?: ElementRef;
+
+  ngAfterViewInit() {
+    // Start width tracking after the view is fully initialized
+    setTimeout(() => {
+      this.startWidthTracking();
+    }, 100);
+  }
 
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
+    if (this.widthTrackingInterval) {
+      clearInterval(this.widthTrackingInterval);
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
   }
 
   ngOnInit() {
@@ -198,6 +244,8 @@ export class ContactViewComponent implements OnInit, OnDestroy {
         }
       }
     });
+
+    // Width tracking will be initialized in ngAfterViewInit
   }
 
   /**
@@ -388,6 +436,74 @@ export class ContactViewComponent implements OnInit, OnDestroy {
     if (this.gdriveComponent) {
       this.gdriveComponent.openGoogleDrivePicker();
     }
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    setTimeout(() => {
+      this.updateComponentWidth();
+    }, 10);
+  }
+
+  private startWidthTracking() {
+    // Initial width measurement with multiple attempts
+    this.attemptWidthMeasurement();
+
+    // Use ResizeObserver for more efficient width tracking if available
+    if (typeof ResizeObserver !== 'undefined' && this.widthTracker?.nativeElement) {
+      this.resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const width = entry.contentRect.width;
+          if (width > 0) {
+            const currentWidth = this.componentWidth();
+            if (currentWidth !== width) {
+              this.componentWidth.set(width);
+              this.cdr.detectChanges();
+            }
+          }
+        }
+      });
+      
+      this.resizeObserver.observe(this.widthTracker.nativeElement);
+    } else {
+      // Fallback to polling for older browsers
+      this.widthTrackingInterval = setInterval(() => {
+        this.updateComponentWidth();
+      }, 100);
+    }
+  }
+
+  private attemptWidthMeasurement(attempts: number = 0) {
+    if (attempts > 10) {
+      return;
+    }
+
+    if (this.updateComponentWidth()) {
+      // Width measurement successful
+    } else {
+      // Try again after a short delay
+      setTimeout(() => {
+        this.attemptWidthMeasurement(attempts + 1);
+      }, 50);
+    }
+  }
+
+  private updateComponentWidth(): boolean {
+    if (typeof window !== 'undefined' && this.widthTracker?.nativeElement) {
+      const element = this.widthTracker.nativeElement;
+      const width = element.offsetWidth || element.clientWidth || 0;
+      
+      if (width > 0) {
+        const currentWidth = this.componentWidth();
+        if (currentWidth !== width) {
+          this.componentWidth.set(width);
+          // Trigger change detection
+          this.cdr.detectChanges();
+        }
+        return true;
+      }
+    }
+    return false;
   }
 
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, DestroyRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, DestroyRef, HostListener, ElementRef, computed, effect, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -20,6 +20,7 @@ import { InteractionService } from '../../../../features/internal/services/inter
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { PermissionService } from '../../../../essentials/services/permission.service';
 import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
+import { LayoutService } from '../../../layouts/services/layout.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerEditDialogComponent } from '../../../../features/internal/components/partner/edit-dialog/partner-edit-dialog.component';
 import { ContactEditDialogComponent } from '../../../../features/internal/components/contact/edit-dialog/contact-edit-dialog.component';
@@ -99,6 +100,8 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   private permissionService = inject(PermissionService);
   private feedbackDialogService = inject(FeedbackDialogService);
   private dialogService = inject(DialogService);
+  public layoutService = inject(LayoutService);
+  private elementRef = inject(ElementRef);
 
   // Dashboard Card Configurations specific to home dashboard
   private readonly DASHBOARD_CARD_CONFIGS = {
@@ -200,8 +203,44 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   private timestampInterval?: ReturnType<typeof setInterval>;
   private lastDataLoadTime = new Date();
 
+  // Width tracking using resizer div
+  @ViewChild('widthTracker', { static: false }) widthTracker?: ElementRef;
+  private widthTrackingInterval?: ReturnType<typeof setInterval>;
+
   // Mobile detection
   isMobile = signal<boolean>(false);
+
+  // Component width tracking for responsive quick actions
+  componentWidth = signal<number>(0);
+
+  // Computed signal to determine if quick actions should use vertical layout
+  // This is now based purely on the measured content width
+  shouldUseVerticalLayout = computed(() => {
+    const screenIsMobile = this.isMobile();
+    const componentWidth = this.componentWidth();
+    
+    // Always use vertical on mobile screens
+    if (screenIsMobile) {
+      return true;
+    }
+    
+    const threshold = 750; // Horizontal layout needs 750px of content width
+    
+    // Use vertical layout only when measured content width is below threshold
+    return componentWidth > 0 && componentWidth < threshold;
+  });
+
+  // Computed signal to determine if last updated label should be hidden
+  // Hide "Last Updated" text to give more space for buttons before switching to vertical layout
+  shouldHideLastUpdated = computed(() => {
+    const componentWidth = this.componentWidth();
+    
+    // Hide "Last Updated" text at 900px to provide graceful degradation
+    // This creates a buffer zone where text is hidden but horizontal layout is maintained
+    const hideThreshold = 900; // Hide text to save ~200px and enable horizontal layout down to 800px
+    
+    return componentWidth > 0 && componentWidth < hideThreshold;
+  });
 
   // Dynamic content test mode
   showDynamicContentTest = signal<boolean>(false);
@@ -383,6 +422,9 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     this.loadPermissions();
     this.startTimestampUpdates();
 
+    // Initialize component width tracking with polling approach
+    this.startWidthTracking();
+
     // Subscribe to global filter changes to automatically refresh dashboard
     this.globalFilterService.filtersChanged$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -394,6 +436,9 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.timestampInterval) {
       clearInterval(this.timestampInterval);
+    }
+    if (this.widthTrackingInterval) {
+      clearInterval(this.widthTrackingInterval);
     }
   }
 
@@ -462,12 +507,33 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   @HostListener('window:resize', ['$event'])
   onResize() {
     this.checkMobileView();
+    this.updateComponentWidth();
   }
 
   private checkMobileView() {
     // Consider mobile if width is less than 768px (Tailwind's md breakpoint)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     this.isMobile.set(isMobile);
+  }
+
+  private startWidthTracking() {
+    // Initial width measurement
+    setTimeout(() => {
+      this.updateComponentWidth();
+    }, 100);
+
+    // Poll for width changes every 100ms - this will catch AI panel resizing
+    this.widthTrackingInterval = setInterval(() => {
+      this.updateComponentWidth();
+    }, 100);
+  }
+
+  private updateComponentWidth() {
+    if (typeof window !== 'undefined' && this.widthTracker?.nativeElement) {
+      const element = this.widthTracker.nativeElement;
+      const width = element.offsetWidth || element.clientWidth || 0;
+      this.componentWidth.set(width);
+    }
   }
 
   private loadDashboardData() {

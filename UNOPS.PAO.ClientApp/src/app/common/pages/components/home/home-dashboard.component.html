@@ -134,11 +134,14 @@
 
     <!-- UNOPS Dashboard Content -->
     @if (!loading() && !error() && dashboardData()) {
+      <!-- Width tracker - measures the exact content area width -->
+      <div #widthTracker class="w-full h-px opacity-0 pointer-events-none relative"></div>
+      
       <!-- Quick Actions Toolbar - Show panel only when user has create permissions -->
       <div *ngIf="!permissionsLoading() && hasAnyCreatePermission()" class="bg-unops-surface-primary rounded-unops-lg shadow-unops-sm border border-unops-neutral-200 mb-unops-xl">
         <div class="px-unops-xl py-unops-lg">
           <!-- Desktop Layout: Horizontal -->
-          <div class="hidden md:flex items-center justify-between">
+          <div class="items-center justify-between" [class.hidden]="shouldUseVerticalLayout()" [class.flex]="!shouldUseVerticalLayout()">
             <div class="flex items-center space-x-unops-lg">
               <h2 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
                 {{ 'dashboard.quickActions' | translate }}
@@ -174,7 +177,7 @@
               </div>
             </div>
             <div class="flex items-center space-x-unops-md">
-              <div class="text-unops-body-small text-unops-neutral-500">
+              <div class="text-unops-body-small text-unops-neutral-500" [class.hidden]="shouldHideLastUpdated()">
                 {{ 'dashboard.lastUpdated' | translate }} {{ lastUpdatedTime() }}
               </div>
               <button 
@@ -208,8 +211,8 @@
             </div>
           </div>
 
-          <!-- Mobile Layout: Vertical Stack -->
-          <div class="md:hidden space-y-unops-md">
+          <!-- Mobile/Constrained Layout: Vertical Stack -->
+          <div class="space-y-unops-md" [class.hidden]="!shouldUseVerticalLayout()" [class.block]="shouldUseVerticalLayout()">
             <!-- Quick Actions Label -->
             <h2 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
               Quick Actions

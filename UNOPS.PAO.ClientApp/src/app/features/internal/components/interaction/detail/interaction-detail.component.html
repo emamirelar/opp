@@ -1,3 +1,6 @@
+<!-- Width tracker - measures the exact component width -->
+<div #widthTracker class="w-full h-px opacity-0 pointer-events-none relative"></div>
+
 <div class="flex flex-col gap-8">
   <!-- Header -->
   <div class="shadow-sm border border-solid bg-white border-gray-50 rounded-xl p-6">
@@ -91,9 +94,9 @@
 
   <!-- Loading State -->
   @if (loading()) {
-    <div class="flex flex-col xl:flex-row gap-8 xl:items-stretch">
+    <div [class]="responsiveLayoutClasses().mainLayout">
       <!-- Main Content Column -->
-      <div class="flex flex-col gap-8 xl:w-[60%] h-full xl:sticky xl:top-0">
+      <div [class]="responsiveLayoutClasses().leftColumn">
         <!-- AI Summary Panel -->
         <p-panel class="shadow-sm border border-solid border-gray-50 rounded-xl">
           <ng-template pTemplate="header">
@@ -121,7 +124,7 @@
       </div>
 
       <!-- Sidebar Column -->
-      <div class="flex flex-col gap-8 xl:w-[40%]">
+      <div [class]="responsiveLayoutClasses().rightColumn">
         <!-- Interaction Details Panel -->
         <p-panel [header]="'title.interaction.interactionDetails' | translate" class="shadow-sm border border-solid border-gray-50 rounded-xl">
           <div class="flex flex-col gap-2">
@@ -187,10 +190,10 @@
 
   <!-- Content -->
   @if (!loading() && !error() && interaction()) {
-    <div class="flex flex-col xl:flex-row gap-8 xl:items-stretch">
+    <div [class]="responsiveLayoutClasses().mainLayout">
 
       <!-- Main Content Column -->
-      <div class="flex flex-col gap-8 xl:w-[60%] h-full xl:sticky xl:top-0">
+      <div [class]="responsiveLayoutClasses().leftColumn">
 
         <!-- AI Summary Panel -->
         @if (interaction()?.id) {
@@ -273,7 +276,7 @@
       </div>
 
       <!-- Sidebar Column -->
-      <div class="flex flex-col gap-8 xl:w-[40%]">
+      <div [class]="responsiveLayoutClasses().rightColumn">
 
         <!-- Interaction Details Panel -->
         <p-panel [header]="'title.interaction.interactionDetails' | translate" [toggleable]="false" class="shadow-sm border border-solid border-gray-50 rounded-xl">

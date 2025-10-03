@@ -7,9 +7,12 @@
 <!--              [disabled]="!recordId" />-->
 <!--  </div>-->
 <!--</div>-->
-<div class="flex flex-col gap-8">
-  <div class="flex flex-col xl:flex-row gap-8 xl:items-stretch">
-    <div class="flex flex-col gap-8 h-full xl:sticky xl:top-0 xl:w-[60%]">
+<!-- Width tracker - measures the exact component width -->
+<div #widthTracker class="w-full h-px opacity-0 pointer-events-none relative"></div>
+
+<div [class]="responsiveLayoutClasses().container">
+  <div [class]="responsiveLayoutClasses().mainLayout">
+    <div [class]="responsiveLayoutClasses().leftColumn">
       <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} unops-card unops-surface-elevated unops-rounded-lg unops-shadow-lg">
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
@@ -477,7 +480,7 @@
     </div>
 
     
-    <div class="xl:w-[40%] flex flex-col gap-8" *ngIf="showAiPanel">
+    <div [class]="responsiveLayoutClasses().rightColumn">
       <app-ai-panel
         [title]="'label.partner.summaryOfInteractions'"
         [entityId]="recordId"

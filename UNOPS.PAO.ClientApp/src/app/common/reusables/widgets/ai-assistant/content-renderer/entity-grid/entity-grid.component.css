@@ -1,5 +1,7 @@
 .entity-grid-container {
   margin: 1rem 0;
+  width: 100%;
+  min-width: 0; /* Allows the container to shrink below its content size */
 }
 
 .entity-grid-header h4 {
@@ -25,4 +27,17 @@
 :host-context(.app-dark) .entity-grid-loading,
 :host-context(.app-dark) .entity-grid-empty {
   color: #9ca3af;
+}
+
+/* Responsive content styling */
+.entity-grid-content {
+  width: 100%;
+  overflow: hidden; /* Prevent horizontal scrolling */
+}
+
+/* Debug styling for width tracker (only visible in development) */
+.entity-grid-container[data-debug="true"] div[data-width-tracker] {
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px dashed red;
+  opacity: 0.3 !important;
 } 
