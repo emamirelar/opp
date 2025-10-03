@@ -6,7 +6,6 @@ import { EntityTag, TaggedEntity } from '@shared/models/entity-tag.model';
 
 export interface Partner extends TaggedEntity {
   id?: string | null;
-  partnerCode?: string | null;
 
   // ========== GENERAL FIELDS ==========
   partnerDescription?: string | null; // Full name (required) - was "name"
