@@ -1010,6 +1010,7 @@
 	"label.partner.partnerApprovalReference": "Referencia de Aprobación del Socio",
 	"label.partner.partnerApprovalStatus": "Estado de Aprobación del Socio",
 	"label.partner.partnerCategory": "Categoría de Socio",
+	"label.partner.partnerCode": "Código de Socio (ERP)",
 	"label.partner.partnerDescription": "Descripción del Socio",
 	"label.partner.partnerFocalPoint": "Punto Focal del Socio",
 	"label.partner.partnerFocalPointUserId": "ID del Punto Focal",
