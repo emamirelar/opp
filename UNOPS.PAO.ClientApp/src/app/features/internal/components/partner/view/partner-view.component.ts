@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, AfterViewInit, output, signal, computed, Input, ViewChild, DestroyRef, ElementRef, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnChanges, SimpleChanges, OnInit, AfterViewInit, output, signal, computed, Input, ViewChild, DestroyRef, ElementRef, HostListener } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
@@ -124,7 +124,7 @@ import { BaseEngagementListComponent } from '../../base-engagement/base-engageme
 
   `]
 })
-export class PartnerViewComponent implements OnInit, AfterViewInit {
+export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
   documentService = inject(DocumentService);
@@ -235,6 +235,12 @@ export class PartnerViewComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.startWidthTracking();
     }, 100);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['recordId']) {
+      this._loadRecordDetails();
+    }
   }
 
   ngOnDestroy(): void {
