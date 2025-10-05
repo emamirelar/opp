@@ -163,8 +163,8 @@ async def chat_endpoint(
             request_data = ChatRequest(**body)
             files = []  # No files in JSON requests
 
-        # Import agent here to avoid circular imports
-        from ai_assistant.agent import root_agent
+        # Import agent function here to avoid circular imports
+        from ai_assistant.agent import root_agent, create_agent_with_context
 
         # Create session service
         db_url = get_database_url()
@@ -177,6 +177,9 @@ async def chat_endpoint(
         # Prepare initial state
         initial_state = parsed_state or {}
         initial_state['user_email'] = user_email
+        
+        # Extract page context for dynamic agent creation (not for user message)
+        page_context = initial_state.get('page_context_auto') if initial_state else None
 
         # Convert uploaded files to types.Part objects
         message_parts = []
@@ -231,26 +234,52 @@ async def chat_endpoint(
                 initial_state['audio_files_metadata'] = audio_files_for_artifacts
 
         # Get or create session
+        logger.info(f"🔍 Session management: app={request_data.app_name}, user={request_data.user_id}, session={request_data.session_id}")
         session, actual_session_id, is_new_session = await get_or_create_session(
             session_service = session_service,
             app_name = request_data.app_name,
             user_id = request_data.user_id,
             session_id = request_data.session_id,
-            initial_state = initial_state
+            initial_state = initial_state,
+            user_prompt = text_message
         )
+        
+        # Log session context for debugging
+        logger.info(f"📋 Session context: id={actual_session_id}, is_new={is_new_session}")
+        if hasattr(session, 'events') and session.events:
+            logger.info(f"📝 Session has {len(session.events)} existing events")
+            # Log the last few events for context
+            recent_events = session.events[-3:] if len(session.events) > 3 else session.events
+            for i, event in enumerate(recent_events):
+                author = getattr(event, 'author', 'unknown')
+                logger.info(f"   Event {i+1}: author={author}")
+        else:
+            logger.info("📝 Session has no existing events (new conversation)")
 
         # Ensure state is properly set before creating runner
         if not hasattr(session, 'state') or session.state is None:
             session.state = {}
 
-        # Create runner
+        # Title is now set during session creation using the user prompt
+
+        # Create agent with dynamic page context (injected into instruction, not user message)
+        # This keeps context out of conversation history while making it available to the agent
+        if page_context:
+            agent = create_agent_with_context(page_context)
+            logger.info("Created agent with dynamic page context in instruction")
+        else:
+            agent = root_agent
+            logger.info("Using root agent without page context")
+
+        # Create runner with the appropriate agent
         runner = Runner(
             app_name = request_data.app_name,
-            agent = root_agent,
+            agent = agent,
             session_service = session_service
         )
-
+        
         # Create user message with all parts (text + files)
+        # NO context injection here - it's in the agent instruction instead
         user_message = types.Content(
             parts=message_parts,
             role="user"
@@ -262,7 +291,7 @@ async def chat_endpoint(
         streaming = request_data.streaming
         streaming = True
         if streaming:
-            return await _handle_streaming_response(runner, request_data, actual_session_id, user_message)
+            return await _handle_streaming_response(runner, request_data, actual_session_id, user_message, session_service)
         else:
             return await _handle_regular_response(runner, request_data, actual_session_id, user_message)
 
@@ -279,7 +308,7 @@ async def chat_endpoint(
         }
 
 
-async def _handle_streaming_response(runner, request_data, session_id, user_message):
+async def _handle_streaming_response(runner, request_data, session_id, user_message, session_service):
     """Handle streaming response using the pattern that avoids buffering"""
     
     import asyncio
@@ -290,6 +319,7 @@ async def _handle_streaming_response(runner, request_data, session_id, user_mess
         """Async generator that processes events and yields immediately"""
         try:
             stream_mode = StreamingMode.SSE
+            event_count = 0
             
             # # Send an immediate ping to establish the stream
             # ping_data = f'data: {{"ping": "stream_started", "timestamp": {time.time()}}}\n\n'
@@ -301,9 +331,27 @@ async def _handle_streaming_response(runner, request_data, session_id, user_mess
                 new_message=user_message,
                 run_config=RunConfig(streaming_mode=stream_mode),
             ):
+                event_count += 1
                 sse_event = event.model_dump_json(exclude_none=True, by_alias=True)
                 data = f"data: {sse_event}\n\n"
                 yield data
+                
+            # Log completion and verify session persistence
+            logger.info(f"✅ Streaming completed with {event_count} events for session {session_id}")
+            
+            # Verify session has been updated with the conversation
+            try:
+                session = await session_service.get_session(
+                    app_name=request_data.app_name,
+                    user_id=request_data.user_id,
+                    session_id=session_id
+                )
+                if session and hasattr(session, 'events'):
+                    logger.info(f"📋 Session {session_id} now has {len(session.events)} events stored")
+                else:
+                    logger.warning(f"⚠️ Session {session_id} not found or has no events after streaming")
+            except Exception as verify_error:
+                logger.error(f"❌ Error verifying session persistence: {verify_error}")
                 
         except Exception as e:
             logger.error(f"Error in streaming: {e}")

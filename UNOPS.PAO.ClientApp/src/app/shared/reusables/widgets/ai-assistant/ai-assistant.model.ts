@@ -1,42 +1,80 @@
+// UNIFIED MODEL STRUCTURE - Single model for all AI Assistant data operations
+// Whether processing new messages, handling streaming responses, or loading session history
+
+export interface ChatSession {
+  session: {
+    id: string;
+    timestamp: number; // Numeric timestamp
+    userId: number;
+    status: string;
+    title: string;
+    starred: boolean;
+    archived: boolean;
+  };
+  chatMessages: ChatMessage[];
+}
+
 export interface ChatMessage {
-  text?: string;
-  isUser: boolean;
-  timestamp: Date;
-  files: ChatFile[];
-  // New properties for structured content
-  result?: ResultItem[];
-  entity?: string;
-  suggestedUserResponses?: string[];
+  // Core message properties
+  id: string;
+  timestamp: number; // Numeric timestamp
+  invocationId: string;
+  role: "user" | "model"; // Primary role identifier
+  
+  // Content structure (matches streaming response format)
+  content: {
+    parts: ContentPart[];
+    role: "user" | "model";
+  };
+  
+  // Actions and metadata
+  actions: {
+    stateDelta: any;
+    artifactDelta: any;
+    requestedAuthConfigs: any;
+  };
+  longRunningToolIds: string[];
+  
+  // UI-specific properties (computed from role)
+  isUser?: boolean; // Computed from role === "user"
+  files?: ChatFile[];
   sources?: Source[];
-  isFromHistory?: boolean; // Flag to indicate if message is loaded from history
-  inlineData?: InlineData[]; // Support for inline data like images
+  suggestedUserResponses?: string[];
 }
 
-export interface InlineData {
-  data: string; // Base64 encoded data
-  mimeType: string; // MIME type (e.g., 'image/png', 'image/jpeg')
+export interface ContentPart {
+  text?: string;
+  thought?: boolean;
+  thoughtSignature?: string;
+  functionCall?: {
+    id: string;
+    name: string;
+    args: any;
+  };
+  functionResponse?: {
+    id: string;
+    name: string;
+    response: any;
+  };
+  content?: any; // Content data for processing
+  timestamp?: number; // Timestamp for ordering
+  
+  // Dynamic content properties (populated by dynamic content service)
+  type?: 'markdown' | 'mermaid' | 'code' | 'text' | 'grid' | 'card' | 'chartjs' | 'thought' | 'thoughts' | 'functionCall' | 'functionResponse' | 'chart' | 'user-message';
+  entity?: any; // Entity data for grid/card components
+  completed?: boolean; // Flag to indicate if content is complete (for progressive rendering)
+  partial?: boolean; // Flag to indicate if this part is still streaming/partial
+  
+  // Additional properties needed for dynamic content processing
+  entityType?: string; // Entity type for grid/card components
+  invocationId?: string; // Invocation ID for component tracking
+  renderingId?: string; // Rendering ID for component management
+  isUserMessage?: boolean; // Flag to indicate if this is a user message
+  
+  // NOTE: ContentPart does NOT have a role - only the content object has a role
 }
 
-export interface Source {
-  title: string;
-  url: string;
-  description?: string;
-}
-
-export interface ResultItem {
-  type: 'markdown' | 'mermaid' | 'code' | 'text' | 'grid' | 'card' | 'chartjs' | 'thought' | 'thoughts' | 'functionCall' | 'functionResponse' | 'chart';
-  message: string | any[] | any; // string for text/markdown/code/thought, array for grid/card data, object for chartjs
-  language?: string; // for code blocks
-  entity?: string; // for grid/card data
-  chartType?: string; // for chartjs: pie, bar, line, doughnut, etc.
-  partial?: boolean; // for streaming support - indicates if this is a partial chunk that should be updated
-  invocationId?: string; // unique identifier for the streaming session
-  renderingId?: string; // unique identifier for rendering tracking
-  completed?: boolean; // indicates if this stream item is completed (no more updates)
-  timestamp?: number; // timestamp for change detection
-  arrivalOrder?: number; // order in which this chunk type first appeared
-}
-
+// Supporting interfaces
 export interface ChatFile {
   file?: File;
   name?: string;
@@ -45,43 +83,8 @@ export interface ChatFile {
   mediaType?: string;
 }
 
-export interface AiResponse {
-  entity?: string;
-  intent?: string;
-  message: string;
-  type?: string;
-  summary?: string;
-  forward?: string;
-  mediaUrl?: string;
-  mediaType?: string;
-  rawMessage?: string;
-  files?: any[];   
-  url?: string;
-}
-
-export interface SuggestionsResponse {
-  suggestions: string[];
-  user_id: number;
-  total_actions_found: number;
-}
-
-export interface SuggestionItem {
-  text: string;
-  icon: string;
-  action: () => void;
-}
-
-export enum ScreenToOpenByAiActionCategory {
-  "Contact" = "contacts",
-  "Partner" = "partners",
-  "Interaction" = "interactions",
-  "PartnerTree" = "partner-tree"
-}
-
-export function getUrlPageByAiResponseCategory(category: string | undefined): string | null {
-  if (!category || !(category in ScreenToOpenByAiActionCategory)) {
-    console.error("URL not found for category : " + category)
-    return null;
-  }
-  return ScreenToOpenByAiActionCategory[category as keyof typeof ScreenToOpenByAiActionCategory];
+export interface Source {
+  title: string;
+  url: string;
+  description?: string;
 }

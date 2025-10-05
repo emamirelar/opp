@@ -21,6 +21,7 @@ import { EntityConfigurationService } from '@features/shared/services/entity-con
 import { CachedDataService } from '@shared/services/cached-data.service';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
+import { PageContextService } from '@shared/services/page-context.service';
 
 
 /**
@@ -66,6 +67,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
   entityConfigurationService = inject(EntityConfigurationService);
   cachedDataService = inject(CachedDataService);
   translateService = inject(TranslateService);
+  private pageContextService = inject(PageContextService);
 
   newPartnerData = signal<Partner|null>(null);
 
@@ -201,7 +203,8 @@ export class PartnerComponent implements OnDestroy, OnInit {
   }
 
   ngOnInit() {
-    
+    // Register component data for AI Assistant
+    this.pageContextService.setComponentData(this);
     
     
     // Load permissions using utility service
@@ -281,6 +284,9 @@ export class PartnerComponent implements OnDestroy, OnInit {
   }
 
   ngOnDestroy(): void {
+    // Clear component data for AI Assistant
+    this.pageContextService.clearComponentData();
+    
     this.langChangeSubscription?.unsubscribe();
     // Clean up event listener
     window.removeEventListener('refresh-listview', this.refreshPartnerCacheHandler);

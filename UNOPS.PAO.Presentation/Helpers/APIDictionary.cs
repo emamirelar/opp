@@ -93,8 +93,8 @@ public class APIDictionary
     public const string AiAssistantAccessibility = APIPrefix + "ai-assistant/accessibility";
     public const string AiAssistantUpdateStar = APIPrefix + "ai-assistant/update-star";
     public const string AiAssistantUpdateArchive = APIPrefix + "ai-assistant/update-archive";
-    public const string AiAssistantUpdateTitle = APIPrefix + "ai-assistant/update-title";
-    public const string GenerateEmbeddings = APIPrefix + "generate-embeddings";
+        public const string AiAssistantUpdateTitle = APIPrefix + "ai-assistant/update-title";
+        public const string GenerateEmbeddings = APIPrefix + "generate-embeddings";
 
     public const string Link = APIPrefix + "links";
 
@@ -151,8 +151,6 @@ public class APIDictionary
     public const string GlobalSearch = Global + "/search";
     public const string PreferredLanguage = Global + "/preferred-language";
 
-    public const string AiAssistantGenerateTitle = APIPrefix + "ai-assistant/generate-title";
-    public const string AiAssistantGenerateSuggestions = APIPrefix + "ai-assistant/generate-suggestions";
 
     // Dashboard
     public const string Dashboard = APIPrefix + "dashboard";
