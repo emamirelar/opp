@@ -1,0 +1,517 @@
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  OnInit,
+  OnDestroy,
+  DoCheck,
+  output,
+  signal,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  DestroyRef
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CommonModule } from '@angular/common';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { PanelModule } from 'primeng/panel';
+import { ButtonModule } from 'primeng/button';
+import { MarkdownPipe } from '@features/shared/pipes/markdown.pipe';
+import { takeUntil, Subject } from 'rxjs';
+
+export interface AiDataService {
+  get(entityId: string, promptType: string): any; // Observable<string>
+}
+
+@Component({
+  selector: 'app-ai-panel',
+  imports: [
+    CommonModule,
+    TranslateModule,
+    PanelModule,
+    ButtonModule,
+    MarkdownPipe
+  ],
+  templateUrl: './ai-panel.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
+  styles: `
+    .ai-panel .p-panel {
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+      border-radius: 0.5rem !important;
+    }
+    .ai-panel ::ng-deep .p-panel-content {
+      border-bottom-left-radius: 8px !important;
+      border-bottom-right-radius: 8px !important;
+    }
+
+    /* Enhanced Markdown styling with professional appearance */
+    .ai-panel ::ng-deep .markdown-content,
+    .ai-panel ::ng-deep .markdown-content * {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+      line-height: 1.6 !important;
+      color: #374151 !important;
+    }
+
+    /* Headings with professional styling */
+    .ai-panel ::ng-deep .markdown-content h1 {
+      font-size: 1.75rem !important;
+      font-weight: 700 !important;
+      margin-top: 1.5rem !important;
+      margin-bottom: 1rem !important;
+      color: #1f2937 !important;
+      position: relative !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content h1::after {
+      content: '' !important;
+      position: absolute !important;
+      bottom: -3px !important;
+      left: 0 !important;
+      width: 60px !important;
+      height: 3px !important;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+      border-radius: 2px !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content h2 {
+      font-size: 1.5rem !important;
+      font-weight: 600 !important;
+      margin-top: 1.25rem !important;
+      margin-bottom: 0.75rem !important;
+      color: #374151 !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content h3 {
+      font-size: 1.25rem !important;
+      font-weight: 600 !important;
+      margin-top: 1rem !important;
+      margin-bottom: 0.5rem !important;
+      color: #4b5563 !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content h4,
+    .ai-panel ::ng-deep .markdown-content h5,
+    .ai-panel ::ng-deep .markdown-content h6 {
+      font-size: 1.1rem !important;
+      font-weight: 600 !important;
+      margin-top: 0.75rem !important;
+      margin-bottom: 0.5rem !important;
+      color: #6b7280 !important;
+    }
+
+    /* Paragraphs with better spacing */
+    .ai-panel ::ng-deep .markdown-content p {
+      margin: 0.75rem 0 !important;
+      line-height: 1.7 !important;
+    }
+
+    /* Links with professional styling */
+    .ai-panel ::ng-deep .markdown-content a {
+      color: #2563eb !important;
+      text-decoration: none !important;
+      font-weight: 500 !important;
+      border-bottom: 1px solid transparent !important;
+      transition: all 0.2s ease !important;
+      position: relative !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content a:hover {
+      color: #1d4ed8 !important;
+      border-bottom-color: #2563eb !important;
+      background: linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, transparent 100%) !important;
+      padding: 0 4px !important;
+      margin: 0 -4px !important;
+      border-radius: 4px !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content a:visited {
+      color: #7c3aed !important;
+    }
+
+    /* Lists with proper spacing and styling */
+    .ai-panel ::ng-deep .markdown-content ul,
+    .ai-panel ::ng-deep .markdown-content ol {
+      margin: 0.75rem 0 !important;
+      padding-left: 1.5rem !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content li {
+      margin-bottom: 0.5rem !important;
+      line-height: 1.6 !important;
+      position: relative !important;
+      list-style: none !important;
+    }
+
+    /* Unordered lists (ul) - use bullets */
+    .ai-panel ::ng-deep .markdown-content ul li::before {
+      content: '•' !important;
+      color: #667eea !important;
+      font-weight: bold !important;
+      position: absolute !important;
+      left: -1.2rem !important;
+      font-size: 1.2em !important;
+    }
+
+    /* Ordered lists (ol) - use numbers */
+    .ai-panel ::ng-deep .markdown-content ol {
+      counter-reset: list-counter !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content ol li {
+      counter-increment: list-counter !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content ol li::before {
+      content: counter(list-counter) '.' !important;
+      color: #667eea !important;
+      font-weight: 600 !important;
+      position: absolute !important;
+      left: -1.5rem !important;
+      min-width: 1.2rem !important;
+      text-align: right !important;
+    }
+
+    /* Ensure ul li doesn't get counter styling */
+    .ai-panel ::ng-deep .markdown-content ul li {
+      counter-increment: none !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content ul li::before {
+      content: '•' !important;
+    }
+
+    /* Nested lists */
+    .ai-panel ::ng-deep .markdown-content li ul,
+    .ai-panel ::ng-deep .markdown-content li ol {
+      margin: 0.25rem 0 !important;
+    }
+
+    /* Text formatting */
+    .ai-panel ::ng-deep .markdown-content strong {
+      font-weight: 600 !important;
+      color: #1f2937 !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content em {
+      font-style: italic !important;
+      color: #4b5563 !important;
+    }
+
+    /* Code styling */
+    .ai-panel ::ng-deep .markdown-content code {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+      color: #e11d48 !important;
+      padding: 0.25rem 0.5rem !important;
+      border-radius: 6px !important;
+      font-size: 0.9em !important;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+      border: 1px solid #e2e8f0 !important;
+      font-weight: 500 !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content pre {
+      background: #1e293b !important;
+      color: #e2e8f0 !important;
+      padding: 1.25rem !important;
+      border-radius: 8px !important;
+      overflow-x: auto !important;
+      margin: 1rem 0 !important;
+      border: 1px solid #334155 !important;
+      position: relative !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content pre::before {
+      content: '' !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: 3px !important;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+      border-radius: 8px 8px 0 0 !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content pre code {
+      background: transparent !important;
+      color: inherit !important;
+      padding: 0 !important;
+      border: none !important;
+      font-size: 0.9rem !important;
+      border-radius: 0 !important;
+    }
+
+    /* Blockquotes */
+    .ai-panel ::ng-deep .markdown-content blockquote {
+      margin: 1rem 0 !important;
+      padding: 1rem 1.25rem !important;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+      border-left: 4px solid #667eea !important;
+      border-radius: 0 8px 8px 0 !important;
+      font-style: italic !important;
+      color: #4b5563 !important;
+      position: relative !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content blockquote::before {
+      content: '"' !important;
+      font-size: 3rem !important;
+      color: #667eea !important;
+      position: absolute !important;
+      top: -0.5rem !important;
+      left: 0.5rem !important;
+      opacity: 0.3 !important;
+      font-family: Georgia, serif !important;
+    }
+
+    /* Tables */
+    .ai-panel ::ng-deep .markdown-content table {
+      border-collapse: collapse !important;
+      width: 100% !important;
+      margin: 1rem 0 !important;
+      border-radius: 8px !important;
+      overflow: hidden !important;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content th,
+    .ai-panel ::ng-deep .markdown-content td {
+      padding: 0.75rem 1rem !important;
+      text-align: left !important;
+      border-bottom: 1px solid #e5e7eb !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      font-weight: 600 !important;
+      text-transform: uppercase !important;
+      font-size: 0.85rem !important;
+      letter-spacing: 0.5px !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content tr:nth-child(even) {
+      background-color: #f9fafb !important;
+    }
+
+    .ai-panel ::ng-deep .markdown-content tr:hover {
+      background-color: #f3f4f6 !important;
+    }
+
+    /* Horizontal rules */
+    .ai-panel ::ng-deep .markdown-content hr {
+      border: none !important;
+      height: 2px !important;
+      background: linear-gradient(90deg, transparent 0%, #667eea 50%, transparent 100%) !important;
+      margin: 2rem 0 !important;
+      border-radius: 1px !important;
+    }
+
+    /* Text truncation with CSS ellipsis */
+    .ai-panel .content-truncated {
+      display: -webkit-box !important;
+      -webkit-line-clamp: 8 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-height: 12rem !important; /* Fallback for browsers that don't support line-clamp */
+    }
+
+    .ai-panel .content-full {
+      display: block !important;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .ai-panel ::ng-deep .markdown-content h1 {
+        font-size: 1.5rem !important;
+      }
+      
+      .ai-panel ::ng-deep .markdown-content h2 {
+        font-size: 1.35rem !important;
+      }
+      
+      .ai-panel ::ng-deep .markdown-content ul,
+      .ai-panel ::ng-deep .markdown-content ol {
+        padding-left: 1.25rem !important;
+      }
+      
+      .ai-panel ::ng-deep .markdown-content pre {
+        padding: 1rem !important;
+        margin: 0.75rem -0.25rem !important;
+        border-radius: 6px !important;
+      }
+      
+      .ai-panel ::ng-deep .markdown-content blockquote {
+        margin: 0.75rem 0 !important;
+        padding: 0.75rem 1rem !important;
+      }
+
+      /* Adjust truncation for mobile */
+      .ai-panel .content-truncated {
+        -webkit-line-clamp: 6 !important;
+        max-height: 9rem !important;
+      }
+    }
+  `
+})
+export class AiPanelComponent implements OnInit, OnDestroy, DoCheck {
+  private translateService = inject(TranslateService);
+  private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
+  private destroy$ = new Subject<void>();
+  private currentAbortController: AbortController | null = null;
+  private lastEntityId = '';
+  private lastPromptType = '';
+  private isProcessingChange = false;
+
+  // Inputs
+  title = input.required<string>();
+  entityId = input.required<string>();
+  promptType = input.required<string>();
+  aiService = input.required<AiDataService>();
+  showRefreshButton = input<boolean>(true);
+  showAiIcon = input<boolean>(true);
+  loadOnInit = input<boolean>(true);
+  errorMessage = input<string>('errors.failedToLoad');
+  customStyles = input<string>('unops-text-body-medium bg-gradient-to-r from-unops-secondary via-unops-primary to-unops-primary-light bg-clip-text text-transparent');
+  truncateLength = input<number>(300); // Maximum characters to show before "See more"
+
+  // Outputs
+  onDataLoaded = output<string>();
+  onError = output<Error>();
+  onRefresh = output<void>();
+
+  // Signals
+  isLoading = signal<boolean>(false);
+  content = signal<string>('');
+  hasError = signal<boolean>(false);
+  showFullContent = signal<boolean>(false);
+
+  // Computed values
+  shouldShowSpinner = computed(() => this.isLoading());
+  shouldShowContent = computed(() => !this.isLoading() && !this.hasError() && this.content());
+  shouldShowError = computed(() => !this.isLoading() && this.hasError());
+
+  // Content truncation logic - now handled by CSS
+  shouldTruncate = computed(() => {
+    const content = this.content();
+    return content && content.length > this.truncateLength() && !this.showFullContent();
+  });
+
+  showSeeMoreButton = computed(() => {
+    const content = this.content();
+    return content && content.length > this.truncateLength() && !this.showFullContent();
+  });
+
+  showSeeLessButton = computed(() => {
+    const content = this.content();
+    return content && content.length > this.truncateLength() && this.showFullContent();
+  });
+
+  toggleButtonLabel = computed(() => {
+    return this.showFullContent() ? 'button.seeLess' : 'button.seeMore';
+  });
+
+  toggleButtonIcon = computed(() => {
+    return this.showFullContent() ? 'pi pi-chevron-up' : 'pi pi-chevron-down';
+  });
+
+  ngOnInit() {
+    if (this.loadOnInit()) {
+      this.loadData();
+    }
+  }
+
+  ngDoCheck() {
+    // Check if parameters have changed
+    const currentEntityId = this.entityId();
+    const currentPromptType = this.promptType();
+    
+    const hasChanged = (
+      currentEntityId !== this.lastEntityId || 
+      currentPromptType !== this.lastPromptType
+    );
+    
+    // If parameters changed and we're not already processing a change, reload data
+    if (hasChanged && !this.isProcessingChange && currentEntityId && currentPromptType) {
+      this.loadData();
+    }
+  }
+
+  loadData() {
+    if (!this.entityId() || !this.promptType() || !this.aiService()) {
+      console.warn('AiPanelComponent: Missing required parameters for loading data');
+      return;
+    }
+
+    const currentEntityId = this.entityId();
+    const currentPromptType = this.promptType();
+
+    // Set processing flag to prevent multiple simultaneous calls
+    this.isProcessingChange = true;
+    
+    // Update tracked parameters
+    this.lastEntityId = currentEntityId;
+    this.lastPromptType = currentPromptType;
+
+    // Cancel any previous request
+    if (this.currentAbortController) {
+      this.currentAbortController.abort();
+    }
+    this.currentAbortController = new AbortController();
+
+    this.isLoading.set(true);
+    this.hasError.set(false);
+    this.showFullContent.set(false); // Reset "See more" state when loading new data
+    this.cdr.markForCheck();
+
+    this.aiService().get(currentEntityId, currentPromptType)
+      .pipe(
+        takeUntil(this.destroy$),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe({
+        next: (data: string) => {
+          // Only update if this request hasn't been aborted
+          if (!this.currentAbortController?.signal.aborted) {
+            this.content.set(data);
+            this.isLoading.set(false);
+            this.isProcessingChange = false;
+            this.onDataLoaded.emit(data);
+            this.cdr.markForCheck();
+          }
+        },
+        error: (error: Error) => {
+          // Only handle error if this request hasn't been aborted
+          if (!this.currentAbortController?.signal.aborted) {
+            console.error('AiPanelComponent error:', error);
+            this.content.set(this.translateService.instant(this.errorMessage()));
+            this.isLoading.set(false);
+            this.hasError.set(true);
+            this.isProcessingChange = false;
+            this.onError.emit(error);
+            this.cdr.markForCheck();
+          }
+        }
+      });
+  }
+
+  refresh() {
+    this.onRefresh.emit();
+    this.loadData();
+  }
+
+  toggleFullContent() {
+    this.showFullContent.set(!this.showFullContent());
+  }
+
+  ngOnDestroy() {
+    if (this.currentAbortController) {
+      this.currentAbortController.abort();
+    }
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}

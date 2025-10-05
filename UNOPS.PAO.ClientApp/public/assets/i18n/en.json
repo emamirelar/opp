@@ -1007,6 +1007,7 @@
   "label.partner.partnerApprovalReference": "Partner Approval Reference",
   "label.partner.partnerApprovalStatus": "Partner Approval Status",
   "label.partner.partnerCategory": "Partner Category",
+  "label.partner.partnerCode": "Partner Code (ERP)",
   "label.partner.partnerDescription": "Partner Description",
   "label.partner.partnerFocalPoint": "Partner Focal Point",
   "label.partner.partnerFocalPointUserId": "Focal Point ID",

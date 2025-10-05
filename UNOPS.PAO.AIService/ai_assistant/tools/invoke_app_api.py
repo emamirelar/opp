@@ -19,18 +19,18 @@ def prepare_api_url(url: str) -> str:
     For relative URLs, combines directly with the config base URL.
     
     Args:
-        url: URL to prepare - can be relative (e.g., /api/partners) or absolute (e.g., https://localhost:44426/api/partners)
+        url: URL to prepare - can be relative (e.g., /api/partner) or absolute (e.g., https://localhost:44426/api/partner)
     
     Returns:
         str: The final URL to use for the API call with base URL from config
     
     Examples:
         # Relative URL - will be combined with base URL from config
-        final_url = prepare_api_url("/api/users")
+        final_url = prepare_api_url("/api/user")
         
         # Absolute URL - path will be extracted and combined with config base URL
-        final_url = prepare_api_url("https://someother.com/api/users")
-        # Result: https://config-base-url/api/users
+        final_url = prepare_api_url("https://someother.com/api/user")
+        # Result: https://config-base-url/api/user
     """
     try:
         from ..utils.config import get_api_base_url
@@ -69,7 +69,7 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
     Invoke an API endpoint with minimal logging
     
     Args:
-        url: URL to call - can be relative (e.g., /api/partners) or absolute (e.g., https://localhost:44426/api/partners)
+        url: URL to call - can be relative (e.g., /api/partners) or absolute (e.g., https://localhost:44426/api/partner)
         method: HTTP method (GET, POST, PUT, DELETE)
         params: Request parameters/body
         headers: Optional additional headers
@@ -80,28 +80,28 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
     
     Examples:
         # GET request with relative URL (will use base URL from config)
-        result = invoke_app_api("/api/users", "GET")
+        result = invoke_app_api("/api/user", "GET")
         
         # GET request with absolute URL (will use as-is)
-        result = invoke_app_api("https://api.example.com/users", "GET")
+        result = invoke_app_api("https://api.example.com/user", "GET")
         
         # POST request with data
         result = invoke_app_api(
-            "/api/users", 
+            "/api/user", 
             "POST", 
             params={"name": "John", "email": "john@example.com"}
         )
         
         # GET request with query parameters
         result = invoke_app_api(
-            "/api/users", 
+            "/api/user", 
             "GET", 
             params={"search": "john", "limit": 10}
         )
         
         # PUT request with custom headers
         result = invoke_app_api(
-            "/api/users/123", 
+            "/api/user/123", 
             "PUT", 
             params={"name": "John Updated"},
             headers={"X-Custom-Header": "value"}
@@ -146,6 +146,10 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
             
             try:
                 response = requests.get(final_url, headers=request_headers, timeout=api_timeout, verify=False)
+                print(f"📊 Response status: {response.status_code}")
+                print(f"📊 Response headers: {dict(response.headers)}")
+                print(f"📊 Content-Type: {response.headers.get('content-type', 'Not specified')}")
+                print(f"📊 Response body (first 500 chars): {response.text[:500]}")
                 if response.status_code != 200:
                     print(f"❌ GET request failed - Status: {response.status_code}, Error: {response.text[:200]}")
             except requests.exceptions.RequestException as e:
@@ -158,6 +162,11 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
             
             try:
                 response = requests.post(final_url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
+                print(f"📊 Response status: {response.status_code}")
+                print(f"📊 Response headers: {dict(response.headers)}")
+                print(f"📊 Content-Type: {response.headers.get('content-type', 'Not specified')}")
+                print(f"📊 Response body (first 500 chars): {response.text[:500]}")
+    
                 if response.status_code != 200:
                     print(f"❌ POST request failed - Status: {response.status_code}, Error: {response.text[:200]}")
             except requests.exceptions.RequestException as e:

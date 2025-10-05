@@ -1012,6 +1012,7 @@
 	"label.partner.partnerApprovalReference": "Référence d'Approbation du Partenaire",
 	"label.partner.partnerApprovalStatus": "Statut d'Approbation du Partenaire",
 	"label.partner.partnerCategory": "Catégorie de Partenaire",
+	"label.partner.partnerCode": "Code Partenaire (ERP)",
 	"label.partner.partnerDescription": "Description du Partenaire",
 	"label.partner.partnerFocalPoint": "Point Focal du Partenaire",
 	"label.partner.partnerFocalPointUserId": "ID du Point Focal",
