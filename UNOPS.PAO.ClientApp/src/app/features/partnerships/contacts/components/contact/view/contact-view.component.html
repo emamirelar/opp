@@ -1,0 +1,339 @@
+<p-confirmDialog></p-confirmDialog>
+
+<!-- Width tracker - measures the exact component width -->
+<div #widthTracker class="w-full h-px opacity-0 pointer-events-none relative"></div>
+
+<div [class]="responsiveLayoutClasses().container">
+  <div [class]="responsiveLayoutClasses().mainLayout">
+    <div [class]="responsiveLayoutClasses().leftColumn">
+      <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} unops-card unops-surface-elevated unops-rounded-lg unops-shadow-lg">
+        <ng-template pTemplate="header">
+          <div class="flex justify-between items-center w-full">
+            <div class="flex items-center gap-2">
+              <span class="unops-text-headline-medium">{{ 'label.contact.information' | translate }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              @if (recordPermissions().permissions.canUpdate) {
+                <p-button icon="pi pi-pencil"
+                          [rounded]="true"
+                          [text]="true"
+                          [size]="'small'"
+                          class="edit-button contact-edit-button"
+                          (onClick)="handleEditClick()"></p-button>
+              }
+              @if (recordPermissions().permissions.canDelete) {
+                <p-button icon="pi pi-trash"
+                          [rounded]="true"
+                          [text]="true"
+                          [size]="'small'"
+                          severity="danger"
+                          class="delete-button contact-delete-button"
+                          (onClick)="deleteContact()"></p-button>
+              }
+            </div>
+          </div>
+        </ng-template>
+
+        <div class="flex flex-col gap-4 pb-2 contact-info-content">
+
+          <!-- Primary Information: Partner -->
+          @if(recordData().partner?.name){
+            <div class="unops-p-lg unops-mb-md unops-rounded-lg" style="background-color: var(--unops-surface-cool); border: 1px solid var(--unops-neutral-200);">
+              <div class="unops-text-body-large unops-text-secondary unops-mb-sm">{{ 'fieldLabels.partner' | translate }}</div>
+              <div class="flex items-center gap-3">
+                <div class="unops-flex unops-items-center unops-gap-sm">
+                  <i class="pi pi-building unops-text-secondary" style="font-size: 1.1rem;"></i>
+                  <a [routerLink]="['/partnerships/partners', recordData().partner?.id]"
+                     class="unops-text-title-medium unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer contact-partner-link"
+                     style="font-weight: var(--unops-font-weight-bold); text-decoration: none; border-bottom: 2px solid transparent;"
+                     onmouseover="this.style.borderBottom='2px solid var(--unops-secondary)'; this.style.transform='translateY(-1px)'"
+                     onmouseout="this.style.borderBottom='2px solid transparent'; this.style.transform='translateY(0)'">
+                    {{recordData().partner?.name}}
+                  </a>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Contact Information Section -->
+          @if(recordData().email || recordData().phone || recordData().mobile){
+            <div class="unops-mb-md">
+              <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
+                <i class="pi pi-phone unops-text-info" style="font-size: 1rem;"></i>
+                {{ 'label.contact.information' | translate }}
+              </div>
+              
+              <!-- Primary Information: Email -->
+              @if(recordData().email) {
+                <div class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                  <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.contact.email' | translate }}</div>
+                  <a [href]="'mailto:' + recordData().email" 
+                     class="unops-text-body-large unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer"
+                     style="font-weight: var(--unops-font-weight-semibold); text-decoration: none; border-bottom: 1px solid transparent;"
+                     onmouseover="this.style.borderBottom='1px solid var(--unops-secondary)'"
+                     onmouseout="this.style.borderBottom='1px solid transparent'">
+                    {{recordData().email}}
+                  </a>
+                </div>
+              }
+              
+              <!-- Other Contact Information -->
+              <div class="unops-flex unops-flex-col unops-gap-sm">
+                @if(recordData().phone){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.phone' | translate }} ({{ 'office' | translate }})</span>
+                    <span class="unops-text-body-medium unops-text-secondary">{{recordData().phone}}</span>
+                  </div>
+                }
+                @if(recordData().mobile){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.mobile' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary">{{recordData().mobile}}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+
+
+          @if(showAdditionalInfo() && showFullContent()) {
+            <!-- Assistant Information Section -->
+            @if(recordData().assistant || recordData().assistantPhone || recordData().assistantEmail){
+              <div class="unops-mb-md">
+                <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
+                  <i class="pi pi-user unops-text-success" style="font-size: 1rem;"></i>
+                  {{ 'label.contact.contactViaAssistant' | translate }}
+                </div>
+                
+                <!-- Primary Information: Assistant Name -->
+                @if(recordData().assistant) {
+                  <div class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                    <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.contact.assistantName' | translate }}</div>
+                    <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{recordData().assistant}}</div>
+                  </div>
+                }
+                
+                <!-- Other Assistant Information -->
+                <div class="unops-flex unops-flex-col unops-gap-sm">
+                  @if(recordData().assistantPhone){
+                    <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.assistantPhone' | translate }}</span>
+                      <span class="unops-text-body-medium unops-text-secondary">{{recordData().assistantPhone}}</span>
+                    </div>
+                  }
+                  @if(recordData().assistantEmail){
+                    <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.assistantEmail' | translate }}</span>
+                      <a [href]="'mailto:' + recordData().assistantEmail" 
+                         class="unops-text-body-medium unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer"
+                         style="text-decoration: none; border-bottom: 1px solid transparent;"
+                         onmouseover="this.style.borderBottom='1px solid var(--unops-secondary)'"
+                         onmouseout="this.style.borderBottom='1px solid transparent'">
+                        {{recordData().assistantEmail}}
+                      </a>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Address Section -->
+            @if(recordData().mailingStreet || recordData().mailingCity || recordData().mailingCountry){
+              <div class="unops-mb-md">
+                <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
+                  <i class="pi pi-map-marker unops-text-info" style="font-size: 1rem;"></i>
+                  {{ 'label.contact.mailingAddress' | translate }}
+                </div>
+                
+                <!-- Primary Information: Country -->
+                @if(recordData().mailingCountry) {
+                  <div class="unops-p-md unops-rounded-md unops-mb-sm" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                    <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.contact.country' | translate }}</div>
+                    <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{recordData().mailingCountry}}</div>
+                  </div>
+                }
+                
+                <!-- Other Address Information -->
+                <div class="unops-flex unops-flex-col unops-gap-sm">
+                  @if(recordData().mailingStreet){
+                    <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.street' | translate }}</span>
+                      <span class="unops-text-body-medium unops-text-secondary">{{recordData().mailingStreet}}</span>
+                    </div>
+                  }
+                  @if(recordData().mailingStreet2) {
+                    <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.street2' | translate }}</span>
+                      <span class="unops-text-body-medium unops-text-secondary">{{recordData().mailingStreet2}}</span>
+                    </div>
+                  }
+                  @if(recordData().mailingCity || recordData().mailingStateProvince || recordData().mailingPostalCode){
+                    <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                      <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.cityStatePostal' | translate }}</span>
+                      <span class="unops-text-body-medium unops-text-secondary text-right">
+                        {{recordData().mailingCity}}
+                        @if(recordData().mailingStateProvince) {
+                          , {{recordData().mailingStateProvince}}
+                        }
+                        @if(recordData().mailingPostalCode) {
+                          {{recordData().mailingPostalCode}}
+                        }
+                      </span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+
+
+            <!-- Additional Details Section -->
+            <div class="unops-mb-lg">
+              <div class="unops-text-headline-small unops-text-secondary unops-mb-md">{{ 'label.contact.generalInformation' | translate }}</div>
+              
+              <!-- Primary Information: Status -->
+              @if(recordData().status){
+                <div class="unops-p-md unops-rounded-md unops-mb-md" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
+                  <div class="unops-text-label-large unops-text-muted unops-mb-sm">{{ 'label.contact.status' | translate }}</div>
+                  <div class="unops-text-body-large unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{recordData().status}}</div>
+                </div>
+              }
+              
+              <!-- Other Information -->
+              <div class="unops-flex unops-flex-col unops-gap-sm">
+                @if(recordData().id){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.id' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary">{{recordData().id}}</span>
+                  </div>
+                }
+                @if(recordData().department){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.department' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary">{{recordData().department}}</span>
+                  </div>
+                }
+                @if(recordData().pronouns){
+                  <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted">{{ 'label.contact.pronouns' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary">{{recordData().pronouns}}</span>
+                  </div>
+                }
+                @if(recordData().description){
+                  <div class="unops-flex unops-justify-between unops-items-start unops-p-sm unops-rounded-sm unops-border-light">
+                    <span class="unops-text-label-large unops-text-muted" style="flex-shrink: 0; margin-right: var(--unops-spacing-md);">{{ 'label.contact.notes' | translate }}</span>
+                    <span class="unops-text-body-medium unops-text-secondary text-right" style="line-height: 1.6;">{{recordData().description}}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- See More / See Less Button -->
+          @if (shouldShowSeeMoreButton()) {
+            <div class="flex justify-center -mb-4">
+              <p-button
+                label="{{ 'button.seeMore' | translate }}"
+                icon="pi pi-chevron-down"
+                [rounded]="true"
+                [size]="'small'"
+                [text]="true"
+                (onClick)="toggleFullContent()"
+              />
+            </div>
+          }
+
+          @if (shouldShowSeeLessButton()) {
+            <div class="flex justify-center -mb-4">
+              <p-button
+                label="{{ 'button.seeLess' | translate }}"
+                icon="pi pi-chevron-up"
+                [rounded]="true"
+                [size]="'small'"
+                [text]="true"
+                (onClick)="toggleFullContent()"
+              />
+            </div>
+          }
+
+          <p-divider></p-divider>
+
+          <div class="flex justify-between items-center unops-mb-sm">
+            <div class="unops-text-headline-medium unops-text-secondary unops-flex unops-items-center unops-gap-sm">
+              <i class="pi pi-link unops-text-info" style="font-size: 1.1rem;"></i>
+              {{ 'title.links' | translate }}
+            </div>
+            @if (recordPermissions().permissions.canUpdate) {
+              <p-button
+                icon="pi pi-plus"
+                rounded
+                styleClass="p-button-text"
+                [label]="'button.addLink' | translate"
+                (onClick)="openAddLinkDialog()"
+                severity="primary" />
+            }
+          </div>
+          @if (recordData().id && +(recordData().id!) > 0) {
+            <app-link-list #linkListComponent
+                           [entityType]="entityTypeContact"
+                           [entityId]="+(recordData().id!)"
+                           [showAddButton]="false"
+                           [disabled]="!recordPermissions().permissions.canUpdate"
+                           class="contact-links-section" />
+          }
+
+          <p-divider></p-divider>
+
+          <div class="flex justify-between items-center unops-mb-md">
+            <div class="unops-text-headline-medium unops-text-secondary unops-flex unops-items-center unops-gap-sm">
+              <i class="pi pi-file unops-text-success" style="font-size: 1.1rem;"></i>
+              {{ 'title.doc' | translate }}
+            </div>
+            @if (recordPermissions().permissions.canUpdate) {
+              <p-button
+                icon="pi pi-google"
+                rounded
+                styleClass="p-button-text"
+                [label]="'button.uploadDocument' | translate"
+                (onClick)="openGoogleDriveDialog()"
+                severity="primary" />
+            }
+          </div>
+          <app-document #appDocument
+                        [entityId]="recordId"
+                        [entityName]="'contact'"
+                        [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
+                        [showUploadButton]="false"
+                        [disabled]="!recordPermissions().permissions.canUpdate"
+                        class="contact-document-section">
+            <div ngProjectAs="document-toolbar">
+              @if(recordPermissions().permissions.canUpdate){
+                <app-document-gdrive #gdriveComponent
+                                     [entityId]="recordId"
+                                     [entityName]="'contact'"
+                                     [appDocumentRef]="appDocument"
+                                     [showUploadButton]="false"
+                                     [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+              }
+            </div>
+          </app-document>
+        </div>
+      </p-panel>
+    </div>
+
+
+    <div [class]="responsiveLayoutClasses().rightColumn">
+      <app-ai-panel
+        class="shadow-sm contact-ai-summary"
+        [title]="'label.contact.summaryOfInteractions'"
+        [entityId]="recordId"
+        [promptType]="'contact_interactions_summary'"
+        [aiService]="geminiService"
+        (onRefresh)="onSummaryRefresh()"
+        (onDataLoaded)="onSummaryLoaded($event)"
+        (onError)="onSummaryError($event)"
+      />
+    </div>
+  </div>
+</div>

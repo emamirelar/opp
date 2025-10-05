@@ -1,0 +1,151 @@
+<p-confirmDialog></p-confirmDialog>
+
+<div class="flex flex-col gap-8 ">
+
+  <!-- Enhanced Global Filter Information with Toggle -->
+  @if(shouldShowFilterToggle()) {
+    <div class="flex items-center space-x-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg transition-all duration-200">
+      <i class="pi pi-filter text-blue-600"></i>
+      <div class="flex-1">
+        <div class="text-blue-700 font-medium">
+          @if(isFilterTemporarilyDisabled()) {
+            {{ 'search.globalFiltersOff' | translate }}
+          } @else {
+            {{ 'search.filteredBy' | translate }}: 
+            @for(label of activeFilterLabels(); track label; let isLast = $last) {
+              <span>{{ label }}@if(!isLast) {<span>, </span>}</span>
+            }
+          }
+        </div>
+        <div class="text-blue-600 text-sm mt-1">
+          {{ getRecordCountText() }}
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button 
+          pButton 
+          type="button"
+          class="p-button-sm p-button-outlined"
+          [class.p-button-success]="isFilterTemporarilyDisabled()"
+          [class.p-button-secondary]="!isFilterTemporarilyDisabled()"
+          (click)="toggleGlobalFilter()"
+          [title]="getToggleButtonText()">
+          <i class="pi" [class.pi-eye]="isFilterTemporarilyDisabled()" [class.pi-filter]="!isFilterTemporarilyDisabled()"></i>
+          <span class="ml-2">{{ getToggleButtonText() }}</span>
+        </button>
+        <button 
+          pButton 
+          type="button"
+          icon="pi pi-sliders-h"
+          class="p-button-sm p-button-outlined p-button-secondary"
+          (click)="openGlobalFiltersDialog()"
+          [title]="'Click to modify global filters'">
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Search bar -->
+  @if (config.enableSearch) {
+    <!-- Autocomplete Search Input (default mode) -->
+    @if (!isAdvancedSearch()) {
+      <div [class]="searchPanelClasses().container">
+        <!-- Search Row -->
+        <div class="flex gap-2 items-center flex-1">
+          <p-iconfield iconPosition="left" [class]="searchPanelClasses().searchField">
+            <p-inputicon class="pi pi-search" />
+            <input pInputText type="text"
+              [(ngModel)]="searchValue"
+              [placeholder]="'search.placeholder' | translate"
+              (keyup.enter)="onSearch()"
+              class="w-full quick-search"
+            />
+            @if (searchValue && searchValue.length > 0) {
+              <p-inputicon class="pi pi-times cursor-pointer" (click)="clearSearch()" />
+            }
+          </p-iconfield>
+
+          <!-- Advanced Search Button -->
+          @if (config.searchConfig?.useAdvancedSearch) {
+            <!-- Mobile: Icon only -->
+            <p-button
+              icon="pi pi-filter"
+              [class]="searchPanelClasses().advancedButtonMobile"
+              text rounded
+              [pTooltip]="'search.advanced' | translate"
+              (onClick)="switchToAdvancedSearch()"
+            ></p-button>
+            <!-- Desktop: Icon + Label -->
+            <p-button
+              [label]="'search.advanced' | translate"
+              icon="pi pi-filter"
+              [class]="searchPanelClasses().advancedButtonDesktop"
+              text rounded
+              (onClick)="switchToAdvancedSearch()"
+            ></p-button>
+          }
+        </div>
+
+        <!-- Sort Dropdown -->
+        @if (config.enableSorting && sortableFields().length > 0) {
+          <div [class]="searchPanelClasses().sortContainer">
+            <i class="pi pi-sort-alt text-gray-600"></i>
+            <p-select
+              [options]="sortOptions()"
+              [(ngModel)]="currentSortConfig"
+              (ngModelChange)="onSortConfigChange($event)"
+              optionLabel="label"
+              optionValue="value"
+              appendTo="body"
+              [placeholder]="'label.selectSort' | translate"
+              class="w-64"
+            />
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Advanced Search -->
+    @if (isAdvancedSearch()) {
+      <app-listview-advanced-search
+        [config]="config"
+        [isLoading]="isLoading()"
+        [filters]="searchCriteria"
+        [entityType]="entityType()"
+        [orderBy]="currentSortField()"
+        [ascending]="currentSortOrder() === 'asc'"
+        [advancedSearchClasses]="advancedSearchClasses()"
+        (search)="onAdvancedSearch($event)"
+        (removeCriterion)="onRemoveSearchCriterion($event)"
+        (clearSearch)="onClearAdvancedSearch()"
+        (switchToSimple)="switchToSimpleSearch()"
+        (myOfficeFilterChanged)="onMyOfficeFilterChanged($event)"
+        (applySavedFilter)="onApplySavedFilter($event)">
+      </app-listview-advanced-search>
+    }
+  }
+
+    <!-- Card view -->
+      <app-listview-card
+        [columns]="columns()"
+        [config]="config"
+        [data]="currentPageData()"
+        [totalRecords]="totalRecordsCount()"
+        [loading]="isLoading()"
+        [error]="hasError()"
+        [hasMoreData]="hasMoreDataAvailable()"
+        [isLoadingMore]="isLoadingMore()"
+        (loadMore)="onLoadMore()"
+        (sortChange)="onSortChange($event)"
+        (rowClick)="onRowClick($event)"
+      >
+        @if (actionsTemplate) {
+          <ng-template #cardActionsTemplate let-rowData>
+            <ng-container
+              [ngTemplateOutlet]="actionsTemplate"
+              [ngTemplateOutletContext]="{ $implicit: rowData }"
+            ></ng-container>
+          </ng-template>
+        }
+      </app-listview-card>
+</div>
