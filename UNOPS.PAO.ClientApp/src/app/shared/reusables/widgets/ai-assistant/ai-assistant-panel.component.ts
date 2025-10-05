@@ -19,8 +19,8 @@ import { SafeUrlPipe } from './safe-url.pipe';
 import { Router } from '@angular/router';
 import { GlobalFilterService } from '@core/services/global-filter.service';
 import { HttpClient } from '@angular/common/http';
-import { AuthService } from '../../../../essentials/services/auth.service';
-import { AiAssistantService } from '../../../../features/internal/services/ai-assistant.service';
+import { AuthService } from '@core/services/auth.service';
+import { AiAssistantService } from '@ai/services/ai-assistant.service';
 import { ChatSession, ChatMessage, ChatFile } from './ai-assistant.model';
 import { Observable, map, catchError, of } from 'rxjs';
 import { DynamicContentService } from './dynamic-content.service';
@@ -228,6 +228,10 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
             
             // ALWAYS process the current chunk (it's not in the buffer)
             this.dynamicContentService.processChunk(chunk);
+            
+            // Mark that messages have been rendered via streaming
+            // This prevents the reactive effect from clearing and re-rendering when streaming completes
+            this.hasRenderedInitialMessages = true;
           } else {
             // ViewChild not yet available, buffer the chunk
             this.chunkBuffer.push(chunk);
@@ -699,13 +703,13 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   // Star and Archive methods
   toggleStar(): void {
     this.aiAssistantService.toggleStar().subscribe({
-      error: (error) => console.error('Failed to toggle star:', error)
+      error: (error: any) => console.error('Failed to toggle star:', error)
     });
   }
 
   toggleArchive(): void {
     this.aiAssistantService.toggleArchive().subscribe({
-      error: (error) => console.error('Failed to toggle archive:', error)
+      error: (error: any) => console.error('Failed to toggle archive:', error)
     });
   }
 
@@ -742,7 +746,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     // Refresh sessions when opening dropdown
     if (!this.sessionMenu.visible) {
       this.aiAssistantService.loadUserSessions().subscribe({
-        error: (error) => console.error('Failed to load sessions:', error)
+        error: (error: any) => console.error('Failed to load sessions:', error)
       });
     }
     this.sessionMenu.toggle(event);
@@ -752,7 +756,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     const sessions = this.aiAssistantService.userSessions();
     const currentSessionId = this.aiAssistantService.currentSessionId();
     
-    const validSessions = sessions.filter(session => session.id);
+    const validSessions = sessions.filter((session: any) => session.id);
     
     if (validSessions.length === 0) {
       // Show placeholder when no sessions exist
@@ -768,7 +772,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     
     // Sort sessions by lastUpdated timestamp in descending order (most recent first)
     const sortedSessions = validSessions
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         const aTime = a.lastUpdated || a.startTime || 0;
         const bTime = b.lastUpdated || b.startTime || 0;
         // Handle both numeric timestamps and date strings for backward compatibility
@@ -788,7 +792,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
         separator: true
       },
       // Add chat sessions
-      ...sortedSessions.map(session => ({
+      ...sortedSessions.map((session: any) => ({
         label: session.title || this.translateService.instant('aiAssistant.untitledChat'),
         icon: session.id === currentSessionId ? 'pi pi-check' : 'pi pi-comment',
         command: () => this.switchToSession(session.id!),
@@ -1330,8 +1334,8 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   private loadUserInfo(): void {
     // Get email from claims to pass as parameter
     this.authService.user().subscribe({
-      next: (claims) => {
-        const emailClaim = claims.find(c => c.type === 'email' || 
+      next: (claims: any) => {
+        const emailClaim = claims.find((c: any) => c.type === 'email' || 
                                      c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
         
         const email = emailClaim?.value;

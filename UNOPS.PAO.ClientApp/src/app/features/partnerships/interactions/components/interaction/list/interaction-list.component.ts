@@ -21,7 +21,7 @@ import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { OverlayPanel } from 'primeng/overlaypanel';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { PageContextService } from '../../../../../common/services/page-context.service';
+import { PageContextService } from '@shared/services/page-context.service';
 
 /**
  * @uiEntity InteractionList

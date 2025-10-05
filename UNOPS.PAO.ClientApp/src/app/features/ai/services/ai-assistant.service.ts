@@ -21,8 +21,8 @@ import {
   ChatMessage, 
   ChatFile,
   ContentPart
-} from '../../../common/reusables/widgets/ai-assistant/ai-assistant.model';
-import { ComponentResolverService } from './component-resolver.service';
+} from '@shared/reusables/widgets/ai-assistant/ai-assistant.model';
+import { ComponentResolverService } from '@features/shared/services/component-resolver.service';
 
 
 // Legacy interface - will be replaced by unified ChatSession

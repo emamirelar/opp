@@ -17,16 +17,16 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {DialogModule} from 'primeng/dialog';
 import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.component';
 import {BusinessCardScannerComponent} from './business-card-scanner/business-card-scanner.component';
-import {ListviewComponent} from '../../../../../common/pages/components/listview/listview.component';
+import {ListviewComponent} from '@shared/pages/components/listview/listview.component';
 import {ContactService} from '../../../services/contact.service';
-import {FeedbackDialogService} from '../../../../../common/services/feedback-dialog.service';
-import {ListViewColumn, ListViewConfig, SearchParams} from '../../../../../common/pages/components/listview/listview.model';
+import {FeedbackDialogService} from '@shared/services/feedback-dialog.service';
+import {ListViewColumn, ListViewConfig, SearchParams} from '@shared/pages/components/listview/listview.model';
 import {Contact} from '../../../models/contact.model';
-import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
-import { SearchField } from '../../../../../common/services/search-parser.service';
-import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
-import { EntityConfigurationService } from '../../../services/entity-configuration.service';
-import { PageContextService } from '../../../../../common/services/page-context.service';
+import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
+import { SearchField } from '@shared/services/search-parser.service';
+import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
+import { PageContextService } from '@shared/services/page-context.service';
 
 /**
  * @uiEntity Contact
@@ -217,14 +217,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
     this.entityConfigurationService.getEntityListViewConfiguration('Contact')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (columns) => {
+        next: (columns: any) => {
           // Convert backend columns to frontend format and add template functions
-          const processedColumns = columns.map(col => this.processColumn(col));
+          const processedColumns = columns.map((col: any) => this.processColumn(col));
           this.contactColumns.set(processedColumns);
           this.columnsLoading.set(false);
           this.cdr.detectChanges();
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Failed to load contact columns:', error);
           // Fallback to default columns if API fails
           this.setFallbackColumns();

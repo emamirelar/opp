@@ -44,8 +44,8 @@ import { PermissionUtilityService } from '@core/services/permission-utility.serv
 import { AiPanelComponent } from '@shared/reusables/components/ai-panel/ai-panel.component';
 import { GeminiService } from '@ai/services/gemini.service';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
-import { PageContextService } from '../../../../../common/services/page-context.service';
-import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
+import { PageContextService } from '@shared/services/page-context.service';
+import { GoBackComponent } from '@shared/reusables/components/go-back/go-back.component';
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
 import { PartnerApprovalDialogComponent } from '../approval-dialog/partner-approval-dialog.component';

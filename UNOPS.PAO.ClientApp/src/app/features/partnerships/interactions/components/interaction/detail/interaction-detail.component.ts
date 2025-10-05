@@ -22,12 +22,12 @@ import { Interaction } from '@partnerships/interactions/models/interaction.model
 import { InteractionService } from '@partnerships/interactions/services/interaction.service';
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
 import { InteractionType } from '../../../models/interaction-type.enum';
-import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
-import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
-import { InteractionIconService } from '../../../../../common/services/interaction-icon.service';
-import { CachedDataService } from '../../../../../common/services/cached-data.service';
-import { GeminiService } from '../../../services/gemini.service';
-import { PageContextService } from '../../../../../common/services/page-context.service';
+import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { InteractionIconService } from '@shared/services/interaction-icon.service';
+import { CachedDataService } from '@shared/services/cached-data.service';
+import { GeminiService } from '@ai/services/gemini.service';
+import { PageContextService } from '@shared/services/page-context.service';
 
 @Component({
   selector: 'app-interaction-detail',
@@ -209,10 +209,10 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
     this.loading.set(true);
     this.error.set(null); // Clear any previous errors
     
-    this.interactionService.getById(Number(interactionId)).subscribe({
+    this.interactionService.getById(Number(id)).subscribe({
       next: (response) => {
         if (response.status === 404) {
-          this.error.set(this.translateService.instant('interaction.detail.error.notFound', { id: interactionId }));
+          this.error.set(this.translateService.instant('interaction.detail.error.notFound', { id: id }));
         } else if (response.body) {
           this.interaction.set(response.body);
           this.error.set(null);
@@ -221,10 +221,10 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
         }
         this.loading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading interaction:', error);
         const errorMessage = error.status === 404
-          ? this.translateService.instant('interaction.detail.error.notFound', { id: interactionId })
+          ? this.translateService.instant('interaction.detail.error.notFound', { id: id })
           : this.translateService.instant('interaction.detail.error.loadFailed', { status: error.status || this.translateService.instant('common.error.networkError') });
         this.error.set(errorMessage);
         this.loading.set(false);

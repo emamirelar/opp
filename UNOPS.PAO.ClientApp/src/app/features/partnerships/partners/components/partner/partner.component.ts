@@ -21,7 +21,7 @@ import { EntityConfigurationService } from '@features/shared/services/entity-con
 import { CachedDataService } from '@shared/services/cached-data.service';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { PageContextService } from '../../../../common/services/page-context.service';
+import { PageContextService } from '@shared/services/page-context.service';
 
 
 /**

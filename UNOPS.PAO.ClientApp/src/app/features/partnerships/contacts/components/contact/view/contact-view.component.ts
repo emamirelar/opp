@@ -45,10 +45,8 @@ import { ContactEditDialogFooterComponent } from '../edit-dialog/footer/contact-
 import { ContactEditDialogComponent } from '../edit-dialog/contact-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { Contact } from '../../../models/contact.model';
-import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { PageContextService } from '../../../../../common/services/page-context.service';
+import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PageContextService } from '@shared/services/page-context.service';
 
 
 /**
