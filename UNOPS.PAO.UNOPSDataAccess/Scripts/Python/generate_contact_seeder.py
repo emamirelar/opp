@@ -4,6 +4,9 @@ Python script to generate ContactSeeder.cs from CSV data.
 This script reads the Contacts CSV file and generates a C# seeder class
 with individual contact objects, similar to PartnerSeeder.cs format.
 
+The generated seeder includes logic to check for existing contacts in the database
+by matching the ContactNumber field with the Id from the CSV file, preventing duplicates.
+
 File Structure:
 - Script location: UNOPS.PAO.UNOPSDataAccess/Scripts/Python/
 - CSV input: UNOPS.PAO.UNOPSDataAccess/Scripts/CSV/Contacts_20251002 - Sheet2.csv
@@ -100,6 +103,7 @@ def generate_contact_seeder(csv_file_path: str, output_file_path: str) -> None:
     
     contacts: List[str] = []
     skipped_count = 0
+    existing_count = 0
     
     # Read CSV and generate contact objects
     try:
@@ -143,23 +147,30 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
     {{
         public static async Task SeedContactsAsync(UNOPSAppDbContext context)
         {{
-            if (await context.Contacts.AnyAsync())
-            {{
-                return;
-            }}
-
             // Create mapping from Partner ErpDimValue to PartnerId
             var partnerMapping = await context.Partners
                 .Where(p => p.ErpDimValue.HasValue)
                 .ToDictionaryAsync(p => p.ErpDimValue.Value, p => p.Id);
+
+            // Get existing contact numbers to avoid duplicates
+            var existingContactNumbers = await context.Contacts
+                .Where(c => !string.IsNullOrEmpty(c.ContactNumber))
+                .Select(c => c.ContactNumber)
+                .ToHashSetAsync();
 
             var contacts = new List<UNOPSContact>
             {{
 {chr(10).join(contacts)}
             }};
 
-            await context.Contacts.AddRangeAsync(contacts);
-            await context.SaveChangesAsync();
+            // Filter out contacts that already exist in the database
+            var newContacts = contacts.Where(c => !existingContactNumbers.Contains(c.ContactNumber)).ToList();
+
+            if (newContacts.Any())
+            {{
+                await context.Contacts.AddRangeAsync(newContacts);
+                await context.SaveChangesAsync();
+            }}
         }}
     }}
 }}"""
@@ -170,6 +181,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
             file.write(csharp_content)
         print(f"Successfully generated ContactSeeder.cs with {len(contacts)} contacts")
         print(f"Skipped {skipped_count} contacts due to missing or invalid PartnerId")
+        print(f"Note: The seeder will check for existing contacts by ContactNumber and only add new ones")
         print(f"Output file: {output_file_path}")
     except Exception as e:
         print(f"Error writing output file: {e}")

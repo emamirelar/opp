@@ -12,15 +12,16 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
     {
         public static async Task SeedContactsAsync(UNOPSAppDbContext context)
         {
-            if (await context.Contacts.AnyAsync())
-            {
-                return;
-            }
-
             // Create mapping from Partner ErpDimValue to PartnerId
             var partnerMapping = await context.Partners
                 .Where(p => p.ErpDimValue.HasValue)
                 .ToDictionaryAsync(p => p.ErpDimValue.Value, p => p.Id);
+
+            // Get existing contact numbers to avoid duplicates
+            var existingContactNumbers = await context.Contacts
+                .Where(c => !string.IsNullOrEmpty(c.ContactNumber))
+                .Select(c => c.ContactNumber)
+                .ToHashSetAsync();
 
             var contacts = new List<UNOPSContact>
             {
@@ -23546,8 +23547,14 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 }
             };
 
-            await context.Contacts.AddRangeAsync(contacts);
-            await context.SaveChangesAsync();
+            // Filter out contacts that already exist in the database
+            var newContacts = contacts.Where(c => !existingContactNumbers.Contains(c.ContactNumber)).ToList();
+
+            if (newContacts.Any())
+            {
+                await context.Contacts.AddRangeAsync(newContacts);
+                await context.SaveChangesAsync();
+            }
         }
     }
 }
