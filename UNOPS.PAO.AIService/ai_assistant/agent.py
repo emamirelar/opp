@@ -141,6 +141,67 @@ def format_entities_metadata_as_markdown(metadata):
     return result
 
 
+def format_page_context_for_instruction(page_context: dict) -> str:
+    """Format page context data into a concise instruction-friendly string"""
+    if not page_context:
+        return ""
+    
+    component_data = page_context.get('component_data', {})
+    context_parts = []
+    
+    # Add route information
+    if 'route' in page_context:
+        route = page_context['route']
+        context_parts.append(f"**Current Page:** {route.get('path', 'Unknown')}")
+    
+    # Add geo context information
+    if 'user_geo_stats' in page_context:
+        geo_stats = page_context['user_geo_stats']
+        location = geo_stats.get('location', {})
+        if location and location.get('status') == 'success':
+            geo_info = []
+            if location.get('city'):
+                geo_info.append(location['city'])
+            if location.get('country'):
+                geo_info.append(location['country'])
+            if location.get('timezone'):
+                geo_info.append(f"Timezone: {location['timezone']}")
+            
+            if geo_info:
+                context_parts.append(f"\n**User Location:** {', '.join(geo_info)}")
+        
+        # Add current datetime if available
+        if geo_stats.get('current_datetime'):
+            context_parts.append(f"**Current DateTime (User's timezone):** {geo_stats['current_datetime']}")
+    
+    # Extract the main data object (recordData, partner, contact, interactions, etc.)
+    if 'recordData' in component_data:
+        record = component_data['recordData']
+        # Extract key fields only to keep it concise
+        if isinstance(record, dict):
+            key_fields = {}
+            for key in ['id', 'name', 'partnerCategoryName', 'status', 'partnerGroupName']:
+                if key in record:
+                    key_fields[key] = record[key]
+            context_parts.append(f"\n**Currently Viewing Entity:** {key_fields}")
+        else:
+            context_parts.append(f"\n**Currently Viewing Entity:** {record}")
+    
+    # Add any other relevant data from component_data
+    for key, value in component_data.items():
+        if key in ['partner', 'contact', 'interaction'] and key != 'recordData':
+            # Extract key fields only
+            if isinstance(value, dict):
+                key_fields = {k: v for k, v in value.items() if k in ['id', 'name', 'status']}
+                context_parts.append(f"\n**{key.title()}:** {key_fields}")
+            else:
+                context_parts.append(f"\n**{key.title()}:** {value}")
+    
+    if context_parts:
+        return "\n\n---\n**CURRENT PAGE CONTEXT:**\n" + "\n".join(context_parts) + "\n---\n"
+    return ""
+
+
 google_search_agent = LlmAgent(
     model="gemini-2.0-flash",
     name="google_search_agent",
@@ -155,6 +216,20 @@ You are an experienced Partnerships Specialist for the United Nations Office for
 Your goal is to help the user with their request.
 You will use the tools provided to you to help the user.
 Respond in well-formed markdown.
+
+## IMPORTANT: Page Context Awareness
+
+The user's messages will include **CURRENT PAGE CONTEXT** information that tells you:
+- What page the user is currently viewing
+- What data is loaded on their screen (partner details, contact information, interaction records, etc.)
+- The specific entity they are looking at (with full details)
+
+**ALWAYS use this context to understand what the user is referring to.** For example:
+- If they say "Tell me about this partner" and the context shows they're viewing "The World Bank" (ID: 443), you know they mean The World Bank
+- If they ask "What contacts do we have?" and the context shows a partner record with associated contacts, use that data
+- If they ask "Summarize this" and there's a record loaded, summarize that specific record
+
+**DO NOT ask the user to clarify which entity they mean if the context already provides it.**
 
 ## UNOPS PAO System Entities and API Reference
 
@@ -221,3 +296,52 @@ root_agent = LlmAgent(
     ),
     tools=[invoke_app_api, search_corp_vector_store, AgentTool(google_search_agent)]
 )
+
+
+def create_agent_with_context(page_context: dict = None) -> LlmAgent:
+    """
+    Create an agent instance with optional page context injected into the instruction.
+    This allows dynamic context without polluting the conversation history.
+    
+    Args:
+        page_context: Optional page context data from the frontend
+        
+    Returns:
+        LlmAgent instance with context-aware instruction
+    """
+    # Build the instruction with optional page context
+    context_instruction = ""
+    if page_context:
+        context_instruction = format_page_context_for_instruction(page_context)
+    
+    # Combine base instruction with context
+    full_instruction = instruction
+    if context_instruction:
+        # Insert context right after the Page Context Awareness section
+        full_instruction = instruction.replace(
+            "**DO NOT ask the user to clarify which entity they mean if the context already provides it.**",
+            f"**DO NOT ask the user to clarify which entity they mean if the context already provides it.**\n\n{context_instruction}"
+        )
+    
+    return LlmAgent(
+        name="root_agent",
+        description="Root agent for the AI assistant",
+        instruction=full_instruction,
+        model="gemini-2.5-flash",
+        generate_content_config=types.GenerateContentConfig(
+            temperature=0.2,
+            safety_settings=[
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    threshold=types.HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
+                )
+            ]
+        ),
+        planner=BuiltInPlanner(
+            thinking_config=types.ThinkingConfig(
+                include_thoughts=True,
+                thinking_budget=1024,
+            )
+        ),
+        tools=[invoke_app_api, search_corp_vector_store, AgentTool(google_search_agent)]
+    )

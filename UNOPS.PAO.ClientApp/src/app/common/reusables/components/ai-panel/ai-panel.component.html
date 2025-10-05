@@ -27,7 +27,7 @@
     </div>
   } @else if (shouldShowContent()) {
     <div class="flex flex-col gap-4">
-      <div [innerHTML]="displayContent() | markdown" [class]="'markdown-content ' + customStyles()"></div>
+      <div [innerHTML]="content() | markdown" [class]="'markdown-content ' + customStyles() + (shouldTruncate() ? ' content-truncated' : ' content-full')"></div>
 
       @if (showSeeMoreButton() || showSeeLessButton()) {
         <div class="flex justify-center -mb-2">

@@ -29,7 +29,6 @@ import { Partner } from '../../../../features/internal/models/partner.model';
 import { Contact } from '../../../../features/internal/models/contact.model';
 import { Interaction } from '../../../../features/internal/models/interaction.model';
 import { DashboardCardComponent, DashboardCardConfig, DashboardCardFilter } from '../../../components/dashboard-card';
-import { DynamicContentTestComponent } from '../../../../features/internal/components/dynamic-content-test/dynamic-content-test.component';
 // import { InteractionType } from '../../../../features/internal/models/interaction-type.enum'; // Uncomment for dummy data testing
 
 interface DashboardData {
@@ -227,6 +226,18 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     const threshold = 750; // Horizontal layout needs 750px of content width
     
     // Use vertical layout only when measured content width is below threshold
+    return componentWidth > 0 && componentWidth < threshold;
+  });
+
+  // Computed signal to determine if dashboard cards should use single-column layout
+  // Based on content width, not screen size
+  shouldUseCardVerticalLayout = computed(() => {
+    const componentWidth = this.componentWidth();
+    
+    // For cards, we need more space since we're showing 3 columns
+    // Use single column layout when width is below 900px
+    const threshold = 900; // 3-column layout needs at least 900px
+    
     return componentWidth > 0 && componentWidth < threshold;
   });
 

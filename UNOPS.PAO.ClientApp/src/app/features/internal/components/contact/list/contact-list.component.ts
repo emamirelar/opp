@@ -26,6 +26,7 @@ import { ImportDialogService } from '../../../../../common/reusables/components/
 import { SearchField } from '../../../../../common/services/search-parser.service';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { EntityConfigurationService } from '../../../services/entity-configuration.service';
+import { PageContextService } from '../../../../../common/services/page-context.service';
 
 /**
  * @uiEntity Contact
@@ -77,6 +78,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   translateService = inject(TranslateService);
   cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
+  private pageContextService = inject(PageContextService);
 
   // Permission management using utility service
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Contact');
@@ -190,7 +192,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
   showBusinessCardScanner = signal(false);
 
   ngOnInit() {
-
+    // Register component data for AI Assistant
+    this.pageContextService.setComponentData(this);
 
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
@@ -323,6 +326,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Clear component data for AI Assistant
+    this.pageContextService.clearComponentData();
+    
     // No need to clear caches manually - utility service handles this
   }
 

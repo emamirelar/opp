@@ -63,6 +63,7 @@ const internalRoutes: Routes = [
                 component: ContactTabsComponent,
                 canActivate: [authGuard, routePermissionGuard],
                 data: { breadcrumb: 'Contact' },
+                runGuardsAndResolvers: 'paramsOrQueryParamsChange',
                 resolve: {
                   contactData: ContactDataResolver
                 },
@@ -108,6 +109,7 @@ const internalRoutes: Routes = [
             component: PartnerTabsComponent,
             canActivate: [authGuard, routePermissionGuard],
             data: { breadcrumb: 'Partner' },
+            runGuardsAndResolvers: 'paramsOrQueryParamsChange',
             resolve: {
               partnerData: PartnerDataResolver
             },
@@ -181,6 +183,7 @@ const internalRoutes: Routes = [
                 path: ':recordId',
                 component: PartnerTreeViewComponent,
                 data: { breadcrumb: 'Partner Tree View' },
+                runGuardsAndResolvers: 'paramsOrQueryParamsChange',
                 resolve: {
                   partnerTreeData: PartnerTreeDataResolver
                 },

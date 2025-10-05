@@ -46,6 +46,7 @@ import { Contact } from '../../../models/contact.model';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { PageContextService } from '../../../../../common/services/page-context.service';
 
 
 /**
@@ -171,6 +172,7 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy {
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
   confirmationService = inject(ConfirmationService);
+  private pageContextService = inject(PageContextService);
 
   // Permission management using utility service
   private permissionUtils = this.permissionUtilityService.createInstancePermissions('Contact');
@@ -198,6 +200,9 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Clear component data for AI Assistant
+    this.pageContextService.clearComponentData();
+    
     this.langChangeSubscription?.unsubscribe();
     if (this.widthTrackingInterval) {
       clearInterval(this.widthTrackingInterval);
@@ -208,46 +213,35 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Register component data for AI Assistant
+    this.pageContextService.setComponentData(this);
     
-    // If recordId is provided via Input (AI layout), load data directly
-    if (this.recordId && this.recordId !== '') {
+    // Load initial data if recordId is already set
+    if (this.recordId) {
       this._loadRecordDetails();
-      return;
     }
-
-    // Otherwise, use the route-based logic (normal navigation)
-    this.activatedRoute.paramMap.subscribe({
-      next: (paramMap) => {
-        this.recordId = paramMap.get("recordId") || '';
-
-        if (this.recordId != '') {
-          // Check if data is already available from the resolver
-          this.activatedRoute.parent?.data.subscribe(data => {
-            if (data['contactData']) {
-              const contactData = data['contactData'];
-              this.recordData.set(contactData);
-              
-              // Extract permissions from the resolver data if they exist
-              if (contactData.permissions) {
-                this.recordPermissions.set({
-                  entity: 'Contact',
-                  hasAccess: true,
-                  permissions: contactData.permissions
-                });
-              }
-              
-              this.infoLoading.set(false);
-            } else {
-              // Fallback to loading details directly if resolver data isn't available
-              this._loadRecordDetails();
-            }
-          });
+    
+    // ALWAYS subscribe to route parameter changes, regardless of initial recordId
+    // Note: recordId is on the parent route (ContactTabsComponent), not the child route
+    // So we need to subscribe to parent.paramMap, not paramMap
+    const parent = this.activatedRoute.parent;
+    if (parent) {
+      parent.paramMap.subscribe({
+        next: (paramMap) => {
+          const newRecordId = paramMap.get("recordId") || '';
           
-          // Load permissions for this specific contact
-          // Permissions are now extracted from the contact response directly
+          // ALWAYS reload when recordId changes
+          if (newRecordId && newRecordId !== this.recordId) {
+            this.recordId = newRecordId;
+            this._loadRecordDetails();
+          } else if (newRecordId && !this.recordId) {
+            // First load when recordId is empty
+            this.recordId = newRecordId;
+            this._loadRecordDetails();
+          }
         }
-      }
-    });
+      });
+    }
 
     // Width tracking will be initialized in ngAfterViewInit
   }

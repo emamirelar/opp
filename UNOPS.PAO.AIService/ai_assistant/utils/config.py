@@ -150,6 +150,7 @@ def get_environment() -> str:
 def get_application_name() -> str:
     """Get the application name"""
     config = get_config()
+    # print(f"Application name: {config.get('branding', {}).get('application_name', 'AI Agent')}")
     return config.get('branding', {}).get('application_name', 'AI Agent')
 
 

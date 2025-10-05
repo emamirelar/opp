@@ -48,6 +48,10 @@ export interface AiAssistantSessionRequest {
     endTime?: string | null;
     status?: string;
     chats?: ChatHistoryItem[];
+    lastUpdated?: string;
+    title?: string;
+    starred?: boolean;
+    archived?: boolean;
   }
 
   export type Sender = 'model' | 'user';

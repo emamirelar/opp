@@ -166,11 +166,11 @@
 
             @if(recordData().partnerFocalPointName || recordData().partnerFocalPointUserName || recordData().liaisonOfficeName || recordData().liaisonOfficeId){
             <div class="unops-p-md unops-mb-md unops-rounded-md" style="background-color: var(--unops-surface-cool); border: 1px solid var(--unops-neutral-200);">
+              @if(recordData().partnerFocalPointName || recordData().partnerFocalPointUserName) {
               <div class="unops-flex unops-items-center unops-gap-sm unops-mb-sm">
                 <i class="pi pi-user unops-text-success" style="font-size: 1.2rem;"></i>
                 <div class="unops-text-body-large unops-text-secondary">{{ 'label.partner.partnerFocalPoint' | translate }}</div>
               </div>
-              @if(recordData().partnerFocalPointName || recordData().partnerFocalPointUserName) {
                <div class="unops-pl-lg unops-mb-sm">
                  <a [href]="'mailto:' + recordData().partnerFocalPointUserName" 
                     class="unops-text-body-large unops-text-secondary hover:unops-text-primary unops-transition cursor-pointer"

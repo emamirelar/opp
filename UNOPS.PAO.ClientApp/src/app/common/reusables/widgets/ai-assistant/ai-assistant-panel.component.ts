@@ -21,9 +21,10 @@ import { GlobalFilterService } from '../../../../services/global-filter.service'
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../essentials/services/auth.service';
 import { AiAssistantService } from '../../../../features/internal/services/ai-assistant.service';
-import { SuggestionsResponse, SuggestionItem } from './ai-assistant.model';
+import { ChatSession, ChatMessage, ChatFile } from './ai-assistant.model';
 import { Observable, map, catchError, of } from 'rxjs';
 import { DynamicContentService } from './dynamic-content.service';
+import { PageContextService } from '../../../services/page-context.service';
 
 @Component({
   selector: 'app-ai-assistant-panel',
@@ -77,6 +78,10 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     return false;
   });
 
+  // UNIFIED MODEL STATE - Use ChatSession from service
+  currentChatSession = computed(() => this.aiAssistantService.currentChatSession());
+  chatMessages = computed(() => this.currentChatSession()?.chatMessages || []);
+  
   firstScroll = signal(true);
   message = signal('');
   selectedFiles = signal<{ file: File, name: string, content: string }[]>([]);
@@ -102,12 +107,6 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   // User info for personalized greeting
   userName = signal<string>('');
   
-  // Smart suggestions from AI
-  smartSuggestions = signal<SuggestionItem[]>([]);
-  suggestionsLoading = signal(false);
-  showSuggestions = signal(true);
-  suggestionsError = signal(false);
-  
   // Resize listener reference for cleanup
   private resizeListener?: () => void;
   private visualViewportListener?: () => void;
@@ -117,7 +116,10 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   
   // Buffer for chunks that arrive before ViewChild is available
   private chunkBuffer: any[] = [];
+  private isSwitchingSession: boolean = false; // Flag to prevent reactive effect during session switching
   private viewInitialized = false;
+  private hasRenderedInitialMessages = false; // Flag to prevent duplicate rendering of initial messages
+  private isCurrentlyRendering = false; // Flag to prevent concurrent rendering calls
   
   // Check if AI is currently in fullscreen mode (on AI route)
   isInFullscreenMode = computed(() => {
@@ -133,32 +135,47 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     private globalFilterService: GlobalFilterService,
     private http: HttpClient,
     private authService: AuthService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private pageContextService: PageContextService
   ) {
-    effect(() => {
-      const chatHistory = this.aiAssistantService.chatHistory();
-      if (chatHistory.length > 0) {
-        this.scrollToBottom(!this.firstScroll());
-      }
-      if (this.firstScroll()) {
-        this.firstScroll.set(false);
-      }
-    });
-
-    // Build session menu items whenever sessions or current session change
+    // Effects must be in constructor (injection context)
+    
+    // Manual session menu building - call when sessions change
     effect(() => {
       const sessions = this.aiAssistantService.userSessions();
-      const currentSessionId = this.aiAssistantService.currentSessionId();
       this.buildSessionMenuItems();
     });
-
-    // Manage dots animation based on loading state
+    
+    // Manual dots animation management - call when loading state changes
     effect(() => {
       const isLoading = this.aiAssistantService.isLoading();
       if (isLoading) {
         this.startGeneratingDotsAnimation();
       } else {
         this.stopGeneratingDotsAnimation();
+      }
+    });
+    
+    // Reactive rendering effect - render messages when they become available
+    effect(() => {
+      const messages = this.chatMessages();
+      const isLoading = this.aiAssistantService.isLoading();
+      
+      // Only render if:
+      // 1. We have messages
+      // 2. Not currently loading/streaming
+      // 3. Haven't rendered these messages yet
+      // 4. View is initialized
+      // 5. Not switching sessions
+      if (messages.length > 0 && 
+          !isLoading && 
+          !this.hasRenderedInitialMessages && 
+          this.viewInitialized && 
+          !this.isSwitchingSession) {
+        // Use setTimeout to ensure this runs after the current change detection cycle
+        setTimeout(() => {
+          this.renderExistingMessages();
+        }, 100);
       }
     });
   }
@@ -172,10 +189,15 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       this.aiAssistantService.setViewContainerRef(this.viewContainerRef);
     }
     
-    // Load smart suggestions
-    this.loadSmartSuggestions();
+    // Load user sessions on initialization
+    this.aiAssistantService.loadUserSessions().subscribe({
+      next: () => {
+        this.buildSessionMenuItems();
+      },
+      error: (error) => console.error('Failed to load initial sessions:', error)
+    });
     
-    // Listen for chat history changes to scroll to bottom for new messages
+    // Manual scroll handling - no automatic effects
     this.aiAssistantService.chatHistoryChanged$.subscribe(() => {
       // Use a small delay to ensure the DOM has updated
       setTimeout(() => {
@@ -204,7 +226,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
               this.chunkBuffer = [];
             }
             
-            // Now process the current chunk
+            // ALWAYS process the current chunk (it's not in the buffer)
             this.dynamicContentService.processChunk(chunk);
           } else {
             // ViewChild not yet available, buffer the chunk
@@ -242,19 +264,26 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     // Mark view as initialized and process any buffered chunks
     this.viewInitialized = true;
     
-    if (this.chunkBuffer.length > 0) {
-      // Set the view container once
-      if (this.dynamicContentContainer) {
-        this.dynamicContentService.setViewContainer(this.dynamicContentContainer);
-        this.dynamicContentService.setCardClickCallback(this.onCardClicked.bind(this));
-        
-        // Process all buffered chunks
+    if (this.dynamicContentContainer) {
+      this.dynamicContentService.setViewContainer(this.dynamicContentContainer);
+      this.dynamicContentService.setCardClickCallback(this.onCardClicked.bind(this));
+      
+      // Process any buffered chunks first
+      if (this.chunkBuffer.length > 0) {
         this.chunkBuffer.forEach((chunk, index) => {
           this.dynamicContentService.processChunk(chunk);
         });
-        
-        // Clear the buffer
         this.chunkBuffer = [];
+      }
+      
+      // Check if there are existing messages in the session that need to be rendered
+      // This handles the case when switching between sidebar and fullscreen modes
+      const existingMessages = this.chatMessages();
+      if (existingMessages.length > 0 && !this.aiAssistantService.isLoading() && !this.hasRenderedInitialMessages) {
+        // Use setTimeout to ensure the view is fully initialized
+        setTimeout(() => {
+          this.renderExistingMessages();
+        }, 50);
       }
     }
   }
@@ -314,10 +343,6 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   updateMessage(value: string): void {
     this.ngZone.run(() => {
       this.message.set(value);
-      // Hide suggestions when user starts typing
-      if (value.trim() && this.showSuggestions()) {
-        this.showSuggestions.set(false);
-      }
       this.cdr.detectChanges();
     });
   }
@@ -391,67 +416,6 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     this.selectedFiles.update(files => files.filter((_, i) => i !== index));
   }
 
-  // Load smart suggestions from the API
-  private loadSmartSuggestions(): void {
-    this.suggestionsLoading.set(true);
-    this.suggestionsError.set(false);
-
-    /*this.aiAssistantService.getSuggestions().subscribe({
-      next: (response: SuggestionsResponse) => {
-        if (response.suggestions && response.suggestions.length > 0) {
-          const suggestions: SuggestionItem[] = response.suggestions.map((suggestion, index) => ({
-            text: suggestion,
-            icon: this.getSuggestionIcon(suggestion),
-            action: () => this.onSuggestionClick(suggestion)
-          }));
-          this.smartSuggestions.set(suggestions);
-          this.suggestionsError.set(false);
-        }
-        this.suggestionsLoading.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading suggestions:', error);
-        this.suggestionsLoading.set(false);
-        this.suggestionsError.set(true);
-      }
-    });*/
-  }
-
-
-
-  // Get appropriate icon for suggestion based on content
-  private getSuggestionIcon(suggestion: string): string {
-    const lowerSuggestion = suggestion.toLowerCase();
-    
-    if (lowerSuggestion.includes('search') || lowerSuggestion.includes('find')) {
-      return 'pi pi-search';
-    } else if (lowerSuggestion.includes('create') || lowerSuggestion.includes('generate')) {
-      return 'pi pi-file-edit';
-    } else if (lowerSuggestion.includes('chart') || lowerSuggestion.includes('visualize')) {
-      return 'pi pi-chart-line';
-    } else if (lowerSuggestion.includes('export') || lowerSuggestion.includes('download')) {
-      return 'pi pi-download';
-    } else if (lowerSuggestion.includes('update') || lowerSuggestion.includes('edit')) {
-      return 'pi pi-pencil';
-    } else if (lowerSuggestion.includes('partner') || lowerSuggestion.includes('contact')) {
-      return 'pi pi-users';
-    } else {
-      return 'pi pi-lightbulb';
-    }
-  }
-
-  // Handle suggestion click
-  private onSuggestionClick(suggestion: string): void {
-    this.message.set(suggestion);
-    this.sendMessage();
-    this.showSuggestions.set(false); // Hide suggestions after selection
-  }
-
-  // Toggle suggestions visibility
-  toggleSuggestions(): void {
-    this.showSuggestions.set(!this.showSuggestions());
-  }
-
   // Drag and drop handlers
   onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -506,37 +470,96 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     }
   }
 
-  // Message handling
+  // UNIFIED MESSAGE HANDLING - Works with ChatSession model
   sendMessage(): void {
+    // Ensure view container is available before processing
+    if (!this.dynamicContentContainer) {
+      console.warn('⚠️ Dynamic content container not available, cannot send message');
+      return;
+    }
+
     const currentMessage = this.message();
     const currentFiles = this.selectedFiles();
 
     if (currentMessage.trim() || currentFiles.length > 0) {
-      // IMPORTANT: Clear all dynamic components and buffer before sending a new message
-      // This prevents old components from interfering with new streaming content
-      this.dynamicContentService.clearAllComponents();
-      this.chunkBuffer = [];
-      
       this.ngZone.run(() => {
         this.message.set('');
         this.cdr.detectChanges();
       });
 
-      const chatFiles = currentFiles.map(f => ({
+      const chatFiles: ChatFile[] = currentFiles.map(f => ({
         file: f.file,
         name: f.name,
         content: ''
       }));
 
       // Build enhanced state object with screen context parameters for the enhanced screen context agent
-      const state = {
-        screen_url: this.extractCurrentRoute(),
-        user_focus_context: this.rightPanelEntityType && this.rightPanelEntityId ? 
-          `/${this.rightPanelEntityType.toLowerCase()}s/${this.rightPanelEntityId}` : '',
-        user_email: localStorage.getItem('user_email')
+      const state = this.buildMessageState();
+
+      // 1. Create proper USER message object (same as service)
+      const userMessage: ChatMessage = {
+        id: this.generateId(),
+        timestamp: Date.now(),
+        invocationId: this.generateInvocationId(),
+        role: "user",
+        content: {
+          parts: [{ 
+            text: currentMessage,
+            partial: false // User messages are always complete
+          }],
+          role: "user"
+        },
+        actions: { stateDelta: {}, artifactDelta: {}, requestedAuthConfigs: {} },
+        longRunningToolIds: [],
+        isUser: true,
+        files: chatFiles,
+        sources: [],
+        suggestedUserResponses: []
       };
 
-      this.aiAssistantService.sendMessage(currentMessage, chatFiles, state).subscribe({
+      // 2. Add to current ChatSession's chatMessages array (single source of truth)
+      const currentSession = this.aiAssistantService.currentChatSession();
+      if (currentSession) {
+        currentSession.chatMessages.push(userMessage);
+        // Manually emit chat history change for new user message
+        this.aiAssistantService.emitChatHistoryChanged();
+      } else {
+        // Create new ChatSession if none exists
+        const newTitle = currentMessage.substring(0, 200) + (currentMessage.length > 200 ? "..." : "");
+        this.aiAssistantService.currentChatSession.set({
+          session: {
+            id: '', // Will be set by server
+            timestamp: Date.now(),
+            userId: this.getCurrentUserId(),
+            status: "Active",
+            title: newTitle,
+            starred: false,
+            archived: false
+          },
+          chatMessages: [userMessage]
+        });
+        // Update the sessionTitle signal immediately
+        this.aiAssistantService.sessionTitle.set(newTitle);
+        // Manually emit chat history change for new session
+        this.aiAssistantService.emitChatHistoryChanged();
+      }
+
+      // Mark as no longer first page load when user sends first message
+      if (this.aiAssistantService.isFirstPageLoad()) {
+        this.aiAssistantService.isFirstPageLoad.set(false);
+      }
+
+      // 3. Process user message immediately for instant feedback
+      if (this.dynamicContentContainer) {
+        this.dynamicContentService.setViewContainer(this.dynamicContentContainer);
+        this.dynamicContentService.setCardClickCallback(this.onCardClicked.bind(this));
+        this.dynamicContentService.processChunk(userMessage);
+      }
+
+      // 4. Send to server directly (service will handle streaming response)
+      const sessionId = this.aiAssistantService.currentSessionId() || '';
+      this.aiAssistantService.isLoading.set(true);
+      this.aiAssistantService.sendMessageToServer(sessionId, userMessage, chatFiles, state).subscribe({
         next: () => {
           this.ngZone.run(() => {
             this.selectedFiles.set([]);
@@ -550,71 +573,6 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
           });
         }
       });
-    }
-  }
-
-  // Extract URL structure generically by skipping prefixes
-  private extractUrlStructure(): {entity: string, id: number|null, section: string|null, queryParams: string} {
-    try {
-      const url = new URL(window.location.href);
-      const pathSegments = url.pathname.split('/').filter(segment => segment.length > 0);
-      const queryParams = url.search;
-      
-      // Skip first segment (prefix) generically
-      const meaningfulSegments = pathSegments.slice(1);
-      
-      let entity = '';
-      let id: number | null = null;
-      let section: string | null = null;
-      
-      if (meaningfulSegments.length > 0) {
-        // First meaningful segment is the entity
-        const rawEntity = meaningfulSegments[0];
-        
-        // Normalize entity name
-        if (rawEntity === 'partners') {
-          entity = 'Partner';
-        } else if (rawEntity === 'contacts') {
-          entity = 'Contact';
-        } else if (rawEntity === 'interactions') {
-          entity = 'Interaction';
-        } else if (rawEntity === 'partner-tree') {
-          entity = 'PartnerTree';
-        } else {
-          // Capitalize first letter for any other entity
-          entity = rawEntity.charAt(0).toUpperCase() + rawEntity.slice(1);
-        }
-        
-        // Second segment might be an ID
-        if (meaningfulSegments.length > 1) {
-          const idSegment = meaningfulSegments[1];
-          const parsedId = parseInt(idSegment, 10);
-          if (!isNaN(parsedId)) {
-            id = parsedId;
-          }
-        }
-        
-        // Third segment might be a section
-        if (meaningfulSegments.length > 2) {
-          section = meaningfulSegments[2];
-        }
-      }
-      
-      return {
-        entity,
-        id,
-        section,
-        queryParams
-      };
-      
-    } catch (error) {
-      console.error('Error extracting URL structure:', error);
-      return {
-        entity: '',
-        id: null,
-        section: null,
-        queryParams: ''
-      };
     }
   }
 
@@ -751,7 +709,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     });
   }
 
-  // Follow-up suggestion handling
+  // Follow-up response handling
   selectUserResponse(followUpText: string): void {
     this.message.set(followUpText);
     // Focus the textarea for user convenience
@@ -763,15 +721,15 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     }, 0);
   }
 
-  // Get suggested user responses from the most recent message
+  // Get suggested user responses from the most recent message using unified model
   getLatestSuggestedUserResponses(): string[] {
-    const chatHistory = this.aiAssistantService.chatHistory();
-    if (chatHistory.length === 0) return [];
+    const chatMessages = this.chatMessages();
+    if (chatMessages.length === 0) return [];
     
     // Get the most recent AI message (not user message)
-    for (let i = chatHistory.length - 1; i >= 0; i--) {
-      const message = chatHistory[i];
-      if (!message.isUser && message.suggestedUserResponses && message.suggestedUserResponses.length > 0) {
+    for (let i = chatMessages.length - 1; i >= 0; i--) {
+      const message = chatMessages[i];
+      if (message.role === "model" && message.suggestedUserResponses && message.suggestedUserResponses.length > 0) {
         return message.suggestedUserResponses;
       }
     }
@@ -808,12 +766,15 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       return;
     }
     
-    // Sort sessions by most recent first and limit to show recent chats
+    // Sort sessions by lastUpdated timestamp in descending order (most recent first)
     const sortedSessions = validSessions
       .sort((a, b) => {
-        const aTime = (a as any).lastMessageTime || (a as any).startTime || 0;
-        const bTime = (b as any).lastMessageTime || (b as any).startTime || 0;
-        return new Date(bTime).getTime() - new Date(aTime).getTime();
+        const aTime = a.lastUpdated || a.startTime || 0;
+        const bTime = b.lastUpdated || b.startTime || 0;
+        // Handle both numeric timestamps and date strings for backward compatibility
+        const aTimestamp = typeof aTime === 'number' ? aTime : new Date(aTime).getTime();
+        const bTimestamp = typeof bTime === 'number' ? bTime : new Date(bTime).getTime();
+        return bTimestamp - aTimestamp;
       })
       .slice(0, 50); // Limit to 50 most recent chats for performance
     
@@ -828,22 +789,108 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       },
       // Add chat sessions
       ...sortedSessions.map(session => ({
-        label: (session as any).title || this.translateService.instant('aiAssistant.untitledChat'),
+        label: session.title || this.translateService.instant('aiAssistant.untitledChat'),
         icon: session.id === currentSessionId ? 'pi pi-check' : 'pi pi-comment',
         command: () => this.switchToSession(session.id!),
         styleClass: session.id === currentSessionId ? 'font-bold bg-blue-50' : '',
-        title: (session as any).title || this.translateService.instant('aiAssistant.untitledChat') // Tooltip
+        title: session.title || this.translateService.instant('aiAssistant.untitledChat') // Tooltip
       }))
     ];
 
     this.sessionMenuItems.set(menuItems);
   }
 
+  /**
+   * Render existing messages from the current session
+   * Used when component is initialized with existing messages (e.g., switching between modes)
+   */
+  private renderExistingMessages(): void {
+    // Prevent concurrent rendering calls
+    if (this.isCurrentlyRendering) {
+      return;
+    }
+    
+    if (!this.dynamicContentContainer) {
+      console.warn('⚠️ Dynamic content container not available, cannot render existing messages');
+      return;
+    }
+
+    const chatMessages = this.chatMessages();
+    if (chatMessages.length === 0) {
+      return;
+    }
+
+    // Mark as currently rendering
+    this.isCurrentlyRendering = true;
+
+    try {
+      // Clear any existing components first to avoid duplicates
+      this.dynamicContentService.clearAllComponents();
+      
+      // Ensure view container and callback are set
+      this.dynamicContentService.setViewContainer(this.dynamicContentContainer);
+      this.dynamicContentService.setCardClickCallback(this.onCardClicked.bind(this));
+      
+      // Sort messages by timestamp to ensure correct chronological order
+      const sortedMessages = [...chatMessages].sort((a, b) => a.timestamp - b.timestamp);
+      
+      // Process each message through the dynamic content service
+      sortedMessages.forEach((message) => {
+        this.dynamicContentService.processChunk(message);
+      });
+      
+      // Mark that we've rendered initial messages
+      this.hasRenderedInitialMessages = true;
+      
+      // Scroll to bottom after rendering
+      setTimeout(() => {
+        this.scrollToBottom(false); // Use instant scroll for existing messages
+      }, 100);
+    } finally {
+      // Reset the rendering flag
+      this.isCurrentlyRendering = false;
+    }
+  }
+
   switchToSession(sessionId: string): void {
+    // Ensure view container is available before switching sessions
+    if (!this.dynamicContentContainer) {
+      console.warn('⚠️ Dynamic content container not available, cannot switch session');
+      return;
+    }
+
+    this.isSwitchingSession = true; // Prevent reactive effect from running
     this.sessionMenu.hide();
     this.ngZone.run(() => {
-      this.aiAssistantService.switchToSession(sessionId).subscribe({
-        error: (error) => console.error('Failed to switch session:', error)
+      // Clear existing dynamic components and buffer before loading new session
+      this.dynamicContentService.clearAllComponents();
+      this.chunkBuffer = [];
+      this.hasRenderedInitialMessages = false; // Reset flag for new session
+      this.isCurrentlyRendering = false; // Reset rendering flag
+      
+      // Force a synchronous clearing by triggering change detection
+      this.cdr.detectChanges();
+      
+      // Use requestAnimationFrame to ensure clearing is complete before loading new session
+      requestAnimationFrame(() => {
+        this.aiAssistantService.switchToSession(sessionId).subscribe({
+          next: () => {
+            // Use setTimeout to ensure the view is fully rendered and clearing is complete
+            setTimeout(() => {
+              // Render the loaded messages
+              this.renderExistingMessages();
+              
+              // Reset flag after processing is complete
+              setTimeout(() => {
+                this.isSwitchingSession = false;
+              }, 50); // Small delay to ensure processing is complete
+            }, 100);
+          },
+          error: (error) => {
+            console.error('Failed to switch session:', error);
+            this.isSwitchingSession = false; // Reset flag on error
+          }
+        });
       });
     });
   }
@@ -925,22 +972,50 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     return '.'.repeat(this.generatingDots());
   }
 
-  // Open AI assistant in fullscreen mode
-  openFullscreen(): void {
-    const currentSessionId = this.aiAssistantService.currentSessionId();
-    
-    // Navigate within the same browser tab to the AI route
-    if (currentSessionId) {
-      this.router.navigate(['/ai', currentSessionId]);
+  // UNIFIED NAVIGATION - Expand to fullscreen with proper session data handling
+  onExpandToFullScreen(): void {
+    const currentSession = this.currentChatSession();
+    if (currentSession?.session?.id) {
+      // Only load user sessions if we don't already have them
+      if (this.aiAssistantService.userSessions().length === 0) {
+        this.aiAssistantService.loadUserSessions().subscribe();
+      }
+      
+      // Pass current session data to full screen component
+      // This avoids reloading from server
+      this.router.navigate(['/ai'], {
+        queryParams: { sessionId: currentSession.session.id },
+        state: { 
+          chatSession: currentSession,
+          preserveData: true 
+        }
+      });
     } else {
+      // No current session, navigate to AI without session
       this.router.navigate(['/ai']);
     }
   }
 
+  // Open AI assistant in fullscreen mode (legacy method)
+  openFullscreen(): void {
+    this.onExpandToFullScreen();
+  }
+
   // Minimize AI assistant from fullscreen mode
   minimizeFullscreen(): void {
-    // Navigate back to home page when minimizing from fullscreen
-    this.router.navigate(['/']);
+    // Navigate back to previous route or home page when minimizing from fullscreen
+    const previousRoute = this.getPreviousRoute();
+    
+    // Navigate to the previous route (or home if none exists)
+    this.router.navigate([previousRoute === '/ai' ? '/' : previousRoute]).then(() => {
+      // After navigation, explicitly open the AI assistant in sidebar/popup mode (not toggle)
+      setTimeout(() => {
+        this.layoutService.layoutState.update(state => ({
+          ...state,
+          aiAssistantActive: true
+        }));
+      }, 100);
+    });
   }
 
   // Toggle between fullscreen and popup modes
@@ -959,6 +1034,13 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     
     // Clear any buffered chunks as well
     this.chunkBuffer = [];
+    
+    // Reset rendering flags
+    this.hasRenderedInitialMessages = false;
+    this.isCurrentlyRendering = false;
+    
+    // Force change detection to ensure clearing is complete
+    this.cdr.detectChanges();
     
     this.aiAssistantService.clearConversation();
   }
@@ -1216,15 +1298,6 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     return cleaned;
   }
 
-  testCleanedImage(inline: any): void {
-    const cleaned = this.cleanBase64Data(inline.data);
-    const dataUrl = `data:${inline.mimeType};base64,${cleaned}`;
-    
-    // Create a test image to see if it loads
-    const img = new Image();
-    img.src = dataUrl;
-  }
-
   onImageError(event: any, inline: any): void {
     // Silent error handling for image loading failures
   }
@@ -1289,65 +1362,12 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   /**
-   * Regenerate the last AI response
-   */
-  regenerateMessage(messageIndex: number): void {
-    const chatHistory = this.aiAssistantService.chatHistory();
-    const message = chatHistory[messageIndex];
-    
-    if (!message || message.isUser) {
-      return;
-    }
-
-    // Find the previous user message
-    let userMessageIndex = messageIndex - 1;
-    while (userMessageIndex >= 0 && !chatHistory[userMessageIndex].isUser) {
-      userMessageIndex--;
-    }
-
-    if (userMessageIndex >= 0) {
-      const userMessage = chatHistory[userMessageIndex];
-      
-      // Clear dynamic components and buffer before regenerating
-      this.dynamicContentService.clearAllComponents();
-      this.chunkBuffer = [];
-      
-      // Remove all messages after the user message
-      const newHistory = chatHistory.slice(0, userMessageIndex + 1);
-      this.aiAssistantService.chatHistory.set(newHistory);
-      
-      // Resend the user message
-      this.aiAssistantService.sendMessage(
-        userMessage.text || '',
-        userMessage.files || [],
-        this.buildMessageState()
-      ).subscribe({
-        next: () => {
-          // Message regenerated successfully
-        },
-        error: (error) => {
-          // Error regenerating message
-        }
-      });
-    }
-  }
-
-  /**
-   * Select an example prompt and populate the message input
-   */
-  selectExamplePrompt(promptText: string): void {
-    this.message.set(promptText);
-    // Scroll to input area
-    setTimeout(() => {
-      this.scrollToBottom();
-    }, 100);
-  }
-
-  /**
-   * Build message state object with screen context parameters
+   * Build message state object with screen context parameters and AUTOMATIC page data extraction
+   * 
+   * NO COMPONENT CHANGES NEEDED - automatically grabs data from the active page component!
    */
   private buildMessageState(): any {
-    return {
+    const baseState = {
       screen_url: this.extractCurrentRoute(),
       user_focus_context: this.rightPanelEntityType && this.rightPanelEntityId ? 
         `/${this.rightPanelEntityType.toLowerCase()}s/${this.rightPanelEntityId}` : '',
@@ -1359,6 +1379,39 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       global_filter_enabled: this.globalFilterService.isFilterEnabled(),
       global_org_unit_id: this.globalFilterService.getActiveOrgUnitId()
     };
+
+    // AUTOMATICALLY extract page context from the currently active component
+    // This extracts ALL data properties (partner, interactions, contacts, etc.)
+    // without requiring ANY component changes!
+    const pageContext = this.pageContextService.getPageContextForAI({
+      maxArrayLength: 20,  // Limit arrays to 20 items
+      maxDepth: 3,         // Limit object depth to 3 levels
+      includePrivateProps: false  // Skip private properties
+    });
+
+    // Add page context if available
+    if (pageContext) {
+      return {
+        ...baseState,
+        page_context_auto: pageContext  // "auto" to distinguish from manual registration
+      };
+    }
+
+    return baseState;
+  }
+
+  // Utility methods for ChatMessage creation
+  private generateId(): string {
+    return Math.random().toString(36).substr(2, 9);
+  }
+
+  private generateInvocationId(): string {
+    return 'e-' + Math.random().toString(36).substr(2, 9);
+  }
+
+  private getCurrentUserId(): number {
+    // This should come from auth service
+    return parseInt(localStorage.getItem('user_id') || '0', 10);
   }
 
 } 

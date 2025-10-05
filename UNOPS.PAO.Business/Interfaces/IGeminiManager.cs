@@ -11,8 +11,7 @@ public interface IGeminiManager
     AiPrompt MapModelToEntity(GeminiProcessDataRequest req);
     Task<IEnumerable<AiPrompt>> GetPromptData(string type);
     Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData, string entityId = null);
-    Task<SessionWithChats> GetSessionDataWithChats(string sessionId, int userId);
-    Task<IEnumerable<AiChatSession>> GetSessionData(string sessionId, int userId);
+    Task<string> GetSessionDataWithChats(string sessionId, int userId);
     Task<IEnumerable<AiChatSession>> GetUserSessions(int userId);
     Task<string> ExtractDataFromFile(IFormFile file);
     string FindFileType(IFormFile file);
@@ -28,10 +27,32 @@ public interface IGeminiManager
     Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req, int currentUserId);
 
     Task<string> BulkInsertRecordsAsync(BulkUploadRequest request);
-    Task<bool> CanGenerateTitle(string sessionId);
     Task UpdateSessionTitleAndFlag(string sessionId, string title);
     Task<string> ChatWithGemini(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null);
     IAsyncEnumerable<string> ChatWithGeminiStreaming(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null);
-    Task<string> GenerateTitle(string sessionId, int userId);
-    Task<object> GenerateSuggestions(int userId);
+    Task<SessionConfiguration> GetSessionConfigurationAsync();
+}
+
+/// <summary>
+/// Represents session configuration data from the Python service.
+/// </summary>
+public class SessionConfiguration
+{
+    [System.Text.Json.Serialization.JsonPropertyName("app_name")]
+    public string AppName { get; set; } = string.Empty;
+    
+    [System.Text.Json.Serialization.JsonPropertyName("application_name")]
+    public string ApplicationName { get; set; } = string.Empty;
+    
+    [System.Text.Json.Serialization.JsonPropertyName("project_name")]
+    public string ProjectName { get; set; } = string.Empty;
+    
+    [System.Text.Json.Serialization.JsonPropertyName("organization")]
+    public string Organization { get; set; } = string.Empty;
+    
+    [System.Text.Json.Serialization.JsonPropertyName("environment")]
+    public string Environment { get; set; } = string.Empty;
+    
+    [System.Text.Json.Serialization.JsonPropertyName("version")]
+    public string Version { get; set; } = string.Empty;
 }

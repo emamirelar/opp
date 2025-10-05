@@ -1,7 +1,7 @@
-import { HttpClient, HttpErrorResponse, HttpResponse, HttpEventType } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable, signal, ViewContainerRef, effect } from '@angular/core';
 import { Observable, map, throwError, timer, Subject, of } from 'rxjs';
-import { catchError, mergeMap, retry, retryWhen, tap, filter, switchMap, finalize } from 'rxjs/operators';
+import { catchError, mergeMap, retry, retryWhen, tap, switchMap, finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { FetchStreamService } from '../../../common/services/fetch-stream.service';
 import {
@@ -16,15 +16,16 @@ import {
   AiAssistantRequestWithFiles
 } from '../models/ai-assistant.model';
 import {GeminiResponse} from '../models/gemini.model';
-import { 
-  AiResponse, 
+import {
+  ChatSession,
   ChatMessage, 
   ChatFile,
-  getUrlPageByAiResponseCategory 
+  ContentPart
 } from '../../../common/reusables/widgets/ai-assistant/ai-assistant.model';
 import { ComponentResolverService } from './component-resolver.service';
 
 
+// Legacy interface - will be replaced by unified ChatSession
 export interface SessionWithChats {
   session: {
     id: string;
@@ -36,7 +37,7 @@ export interface SessionWithChats {
     archived: boolean;
     starred: boolean;
   };
-  chatMessages: ChatMessage[];
+  chatMessages: any[]; // Legacy format
 }
 
 @Injectable({
@@ -75,12 +76,12 @@ export class AiAssistantService {
     'application/vnd.ms-powerpoint' // .ppt
   ];
 
-  // STATE MANAGEMENT - Moved from AiAssistantData
-  readonly chatHistory = signal<ChatMessage[]>([]);
+  // UNIFIED STATE MANAGEMENT - Single ChatSession for all operations
+  readonly currentChatSession = signal<ChatSession | null>(null);
   readonly currentSessionId = signal<string | null>(null);
   readonly isLoading = signal(false);
   readonly isLoadingSession = signal(false);
-  readonly sessionTitle = signal<string>('New Chat');
+  readonly sessionTitle = signal<string>('');
   readonly sessionStarred = signal<boolean>(false);
   readonly sessionArchived = signal<boolean>(false);
   readonly userSessions = signal<SessionData[]>([]);
@@ -96,6 +97,11 @@ export class AiAssistantService {
   // Streaming subjects
   private _chatHistoryChanged = new Subject<void>();
   chatHistoryChanged$ = this._chatHistoryChanged.asObservable();
+  
+  // Public method to manually emit chat history changes
+  public emitChatHistoryChanged(): void {
+    this._chatHistoryChanged.next();
+  }
 
   private _streamingChunk = new Subject<any>();
   streamingChunk$ = this._streamingChunk.asObservable();
@@ -106,56 +112,80 @@ export class AiAssistantService {
     private router: Router,
     private componentResolverService: ComponentResolverService
   ) {
-    // Effect to emit chat history changes only for new messages, not loaded chats
-    effect(() => {
-      const chatHistory = this.chatHistory();
-      
-      // Only emit when chat history changes and we're not loading a past chat
-      if (chatHistory.length > 0 && !this._isLoadingPastChat) {
-        this._chatHistoryChanged.next();
-      }
-    });
+    // NO AUTOMATIC EFFECTS - Manual control only to prevent unwanted triggers
   }
 
-  // Enhanced chat method with file support
-  chatWithFiles(requestData: ChatRequestData): Observable<HttpResponse<AiResponse>> {
-    const formData = this.createChatFormData(requestData);
-    
-    return this.http.post<AiResponse>(
-      `${this.aiAssistantUrl}/chat`,
-      formData,
-      { observe: 'response' }
-    ).pipe(
-      this.addIapRetryStrategy<HttpResponse<AiResponse>>()
+  // Server communication with streaming using unified model
+  public sendMessageToServer(
+    sessionId: string, 
+    userMessage: ChatMessage, 
+    files?: ChatFile[], 
+    state?: any
+  ): Observable<void> {
+    // Track if we've created a streaming message for this conversation
+    let streamingMessage: ChatMessage | null = null;
+    let messageIndex = -1;
+
+    // Use streaming response method
+    return this.chatWithFilesStreaming(userMessage, sessionId, files, state).pipe(
+      tap(({ data, complete }: { data: any, complete: boolean }) => {
+        // Create a placeholder streaming message for the MODEL'S response
+        // This ensures the chat UI shows that a response is being generated
+        if (!streamingMessage) {
+          streamingMessage = {
+            id: this.generateId(),
+            timestamp: Date.now(),
+            invocationId: this.generateInvocationId(),
+            role: "model", // This is the MODEL's response placeholder
+            content: {
+              parts: [{ text: '' }], // Empty text part for streaming
+              role: "model"
+            },
+            actions: { stateDelta: {}, artifactDelta: {}, requestedAuthConfigs: {} },
+            longRunningToolIds: [],
+            isUser: false, // Computed from role === "model"
+            files: [],
+            sources: [],
+            suggestedUserResponses: []
+          } as ChatMessage;
+          
+          // Add to current ChatSession's chatMessages array (single source of truth)
+          const currentSession = this.currentChatSession();
+          if (currentSession) {
+            currentSession.chatMessages.push(streamingMessage);
+            messageIndex = currentSession.chatMessages.length - 1;
+            
+            // Manually emit chat history change for new messages (not loaded sessions)
+            if (!this._isLoadingPastChat) {
+              this.emitChatHistoryChanged();
+            }
+          }
+        }
+      }),
+      // Complete the observable when the stream finishes
+      map(() => void 0),
+      catchError(error => {
+        this.isLoading.set(false);
+        this.addSystemMessage('Sorry, there was an error processing your message. Please try again.');
+        return of();
+      }),
+      finalize(() => {
+        this.isLoading.set(false);
+      })
     );
   }
 
-  // Enhanced chat method with simple parameters (backward compatible)
-  chatWithFilesSimple(
-    message: string, 
-    sessionId?: string, 
-    files?: File[], 
-    state?: any
-  ): Observable<HttpResponse<AiResponse>> {
-    return this.chatWithFiles({
-      message,
-      sessionId,
-      files,
-      state
-    });
-  }
-
-  // Streaming chat method with HttpClient - SIMPLIFIED
+  // Streaming chat method with unified model
   chatWithFilesStreaming(
-    message: string, 
+    userMessage: ChatMessage, 
     sessionId?: string, 
-    files?: File[], 
+    files?: ChatFile[], 
     state?: any
   ): Observable<{ data: any, complete: boolean }> {
     const formData = this.createStreamingChatFormData({
-      message,
+      message: userMessage.content.parts[0]?.text || '', // Extract text from unified model
       sessionId,
-      files,
+      files: files?.map(f => f.file).filter(file => file != null),
       state,
       streaming: true
     });
@@ -165,9 +195,6 @@ export class AiAssistantService {
       method: 'POST',
       body: formData
     }).pipe(
-      // tap(chunk => {
-      //   console.log('[ai-assistant-service] Raw chunk:', chunk);
-      // }),
       switchMap(chunk => this.parseStreamingChunks(chunk)),
       tap(({ data, complete }) => {
         // DIRECT STREAMING: Emit all chunks immediately to streamingChunk$
@@ -175,22 +202,31 @@ export class AiAssistantService {
           this._streamingChunk.next(data);
         }
         
-        // Handle session ID updates
+        // Handle session ID updates - capture session ID from first response
+        // This ensures subsequent requests use the correct session ID
         if (data.session_id && !this.currentSessionId()) {
           this.currentSessionId.set(data.session_id);
-          this.loadUserSessions().subscribe();
-          this.router.navigate(['/ai', data.session_id], { replaceUrl: true });
+          
+          // Also update the current chat session's ID and sync the title signal
+          const currentSession = this.currentChatSession();
+          if (currentSession && (!currentSession.session.id || currentSession.session.id === '')) {
+            currentSession.session.id = data.session_id;
+            
+            // Update the sessionTitle signal from the session object
+            if (currentSession.session.title) {
+              this.sessionTitle.set(currentSession.session.title);
+            }
+          }
         }
       }),
       finalize(() => {
-         // When the stream completes, emit a completion signal after a small delay
-        // This ensures all chunks have been processed before marking as complete
+        // When the stream completes, emit a completion signal
         setTimeout(() => {
           this._streamingChunk.next({ 
             streamCompleted: true, 
             timestamp: Date.now() 
           });
-         }, 100);
+        }, 100);
       }),
       catchError(error => {
         console.error('[ai-assistant-service] Streaming error:', error);
@@ -257,16 +293,6 @@ export class AiAssistantService {
   //     }
   //   });
   // }
-
-  // Get personalized suggestions for the user
-  getSuggestions(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/ai-assistant/generate-suggestions`).pipe(
-      catchError((error: HttpErrorResponse) => {
-        console.error('Error fetching suggestions:', error);
-        return throwError(() => new Error('Failed to fetch suggestions'));
-      })
-    );
-  }
 
   // Helper method to create FormData for chat requests
   private createChatFormData(requestData: ChatRequestData): FormData {
@@ -494,8 +520,8 @@ export class AiAssistantService {
   }
 
   // Chat with AiAssistant AI (original method - backward compatible)
-  chat(formdata: FormData): Observable<HttpResponse<AiResponse>> {
-    return this.http.post<AiResponse>(
+  chat(formdata: FormData): Observable<HttpResponse<any>> {
+    return this.http.post<any>(
       `${this.aiAssistantUrl}/chat`,
       formdata,
       { observe: 'response' }
@@ -565,40 +591,10 @@ export class AiAssistantService {
     );
   }
 
-  // HIGH-LEVEL METHODS - Moved from AiAssistantData
-
-  public setViewContainerRef(viewContainerRef: ViewContainerRef) {
-    this.viewContainerRef = viewContainerRef;
-  }
-
-  public sendMessage(
-    message: string, 
-    files: ChatFile[] = [], 
-    state?: any
-  ): Observable<void> {
-    if (!this.isValidMessage(message, files)) {
-      return of();
-    }
-
-    // Mark as no longer first page load when user sends first message
-    if (this.isFirstPageLoad()) {
-      this.isFirstPageLoad.set(false);
-    }
-
-    this.addUserMessage(message, files);
-    this.isLoading.set(true);
-
-    // Allow empty sessionId for new conversations - backend will create one
-    const sessionId = this.currentSessionId() || '';
-    
-    // Enhanced: Support multiple files instead of just the first one
-    const fileObjects = files.map(chatFile => chatFile.file).filter(file => file != null);
-    return this.sendMessageToServer(sessionId, message, fileObjects, state);
-  }
-
+  // UNIFIED SESSION MANAGEMENT
   public clearConversation(): void {
-    this.chatHistory.set([]);
-    this.sessionTitle.set('New Chat');
+    this.currentChatSession.set(null);
+    this.sessionTitle.set('');
     this.sessionStarred.set(false);
     this.sessionArchived.set(false);
     
@@ -608,6 +604,97 @@ export class AiAssistantService {
     
     // Mark as manual new chat (not first page load)
     this.isFirstPageLoad.set(false);
+  }
+
+  public loadUserSessions(): Observable<void> {
+    this.isLoadingSessions.set(true);
+    
+    return this.getUserSessions().pipe(
+      tap(response => {
+        if (response?.body && Array.isArray(response.body)) {
+          this.userSessions.set(response.body);
+        }
+      }),
+      catchError(error => {
+        return of();
+      }),
+      finalize(() => this.isLoadingSessions.set(false)),
+      map(() => void 0)
+    );
+  }
+
+  public switchToSession(sessionId: string): Observable<void> {
+    if (sessionId === this.currentSessionId()) {
+      return of(); // Already on this session
+    }
+    
+    this.isLoadingSession.set(true);
+    this.isLoading.set(true);
+    this._isLoadingPastChat = true;
+    
+    // Clear current session data before loading new session
+    this.currentChatSession.set(null);
+    this.sessionTitle.set('');
+    this.sessionStarred.set(false);
+    this.sessionArchived.set(false);
+    
+    this.currentSessionId.set(sessionId);
+    
+    return this.loadSessionWithChats(sessionId).pipe(
+      map(() => void 0),
+      finalize(() => {
+        this.isLoading.set(false);
+        this.isLoadingSession.set(false);
+        this._isLoadingPastChat = false;
+      })
+    );
+  }
+
+  // Load session with chat history from API using unified model
+  loadSessionWithChats(sessionId: string): Observable<SessionWithChats> {
+    return this.http.post<SessionWithChats>(`${this.aiAssistantUrl}/get-session`, {
+      sessionId: sessionId
+    }).pipe(
+      tap(sessionData => {
+        // Update current session state
+        this.currentSessionId.set(sessionId);
+        this.sessionTitle.set(sessionData.session.title);
+        this.sessionStarred.set(sessionData.session.starred);
+        this.sessionArchived.set(sessionData.session.archived);
+        
+        // Convert to unified model format with defensive role assignment
+        const chatMessages: ChatMessage[] = sessionData.chatMessages.map(msg => ({
+          id: msg.id || this.generateId(),
+          timestamp: msg.timestamp || Date.now(),
+          invocationId: msg.invocationId || this.generateInvocationId(),
+          role: msg.content?.role || (msg.author === "user" ? "user" : "model"), // Defensive: use content.role first, fallback to author
+          content: msg.content || { parts: [{ text: msg.text || '' }], role: msg.content?.role || (msg.author === "user" ? "user" : "model") },
+          actions: msg.actions || { stateDelta: {}, artifactDelta: {}, requestedAuthConfigs: {} },
+          longRunningToolIds: msg.longRunningToolIds || [],
+          isUser: msg.content?.role === "user" || msg.author === "user", // Defensive: check both role and author
+          files: msg.files || [],
+          sources: msg.sources || [],
+          suggestedUserResponses: msg.suggestedUserResponses || []
+        }));
+        
+        // Always create a completely new ChatSession to ensure clean state
+        this.currentChatSession.set({
+          session: {
+            id: sessionData.session.id,
+            timestamp: new Date(sessionData.session.startTime).getTime(),
+            userId: sessionData.session.userId,
+            status: sessionData.session.status,
+            title: sessionData.session.title,
+            starred: sessionData.session.starred,
+            archived: sessionData.session.archived
+          },
+          chatMessages: chatMessages
+        });
+        
+        // Message processing is now handled by the panel component
+        // when the session is loaded or switched
+      })
+    );
   }
 
   public toggleStar(): Observable<void> {
@@ -679,41 +766,6 @@ export class AiAssistantService {
     );
   }
 
-  public loadUserSessions(): Observable<void> {
-    this.isLoadingSessions.set(true);
-    
-    return this.getUserSessions().pipe(
-      tap(response => {
-        if (response?.body && Array.isArray(response.body)) {
-          this.userSessions.set(response.body);
-        }
-      }),
-      catchError(error => {
-        return of();
-      }),
-      finalize(() => this.isLoadingSessions.set(false)),
-      map(() => void 0)
-    );
-  }
-
-  public switchToSession(sessionId: string): Observable<void> {
-    if (sessionId === this.currentSessionId()) {
-      return of(); // Already on this session
-    }
-    this.isLoadingSession.set(true);
-    this.isLoading.set(true);
-    this._isLoadingPastChat = true;
-    this.currentSessionId.set(sessionId);
-    
-    return this.fetchSessionDetails(sessionId).pipe(
-      finalize(() => {
-        this.isLoading.set(false);
-        this.isLoadingSession.set(false);
-        this._isLoadingPastChat = false;
-      })
-    );
-  }
-
   onTextToSpeechToggle(): void {
     this.isLoading.set(true);
     const sessionId = this.currentSessionId();
@@ -731,244 +783,49 @@ export class AiAssistantService {
     }
   }
 
-  // PRIVATE HELPER METHODS
-
-  private sendMessageToServer(
-    sessionId: string, 
-    message: string, 
-    files?: File[], 
-    state?: any
-  ): Observable<void> {
-    // Track if we've created a streaming message for this conversation
-    let streamingMessage: ChatMessage | null = null;
-    let messageIndex = -1;
-
-    // Use streaming response method
-    return this.chatWithFilesStreaming(
-      message,
-      sessionId,
-      files,
-      state
-    ).pipe(
-      tap(({ data, complete }: { data: any, complete: boolean }) => {
-        // Create a placeholder streaming message for the chat history if needed
-        // This ensures the chat UI shows that a response is being generated
-        if (!streamingMessage) {
-          streamingMessage = {
-            text: '',
-            isUser: false,
-            timestamp: new Date(),
-            files: [],
-            result: [],
-            entity: undefined,
-            suggestedUserResponses: [],
-            sources: [],
-            isFromHistory: false,
-          } as ChatMessage;
-          this.addMessage(streamingMessage);
-          messageIndex = this.chatHistory().length - 1;
-        }
-      }),
-      // Complete the observable when the stream finishes
-      map(() => void 0),
-      catchError(error => {
-        this.isLoading.set(false);
-        this.addSystemMessage({message:'Sorry, there was an error processing your message. Please try again.'});
-        return of();
-      }),
-      finalize(() => {
-        this.isLoading.set(false);
-      })
-    );
+  // UTILITY METHODS
+  public setViewContainerRef(viewContainerRef: ViewContainerRef) {
+    this.viewContainerRef = viewContainerRef;
   }
 
   private isValidMessage(message: string, files: ChatFile[]): boolean {
     return Boolean(message.trim() || files.length);
   }
 
-  private addUserMessage(message: string, files: ChatFile[]): void {
-    if (files.length > 0) {
-      const file = files[0]?.file;
-      if (file)
-      {
-        files[0].mediaType = file?.type.split('/')[0];
-        files[0].mediaUrl = URL.createObjectURL(file);
-      }
-    }
-    this.addMessage({
-      text: message,
-      isUser: true,
-      timestamp: new Date(),
-      files,
-      isFromHistory: false
-    });
-  }
-
-  private addSystemMessage(aiResponse: AiResponse ): void {
-    if (aiResponse.intent === 'Action') {
-      if (aiResponse.url) {
-        // Navigation
-        this.router.navigateByUrl(aiResponse.url);
-      } else {
-        var record = aiResponse.rawMessage ? JSON.parse(aiResponse.rawMessage) : {};
-        this.componentResolverService.loadComponent(aiResponse.entity, this.viewContainerRef, record);
-      }
-    }
-
-    this.addMessage({
-      text: aiResponse.message,
+  private addSystemMessage(message: string): void {
+    const systemMessage: ChatMessage = {
+      id: this.generateId(),
+      timestamp: Date.now(),
+      invocationId: this.generateInvocationId(),
+      role: "model",
+      content: {
+        parts: [{ text: message }],
+        role: "model"
+      },
+      actions: { stateDelta: {}, artifactDelta: {}, requestedAuthConfigs: {} },
+      longRunningToolIds: [],
       isUser: false,
-      timestamp: new Date(),
-      files: aiResponse.files || [],
-      isFromHistory: this._isLoadingPastChat
-    });
-  }
+      files: [],
+      sources: [],
+      suggestedUserResponses: []
+    };
 
-  private addMessage(message: ChatMessage): void {
-    this.chatHistory.update(history => {
-      const updated = [...history, message];
-
-      // Check if we need to generate a title: after the second model message in a new session
-      const isModel = (msg: ChatMessage) => !msg.isUser;
-      const modelMessages = updated.filter(isModel);
-      if (
-        modelMessages.length === 2 &&
-        this.currentSessionId() &&
-        this.sessionTitle() === 'New Chat' &&
-        !this._titleGeneratedForSession?.[this.currentSessionId()!]
-      ) {
-        // Mark as generated to avoid duplicate calls
-        if (!this._titleGeneratedForSession) this._titleGeneratedForSession = {};
-        this._titleGeneratedForSession[this.currentSessionId()!] = true;
-        this.generateTitle(this.currentSessionId()!).subscribe({
-          next: (resp) => {
-            const newTitle = resp.body?.title?.trim();
-            if (newTitle) {
-              this.sessionTitle.set(newTitle);
-              // Also update the session in the list
-              this.userSessions.update(sessions =>
-                sessions.map(session =>
-                  session.id === this.currentSessionId()
-                    ? { ...session, title: newTitle }
-                    : session
-                )
-              );
-            }
-          },
-          error: (err) => {
-          }
-        });
-      }
-      return updated;
-    });
-  }
-
-  private fetchSessionDetails(sessionId: string): Observable<void> {
-    this.isLoadingSession.set(true);
-    return this.getSessionDetails(sessionId).pipe(
-      tap(detailsResponse => {
-        const sessionData = detailsResponse?.body as unknown as SessionWithChats;
-        if (sessionData?.session) {
-          // Update session details
-          this.sessionTitle.set(sessionData.session.title);
-          this.sessionStarred.set(sessionData.session.starred);
-          this.sessionArchived.set(sessionData.session.archived);
-          
-          // Also update the session in the list to keep it in sync
-          this.userSessions.update(sessions =>
-            sessions.map(session =>
-              session.id === sessionId
-                ? { ...session, title: sessionData.session.title, starred: sessionData.session.starred, archived: sessionData.session.archived }
-                : session
-            )
-          );
-          
-          // Update chat history
-          if (sessionData.chatMessages) {
-            const history = this.processNewChatHistory(sessionData.chatMessages);
-            this.chatHistory.set(history);
-          }
-        } else if (detailsResponse?.body?.[0]?.chats) {
-          // Fallback for old response structure
-          const history = this.processSessionHistory(detailsResponse.body[0].chats);
-          this.chatHistory.set(history);
-        }
-      }),
-      catchError(error => {
-        this.chatHistory.set([]);
-        return of();
-      }),
-      map(() => void 0)
-    );
-  }
-
-  private processSessionHistory(chats: any[]): ChatMessage[] {
-    return chats
-      .map(chat => {
-          const files: ChatFile[] = [{
-            mediaUrl: chat.mediaUrl,
-            mediaType: chat.mediaType
-          }];
-          return {
-            text: this.parseMessageContent(chat.message || ''),
-            isUser: chat.sender === 'user',
-            timestamp: chat.timestamp ? new Date(chat.timestamp) : new Date(),
-            files
-          }
-      })
-      .filter(message => message.text);
-  }
-
-  private processNewChatHistory(chatMessages: any[]): ChatMessage[] {
-    const mapped = chatMessages.map(chat => {
-      const message: ChatMessage = {
-        text: chat.text ? this.parseMessageContent(chat.text) : '',
-        isUser: chat.role === 'user',
-        timestamp: new Date(),
-        files: [],
-        isFromHistory: true,
-        inlineData: (chat.inlineData || chat.InlineData) ? (chat.inlineData || chat.InlineData).map((inline: any) => {
-          return {
-            data: inline.data || inline.Data,
-            mimeType: inline.mimeType || inline.MimeType
-          };
-        }) : []
-      };
-      // For model messages, check if the text contains structured data
-      if (!message.isUser && message.text) {
-        try {
-          const parsed = JSON.parse(message.text);
-          if (parsed.result && Array.isArray(parsed.result)) {
-            message.result = parsed.result;
-            message.entity = parsed.entity;
-            message.suggestedUserResponses = parsed.suggestedUserResponses || [];
-            message.sources = parsed.sources || [];
-            message.text = '';
-          }
-        } catch (e) {
-          // Not JSON, keep as regular text
-        }
-      }
-      return message;
-    });
-
-    const filtered = mapped.filter(message =>
-      (message.text && message.text.trim() !== '') ||
-      (message.result && message.result.length > 0) ||
-      (message.inlineData && message.inlineData.length > 0)
-    );
-
-    return filtered;
-  }
-
-  private parseMessageContent(message: string): string {
-    try {
-      const cleanedMessage = message
-        .replace(/^```json\s*/, '')
-        .replace(/```/, '');
-      return cleanedMessage;
-    } catch (error) {
-      return message;
+    const currentSession = this.currentChatSession();
+    if (currentSession) {
+      currentSession.chatMessages.push(systemMessage);
     }
+  }
+
+  private generateId(): string {
+    return Math.random().toString(36).substr(2, 9);
+  }
+
+  private generateInvocationId(): string {
+    return 'e-' + Math.random().toString(36).substr(2, 9);
+  }
+
+  private getCurrentUserId(): number {
+    // This should come from auth service
+    return parseInt(localStorage.getItem('user_id') || '0', 10);
   }
 }
