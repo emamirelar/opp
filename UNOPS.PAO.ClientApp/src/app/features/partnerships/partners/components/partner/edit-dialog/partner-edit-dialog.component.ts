@@ -257,14 +257,6 @@ export class PartnerEditDialogComponent implements OnInit {
       }));
   });
 
-  /**
-   * Check if status field should be visible
-   */
-  showStatusField = computed(() => {
-    return !!(this.recordData().permissions?.canClose || this.recordData().permissions?.canArchive);
-  });
-
-
 
   // Signal to track form control changes (first element of array for single org unit)
   private selectedOrgUnitSignal = signal<number | null>(null);

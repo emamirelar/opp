@@ -123,6 +123,75 @@ import { BaseEngagementListComponent } from '@features/shared/base-engagement/ba
       border-bottom-right-radius: 8px !important;
     }
 
+    /* Action Button Styles - All buttons same size */
+    :host ::ng-deep .action-button .p-button,
+    :host ::ng-deep .utility-button .p-button {
+      padding: 0.5rem !important;
+      width: 2.5rem !important;
+      height: 2.5rem !important;
+      min-width: 2.5rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    :host ::ng-deep .action-button .p-button-icon,
+    :host ::ng-deep .utility-button .p-button-icon {
+      margin: 0 !important;
+      font-size: 1rem !important;
+    }
+
+    /* Remove any label display */
+    :host ::ng-deep .action-button .p-button-label,
+    :host ::ng-deep .utility-button .p-button-label {
+      display: none !important;
+    }
+
+    /* Custom color for Approve button - Green */
+    :host ::ng-deep .approve-button .p-button {
+      color: #22c55e !important;
+      border-color: #22c55e !important;
+    }
+    :host ::ng-deep .approve-button .p-button:hover {
+      background-color: #22c55e !important;
+      color: white !important;
+    }
+
+    /* Custom color for Unapprove button - Red */
+    :host ::ng-deep .unapprove-button .p-button {
+      color: #ef4444 !important;
+      border-color: #ef4444 !important;
+    }
+    :host ::ng-deep .unapprove-button .p-button:hover {
+      background-color: #ef4444 !important;
+      color: white !important;
+    }
+
+    /* Custom color for Close button - Yellow */
+    :host ::ng-deep .close-button .p-button {
+      color: #eab308 !important;
+      border-color: #eab308 !important;
+    }
+    :host ::ng-deep .close-button .p-button:hover {
+      background-color: #eab308 !important;
+      color: white !important;
+    }
+
+    /* Custom color for Archive button - Orange */
+    :host ::ng-deep .archive-button .p-button {
+      color: #f97316 !important;
+      border-color: #f97316 !important;
+    }
+    :host ::ng-deep .archive-button .p-button:hover {
+      background-color: #f97316 !important;
+      color: white !important;
+    }
+
+    /* Button group separators */
+    .border-l {
+      border-left: 1px solid var(--unops-neutral-200) !important;
+    }
+
   `]
 })
 export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
@@ -588,11 +657,13 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
   handleUnapprovalClick() {
     console.log('Unapproval button clicked for partner:', this.recordData().name);
     
-    // Show confirmation dialog
+    const message = this.translateService.instant('partner.view.unapproval.confirmMessage', { 
+      partnerName: this.recordData().name 
+    });
+    
+    // Show confirmation dialog with HTML message
     this.confirmationService.confirm({
-      message: this.translateService.instant('partner.view.unapproval.confirmMessage', { 
-        partnerName: this.recordData().name 
-      }),
+      message: message.replace(/\n\n/g, '<br><br>'),
       header: this.translateService.instant('partner.view.unapproval.confirmHeader'),
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-warn',
@@ -691,6 +762,122 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
         console.error('Error activating partner:', error);
         this.feedbackDialogService.showErrorToast({
           detail: this.translateService.instant('message.failedToActivatePartner')
+        });
+      }
+    });
+  }
+
+  /**
+   * @uiButton close_partner
+   * @description Opens close confirmation dialog and closes the partner
+   * @label Close
+   * @icon pi pi-times-circle
+   * @when_to_use When partner needs to be closed and user has close privileges
+   * @permissions canClose
+   */
+  handleCloseClick() {
+    const message = this.translateService.instant('partner.view.close.confirmMessage', {
+      partnerName: this.recordData().name
+    });
+    
+    // Show confirmation dialog with HTML message
+    this.confirmationService.confirm({
+      message: message.replace(/\n\n/g, '<br><br>'),
+      header: this.translateService.instant('message.confirmClose'),
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.performClose();
+      },
+      reject: () => {
+        console.log('Close cancelled');
+      }
+    });
+  }
+
+  /**
+   * Performs the actual close API call
+   */
+  private performClose() {
+    const requestPayload = {
+      id: this.recordData().id,
+      notes: `Partner closed via UI on ${new Date().toISOString()}`
+    };
+
+    this.partnerService.closePartner(requestPayload).subscribe({
+      next: (data: any) => {
+        console.log('Partner closed successfully:', data);
+        // Show success message
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.close.successMessage', { 
+            partnerName: this.recordData().name 
+          })
+        });
+        // Reload partner details to show updated status
+        this._loadRecordDetails();
+      },
+      error: (error) => {
+        console.error('Failed to close partner:', error);
+        // Show error message
+        this.feedbackDialogService.showErrorToast({ 
+          detail: this.translateService.instant('partner.view.close.errorMessage')
+        });
+      }
+    });
+  }
+
+  /**
+   * @uiButton archive_partner
+   * @description Opens archive confirmation dialog and archives the partner
+   * @label Archive
+   * @icon pi pi-archive
+   * @when_to_use When partner needs to be archived and user has archive privileges
+   * @permissions canArchive
+   */
+  handleArchiveClick() {
+    const message = this.translateService.instant('partner.view.archive.confirmMessage', {
+      partnerName: this.recordData().name
+    });
+    
+    // Show confirmation dialog with HTML message
+    this.confirmationService.confirm({
+      message: message.replace(/\n\n/g, '<br><br>'),
+      header: this.translateService.instant('message.confirmArchive'),
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.performArchive();
+      },
+      reject: () => {
+        console.log('Archive cancelled');
+      }
+    });
+  }
+
+  /**
+   * Performs the actual archive API call
+   */
+  private performArchive() {
+    const requestPayload = {
+      id: this.recordData().id,
+      notes: `Partner archived via UI on ${new Date().toISOString()}`
+    };
+
+    this.partnerService.archivePartner(requestPayload).subscribe({
+      next: (data: any) => {
+        console.log('Partner archived successfully:', data);
+        // Show success message
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.archive.successMessage', { 
+            partnerName: this.recordData().name 
+          })
+        });
+        // Reload partner details to show updated status
+        this._loadRecordDetails();
+      },
+      error: (error) => {
+        console.error('Failed to archive partner:', error);
+        // Show error message
+        this.feedbackDialogService.showErrorToast({ 
+          detail: this.translateService.instant('partner.view.archive.errorMessage')
         });
       }
     });
