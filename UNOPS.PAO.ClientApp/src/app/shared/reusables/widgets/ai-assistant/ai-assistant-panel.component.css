@@ -821,11 +821,6 @@
   color: var(--blue-600) !important;
 }
 
-.regenerate-btn:hover {
-  background: var(--green-50) !important;
-  border-color: var(--green-300) !important;
-  color: var(--green-600) !important;
-}
 
 .share-btn:hover {
   background: var(--purple-50) !important;
@@ -1163,6 +1158,16 @@
   :host ::ng-deep .p-menu .p-menuitem-text {
     max-width: 150px !important;
   }
+}
+
+/* ===== DYNAMIC CONTENT CONTAINER ===== */
+/* Use flexbox for proper message alignment */
+.dynamic-content-container {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: var(--unops-spacing-md) !important;
 }
 
 /* ===== MOBILE KEYBOARD ADJUSTMENTS ===== */

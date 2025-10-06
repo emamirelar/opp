@@ -1,14 +1,16 @@
+using System.Collections.Generic;
 using UNOPS.PAO.Domain.Entities;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace UNOPS.PAO.Models
 {
     public class SessionWithChats
     {
         [JsonProperty("session")]
-        public AiChatSession Session { get; set; }
+        public AiChatSession? Session { get; set; }
         
         [JsonProperty("chatMessages")]
-        public List<ChatMessage> ChatMessages { get; set; } = new List<ChatMessage>();
+        public JArray ChatMessages { get; set; } = new JArray();
     }
 } 

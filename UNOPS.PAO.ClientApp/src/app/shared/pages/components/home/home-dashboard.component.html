@@ -349,7 +349,7 @@
                     </div>
                   }
                   <!-- Actions Grid -->
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unops-md actions-grid">
+                  <div class="grid gap-unops-md actions-grid" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-3]="!shouldUseCardVerticalLayout()">
                     @for (item of getDisplayedDraftActions(); track item.id) {
                       <div class="p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-warning/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
                            (click)="navigateToEntity(getDraftActionEntityType(item), getEntityId(item.id))">
@@ -458,7 +458,7 @@
                     </div>
                   }
                   <!-- Activity Grid -->
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unops-md activity-grid">
+                  <div class="grid gap-unops-md activity-grid" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-3]="!shouldUseCardVerticalLayout()">
                     @for (update of getDisplayedOrgUnitUpdates(); track update.id) {
                       <div class="p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-info/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
                            (click)="navigateToEntity(update.type, update.id)">
@@ -528,7 +528,7 @@
                 </div>
               </div>
               <div class="p-unops-lg">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-unops-xl">
+                <div class="grid gap-unops-xl" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-2]="!shouldUseCardVerticalLayout()">
                   <!-- All Partners -->
               @if (dashboardData()!.myPartners.length > 0) {
                     <div>
@@ -656,7 +656,7 @@
                     </div>
                   }
                   <!-- Interactions Grid -->
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unops-md interactions-grid">
+                  <div class="grid gap-unops-md interactions-grid" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-3]="!shouldUseCardVerticalLayout()">
                     @for (interaction of getDisplayedInteractions(); track interaction.id) {
                       <div class="p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-accent-orange/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
                            (click)="navigateToEntity('Interaction', getEntityId(interaction.id))">
@@ -728,8 +728,8 @@
           }
         </div>
       } @else {
-        <!-- Normal 3-Panel View -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-unops-xl mb-unops-xl">
+        <!-- Normal 3-Panel View - Responsive based on container width -->
+        <div class="grid gap-unops-xl mb-unops-xl" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-3]="!shouldUseCardVerticalLayout()">
         
           <!-- Left Panel: Actions Required -->
           <app-dashboard-card
@@ -921,7 +921,7 @@
           
           <!-- Content Template - Only show when there are interactions -->
           @if (dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0) {
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-unops-md interactions-grid">
+            <div class="grid gap-unops-md interactions-grid" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-3]="!shouldUseCardVerticalLayout()">
               @for (interaction of getTruncatedInteractions(); track interaction.id) {
                 <div class="p-unops-sm rounded-unops-lg border border-unops-neutral-200 hover:border-unops-accent-orange/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
                      (click)="navigateToEntity('Interaction', getEntityId(interaction.id))">
