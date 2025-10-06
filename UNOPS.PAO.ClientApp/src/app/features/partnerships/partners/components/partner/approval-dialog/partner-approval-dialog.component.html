@@ -27,7 +27,8 @@
                   [ariaLabel]="'aria.selectDueDiligenceRequired' | translate" />
       </div>
 
-      <!-- Due Diligence (Approval) -->
+      <!-- Due Diligence (Approval) - Only show when Due Diligence Required is "Required" -->
+      @if (shouldShowDueDiligenceApproval()) {
       <div class="flex flex-col gap-2">
         <label for="dueDiligenceApproval">{{ 'label.partner.dueDiligenceApproval' | translate }}</label>
         <p-select formControlName="dueDiligenceApproval" [options]="allDueDiligenceApprovalData()"
@@ -40,20 +41,31 @@
                   id="dueDiligenceApproval"
                   [ariaLabel]="'aria.selectDueDiligenceApproval' | translate" />
       </div>
+      }
 
-      <!-- Due Diligence Approval Date -->
+      <!-- Due Diligence Approval Date - Only show when Due Diligence Approval is "Approved" -->
+      @if (shouldShowDueDiligenceDates()) {
       <div class="flex flex-col gap-2">
-        <label for="dueDiligenceApprovalDate">{{ 'label.partner.dueDiligenceApprovalDate' | translate }}</label>
+        <label for="dueDiligenceApprovalDate">{{ 'label.partner.dueDiligenceApprovalDate' | translate }} *</label>
         <p-datepicker formControlName="dueDiligenceApprovalDate" 
                       fluid="true" id="dueDiligenceApprovalDate" />
+        @if( formGroup.get("dueDiligenceApprovalDate")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">{{ 'validation.required' | translate }}</p-message>
+        }
       </div>
+      }
 
-      <!-- Due diligence expiry date -->
+      <!-- Due diligence expiry date - Only show when Due Diligence Approval is "Approved" -->
+      @if (shouldShowDueDiligenceDates()) {
       <div class="flex flex-col gap-2">
-        <label for="dueDiligenceExpiryDate">{{ 'label.partner.dueDiligenceExpiryDate' | translate }}</label>
+        <label for="dueDiligenceExpiryDate">{{ 'label.partner.dueDiligenceExpiryDate' | translate }} *</label>
         <p-datepicker formControlName="dueDiligenceExpiryDate" 
                       fluid="true" id="dueDiligenceExpiryDate" />
+        @if( formGroup.get("dueDiligenceExpiryDate")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">{{ 'validation.required' | translate }}</p-message>
+        }
       </div>
+      }
 
       <!-- Partner Approval Date -->
       <div class="flex flex-col gap-2">
@@ -85,8 +97,11 @@
       <!-- Reason for Levy - Only show when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied" -->
       @if (shouldShowReasonForLevy()) {
       <div class="flex flex-col gap-2">
-        <label for="reasonForLevy">{{ 'label.partner.reasonForLevy' | translate }}</label>
+        <label for="reasonForLevy">{{ 'label.partner.reasonForLevy' | translate }} *</label>
         <input pInputText formControlName="reasonForLevy" fluid="true" id="reasonForLevy" />
+        @if( formGroup.get("reasonForLevy")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">{{ 'validation.reasonForLevyRequired' | translate }}</p-message>
+        }
       </div>
       }
 
@@ -135,25 +150,6 @@
           id="pooledFund" />
         <label for="pooledFund">{{ "label.partner.pooledFund" | translate }}</label>
       </div>
-
-      <!-- Can create new opportunities? -->
-      <div class="flex items-center gap-3">
-        <p-checkbox 
-          formControlName="canCreateNewOpportunities"
-          [binary]="true" 
-          id="canCreateNewOpportunities" />
-        <label for="canCreateNewOpportunities">{{ "label.partner.canCreateNewOpportunities" | translate }}</label>
-      </div>
-    </div>
-
-    <!-- Reason (full width) -->
-    <div class="flex flex-col gap-2">
-      <label for="reasonForNoNewOpportunity">{{ 'label.partner.reasonForNoNewOpportunity' | translate }} *</label>
-      <textarea pTextarea formControlName="reasonForNoNewOpportunity" 
-                fluid="true" id="reasonForNoNewOpportunity" rows="2"></textarea>
-      @if( formGroup.get("reasonForNoNewOpportunity")?.invalid && showValidationFailedError() ) {
-      <p-message severity="error" variant="simple">{{ 'validation.reasonRequired' | translate }}</p-message>
-      }
     </div>
   </form>
 

@@ -20,28 +20,73 @@
               <span class="unops-text-headline-medium">{{ 'title.partnerInformation' | translate }}</span>
               <app-entity-tags [tags]="recordData().tags"></app-entity-tags>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1 flex-wrap">
+              <!-- Primary Actions Group -->
               @if (recordData().permissions?.canApprove) {
-                <p-button [label]="'button.approve' | translate"
-                          icon="pi pi-check"
+                <p-button icon="pi pi-check"
                           [rounded]="true"
-                          severity="primary"
+                          [text]="true"
+                          [size]="'small'"
+                          severity="success"
+                          class="action-button approve-button"
+                          pTooltip="{{ 'button.approve' | translate }}"
+                          tooltipPosition="bottom"
                           (onClick)="handleApprovalClick()"></p-button>
               }
-              @if (recordData().permissions?.canActivate) {
-                <p-button [label]="'button.activate' | translate"
-                          icon="pi pi-play"
+              @if (recordData().permissions?.canUnapprove) {
+                <p-button icon="pi pi-times"
                           [rounded]="true"
-                          severity="primary"
+                          [text]="true"
+                          [size]="'small'"
+                          severity="warn"
+                          class="action-button unapprove-button"
+                          pTooltip="{{ 'button.unapprove' | translate }}"
+                          tooltipPosition="bottom"
+                          (onClick)="handleUnapprovalClick()"></p-button>
+              }
+              @if (recordData().permissions?.canActivate) {
+                <p-button icon="pi pi-play"
+                          [rounded]="true"
+                          [text]="true"
+                          [size]="'small'"
+                          severity="info"
+                          class="action-button activate-button"
+                          pTooltip="{{ 'button.activate' | translate }}"
+                          tooltipPosition="bottom"
                           (onClick)="handleActivateClick()"></p-button>
               }
 
+              <!-- Status Actions Group -->
+              @if (recordData().permissions?.canClose) {
+                <p-button icon="pi pi-times-circle"
+                          [rounded]="true"
+                          [text]="true"
+                          [size]="'small'"
+                          class="action-button close-button"
+                          pTooltip="{{ 'button.close' | translate }}"
+                          tooltipPosition="bottom"
+                          (onClick)="handleCloseClick()"></p-button>
+              }
+              @if (recordData().permissions?.canArchive) {
+                <p-button icon="pi pi-inbox"
+                          [rounded]="true"
+                          [text]="true"
+                          [size]="'small'"
+                          class="action-button archive-button"
+                          pTooltip="{{ 'button.archive' | translate }}"
+                          tooltipPosition="bottom"
+                          (onClick)="handleArchiveClick()"></p-button>
+              }
+
+              <!-- Utility Actions Group -->
               @if (recordData().permissions?.canUpdate) {
                 <p-button icon="pi pi-pencil"
                           [rounded]="true"
                           [text]="true"
                           [size]="'small'"
-                          class="edit-button partner-edit-button"
+                          class="edit-button partner-edit-button utility-button"
+                          pTooltip="{{ 'button.edit' | translate }}"
+                          tooltipPosition="bottom"
                           (onClick)="handleEditClick()"></p-button>
               }
               @if (recordData().permissions?.canDelete) {
@@ -50,7 +95,9 @@
                           [text]="true"
                           [size]="'small'"
                           severity="danger"
-                          class="delete-button partner-delete-button"
+                          class="delete-button partner-delete-button utility-button"
+                          pTooltip="{{ 'button.delete' | translate }}"
+                          tooltipPosition="bottom"
                           (onClick)="deletePartner()"></p-button>
               }
             </div>
@@ -295,6 +342,27 @@
                     <span class="unops-text-body-medium unops-text-secondary">{{recordData().dueDiligenceApprovalDate | date}}</span>
                   </div>
                   }
+                  
+                  <!-- Due Diligence Expiry Warning Banner -->
+                  @if(dueDiligenceExpiryWarning()){
+                  <div class="unops-p-md unops-rounded-md unops-mb-sm" style="border: 1px solid var(--unops-warning); background: var(--unops-accent-yellow-soft);">
+                    <div class="unops-flex unops-items-start unops-gap-sm">
+                      <i class="pi pi-exclamation-triangle unops-text-warning" style="font-size: 1.1rem; margin-top: 2px;"></i>
+                      <div class="unops-flex unops-flex-col unops-gap-xs">
+                        <div class="unops-text-body-medium unops-text-warning" style="font-weight: var(--unops-font-weight-semibold);">
+                          {{ 'partner.view.dueDiligence.expiryWarning' | translate: {
+                            months: dueDiligenceExpiryWarning()!.months,
+                            days: dueDiligenceExpiryWarning()!.days
+                          } }}
+                        </div>
+                        <div class="unops-text-body-small" style="color: var(--unops-warning-dark);">
+                          {{ 'partner.view.dueDiligence.expiryWarningDetails' | translate }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  }
+                  
                   @if(recordData().dueDiligenceExpiryDate){
                   <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm" style="border: 1px solid var(--unops-warning); background: var(--unops-accent-yellow-soft);">
                     <span class="unops-text-label-large unops-text-warning">{{ 'label.partner.dueDiligenceExpiryDate' | translate }}</span>

@@ -56,6 +56,13 @@ public class EntityPermissionsModel
     public bool? CanApprove { get; set; }
 
     /// <summary>
+    /// Whether the user can unapprove this entity
+    /// Only applicable to certain entities like Partner
+    /// </summary>
+    public bool? CanUnapprove { get; set; }
+
+
+    /// <summary>
     /// Whether the user can export data (PARTNER_GLOB_ADMIN only)
     /// </summary>
     public bool CanExport { get; set; }
