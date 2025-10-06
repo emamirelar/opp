@@ -1430,6 +1430,9 @@
   "search.showAll": "Show All",
   "search.showAllResults": "Show All Results",
   "search.showMetadata": "Show Metadata",
+  "search.hideMetadata": "Hide Metadata",
+  "search.metadataToggle": "Metadata",
+  "search.metadataToggleTooltip": "Toggle search metadata display",
   "search.showMyOrgUnitOnly": "Show My Org Unit Only",
   "search.showingAllRecords": "Showing {{total}} records",
   "search.showingRecords": "Showing {{filtered}} of {{total}} records",
@@ -1939,5 +1942,11 @@
   "tooltip.interaction.phoneNumbers": "The phone numbers of contacts and UNOPS members involved in the interaction.",
   "tooltip.interaction.emailAddresses": "The email addresses of contacts and UNOPS members involved in the interaction.",
   "tooltip.interaction.relatedTo": "All the partner contacts involved in this interaction.",
-  "tooltip.interaction.users": "UNOPS users involved in the interaction."
+  "tooltip.interaction.users": "UNOPS users involved in the interaction.",
+  "label.totalRecords": "Total Records",
+  "label.searchResults": "Search Results",
+  "label.advancedSearchResults": "Advanced Search Results",
+  "label.showingRecords": "Showing {{count}} records",
+  "label.searchResultsCount": "{{current}} of {{total}} results",
+  "label.advancedSearchResultsCount": "{{current}} of {{total}} results"
 }

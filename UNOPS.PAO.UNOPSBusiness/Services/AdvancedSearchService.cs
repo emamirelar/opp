@@ -111,7 +111,9 @@ public class AdvancedSearchService
                 TotalCount = totalCount,
                 PageIndex = request.PageIndex,
                 PageSize = request.PageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
+                TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize),
+                SearchMetadata = !string.IsNullOrWhiteSpace(request.Query) ? await GenerateBasicSearchMetadataAsync(mappedResults, request.Query, typeof(TEntity).Name) : null,
+                SearchQuery = request.Query
             };
         }
         catch (Exception ex)
@@ -167,6 +169,144 @@ public class AdvancedSearchService
         };
 
         return await SearchAsync<TEntity, TModel>(request, user);
+    }
+
+    /// <summary>
+    /// Search method with metadata for text query only (enhanced search endpoint)
+    /// Returns search results with metadata showing which fields matched
+    /// </summary>
+    public async Task<PaginationResponse<TModel>> SearchWithQueryAndMetadataAsync<TEntity, TModel>(
+        string query,
+        PaginationRequest pagination,
+        ClaimsPrincipal user)
+        where TEntity : class
+        where TModel : class
+    {
+        var startTime = DateTime.UtcNow;
+        
+        try
+        {
+            _logger.LogInformation("=== SEARCH WITH METADATA ===");
+            _logger.LogInformation("Entity: {EntityType}, Query: '{Query}'", typeof(TEntity).Name, query);
+
+            // Get entity type name for PostgreSQL function
+            var entityType = typeof(TEntity).Name.Replace("UNOPS", ""); // UNOPSPartner -> Partner
+            
+            // Use the specific PostgreSQL search function based on entity type
+            List<GlobalSearchResult> searchResults;
+            switch (entityType)
+            {
+                case "Partner":
+                    searchResults = await SearchPartnersAsync(query);
+                    break;
+                case "Contact":
+                    searchResults = await SearchContactsAsync(query);
+                    break;
+                case "Interaction":
+                    searchResults = await SearchInteractionsAsync(query);
+                    break;
+                default:
+                    throw new ArgumentException($"Unsupported entity type: {entityType}");
+            }
+
+            // Get all entity IDs from search results (don't paginate yet)
+            var allEntityIds = searchResults.Select(r => r.EntityId).ToList();
+            
+            // Get the actual entity records for all search results
+            var allEntities = await GetEntitiesByIds<TEntity>(allEntityIds);
+            
+            // Apply user's requested ordering to the entities
+            var orderedEntities = ApplyDynamicOrdering(allEntities.AsQueryable(), pagination.OrderBy, pagination.Ascending ?? false).ToList();
+            
+            // Update total count to reflect actual entities returned after access control
+            var totalCount = orderedEntities.Count;
+            
+            // Now apply pagination to the ordered entities
+            var paginatedEntities = orderedEntities
+                .Skip((pagination.PageIndex - 1) * pagination.PageSize)
+                .Take(pagination.PageSize)
+                .ToList();
+            
+            // Get the corresponding search results for the paginated entities
+            var paginatedEntityIds = paginatedEntities.Select(e => GetEntityId(e)).ToList();
+            var paginatedResults = searchResults.Where(r => paginatedEntityIds.Contains(r.EntityId)).ToList();
+            
+            // Map to models
+            var mappedResults = await MapToModelsAsync<TEntity, TModel>(paginatedEntities);
+
+            // Create search metadata using the same structure as global search
+            var searchMetadata = new Dictionary<int, Dictionary<string, object>>();
+            foreach (var result in paginatedResults)
+            {
+                var metadata = new Dictionary<string, object>();
+                
+                if (!string.IsNullOrEmpty(result.MatchedField))
+                    metadata["matchedField"] = result.MatchedField;
+                    
+                if (!string.IsNullOrEmpty(result.SearchType))
+                    metadata["searchType"] = result.SearchType;
+                    
+                if (!string.IsNullOrEmpty(result.MatchCriteria))
+                    metadata["matchCriteria"] = result.MatchCriteria;
+                    
+                metadata["score"] = result.Score;
+                
+                if (!string.IsNullOrEmpty(result.Snippet))
+                {
+                    // Truncate snippet if too long for frontend display
+                    metadata["snippet"] = result.Snippet.Length > 200 ? 
+                        result.Snippet.Substring(0, 200) + "..." : result.Snippet;
+                }
+                
+                searchMetadata[result.EntityId] = metadata;
+            }
+
+            var executionTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            
+            _logger.LogInformation("Search with metadata completed. Results: {Count}, Time: {ExecutionTime}ms", 
+                mappedResults.Count, executionTime);
+
+            return new PaginationResponse<TModel>
+            {
+                Records = mappedResults,
+                TotalCount = totalCount,
+                PageIndex = pagination.PageIndex,
+                PageSize = pagination.PageSize,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pagination.PageSize),
+                SearchMetadata = searchMetadata,
+                SearchQuery = query,
+                ExecutionTimeMs = executionTime
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in SearchWithQueryAndMetadataAsync for {EntityType}", typeof(TEntity).Name);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Helper method to get entities by their IDs
+    /// </summary>
+    private async Task<List<TEntity>> GetEntitiesByIds<TEntity>(List<int> ids) where TEntity : class
+    {
+        var query = BuildBaseQueryWithIncludes<TEntity>();
+        
+        // Add ID filter based on entity type
+        if (typeof(TEntity).Name.Contains("Partner"))
+        {
+            query = query.Where(e => ids.Contains(EF.Property<int>(e, "Id")));
+        }
+        else if (typeof(TEntity).Name.Contains("Contact"))
+        {
+            query = query.Where(e => ids.Contains(EF.Property<int>(e, "Id")));
+        }
+        else if (typeof(TEntity).Name.Contains("Interaction"))
+        {
+            query = query.Where(e => ids.Contains(EF.Property<int>(e, "Id")));
+        }
+
+        return await query.ToListAsync();
     }
 
     /// <summary>
@@ -2116,6 +2256,41 @@ public class AdvancedSearchService
             // Fallback to default ordering if dynamic ordering fails
             return query.OrderBy($"Id {(ascending ? "ascending" : "descending")}");
         }
+    }
+
+    /// <summary>
+    /// Generates basic search metadata for SearchAsync method
+    /// This provides basic metadata when using Entity Framework queries instead of PostgreSQL search functions
+    /// </summary>
+    private async Task<Dictionary<int, Dictionary<string, object>>?> GenerateBasicSearchMetadataAsync<TModel>(
+        List<TModel> results, 
+        string query, 
+        string entityTypeName)
+        where TModel : class
+    {
+        if (results == null || !results.Any() || string.IsNullOrWhiteSpace(query))
+            return null;
+
+        var searchMetadata = new Dictionary<int, Dictionary<string, object>>();
+        
+        foreach (var result in results)
+        {
+            var entityId = GetEntityId(result);
+            if (entityId == 0) continue;
+
+            var metadata = new Dictionary<string, object>
+            {
+                ["matchedField"] = "General Search",
+                ["searchType"] = "text",
+                ["matchCriteria"] = $"Contains '{query}'",
+                ["score"] = 0.8, // Default score for basic search
+                ["snippet"] = $"Search matched: {query}"
+            };
+
+            searchMetadata[entityId] = metadata;
+        }
+
+        return searchMetadata;
     }
 
     #endregion

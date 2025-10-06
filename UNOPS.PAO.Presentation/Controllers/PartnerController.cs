@@ -276,8 +276,8 @@ public class PartnerController : BaseController
                 FilterActive = filterActive
             };
 
-            // Use AdvancedSearchService for unified text search with PostgreSQL similarity
-            var result = await _advancedSearchService.SearchWithQueryAsync<UNOPSPartner, PartnerModel>(
+            // Use AdvancedSearchService for unified text search with PostgreSQL similarity and metadata
+            var result = await _advancedSearchService.SearchWithQueryAndMetadataAsync<UNOPSPartner, PartnerModel>(
                 query, 
                 paginationRequest, 
                 User);

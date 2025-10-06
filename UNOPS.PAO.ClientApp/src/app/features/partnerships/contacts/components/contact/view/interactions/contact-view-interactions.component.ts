@@ -147,6 +147,10 @@ export class ContactViewInteractionsComponent implements OnInit {
           operators: ['is', 'is not', 'after', 'before', 'between', '>', '<', '>=', '<=']
         }
       ] as SearchField[]
+    },
+    searchMetadata: {
+      enabled: true,
+      defaultVisible: false
     }
   }));
 
@@ -322,5 +326,6 @@ export class ContactViewInteractionsComponent implements OnInit {
 
   onSearchChange(searchParams: SearchParams) {
   }
+
 }
 

@@ -313,8 +313,8 @@ public class ContactController : BaseController
             return Ok(searchResult);
         }
 
-        // Use AdvancedSearchService for unified text search with PostgreSQL similarity
-        var result = await _advancedSearchService.SearchWithQueryAsync<UNOPSContact, ContactModel>(
+        // Use AdvancedSearchService for unified text search with PostgreSQL similarity and metadata
+        var result = await _advancedSearchService.SearchWithQueryAndMetadataAsync<UNOPSContact, ContactModel>(
             query, 
             paginationRequest, 
             User);
