@@ -90,6 +90,7 @@
 	"aiAssistant.inlineImage": "Imagem inline",
 	"aiAssistant.learnMore": "Saiba mais sobre o que você pode usar o Assistente de IA para",
 	"aiAssistant.loadingSuggestions": "Carregando sugestões personalizadas...",
+	"aiAssistant.loadingChat": "Carregando conversa...",
 	"aiAssistant.minimizeToPopup": "Minimizar para popup",
 	"aiAssistant.newChat": "Novo Chat",
 	"aiAssistant.newConversation": "Nova conversa",
@@ -1428,6 +1429,7 @@
 	"search.showAll": "Mostrar Tudo",
 	"search.showAllResults": "Mostrar Todos os Resultados",
 	"search.showMetadata": "Mostrar Metadados",
+	"search.hideMetadata": "Ocultar Metadados",
 	"search.showMyOrgUnitOnly": "Mostrar Apenas Minha Unidade Orgânica",
 	"search.showingAllRecords": "Mostrando todos os {{total}} registros",
 	"search.showingRecords": "Mostrando {{filtered}} de {{total}} registros",
@@ -1564,6 +1566,7 @@
 	"tooltip.contact.email": "Endereço de e-mail principal do contato.",
 	"tooltip.contact.phone": "Número de telefone principal do contato.",
 	"tooltip.contact.mobile": "Número de telefone celular do contato.",
+	"tooltip.contact.contactOrgUnit": "Refers to the UNOPS org unit that manages this contact",
 	"tooltip.contact.fax": "Número de fax do contato.",
 	"tooltip.contact.department": "O departamento da organização parceira para o qual o contato trabalha/está relacionado.",
 	"tooltip.contact.description": "Descrição detalhada do contato e quaisquer responsabilidades relevantes, em particular relacionadas à sua relação/importância para a UNOPS.",
@@ -1913,5 +1916,11 @@
 	"tooltip.interaction.phoneNumbers": "Os números de telefone de contatos e membros da UNOPS envolvidos na interação.",
 	"tooltip.interaction.emailAddresses": "Os endereços de e-mail de contatos e membros da UNOPS envolvidos na interação.",
 	"tooltip.interaction.relatedTo": "Todos os contatos de parceiros envolvidos nesta interação.",
-	"tooltip.interaction.users": "Usuários UNOPS envolvidos na interação."
+	"tooltip.interaction.users": "Usuários UNOPS envolvidos na interação.",
+	"label.totalRecords": "Total de Registros",
+	"label.searchResults": "Resultados da Pesquisa",
+	"label.advancedSearchResults": "Resultados da Pesquisa Avançada",
+	"label.showingRecords": "Mostrando {{count}} registros",
+	"label.searchResultsCount": "{{current}} de {{total}} resultados",
+	"label.advancedSearchResultsCount": "{{current}} de {{total}} resultados"
 }

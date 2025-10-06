@@ -193,8 +193,7 @@ public class AppDbContext : AuditableDbContext<int, int>
         modelBuilder
             .Entity<AiPrompt>();
 
-        modelBuilder
-            .Entity<AiChatSession>();
+        // AiChatSession entity removed - session data now managed by ADK session state
 
         modelBuilder.Entity<Document>(doc =>
         {

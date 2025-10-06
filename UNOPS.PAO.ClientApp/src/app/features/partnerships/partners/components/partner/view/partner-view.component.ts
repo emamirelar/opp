@@ -44,6 +44,7 @@ import { PermissionUtilityService } from '@core/services/permission-utility.serv
 import { AiPanelComponent } from '@shared/reusables/components/ai-panel/ai-panel.component';
 import { GeminiService } from '@ai/services/gemini.service';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { PageContextService } from '@shared/services/page-context.service';
 import { GoBackComponent } from '@shared/reusables/components/go-back/go-back.component';
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
@@ -141,6 +142,7 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
   authService = inject(AuthService);
   confirmationService = inject(ConfirmationService);
   private destroyRef = inject(DestroyRef);
+  private pageContextService = inject(PageContextService);
 
   // Permission management using utility service
   private permissionUtils = this.permissionService.createInstancePermissions('Partner');
@@ -244,6 +246,9 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   ngOnDestroy(): void {
+    // Clear component data for AI Assistant
+    this.pageContextService.clearComponentData();
+    
     this.langChangeSubscription?.unsubscribe();
     if (this.widthTrackingInterval) {
       clearInterval(this.widthTrackingInterval);
@@ -254,6 +259,9 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   ngOnInit() {
+    // Register component data for AI Assistant
+    this.pageContextService.setComponentData(this);
+    
     // Check admin role
     this.authService.isAdmin().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (isAdmin) => {
@@ -265,45 +273,32 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
       }
     });
 
-    // If recordId is provided via Input (AI layout), load data directly
-    if (this.recordId && this.recordId !== '') {
+    // Load initial data if recordId is already set
+    if (this.recordId) {
       this._loadRecordDetails();
-      return;
     }
-
-    // Otherwise, use the route-based logic (normal navigation)
-    this.activatedRoute.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (paramMap) => {
-        this.recordId = paramMap.get("recordId") || '';
-
-        if (this.recordId != '') {
-          // Check if data is already available from the resolver
-          this.activatedRoute.parent?.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
-            if (data['partnerData']) {
-              const partnerData = data['partnerData'];
-              this.recordData.set(partnerData);
-
-              // Extract permissions from the resolver data if they exist
-              if (partnerData.permissions) {
-                this.recordPermissions.set({
-                  entity: 'Partner',
-                  hasAccess: true,
-                  permissions: partnerData.permissions
-                });
-              }
-
-              this.infoLoading.set(false);
-            } else {
-              // Fallback to loading details directly if resolver data isn't available
-              this._loadRecordDetails();
-            }
-          });
-
-          // Load permissions for this specific partner
-          // Permissions are now extracted from the partner response directly
+    
+    // ALWAYS subscribe to route parameter changes, regardless of initial recordId
+    // Note: recordId is on the parent route, not the child route
+    // So we need to subscribe to parent.paramMap, not paramMap
+    const parent = this.activatedRoute.parent;
+    if (parent) {
+      parent.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: (paramMap) => {
+          const newRecordId = paramMap.get("recordId") || '';
+          
+          // ALWAYS reload when recordId changes
+          if (newRecordId && newRecordId !== this.recordId) {
+            this.recordId = newRecordId;
+            this._loadRecordDetails();
+          } else if (newRecordId && !this.recordId) {
+            // First load when recordId is empty
+            this.recordId = newRecordId;
+            this._loadRecordDetails();
+          }
         }
-      }
-    });
+      });
+    }
 
     // Width tracking will be initialized in ngAfterViewInit
 
@@ -335,6 +330,7 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
         }
 
         this.infoLoading.set(false);
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading partner details:', error);
@@ -809,15 +805,14 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
 
   @HostListener('window:resize', ['$event'])
   onResize() {
-    console.log('Partner View - Window resize detected');
-    setTimeout(() => {
-      this.updateComponentWidth();
-    }, 10);
+    if (this.updateComponentWidth) {
+      setTimeout(() => {
+        this.updateComponentWidth();
+      }, 10);
+    }
   }
 
   private startWidthTracking() {
-    console.log('Partner View - Starting width tracking'); // Debug log
-    
     // Initial width measurement with multiple attempts
     this.attemptWidthMeasurement();
 
@@ -829,7 +824,6 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
           if (width > 0) {
             const currentWidth = this.componentWidth();
             if (currentWidth !== width) {
-              console.log('Partner View - ResizeObserver width changed from', currentWidth, 'to', width);
               this.componentWidth.set(width);
               this.cdr.detectChanges();
             }
@@ -838,10 +832,8 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
       });
       
       this.resizeObserver.observe(this.widthTracker.nativeElement);
-      console.log('Partner View - ResizeObserver initialized');
     } else {
       // Fallback to polling for older browsers
-      console.log('Partner View - Using polling fallback');
       this.widthTrackingInterval = setInterval(() => {
         this.updateComponentWidth();
       }, 100);
@@ -855,7 +847,7 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
     }
 
     if (this.updateComponentWidth()) {
-      console.log('Partner View - Width measurement successful');
+      // Width measurement successful
     } else {
       // Try again after a short delay
       setTimeout(() => {
@@ -872,7 +864,6 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
       if (width > 0) {
         const currentWidth = this.componentWidth();
         if (currentWidth !== width) {
-          console.log('Partner View - Width changed from', currentWidth, 'to', width);
           this.componentWidth.set(width);
           // Trigger change detection
           this.cdr.detectChanges();

@@ -1,110 +1,70 @@
+/* Host element styling - applies to <app-content-renderer> */
+:host {
+  display: block;
+  width: 100%;
+}
+
+:host.user-message {
+  display: block !important;
+  max-width: 85% !important;
+  width: fit-content !important;
+  align-self: flex-end !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+:host.ai-message {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  align-self: flex-start !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
 .content-item {
-  margin: 0.75rem 0;
-  padding-bottom: 1.25rem;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+  margin: 1rem 0;
+  padding: 0;
   position: relative;
-  transition: border-color 0.3s ease;
+  transition: all 0.3s ease;
+  width: 100%;
 }
 
 .content-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
+/* Remove all decorative borders and gradients */
 .content-item::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(102, 126, 234, 0.3) 25%, 
-    rgba(118, 75, 162, 0.4) 50%, 
-    rgba(102, 126, 234, 0.3) 75%, 
-    transparent 100%);
-  opacity: 0.8;
-  border-radius: 1px;
-}
-
-.content-item:last-child::after {
   display: none;
 }
 
-/* Enhanced border colors for different content types */
-.content-item .content-markdown::after {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(59, 130, 246, 0.4) 25%, 
-    rgba(147, 51, 234, 0.5) 50%, 
-    rgba(59, 130, 246, 0.4) 75%, 
-    transparent 100%);
-}
-
+/* Remove all decorative borders and gradients for content types */
+.content-item .content-markdown::after,
 .content-item .content-card::after,
-.content-item .content-grid::after {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(251, 113, 133, 0.4) 25%, 
-    rgba(254, 225, 64, 0.5) 50%, 
-    rgba(251, 113, 133, 0.4) 75%, 
-    transparent 100%);
-}
-
-.content-item .content-mermaid::after {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(79, 172, 254, 0.4) 25%, 
-    rgba(0, 242, 254, 0.5) 50%, 
-    rgba(79, 172, 254, 0.4) 75%, 
-    transparent 100%);
-}
-
-.content-item .content-chartjs::after {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(255, 107, 107, 0.4) 25%, 
-    rgba(78, 205, 196, 0.5) 50%, 
-    rgba(255, 107, 107, 0.4) 75%, 
-    transparent 100%);
-}
-
-.content-item .content-code::after {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(67, 233, 123, 0.4) 25%, 
-    rgba(56, 249, 215, 0.5) 50%, 
-    rgba(67, 233, 123, 0.4) 75%, 
-    transparent 100%);
-}
-
+.content-item .content-grid::after,
+.content-item .content-mermaid::after,
+.content-item .content-chartjs::after,
+.content-item .content-code::after,
 .content-item .content-text::after {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(156, 163, 175, 0.4) 25%, 
-    rgba(107, 114, 128, 0.5) 50%, 
-    rgba(156, 163, 175, 0.4) 75%, 
-    transparent 100%);
+  display: none;
 }
 
-/* Hover effect for better interactivity */
-.content-item:hover::after {
-  opacity: 1;
-  transform: scaleY(1.2);
-  transition: opacity 0.3s ease, transform 0.3s ease;
+/* Subtle hover effect for better interactivity */
+.content-item:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
 }
 
 /* Content Type Headers */
 .content-type-header {
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.25rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0;
 }
 
 .content-type-label {
   display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4ec3e0 0%, #1bb3a6 100%);
   color: white;
   font-size: 0.75rem;
   font-weight: 600;
@@ -132,17 +92,17 @@
   left: 100%;
 }
 
-/* Content Type Specific Colors */
+/* Content Type Specific Colors - All using unified dashboard ocean-to-teal gradient */
 .mermaid-container .content-type-label {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  background: linear-gradient(135deg, #4ec3e0 0%, #1bb3a6 100%);
 }
 
 .code-container .content-type-label {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  background: linear-gradient(135deg, #4ec3e0 0%, #1bb3a6 100%);
 }
 
 .fade-in-content:has(app-entity-grid) .content-type-label {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  background: linear-gradient(135deg, #4ec3e0 0%, #1bb3a6 100%);
 }
 
 .fade-in-content {
@@ -163,11 +123,11 @@
 .mermaid-container {
   margin: 1rem 0;
   text-align: center;
-  background: white;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  border: 1px solid #e0e0e0;
+  background: var(--unops-surface-primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--unops-shadow-sm);
+  width: 100%;
 }
 
 .mermaid-container .mermaid {
@@ -185,14 +145,15 @@
 
 .code-container {
   margin: 1rem 0;
+  width: 100%;
 }
 
 .code-container pre {
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 1rem;
+  background-color: var(--unops-surface-secondary);
+  border-radius: 8px;
+  padding: 1.25rem;
   overflow-x: auto;
+  box-shadow: var(--unops-shadow-sm);
 }
 
 .text-content {
@@ -202,19 +163,127 @@
 /* Enhanced Markdown styling with professional appearance */
 .content-item markdown,
 .content-item markdown > * {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
-  line-height: 1.6 !important;
-  color: #374151 !important;
+  font-family: var(--unops-font-body) !important;
+  line-height: 1.7 !important;
+  color: var(--unops-neutral-900) !important;
+  white-space: pre-wrap !important;
 }
 
-/* Headings with professional styling */
+/* Ensure proper line break handling */
+.content-item markdown p,
+.content-item markdown div,
+.content-item markdown span {
+  white-space: pre-wrap !important;
+}
+
+/* User message styling - clean bubble appearance */
+.content-item.user-message {
+  margin: 0.5rem 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: flex-end !important;
+}
+
+.content-item.user-message::after {
+  display: none;
+}
+
+.content-item.user-message .content-markdown {
+  background: var(--unops-primary) !important;
+  color: var(--unops-primary-on) !important;
+  border-radius: 1rem 1rem 0.25rem 1rem !important;
+  padding: 0.75rem 1rem !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+  min-width: 120px !important;
+  width: fit-content !important;
+  box-shadow: var(--unops-shadow-md) !important;
+  display: inline-block !important;
+  transition: all 0.2s ease !important;
+  word-break: break-words !important;
+}
+
+.content-item.user-message .content-markdown:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--unops-shadow-lg);
+}
+
+.content-item.user-message .user-message-text {
+  white-space: pre-wrap;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: inherit;
+  margin: 0;
+}
+
+/* Also handle the old class structure for backward compatibility */
+.content-item:has(.content-markdown.user-message) {
+  margin: 0.5rem 0 !important;
+  padding: 0 !important;
+  max-width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.content-item:has(.content-markdown.user-message)::after {
+  display: none !important;
+}
+
+.content-item .content-markdown.user-message {
+  background: var(--unops-primary);
+  color: var(--unops-primary-on);
+  border-radius: 1rem 1rem 0.25rem;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  max-width: 85%;
+  min-width: 120px;
+  box-shadow: var(--unops-shadow-md);
+  display: inline-block;
+  transition: all 0.2s ease;
+  word-break: break-words;
+}
+
+.content-item .content-markdown.user-message:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--unops-shadow-lg);
+}
+
+.content-item .content-markdown.user-message .user-message-text {
+  white-space: pre-wrap;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: inherit;
+  margin: 0;
+}
+
+/* AI message styling - clean appearance */
+.content-item.ai-message {
+  margin: 0.75rem 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  word-break: break-words !important;
+  display: block !important;
+  text-align: left !important;
+}
+
+.content-item.ai-message::after {
+  display: none;
+}
+
+/* Headings with UNOPS design system styling */
 .content-item markdown h1 {
-  font-size: 2rem !important;
-  font-weight: 700 !important;
+  font-size: var(--unops-font-size-headline-large) !important;
+  font-weight: var(--unops-font-weight-bold) !important;
   margin-top: 1.5rem !important;
   margin-bottom: 1rem !important;
-  color: #1f2937 !important;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+  color: var(--unops-neutral-black) !important;
+  background: linear-gradient(135deg, #4ec3e0 0%, #1bb3a6 100%) !important;
   background-clip: text !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -228,34 +297,34 @@
   left: 0 !important;
   width: 60px !important;
   height: 3px !important;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
+  background: linear-gradient(90deg, #4ec3e0 0%, #1bb3a6 100%) !important;
   border-radius: 2px !important;
 }
 
 .content-item markdown h2 {
-  font-size: 1.5rem !important;
-  font-weight: 600 !important;
+  font-size: var(--unops-font-size-headline-medium) !important;
+  font-weight: var(--unops-font-weight-semibold) !important;
   margin-top: 1.25rem !important;
   margin-bottom: 0.75rem !important;
-  color: #374151 !important;
+  color: var(--unops-neutral-800) !important;
 }
 
 .content-item markdown h3 {
-  font-size: 1.25rem !important;
-  font-weight: 600 !important;
+  font-size: var(--unops-font-size-headline-small) !important;
+  font-weight: var(--unops-font-weight-semibold) !important;
   margin-top: 1rem !important;
   margin-bottom: 0.5rem !important;
-  color: #4b5563 !important;
+  color: var(--unops-neutral-700) !important;
 }
 
 .content-item markdown h4,
 .content-item markdown h5,
 .content-item markdown h6 {
-  font-size: 1.1rem !important;
-  font-weight: 600 !important;
+  font-size: var(--unops-font-size-lg) !important;
+  font-weight: var(--unops-font-weight-semibold) !important;
   margin-top: 0.75rem !important;
   margin-bottom: 0.5rem !important;
-  color: #6b7280 !important;
+  color: var(--unops-neutral-600) !important;
 }
 
 /* Paragraphs with better spacing */
@@ -264,27 +333,27 @@
   line-height: 1.7 !important;
 }
 
-/* Links with professional styling */
+/* Links with UNOPS styling */
 .content-item markdown a {
-  color: #2563eb !important;
+  color: var(--unops-primary) !important;
   text-decoration: none !important;
-  font-weight: 500 !important;
+  font-weight: var(--unops-font-weight-medium) !important;
   border-bottom: 1px solid transparent !important;
   transition: all 0.2s ease !important;
   position: relative !important;
 }
 
 .content-item markdown a:hover {
-  color: #1d4ed8 !important;
-  border-bottom-color: #2563eb !important;
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, transparent 100%) !important;
+  color: var(--unops-primary-dark) !important;
+  border-bottom-color: var(--unops-primary) !important;
+  background: var(--unops-primary-container-soft) !important;
   padding: 0 4px !important;
   margin: 0 -4px !important;
-  border-radius: 4px !important;
+  border-radius: var(--unops-radius-sm) !important;
 }
 
 .content-item markdown a:visited {
-  color: #7c3aed !important;
+  color: var(--unops-secondary) !important;
 }
 
 /* Lists with proper spacing and styling */
@@ -304,7 +373,7 @@
 /* Unordered lists (ul) - use bullets */
 .content-item markdown ul li::before {
   content: '•' !important;
-  color: #667eea !important;
+  color: var(--unops-primary) !important;
   font-weight: bold !important;
   position: absolute !important;
   left: -1.2rem !important;
@@ -322,8 +391,8 @@
 
 .content-item markdown ol li::before {
   content: counter(list-counter) '.' !important;
-  color: #667eea !important;
-  font-weight: 600 !important;
+  color: var(--unops-primary) !important;
+  font-weight: var(--unops-font-weight-semibold) !important;
   position: absolute !important;
   left: -1.5rem !important;
   min-width: 1.2rem !important;
@@ -347,35 +416,35 @@
 
 /* Text formatting */
 .content-item markdown strong {
-  font-weight: 600 !important;
-  color: #1f2937 !important;
+  font-weight: var(--unops-font-weight-semibold) !important;
+  color: var(--unops-neutral-black) !important;
 }
 
 .content-item markdown em {
   font-style: italic !important;
-  color: #4b5563 !important;
+  color: var(--unops-neutral-700) !important;
 }
 
 /* Code styling */
 .content-item markdown code {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  color: #e11d48 !important;
+  background: var(--unops-surface-secondary) !important;
+  color: var(--unops-accent-cherry) !important;
   padding: 0.25rem 0.5rem !important;
-  border-radius: 6px !important;
+  border-radius: var(--unops-radius-sm) !important;
   font-size: 0.9em !important;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
-  border: 1px solid #e2e8f0 !important;
-  font-weight: 500 !important;
+  border: 1px solid var(--unops-neutral-200) !important;
+  font-weight: var(--unops-font-weight-medium) !important;
 }
 
 .content-item markdown pre {
-  background: #1e293b !important;
-  color: #e2e8f0 !important;
+  background: var(--unops-neutral-black) !important;
+  color: var(--unops-neutral-white) !important;
   padding: 1.25rem !important;
-  border-radius: 8px !important;
+  border-radius: var(--unops-radius-md) !important;
   overflow-x: auto !important;
   margin: 1rem 0 !important;
-  border: 1px solid #334155 !important;
+  border: 1px solid var(--unops-neutral-700) !important;
   position: relative !important;
 }
 
@@ -386,8 +455,8 @@
   left: 0 !important;
   right: 0 !important;
   height: 3px !important;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%) !important;
-  border-radius: 8px 8px 0 0 !important;
+  background: linear-gradient(90deg, #4ec3e0 0%, #1bb3a6 100%) !important;
+  border-radius: var(--unops-radius-md) var(--unops-radius-md) 0 0 !important;
 }
 
 .content-item markdown pre code {
@@ -403,18 +472,18 @@
 .content-item markdown blockquote {
   margin: 1rem 0 !important;
   padding: 1rem 1.25rem !important;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  border-left: 4px solid #667eea !important;
-  border-radius: 0 8px 8px 0 !important;
+  background: var(--unops-surface-secondary) !important;
+  border-left: 4px solid var(--unops-primary) !important;
+  border-radius: 0 var(--unops-radius-md) var(--unops-radius-md) 0 !important;
   font-style: italic !important;
-  color: #4b5563 !important;
+  color: var(--unops-neutral-700) !important;
   position: relative !important;
 }
 
 .content-item markdown blockquote::before {
   content: '"' !important;
   font-size: 3rem !important;
-  color: #667eea !important;
+  color: var(--unops-primary) !important;
   position: absolute !important;
   top: -0.5rem !important;
   left: 0.5rem !important;
@@ -427,40 +496,40 @@
   border-collapse: collapse !important;
   width: 100% !important;
   margin: 1rem 0 !important;
-  border-radius: 8px !important;
+  border-radius: var(--unops-radius-md) !important;
   overflow: hidden !important;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: var(--unops-shadow-sm) !important;
 }
 
 .content-item markdown th,
 .content-item markdown td {
   padding: 0.75rem 1rem !important;
   text-align: left !important;
-  border-bottom: 1px solid #e5e7eb !important;
+  border-bottom: 1px solid var(--unops-neutral-200) !important;
 }
 
 .content-item markdown th {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  font-weight: 600 !important;
+  background: linear-gradient(90deg, #4ec3e0 0%, #1bb3a6 100%) !important;
+  color: var(--unops-primary-on) !important;
+  font-weight: var(--unops-font-weight-semibold) !important;
   text-transform: uppercase !important;
-  font-size: 0.85rem !important;
+  font-size: var(--unops-font-size-sm) !important;
   letter-spacing: 0.5px !important;
 }
 
 .content-item markdown tr:nth-child(even) {
-  background-color: #f9fafb !important;
+  background-color: var(--unops-surface-secondary) !important;
 }
 
 .content-item markdown tr:hover {
-  background-color: #f3f4f6 !important;
+  background-color: var(--unops-surface-cool) !important;
 }
 
 /* Horizontal rules */
 .content-item markdown hr {
   border: none !important;
   height: 2px !important;
-  background: linear-gradient(90deg, transparent 0%, #667eea 50%, transparent 100%) !important;
+  background: linear-gradient(90deg, transparent 0%, #4ec3e0 50%, transparent 100%) !important;
   margin: 2rem 0 !important;
   border-radius: 1px !important;
 }
@@ -500,40 +569,37 @@
   border-radius: 8px;
   border: 1px solid var(--surface-border);
   overflow: hidden;
+  width: 100%;
 }
 
 .chartjs-container .content-type-label {
-  background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+  background: linear-gradient(135deg, #4ec3e0 0%, #1bb3a6 100%);
 }
 
-/* Thought content styling - italicized with different background */
+/* Thought content styling - clean appearance without borders */
 .content-thought {
-  background: rgba(156, 163, 175, 0.08); /* Light gray background */
-  border-left: 3px solid rgba(156, 163, 175, 0.4); /* Gray left border */
-  padding: 0.75rem;
-  margin: 0.5rem 0;
-  border-radius: 0.375rem;
+  background: var(--unops-surface-secondary);
+  border-left: 3px solid var(--unops-primary);
+  padding: 1rem;
+  margin: 0.75rem 0;
+  border-radius: var(--unops-radius-md);
   font-style: italic;
   position: relative;
+  box-shadow: var(--unops-shadow-sm);
 }
 
 .content-thought::before {
   content: '💭';
   position: absolute;
-  top: 0.5rem;
-  right: 0.75rem;
-  font-size: 0.875rem;
+  top: 0.75rem;
+  right: 1rem;
+  font-size: 1rem;
   opacity: 0.6;
 }
 
 /* Override the gradient border for thoughts */
 .content-item .content-thought::after {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(156, 163, 175, 0.3) 25%, 
-    rgba(107, 114, 128, 0.4) 50%, 
-    rgba(156, 163, 175, 0.3) 75%, 
-    transparent 100%);
+  display: none;
 }
 
 .content-thought ::ng-deep .typewriter-content {
@@ -571,11 +637,11 @@
 /* Function Call and Response Styling */
 .content-function-call,
 .content-function-response {
-  background: rgba(99, 102, 241, 0.05);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 8px;
-  padding: 1rem;
-  margin: 0.5rem 0;
+  background: var(--unops-surface-secondary);
+  border-radius: var(--unops-radius-md);
+  padding: 1.25rem;
+  margin: 0.75rem 0;
+  box-shadow: var(--unops-shadow-sm);
 }
 
 .content-function-call .content-type-header,
@@ -585,9 +651,9 @@
 
 .function-call-content,
 .function-response-content {
-  background: rgba(15, 23, 42, 0.8);
-  color: #e2e8f0;
-  border-radius: 6px;
+  background: var(--unops-neutral-black);
+  color: var(--unops-neutral-white);
+  border-radius: var(--unops-radius-sm);
   padding: 1rem;
   margin: 0;
   font-family: 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
@@ -599,27 +665,36 @@
 }
 
 .content-function-call {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid var(--unops-primary);
 }
 
 .content-function-response {
-  border-left: 4px solid #10b981;
+  border-left: 4px solid var(--unops-success);
 }
 
 /* Chart content styling */
 .content-chart {
-  background: rgba(16, 185, 129, 0.05);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 8px;
-  padding: 1rem;
-  margin: 0.5rem 0;
+  background: var(--unops-surface-secondary);
+  border-radius: var(--unops-radius-md);
+  padding: 1.25rem;
+  margin: 0.75rem 0;
+  box-shadow: var(--unops-shadow-sm);
+  width: 100%;
 }
 
 .content-chart::after {
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(16, 185, 129, 0.4) 25%, 
-    rgba(34, 197, 94, 0.5) 50%, 
-    rgba(16, 185, 129, 0.4) 75%, 
-    transparent 100%);
+  display: none;
+}
+
+/* Ensure card and grid content take full width */
+.content-card,
+.content-grid {
+  width: 100%;
+  max-width: 100%;
+}
+
+.content-card app-entity-grid,
+.content-grid app-entity-grid {
+  width: 100%;
+  display: block;
 } 

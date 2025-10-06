@@ -1,0 +1,127 @@
+{
+    "session": {
+        "id": "14cce006-991b-449c-b4a8-79488fda0983",
+        "userId": 55050,
+        "status": "Active",
+        "lastUpdated": "2025-10-05T08:38:59.086273+00:00",
+        "title": "what is the capital of india",
+        "starred": false,
+        "archived": false
+    },
+    "chatMessages": [
+        {
+            "content": {
+                "parts": [
+                    {
+                        "text": "what is the capital of india"
+                    }
+                ],
+                "role": "user"
+            },
+            "invocationId": "e-b3254813-0174-405a-b7bf-26de719ebe9c",
+            "author": "user",
+            "actions": {
+                "stateDelta": {},
+                "artifactDelta": {},
+                "requestedAuthConfigs": {}
+            },
+            "longRunningToolIds": [],
+            "id": "2be48ae6-edaa-4efa-84f8-603bd4929b26",
+            "timestamp": 1759653456.875812
+        },
+        {
+            "content": {
+                "parts": [
+                    {
+                        "thought": true,
+                        "text": "**Querying Capital Cities**\n\nI'm currently formulating the query for the search. I think using \"capital of India\" is the most straightforward approach. I will then await the results to answer the user. It is important to use the correct tools.\n\n\n"
+                    }
+                ],
+                "role": "model"
+            },
+            "invocationId": "e-b3254813-0174-405a-b7bf-26de719ebe9c",
+            "author": "root_agent",
+            "actions": {
+                "stateDelta": {},
+                "artifactDelta": {},
+                "requestedAuthConfigs": {}
+            },
+            "longRunningToolIds": [],
+            "id": "6a317be5-6408-45a3-bbc6-c9d647c8002c",
+            "timestamp": 1759653461.501093
+        },
+        {
+            "content": {
+                "parts": [
+                    {
+                        "thoughtSignature": "CjMBH8yFtqvJ6ZV5ivp7KRx0TCDmMj5wNe3F_XLrIvIJPKVga9AyrcVWfxox-xwbAoHzqAEKjgEBH8yFtkdlBJsKhIskwmoRNaIi0VPuiXS4U2nartHfuOFdB_jVt0pIW_DX_vtGgZbTokurHSstSu6fJB66jA5zFINvX_NnZTPg0w24HqyO-3FJ5e_Dz9YDAtXbusP_wun4ZTmq2cXVV1DQzjejJ-d_l96xuUVPzPwL1HYrhWL8eSD3fE9I-VcMDfE60tQ4CmMBH8yFtoc48cm_Tt8cJ__JxdAzoJoGThZ5HzwgmzamBDTImWRPVCo_qbRuUDEg1onUPiGf7Z2l796unSMkA5GONSmoVKS42dTHze9rfTmSjg--Kp-WviqFx90H8rb3gENEB-sKOAEfzIW22VfsZO8VO5o9Y-R3orE_fIgwFI2E3EOFfVbLTqiE1h7eXgRLycuQVL9bKoVMO4B249UA",
+                        "functionCall": {
+                            "id": "adk-f9b10530-d31a-434d-a0d4-6e9d9fc31d1e",
+                            "args": {
+                                "request": "capital of India"
+                            },
+                            "name": "google_search_agent"
+                        }
+                    }
+                ],
+                "role": "model"
+            },
+            "invocationId": "e-b3254813-0174-405a-b7bf-26de719ebe9c",
+            "author": "root_agent",
+            "actions": {
+                "stateDelta": {},
+                "artifactDelta": {},
+                "requestedAuthConfigs": {}
+            },
+            "longRunningToolIds": [],
+            "id": "3072b307-a002-4441-9803-e97ade5303af",
+            "timestamp": 1759653461.627334
+        },
+        {
+            "content": {
+                "parts": [
+                    {
+                        "functionResponse": {
+                            "id": "adk-f9b10530-d31a-434d-a0d4-6e9d9fc31d1e",
+                            "name": "google_search_agent",
+                            "response": {
+                                "result": "New Delhi is the capital of India. It is part of the National Capital Territory of Delhi (NCT). New Delhi is the seat of all three branches of the Government of India, hosting the Rashtrapati Bhavan (Presidential Palace), Sansad Bhavan (Parliament House), and the Supreme Court.\n\nThe British rulers officially designated New Delhi as the capital in 1911. After India gained independence in 1947, New Delhi continued as the capital.\n"
+                            }
+                        }
+                    }
+                ],
+                "role": "user"
+            },
+            "invocationId": "e-b3254813-0174-405a-b7bf-26de719ebe9c",
+            "author": "root_agent",
+            "actions": {
+                "stateDelta": {},
+                "artifactDelta": {},
+                "requestedAuthConfigs": {}
+            },
+            "longRunningToolIds": [],
+            "id": "93a588c0-fd49-41e1-9285-44424936c3c9",
+            "timestamp": 1759653466.709687
+        },
+        {
+            "content": {
+                "parts": [
+                    {
+                        "text": "New Delhi is the capital of India. It is part of the National Capital Territory of Delhi (NCT) and is the seat of all three branches of the Government of India. The British officially designated New Delhi as the capital in 1911, and it continued as such after India gained independence in 1947."
+                    }
+                ],
+                "role": "model"
+            },
+            "invocationId": "e-b3254813-0174-405a-b7bf-26de719ebe9c",
+            "author": "root_agent",
+            "actions": {
+                "stateDelta": {},
+                "artifactDelta": {},
+                "requestedAuthConfigs": {}
+            },
+            "longRunningToolIds": [],
+            "id": "bd4b1de2-5562-484f-9b94-40cb12dea516",
+            "timestamp": 1759653470.37563
+        }
+    ]
+}

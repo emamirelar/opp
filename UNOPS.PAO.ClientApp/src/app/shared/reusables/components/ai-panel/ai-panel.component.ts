@@ -308,6 +308,20 @@ export interface AiDataService {
       border-radius: 1px !important;
     }
 
+    /* Text truncation with CSS ellipsis */
+    .ai-panel .content-truncated {
+      display: -webkit-box !important;
+      -webkit-line-clamp: 8 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-height: 12rem !important; /* Fallback for browsers that don't support line-clamp */
+    }
+
+    .ai-panel .content-full {
+      display: block !important;
+    }
+
     /* Responsive design */
     @media (max-width: 768px) {
       .ai-panel ::ng-deep .markdown-content h1 {
@@ -332,6 +346,12 @@ export interface AiDataService {
       .ai-panel ::ng-deep .markdown-content blockquote {
         margin: 0.75rem 0 !important;
         padding: 0.75rem 1rem !important;
+      }
+
+      /* Adjust truncation for mobile */
+      .ai-panel .content-truncated {
+        -webkit-line-clamp: 6 !important;
+        max-height: 9rem !important;
       }
     }
   `
@@ -374,18 +394,10 @@ export class AiPanelComponent implements OnInit, OnDestroy, DoCheck {
   shouldShowContent = computed(() => !this.isLoading() && !this.hasError() && this.content());
   shouldShowError = computed(() => !this.isLoading() && this.hasError());
 
-  // Content truncation logic
+  // Content truncation logic - now handled by CSS
   shouldTruncate = computed(() => {
     const content = this.content();
     return content && content.length > this.truncateLength() && !this.showFullContent();
-  });
-
-  displayContent = computed(() => {
-    const content = this.content();
-    if (this.shouldTruncate()) {
-      return content.substring(0, this.truncateLength()) + '...';
-    }
-    return content;
   });
 
   showSeeMoreButton = computed(() => {
