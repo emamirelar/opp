@@ -1326,6 +1326,8 @@
 	"partner.view.approval.confirmHeader": "Confirmar Aprobación",
 	"partner.view.approval.confirmMessage": "¿Está seguro de que desea aprobar?",
 	"partner.view.approval.modalHeader": "Aprobación",
+	"partner.view.dueDiligence.expiryWarning": "La Debida Diligencia para este socio expirará en {{months}} meses y {{days}} días.",
+	"partner.view.dueDiligence.expiryWarningDetails": "Es posible que se requiera un nuevo proceso de debida diligencia para finalizar cualquier oportunidad después de esta fecha.",
 	"partner.view.error.editPermissionDenied": "Permiso de Edición Denegado",
 	"partner.view.modal.editHeader": "Editar Socio",
 	"partner.view.unapproval.confirmHeader": "Confirmar Desaprovação",

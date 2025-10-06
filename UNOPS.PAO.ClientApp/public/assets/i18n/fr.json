@@ -1326,6 +1326,8 @@
 	"partner.view.approval.confirmHeader": "Confirmer l'Approbation",
 	"partner.view.approval.confirmMessage": "Êtes-vous sûr de vouloir approuver ce partenaire ?",
 	"partner.view.approval.modalHeader": "Approbation du Partenaire",
+	"partner.view.dueDiligence.expiryWarning": "La Diligence Raisonnable pour ce partenaire expirera dans {{months}} mois et {{days}} jours.",
+	"partner.view.dueDiligence.expiryWarningDetails": "Un nouveau processus de diligence raisonnable peut être requis pour finaliser toute opportunité après cette date.",
 	"partner.view.error.editPermissionDenied": "Vous n'avez pas la permission de modifier ce partenaire.",
 	"partner.view.modal.editHeader": "Modifier le Partenaire",
 	"partner.view.unapproval.confirmHeader": "Confirmer la Désapprobation",

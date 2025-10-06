@@ -1325,6 +1325,8 @@
 	"partner.view.approval.confirmHeader": "Confirmar Aprovação",
 	"partner.view.approval.confirmMessage": "Tem certeza de que deseja aprovar este parceiro?",
 	"partner.view.approval.modalHeader": "Aprovar Parceiro",
+	"partner.view.dueDiligence.expiryWarning": "A Diligência Devida para este parceiro expirará em {{months}} meses e {{days}} dias.",
+	"partner.view.dueDiligence.expiryWarningDetails": "Um novo processo de diligência devida pode ser necessário para finalizar quaisquer oportunidades após esta data.",
 	"partner.view.error.editPermissionDenied": "Você não tem permissão para editar este parceiro",
 	"partner.view.modal.editHeader": "Editar Parceiro",
 	"partner.view.unapproval.confirmHeader": "Confirmar Desaprovação",

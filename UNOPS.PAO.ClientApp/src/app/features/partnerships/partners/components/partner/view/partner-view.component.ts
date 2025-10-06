@@ -157,6 +157,16 @@ import { BaseEngagementListComponent } from '@features/shared/base-engagement/ba
       color: white !important;
     }
 
+    /* Custom color for Activate button - Green (same as Approve) */
+    :host ::ng-deep .activate-button .p-button {
+      color: #22c55e !important;
+      border-color: #22c55e !important;
+    }
+    :host ::ng-deep .activate-button .p-button:hover {
+      background-color: #22c55e !important;
+      color: white !important;
+    }
+
     /* Custom color for Unapprove button - Red */
     :host ::ng-deep .unapprove-button .p-button {
       color: #ef4444 !important;
@@ -230,6 +240,66 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
   showCommentDialog = false;
   entityTypePartner = EntityType.Partner;
   infoLoading = signal<boolean>(false);
+
+  // Computed property for Due Diligence expiry warning
+  dueDiligenceExpiryWarning = computed(() => {
+    const expiryDate = this.recordData().dueDiligenceExpiryDate;
+    if (!expiryDate) return null;
+
+    // Normalize today to start of day (midnight) in local timezone
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Ensure expiry is a Date object and normalize to start of day
+    const expiry = new Date(expiryDate);
+    expiry.setHours(0, 0, 0, 0);
+
+    // Calculate 6 months from today
+    const sixMonthsFromNow = new Date(today);
+    sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+
+    // Only show warning if expiry is within the next 6 months and not in the past
+    if (expiry > sixMonthsFromNow || expiry < today) {
+      return null;
+    }
+
+    // Calculate total difference in days
+    const diffTime = expiry.getTime() - today.getTime();
+    const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Calculate months and remaining days
+    let months = 0;
+    let days = totalDays;
+    
+    // Count full months
+    const tempDate = new Date(today);
+    while (true) {
+      const nextMonth = new Date(tempDate);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      
+      // Check if adding another month would exceed the expiry date
+      if (nextMonth > expiry) {
+        break;
+      }
+      
+      months++;
+      tempDate.setMonth(tempDate.getMonth() + 1);
+    }
+    
+    // Calculate remaining days after full months
+    if (months > 0) {
+      const afterMonthsDate = new Date(today);
+      afterMonthsDate.setMonth(afterMonthsDate.getMonth() + months);
+      const remainingMs = expiry.getTime() - afterMonthsDate.getTime();
+      days = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+    }
+
+    return {
+      months,
+      days,
+      totalDays
+    };
+  });
 
   // ViewChild reference for link list component
   @ViewChild('linkListComponent') linkListComponent!: LinkListComponent;

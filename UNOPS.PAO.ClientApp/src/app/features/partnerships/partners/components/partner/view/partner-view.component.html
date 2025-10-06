@@ -342,6 +342,27 @@
                     <span class="unops-text-body-medium unops-text-secondary">{{recordData().dueDiligenceApprovalDate | date}}</span>
                   </div>
                   }
+                  
+                  <!-- Due Diligence Expiry Warning Banner -->
+                  @if(dueDiligenceExpiryWarning()){
+                  <div class="unops-p-md unops-rounded-md unops-mb-sm" style="border: 1px solid var(--unops-warning); background: var(--unops-accent-yellow-soft);">
+                    <div class="unops-flex unops-items-start unops-gap-sm">
+                      <i class="pi pi-exclamation-triangle unops-text-warning" style="font-size: 1.1rem; margin-top: 2px;"></i>
+                      <div class="unops-flex unops-flex-col unops-gap-xs">
+                        <div class="unops-text-body-medium unops-text-warning" style="font-weight: var(--unops-font-weight-semibold);">
+                          {{ 'partner.view.dueDiligence.expiryWarning' | translate: {
+                            months: dueDiligenceExpiryWarning()!.months,
+                            days: dueDiligenceExpiryWarning()!.days
+                          } }}
+                        </div>
+                        <div class="unops-text-body-small" style="color: var(--unops-warning-dark);">
+                          {{ 'partner.view.dueDiligence.expiryWarningDetails' | translate }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  }
+                  
                   @if(recordData().dueDiligenceExpiryDate){
                   <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm" style="border: 1px solid var(--unops-warning); background: var(--unops-accent-yellow-soft);">
                     <span class="unops-text-label-large unops-text-warning">{{ 'label.partner.dueDiligenceExpiryDate' | translate }}</span>

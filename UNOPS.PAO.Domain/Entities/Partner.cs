@@ -377,6 +377,7 @@ public class Partner : ModifiableDeletableEntity
         PartnerApprovalStatus = PartnerApprovalStatus.Approved;
         PartnerApprovalDate = DateTime.UtcNow;
         PartnerApprovedBy = $"Approved by {approverName} (ID: {approverId}) on {currentDate}";
+        CanCreateNewOpportunities = true; // Set to true when approved
         
         // Auto-assign the ERP dimension value only if not already set
         if (!ErpDimValue.HasValue)
@@ -404,6 +405,7 @@ public class Partner : ModifiableDeletableEntity
         string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
         PartnerApprovalStatus = PartnerApprovalStatus.NotApproved;
         PartnerApprovedBy = $"Unapproved by {unapproverName} (ID: {unapproverId}) on {currentDate}";
+        CanCreateNewOpportunities = false; // Set to false when unapproved
     }
     
     /// <summary>

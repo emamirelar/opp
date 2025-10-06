@@ -1326,6 +1326,8 @@
   "partner.view.approval.confirmHeader": "Confirm Approval",
   "partner.view.approval.confirmMessage": "Are you sure you want to approve this partner?",
   "partner.view.approval.modalHeader": "Partner Approval",
+  "partner.view.dueDiligence.expiryWarning": "Due Diligence for this partner will expire in {{months}} months and {{days}} days.",
+  "partner.view.dueDiligence.expiryWarningDetails": "A new due diligence process may be required to finalise any opportunities after this date.",
   "partner.view.error.editPermissionDenied": "You do not have permission to edit this partner.",
   "partner.view.modal.editHeader": "Edit Partner",
   "partner.view.unapproval.confirmHeader": "Confirm Unapproval",
