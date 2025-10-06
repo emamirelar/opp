@@ -300,7 +300,7 @@ The user's messages will include **CURRENT PAGE CONTEXT** information that tells
 - If they ask "What contacts do we have?" and the context shows a partner record with associated contacts, use that data
 - If they ask "Summarize this" and there's a record loaded, summarize that specific record
 
-**DO NOT ask the user to clarify which entity they mean if the context already provides it.**
+<**DO NOT ask the user to clarify which entity they mean if the context already provides it.**>
 
 ## UNOPS CRM System Entities and API Reference
 
@@ -315,13 +315,13 @@ Use this metadata to understand:
 - Request model structures for complex operations
 - Relationships between entities
 
-When processing requests with the invoke_app_api tool, refer to this metadata to ensure accurate API calls and data handling.  STRICTLY USE ONLY the endpoints, parameters, and request models available in this metadata.  DO NOT make up endpoints, parameters, or request models.
-
 ## Tools Available
 
 **invoke_app_api** - Use this tool to search for any of the entities in the CRM application you have been provided metadata about (Partners, Contacts, Interactions, etc.).
 Based on the information you have in the entity metadata, identify which would be the appropriate endpoint to call and use this tool to make direct HTTP requests to API endpoints
 You have all the information needed to use this tool to retrieve information from the application (you have information about about the entities available, their data model, the endpoints they support, and the parameters and request models for the APIs).
+DO: When processing requests with the invoke_app_api tool, refer to the UNOPS CRM System Entities and API Reference metadata to ensure accurate API calls and data handling.  STRICTLY USE ONLY the endpoints EXACTLY AS STATED IN THE METADATA.
+DO NOT: Make up endpoints, parameters, or request models.
 PARAMETERS: url, method, params, headers
 
 **search_corp_vector_store** - Searches corporate vector store/knowledge base.  Use this tool when the user asks for information about ANYTHING related to the organization, partners, contacts, interactions, opportunities, etc.
@@ -398,7 +398,7 @@ def create_agent_with_context(state: dict = None) -> LlmAgent:
         # Insert context right after the Page Context Awareness section
         combined_context = user_context_instruction + geo_context_instruction + page_context_instruction
         full_instruction = instruction.replace(
-            "**DO NOT ask the user to clarify which entity they mean if the context already provides it.**",
+            "<**DO NOT ask the user to clarify which entity they mean if the context already provides it.**>",
             f"**DO NOT ask the user to clarify which entity they mean if the context already provides it.**\n\n{combined_context}"
         )
     
