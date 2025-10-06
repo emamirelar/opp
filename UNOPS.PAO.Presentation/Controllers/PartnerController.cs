@@ -642,6 +642,35 @@ public class PartnerController : BaseController
     }
 
     /// <summary>
+    /// Unapproves an approved partner (Admin only) - unlocks data fields and records unapproval audit trail
+    /// </summary>
+    /// <param name="id">Partner ID</param>
+    /// <param name="request">Unapproval request with optional notes</param>
+    /// <returns>Updated partner with unapproved status</returns>
+    [HttpPost(APIDictionary.Partner + "/{id}/unapprove")]
+    [AccessControlled(EntityTypes.Partner, "update")]
+    public async Task<IActionResult> UnapprovePartner(int id, [FromBody] StatusChangeRequest request)
+    {
+        try
+        {
+            var result = await _manager.UnapprovePartnerAsync(User, id, request);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+    }
+
+    /// <summary>
     /// Retrieves the current user's permissions for a specific partner (read, update, delete).
     /// </summary>
     /// <param name="id">Partner ID</param>

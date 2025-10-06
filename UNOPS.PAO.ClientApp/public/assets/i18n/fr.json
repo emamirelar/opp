@@ -327,6 +327,7 @@
 	"button.active": "Marquer comme Actif",
 	"button.addLink": "Ajouter un lien",
 	"button.approve": "Approuver",
+	"button.unapprove": "Désapprouver",
 	"button.back": "Retour",
 	"button.backToHome": "Retour à l'Accueil",
 	"button.browse": "Parcourir",

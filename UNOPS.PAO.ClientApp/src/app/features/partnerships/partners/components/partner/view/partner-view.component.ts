@@ -52,7 +52,7 @@ import { PartnerApprovalDialogComponent } from '../approval-dialog/partner-appro
 import { AuthService } from '@core/services/auth.service';
 import { EntityTagsComponent } from '@shared/components/entity-tags/entity-tags.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { BaseEngagementListComponent } from '@features/shared/base-engagement/base-engagement-list.component';
 
 /**
@@ -141,6 +141,7 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
   permissionService = inject(PermissionUtilityService);
   authService = inject(AuthService);
   confirmationService = inject(ConfirmationService);
+  messageService = inject(MessageService);
   private destroyRef = inject(DestroyRef);
   private pageContextService = inject(PageContextService);
 
@@ -572,6 +573,67 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
       if (result) {
         // Reload partner details to show updated approval status
         this._loadRecordDetails();
+      }
+    });
+  }
+  
+  /**
+ * @uiButton unapprove_partner
+ * @description Shows unapproval confirmation dialog for approved partners
+ * @label Unapprove
+ * @icon pi pi-times
+ * @when_to_use When approved partner needs to be unapproved and user has admin privileges
+ * @permissions canUnapprove
+ */
+  handleUnapprovalClick() {
+    console.log('Unapproval button clicked for partner:', this.recordData().name);
+    
+    // Show confirmation dialog
+    this.confirmationService.confirm({
+      message: this.translateService.instant('partner.view.unapproval.confirmMessage', { 
+        partnerName: this.recordData().name 
+      }),
+      header: this.translateService.instant('partner.view.unapproval.confirmHeader'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-warn',
+      rejectButtonStyleClass: 'p-button-secondary',
+      accept: () => {
+        console.log('Unapproval confirmed, proceeding with unapproval');
+        this.performUnapproval();
+      },
+      reject: () => {
+        console.log('Unapproval cancelled');
+      }
+    });
+  }
+
+  /**
+   * Performs the actual unapproval API call
+   */
+  private performUnapproval() {
+    const requestPayload = {
+      id: this.recordData().id,
+      notes: `Partner unapproved via UI on ${new Date().toISOString()}`
+    };
+
+    this.partnerService.unapprovePartner(requestPayload).subscribe({
+      next: (data: any) => {
+        console.log('Partner unapproved successfully:', data);
+        // Show success message
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.unapproval.successMessage', { 
+            partnerName: this.recordData().name 
+          })
+        });
+        // Reload partner details to show updated status
+        this._loadRecordDetails();
+      },
+      error: (error) => {
+        console.error('Failed to unapprove partner:', error);
+        // Show error message
+        this.feedbackDialogService.showErrorToast({ 
+          detail: this.translateService.instant('partner.view.unapproval.errorMessage')
+        });
       }
     });
   }

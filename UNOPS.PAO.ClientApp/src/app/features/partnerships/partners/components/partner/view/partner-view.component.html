@@ -28,6 +28,13 @@
                           severity="primary"
                           (onClick)="handleApprovalClick()"></p-button>
               }
+              @if (recordData().permissions?.canUnapprove) {
+                <p-button [label]="'button.unapprove' | translate"
+                          icon="pi pi-times"
+                          [rounded]="true"
+                          severity="warn"
+                          (onClick)="handleUnapprovalClick()"></p-button>
+              }
               @if (recordData().permissions?.canActivate) {
                 <p-button [label]="'button.activate' | translate"
                           icon="pi pi-play"
@@ -35,7 +42,6 @@
                           severity="primary"
                           (onClick)="handleActivateClick()"></p-button>
               }
-
               @if (recordData().permissions?.canUpdate) {
                 <p-button icon="pi pi-pencil"
                           [rounded]="true"
