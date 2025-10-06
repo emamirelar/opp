@@ -143,11 +143,18 @@ export class TopbarComponent implements OnInit, OnDestroy {
   private previousRoute: string = '/';
 
   // Chat history properties
-  chatSessions: any[] = [];
-  isLoadingChatSessions: boolean = false;
   chatSearchQuery: string = '';
   filteredChatSessions: any[] = [];
   isNewChatDisabled: boolean = false;
+  
+  // Use AI assistant service as single source of truth for sessions
+  get chatSessions(): any[] {
+    return this.aiAssistantService.userSessions();
+  }
+  
+  get isLoadingChatSessions(): boolean {
+    return this.aiAssistantService.isLoadingSessions();
+  }
 
   constructor(
     public layoutService: LayoutService,
@@ -1034,27 +1041,27 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   // Chat history methods
-  async loadChatSessions(): Promise<void> {
+  loadChatSessions(): void {
     if (!this.isOnAiPage()) return;
     
-    this.isLoadingChatSessions = true;
-    this.cdr.markForCheck();
-    
-    try {
-      const response = await this.http.post<any[]>('/api/ai-assistant/get-user-sessions', {}).toPromise();
-      if (response) {
-        const sortedSessions = response.sort((a, b) => 
-          (b.lastUpdated || 0) - (a.lastUpdated || 0)
-        );
-        this.chatSessions = sortedSessions;
-        this.filteredChatSessions = [...sortedSessions];
-      }
-    } catch (error) {
-      console.error('Error loading chat sessions:', error);
-      this.chatSessions = [];
-      this.filteredChatSessions = [];
-    } finally {
-      this.isLoadingChatSessions = false;
+    // Only load if we don't have cached sessions
+    // The service will handle loading state and caching
+    if (this.aiAssistantService.userSessions().length === 0) {
+      this.aiAssistantService.loadUserSessions().subscribe({
+        next: () => {
+          // Update filtered sessions after loading
+          this.filteredChatSessions = [...this.aiAssistantService.userSessions()];
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('Error loading chat sessions:', error);
+          this.filteredChatSessions = [];
+          this.cdr.markForCheck();
+        }
+      });
+    } else {
+      // Use cached sessions
+      this.filteredChatSessions = [...this.aiAssistantService.userSessions()];
       this.cdr.markForCheck();
     }
   }
@@ -1108,14 +1115,23 @@ export class TopbarComponent implements OnInit, OnDestroy {
       session.starred = newStarredState;
       this.cdr.markForCheck();
       
-      // Call backend API
+      // Call backend API using the service's method
       await this.http.post('/api/ai-assistant/update-star', {
         sessionId: session.id,
         starred: newStarredState
       }).toPromise();
       
-      // Reload sessions to ensure consistency
-      await this.loadChatSessions();
+      // Update the service's cached sessions
+      this.aiAssistantService.userSessions.update(sessions => 
+        sessions.map(s => s.id === session.id ? { ...s, starred: newStarredState } : s)
+      );
+      
+      // Update filtered sessions
+      this.filteredChatSessions = this.filteredChatSessions.map(s => 
+        s.id === session.id ? { ...s, starred: newStarredState } : s
+      );
+      
+      this.cdr.markForCheck();
       
     } catch (error) {
       console.error('Error updating star status:', error);

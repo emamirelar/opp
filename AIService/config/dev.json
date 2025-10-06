@@ -20,7 +20,7 @@
   },
   "server": {
     "serve_web_interface": true,
-    "api_base_url": "https://opportunityplus.dev.unops.org",
+    "api_base_url": "https://opportunityplus.dev.unops.org/api/",
     "is_development": true,
     "host": "0.0.0.0",
     "port": 8000,

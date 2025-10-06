@@ -53,11 +53,17 @@ def prepare_api_url(url: str) -> str:
         
         # Ensure proper URL joining with the config base URL
         if base_url.endswith('/') and path.startswith('/'):
-            return base_url + path[1:]
+            final_url = base_url + path[1:]
         elif not base_url.endswith('/') and not path.startswith('/'):
-            return base_url + '/' + path
+            final_url = base_url + '/' + path
         else:
-            return base_url + path
+            final_url = base_url + path
+        
+        # Defensive check: Remove duplicate /api/ patterns
+        while '/api/api/' in final_url:
+            final_url = final_url.replace('/api/api/', '/api/')
+        
+        return final_url
             
     except ImportError:
         # Config manager not available, return url as-is
@@ -69,7 +75,7 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
     Invoke an API endpoint with minimal logging
     
     Args:
-        url: URL to call - can be relative (e.g., /api/partners) or absolute (e.g., https://localhost:44426/api/partner)
+        url: URL to call - can be relative (e.g., /api/partner) or absolute (e.g., https://localhost:44426/api/partner)
         method: HTTP method (GET, POST, PUT, DELETE)
         params: Request parameters/body
         headers: Optional additional headers
@@ -77,35 +83,6 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
     
     Returns:
         dict: API response or error information
-    
-    Examples:
-        # GET request with relative URL (will use base URL from config)
-        result = invoke_app_api("/api/user", "GET")
-        
-        # GET request with absolute URL (will use as-is)
-        result = invoke_app_api("https://api.example.com/user", "GET")
-        
-        # POST request with data
-        result = invoke_app_api(
-            "/api/user", 
-            "POST", 
-            params={"name": "John", "email": "john@example.com"}
-        )
-        
-        # GET request with query parameters
-        result = invoke_app_api(
-            "/api/user", 
-            "GET", 
-            params={"search": "john", "limit": 10}
-        )
-        
-        # PUT request with custom headers
-        result = invoke_app_api(
-            "/api/user/123", 
-            "PUT", 
-            params={"name": "John Updated"},
-            headers={"X-Custom-Header": "value"}
-        )
     """
     
     try:
