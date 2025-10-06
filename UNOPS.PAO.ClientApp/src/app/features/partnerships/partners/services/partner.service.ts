@@ -126,9 +126,48 @@ export class PartnerService {
       }));
   }
 
+  unapprovePartner(requestJson: any) {
+    this.isLoading.set(true);
+    return this.http.post(`${this.apiUrl}/${requestJson.id}/unapprove`, requestJson).pipe(tap(
+      {
+        next: (event) => {
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        }
+      }));
+  }
+
   activatePartner(id: string) {
     this.isLoading.set(true);
     return this.http.post<Partner>(`${this.apiUrl}/${id}/activate`, {}).pipe(tap(
+      {
+        next: (event) => {
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        }
+      }));
+  }
+
+  closePartner(requestJson: any) {
+    this.isLoading.set(true);
+    return this.http.post<Partner>(`${this.apiUrl}/${requestJson.id}/close`, requestJson).pipe(tap(
+      {
+        next: (event) => {
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        }
+      }));
+  }
+
+  archivePartner(requestJson: any) {
+    this.isLoading.set(true);
+    return this.http.post<Partner>(`${this.apiUrl}/${requestJson.id}/archive`, requestJson).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);

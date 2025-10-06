@@ -13,7 +13,7 @@ export class GlobalFilterService {
 
   private filterEnabledSignal = signal<boolean>(this.loadFilterEnabled());
   private selectedOrgUnitIdSignal = signal<number | null>(this.loadSelectedOrgUnitId());
-  private filtersChangedSignal = signal<void>(undefined);
+  private filtersChangedSignal = signal<number>(0);
 
   filterEnabled = this.filterEnabledSignal.asReadonly();
   selectedOrgUnitId = this.selectedOrgUnitIdSignal.asReadonly();
@@ -34,17 +34,17 @@ export class GlobalFilterService {
   setFilterEnabled(enabled: boolean): void {
     this.filterEnabledSignal.set(enabled);
     this.saveFilterEnabled(enabled);
-    this.filtersChangedSignal.set(undefined);
+    this.triggerFiltersChanged();
   }
 
   setSelectedOrgUnitId(orgUnitId: number | null): void {
     this.selectedOrgUnitIdSignal.set(orgUnitId);
     this.saveSelectedOrgUnitId(orgUnitId);
-    this.filtersChangedSignal.set(undefined);
+    this.triggerFiltersChanged();
   }
 
   triggerFiltersChanged(): void {
-    this.filtersChangedSignal.set(undefined);
+    this.filtersChangedSignal.set(this.filtersChangedSignal() + 1);
   }
 
   // Method to clear all filters (used during reset)

@@ -137,29 +137,32 @@ export class ContactTabsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.recordId = this.activatedRoute.snapshot.paramMap.get('recordId') || '';
+    // Subscribe to parameter changes to handle back navigation properly
+    this.activatedRoute.paramMap.subscribe(paramMap => {
+      this.recordId = paramMap.get('recordId') || '';
+
+      // Update tabs when recordId changes
+      this.tabs = [
+        {
+          label: 'title.details',
+          route: `/partnerships/contacts/${this.recordId}`,
+          translatedLabel: this.translateService.instant('title.details')
+        },
+        {
+          label: 'title.interactions',
+          route: `/partnerships/contacts/${this.recordId}/interactions`,
+          translatedLabel: this.translateService.instant('title.interactions')
+        }
+      ];
+
+      // Update active tab after tabs are refreshed
+      this.updateActiveTab();
+    });
 
     // Get the resolved data from the route
     this.activatedRoute.data.subscribe(data => {
       this.recordData = data['contactData'];
     });
-
-    // Create tabs based on recordId
-    this.tabs = [
-      {
-        label: 'title.details',
-        route: `/partnerships/contacts/${this.recordId}`,
-        translatedLabel: this.translateService.instant('title.details')
-      },
-      {
-        label: 'title.interactions',
-        route: `/partnerships/contacts/${this.recordId}/interactions`,
-        translatedLabel: this.translateService.instant('title.interactions')
-      }
-    ];
-
-    // Set initial active tab
-    this.updateActiveTab();
 
     // Subscribe to router events to update active tab on navigation
     this.routerSubscription = this.router.events

@@ -73,9 +73,15 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly IUserProfileCacheService _userProfileCacheService;
     private readonly IScreenContextCacheService _screenContextCacheService;
     private readonly IGeoTimeCacheService _geoTimeCacheService;
+    private readonly IMemoryCache _memoryCache;
+    private readonly HttpClient _httpClient;
     private IManagerWrapper _managerWrapper;
+    
+    // Session configuration caching
+    private readonly string _sessionConfigCacheKey = "session_configuration";
+    private readonly TimeSpan _sessionConfigCacheExpiration = TimeSpan.FromHours(1);
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService, IMemoryCache memoryCache, HttpClient httpClient)
     {
         _mapper = mapper;
         _context = context;
@@ -90,6 +96,8 @@ public class UNOPSGeminiManager : IGeminiManager
         _userProfileCacheService = userProfileCacheService;
         _screenContextCacheService = screenContextCacheService;
         _geoTimeCacheService = geoTimeCacheService;
+        _memoryCache = memoryCache;
+        _httpClient = httpClient;
         
         // Initialize CloudRunHelper internally
         var cloudRunHelperLogger = new LoggerFactory().CreateLogger<CloudRunHelper>();
@@ -579,17 +587,20 @@ public class UNOPSGeminiManager : IGeminiManager
         };
     }
 
-    public async Task<SessionWithChats> GetSessionDataWithChats(string sessionId, int userId) 
+    public async Task<string> GetSessionDataWithChats(string sessionId, int userId) 
     {
         try
         {
             var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
-            var appName = _configuration.GetValue<string>("AgenticAi:AppName");
             
-            if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+            if (string.IsNullOrEmpty(serviceUrl))
             {
-                throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+                throw new InvalidOperationException("AgenticAi:ServiceURL configuration is missing.");
             }
+
+            // Get app_name from session configuration
+            var sessionConfig = await GetSessionConfigurationAsync();
+            var appName = sessionConfig.AppName;
             
             var apiUrl = $"/session-with-chats?app_name={appName}&user_id={userId}&session_id={sessionId}";
             
@@ -601,26 +612,9 @@ public class UNOPSGeminiManager : IGeminiManager
             if (response.IsSuccessStatusCode)
             {
                 var jsonContent = await response.Content.ReadAsStringAsync();
-                var sessionWithChats = JsonConvert.DeserializeObject<SessionWithChats>(jsonContent);
                 
-                if (sessionWithChats?.Session != null)
-                {
-                    // Get the actual session data from database to get real title, starred, archived status
-                    var dbSession = await _context.AiChatSession
-                        .FirstOrDefaultAsync(x => x.Id == sessionId && x.UserId == userId);
-                    
-                    if (dbSession != null)
-                    {
-                        // Update session with database values
-                        sessionWithChats.Session.Title = dbSession.Title ?? "New Chat";
-                        sessionWithChats.Session.Starred = dbSession.Starred;
-                        sessionWithChats.Session.Archived = dbSession.Archived;
-                        sessionWithChats.Session.AiGenerateTitle = dbSession.AiGenerateTitle;
-                        sessionWithChats.Session.LastUpdated = dbSession.LastUpdated;
-                    }
-                }
-                
-                return sessionWithChats ?? new SessionWithChats();
+                // Return the raw JSON content as-is without any deserialization or transformation
+                return jsonContent;
             }
             else
             {
@@ -633,54 +627,21 @@ public class UNOPSGeminiManager : IGeminiManager
         }
     }
 
-    public async Task<IEnumerable<AiChatSession>> GetSessionData(string sessionId, int userId) 
-    {
-        try
-        {
-            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
-            var appName = _configuration.GetValue<string>("AgenticAi:AppName");
-            
-            if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
-            {
-                throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
-            }
-            
-            var apiUrl = $"/session-data?app_name={appName}&user_id={userId}&session_id={sessionId}";
-            
-            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
-            httpClient.Timeout = TimeSpan.FromSeconds(30);
-            
-            var response = await httpClient.GetAsync(apiUrl);
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var jsonContent = await response.Content.ReadAsStringAsync();
-                var sessionData = JsonConvert.DeserializeObject<IEnumerable<AiChatSession>>(jsonContent);
-                
-                return sessionData ?? new List<AiChatSession>();
-            }
-            else
-            {
-                throw new HttpRequestException($"Failed to fetch session data from external API. Status: {response.StatusCode}, Reason: {response.ReasonPhrase}");
-            }
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Error calling external API for session data: {ex.Message}", ex);
-        }
-    }
 
     public async Task<IEnumerable<AiChatSession>> GetUserSessions(int userId) 
     {
         try
         {
             var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
-            var appName = _configuration.GetValue<string>("AgenticAi:AppName");
             
-            if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+            if (string.IsNullOrEmpty(serviceUrl))
             {
-                throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+                throw new InvalidOperationException("AgenticAi:ServiceURL configuration is missing.");
             }
+
+            // Get app_name from session configuration
+            var sessionConfig = await GetSessionConfigurationAsync();
+            var appName = sessionConfig.AppName;
             
             var apiUrl = $"/get-user-sessions?app_name={appName}&user_id={userId}";
             
@@ -692,59 +653,35 @@ public class UNOPSGeminiManager : IGeminiManager
             if (response.IsSuccessStatusCode)
             {
                 var jsonContent = await response.Content.ReadAsStringAsync();
-                var externalSessions = JsonConvert.DeserializeObject<IEnumerable<AiChatSession>>(jsonContent);
+                _logger.LogInformation("🔍 Raw JSON response from Python service: {JsonContent}", jsonContent);
+                
+                var settings = new JsonSerializerSettings
+                {
+                    DateParseHandling = DateParseHandling.None
+                };
+                
+                var externalSessions = JsonConvert.DeserializeObject<IEnumerable<AiChatSession>>(jsonContent, settings);
                 
                 if (externalSessions == null || !externalSessions.Any())
                 {
                     return new List<AiChatSession>();
                 }
                 
-                // Get session IDs from external API response
-                var sessionIds = externalSessions.Select(s => s.Id).ToList();
-                
-                // Query AiChatSession table to get additional details
-                var dbSessions = await _context.AiChatSession
-                    .Where(x => sessionIds.Contains(x.Id) && x.UserId == userId)
-                    .ToListAsync();
-                
-                // Join external sessions with database sessions to combine data
-                var joinedSessions = externalSessions.Select(extSession =>
+                // All session data now comes from ADK session state via Python service
+                // No need to query database - use external session data directly
+                var sessions = externalSessions.Select(extSession => new AiChatSession
                 {
-                    var dbSession = dbSessions.FirstOrDefault(db => db.Id == extSession.Id);
-                    if (dbSession != null)
-                    {
-                        // Use database session data for fields like Title, Starred, Archived, etc.
-                        // but keep external session data for chat-related fields
-                        return new AiChatSession
-                        {
-                            Id = extSession.Id,
-                            UserId = extSession.UserId,
-                            Status = extSession.Status,
-                            LastUpdated = dbSession.LastUpdated, // Use actual database timestamp
-                            Title = dbSession.Title ?? "New Chat",
-                            Starred = dbSession.Starred,
-                            Archived = dbSession.Archived,
-                            AiGenerateTitle = dbSession.AiGenerateTitle
-                        };
-                    }
-                    else
-                    {
-                        // If no database record found, use external session data with defaults
-                        return new AiChatSession
-                        {
-                            Id = extSession.Id,
-                            UserId = extSession.UserId,
-                            Status = extSession.Status,
-                            LastUpdated = DateTime.UtcNow, // Use current time for new sessions
-                            Title = "New Chat",
-                            Starred = false,
-                            Archived = false,
-                            AiGenerateTitle = true
-                        };
-                    }
+                    Id = extSession.Id,
+                    UserId = extSession.UserId,
+                    Status = extSession.Status,
+                    LastUpdated = extSession.LastUpdated,
+                    Title = extSession.Title,
+                    Starred = extSession.Starred,
+                    Archived = extSession.Archived,
+                    AiGenerateTitle = extSession.AiGenerateTitle
                 }).ToList();
                 
-                return joinedSessions.OrderByDescending(s => s.LastUpdated);
+                return sessions.OrderByDescending(s => s.LastUpdated);
             }
             else
             {
@@ -774,75 +711,154 @@ public class UNOPSGeminiManager : IGeminiManager
 
     public async Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req)
     {
-        var session = await _context.AiChatSession
-                                .FirstOrDefaultAsync(x => x.Id == req.SessionId);
-
-        if (session != null)
-        {
-            // Note: TextToSpeech property not available in AiChatSession entity
-            // This functionality may need to be implemented separately or added to the entity
-            await _context.SaveChangesAsync();
-            return true; // Save changes to DB
-        }
-
-        return false; // No session found
+        // Session accessibility settings are now managed in ADK session state
+        // This functionality should be implemented via Python service if needed
+        // For now, return true as the session state is managed elsewhere
+        return true;
     }
 
     public async Task<bool> UpdateSessionStar(string sessionId, bool starred)
     {
-        var session = await _context.AiChatSession
-                                .FirstOrDefaultAsync(x => x.Id == sessionId);
-
-        if (session != null)
+        try
         {
-            session.Starred = starred;
-            await _context.SaveChangesAsync();
-            return true;
-        }
+            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+            
+            if (string.IsNullOrEmpty(serviceUrl))
+            {
+                throw new InvalidOperationException("AgenticAi:ServiceURL configuration is missing.");
+            }
 
-        return false;
+            // Get app_name from session configuration
+            var sessionConfig = await GetSessionConfigurationAsync();
+            var appName = sessionConfig.AppName;
+            
+            var apiUrl = $"/update-session-metadata";
+            
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+            
+            var requestBody = new
+            {
+                sessionId = sessionId,
+                starred = starred
+            };
+            
+            var jsonContent = JsonConvert.SerializeObject(requestBody);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            
+            var response = await httpClient.PostAsync(apiUrl, content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            else
+            {
+                throw new HttpRequestException($"Failed to update session star status. Status: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error updating session star status: {ex.Message}", ex);
+        }
     }
 
     public async Task<bool> UpdateSessionArchive(string sessionId, bool archived)
     {
-        var session = await _context.AiChatSession
-                                .FirstOrDefaultAsync(x => x.Id == sessionId);
-
-        if (session != null)
+        try
         {
-            session.Archived = archived;
-            await _context.SaveChangesAsync();
-            return true;
-        }
+            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+            
+            if (string.IsNullOrEmpty(serviceUrl))
+            {
+                throw new InvalidOperationException("AgenticAi:ServiceURL configuration is missing.");
+            }
 
-        return false;
+            // Get app_name from session configuration
+            var sessionConfig = await GetSessionConfigurationAsync();
+            var appName = sessionConfig.AppName;
+            
+            var apiUrl = $"/update-session-metadata";
+            
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+            
+            var requestBody = new
+            {
+                sessionId = sessionId,
+                archived = archived
+            };
+            
+            var jsonContent = JsonConvert.SerializeObject(requestBody);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            
+            var response = await httpClient.PostAsync(apiUrl, content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            else
+            {
+                throw new HttpRequestException($"Failed to update session archive status. Status: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error updating session archive status: {ex.Message}", ex);
+        }
     }
 
     public async Task<bool> UpdateSessionTitle(string sessionId, string title)
     {
-        var session = await _context.AiChatSession
-                                .FirstOrDefaultAsync(x => x.Id == sessionId);
-
-        if (session != null)
+        try
         {
-            session.Title = title;
-            session.AiGenerateTitle = false;
-            await _context.SaveChangesAsync();
-            return true;
-        }
+            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+            
+            if (string.IsNullOrEmpty(serviceUrl))
+            {
+                throw new InvalidOperationException("AgenticAi:ServiceURL configuration is missing.");
+            }
 
-        return false;
+            // Get app_name from session configuration
+            var sessionConfig = await GetSessionConfigurationAsync();
+            var appName = sessionConfig.AppName;
+            
+            var apiUrl = $"/update-session-title";
+            
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+            
+            var requestBody = new
+            {
+                sessionId = sessionId,
+                title = title
+            };
+            
+            var jsonContent = JsonConvert.SerializeObject(requestBody);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            
+            var response = await httpClient.PostAsync(apiUrl, content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            else
+            {
+                throw new HttpRequestException($"Failed to update session title. Status: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error updating session title: {ex.Message}", ex);
+        }
     }
 
     public async Task UpdateSessionTitleAndFlag(string sessionId, string title)
     {
-        var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
-        if (session != null)
-        {
-            session.Title = title;
-            session.AiGenerateTitle = false;
-            await _context.SaveChangesAsync();
-        }
+        // This method is now handled by UpdateSessionTitle which calls the Python service
+        await UpdateSessionTitle(sessionId, title);
     }
 
     public async Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req, int currentUserId)
@@ -1892,15 +1908,17 @@ public class UNOPSGeminiManager : IGeminiManager
         _logger.LogDebug("ChatWithGemini: Method called with sessionId: {SessionId}, hasFiles: {HasFiles}", 
             req.sessionId, req.Files?.Any() ?? false);
             
-        var appName = _configuration.GetValue<string>("AgenticAi:AppName");
         var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
             
-        if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+        if (string.IsNullOrEmpty(serviceUrl))
         {
-            _logger.LogError("ChatWithGemini: AgenticAi configuration is missing or incomplete. AppName: {AppName}, ServiceURL: {ServiceUrl}", 
-                appName, serviceUrl);
-            throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+            _logger.LogError("ChatWithGemini: AgenticAi:ServiceURL configuration is missing");
+            throw new InvalidOperationException("AgenticAi:ServiceURL configuration is missing.");
         }
+
+        // Get app_name from session configuration
+        var sessionConfig = await GetSessionConfigurationAsync();
+        var appName = sessionConfig.AppName;
         
         // Extract user ID from claims
         var currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -2028,31 +2046,8 @@ public class UNOPSGeminiManager : IGeminiManager
                 }
             }
 
-            if (!string.IsNullOrEmpty(sessionId))
-            {
-                var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
-                if (session != null)
-                {
-                    session.LastUpdated = DateTime.UtcNow;
-                    await _context.SaveChangesAsync();
-                }
-                else
-                {
-                    var newSession = new AiChatSession
-                    {
-                        Id = sessionId,
-                        UserId = int.Parse(currentUserId),
-                        Status = "Active",
-                        Title = "New Chat",
-                        LastUpdated = DateTime.UtcNow,
-                        AiGenerateTitle = true,
-                        Archived = false,
-                        Starred = false
-                    };
-                    _context.AiChatSession.Add(newSession);
-                    await _context.SaveChangesAsync();
-                }
-            }
+            // Session management is now handled entirely by the Python service
+            // No need to create or update AiChatSession entries
 
             return responseContent;
         }
@@ -2063,15 +2058,17 @@ public class UNOPSGeminiManager : IGeminiManager
         _logger.LogDebug("ChatWithGeminiStreaming: Method called with sessionId: {SessionId}, hasFiles: {HasFiles}", 
             req.sessionId, req.Files?.Any() ?? false);
             
-        var appName = _configuration.GetValue<string>("AgenticAi:AppName");
         var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
             
-        if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+        if (string.IsNullOrEmpty(serviceUrl))
         {
-            _logger.LogError("ChatWithGeminiStreaming: AgenticAi configuration is missing or incomplete. AppName: {AppName}, ServiceURL: {ServiceUrl}", 
-                appName, serviceUrl);
-            throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+            _logger.LogError("ChatWithGeminiStreaming: AgenticAi:ServiceURL configuration is missing");
+            throw new InvalidOperationException("AgenticAi:ServiceURL configuration is missing.");
         }
+
+        // Get app_name from session configuration
+        var sessionConfig = await GetSessionConfigurationAsync();
+        var appName = sessionConfig.AppName;
         
         // Extract user ID from claims
         var currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -2319,8 +2316,7 @@ public class UNOPSGeminiManager : IGeminiManager
                     {
                         sessionId = extractedSessionId;
                         
-                        // Create or update session
-                        await CreateOrUpdateSession(sessionId, userId);
+                        // Session management is now handled entirely by the Python service
                     }
                 }
                 catch (Exception ex)
@@ -2341,94 +2337,10 @@ public class UNOPSGeminiManager : IGeminiManager
         return sessionId;
     }
 
-    private async Task CreateOrUpdateSession(string sessionId, int userId)
-    {
-        try
-        {
-            var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
-            if (session != null)
-            {
-                session.LastUpdated = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                var newSession = new AiChatSession
-                {
-                    Id = sessionId,
-                    UserId = userId,
-                    LastUpdated = DateTime.UtcNow,
-                    AiGenerateTitle = true,
-                    Starred = false,
-                    Archived = false
-                };
-                
-                _context.AiChatSession.Add(newSession);
-                await _context.SaveChangesAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning("CreateOrUpdateSession: Error managing session: {Error}", ex.Message);
-        }
-    }
+    // Session management is now handled entirely by the Python service
+    // No need for CreateOrUpdateSession method
 
-    public async Task<string> GenerateTitle(string sessionId, int userId)
-    {
-        // If sessionId is null or empty, throw
-        if (string.IsNullOrEmpty(sessionId))
-            throw new ArgumentException("SessionId is required");
 
-        var canGenerate = await CanGenerateTitle(sessionId);
-        if (!canGenerate)
-            throw new InvalidOperationException("Title generation is not allowed for this session.");
-
-        var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
-        var apiUrl = $"/generate-title?session_id={sessionId}&user_id={userId}";
-        using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
-        var response = await httpClient.GetAsync(apiUrl);
-        if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException("Failed to generate title");
-
-        var content = await response.Content.ReadAsStringAsync();
-        var result = Newtonsoft.Json.Linq.JObject.Parse(content);
-        string title = result["title"]?.ToString();
-        await UpdateSessionTitleAndFlag(sessionId, title);
-        return title;
-    }
-
-    public async Task<bool> CanGenerateTitle(string sessionId)
-    {
-        var session = await _context.AiChatSession.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sessionId);
-        return session != null && session.AiGenerateTitle;
-    }
-
-    public async Task<object> GenerateSuggestions(int userId)
-    {
-        try
-        {
-            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
-            var apiUrl = $"/generate-suggestions?user_id={userId}";
-            
-            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
-            var response = await httpClient.GetAsync(apiUrl);
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError($"Failed to generate suggestions. Status: {response.StatusCode}");
-                throw new InvalidOperationException($"Failed to generate suggestions. Status: {response.StatusCode}");
-            }
-
-            var content = await response.Content.ReadAsStringAsync();
-            var result = Newtonsoft.Json.Linq.JObject.Parse(content);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error generating suggestions: {ex.Message}");
-            throw;
-        }
-    }
 
     /// <summary>
     /// Process AI response for data_modifications and create notifications
@@ -2824,4 +2736,93 @@ public class UNOPSGeminiManager : IGeminiManager
                 return JsonConvert.SerializeObject(errorResult);
             }
         }
+
+        #region Session Configuration Methods
+
+        /// <summary>
+        /// Gets the session configuration including app_name and other session-related settings.
+        /// This method fetches configuration from the Python service and caches it.
+        /// </summary>
+        /// <returns>Session configuration with app_name and other settings</returns>
+        public async Task<SessionConfiguration> GetSessionConfigurationAsync()
+        {
+            // Try to get from cache first
+            if (_memoryCache.TryGetValue(_sessionConfigCacheKey, out SessionConfiguration cachedConfig))
+            {
+                _logger.LogDebug("📋 Retrieved session configuration from cache");
+                return cachedConfig;
+            }
+
+            // If not in cache, fetch from Python service
+            try
+            {
+                var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+                if (string.IsNullOrEmpty(serviceUrl))
+                {
+                    _logger.LogError("❌ AgenticAi:ServiceURL is not configured");
+                    throw new InvalidOperationException("AgenticAi:ServiceURL is not configured");
+                }
+
+                var configUrl = $"{serviceUrl.TrimEnd('/')}/api/ai-assistant/configuration";
+                _logger.LogInformation("🔍 Fetching session configuration from: {ConfigUrl}", configUrl);
+
+                HttpResponseMessage response;
+                string jsonContent;
+                
+                // For local development, use unauthenticated HttpClient
+                if (serviceUrl.StartsWith("http://localhost") || serviceUrl.StartsWith("http://127.0.0.1"))
+                {
+                    _logger.LogDebug("GetSessionConfiguration: Using local development HttpClient");
+                    response = await _httpClient.GetAsync(configUrl);
+                    response.EnsureSuccessStatusCode();
+                    jsonContent = await response.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    // For production/Cloud Run, use authenticated HttpClient
+                    _logger.LogDebug("GetSessionConfiguration: Creating authenticated HttpClient for Cloud Run");
+                    using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+                    response = await httpClient.GetAsync(configUrl);
+                    response.EnsureSuccessStatusCode();
+                    jsonContent = await response.Content.ReadAsStringAsync();
+                }
+                _logger.LogInformation("📋 Raw JSON response from Python service: {JsonContent}", jsonContent);
+                
+                var config = System.Text.Json.JsonSerializer.Deserialize<SessionConfiguration>(jsonContent, new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                if (config == null)
+                {
+                    throw new InvalidOperationException("Failed to deserialize session configuration");
+                }
+
+                _logger.LogInformation("📋 Deserialized configuration - AppName: '{AppName}', ApplicationName: '{ApplicationName}'", 
+                    config.AppName, config.ApplicationName);
+
+                // Cache the configuration
+                _memoryCache.Set(_sessionConfigCacheKey, config, _sessionConfigCacheExpiration);
+                _logger.LogInformation("✅ Session configuration cached successfully: {AppName}", config.AppName);
+
+                return config;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Failed to fetch session configuration from Python service");
+                throw new InvalidOperationException("AI service is unavailable - cannot fetch session configuration", ex);
+            }
+        }
+
+        /// <summary>
+        /// Clears the cached session configuration, forcing a fresh fetch on next request.
+        /// </summary>
+        public void ClearSessionConfigurationCache()
+        {
+            _memoryCache.Remove(_sessionConfigCacheKey);
+            _logger.LogInformation("🗑️ Session configuration cache cleared");
+        }
+
+        #endregion
     }
+

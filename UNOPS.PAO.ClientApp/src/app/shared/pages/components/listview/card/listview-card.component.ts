@@ -122,7 +122,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   hasActionsTemplate = computed(() => !!this.actionsTemplate);
 
   // Search metadata support
-  showSearchMetadata = signal<boolean>(false);
+  showSearchMetadata = input<boolean>(false);
   searchMetadataEnabled = computed(() => this.config()?.searchMetadata?.enabled || false);
   searchMetadataDefaultVisible = computed(() => this.config()?.searchMetadata?.defaultVisible || false);
   searchQuery = computed(() => this.config()?.searchMetadata?.searchQuery || '');
@@ -434,10 +434,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
       this.scheduleObserveSentinel();
     }
 
-    // Initialize search metadata visibility
-    if (changes['config'] && this.searchMetadataEnabled()) {
-      this.showSearchMetadata.set(this.searchMetadataDefaultVisible());
-    }
+    // Search metadata visibility is now controlled by parent component
   }
 
   /**
@@ -983,12 +980,6 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
   // Search metadata helper methods
 
-  /**
-   * Toggle search metadata visibility
-   */
-  toggleSearchMetadata(): void {
-    this.showSearchMetadata.set(!this.showSearchMetadata());
-  }
 
   /**
    * Get search metadata for an item

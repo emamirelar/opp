@@ -21,6 +21,7 @@ import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { OverlayPanel } from 'primeng/overlaypanel';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
+import { PageContextService } from '@shared/services/page-context.service';
 
 /**
  * @uiEntity InteractionList
@@ -152,6 +153,16 @@ export class InteractionListComponent implements OnInit, OnDestroy {
           operators: ['after', 'before', 'between']
         }
       ] as SearchField[]
+    },
+    // Enable search metadata display
+    searchMetadata: {
+      enabled: true,
+      defaultVisible: false, // Hidden by default, user can toggle
+      searchQuery: '', // Will be populated automatically
+      extractMetadata: (item: any) => {
+        // Extract search metadata from the item
+        return item._searchMetadata || null;
+      }
     }
   }));
 
@@ -160,6 +171,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
   private dialogService = inject(DialogService);
   private translateService = inject(TranslateService);
+  private pageContextService = inject(PageContextService);
 
   constructor(
     private interactionService: InteractionService,
@@ -169,7 +181,8 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-
+    // Register component data for AI Assistant
+    this.pageContextService.setComponentData(this);
 
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
@@ -285,6 +298,9 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Clear component data for AI Assistant
+    this.pageContextService.clearComponentData();
+    
     // No need to clear caches manually - utility service handles this
   }
 
@@ -445,6 +461,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   onSearchChange(searchParams: SearchParams) {
     this.currentSearchText = searchParams.generalSearch || '';
   }
+
 
   // Import menu items
   importMenuItems = signal<MenuItem[]>([

@@ -1044,7 +1044,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
       const response = await this.http.post<any[]>('/api/ai-assistant/get-user-sessions', {}).toPromise();
       if (response) {
         const sortedSessions = response.sort((a, b) => 
-          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+          (b.lastUpdated || 0) - (a.lastUpdated || 0)
         );
         this.chatSessions = sortedSessions;
         this.filteredChatSessions = [...sortedSessions];
@@ -1089,7 +1089,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   openChatSession(session: any): void {
     this.router.navigate(['/ai', session.id], { replaceUrl: true });
     this.aiAssistantService.switchToSession(session.id).subscribe({
-      error: (error) => console.error('Failed to switch session:', error)
+      error: (error: any) => console.error('Failed to switch session:', error)
     });
   }
 
@@ -1125,10 +1125,11 @@ export class TopbarComponent implements OnInit, OnDestroy {
     }
   }
 
-  formatChatDate(dateString: string): string {
-    if (!dateString) return '';
+  formatChatDate(timestamp: string | number): string {
+    if (!timestamp) return '';
     
-    const date = new Date(dateString);
+    // Handle both numeric timestamps and date strings for backward compatibility
+    const date = typeof timestamp === 'number' ? new Date(timestamp * 1000) : new Date(timestamp);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

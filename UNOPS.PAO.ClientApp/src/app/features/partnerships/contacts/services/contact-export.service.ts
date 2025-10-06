@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { switchMap, tap, catchError } from 'rxjs/operators';
+import { switchMap, tap, catchError, map } from 'rxjs/operators';
 import { Contact } from '../models/contact.model';
 import { ContactService } from './contact.service';
 import { ExportGoogleSheetService } from '@shared/reusables/components/export/export-google-sheet.service';
@@ -85,15 +85,20 @@ export class ContactExportService {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
         const finalFileName = `${fileName} ${timestamp}`;
 
-        return this.exportGoogleSheetService.exportToSheet(exportableContacts, finalFileName);
+        return this.exportGoogleSheetService.exportToSheet(exportableContacts, finalFileName).pipe(
+          map(result => ({ ...result, recordCount: exportableContacts.length }))
+        );
       }),
       tap(result => {
         // Clear any existing toasts
         this.feedbackDialogService.clearAll();
         
-        // Show success confirmation dialog instead of toast
+        // Automatically open the Google Sheet in a new tab
+        window.open(result.url, '_blank');
+        
+        // Show success confirmation dialog with record count
         this.confirmationService.confirm({
-          message: `Contacts exported successfully!<br><br><a href="${result.url}" target="_blank" style="text-decoration: underline; color: #007bff; font-weight: bold; padding: 4px 8px; border: 1px solid #007bff; border-radius: 4px; background-color: #f8f9fa;">📊 Open Spreadsheet</a>`,
+          message: `Contacts exported successfully!<br><br><strong>${result.recordCount} records</strong> have been exported to Google Sheets.<br><br><a href="${result.url}" target="_blank" style="text-decoration: underline; color: #007bff; font-weight: bold; padding: 4px 8px; border: 1px solid #007bff; border-radius: 4px; background-color: #f8f9fa;">📊 Open Spreadsheet</a>`,
           header: 'Export Complete',
           icon: 'pi pi-check-circle',
           acceptVisible: true,

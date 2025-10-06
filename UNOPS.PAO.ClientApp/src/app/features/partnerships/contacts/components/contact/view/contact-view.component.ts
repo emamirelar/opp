@@ -44,8 +44,9 @@ import { EntityType } from '@shared/models/link.model';
 import { ContactEditDialogFooterComponent } from '../edit-dialog/footer/contact-edit-dialog-footer.component';
 import { ContactEditDialogComponent } from '../edit-dialog/contact-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
-import { Contact } from '@partnerships/contacts/models/contact.model';
+import { Contact, getPrimaryOrganizationUnit } from '../../../models/contact.model';
 import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PageContextService } from '@shared/services/page-context.service';
 
 
 /**
@@ -171,6 +172,7 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy, O
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
   confirmationService = inject(ConfirmationService);
+  private pageContextService = inject(PageContextService);
 
   // Permission management using utility service
   private permissionUtils = this.permissionUtilityService.createInstancePermissions('Contact');
@@ -198,6 +200,9 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy, O
   }
 
   ngOnDestroy(): void {
+    // Clear component data for AI Assistant
+    this.pageContextService.clearComponentData();
+    
     this.langChangeSubscription?.unsubscribe();
     if (this.widthTrackingInterval) {
       clearInterval(this.widthTrackingInterval);
@@ -214,46 +219,35 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy, O
   }
 
   ngOnInit() {
+    // Register component data for AI Assistant
+    this.pageContextService.setComponentData(this);
     
-    // If recordId is provided via Input (AI layout), load data directly
-    if (this.recordId && this.recordId !== '') {
+    // Load initial data if recordId is already set
+    if (this.recordId) {
       this._loadRecordDetails();
-      return;
     }
-
-    // Otherwise, use the route-based logic (normal navigation)
-    this.activatedRoute.paramMap.subscribe({
-      next: (paramMap) => {
-        this.recordId = paramMap.get("recordId") || '';
+    
+    // ALWAYS subscribe to route parameter changes, regardless of initial recordId
+    // Note: recordId is on the parent route (ContactTabsComponent), not the child route
+    // So we need to subscribe to parent.paramMap, not paramMap
+    const parent = this.activatedRoute.parent;
+    if (parent) {
+      parent.paramMap.subscribe({
+        next: (paramMap) => {
+          const newRecordId = paramMap.get("recordId") || '';
           
-          if (this.recordId != '') {
-          // Check if data is already available from the resolver
-          this.activatedRoute.parent?.data.subscribe(data => {
-            if (data['contactData']) {
-              const contactData = data['contactData'];
-              this.recordData.set(contactData);
-              
-              // Extract permissions from the resolver data if they exist
-              if (contactData.permissions) {
-                this.recordPermissions.set({
-                  entity: 'Contact',
-                  hasAccess: true,
-                  permissions: contactData.permissions
-                });
-              }
-              
-              this.infoLoading.set(false);
-            } else {
-              // Fallback to loading details directly if resolver data isn't available
+          // ALWAYS reload when recordId changes
+          if (newRecordId && newRecordId !== this.recordId) {
+            this.recordId = newRecordId;
+            this._loadRecordDetails();
+          } else if (newRecordId && !this.recordId) {
+            // First load when recordId is empty
+            this.recordId = newRecordId;
             this._loadRecordDetails();
           }
-          });
-          
-          // Load permissions for this specific contact
-          // Permissions are now extracted from the contact response directly
         }
-      }
-    });
+      });
+    }
 
     // Width tracking will be initialized in ngAfterViewInit
   }
@@ -556,5 +550,10 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy, O
       }
     });
   }
+
+  /**
+   * Get the primary organization unit for this contact
+   */
+  getPrimaryOrganizationUnit = getPrimaryOrganizationUnit;
 
 }

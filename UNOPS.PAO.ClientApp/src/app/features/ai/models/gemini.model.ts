@@ -32,7 +32,6 @@ export interface GeminiResponse {
     totalTokenCount: number;
   };
   modelVersion: string;
-  createTime: string;
   responseId: string;
 }
 

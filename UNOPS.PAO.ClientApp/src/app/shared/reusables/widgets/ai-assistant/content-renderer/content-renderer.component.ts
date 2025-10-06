@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges, ViewEncapsulation, inject, PLATFORM_ID, signal, output, ViewChild, ElementRef, AfterViewInit, Output, EventEmitter, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { MarkdownModule } from 'ngx-markdown';
-import { ResultItem } from '../ai-assistant.model';
+import { ContentPart } from '../ai-assistant.model';
 import { EntityGridComponent } from './entity-grid/entity-grid.component';
 import { ChartJsComponent } from './chart-js/chart-js.component';
 
@@ -15,12 +15,15 @@ import { ChartJsComponent } from './chart-js/chart-js.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ContentRendererComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
-  @Input() item!: ResultItem;
+  @Input() item!: ContentPart;
   @Input() shouldShow: boolean = true; // Controls when this item should be visible
   @Input() isSequential: boolean = false; // Whether this is part of sequential display
   @Input() isNewMessage: boolean = true; // Whether this is a new message (for typewriter effect)
   @Input() renderingId?: string; // Unique identifier for progressive rendering
   @Input() isProgressive: boolean = false; // Whether this is progressive content
+  @Input() isUserMessage: boolean = false; // Whether this is a user message (for styling)
+  
+  private timeoutIds: (number | ReturnType<typeof setTimeout>)[] = []; // Track timeout IDs for cleanup
   
   // Output when this content item is done displaying
   contentComplete = output<void>();
@@ -54,7 +57,9 @@ export class ContentRendererComponent implements OnInit, OnChanges, AfterViewIni
         }
         
         // Fallback content comparison if somehow references differ
-        const contentChanged = JSON.stringify(this.item.message) !== JSON.stringify(changes['item'].previousValue?.message);
+        const currentContent = JSON.stringify(this.item.entity || this.item.text || this.item.functionCall || this.item.functionResponse);
+        const previousContent = JSON.stringify(changes['item'].previousValue?.entity || changes['item'].previousValue?.text || changes['item'].previousValue?.functionCall || changes['item'].previousValue?.functionResponse);
+        const contentChanged = currentContent !== previousContent;
         if (!contentChanged) {
           return; // Skip re-rendering if card is completed and content hasn't changed
         }
@@ -81,31 +86,41 @@ export class ContentRendererComponent implements OnInit, OnChanges, AfterViewIni
     // Emit content complete immediately - no delays or animations
     if (this.shouldShow) {
       // Use setTimeout with 0 delay to ensure it happens after current execution stack
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         this.emitContentComplete();
       }, 0);
+      this.timeoutIds.push(timeoutId);
     }
   }
 
   async ngAfterViewInit() {
     if (this.item.type === 'mermaid' && this.isBrowser) {
       // Small delay to ensure element is ready
-      setTimeout(() => this.renderMermaidDiagram(), 100);
+      const timeoutId = setTimeout(() => this.renderMermaidDiagram(), 100);
+      this.timeoutIds.push(timeoutId);
     }
   }
 
   getStringMessage(): string {
-    if (typeof this.item.message === 'string') {
-      return this.item.message;
+    if (this.item.text) {
+      return this.item.text;
     }
     
     // Handle function calls and responses - format them nicely
-    if (this.item.type === 'functionCall' || this.item.type === 'functionResponse') {
-      return JSON.stringify(this.item.message, null, 2);
+    if (this.item.type === 'functionCall' && this.item.functionCall) {
+      return JSON.stringify(this.item.functionCall, null, 2);
     }
     
-    // Fallback for array or other types
-    return JSON.stringify(this.item.message);
+    if (this.item.type === 'functionResponse' && this.item.functionResponse) {
+      return JSON.stringify(this.item.functionResponse, null, 2);
+    }
+    
+    // Fallback for entity data
+    if (this.item.entity) {
+      return JSON.stringify(this.item.entity, null, 2);
+    }
+    
+    return '';
   }
 
   getContentTypeLabel(): string {
@@ -117,11 +132,11 @@ export class ContentRendererComponent implements OnInit, OnChanges, AfterViewIni
       case 'mermaid':
         return 'Mermaid Diagram';
       case 'code':
-        return this.item.language ? this.item.language.toUpperCase() : 'Code';
+        return 'Code';
       case 'grid':
-        return this.item.entity ? `${this.item.entity} Table` : 'Data Table';
+        return this.item.entityType ? `${this.item.entityType} Table` : 'Data Table';
       case 'card':
-        return this.item.entity ? `${this.item.entity} Cards` : 'Data Cards';
+        return this.item.entityType ? `${this.item.entityType} Cards` : 'Data Cards';
       case 'thought':
       case 'thoughts':
         return 'AI Thought Process';
@@ -130,32 +145,35 @@ export class ContentRendererComponent implements OnInit, OnChanges, AfterViewIni
       case 'functionResponse':
         return 'Function Response';
       default:
-        return this.item.type?.charAt(0).toUpperCase() + this.item.type?.slice(1) || 'Content';
+        return this.item.type ? this.item.type.charAt(0).toUpperCase() + this.item.type.slice(1) : 'Content';
     }
   }
 
   getArrayMessage(): any[] {
-    // Handle array of objects (multiple cards/items) - return as-is
-    if (Array.isArray(this.item.message)) {
-      return this.item.message;
+    // Handle entity data (grid/card components)
+    if (this.item.entity && Array.isArray(this.item.entity)) {
+      return this.item.entity;
     }
     
-    // Handle single object (single card/item) - wrap in array for consistent display
-    if (this.item.message && typeof this.item.message === 'object') {
-      return [this.item.message];
+    // Handle single entity object - wrap in array for consistent display
+    if (this.item.entity && typeof this.item.entity === 'object') {
+      return [this.item.entity];
     }
     
-    // Fallback for string or other types - return empty array
+    // Fallback - return empty array
     return [];
   }
 
   // Content is shown immediately, no typing effect
   private emitContentComplete(): void {
-    this.contentComplete.emit();
+    // Only emit if component is still alive (timeoutIds array exists)
+    if (this.timeoutIds !== null) {
+      this.contentComplete.emit();
+    }
   }
 
   private isNonTextContent(): boolean {
-    return ['grid', 'card', 'mermaid', 'code', 'chartjs'].includes(this.item.type);
+    return this.item.type ? ['grid', 'card', 'mermaid', 'code', 'chartjs'].includes(this.item.type) : false;
   }
 
   // Chart.js related methods
@@ -164,15 +182,15 @@ export class ContentRendererComponent implements OnInit, OnChanges, AfterViewIni
   }
 
   getChartConfig(): any {
-    if (typeof this.item.message === 'object' && this.item.message !== null) {
-      return this.item.message;
+    if (this.item.entity && typeof this.item.entity === 'object') {
+      return this.item.entity;
     }
     return null;
   }
 
   getChartData(): any {
-    if (typeof this.item.message === 'object' && this.item.message !== null) {
-      return (this.item.message as any).data;
+    if (this.item.entity && typeof this.item.entity === 'object') {
+      return (this.item.entity as any).data;
     }
     return null;
   }
@@ -234,5 +252,8 @@ export class ContentRendererComponent implements OnInit, OnChanges, AfterViewIni
   }
   
   ngOnDestroy(): void {
+    // Clear all pending timeouts to prevent memory leaks and destroyed component emissions
+    this.timeoutIds.forEach(timeoutId => clearTimeout(timeoutId));
+    this.timeoutIds = [];
   }
 } 
