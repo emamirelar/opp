@@ -2766,10 +2766,26 @@ public class UNOPSGeminiManager : IGeminiManager
                 var configUrl = $"{serviceUrl.TrimEnd('/')}/api/ai-assistant/configuration";
                 _logger.LogInformation("🔍 Fetching session configuration from: {ConfigUrl}", configUrl);
 
-                var response = await _httpClient.GetAsync(configUrl);
-                response.EnsureSuccessStatusCode();
-
-                var jsonContent = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage response;
+                string jsonContent;
+                
+                // For local development, use unauthenticated HttpClient
+                if (serviceUrl.StartsWith("http://localhost") || serviceUrl.StartsWith("http://127.0.0.1"))
+                {
+                    _logger.LogDebug("GetSessionConfiguration: Using local development HttpClient");
+                    response = await _httpClient.GetAsync(configUrl);
+                    response.EnsureSuccessStatusCode();
+                    jsonContent = await response.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    // For production/Cloud Run, use authenticated HttpClient
+                    _logger.LogDebug("GetSessionConfiguration: Creating authenticated HttpClient for Cloud Run");
+                    using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+                    response = await httpClient.GetAsync(configUrl);
+                    response.EnsureSuccessStatusCode();
+                    jsonContent = await response.Content.ReadAsStringAsync();
+                }
                 _logger.LogInformation("📋 Raw JSON response from Python service: {JsonContent}", jsonContent);
                 
                 var config = System.Text.Json.JsonSerializer.Deserialize<SessionConfiguration>(jsonContent, new System.Text.Json.JsonSerializerOptions
