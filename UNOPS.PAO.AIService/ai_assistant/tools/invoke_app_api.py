@@ -75,7 +75,7 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
     Invoke an API endpoint with minimal logging
     
     Args:
-        url: URL to call - can be relative (e.g., /api/partners) or absolute (e.g., https://localhost:44426/api/partner)
+        url: URL to call - can be relative (e.g., /api/partner) or absolute (e.g., https://localhost:44426/api/partner)
         method: HTTP method (GET, POST, PUT, DELETE)
         params: Request parameters/body
         headers: Optional additional headers
@@ -83,35 +83,6 @@ def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers
     
     Returns:
         dict: API response or error information
-    
-    Examples:
-        # GET request with relative URL (will use base URL from config)
-        result = invoke_app_api("/api/user", "GET")
-        
-        # GET request with absolute URL (will use as-is)
-        result = invoke_app_api("https://api.example.com/user", "GET")
-        
-        # POST request with data
-        result = invoke_app_api(
-            "/api/user", 
-            "POST", 
-            params={"name": "John", "email": "john@example.com"}
-        )
-        
-        # GET request with query parameters
-        result = invoke_app_api(
-            "/api/user", 
-            "GET", 
-            params={"search": "john", "limit": 10}
-        )
-        
-        # PUT request with custom headers
-        result = invoke_app_api(
-            "/api/user/123", 
-            "PUT", 
-            params={"name": "John Updated"},
-            headers={"X-Custom-Header": "value"}
-        )
     """
     
     try:
