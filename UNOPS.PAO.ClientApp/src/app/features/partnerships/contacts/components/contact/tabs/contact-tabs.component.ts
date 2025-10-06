@@ -200,7 +200,14 @@ export class ContactTabsComponent implements OnInit, OnDestroy {
   }
 
   _loadRecordDetails(): void {
-    // Reload contact data after profile picture change
+    this.contactService.getContactById(this.recordId).subscribe({
+      next: (data) => {
+        this.recordData = data;
+      },
+      error: (error) => {
+        console.error('Error reloading contact data after profile picture upload:', error);
+      }
+    });
   }
 
   getActiveTab(): TabItem | null {
