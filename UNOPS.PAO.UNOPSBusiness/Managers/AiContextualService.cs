@@ -932,7 +932,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             if (interactionType)
             {
                 var dateValue = responseObject["date"];
-                if (dateValue == null || 
+                    if (dateValue == null || 
                     string.IsNullOrWhiteSpace(dateValue?.ToString()) ||
                     (dateValue is JValue jValue && (jValue.Value == null || string.IsNullOrWhiteSpace(jValue.Value?.ToString()))))
                 {

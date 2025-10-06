@@ -1447,6 +1447,9 @@
   "search.showAll": "Show All",
   "search.showAllResults": "Show All Results",
   "search.showMetadata": "Show Metadata",
+  "search.hideMetadata": "Hide Metadata",
+  "search.metadataToggle": "Metadata",
+  "search.metadataToggleTooltip": "Toggle search metadata display",
   "search.showMyOrgUnitOnly": "Show My Org Unit Only",
   "search.showingAllRecords": "Showing {{total}} records",
   "search.showingRecords": "Showing {{filtered}} of {{total}} records",
@@ -1583,6 +1586,7 @@
   "tooltip.contact.email": "The contact's primary email address.",
   "tooltip.contact.phone": "The contact's primary phone number.",
   "tooltip.contact.mobile": "The contact's mobile phone number.",
+  "tooltip.contact.contactOrgUnit": "Refers to the UNOPS org unit that manages this contact",
   "tooltip.contact.fax": "The contact's fax number.",
   "tooltip.contact.department": "The department in the partner organization that the contact works for/is related to.",
   "tooltip.contact.description": "Detailed description of the contact and any relevant responsibilities, in particular relating to their relationship/importance to UNOPS.",
@@ -1956,5 +1960,11 @@
   "tooltip.interaction.phoneNumbers": "The phone numbers of contacts and UNOPS members involved in the interaction.",
   "tooltip.interaction.emailAddresses": "The email addresses of contacts and UNOPS members involved in the interaction.",
   "tooltip.interaction.relatedTo": "All the partner contacts involved in this interaction.",
-  "tooltip.interaction.users": "UNOPS users involved in the interaction."
+  "tooltip.interaction.users": "UNOPS users involved in the interaction.",
+  "label.totalRecords": "Total Records",
+  "label.searchResults": "Search Results",
+  "label.advancedSearchResults": "Advanced Search Results",
+  "label.showingRecords": "Showing {{count}} records",
+  "label.searchResultsCount": "{{current}} of {{total}} results",
+  "label.advancedSearchResultsCount": "{{current}} of {{total}} results"
 }
