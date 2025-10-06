@@ -253,6 +253,7 @@ public abstract class BaseUNOPSManager
                     CanClose = GetCanClose(result, entityPermissions),
                     CanArchive = GetCanArchive(result, entityPermissions),
                     CanApprove = GetCanApprove(result, entityPermissions),
+                    CanUnapprove = GetCanUnapprove(result, entityPermissions),
                     CanExport = _permissionService?.CanExport(user) ?? false,
                     CanImport = _permissionService?.CanImport(user) ?? false
                 };
@@ -836,6 +837,50 @@ public abstract class BaseUNOPSManager
             var isNotApproved = approvalStatus?.ToString() == "NotApproved" || approvalStatus?.ToString() == "0"; // PartnerApprovalStatus.NotApproved = 0
             
             return isNotApproved;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Determines if the user can unapprove a Partner entity
+    /// </summary>
+    private bool? GetCanUnapprove(object result, List<EntityPermission> entityPermissions)
+    {
+        // Only applicable to Partner entities
+        if (_entityName != "Partner" || result == null)
+            return null;
+
+        // Check if user has admin-level permissions (only admins can unapprove)
+        // Admin users should have specific roles like PARTNER_GLOB_ADMIN
+        var hasAdminPermission = entityPermissions.Any(p => p.Role == "PARTNER_GLOB_ADMIN");
+        if (!hasAdminPermission)
+            return false;
+
+        // Use reflection to check partner status and approval status
+        var resultType = result.GetType();
+        var statusProperty = resultType.GetProperty("Status");
+        var approvalStatusProperty = resultType.GetProperty("PartnerApprovalStatus");
+
+        if (statusProperty == null || approvalStatusProperty == null)
+            return null;
+
+        try
+        {
+            // Check if partner is Active
+            var status = statusProperty.GetValue(result);
+            var isActive = status?.ToString() == "Active" || status?.ToString() == "1"; // EntityStatus.Active = 1
+            
+            if (!isActive)
+                return false; // Can only unapprove Active partners
+
+            // Check if partner is Approved (can only unapprove already approved partners)
+            var approvalStatus = approvalStatusProperty.GetValue(result);
+            var isApproved = approvalStatus?.ToString() == "Approved" || approvalStatus?.ToString() == "1"; // PartnerApprovalStatus.Approved = 1
+            
+            return isApproved;
         }
         catch
         {

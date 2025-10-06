@@ -377,12 +377,35 @@ public class Partner : ModifiableDeletableEntity
         PartnerApprovalStatus = PartnerApprovalStatus.Approved;
         PartnerApprovalDate = DateTime.UtcNow;
         PartnerApprovedBy = $"Approved by {approverName} (ID: {approverId}) on {currentDate}";
+        CanCreateNewOpportunities = true; // Set to true when approved
         
         // Auto-assign the ERP dimension value only if not already set
         if (!ErpDimValue.HasValue)
         {
             ErpDimValue = nextErpDimValue;
         }
+    }
+
+    
+    /// <summary>
+    /// Unapproves a partner and records audit trail
+    /// </summary>
+    /// <param name="unapproverId">ID of the admin user performing the unapproval</param>
+    /// <param name="unapproverName">Name of the admin user performing the unapproval</param>
+    public void UnapprovePartner(int unapproverId, string unapproverName)
+    {
+        if (Status != EntityStatus.Active)
+        {
+            throw new InvalidOperationException("Only Active partners can be unapproved.");
+        }
+        if (PartnerApprovalStatus != PartnerApprovalStatus.Approved)
+        {
+            throw new InvalidOperationException("Only approved partners can be unapproved.");
+        }
+        string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
+        PartnerApprovalStatus = PartnerApprovalStatus.NotApproved;
+        PartnerApprovedBy = $"Unapproved by {unapproverName} (ID: {unapproverId}) on {currentDate}";
+        CanCreateNewOpportunities = false; // Set to false when unapproved
     }
     
     /// <summary>

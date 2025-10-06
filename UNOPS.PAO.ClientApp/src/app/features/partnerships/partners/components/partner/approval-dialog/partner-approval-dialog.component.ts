@@ -56,6 +56,8 @@ export class PartnerApprovalDialogComponent implements OnInit {
   isLoading = signal(false);
   showValidationFailedError = signal(false);
   partnerLevyStatusValue = signal<string>('');
+  dueDiligenceRequiredValue = signal<string>('');
+  dueDiligenceApprovalValue = signal<string>('');
   
   partner: Partner;
 
@@ -74,14 +76,66 @@ export class PartnerApprovalDialogComponent implements OnInit {
     this.formGroup.get('partnerLevyStatus')?.valueChanges.subscribe(value => {
       this.partnerLevyStatusValue.set(value || '');
       
-      // Clear reasonForLevy when it should be hidden
-      if (value !== 'DoesNotApply' && value !== 'PotentiallyNotApplied') {
-        this.formGroup.get('reasonForLevy')?.setValue('');
+      const reasonForLevyControl = this.formGroup.get('reasonForLevy');
+      
+      // Clear and manage validators for reasonForLevy based on visibility
+      if (value === 'DoesNotApply' || value === 'PotentiallyNotApplied') {
+        // Make reasonForLevy required when visible
+        reasonForLevyControl?.setValidators([Validators.required]);
+      } else {
+        // Clear value and validators when hidden
+        reasonForLevyControl?.setValue('');
+        reasonForLevyControl?.clearValidators();
       }
+      
+      reasonForLevyControl?.updateValueAndValidity();
     });
     
-    // Initialize the signal with the current form value
+    // Subscribe to Due Diligence Required changes
+    this.formGroup.get('dueDiligenceRequired')?.valueChanges.subscribe(value => {
+      this.dueDiligenceRequiredValue.set(value || '');
+      
+      // Clear Due Diligence Approval fields when Due Diligence is not Required
+      if (value !== 'Required') {
+        this.formGroup.get('dueDiligenceApproval')?.setValue('');
+        this.formGroup.get('dueDiligenceApprovalDate')?.setValue(null);
+        this.formGroup.get('dueDiligenceExpiryDate')?.setValue(null);
+        this.formGroup.get('dueDiligenceApproval')?.clearValidators();
+        this.formGroup.get('dueDiligenceApprovalDate')?.clearValidators();
+        this.formGroup.get('dueDiligenceExpiryDate')?.clearValidators();
+      }
+      this.formGroup.get('dueDiligenceApproval')?.updateValueAndValidity();
+      this.formGroup.get('dueDiligenceApprovalDate')?.updateValueAndValidity();
+      this.formGroup.get('dueDiligenceExpiryDate')?.updateValueAndValidity();
+    });
+    
+    // Subscribe to Due Diligence Approval changes
+    this.formGroup.get('dueDiligenceApproval')?.valueChanges.subscribe(value => {
+      this.dueDiligenceApprovalValue.set(value || '');
+      
+      const approvalDateControl = this.formGroup.get('dueDiligenceApprovalDate');
+      const expiryDateControl = this.formGroup.get('dueDiligenceExpiryDate');
+      
+      if (value === 'Approved') {
+        // Make dates required when Approved
+        approvalDateControl?.setValidators([Validators.required]);
+        expiryDateControl?.setValidators([Validators.required]);
+      } else {
+        // Clear dates and validators when not Approved
+        approvalDateControl?.setValue(null);
+        expiryDateControl?.setValue(null);
+        approvalDateControl?.clearValidators();
+        expiryDateControl?.clearValidators();
+      }
+      
+      approvalDateControl?.updateValueAndValidity();
+      expiryDateControl?.updateValueAndValidity();
+    });
+    
+    // Initialize the signals with the current form values
     this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
+    this.dueDiligenceRequiredValue.set(this.formGroup.get('dueDiligenceRequired')?.value || '');
+    this.dueDiligenceApprovalValue.set(this.formGroup.get('dueDiligenceApproval')?.value || '');
   }
 
   initializeForm(): void {
@@ -99,9 +153,7 @@ export class PartnerApprovalDialogComponent implements OnInit {
       partnerLevyStatus: [this.partner.partnerLevyStatus || ''],
       reasonForLevy: [this.partner.reasonForLevy || ''],
       levyTreatment: [this.partner.levyTreatment || ''],
-      pooledFund: [this.partner.pooledFund || false],
-      canCreateNewOpportunities: [this.partner.canCreateNewOpportunities || false],
-      reasonForNoNewOpportunity: [this.partner.reasonForNoNewOpportunity || '', Validators.required]
+      pooledFund: [this.partner.pooledFund || false]
     });
   }
 
@@ -116,6 +168,16 @@ export class PartnerApprovalDialogComponent implements OnInit {
   shouldShowReasonForLevy = computed(() => {
     const partnerLevyStatus = this.partnerLevyStatusValue();
     return (partnerLevyStatus === 'DoesNotApply' || partnerLevyStatus === 'PotentiallyNotApplied');
+  });
+
+  // Show "Due Diligence Approval" only when Due Diligence Required is "Required"
+  shouldShowDueDiligenceApproval = computed(() => {
+    return this.dueDiligenceRequiredValue() === 'Required';
+  });
+
+  // Show "Due Diligence Approval Date" and "Due Diligence Expiry Date" only when Due Diligence Approval is "Approved"
+  shouldShowDueDiligenceDates = computed(() => {
+    return this.dueDiligenceApprovalValue() === 'Approved';
   });
 
   handleApprove(): void {

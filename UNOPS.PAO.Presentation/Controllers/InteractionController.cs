@@ -320,9 +320,10 @@ namespace UNOPS.PAO.Presentation.Controllers
                 FilterActive = paginationRequest.FilterActive
             };
 
-            // Use AdvancedSearchService for unified text search with PostgreSQL similarity
-            var result = await _advancedSearchService.SearchAsync<UNOPSInteraction, InteractionModel>(
-                searchRequest, 
+            // Use AdvancedSearchService for unified text search with PostgreSQL similarity and metadata
+            var result = await _advancedSearchService.SearchWithQueryAndMetadataAsync<UNOPSInteraction, InteractionModel>(
+                query, 
+                paginationRequest, 
                 User);
 
             _logger.LogInformation("Interaction search completed: Found {TotalCount} results for query: {Query}, export: {Export}", result.TotalCount, query, export);

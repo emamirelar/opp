@@ -276,8 +276,8 @@ public class PartnerController : BaseController
                 FilterActive = filterActive
             };
 
-            // Use AdvancedSearchService for unified text search with PostgreSQL similarity
-            var result = await _advancedSearchService.SearchWithQueryAsync<UNOPSPartner, PartnerModel>(
+            // Use AdvancedSearchService for unified text search with PostgreSQL similarity and metadata
+            var result = await _advancedSearchService.SearchWithQueryAndMetadataAsync<UNOPSPartner, PartnerModel>(
                 query, 
                 paginationRequest, 
                 User);
@@ -625,6 +625,35 @@ public class PartnerController : BaseController
         try
         {
             var result = await _manager.ApprovePartnerAsync(User, id, request);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Unapproves an approved partner (Admin only) - unlocks data fields and records unapproval audit trail
+    /// </summary>
+    /// <param name="id">Partner ID</param>
+    /// <param name="request">Unapproval request with optional notes</param>
+    /// <returns>Updated partner with unapproved status</returns>
+    [HttpPost(APIDictionary.Partner + "/{id}/unapprove")]
+    [AccessControlled(EntityTypes.Partner, "update")]
+    public async Task<IActionResult> UnapprovePartner(int id, [FromBody] StatusChangeRequest request)
+    {
+        try
+        {
+            var result = await _manager.UnapprovePartnerAsync(User, id, request);
             if (result == null)
             {
                 return NotFound();

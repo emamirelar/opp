@@ -94,7 +94,7 @@ public interface IPartnerManager
     Task<PartnerModel?> ClosePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request);
     Task<PartnerModel?> ArchivePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request);
     Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, UpdatePartnerRequest request);
-    
+    Task<PartnerModel?> UnapprovePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request);
     
     
     /// <summary>

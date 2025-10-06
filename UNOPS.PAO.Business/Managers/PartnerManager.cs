@@ -785,7 +785,12 @@ public class PartnerManager : IPartnerManager
         throw new NotSupportedException("Partner approval is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
     }
 
-
+    public async Task<PartnerModel?> UnapprovePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request)
+    {
+        // This implementation doesn't support archiving since it works with Partner entities (not UNOPSPartner)
+        // Status workflows are managed by UNOPSPartnerManager
+        throw new NotSupportedException("Partner unapproval is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
+    }
 
     public virtual async Task<PartnerModel?> GetPartnerByNameAsync(ClaimsPrincipal user, string name)
     {
