@@ -56,7 +56,7 @@
     },
     "server": {
       "serve_web_interface": true,
-      "api_base_url": "https://localhost:44426/",
+      "api_base_url": "https://opportunityplus.unops.org/api/",
       "is_development": false,
       "host": "0.0.0.0",
       "port": 8001,

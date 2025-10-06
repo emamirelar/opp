@@ -87,7 +87,7 @@ def format_entities_metadata_as_markdown(metadata):
     # Handle entities section
     if 'entities' in metadata:
         markdown_content.append("## Entities")
-        markdown_content.append("Available entities in the UNOPS PAO system:")
+        markdown_content.append("Available entities in the UNOPS CRM system:")
         markdown_content.append("")
         
         for entity_name, entity_info in metadata['entities'].items():
@@ -141,6 +141,97 @@ def format_entities_metadata_as_markdown(metadata):
     return result
 
 
+def format_user_context_for_instruction(state: dict) -> str:
+    """Format user information from state into a concise instruction-friendly string"""
+    if not state:
+        return ""
+    
+    user_profile = state.get('user_profile', {})
+    user_info = user_profile.get('userInfoWithOrgSettings', {})
+    
+    if not user_info:
+        return ""
+    
+    context_parts = []
+    
+    # Add user name and basic info
+    if user_info.get('Name'):
+        context_parts.append(f"**User Name:** {user_info['Name']}")
+    
+    if user_info.get('Position'):
+        context_parts.append(f"**Position:** {user_info['Position']}")
+    
+    if user_info.get('UserEmail'):
+        context_parts.append(f"**Email:** {user_info['UserEmail']}")
+    
+    # Add organizational information
+    if user_info.get('OrgUnitDescription'):
+        context_parts.append(f"**Organization Unit:** {user_info['OrgUnitDescription']}")
+    elif user_info.get('OrgUnit'):
+        context_parts.append(f"**Organization Unit:** {user_info['OrgUnit']}")
+    
+    if user_info.get('DutyStation'):
+        context_parts.append(f"**Duty Station:** {user_info['DutyStation']}")
+    
+    # Add supervisor information
+    if user_info.get('SupervisorName'):
+        supervisor_info = user_info['SupervisorName']
+        if user_info.get('SupervisorEmail'):
+            supervisor_info += f" ({user_info['SupervisorEmail']})"
+        context_parts.append(f"**Supervisor:** {supervisor_info}")
+    
+    if context_parts:
+        return "\n\n---\n**USER CONTEXT:**\n" + "\n".join(context_parts) + "\n---\n"
+    return ""
+
+
+def format_geo_context_for_instruction(state: dict) -> str:
+    """Format geo information from state into a concise instruction-friendly string"""
+    if not state:
+        return ""
+    
+    geo_stats = state.get('user_geo_stats', {})
+    if not geo_stats:
+        return ""
+    
+    context_parts = []
+    
+    # Extract location information
+    location = geo_stats.get('location', {})
+    if location and location.get('status') == 'success':
+        # Add city and country
+        location_parts = []
+        if location.get('city'):
+            location_parts.append(location['city'])
+        if location.get('region'):
+            location_parts.append(location['region'])
+        if location.get('country'):
+            location_parts.append(location['country'])
+        
+        if location_parts:
+            context_parts.append(f"**Location:** {', '.join(location_parts)}")
+        
+        # Add timezone
+        if location.get('timezone'):
+            context_parts.append(f"**Timezone:** {location['timezone']}")
+        
+        # Add coordinates if available
+        if location.get('latitude') and location.get('longitude'):
+            context_parts.append(f"**Coordinates:** {location['latitude']}, {location['longitude']}")
+        
+        # Add ISP information if available
+        if location.get('isp'):
+            context_parts.append(f"**ISP:** {location['isp']}")
+    
+    # Add current datetime
+    if geo_stats.get('current_datetime'):
+        context_parts.append(f"**Current DateTime (UTC):** {geo_stats['current_datetime']}")
+    
+    if context_parts:
+        return "\n\n---\n**GEO CONTEXT:**\n" + "\n".join(context_parts) + "\n---\n"
+    return ""
+
+
 def format_page_context_for_instruction(page_context: dict) -> str:
     """Format page context data into a concise instruction-friendly string"""
     if not page_context:
@@ -153,26 +244,6 @@ def format_page_context_for_instruction(page_context: dict) -> str:
     if 'route' in page_context:
         route = page_context['route']
         context_parts.append(f"**Current Page:** {route.get('path', 'Unknown')}")
-    
-    # Add geo context information
-    if 'user_geo_stats' in page_context:
-        geo_stats = page_context['user_geo_stats']
-        location = geo_stats.get('location', {})
-        if location and location.get('status') == 'success':
-            geo_info = []
-            if location.get('city'):
-                geo_info.append(location['city'])
-            if location.get('country'):
-                geo_info.append(location['country'])
-            if location.get('timezone'):
-                geo_info.append(f"Timezone: {location['timezone']}")
-            
-            if geo_info:
-                context_parts.append(f"\n**User Location:** {', '.join(geo_info)}")
-        
-        # Add current datetime if available
-        if geo_stats.get('current_datetime'):
-            context_parts.append(f"**Current DateTime (User's timezone):** {geo_stats['current_datetime']}")
     
     # Extract the main data object (recordData, partner, contact, interactions, etc.)
     if 'recordData' in component_data:
@@ -231,9 +302,9 @@ The user's messages will include **CURRENT PAGE CONTEXT** information that tells
 
 **DO NOT ask the user to clarify which entity they mean if the context already provides it.**
 
-## UNOPS PAO System Entities and API Reference
+## UNOPS CRM System Entities and API Reference
 
-You have access to a comprehensive UNOPS PAO system with the following entities and capabilities:
+You have access to a comprehensive UNOPS CRM system with the following entities and capabilities:
 
 {entities_metadata}
 
@@ -244,25 +315,25 @@ Use this metadata to understand:
 - Request model structures for complex operations
 - Relationships between entities
 
-When processing requests, refer to this metadata to ensure accurate API calls and data handling.
+When processing requests with the invoke_app_api tool, refer to this metadata to ensure accurate API calls and data handling.  STRICTLY USE ONLY the endpoints, parameters, and request models available in this metadata.  DO NOT make up endpoints, parameters, or request models.
 
 ## Tools Available
 
-**invoke_app_api** - Use this tool to search for any of the corporate entities in the CRM application you have been provided metadata about (Partners, Contacts, Interactions, etc.).
+**invoke_app_api** - Use this tool to search for any of the entities in the CRM application you have been provided metadata about (Partners, Contacts, Interactions, etc.).
 Based on the information you have in the entity metadata, identify which would be the appropriate endpoint to call and use this tool to make direct HTTP requests to API endpoints
 You have all the information needed to use this tool to retrieve information from the application (you have information about about the entities available, their data model, the endpoints they support, and the parameters and request models for the APIs).
-PARAMETERS: url, method, params, headers, tool_context
+PARAMETERS: url, method, params, headers
 
 **search_corp_vector_store** - Searches corporate vector store/knowledge base.  Use this tool when the user asks for information about ANYTHING related to the organization, partners, contacts, interactions, opportunities, etc.
-Use relevant entityTypeIds to get the most relevant information.  The entityTypeIds are: "ENGAGEMENT", "PROJECT", "POLICY", "LEGAL_AGREEMENT".
-If you are not sure about the entityTypeIds, leave it blank.
-PARAMETERS: query, applicationId, entityTypeId, entityId, maxResults, isMultiToolRequest
+Use relevant entityTypeIds to get the most relevant information.  The entityTypeIds are: "BUSINESS_OPPORTUNITY", "FUNDING_SOURCE", "CONTINENT", "DUTY_STATION", "ORGANIZATION", "RFX", "PO", "GUIDANCE", "CONTRACT", "LTA", "POLICY", "SUPPLIER", "CLIENT", "COUNTRY", "BANK", "ORG_UNIT", "GEO_REGION", "PROCESS", "STANDARD", "INVOICE", "PAYMENT", "AGREEMENT", "HOST_COUNTRY_AGREEMENT", "PERSON", "PERSON_SKILL", "ENGAGEMENT", "PARTNER", "PROJECT", "SDG", "OUTPUT", "PERSON_ROLE", "LESSON_LEARNT", "PROPOSAL", "ORG_REPORT", "ORG_STRATEGY", "MOU", "EXTERNAL_PUBLICATION", "TEMPLATE", "RISK", "ISSUE".
+If you are not sure about the entityTypeId, or if there are too many entityTypeIds, leave it blank which will return a wide spectrum of information.  You may wish to adjust the maxResults in that case.
+PARAMETERS: query, applicationId, entityTypeId, entityId, maxResults
 
 **google_search** - Searches the web for information.
 PARAMETERS: query
 Make sure to return the results in well-formed markdown along with links to the sources.
 
-When you provide your thoughts, make sure to not use the names of the specific tools. Just describe what you would do and substitute the tool name with a short description of what the tool does.  Use non-technical language.
+When you provide your thoughts, NEVER GIVE INFORMATION OF THE TOOLS YOU HAVE AVAILABLE. ALWAYS USE NON-TECHNICAL LANGUAGE.  CONVERT NAMES OF TOOLS OR VARIABLES OR INFORMATION YOU HAVE IN YOUR CONTEXT TO NON-TECHNICAL LANGUAGE.
 Respond in WELL-FORMED MARKDOWN making proper use of different heading levels, bold text, and lists.
 
 """
@@ -298,29 +369,37 @@ root_agent = LlmAgent(
 )
 
 
-def create_agent_with_context(page_context: dict = None) -> LlmAgent:
+def create_agent_with_context(state: dict = None) -> LlmAgent:
     """
-    Create an agent instance with optional page context injected into the instruction.
+    Create an agent instance with optional user, page, and geo context injected into the instruction.
     This allows dynamic context without polluting the conversation history.
     
     Args:
-        page_context: Optional page context data from the frontend
+        state: Optional state dictionary containing user_profile, page_context_auto, and user_geo_stats
         
     Returns:
         LlmAgent instance with context-aware instruction
     """
-    # Build the instruction with optional page context
-    context_instruction = ""
-    if page_context:
-        context_instruction = format_page_context_for_instruction(page_context)
+    # Build the instruction with optional user, page, and geo context
+    user_context_instruction = ""
+    page_context_instruction = ""
+    geo_context_instruction = ""
     
-    # Combine base instruction with context
+    if state:
+        user_context_instruction = format_user_context_for_instruction(state)
+        geo_context_instruction = format_geo_context_for_instruction(state)
+        page_context = state.get('page_context_auto')
+        if page_context:
+            page_context_instruction = format_page_context_for_instruction(page_context)
+    
+    # Combine base instruction with context (user context, geo context, then page context)
     full_instruction = instruction
-    if context_instruction:
+    if user_context_instruction or geo_context_instruction or page_context_instruction:
         # Insert context right after the Page Context Awareness section
+        combined_context = user_context_instruction + geo_context_instruction + page_context_instruction
         full_instruction = instruction.replace(
             "**DO NOT ask the user to clarify which entity they mean if the context already provides it.**",
-            f"**DO NOT ask the user to clarify which entity they mean if the context already provides it.**\n\n{context_instruction}"
+            f"**DO NOT ask the user to clarify which entity they mean if the context already provides it.**\n\n{combined_context}"
         )
     
     return LlmAgent(

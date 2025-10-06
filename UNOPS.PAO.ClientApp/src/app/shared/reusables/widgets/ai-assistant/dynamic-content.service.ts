@@ -32,6 +32,13 @@ export class DynamicContentService {
   }
 
   setViewContainer(viewContainer: ViewContainerRef): void {
+    // If we're setting a new view container and there are active components,
+    // they must be from a previous component instance (e.g., when switching from sidebar to fullscreen)
+    // Clear them to prevent stale references
+    if (this.viewContainer && this.viewContainer !== viewContainer && this.activeComponents.size > 0) {
+      this.clearAllComponents();
+    }
+    
     this.viewContainer = viewContainer;
   }
 
@@ -41,7 +48,6 @@ export class DynamicContentService {
 
   processChunk(chunk: any): void {
     if (!this.viewContainer) {
-      console.warn('⚠️ No view container set, cannot process chunk');
       return;
     }
 
@@ -89,6 +95,7 @@ export class DynamicContentService {
     // Different content types within the same invocation get separate components
     renderingIdBase = chunk.invocationId;
     
+    // PRIORITY 1: Check for thought content (has thought flag)
     if (part.thought === true && part.text) {
       return {
         text: part.text,
@@ -102,15 +109,18 @@ export class DynamicContentService {
       };
     }
     
-    if (part.text && !part.functionCall && !part.thought) {
+    // PRIORITY 2: Check for text content (streaming or stored format)
+    // Handle both streaming format (part.text) and stored format (part might be a string or have content property)
+    const textContent = part.text || (typeof part === 'string' ? part : null) || part.content;
+    if (textContent && !part.functionCall && !part.thought) {
       // Check if this is a user message - use special user-message type
       const isUserMessage = chunk.role === 'user' || chunk.isUser === true || chunk.author === 'user';
       const contentType = isUserMessage ? 'user-message' : 'markdown';
       
       return {
-        text: part.text,
+        text: textContent,
         type: contentType,
-        content: part.text,
+        content: textContent,
         partial: isUserMessage ? false : isPartial, // User messages are always complete, AI messages use actual partial flag
         invocationId: chunk.invocationId,
         renderingId: `${renderingIdBase}-${contentType}`,
@@ -119,17 +129,24 @@ export class DynamicContentService {
       };
     }
     
+    // PRIORITY 3: Check for function call (don't render)
     if (part.functionCall) {
       // Don't render components for functionCall
       return null;
     }
     
+    // PRIORITY 4: Check for function response
     if (part.functionResponse) {
       // Handle function response - especially invoke_app_api
       if (part.functionResponse.name === 'invoke_app_api' && part.functionResponse.response) {
         try {
           // For invoke_app_api, the response is already parsed, not a JSON string
           const parsedResult = part.functionResponse.response;
+          
+          // Don't render anything if the response status is "error"
+          if (parsedResult.status === 'error') {
+            return null;
+          }
           
           let cardData = parsedResult;
           
@@ -146,14 +163,24 @@ export class DynamicContentService {
             cardData = parsedResult.records;
           }
           
-          // Determine entity type (title case to match switch cases in AI content component)
-          let entityType = 'Partner';
-          if (parsedResult.api_call?.includes('/api/partner')) {
-            entityType = 'Partner';
-          } else if (parsedResult.api_call?.includes('/api/contact')) {
-            entityType = 'Contact';
-          } else if (parsedResult.api_call?.includes('/api/interaction')) {
+          // Determine entity type from the actual resource being fetched (not the parent path)
+          // Check for specific resource paths first (most specific to least specific)
+          let entityType = 'Item'; // Default fallback
+          const apiCall = parsedResult.api_call || '';
+          
+          // Check for base-engagements first (more specific than just "engagement")
+          if (apiCall.includes('/base-engagement')) {
+            entityType = 'BaseEngagement';
+          } else if (apiCall.includes('/engagement')) {
+            entityType = 'Engagement';
+          } else if (apiCall.includes('/interaction')) {
             entityType = 'Interaction';
+          } else if (apiCall.includes('/contact')) {
+            entityType = 'Contact';
+          } else if (apiCall.includes('/partner')) {
+            entityType = 'Partner';
+          } else if (apiCall.includes('/opportunity')) {
+            entityType = 'Opportunity';
           }
           
           return {
@@ -173,6 +200,30 @@ export class DynamicContentService {
       
       // Don't render components for regular functionResponse
       return null;
+    }
+    
+    // FALLBACK: If we have any text-like content, try to render it
+    // This handles edge cases where the structure doesn't match expected formats
+    if (part && typeof part === 'object') {
+      // Try to find any text property in the part object
+      const possibleTextProperties = ['text', 'content', 'message', 'body', 'value'];
+      for (const prop of possibleTextProperties) {
+        if (part[prop] && typeof part[prop] === 'string') {
+          const isUserMessage = chunk.role === 'user' || chunk.isUser === true || chunk.author === 'user';
+          const contentType = isUserMessage ? 'user-message' : 'markdown';
+          
+          return {
+            text: part[prop],
+            type: contentType,
+            content: part[prop],
+            partial: isUserMessage ? false : isPartial,
+            invocationId: chunk.invocationId,
+            renderingId: `${renderingIdBase}-${contentType}`,
+            timestamp: chunk.timestamp || Date.now(),
+            isUserMessage: isUserMessage
+          };
+        }
+      }
     }
     
     return null;
@@ -332,19 +383,8 @@ export class DynamicContentService {
   }
 
   clearAllComponents(): void {
-    // Destroy all component references
-    for (const [id, componentInfo] of this.activeComponents) {
-      try {
-        componentInfo.componentRef.destroy();
-      } catch (error) {
-        console.warn('Error destroying component:', error);
-      }
-    }
-    
-    // Clear the map
-    this.activeComponents.clear();
-    
-    // Clear the view container
+    // Clear the view container FIRST to remove all DOM elements
+    // This ensures clean slate even if component destruction fails
     if (this.viewContainer) {
       try {
         this.viewContainer.clear();
@@ -353,6 +393,21 @@ export class DynamicContentService {
       }
     }
     
+    // Then destroy all component references to clean up subscriptions/resources
+    for (const [id, componentInfo] of this.activeComponents) {
+      try {
+        // Only destroy if the component hasn't already been destroyed
+        if (componentInfo.componentRef && !componentInfo.componentRef.hostView.destroyed) {
+          componentInfo.componentRef.destroy();
+        }
+      } catch (error) {
+        // Silent error - component might already be destroyed by Angular
+        console.warn('Error destroying component:', error);
+      }
+    }
+    
+    // Clear the map
+    this.activeComponents.clear();
   }
 
   getActiveComponentsCount(): number {

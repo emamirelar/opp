@@ -9,21 +9,18 @@ from google.adk.tools.tool_context import ToolContext
 from ..utils.config import get_config
 from ..utils.auth_helpers import get_service_account_oidc_token
 
-def search_corp_vector_store(tool_context: ToolContext, query: str, applicationId: Optional[str] = None, entityTypeId: Optional[str] = None, entityId: Optional[str] = None, maxResults: Optional[int] = 10, filename: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None) -> str:
+def search_corp_vector_store(query: str, applicationId: Optional[str] = None, entityTypeId: Optional[str] = None, entityId: Optional[str] = None, maxResults: Optional[int] = 10, tool_context: Optional[ToolContext] = None) -> str:
     """
     Search corporate vector store using external API
     The tool provides access to ALL corporate information including information regarding engagements, projects, policies, processes, legal agreements, etc.
     
     Args:
-        tool_context: Tool context for authentication and state
         query: Search query string
         applicationId: Optional application ID to filter search
         entityTypeId: Optional entity type ID to filter search
         entityId: Optional entity ID to filter search
         maxResults: Maximum number of results to return (default: 10)
-        filename: Optional filename for logging purposes
-        metadata: Optional metadata for the search
-        
+                
     Returns:
         JSON string with the search results
     """
@@ -92,15 +89,13 @@ def search_corp_vector_store(tool_context: ToolContext, query: str, applicationI
                 return json.dumps({
                     "status": "success",
                     "response": response_data,
-                    "query": query,
-                    "metadata": metadata
+                    "query": query
                 })
             except json.JSONDecodeError:
                 return json.dumps({
                     "status": "success",
                     "response": {"text": response.text},
                     "query": query,
-                    "metadata": metadata,
                     "note": "Response was not JSON"
                 })
         else:
@@ -118,7 +113,6 @@ def search_corp_vector_store(tool_context: ToolContext, query: str, applicationI
                 "status": "error",
                 "error": error_message,
                 "query": query,
-                "metadata": metadata
             })
         
     except Exception as e:
@@ -126,6 +120,5 @@ def search_corp_vector_store(tool_context: ToolContext, query: str, applicationI
         return json.dumps({
             "error": f"Failed to search corporate vector store: {str(e)}",
             "query": query,
-            "metadata": metadata,
             "suggestion": "Check if the vector store service is available and the query is valid"
         }) 

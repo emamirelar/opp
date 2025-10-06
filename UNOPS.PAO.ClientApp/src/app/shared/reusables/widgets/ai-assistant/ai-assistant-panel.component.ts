@@ -51,6 +51,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   @ViewChild('dynamicContentContainer', { read: ViewContainerRef }) private dynamicContentContainer!: ViewContainerRef;
   @ViewChild('scanComponent') private scanComponent!: AiAssistantScanComponent;
   @ViewChild('sessionMenu') private sessionMenu!: Menu;
+  @ViewChild('messageInput') private messageInput!: ElementRef;
   @Input() viewContainerRef!: ViewContainerRef;
   @Input() hideHeader: boolean = false; // Hide header in fullscreen mode
   @Input() rightPanelEntityType: string | null = null; // Entity type in right panel
@@ -68,9 +69,10 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
 
   // Mobile keyboard detection
   private initialViewportHeight = signal(0);
+  private currentViewportHeight = signal(0);
   isMobileKeyboardActive = computed(() => {
     if (typeof window !== 'undefined' && this.isMobile()) {
-      const currentHeight = window.visualViewport?.height || window.innerHeight;
+      const currentHeight = this.currentViewportHeight();
       const initialHeight = this.initialViewportHeight();
       // Consider keyboard active if viewport height decreased by more than 150px
       return initialHeight > 0 && (initialHeight - currentHeight) > 150;
@@ -96,6 +98,11 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   private audioChunks: Blob[] = [];
   isRecording = signal(false);
   audioBlob = signal<Blob | null>(null);
+  private audioContext: AudioContext | null = null;
+  private analyser: AnalyserNode | null = null;
+  private microphone: MediaStreamAudioSourceNode | null = null;
+  private animationFrameId: number | null = null;
+  audioLevel = signal(0); // 0-100 for visual feedback
   isEditingTitle = signal(false);
   editingTitle = signal('');
   sessionMenuItems = signal<MenuItem[]>([]);
@@ -167,11 +174,13 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       // 3. Haven't rendered these messages yet
       // 4. View is initialized
       // 5. Not switching sessions
+      // 6. Not currently rendering (to prevent race conditions)
       if (messages.length > 0 && 
           !isLoading && 
           !this.hasRenderedInitialMessages && 
           this.viewInitialized && 
-          !this.isSwitchingSession) {
+          !this.isSwitchingSession &&
+          !this.isCurrentlyRendering) {
         // Use setTimeout to ensure this runs after the current change detection cycle
         setTimeout(() => {
           this.renderExistingMessages();
@@ -242,7 +251,9 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     // Listen for window resize to update mobile detection
     if (typeof window !== 'undefined') {
       // Initialize viewport height for keyboard detection
-      this.initialViewportHeight.set(window.visualViewport?.height || window.innerHeight);
+      const initialHeight = window.visualViewport?.height || window.innerHeight;
+      this.initialViewportHeight.set(initialHeight);
+      this.currentViewportHeight.set(initialHeight);
       
       this.resizeListener = () => {
         this.cdr.markForCheck();
@@ -252,9 +263,12 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       // Listen for visual viewport changes (keyboard show/hide)
       if (window.visualViewport) {
         const visualViewportListener = () => {
+          const newHeight = window.visualViewport?.height || window.innerHeight;
+          this.currentViewportHeight.set(newHeight);
           this.cdr.markForCheck();
         };
         window.visualViewport.addEventListener('resize', visualViewportListener);
+        window.visualViewport.addEventListener('scroll', visualViewportListener);
         
         // Store the listener for cleanup
         this.visualViewportListener = visualViewportListener;
@@ -267,6 +281,11 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   ngAfterViewInit(): void {
     // Mark view as initialized and process any buffered chunks
     this.viewInitialized = true;
+    
+    // CRITICAL: Always reset flags for new component instance
+    this.hasRenderedInitialMessages = false;
+    this.isCurrentlyRendering = false;
+    this.isSwitchingSession = false;
     
     if (this.dynamicContentContainer) {
       this.dynamicContentService.setViewContainer(this.dynamicContentContainer);
@@ -295,6 +314,12 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   ngOnDestroy(): void {
     this.stopGeneratingDotsAnimation();
     
+    // Clean up audio recording if active
+    if (this.isRecording()) {
+      this.stopRecording();
+    }
+    this.cleanupAudioVisualization();
+    
     // Complete the destroy subject to unsubscribe from all observables
     this.destroy$.next();
     this.destroy$.complete();
@@ -307,7 +332,13 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     // Clean up visual viewport listener
     if (typeof window !== 'undefined' && window.visualViewport && this.visualViewportListener) {
       window.visualViewport.removeEventListener('resize', this.visualViewportListener);
+      window.visualViewport.removeEventListener('scroll', this.visualViewportListener);
     }
+    
+    // CRITICAL: Clear dynamic content service state when component is destroyed
+    // This ensures that when switching between sidebar and fullscreen modes,
+    // the service doesn't retain stale component references from the old view container
+    this.dynamicContentService.clearAllComponents();
   }
 
   // Handle closing the AI Assistant
@@ -349,6 +380,25 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       this.message.set(value);
       this.cdr.detectChanges();
     });
+  }
+
+  /**
+   * Handle textarea focus event - ensures input is visible above keyboard on mobile
+   */
+  onTextareaFocus(): void {
+    if (this.isMobile() && typeof window !== 'undefined') {
+      // Use setTimeout to wait for keyboard to appear
+      setTimeout(() => {
+        if (this.messageInput?.nativeElement) {
+          // Scroll the input into view, accounting for the keyboard
+          this.messageInput.nativeElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest'
+          });
+        }
+      }, 300); // Wait for keyboard animation to complete
+    }
   }
 
   onFileSelect(event: any): void {
@@ -430,7 +480,15 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   onDragLeave(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    this.isDragging.set(false);
+    
+    // Only set isDragging to false if we're actually leaving the container
+    // Check if the related target is outside the chat container
+    const target = event.currentTarget as HTMLElement;
+    const relatedTarget = event.relatedTarget as Node;
+    
+    if (!relatedTarget || !target.contains(relatedTarget)) {
+      this.isDragging.set(false);
+    }
   }
 
   onDrop(event: DragEvent): void {
@@ -605,9 +663,23 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     return this.aiAssistantService.isLoading();
   }
 
+  public async toggleRecording(): Promise<void> {
+    if (this.isRecording()) {
+      this.stopRecording();
+    } else {
+      await this.startRecording();
+    }
+  }
+
   public async startRecording(): Promise<void> {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Show overlay immediately after getting permission
+      this.isRecording.set(true);
+      this.cdr.detectChanges();
+      
+      // Set up MediaRecorder for recording
       this.mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm'
       });
@@ -620,15 +692,22 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       };
 
       this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/mpeg' });
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
         this.audioBlob.set(audioBlob);
         this.processAudioMessage(audioBlob);
+        
+        // Clean up audio visualization
+        this.cleanupAudioVisualization();
       };
 
+      // Set up audio visualization
+      this.setupAudioVisualization(stream);
+
       this.mediaRecorder.start();
-      this.isRecording.set(true);
     } catch (error) {
       console.error('Error starting recording:', error);
+      this.isRecording.set(false);
+      alert('Unable to access microphone. Please check your permissions.');
     }
   }
 
@@ -640,10 +719,73 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     }
   }
 
+  private setupAudioVisualization(stream: MediaStream): void {
+    try {
+      // Create audio context and analyser
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      this.analyser = this.audioContext.createAnalyser();
+      this.microphone = this.audioContext.createMediaStreamSource(stream);
+      
+      this.analyser.fftSize = 256;
+      this.analyser.smoothingTimeConstant = 0.8; // Add smoothing for better visualization
+      const bufferLength = this.analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      
+      this.microphone.connect(this.analyser);
+      
+      // Animation loop to update audio level
+      const updateLevel = () => {
+        if (!this.isRecording()) {
+          return;
+        }
+        
+        this.analyser!.getByteFrequencyData(dataArray);
+        
+        // Calculate average level with more sensitivity
+        const sum = dataArray.reduce((a, b) => a + b, 0);
+        const average = sum / bufferLength;
+        // Amplify the level for better visibility (multiply by 2)
+        const level = Math.min(100, ((average / 255) * 100) * 2);
+        
+        // Update audio level and force change detection
+        this.ngZone.run(() => {
+          this.audioLevel.set(level);
+          this.cdr.markForCheck();
+        });
+        
+        this.animationFrameId = requestAnimationFrame(updateLevel);
+      };
+      
+      updateLevel();
+    } catch (error) {
+      console.error('Error setting up audio visualization:', error);
+    }
+  }
+
+  private cleanupAudioVisualization(): void {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+    
+    if (this.microphone) {
+      this.microphone.disconnect();
+      this.microphone = null;
+    }
+    
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+    }
+    
+    this.analyser = null;
+    this.audioLevel.set(0);
+  }
+
   private async processAudioMessage(audioBlob: Blob): Promise<void> {
     try {
       const base64Audio = await this.blobToBase64(audioBlob);
-      this.selectedFiles.set([{ file: new File([audioBlob], 'audio-message.mp3', { type: 'audio/mpeg' }), name: 'audio-message.mp3', content: '' }]);
+      this.selectedFiles.set([{ file: new File([audioBlob], 'audio-message.webm', { type: 'audio/webm' }), name: 'audio-message.webm', content: '' }]);
     } catch (error) {
       console.error('Error processing audio message:', error);
     }
@@ -743,11 +885,16 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
 
   // Session dropdown methods
   toggleSessionMenu(event: Event): void {
-    // Refresh sessions when opening dropdown
+    // Only load sessions if we don't have any cached or it's been more than 30 seconds
     if (!this.sessionMenu.visible) {
-      this.aiAssistantService.loadUserSessions().subscribe({
-        error: (error: any) => console.error('Failed to load sessions:', error)
-      });
+      const sessions = this.aiAssistantService.userSessions();
+      const shouldRefresh = sessions.length === 0; // Only refresh if we have no sessions
+      
+      if (shouldRefresh) {
+        this.aiAssistantService.loadUserSessions().subscribe({
+          error: (error: any) => console.error('Failed to load sessions:', error)
+        });
+      }
     }
     this.sessionMenu.toggle(event);
   }
@@ -815,7 +962,6 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
     }
     
     if (!this.dynamicContentContainer) {
-      console.warn('⚠️ Dynamic content container not available, cannot render existing messages');
       return;
     }
 
@@ -863,6 +1009,12 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       return;
     }
 
+    // Don't reload if already on this session
+    if (sessionId === this.aiAssistantService.currentSessionId()) {
+      this.sessionMenu.hide();
+      return;
+    }
+
     this.isSwitchingSession = true; // Prevent reactive effect from running
     this.sessionMenu.hide();
     this.ngZone.run(() => {
@@ -877,6 +1029,7 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       
       // Use requestAnimationFrame to ensure clearing is complete before loading new session
       requestAnimationFrame(() => {
+        // Switch to the specific session (this calls get-session, NOT get-user-sessions)
         this.aiAssistantService.switchToSession(sessionId).subscribe({
           next: () => {
             // Use setTimeout to ensure the view is fully rendered and clearing is complete
@@ -1416,6 +1569,53 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   private getCurrentUserId(): number {
     // This should come from auth service
     return parseInt(localStorage.getItem('user_id') || '0', 10);
+  }
+
+  /**
+   * Get the container height in pixels
+   * Uses visual viewport height when keyboard is active on mobile
+   */
+  getContainerHeight(): number {
+    if (typeof window === 'undefined') {
+      return 0;
+    }
+    
+    if (this.isMobile() && window.visualViewport) {
+      // Use visual viewport height which accounts for the keyboard
+      return window.visualViewport.height;
+    }
+    
+    // For desktop or when visual viewport is not available
+    return window.innerHeight;
+  }
+
+  // Calculate bar height for audio visualization
+  // Creates a wave-like effect with the center bars being tallest
+  getBarHeight(index: number): number {
+    const totalBars = 15;
+    const centerIndex = Math.floor(totalBars / 2);
+    const distanceFromCenter = Math.abs(index - centerIndex);
+    
+    // Base height varies with distance from center (creates wave shape)
+    const baseMultiplier = 1 - (distanceFromCenter / totalBars * 0.5);
+    
+    // Add some randomness based on audio level for dynamic effect
+    const audioLevelValue = this.audioLevel();
+    
+    // Each bar gets a different random factor based on its index
+    // This creates more variation between bars
+    const randomSeed = Math.sin(index * 1000 + Date.now() * 0.003);
+    const randomFactor = 0.5 + (Math.abs(randomSeed) * 1.0); // 0.5 to 1.5
+    
+    // Calculate height: minimum 8px, scales with audio level
+    const minHeight = 8;
+    const maxHeight = 96; // 24 * 4 for h-24 container
+    
+    // Add base level even when quiet so bars are always visible
+    const effectiveLevel = Math.max(audioLevelValue, 20);
+    const dynamicHeight = minHeight + (maxHeight - minHeight) * (effectiveLevel / 100) * baseMultiplier * randomFactor;
+    
+    return Math.max(minHeight, Math.min(maxHeight, dynamicHeight));
   }
 
 } 

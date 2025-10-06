@@ -2960,8 +2960,15 @@
         {
           "endpoint": "/base-engagements",
           "method": "GET",
-          "description": "Retrieves all base engagements that the user has permission to view with engagement and partner information",
-          "parameters": []
+          "description": "Retrieves all base engagements that the user has permission to view with engagement and partner information. Optionally filter by partnerId query parameter.",
+          "parameters": [
+            {
+              "name": "partnerId",
+              "dataType": "int",
+              "required": false,
+              "description": "Optional partner ID to filter engagements by (query string parameter)"
+            }
+          ]
         },
         {
           "endpoint": "/base-engagements",

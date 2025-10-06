@@ -60,6 +60,8 @@ export class AiAssistantService {
     // Audio files
     'audio/wav',
     'audio/mp3',
+    'audio/mpeg',
+    'audio/webm',
     'audio/aiff', 
     'audio/aac',
     'audio/ogg',
@@ -197,26 +199,38 @@ export class AiAssistantService {
     }).pipe(
       switchMap(chunk => this.parseStreamingChunks(chunk)),
       tap(({ data, complete }) => {
-        // DIRECT STREAMING: Emit all chunks immediately to streamingChunk$
-        if (data?.content?.parts) {
-          this._streamingChunk.next(data);
-        }
-        
-        // Handle session ID updates - capture session ID from first response
-        // This ensures subsequent requests use the correct session ID
-        if (data.session_id && !this.currentSessionId()) {
-          this.currentSessionId.set(data.session_id);
+        // Handle session ID from first chunk BEFORE processing content
+        // The backend sends a special first chunk with just session_id and timestamp
+        const sessionIdFromServer = data?.session_id || data?.sessionId;
+        if (sessionIdFromServer) {
+          const currentStoredId = this.currentSessionId();
           
-          // Also update the current chat session's ID and sync the title signal
-          const currentSession = this.currentChatSession();
-          if (currentSession && (!currentSession.session.id || currentSession.session.id === '')) {
-            currentSession.session.id = data.session_id;
+          if (!currentStoredId) {
+            this.currentSessionId.set(sessionIdFromServer);
             
-            // Update the sessionTitle signal from the session object
-            if (currentSession.session.title) {
-              this.sessionTitle.set(currentSession.session.title);
+            // Also update the current chat session's ID and sync the title signal
+            const currentSession = this.currentChatSession();
+            if (currentSession && (!currentSession.session.id || currentSession.session.id === '')) {
+              currentSession.session.id = sessionIdFromServer;
+              
+              // Update the sessionTitle signal from the session object
+              if (currentSession.session.title) {
+                this.sessionTitle.set(currentSession.session.title);
+              }
             }
           }
+        }
+        
+        // Process content chunks AFTER session ID handling
+        // The backend sends a special first chunk with only {session_id, timestamp}
+        // Skip that chunk and only process chunks that have actual content
+        if (data?.content?.parts) {
+          // This is a real content chunk - emit for UI rendering
+          this._streamingChunk.next(data);
+          
+          // CRITICAL: Also update the ChatMessage in the session with accumulated text
+          // This ensures that when switching modes, the session has the full content
+          this.updateChatMessageFromChunk(data);
         }
       }),
       finalize(() => {
@@ -347,11 +361,8 @@ export class AiAssistantService {
       formData.append('session_id', requestData.sessionId);
     }
     
-    // Add streaming flag
-    formData.append('streaming', requestData.streaming ? 'true' : 'false');
-    
-    // Add app_name (required by backend)
-    formData.append('app_name', 'opportunityplus');
+    // Add streaming flag (always streaming)
+    formData.append('streaming', 'true');
     
     // Add user information (these should come from auth service, but using defaults for now)
     formData.append('user_id', localStorage.getItem('user_id') || '');
@@ -589,6 +600,108 @@ export class AiAssistantService {
         })
       )
     );
+  }
+
+  /**
+   * Update ChatMessage in session with accumulated text from streaming chunks
+   * This ensures the session state matches what's rendered in the UI
+   */
+  private updateChatMessageFromChunk(chunk: any): void {
+    const currentSession = this.currentChatSession();
+    if (!currentSession || !chunk.invocationId) {
+      return;
+    }
+
+    // Find the ChatMessage with matching invocationId
+    let targetMessage = currentSession.chatMessages.find(
+      msg => msg.invocationId === chunk.invocationId
+    );
+
+    // If not found, this is a new AI response - create it
+    // AI responses may not have role set in chunks, so we check if it's NOT a user message
+    const isUserChunk = chunk.role === 'user' || chunk.isUser === true || chunk.author === 'user';
+    
+    if (!targetMessage && !isUserChunk) {
+      // Ensure AI message timestamp is after the most recent user message
+      // This guarantees correct chronological order when sorting
+      const lastMessage = currentSession.chatMessages[currentSession.chatMessages.length - 1];
+      const aiMessageTimestamp = lastMessage && lastMessage.timestamp 
+        ? lastMessage.timestamp + 1  // 1ms after the last message (should be the user message)
+        : (chunk.timestamp || Date.now());
+      
+      targetMessage = {
+        id: this.generateId(),
+        timestamp: aiMessageTimestamp,
+        invocationId: chunk.invocationId,
+        role: 'model',
+        content: {
+          parts: [],
+          role: 'model'
+        },
+        actions: { stateDelta: {}, artifactDelta: {}, requestedAuthConfigs: {} },
+        longRunningToolIds: [],
+        isUser: false,
+        files: [],
+        sources: chunk.sources || [],
+        suggestedUserResponses: chunk.suggestedUserResponses || []
+      };
+      currentSession.chatMessages.push(targetMessage);
+    }
+
+    if (!targetMessage) {
+      return;
+    }
+
+    // Process each part in the chunk
+    if (chunk.content?.parts) {
+      chunk.content.parts.forEach((chunkPart: any, partIndex: number) => {
+        // Determine the part type
+        const partType = chunkPart.thought ? 'thought' : 'text';
+        
+        // Find existing part of the same type in the message
+        let existingPart = targetMessage!.content.parts.find(
+          (p: any) => (p.thought && chunkPart.thought) || (!p.thought && !chunkPart.thought && p.text !== undefined)
+        );
+
+        if (existingPart) {
+          // Update existing part - accumulate text if partial, replace if final
+          if (chunk.partial === true) {
+            // Partial chunk - concatenate text
+            if (chunkPart.text) {
+              existingPart.text = (existingPart.text || '') + chunkPart.text;
+            }
+          } else {
+            // Final chunk - replace with complete text
+            if (chunkPart.text !== undefined) {
+              existingPart.text = chunkPart.text;
+            }
+            // Copy other properties
+            if (chunkPart.thought !== undefined) {
+              existingPart.thought = chunkPart.thought;
+            }
+            if (chunkPart.functionCall) {
+              existingPart.functionCall = chunkPart.functionCall;
+            }
+            if (chunkPart.functionResponse) {
+              existingPart.functionResponse = chunkPart.functionResponse;
+            }
+          }
+        } else {
+          // New part - add it to the message
+          targetMessage!.content.parts.push({ ...chunkPart });
+        }
+      });
+    }
+
+    // Update other message properties from final chunk
+    if (chunk.partial === false || chunk.partial === undefined) {
+      if (chunk.sources) {
+        targetMessage.sources = chunk.sources;
+      }
+      if (chunk.suggestedUserResponses) {
+        targetMessage.suggestedUserResponses = chunk.suggestedUserResponses;
+      }
+    }
   }
 
   // UNIFIED SESSION MANAGEMENT
