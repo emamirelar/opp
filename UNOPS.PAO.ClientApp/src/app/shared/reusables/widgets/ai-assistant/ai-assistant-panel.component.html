@@ -2,8 +2,8 @@
   <i class="pi pi-spin pi-spinner text-4xl text-[var(--primary-color)]"></i>
 </div>
 <div class="h-full flex flex-col min-h-0 bg-transparent overflow-hidden w-full font-unops-body" 
-     [style.height]="'100dvh'"
-     [ngClass]="{'mobile-keyboard-active': isMobileKeyboardActive()}">
+     [class.mobile-keyboard-active]="isMobileKeyboardActive()"
+     [style.height.px]="getContainerHeight()">
   
   <!-- Header section with UNOPS design system -->
   <div *ngIf="!hideHeader" class="bg-unops-neutral-50 unops-shadow-sm">
@@ -16,7 +16,6 @@
           <div class="unops-flex unops-items-center unops-justify-center unops-w-6 unops-h-6">
             <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="unops-w-4 unops-h-4" />
           </div>
-          <span class="unops-text-body-medium unops-font-semibold unops-text-neutral-700">{{ 'aiAssistant.aiAssistant' | translate }}</span>
         </ng-container>
         
         <!-- Session title when there's an active session or title -->
@@ -26,8 +25,11 @@
             <div class="unops-flex unops-items-center unops-justify-center unops-w-6 unops-h-6">
               <img src="images/AI_visual_64.svg" [alt]="'aiAssistant.aiAssistant' | translate" class="unops-w-4 unops-h-4" />
             </div>
-            <span class="unops-text-body-medium unops-font-semibold unops-text-neutral-700 unops-truncate cursor-pointer hover:unops-text-neutral-900 unops-transition"
+            <!-- Title is hidden for now until we figure out what to do with it -->
+            <span class="hidden unops-text-body-medium unops-font-semibold unops-text-neutral-700 unops-truncate unops-min-w-0 block overflow-hidden whitespace-nowrap max-h-6 leading-6 cursor-pointer hover:unops-text-neutral-900 unops-transition"
                   [class.cursor-pointer]="!aiAssistantService.isLoadingSession()"
+                  [class.max-w-[100px]]="!isInFullscreenMode()"
+                  [class.max-w-[300px]]="isInFullscreenMode()"
                   (click)="!aiAssistantService.isLoadingSession() && startEditingTitle()"
                   [pTooltip]="!aiAssistantService.isLoadingSession() ? ('aiAssistant.clickToEditTitle' | translate) : ''">
               {{ aiAssistantService.isLoadingSession() ? ('aiAssistant.loadingChat' | translate) : aiAssistantService.sessionTitle() }}
@@ -146,7 +148,7 @@
 
   <!-- Chat messages section -->
   <div #chatContainer 
-       class="flex-1 overflow-y-auto min-h-0 ai-chat-container bg-unops-neutral-50"
+       class="relative flex-1 overflow-y-auto min-h-0 ai-chat-container bg-unops-neutral-50"
        [ngClass]="{
          'bg-unops-primary-container-soft border-2 border-dashed border-unops-primary': isDragging(),
          'p-unops-md space-y-unops-md': chatMessages().length > 0,
@@ -159,7 +161,8 @@
 
     <!-- Drag and drop overlay -->
     <div *ngIf="isDragging()"
-         class="absolute inset-0 flex items-center justify-center bg-unops-primary-container-soft/80 backdrop-blur-sm z-10">
+         class="pointer-events-none"
+         style="position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; z-index: 50 !important; margin: 0 !important; padding: 0 !important; background-color: rgba(232, 240, 254, 0.8) !important; backdrop-filter: blur(4px) !important;">
       <div class="text-unops-primary flex flex-col items-center gap-unops-md">
         <i class="pi pi-upload text-3xl"></i>
         <span class="text-unops-lg font-unops-medium">{{ 'aiAssistant.dropFilesHere' | translate }}</span>
@@ -177,8 +180,13 @@
 
       <!-- Personalized Greeting -->
       <div class="mb-unops-xl unops-tablet:mb-unops-2xl">
-        <h1 class="text-unops-display-small unops-tablet:text-unops-display-medium unops-desktop:text-unops-display-large font-unops-regular text-unops-neutral-900 mb-unops-md unops-tablet:mb-unops-lg leading-tight">
-          {{ 'aiAssistant.hello' | translate }} {{ userName() || ('aiAssistant.user' | translate) }}
+        <!-- Placeholder to reserve space before user info loads -->
+        <h1 *ngIf="!userName()" class="text-unops-display-small unops-tablet:text-unops-display-medium unops-desktop:text-unops-display-large font-unops-regular mb-unops-md unops-tablet:mb-unops-lg leading-tight opacity-0">
+          &nbsp;
+        </h1>
+        <!-- Actual greeting with blur-in animation -->
+        <h1 *ngIf="userName()" class="text-unops-display-small unops-tablet:text-unops-display-medium unops-desktop:text-unops-display-large font-unops-regular text-unops-neutral-900 mb-unops-md unops-tablet:mb-unops-lg leading-tight greeting-blur-in">
+          {{ 'aiAssistant.hello' | translate }} {{ userName() }}
         </h1>
         <p class="text-unops-lg unops-tablet:text-unops-xl unops-desktop:text-unops-2xl text-unops-neutral-600 font-unops-light max-w-2xl leading-relaxed mb-unops-md unops-tablet:mb-unops-lg">
           {{ 'aiAssistant.welcomeMessage' | translate }}
@@ -316,10 +324,12 @@
     <div class="p-unops-md ai-input-area">
       <div class="bg-white border border-unops-neutral-300 rounded-unops-xl p-unops-md focus-within:border-unops-primary focus-within:ring-1 focus-within:ring-unops-primary focus-within:ring-opacity-20 transition-all duration-unops-fast shadow-unops-sm">
         <textarea
+          #messageInput
           pTextarea
           [ngModel]="message()"
           (ngModelChange)="updateMessage($event)"
           (paste)="onPaste($event)"
+          (focus)="onTextareaFocus()"
           placeholder="{{ 'aiAssistant.typeMessageOrPaste' | translate }}"
           [rows]="1"
           [autoResize]="true"
@@ -363,9 +373,7 @@
           <div class="flex gap-1">
             <p-button
               icon="pi pi-microphone"
-              (mousedown)="startRecording()"
-              (mouseup)="stopRecording()"
-              (mouseleave)="stopRecording()"
+              (onClick)="toggleRecording()"
               [text]="!isRecording()"
               [rounded]="true"
               size="small"
@@ -395,6 +403,58 @@
       <i class="pi pi-exclamation-triangle text-unops-warning"></i>
       <span>{{ 'aiAssistant.disclaimer' | translate }}</span>
     </div>
+  </div>
+</div>
+
+<!-- Audio Recording Overlay -->
+<div *ngIf="isRecording()" 
+     class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm"
+     style="margin: 0; padding: 0;">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 animate-fade-in">
+    <!-- Recording Header -->
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4 animate-pulse">
+        <i class="pi pi-microphone text-3xl text-red-600"></i>
+      </div>
+      <h3 class="text-2xl font-semibold text-gray-900 mb-2">{{ 'aiAssistant.recordingAudio' | translate }}</h3>
+      <p class="text-gray-600">{{ 'aiAssistant.speakNow' | translate }}</p>
+    </div>
+
+    <!-- Audio Level Visualization -->
+    <div class="mb-8">
+      <div class="flex items-center justify-center gap-1 h-24">
+        <!-- Multiple bars for visual feedback -->
+        <div *ngFor="let i of [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]" 
+             class="w-2 bg-gradient-to-t from-red-500 to-red-300 rounded-full transition-all duration-75"
+             [style.height.px]="getBarHeight(i)">
+        </div>
+      </div>
+      
+      <!-- Level indicator text -->
+      <div class="text-center mt-4">
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full">
+          <i class="pi pi-volume-up text-gray-700"></i>
+          <span class="text-sm font-medium text-gray-700">
+            {{ audioLevel() > 60 ? ('aiAssistant.loudLevel' | translate) : 
+               audioLevel() > 30 ? ('aiAssistant.goodLevel' | translate) : 
+               ('aiAssistant.lowLevel' | translate) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stop Recording Button -->
+    <button 
+      (click)="stopRecording()"
+      class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg transform transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-3">
+      <div class="w-6 h-6 bg-white rounded-sm"></div>
+      <span class="text-lg">{{ 'aiAssistant.stopRecording' | translate }}</span>
+    </button>
+
+    <!-- Cancel hint -->
+    <p class="text-center text-sm text-gray-500 mt-4">
+      {{ 'aiAssistant.clickToStop' | translate }}
+    </p>
   </div>
 </div>
 

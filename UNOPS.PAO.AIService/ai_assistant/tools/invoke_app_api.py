@@ -53,11 +53,17 @@ def prepare_api_url(url: str) -> str:
         
         # Ensure proper URL joining with the config base URL
         if base_url.endswith('/') and path.startswith('/'):
-            return base_url + path[1:]
+            final_url = base_url + path[1:]
         elif not base_url.endswith('/') and not path.startswith('/'):
-            return base_url + '/' + path
+            final_url = base_url + '/' + path
         else:
-            return base_url + path
+            final_url = base_url + path
+        
+        # Defensive check: Remove duplicate /api/ patterns
+        while '/api/api/' in final_url:
+            final_url = final_url.replace('/api/api/', '/api/')
+        
+        return final_url
             
     except ImportError:
         # Config manager not available, return url as-is

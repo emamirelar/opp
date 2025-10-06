@@ -94,15 +94,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     return jsonData;
                 }
                 
-                // Debug logging
-                Console.WriteLine($"[DEBUG] Processing placeholders in text: {text.Substring(0, Math.Min(100, text.Length))}...");
-                Console.WriteLine($"[DEBUG] JSON data: {jsonData.Substring(0, Math.Min(500, jsonData.Length))}...");
-                
                 // Find all placeholders in format {propertyName} or {object.property}
                 var placeholderPattern = @"\{([^}]+)\}";
                 var matches = Regex.Matches(text, placeholderPattern);
-                
-                Console.WriteLine($"[DEBUG] Found {matches.Count} placeholders to process");
                 
                 foreach (Match match in matches)
                 {
@@ -113,7 +107,6 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     
                     if (value != null)
                     {
-                        Console.WriteLine($"[DEBUG] Replacing '{placeholder}' with '{value.Substring(0, Math.Min(50, value.Length))}{(value.Length > 50 ? "..." : "")}'");
                         result = result.Replace(placeholder, value);
                     }
                     else

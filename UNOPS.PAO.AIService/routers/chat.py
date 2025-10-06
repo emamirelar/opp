@@ -179,7 +179,7 @@ async def chat_endpoint(
         initial_state['user_email'] = user_email
         
         # Extract page context for dynamic agent creation (not for user message)
-        page_context = initial_state.get('page_context_auto') if initial_state else None
+        # page_context = initial_state.get('page_context_auto') if initial_state else None
 
         # Convert uploaded files to types.Part objects
         message_parts = []
@@ -262,14 +262,14 @@ async def chat_endpoint(
 
         # Title is now set during session creation using the user prompt
 
-        # Create agent with dynamic page context (injected into instruction, not user message)
+        # Create agent with dynamic state context (injected into instruction, not user message)
         # This keeps context out of conversation history while making it available to the agent
-        if page_context:
-            agent = create_agent_with_context(page_context)
-            logger.info("Created agent with dynamic page context in instruction")
+        if initial_state:
+            agent = create_agent_with_context(initial_state)
+            logger.info("Created agent with state instruction")
         else:
             agent = root_agent
-            logger.info("Using root agent without page context")
+            logger.info("Using root agent without state")
 
         # Create runner with the appropriate agent
         runner = Runner(
@@ -321,9 +321,9 @@ async def _handle_streaming_response(runner, request_data, session_id, user_mess
             stream_mode = StreamingMode.SSE
             event_count = 0
             
-            # # Send an immediate ping to establish the stream
-            # ping_data = f'data: {{"ping": "stream_started", "timestamp": {time.time()}}}\n\n'
-            # yield ping_data
+            # # Send an immediate response with the session_id
+            session_response = f'data: {{"session_id": "{session_id}", "timestamp": {time.time()}}}\n\n'
+            yield session_response
             
             async for event in runner.run_async(
                 user_id=request_data.user_id,

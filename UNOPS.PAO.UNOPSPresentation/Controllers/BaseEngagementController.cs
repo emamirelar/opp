@@ -31,13 +31,22 @@ public class BaseEngagementController : BaseController
     /// <summary>
     /// Retrieves all base engagements that the user has permission to view
     /// </summary>
+    /// <param name="partnerId">Optional partner ID to filter engagements by</param>
     /// <returns>List of base engagement models with engagement and partner information</returns>
     [HttpGet(UNOPSAPIDictionary.BaseEngagements)]
     [AccessControlled(EntityTypes.BaseEngagement, "read")]
-    public async Task<ActionResult> GetBaseEngagements()
+    public async Task<ActionResult> GetBaseEngagements([FromQuery] int? partnerId = null)
     {
         try
         {
+            // If partnerId is provided, filter by that partner
+            if (partnerId.HasValue)
+            {
+                var partnerEngagements = await _manager.GetByPartnerIdAsync(User, partnerId.Value);
+                return Ok(partnerEngagements);
+            }
+            
+            // Otherwise, return all engagements the user has access to
             var engagements = await _manager.GetAllAsync(User);
             return Ok(engagements);
         }
