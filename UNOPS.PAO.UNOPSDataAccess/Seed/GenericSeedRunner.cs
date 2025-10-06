@@ -44,20 +44,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
             
             var seedConfiguration = await LoadSeedConfigurationAsync();
             var orderedSteps = seedConfiguration.SeedSteps.OrderBy(s => s.Order).ToList();
-            
+
             Console.WriteLine($"Found {orderedSteps.Count} seed steps to process");
-            
+
+            bool anyStepExecuted = false;
+
             foreach (var step in orderedSteps)
             {
                 Console.WriteLine($"Processing step {step.Order}: {step.Name} ({step.Type})");
-                
+
                 try
                 {
                     var currentHash = await CalculateStepHashAsync(step);
                     var existingScript = await context.SeedScripts
                         .FirstOrDefaultAsync(s => s.ScriptName == step.Name);
 
-                    bool shouldExecute = ShouldExecuteStep(existingScript, currentHash, step);
+                    bool shouldExecute = ShouldExecuteStep(existingScript, currentHash, step, anyStepExecuted);
 
                     if (!shouldExecute)
                     {
@@ -66,6 +68,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     }
 
                     var action = existingScript == null ? "NEW" : "CHANGED";
+                    if (step.ForceExecuteIfAnyChanged && anyStepExecuted)
+                    {
+                        action = "FORCED (previous steps changed)";
+                    }
                     Console.WriteLine($"Executing step: {step.Name} ({action})");
 
                     if (step.IsSqlScript)
@@ -77,6 +83,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                         await ExecuteSeederStepAsync(context, step, currentHash, existingScript);
                     }
 
+                    anyStepExecuted = true;
                     Console.WriteLine($"Step {step.Name} executed successfully.");
                 }
                 catch (Exception ex)
@@ -190,7 +197,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         /// <summary>
         /// Determines if a step should be executed based on hash comparison
         /// </summary>
-        private static bool ShouldExecuteStep(SeedScript? existingScript, string currentHash, SeedStep step)
+        private static bool ShouldExecuteStep(SeedScript? existingScript, string currentHash, SeedStep step, bool anyPreviousStepExecuted)
         {
             if (existingScript == null)
             {
@@ -200,6 +207,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
             if (existingScript.FileHash != currentHash)
             {
                 return true; // Changed step
+            }
+
+            if (step.ForceExecuteIfAnyChanged && anyPreviousStepExecuted)
+            {
+                return true; // Force execution if any previous step was executed
             }
 
             return false; // Unchanged step
