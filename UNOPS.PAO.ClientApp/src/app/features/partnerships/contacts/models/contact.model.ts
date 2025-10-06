@@ -1,5 +1,7 @@
 import {Partner} from '@partnerships/partners/models/partner.model';
 import { EntityPermissionSet } from '@features/shared/models/shared-types';
+import { OrganizationUnitRelationshipModel } from '@partnerships/partners/models/organization-unit-relationship.model';
+import { OrganizationHierarchyModel } from '@core/models/organization-hierarchy.model';
 
 export interface Contact {
   id?: string | null;
@@ -53,4 +55,12 @@ export interface Contact {
   
   // RBAC permissions
   permissions?: EntityPermissionSet;
+  
+  // Organization Unit Relationships
+  organizationUnitRelationships?: OrganizationUnitRelationshipModel[];
+}
+
+// Utility function to get the primary organization unit from a contact
+export function getPrimaryOrganizationUnit(contact: Contact): OrganizationHierarchyModel | null {
+  return contact.organizationUnitRelationships?.[0]?.organizationHierarchy || null;
 }
