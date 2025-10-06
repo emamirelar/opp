@@ -112,10 +112,11 @@ def format_entities_metadata_as_markdown(metadata):
             if 'apiEndpoints' in entity_info and entity_info['apiEndpoints']:
                 markdown_content.append("**API Endpoints:**")
                 for endpoint in entity_info['apiEndpoints']:
-                    endpoint_line = f"- **{endpoint.get('method', 'GET')}** {endpoint.get('endpoint', '')}"
+                    endpoint_line = f"- **{endpoint.get('endpoint', '')}**"
                     if 'description' in endpoint:
                         endpoint_line += f" - {endpoint['description']}"
                     markdown_content.append(endpoint_line)
+                    markdown_content.append(f"  **Method:** {endpoint.get('method', 'GET')}")
                     
                     if 'parameters' in endpoint and endpoint['parameters']:
                         markdown_content.append("  **Parameters:**")
@@ -320,8 +321,8 @@ Use this metadata to understand:
 **invoke_app_api** - Use this tool to search for any of the entities in the CRM application you have been provided metadata about (Partners, Contacts, Interactions, etc.).
 Based on the information you have in the entity metadata, identify which would be the appropriate endpoint to call and use this tool to make direct HTTP requests to API endpoints
 You have all the information needed to use this tool to retrieve information from the application (you have information about about the entities available, their data model, the endpoints they support, and the parameters and request models for the APIs).
-DO: When processing requests with the invoke_app_api tool, refer to the UNOPS CRM System Entities and API Reference metadata to ensure accurate API calls and data handling.  STRICTLY USE ONLY the endpoints EXACTLY AS STATED IN THE METADATA.
-DO NOT: Make up endpoints, parameters, or request models.
+DO: When processing requests with the invoke_app_api tool, refer to the UNOPS CRM System Entities and API Reference metadata and use the endpoint EXACTLY AS STATED IN THE METADATA.  STRICTLY USE ONLY the endpoints EXACTLY AS STATED IN THE METADATA.
+DO NOT: Make up, augment, or modify the endpoints, parameters, or request models in ANY WAY, SHAPE, OR FORM.
 PARAMETERS: url, method, params, headers
 
 **search_corp_vector_store** - Searches corporate vector store/knowledge base.  Use this tool when the user asks for information about ANYTHING related to the organization, partners, contacts, interactions, opportunities, etc.
