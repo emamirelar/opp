@@ -1566,6 +1566,7 @@
   "tooltip.contact.email": "The contact's primary email address.",
   "tooltip.contact.phone": "The contact's primary phone number.",
   "tooltip.contact.mobile": "The contact's mobile phone number.",
+  "tooltip.contact.contactOrgUnit": "Refers to the UNOPS org unit that manages this contact",
   "tooltip.contact.fax": "The contact's fax number.",
   "tooltip.contact.department": "The department in the partner organization that the contact works for/is related to.",
   "tooltip.contact.description": "Detailed description of the contact and any relevant responsibilities, in particular relating to their relationship/importance to UNOPS.",
