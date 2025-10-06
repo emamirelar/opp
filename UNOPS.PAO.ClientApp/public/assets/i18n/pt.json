@@ -1427,6 +1427,7 @@
 	"search.showAll": "Mostrar Tudo",
 	"search.showAllResults": "Mostrar Todos os Resultados",
 	"search.showMetadata": "Mostrar Metadados",
+	"search.hideMetadata": "Ocultar Metadados",
 	"search.showMyOrgUnitOnly": "Mostrar Apenas Minha Unidade Orgânica",
 	"search.showingAllRecords": "Mostrando todos os {{total}} registros",
 	"search.showingRecords": "Mostrando {{filtered}} de {{total}} registros",
@@ -1912,5 +1913,11 @@
 	"tooltip.interaction.phoneNumbers": "Os números de telefone de contatos e membros da UNOPS envolvidos na interação.",
 	"tooltip.interaction.emailAddresses": "Os endereços de e-mail de contatos e membros da UNOPS envolvidos na interação.",
 	"tooltip.interaction.relatedTo": "Todos os contatos de parceiros envolvidos nesta interação.",
-	"tooltip.interaction.users": "Usuários UNOPS envolvidos na interação."
+	"tooltip.interaction.users": "Usuários UNOPS envolvidos na interação.",
+	"label.totalRecords": "Total de Registros",
+	"label.searchResults": "Resultados da Pesquisa",
+	"label.advancedSearchResults": "Resultados da Pesquisa Avançada",
+	"label.showingRecords": "Mostrando {{count}} registros",
+	"label.searchResultsCount": "{{current}} de {{total}} resultados",
+	"label.advancedSearchResultsCount": "{{current}} de {{total}} resultados"
 }

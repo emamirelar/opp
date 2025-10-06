@@ -1,4 +1,4 @@
-import { Component, ContentChild, ElementRef, EventEmitter, HostListener, Input, Output, TemplateRef, AfterViewInit, computed, inject, signal, ChangeDetectorRef, DestroyRef, input } from '@angular/core';
+import { Component, ContentChild, ElementRef, EventEmitter, HostListener, Input, Output, TemplateRef, AfterViewInit, computed, inject, signal, ChangeDetectorRef, DestroyRef, input, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -122,6 +122,25 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     this.config.searchConfig?.placeholder ||
     (this.config.searchConfig?.useAdvancedSearch ? 'Search by field...' : 'Search...')
   );
+
+  // Search metadata functionality
+  readonly searchMetadataEnabled = computed(() => this.config.searchMetadata?.enabled || false);
+  showSearchMetadata = signal(false);
+  readonly searchQuery = signal('');
+  
+  // Computed property to check if there's an active search
+  readonly hasActiveSearch = computed(() => {
+    const searchText = this.state().searchText;
+    return searchText && searchText.trim().length > 0;
+  });
+
+
+  // Initialize search metadata visibility based on config
+  private initializeSearchMetadata() {
+    if (this.searchMetadataEnabled()) {
+      // Note: We can't set the input signal directly, so we'll handle this in the parent components
+    }
+  }
 
   // Computed property to determine if mobile mode is active
   readonly isMobileMode = computed(() => {
@@ -275,6 +294,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   }
   private _searchDebounceTime = 500;
 
+
   // Outputs
   @Output() rowClick = new EventEmitter<T>();
   @Output() sortChange = new EventEmitter<{field: string, order: 'asc' | 'desc'}>();
@@ -305,6 +325,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   };
 
   constructor() {
+
     this.setupSearchDebounce();
     this.setupLoadDataStream();
     this.loadGlobalFilterInfo();
@@ -872,7 +893,23 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   }
 
   private handleDataResponse(data: any): void {
-    const { pageIndex, data: currentData } = this.state();
+    const { pageIndex, data: currentData, searchText } = this.state();
+
+    // Store the full response for search metadata access
+    this.currentResponse.set(data);
+    
+    // Update search query for metadata highlighting
+    if (searchText?.trim()) {
+      this.searchQuery.set(searchText.trim());
+    }
+
+    // Initialize search metadata visibility if this is a search response with metadata
+    if (data?.searchMetadata && Object.keys(data.searchMetadata).length > 0) {
+      // Only initialize if not already set by user interaction
+      if (!this.showSearchMetadata()) {
+        this.initializeSearchMetadata();
+      }
+    }
 
     let totalCount = 0;
     let newRecords: T[] = [];
@@ -883,6 +920,14 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     } else if (data?.records && Array.isArray(data.records)) {
       totalCount = data.totalCount || data.records.length;
       newRecords = data.records;
+      
+      // If we have search metadata, attach it to individual records for easier access
+      if (data.searchMetadata) {
+        newRecords = newRecords.map(record => ({
+          ...record,
+          _searchMetadata: data.searchMetadata[(record as any).id] || null
+        }));
+      }
     }
 
     if (pageIndex > 1 && newRecords.length === 0) {
@@ -1201,8 +1246,87 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     }
   }
 
+  // Get total records display text (always visible)
+  getTotalRecordsText(): string {
+    const currentCount = this.totalRecordsCount();
+    const searchText = this.state().searchText;
+    const isAdvancedSearch = this.isAdvancedSearch();
+    
+    if (searchText && searchText.trim().length > 0) {
+      if (isAdvancedSearch) {
+        return this.translateService.instant('label.advancedSearchResultsCount', { 
+          current: currentCount, 
+          total: currentCount 
+        });
+      } else {
+        return this.translateService.instant('label.searchResultsCount', { 
+          current: currentCount, 
+          total: currentCount 
+        });
+      }
+    } else {
+      return this.translateService.instant('label.showingRecords', { count: currentCount });
+    }
+  }
+
   // Open global filters dialog
   openGlobalFiltersDialog(): void {
     this.globalFiltersDialogService.openDialog();
   }
+
+  // Search metadata methods
+  toggleSearchMetadata(): void {
+    this.showSearchMetadata.set(!this.showSearchMetadata());
+  }
+
+  // Check if we have search results with metadata
+  hasSearchResults(): boolean {
+    const response = this.currentResponse();
+    const hasSearchText = this.state().searchText?.trim().length > 0;
+    const hasMetadata = response?.searchMetadata && Object.keys(response.searchMetadata).length > 0;
+    return hasSearchText && hasMetadata;
+  }
+
+  // Get metadata button label based on current state
+  getMetadataButtonLabel(): string {
+    return this.showSearchMetadata() 
+      ? this.translateService.instant('search.hideMetadata')
+      : this.translateService.instant('search.showMetadata');
+  }
+
+  // Get metadata button tooltip based on current state
+  getMetadataButtonTooltip(): string {
+    return this.showSearchMetadata() 
+      ? this.translateService.instant('search.hideMetadata')
+      : this.translateService.instant('search.showMetadata');
+  }
+
+  getEnhancedConfig(): ListViewConfig {
+    return {
+      ...this.config,
+      searchMetadata: {
+        ...this.config.searchMetadata,
+        enabled: this.searchMetadataEnabled(),
+        defaultVisible: this.showSearchMetadata(),
+        searchQuery: this.searchQuery(),
+        extractMetadata: (item: any) => {
+          // Check if the item has search metadata from the API response
+          if (item._searchMetadata) {
+            return item._searchMetadata;
+          }
+          
+          // If no direct metadata, check if we have it in the response metadata
+          const response = this.currentResponse();
+          if (response?.searchMetadata && (item as any).id) {
+            return response.searchMetadata[(item as any).id];
+          }
+          
+          return null;
+        }
+      }
+    };
+  }
+
+  // Store the current API response to access search metadata
+  private readonly currentResponse = signal<any>(null);
 }

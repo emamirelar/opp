@@ -1404,6 +1404,7 @@
 	"search.myOfficeTooltip": "Filtrer les résultats pour n'afficher que les données de votre unité organisationnelle",
 	"search.name": "Nom",
 	"search.noFilters": "Aucun filtre",
+	"search.hideMetadata": "Masquer les Métadonnées",
 	"search.noResults": "Aucun résultat trouvé",
 	"search.noResultsFound": "Aucun résultat trouvé",
 	"search.openSearch": "Ouvrir la recherche",
@@ -1936,5 +1937,11 @@
 	"tooltip.interaction.phoneNumbers": "Les numéros de téléphone des contacts et membres UNOPS impliqués dans l'interaction.",
 	"tooltip.interaction.emailAddresses": "Les adresses e-mail des contacts et membres UNOPS impliqués dans l'interaction.",
 	"tooltip.interaction.relatedTo": "Tous les contacts partenaires impliqués dans cette interaction.",
-	"tooltip.interaction.users": "Utilisateurs UNOPS impliqués dans l'interaction."
+	"tooltip.interaction.users": "Utilisateurs UNOPS impliqués dans l'interaction.",
+	"label.totalRecords": "Total des Enregistrements",
+	"label.searchResults": "Résultats de Recherche",
+	"label.advancedSearchResults": "Résultats de Recherche Avancée",
+	"label.showingRecords": "Affichage de {{count}} enregistrements",
+	"label.searchResultsCount": "{{current}} sur {{total}} résultats",
+	"label.advancedSearchResultsCount": "{{current}} sur {{total}} résultats"
 }

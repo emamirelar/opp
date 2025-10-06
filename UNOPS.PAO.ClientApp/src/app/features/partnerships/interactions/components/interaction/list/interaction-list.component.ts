@@ -152,6 +152,16 @@ export class InteractionListComponent implements OnInit, OnDestroy {
           operators: ['after', 'before', 'between']
         }
       ] as SearchField[]
+    },
+    // Enable search metadata display
+    searchMetadata: {
+      enabled: true,
+      defaultVisible: false, // Hidden by default, user can toggle
+      searchQuery: '', // Will be populated automatically
+      extractMetadata: (item: any) => {
+        // Extract search metadata from the item
+        return item._searchMetadata || null;
+      }
     }
   }));
 
@@ -445,6 +455,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   onSearchChange(searchParams: SearchParams) {
     this.currentSearchText = searchParams.generalSearch || '';
   }
+
 
   // Import menu items
   importMenuItems = signal<MenuItem[]>([

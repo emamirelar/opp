@@ -114,13 +114,18 @@ export class ListviewExportService {
         const fileName = `${entityName}s Export ${timestamp}`;
 
         // Export the data to Google Sheets
-        return this.exportGoogleSheetService.exportToSheet(exportableData, fileName);
+        return this.exportGoogleSheetService.exportToSheet(exportableData, fileName).pipe(
+          map(result => ({ ...result, recordCount: exportableData.length }))
+        );
       }),
       tap(() => this.feedbackDialogService.clearAll()),
       tap(result => {
-        // Show success confirmation dialog
+        // Automatically open the Google Sheet in a new tab
+        window.open(result.url, '_blank');
+        
+        // Show success confirmation dialog with record count
         this.confirmationService.confirm({
-          message: `${entityName}s exported successfully!<br><br><a href="${result.url}" target="_blank" style="text-decoration: underline; color: #007bff; font-weight: bold; padding: 4px 8px; border: 1px solid #007bff; border-radius: 4px; background-color: #f8f9fa;">📊 Open Spreadsheet</a>`,
+          message: `${entityName}s exported successfully!<br><br><strong>${result.recordCount} records</strong> have been exported to Google Sheets.<br><br><a href="${result.url}" target="_blank" style="text-decoration: underline; color: #007bff; font-weight: bold; padding: 4px 8px; border: 1px solid #007bff; border-radius: 4px; background-color: #f8f9fa;">📊 Open Spreadsheet</a>`,
           header: 'Export Complete',
           icon: 'pi pi-check-circle',
           acceptVisible: true,

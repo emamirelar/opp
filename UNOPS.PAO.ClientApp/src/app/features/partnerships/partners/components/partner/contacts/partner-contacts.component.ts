@@ -163,6 +163,10 @@ export class PartnerContactsComponent implements OnInit {
       placeholder: this.translateService.instant('search.contactsPlaceholder'),
       entityType: 'Contact' as const,
       searchableFields: this.getSearchableFields()
+    },
+    searchMetadata: {
+      enabled: true,
+      defaultVisible: false
     }
   }));
 
