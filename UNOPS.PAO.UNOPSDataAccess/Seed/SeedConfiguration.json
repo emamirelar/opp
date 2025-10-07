@@ -94,6 +94,16 @@
       "type": "sql",
       "path": "OrganizationUnits.sql",
       "description": "Organization units data import"
+    },
+    {
+      "order": 12,
+      "name": "SequenceResync",
+      "type": "seeder",
+      "className": "SequenceResyncSeeder",
+      "methodName": "ResyncAllSequencesAsync",
+      "filePath": "Seeders/SequenceResyncSeeder.cs",
+      "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
+      "forceExecuteIfAnyChanged": true
     }
   ]
 }

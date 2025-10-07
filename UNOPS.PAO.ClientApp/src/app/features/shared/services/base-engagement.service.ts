@@ -18,9 +18,13 @@ export class BaseEngagementService {
   constructor() { }
 
   // Read-only operations
-  getBaseEngagements(): Observable<BaseEngagement[]> {
+  getBaseEngagements(partnerId?: number): Observable<BaseEngagement[]> {
     this.isLoading.set(true);
-    return this.http.get<BaseEngagement[]>(this.apiUrl).pipe(tap({
+    const url = partnerId 
+      ? `${this.apiUrl}?partnerId=${partnerId}`
+      : this.apiUrl;
+    
+    return this.http.get<BaseEngagement[]>(url).pipe(tap({
       next: (data) => {
         this.baseEngagementData.set(data);
         this.isLoading.set(false);
@@ -47,7 +51,8 @@ export class BaseEngagementService {
 
   getBaseEngagementsByPartnerId(partnerId: number): Observable<BaseEngagement[]> {
     this.isLoading.set(true);
-    return this.http.get<BaseEngagement[]>(`/api/partners/${partnerId}/base-engagements`).pipe(tap({
+    // Using the new query string format for consistency
+    return this.http.get<BaseEngagement[]>(`${this.apiUrl}?partnerId=${partnerId}`).pipe(tap({
       next: (data) => {
         this.isLoading.set(false);
       },
