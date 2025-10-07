@@ -722,9 +722,10 @@ public abstract class BaseUNOPSManager
         if (_entityName != "Partner" || result == null)
             return null;
 
-        // Check if user has update permission (required for closing)
-        var hasUpdatePermission = entityPermissions.Any(p => p.CanUpdate);
-        if (!hasUpdatePermission)
+        // Check if user has admin-level permissions (only global admins can close)
+        // Admin users should have specific roles like PARTNER_GLOB_ADMIN
+        var hasAdminPermission = entityPermissions.Any(p => p.Role == "PARTNER_GLOB_ADMIN");
+        if (!hasAdminPermission)
             return false;
 
         // Use reflection to check partner status and approval status
@@ -765,9 +766,10 @@ public abstract class BaseUNOPSManager
         if (_entityName != "Partner" || result == null)
             return null;
 
-        // Check if user has update permission (required for archiving)
-        var hasUpdatePermission = entityPermissions.Any(p => p.CanUpdate);
-        if (!hasUpdatePermission)
+        // Check if user has admin-level permissions (only global admins can archive)
+        // Admin users should have specific roles like PARTNER_GLOB_ADMIN
+        var hasAdminPermission = entityPermissions.Any(p => p.Role == "PARTNER_GLOB_ADMIN");
+        if (!hasAdminPermission)
             return false;
 
         // Use reflection to check partner status and approval status
