@@ -8,9 +8,6 @@ metadata:
 
 source:
   type: "bigquery"
-  connection:
-    project_id: "unops-partneropportunity"
-    use_environment_auth: true
   
   query: |
     SELECT DISTINCT
