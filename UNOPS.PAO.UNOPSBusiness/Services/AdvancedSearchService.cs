@@ -210,13 +210,28 @@ public class AdvancedSearchService
             }
 
             // Get all entity IDs from search results (don't paginate yet)
+            // Note: PostgreSQL functions now return only one row per entity (best match)
             var allEntityIds = searchResults.Select(r => r.EntityId).ToList();
             
             // Get the actual entity records for all search results
             var allEntities = await GetEntitiesByIds<TEntity>(allEntityIds);
             
             // Apply user's requested ordering to the entities
-            var orderedEntities = ApplyDynamicOrdering(allEntities.AsQueryable(), pagination.OrderBy, pagination.Ascending ?? false).ToList();
+            // If orderBy is "relevance" or not specified, maintain PostgreSQL score order (relevance)
+            List<TEntity> orderedEntities;
+            if (string.IsNullOrWhiteSpace(pagination.OrderBy) || 
+                pagination.OrderBy.Equals("relevance", StringComparison.OrdinalIgnoreCase))
+            {
+                // Maintain PostgreSQL score order by using the order from allEntityIds
+                // Since we used Distinct(), each ID appears only once, so ToDictionary won't fail
+                var entityIdOrder = allEntityIds.Select((id, index) => new { Id = id, Order = index }).ToDictionary(x => x.Id, x => x.Order);
+                orderedEntities = allEntities.OrderBy(e => entityIdOrder.GetValueOrDefault(GetEntityId(e), int.MaxValue)).ToList();
+            }
+            else
+            {
+                // Apply user's custom ordering
+                orderedEntities = ApplyDynamicOrdering(allEntities.AsQueryable(), pagination.OrderBy, pagination.Ascending ?? false).ToList();
+            }
             
             // Update total count to reflect actual entities returned after access control
             var totalCount = orderedEntities.Count;

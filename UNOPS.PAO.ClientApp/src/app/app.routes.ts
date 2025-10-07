@@ -25,6 +25,7 @@ import { PartnerTreeDataResolver } from '@partnerships/partners/resolvers/partne
 import { ContactDataResolver } from '@partnerships/contacts/resolvers/contact-data.resolver';
 import { UserManagementComponent } from '@admin/user-management/user-management.component';
 import { EntityManagerComponent } from '@admin/entity-manager/entity-manager.component';
+import { TranslationWorkbenchComponent } from './features/admin/translation-workbench/translation-workbench.component';
 import { PartnerTreePageComponent } from '@partnerships/partners/components/partner-tree-page/partner-tree-page.component';
 import {
   ContactViewInteractionsComponent
@@ -232,10 +233,9 @@ export const routes: Routes = [
           },
           {
             path: 'translations',
-            component: ComingSoonComponent,
+            component: TranslationWorkbenchComponent,
             data: {
-              breadcrumb: 'Translation Workbench',
-              featureName: 'Translation Workbench'
+              breadcrumb: 'Translation Workbench'
             }
           }
         ]

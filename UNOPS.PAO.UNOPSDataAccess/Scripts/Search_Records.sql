@@ -55,77 +55,93 @@ BEGIN
     word_pattern := '% ' || search_query || ' %';
     
     RETURN QUERY
-    SELECT 
-        'Partners'::TEXT as entity_type,
-        p."Id"::TEXT as entity_id,
-        fields.matched_field,
-        fields.field_value,
-        fields.score,
-        'field-search'::TEXT as search_type,
-        CASE 
-            WHEN fields.field_value ILIKE exact_pattern THEN 'Exact Match'
-            WHEN fields.field_value ILIKE word_pattern THEN 'Word Match'
-            ELSE 'Similarity Match'
-        END::TEXT as match_criteria,
-        left(fields.field_value, snippet_length)::TEXT as snippet
-    FROM public."Partners" p
-    LEFT JOIN public."PartnerTrees" pg ON p."PartnerGroupId" = pg."Id"
-    LEFT JOIN public."LiaisonOffices" lo ON p."LiaisonOfficeId" = lo."Id"
-    LEFT JOIN public."Contacts" c ON p."Id" = c."PartnerId"
-    CROSS JOIN LATERAL (
-        VALUES
-            -- TIER 1 - CORE PARTNER IDENTITY (Score: 1.0-0.9)
-            ('Name', COALESCE(p."Name", ''), 
-             CASE WHEN p."Name" ILIKE exact_pattern THEN 1.0 * text_boost
-                  WHEN p."Name" ILIKE word_pattern THEN 0.9 * text_boost
-                  WHEN similarity(COALESCE(p."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(p."Name", ''), search_query) * 0.8 * text_boost
-                  ELSE 0 END),
-            ('PartnerShortDescription', COALESCE(p."PartnerShortDescription", ''),
-             CASE WHEN p."PartnerShortDescription" ILIKE exact_pattern THEN 0.9 * text_boost
-                  WHEN p."PartnerShortDescription" ILIKE word_pattern THEN 0.8 * text_boost
-                  WHEN similarity(COALESCE(p."PartnerShortDescription", ''), search_query) > 0.2 THEN similarity(COALESCE(p."PartnerShortDescription", ''), search_query) * 0.7 * text_boost
-                  ELSE 0 END),
-            
-            -- TIER 2 - PARTNER CLASSIFICATION (Score: 0.8-0.7)
-            ('PartnerGroup.Name', COALESCE(pg."Name", ''),
-             CASE WHEN pg."Name" ILIKE exact_pattern THEN 0.8 * text_boost
-                  WHEN pg."Name" ILIKE word_pattern THEN 0.7 * text_boost
-                  WHEN similarity(COALESCE(pg."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(pg."Name", ''), search_query) * 0.6 * text_boost
-                  ELSE 0 END),
-            ('PartnerGroup.Code', COALESCE(pg."Code", ''),
-             CASE WHEN pg."Code" ILIKE exact_pattern THEN 0.7 * text_boost
-                  WHEN pg."Code" ILIKE word_pattern THEN 0.6 * text_boost
-                  WHEN similarity(COALESCE(pg."Code", ''), search_query) > 0.3 THEN similarity(COALESCE(pg."Code", ''), search_query) * 0.5 * text_boost
-                  ELSE 0 END),
-            ('PartnerLongDescription', COALESCE(p."PartnerLongDescription", ''),
-             CASE WHEN p."PartnerLongDescription" ILIKE exact_pattern THEN 0.7 * text_boost
-                  WHEN p."PartnerLongDescription" ILIKE word_pattern THEN 0.6 * text_boost
-                  WHEN similarity(COALESCE(p."PartnerLongDescription", ''), search_query) > 0.2 THEN similarity(COALESCE(p."PartnerLongDescription", ''), search_query) * 0.5 * text_boost
-                  ELSE 0 END),
-            
-            -- TIER 3 - ORGANIZATIONAL CONTEXT (Score: 0.6-0.5)
-            ('LiaisonOffice.Name', COALESCE(lo."Name", ''),
-             CASE WHEN lo."Name" ILIKE exact_pattern THEN 0.6 * text_boost
-                  WHEN lo."Name" ILIKE word_pattern THEN 0.5 * text_boost
-                  WHEN similarity(COALESCE(lo."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(lo."Name", ''), search_query) * 0.4 * text_boost
-                  ELSE 0 END),
-            
-            -- TIER 4 - RELATED ENTITIES (Score: 0.4-0.3)
-            ('Contact.FullName', COALESCE(c."FirstName" || ' ' || c."LastName", ''),
-             CASE WHEN (c."FirstName" || ' ' || c."LastName") ILIKE exact_pattern THEN 0.4 * text_boost
-                  WHEN (c."FirstName" || ' ' || c."LastName") ILIKE word_pattern THEN 0.3 * text_boost
-                  WHEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) > 0.3 THEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) * 0.2 * text_boost
-                  ELSE 0 END),
-            ('Contact.Email', COALESCE(c."Email", ''),
-             CASE WHEN c."Email" ILIKE exact_pattern THEN 0.3 * text_boost
-                  WHEN c."Email" ILIKE word_pattern THEN 0.2 * text_boost
-                  WHEN similarity(COALESCE(c."Email", ''), search_query) > 0.3 THEN similarity(COALESCE(c."Email", ''), search_query) * 0.1 * text_boost
-                  ELSE 0 END)
-    ) AS fields(matched_field, field_value, score)
-    WHERE fields.score > 0.1
-    AND fields.field_value IS NOT NULL 
-    AND fields.field_value != ''
-    ORDER BY fields.score DESC;
+    WITH all_matches AS (
+        SELECT 
+            'Partners'::TEXT as entity_type,
+            p."Id"::TEXT as entity_id,
+            fields.matched_field,
+            fields.field_value,
+            fields.score,
+            'field-search'::TEXT as search_type,
+            CASE 
+                WHEN fields.field_value ILIKE exact_pattern THEN 'Exact Match'
+                WHEN fields.field_value ILIKE word_pattern THEN 'Word Match'
+                ELSE 'Similarity Match'
+            END::TEXT as match_criteria,
+            left(fields.field_value, snippet_length)::TEXT as snippet
+        FROM public."Partners" p
+        LEFT JOIN public."PartnerTrees" pg ON p."PartnerGroupId" = pg."Id"
+        LEFT JOIN public."LiaisonOffices" lo ON p."LiaisonOfficeId" = lo."Id"
+        LEFT JOIN public."Contacts" c ON p."Id" = c."PartnerId"
+        CROSS JOIN LATERAL (
+            VALUES
+                -- TIER 1 - CORE PARTNER IDENTITY (Score: 1.0-0.9)
+                ('Name', COALESCE(p."Name", ''), 
+                 CASE WHEN p."Name" ILIKE exact_pattern THEN 1.0 * text_boost
+                      WHEN p."Name" ILIKE word_pattern THEN 0.9 * text_boost
+                      WHEN similarity(COALESCE(p."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(p."Name", ''), search_query) * 0.8 * text_boost
+                      ELSE 0 END),
+                ('PartnerShortDescription', COALESCE(p."PartnerShortDescription", ''),
+                 CASE WHEN p."PartnerShortDescription" ILIKE exact_pattern THEN 0.9 * text_boost
+                      WHEN p."PartnerShortDescription" ILIKE word_pattern THEN 0.8 * text_boost
+                      WHEN similarity(COALESCE(p."PartnerShortDescription", ''), search_query) > 0.2 THEN similarity(COALESCE(p."PartnerShortDescription", ''), search_query) * 0.7 * text_boost
+                      ELSE 0 END),
+                
+                -- TIER 2 - PARTNER CLASSIFICATION (Score: 0.8-0.7)
+                ('PartnerGroup.Name', COALESCE(pg."Name", ''),
+                 CASE WHEN pg."Name" ILIKE exact_pattern THEN 0.8 * text_boost
+                      WHEN pg."Name" ILIKE word_pattern THEN 0.7 * text_boost
+                      WHEN similarity(COALESCE(pg."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(pg."Name", ''), search_query) * 0.6 * text_boost
+                      ELSE 0 END),
+                ('PartnerGroup.Code', COALESCE(pg."Code", ''),
+                 CASE WHEN pg."Code" ILIKE exact_pattern THEN 0.7 * text_boost
+                      WHEN pg."Code" ILIKE word_pattern THEN 0.6 * text_boost
+                      WHEN similarity(COALESCE(pg."Code", ''), search_query) > 0.3 THEN similarity(COALESCE(pg."Code", ''), search_query) * 0.5 * text_boost
+                      ELSE 0 END),
+                ('PartnerLongDescription', COALESCE(p."PartnerLongDescription", ''),
+                 CASE WHEN p."PartnerLongDescription" ILIKE exact_pattern THEN 0.7 * text_boost
+                      WHEN p."PartnerLongDescription" ILIKE word_pattern THEN 0.6 * text_boost
+                      WHEN similarity(COALESCE(p."PartnerLongDescription", ''), search_query) > 0.2 THEN similarity(COALESCE(p."PartnerLongDescription", ''), search_query) * 0.5 * text_boost
+                      ELSE 0 END),
+                
+                -- TIER 3 - ORGANIZATIONAL CONTEXT (Score: 0.6-0.5)
+                ('LiaisonOffice.Name', COALESCE(lo."Name", ''),
+                 CASE WHEN lo."Name" ILIKE exact_pattern THEN 0.6 * text_boost
+                      WHEN lo."Name" ILIKE word_pattern THEN 0.5 * text_boost
+                      WHEN similarity(COALESCE(lo."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(lo."Name", ''), search_query) * 0.4 * text_boost
+                      ELSE 0 END),
+                
+                -- TIER 4 - RELATED ENTITIES (Score: 0.4-0.3)
+                ('Contact.FullName', COALESCE(c."FirstName" || ' ' || c."LastName", ''),
+                 CASE WHEN (c."FirstName" || ' ' || c."LastName") ILIKE exact_pattern THEN 0.4 * text_boost
+                      WHEN (c."FirstName" || ' ' || c."LastName") ILIKE word_pattern THEN 0.3 * text_boost
+                      WHEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) > 0.3 THEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) * 0.2 * text_boost
+                      ELSE 0 END),
+                ('Contact.Email', COALESCE(c."Email", ''),
+                 CASE WHEN c."Email" ILIKE exact_pattern THEN 0.3 * text_boost
+                      WHEN c."Email" ILIKE word_pattern THEN 0.2 * text_boost
+                      WHEN similarity(COALESCE(c."Email", ''), search_query) > 0.3 THEN similarity(COALESCE(c."Email", ''), search_query) * 0.1 * text_boost
+                      ELSE 0 END)
+        ) AS fields(matched_field, field_value, score)
+        WHERE fields.score > 0.1
+        AND fields.field_value IS NOT NULL 
+        AND fields.field_value != ''
+    ),
+    best_matches AS (
+        SELECT DISTINCT ON (all_matches.entity_id)
+            all_matches.entity_type,
+            all_matches.entity_id,
+            all_matches.matched_field,
+            all_matches.field_value,
+            all_matches.score,
+            all_matches.search_type,
+            all_matches.match_criteria,
+            all_matches.snippet
+        FROM all_matches
+        ORDER BY all_matches.entity_id, all_matches.score DESC
+    )
+    SELECT * FROM best_matches
+    ORDER BY score DESC;
 END
 $$;
 
@@ -158,81 +174,97 @@ BEGIN
     word_pattern := '% ' || search_query || ' %';
     
     RETURN QUERY
-    SELECT 
-        'Contacts'::TEXT as entity_type,
-        c."Id"::TEXT as entity_id,
-        fields.matched_field,
-        fields.field_value,
-        fields.score,
-        'field-search'::TEXT as search_type,
-        CASE 
-            WHEN fields.field_value ILIKE exact_pattern THEN 'Exact Match'
-            WHEN fields.field_value ILIKE word_pattern THEN 'Word Match'
-            ELSE 'Similarity Match'
-        END::TEXT as match_criteria,
-        left(fields.field_value, snippet_length)::TEXT as snippet
-    FROM public."Contacts" c
-    LEFT JOIN public."Partners" p ON c."PartnerId" = p."Id"
-    LEFT JOIN public."PartnerTrees" pg ON p."PartnerGroupId" = pg."Id"
-    CROSS JOIN LATERAL (
-        VALUES
-            -- TIER 1 - CORE CONTACT IDENTITY (Score: 1.0-0.9)
-            ('FullName', COALESCE(c."FirstName" || ' ' || c."LastName", ''),
-             CASE WHEN (c."FirstName" || ' ' || c."LastName") ILIKE exact_pattern THEN 1.0 * text_boost
-                  WHEN (c."FirstName" || ' ' || c."LastName") ILIKE word_pattern THEN 0.9 * text_boost
-                  WHEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) > 0.3 THEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) * 0.8 * text_boost
-                  ELSE 0 END),
-            ('FirstName', COALESCE(c."FirstName", ''), 
-             CASE WHEN c."FirstName" ILIKE exact_pattern THEN 0.9 * text_boost
-                  WHEN c."FirstName" ILIKE word_pattern THEN 0.8 * text_boost
-                  WHEN similarity(COALESCE(c."FirstName", ''), search_query) > 0.3 THEN similarity(COALESCE(c."FirstName", ''), search_query) * 0.7 * text_boost
-                  ELSE 0 END),
-            ('LastName', COALESCE(c."LastName", ''),
-             CASE WHEN c."LastName" ILIKE exact_pattern THEN 0.9 * text_boost
-                  WHEN c."LastName" ILIKE word_pattern THEN 0.8 * text_boost
-                  WHEN similarity(COALESCE(c."LastName", ''), search_query) > 0.3 THEN similarity(COALESCE(c."LastName", ''), search_query) * 0.7 * text_boost
-                  ELSE 0 END),
-            
-            -- TIER 2 - CONTACT INFORMATION (Score: 0.8-0.7)
-            ('Email', COALESCE(c."Email", ''),
-             CASE WHEN c."Email" ILIKE exact_pattern THEN 0.8 * text_boost
-                  WHEN c."Email" ILIKE word_pattern THEN 0.7 * text_boost
-                  WHEN similarity(COALESCE(c."Email", ''), search_query) > 0.3 THEN similarity(COALESCE(c."Email", ''), search_query) * 0.6 * text_boost
-                  ELSE 0 END),
-            ('Title', COALESCE(c."Title", ''),
-             CASE WHEN c."Title" ILIKE exact_pattern THEN 0.7 * text_boost
-                  WHEN c."Title" ILIKE word_pattern THEN 0.6 * text_boost
-                  WHEN similarity(COALESCE(c."Title", ''), search_query) > 0.3 THEN similarity(COALESCE(c."Title", ''), search_query) * 0.5 * text_boost
-                  ELSE 0 END),
-            ('Phone', COALESCE(c."Phone", ''),
-             CASE WHEN c."Phone" ILIKE exact_pattern THEN 0.7 * text_boost
-                  WHEN c."Phone" ILIKE word_pattern THEN 0.6 * text_boost
-                  WHEN similarity(COALESCE(c."Phone", ''), search_query) > 0.3 THEN similarity(COALESCE(c."Phone", ''), search_query) * 0.5 * text_boost
-                  ELSE 0 END),
-            
-            -- TIER 3 - ORGANIZATIONAL CONTEXT (Score: 0.6-0.5)
-            ('Department', COALESCE(c."Department", ''),
-             CASE WHEN c."Department" ILIKE exact_pattern THEN 0.6 * text_boost
-                  WHEN c."Department" ILIKE word_pattern THEN 0.5 * text_boost
-                  WHEN similarity(COALESCE(c."Department", ''), search_query) > 0.3 THEN similarity(COALESCE(c."Department", ''), search_query) * 0.4 * text_boost
-                  ELSE 0 END),
-            
-            -- TIER 4 - RELATED ENTITIES (Score: 0.4-0.3)
-            ('Partner.Name', COALESCE(p."Name", ''),
-             CASE WHEN p."Name" ILIKE exact_pattern THEN 0.4 * text_boost
-                  WHEN p."Name" ILIKE word_pattern THEN 0.3 * text_boost
-                  WHEN similarity(COALESCE(p."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(p."Name", ''), search_query) * 0.2 * text_boost
-                  ELSE 0 END),
-            ('PartnerGroup.Name', COALESCE(pg."Name", ''),
-             CASE WHEN pg."Name" ILIKE exact_pattern THEN 0.3 * text_boost
-                  WHEN pg."Name" ILIKE word_pattern THEN 0.2 * text_boost
-                  WHEN similarity(COALESCE(pg."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(pg."Name", ''), search_query) * 0.1 * text_boost
-                  ELSE 0 END)
-    ) AS fields(matched_field, field_value, score)
-    WHERE fields.score > 0.1
-    AND fields.field_value IS NOT NULL 
-    AND fields.field_value != ''
-    ORDER BY fields.score DESC;
+    WITH all_matches AS (
+        SELECT 
+            'Contacts'::TEXT as entity_type,
+            c."Id"::TEXT as entity_id,
+            fields.matched_field,
+            fields.field_value,
+            fields.score,
+            'field-search'::TEXT as search_type,
+            CASE 
+                WHEN fields.field_value ILIKE exact_pattern THEN 'Exact Match'
+                WHEN fields.field_value ILIKE word_pattern THEN 'Word Match'
+                ELSE 'Similarity Match'
+            END::TEXT as match_criteria,
+            left(fields.field_value, snippet_length)::TEXT as snippet
+        FROM public."Contacts" c
+        LEFT JOIN public."Partners" p ON c."PartnerId" = p."Id"
+        LEFT JOIN public."PartnerTrees" pg ON p."PartnerGroupId" = pg."Id"
+        CROSS JOIN LATERAL (
+            VALUES
+                -- TIER 1 - CORE CONTACT IDENTITY (Score: 1.0-0.9)
+                ('FullName', COALESCE(c."FirstName" || ' ' || c."LastName", ''),
+                 CASE WHEN (c."FirstName" || ' ' || c."LastName") ILIKE exact_pattern THEN 1.0 * text_boost
+                      WHEN (c."FirstName" || ' ' || c."LastName") ILIKE word_pattern THEN 0.9 * text_boost
+                      WHEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) > 0.3 THEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) * 0.8 * text_boost
+                      ELSE 0 END),
+                ('FirstName', COALESCE(c."FirstName", ''), 
+                 CASE WHEN c."FirstName" ILIKE exact_pattern THEN 0.9 * text_boost
+                      WHEN c."FirstName" ILIKE word_pattern THEN 0.8 * text_boost
+                      WHEN similarity(COALESCE(c."FirstName", ''), search_query) > 0.3 THEN similarity(COALESCE(c."FirstName", ''), search_query) * 0.7 * text_boost
+                      ELSE 0 END),
+                ('LastName', COALESCE(c."LastName", ''),
+                 CASE WHEN c."LastName" ILIKE exact_pattern THEN 0.9 * text_boost
+                      WHEN c."LastName" ILIKE word_pattern THEN 0.8 * text_boost
+                      WHEN similarity(COALESCE(c."LastName", ''), search_query) > 0.3 THEN similarity(COALESCE(c."LastName", ''), search_query) * 0.7 * text_boost
+                      ELSE 0 END),
+                
+                -- TIER 2 - CONTACT INFORMATION (Score: 0.8-0.7)
+                ('Email', COALESCE(c."Email", ''),
+                 CASE WHEN c."Email" ILIKE exact_pattern THEN 0.8 * text_boost
+                      WHEN c."Email" ILIKE word_pattern THEN 0.7 * text_boost
+                      WHEN similarity(COALESCE(c."Email", ''), search_query) > 0.3 THEN similarity(COALESCE(c."Email", ''), search_query) * 0.6 * text_boost
+                      ELSE 0 END),
+                ('Title', COALESCE(c."Title", ''),
+                 CASE WHEN c."Title" ILIKE exact_pattern THEN 0.7 * text_boost
+                      WHEN c."Title" ILIKE word_pattern THEN 0.6 * text_boost
+                      WHEN similarity(COALESCE(c."Title", ''), search_query) > 0.3 THEN similarity(COALESCE(c."Title", ''), search_query) * 0.5 * text_boost
+                      ELSE 0 END),
+                ('Phone', COALESCE(c."Phone", ''),
+                 CASE WHEN c."Phone" ILIKE exact_pattern THEN 0.7 * text_boost
+                      WHEN c."Phone" ILIKE word_pattern THEN 0.6 * text_boost
+                      WHEN similarity(COALESCE(c."Phone", ''), search_query) > 0.3 THEN similarity(COALESCE(c."Phone", ''), search_query) * 0.5 * text_boost
+                      ELSE 0 END),
+                
+                -- TIER 3 - ORGANIZATIONAL CONTEXT (Score: 0.6-0.5)
+                ('Department', COALESCE(c."Department", ''),
+                 CASE WHEN c."Department" ILIKE exact_pattern THEN 0.6 * text_boost
+                      WHEN c."Department" ILIKE word_pattern THEN 0.5 * text_boost
+                      WHEN similarity(COALESCE(c."Department", ''), search_query) > 0.3 THEN similarity(COALESCE(c."Department", ''), search_query) * 0.4 * text_boost
+                      ELSE 0 END),
+                
+                -- TIER 4 - RELATED ENTITIES (Score: 0.4-0.3)
+                ('Partner.Name', COALESCE(p."Name", ''),
+                 CASE WHEN p."Name" ILIKE exact_pattern THEN 0.4 * text_boost
+                      WHEN p."Name" ILIKE word_pattern THEN 0.3 * text_boost
+                      WHEN similarity(COALESCE(p."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(p."Name", ''), search_query) * 0.2 * text_boost
+                      ELSE 0 END),
+                ('PartnerGroup.Name', COALESCE(pg."Name", ''),
+                 CASE WHEN pg."Name" ILIKE exact_pattern THEN 0.3 * text_boost
+                      WHEN pg."Name" ILIKE word_pattern THEN 0.2 * text_boost
+                      WHEN similarity(COALESCE(pg."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(pg."Name", ''), search_query) * 0.1 * text_boost
+                      ELSE 0 END)
+        ) AS fields(matched_field, field_value, score)
+        WHERE fields.score > 0.1
+        AND fields.field_value IS NOT NULL 
+        AND fields.field_value != ''
+    ),
+    best_matches AS (
+        SELECT DISTINCT ON (all_matches.entity_id)
+            all_matches.entity_type,
+            all_matches.entity_id,
+            all_matches.matched_field,
+            all_matches.field_value,
+            all_matches.score,
+            all_matches.search_type,
+            all_matches.match_criteria,
+            all_matches.snippet
+        FROM all_matches
+        ORDER BY all_matches.entity_id, all_matches.score DESC
+    )
+    SELECT * FROM best_matches
+    ORDER BY score DESC;
 END
 $$;
 
@@ -265,61 +297,77 @@ BEGIN
     word_pattern := '% ' || search_query || ' %';
     
     RETURN QUERY
-    SELECT 
-        'Interactions'::TEXT as entity_type,
-        i."Id"::TEXT as entity_id,
-        fields.matched_field,
-        fields.field_value,
-        fields.score,
-        'field-search'::TEXT as search_type,
-        CASE 
-            WHEN fields.field_value ILIKE exact_pattern THEN 'Exact Match'
-            WHEN fields.field_value ILIKE word_pattern THEN 'Word Match'
-            ELSE 'Similarity Match'
-        END::TEXT as match_criteria,
-        left(fields.field_value, snippet_length)::TEXT as snippet
-    FROM public."Interactions" i
-    LEFT JOIN public."InteractionContacts" ic ON i."Id" = ic."InteractionId"
-    LEFT JOIN public."Contacts" c ON ic."ContactId" = c."Id"
-    LEFT JOIN public."InteractionPartners" ip ON i."Id" = ip."InteractionId"
-    LEFT JOIN public."Partners" p ON ip."PartnerId" = p."Id"
-    CROSS JOIN LATERAL (
-        VALUES
-            -- TIER 1 - CORE INTERACTION IDENTITY (Score: 1.0-0.9)
-            ('Subject', COALESCE(i."Subject", ''), 
-             CASE WHEN i."Subject" ILIKE exact_pattern THEN 1.0 * text_boost
-                  WHEN i."Subject" ILIKE word_pattern THEN 0.9 * text_boost
-                  WHEN similarity(COALESCE(i."Subject", ''), search_query) > 0.3 THEN similarity(COALESCE(i."Subject", ''), search_query) * 0.8 * text_boost
-                  ELSE 0 END),
-            
-            -- TIER 2 - INTERACTION DETAILS (Score: 0.8-0.7)
-            ('Description', COALESCE(i."Description", ''),
-             CASE WHEN i."Description" ILIKE exact_pattern THEN 0.7 * text_boost
-                  WHEN i."Description" ILIKE word_pattern THEN 0.6 * text_boost
-                  WHEN similarity(COALESCE(i."Description", ''), search_query) > 0.2 THEN similarity(COALESCE(i."Description", ''), search_query) * 0.5 * text_boost
-                  ELSE 0 END),
-            ('Location', COALESCE(i."Location", ''),
-             CASE WHEN i."Location" ILIKE exact_pattern THEN 0.6 * text_boost
-                  WHEN i."Location" ILIKE word_pattern THEN 0.5 * text_boost
-                  WHEN similarity(COALESCE(i."Location", ''), search_query) > 0.3 THEN similarity(COALESCE(i."Location", ''), search_query) * 0.4 * text_boost
-                  ELSE 0 END),
-            
-            -- TIER 4 - RELATED ENTITIES (Score: 0.3-0.2)
-            ('Contact.FullName', COALESCE(c."FirstName" || ' ' || c."LastName", ''),
-             CASE WHEN (c."FirstName" || ' ' || c."LastName") ILIKE exact_pattern THEN 0.3 * text_boost
-                  WHEN (c."FirstName" || ' ' || c."LastName") ILIKE word_pattern THEN 0.2 * text_boost
-                  WHEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) > 0.3 THEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) * 0.1 * text_boost
-                  ELSE 0 END),
-            ('Partner.Name', COALESCE(p."Name", ''),
-             CASE WHEN p."Name" ILIKE exact_pattern THEN 0.2 * text_boost
-                  WHEN p."Name" ILIKE word_pattern THEN 0.1 * text_boost
-                  WHEN similarity(COALESCE(p."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(p."Name", ''), search_query) * 0.05 * text_boost
-                  ELSE 0 END)
-    ) AS fields(matched_field, field_value, score)
-    WHERE fields.score > 0.1
-    AND fields.field_value IS NOT NULL 
-    AND fields.field_value != ''
-    ORDER BY fields.score DESC;
+    WITH all_matches AS (
+        SELECT 
+            'Interactions'::TEXT as entity_type,
+            i."Id"::TEXT as entity_id,
+            fields.matched_field,
+            fields.field_value,
+            fields.score,
+            'field-search'::TEXT as search_type,
+            CASE 
+                WHEN fields.field_value ILIKE exact_pattern THEN 'Exact Match'
+                WHEN fields.field_value ILIKE word_pattern THEN 'Word Match'
+                ELSE 'Similarity Match'
+            END::TEXT as match_criteria,
+            left(fields.field_value, snippet_length)::TEXT as snippet
+        FROM public."Interactions" i
+        LEFT JOIN public."InteractionContacts" ic ON i."Id" = ic."InteractionId"
+        LEFT JOIN public."Contacts" c ON ic."ContactId" = c."Id"
+        LEFT JOIN public."InteractionPartners" ip ON i."Id" = ip."InteractionId"
+        LEFT JOIN public."Partners" p ON ip."PartnerId" = p."Id"
+        CROSS JOIN LATERAL (
+            VALUES
+                -- TIER 1 - CORE INTERACTION IDENTITY (Score: 1.0-0.9)
+                ('Subject', COALESCE(i."Subject", ''), 
+                 CASE WHEN i."Subject" ILIKE exact_pattern THEN 1.0 * text_boost
+                      WHEN i."Subject" ILIKE word_pattern THEN 0.9 * text_boost
+                      WHEN similarity(COALESCE(i."Subject", ''), search_query) > 0.3 THEN similarity(COALESCE(i."Subject", ''), search_query) * 0.8 * text_boost
+                      ELSE 0 END),
+                
+                -- TIER 2 - INTERACTION DETAILS (Score: 0.8-0.7)
+                ('Description', COALESCE(i."Description", ''),
+                 CASE WHEN i."Description" ILIKE exact_pattern THEN 0.7 * text_boost
+                      WHEN i."Description" ILIKE word_pattern THEN 0.6 * text_boost
+                      WHEN similarity(COALESCE(i."Description", ''), search_query) > 0.2 THEN similarity(COALESCE(i."Description", ''), search_query) * 0.5 * text_boost
+                      ELSE 0 END),
+                ('Location', COALESCE(i."Location", ''),
+                 CASE WHEN i."Location" ILIKE exact_pattern THEN 0.6 * text_boost
+                      WHEN i."Location" ILIKE word_pattern THEN 0.5 * text_boost
+                      WHEN similarity(COALESCE(i."Location", ''), search_query) > 0.3 THEN similarity(COALESCE(i."Location", ''), search_query) * 0.4 * text_boost
+                      ELSE 0 END),
+                
+                -- TIER 4 - RELATED ENTITIES (Score: 0.3-0.2)
+                ('Contact.FullName', COALESCE(c."FirstName" || ' ' || c."LastName", ''),
+                 CASE WHEN (c."FirstName" || ' ' || c."LastName") ILIKE exact_pattern THEN 0.3 * text_boost
+                      WHEN (c."FirstName" || ' ' || c."LastName") ILIKE word_pattern THEN 0.2 * text_boost
+                      WHEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) > 0.3 THEN similarity(COALESCE(c."FirstName" || ' ' || c."LastName", ''), search_query) * 0.1 * text_boost
+                      ELSE 0 END),
+                ('Partner.Name', COALESCE(p."Name", ''),
+                 CASE WHEN p."Name" ILIKE exact_pattern THEN 0.2 * text_boost
+                      WHEN p."Name" ILIKE word_pattern THEN 0.1 * text_boost
+                      WHEN similarity(COALESCE(p."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(p."Name", ''), search_query) * 0.05 * text_boost
+                      ELSE 0 END)
+        ) AS fields(matched_field, field_value, score)
+        WHERE fields.score > 0.1
+        AND fields.field_value IS NOT NULL 
+        AND fields.field_value != ''
+    ),
+    best_matches AS (
+        SELECT DISTINCT ON (all_matches.entity_id)
+            all_matches.entity_type,
+            all_matches.entity_id,
+            all_matches.matched_field,
+            all_matches.field_value,
+            all_matches.score,
+            all_matches.search_type,
+            all_matches.match_criteria,
+            all_matches.snippet
+        FROM all_matches
+        ORDER BY all_matches.entity_id, all_matches.score DESC
+    )
+    SELECT * FROM best_matches
+    ORDER BY score DESC;
 END
 $$;
 
