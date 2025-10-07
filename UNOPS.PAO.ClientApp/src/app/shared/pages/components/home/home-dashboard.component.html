@@ -483,12 +483,12 @@
                               <span class="inline-flex items-center px-unops-sm py-1 rounded-unops-sm text-unops-label-small font-unops-medium"
                                     [ngClass]="{
                                       'bg-unops-info/10 text-unops-info': update.type === 'Partner',
-                                      'bg-unops-success/10 text-unops-success': update.type === 'Contact', 
+                                      'bg-unops-success/10 text-unops-success': update.type === 'Contact',
                                       'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
                                     }">
                                 {{ ('dashboard.' + update.type.toLowerCase()) | translate }}
                               </span>
-                              <span class="text-unops-body-small text-unops-neutral-600">by {{ update.lastModifiedBy }}</span>
+                              <span class="text-unops-body-small text-unops-neutral-600">by {{ update.lastModifiedByName || ('User ' + update.lastModifiedBy) }}</span>
                             </div>
                           </div>
                         </div>
@@ -821,12 +821,12 @@
                         <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium"
                               [ngClass]="{
                                 'bg-unops-info/10 text-unops-info': update.type === 'Partner',
-                                'bg-unops-success/10 text-unops-success': update.type === 'Contact', 
+                                'bg-unops-success/10 text-unops-success': update.type === 'Contact',
                                 'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
                               }">
                           {{ ('dashboard.' + update.type.toLowerCase()) | translate }}
                         </span>
-                        <span class="text-unops-body-small text-unops-neutral-600 truncate">by {{ update.lastModifiedBy }}</span>
+                        <span class="text-unops-body-small text-unops-neutral-600 truncate">by {{ update.lastModifiedByName || ('User ' + update.lastModifiedBy) }}</span>
                       </div>
                     </div>
                   </div>
