@@ -7,7 +7,8 @@ extracted from main.py for better organization.
 
 import logging
 import uuid
-from typing import List, Any
+import json
+from typing import List, Any, Dict, Union
 from fastapi import APIRouter, HTTPException, Request, Form, File, UploadFile
 from fastapi.responses import StreamingResponse, FileResponse
 from google.adk.agents import RunConfig
@@ -17,7 +18,7 @@ from google.adk.sessions import DatabaseSessionService
 from google.genai import types
 from pydantic import BaseModel
 
-from ai_assistant.utils.config import get_database_url
+from ai_assistant.utils.config import get_database_url, get_config
 from ai_assistant.utils.session_management import get_or_create_session, parse_request_state
 from ai_assistant.utils.iap_validation import validate_iap_headers, extract_iap_headers_for_forwarding
 
@@ -25,6 +26,133 @@ logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter()
+
+
+async def translate_thought_to_non_technical(event_json_str: str) -> str:
+    """
+    Check if the SSE event is a thought and translate it to non-technical language.
+    
+    Args:
+        event_json_str: JSON string of the SSE event
+        
+    Returns:
+        JSON string of the event (modified if it was a thought, original otherwise)
+    """
+    try:
+        # Parse the event
+        event_data = json.loads(event_json_str)
+        
+        # Check if this is a thought event
+        content = event_data.get('content', {})
+        parts = content.get('parts', [])
+        
+        # Look for a thought part
+        thought_found = False
+        for part in parts:
+            if isinstance(part, dict) and part.get('thought', False):
+                thought_found = True
+                original_text = part.get('text', '')
+                
+                if original_text:
+                    # Translate the thought to non-technical language
+                    translated_text = await _translate_with_gemini(original_text)
+                    
+                    # Update the text in the event
+                    part['text'] = translated_text
+                    logger.info(f"Translated thought: {original_text[:50]}... -> {translated_text[:50]}...")
+                    
+        # Return the modified event as JSON string
+        return json.dumps(event_data)
+        
+    except Exception as e:
+        logger.error(f"Error translating thought: {e}")
+        # Return original event if translation fails
+        return event_json_str
+
+
+async def _translate_with_gemini(thought_text: str) -> str:
+    """
+    Use Gemini to translate technical thought text to non-technical language.
+    
+    Args:
+        thought_text: The original technical thought text
+        
+    Returns:
+        Translated non-technical text
+    """
+    try:
+        # Get configuration
+        config = get_config()
+        google_cloud_config = config.get("google_cloud", {})
+        project_id = google_cloud_config.get("project")
+        location = google_cloud_config.get("location", "us-central1")
+        
+        # Initialize Vertex AI
+        import vertexai
+        from vertexai.generative_models import GenerativeModel, GenerationConfig, HarmBlockThreshold, HarmCategory
+        vertexai.init(project=project_id, location=location)
+        
+        # Create prompt for translation
+        prompt = f"""You are translating AI assistant internal thoughts into user-friendly language.
+
+Original thought (contains technical details):
+{thought_text}
+
+Rewrite this thought to be conversational and non-technical. Remove any mentions of:
+- Tool names (like google_search, invoke_app_api, etc.)
+- Technical endpoints or API calls
+- Parameter names or JSON structures
+- Function calls or code references
+- System prompts or instructions
+
+Instead, focus on:
+- What the assistant is trying to accomplish
+- The strategy or approach being taken
+- Why this approach makes sense
+- What the user can expect next
+
+Keep the tone friendly and conversational. Use natural language that a non-technical user would understand.
+
+Translated thought (user-friendly):"""
+
+        # Safety settings
+        safety_settings = {
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+        }
+        
+        # Create generation config
+        generation_config = GenerationConfig(
+            temperature=0.7,
+            max_output_tokens=500,
+            top_p=0.8,
+            top_k=40
+        )
+        
+        # Use gemini-2.0-flash-lite model
+        model = GenerativeModel("gemini-2.0-flash-lite")
+        
+        # Generate translated content
+        response = model.generate_content(
+            prompt,
+            generation_config=generation_config,
+            safety_settings=safety_settings
+        )
+        
+        # Extract the translated text
+        if response.candidates and response.candidates[0].content.parts:
+            translated_text = response.candidates[0].content.parts[0].text.strip()
+            return translated_text
+        else:
+            logger.warning("Gemini returned no candidates, using original text")
+            return thought_text
+            
+    except Exception as e:
+        logger.error(f"Error calling Gemini for thought translation: {e}")
+        # Return original text if translation fails
+        return thought_text
 
 
 @router.get("/test-stream")
@@ -321,7 +449,7 @@ async def _handle_streaming_response(runner, request_data, session_id, user_mess
             stream_mode = StreamingMode.SSE
             event_count = 0
             
-            # # Send an immediate response with the session_id
+            # Send an immediate response with the session_id
             session_response = f'data: {{"session_id": "{session_id}", "timestamp": {time.time()}}}\n\n'
             yield session_response
             
@@ -333,6 +461,10 @@ async def _handle_streaming_response(runner, request_data, session_id, user_mess
             ):
                 event_count += 1
                 sse_event = event.model_dump_json(exclude_none=True, by_alias=True)
+                
+                # Translate thought events to non-technical language
+                sse_event = await translate_thought_to_non_technical(sse_event)
+                
                 data = f"data: {sse_event}\n\n"
                 yield data
                 
