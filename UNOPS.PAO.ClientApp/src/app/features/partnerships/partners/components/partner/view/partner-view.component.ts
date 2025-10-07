@@ -971,7 +971,6 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
         overflow: 'hidden',
         backgroundColor: 'white'
       },
-      baseZIndex: 10000,
       dismissableMask: true,
       closeOnEscape: true,
       closable: true,

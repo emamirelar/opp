@@ -4,11 +4,12 @@ import { MarkdownModule } from 'ngx-markdown';
 import { ContentPart } from '../ai-assistant.model';
 import { EntityGridComponent } from './entity-grid/entity-grid.component';
 import { ChartJsComponent } from './chart-js/chart-js.component';
+import { CollapsibleThoughtComponent } from './collapsible-thought/collapsible-thought.component';
 
 @Component({
   selector: 'app-content-renderer',
   standalone: true,
-  imports: [CommonModule, MarkdownModule, EntityGridComponent, ChartJsComponent],
+  imports: [CommonModule, MarkdownModule, EntityGridComponent, ChartJsComponent, CollapsibleThoughtComponent],
   templateUrl: './content-renderer.component.html',
   styleUrls: ['./content-renderer.component.css'],
   encapsulation: ViewEncapsulation.None,

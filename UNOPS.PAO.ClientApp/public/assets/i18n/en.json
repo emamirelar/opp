@@ -1973,5 +1973,9 @@
   "label.advancedSearchResults": "Advanced Search Results",
   "label.showingRecords": "Showing {{count}} records",
   "label.searchResultsCount": "{{current}} of {{total}} results",
-  "label.advancedSearchResultsCount": "{{current}} of {{total}} results"
+  "label.advancedSearchResultsCount": "{{current}} of {{total}} results",
+  "common.accessDenied": "Access Denied",
+  "common.noPermissionToAccess": "You do not have permission to access this feature",
+  "common.error": "Error",
+  "common.failedToLoadPermissions": "Failed to load permissions"
 }

@@ -124,7 +124,7 @@
             <i class="pi pi-sort-alt text-gray-600"></i>
             <p-select
               [options]="sortOptions()"
-              [(ngModel)]="currentSortConfig"
+              [ngModel]="currentSortConfig()"
               (ngModelChange)="onSortConfigChange($event)"
               optionLabel="label"
               optionValue="value"

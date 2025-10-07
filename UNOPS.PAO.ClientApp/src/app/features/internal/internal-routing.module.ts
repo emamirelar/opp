@@ -23,6 +23,7 @@ import { PartnerTreeDataResolver } from './resolvers/partner-tree-data.resolver'
 import { ContactDataResolver } from './resolvers/contact-data.resolver';
 import { UserManagementComponent } from './admin/user-management/user-management.component';
 import { EntityManagerComponent } from './admin/entity-manager/entity-manager.component';
+import { TranslationWorkbenchComponent } from './admin/translation-workbench/translation-workbench.component';
 import { PartnerTreePageComponent } from './components/partner-tree-page/partner-tree-page.component';
 import {
   ContactViewInteractionsComponent
@@ -233,10 +234,9 @@ const internalRoutes: Routes = [
           },
           {
             path: 'translations',
-            component: ComingSoonComponent,
+            component: TranslationWorkbenchComponent,
             data: {
-              breadcrumb: 'Translation Workbench',
-              featureName: 'Translation Workbench'
+              breadcrumb: 'Translation Workbench'
             }
           }
         ]

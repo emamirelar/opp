@@ -57,15 +57,12 @@
   </app-listview>
 
   <!-- Hover Preview Panel -->
-  <p-overlayPanel 
+  <p-popover 
     #previewPanel 
     styleClass="interaction-preview-panel"
-    [showCloseIcon]="false"
-    [dismissable]="true"
-    [autoZIndex]="true"
     appendTo="body">
     @if (previewInteraction()) {
       <app-interaction-preview [interaction]="previewInteraction()!"></app-interaction-preview>
     }
-  </p-overlayPanel>
+  </p-popover>
 </div>

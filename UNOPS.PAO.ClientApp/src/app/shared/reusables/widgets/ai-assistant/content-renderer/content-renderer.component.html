@@ -9,14 +9,14 @@
     <markdown [data]="getStringMessage()"></markdown>
   </div>
   
-  <!-- Thought content with different styling -->
-  <div *ngSwitchCase="'thoughts'" class="content-thought">
-    <markdown [data]="getStringMessage()"></markdown>
+  <!-- Thought content with collapsible styling -->
+  <div *ngSwitchCase="'thoughts'">
+    <app-collapsible-thought [content]="getStringMessage()"></app-collapsible-thought>
   </div>
   
   <!-- Single thought content (for dynamic service) -->
-  <div *ngSwitchCase="'thought'" class="content-thought">
-    <markdown [data]="getStringMessage()"></markdown>
+  <div *ngSwitchCase="'thought'">
+    <app-collapsible-thought [content]="getStringMessage()"></app-collapsible-thought>
   </div>
   
   <!-- Grid/Table content -->

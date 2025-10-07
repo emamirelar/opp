@@ -1,0 +1,193 @@
+.collapsible-thought-container {
+  background: var(--unops-surface-secondary);
+  border-left: 3px solid var(--unops-primary);
+  border-radius: var(--unops-radius-md);
+  margin: 0.75rem 0;
+  overflow: hidden;
+  box-shadow: var(--unops-shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.collapsible-thought-container:hover {
+  box-shadow: var(--unops-shadow-md);
+}
+
+.thought-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  transition: background 0.2s ease;
+  user-select: none;
+}
+
+.thought-header.clickable {
+  cursor: pointer;
+}
+
+.thought-header.clickable:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.thought-header.expanded {
+  border-bottom: 1px solid var(--unops-neutral-200);
+}
+
+.thought-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: transform 0.3s ease;
+}
+
+.thought-header:hover .thought-icon {
+  transform: scale(1.1);
+}
+
+.thought-preview {
+  flex: 1;
+  overflow: hidden;
+  font-style: italic;
+  color: var(--unops-neutral-700);
+  line-height: 1.5;
+}
+
+.thought-preview:not(.expanded) {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.thought-preview.expanded {
+  color: var(--unops-neutral-900);
+}
+
+/* Override markdown styles in preview for inline display */
+.thought-preview ::ng-deep p {
+  margin: 0 !important;
+  display: inline;
+  font-style: inherit;
+  color: inherit;
+}
+
+.thought-preview ::ng-deep strong {
+  font-weight: 600;
+  font-style: italic;
+  color: inherit;
+}
+
+.thought-preview ::ng-deep em {
+  font-style: italic;
+  color: inherit;
+}
+
+.thought-preview ::ng-deep code {
+  font-size: 0.9em;
+  padding: 0.125rem 0.25rem;
+  background: var(--unops-surface-primary);
+  border-radius: var(--unops-radius-sm);
+}
+
+/* Ensure all markdown elements display inline in collapsed state */
+.thought-preview:not(.expanded) ::ng-deep * {
+  display: inline;
+  white-space: nowrap;
+}
+
+.toggle-button {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--unops-primary);
+  transition: transform 0.3s ease;
+}
+
+.chevron-icon {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease;
+}
+
+.chevron-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.thought-content {
+  padding: 1rem;
+  font-style: italic;
+  color: var(--unops-neutral-700);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+
+/* Markdown content styling within thought */
+.thought-content ::ng-deep p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.thought-content ::ng-deep p:first-child {
+  margin-top: 0;
+}
+
+.thought-content ::ng-deep p:last-child {
+  margin-bottom: 0;
+}
+
+.thought-content ::ng-deep strong {
+  font-weight: 600;
+  color: var(--unops-neutral-900);
+}
+
+.thought-content ::ng-deep em {
+  font-style: italic;
+}
+
+.thought-content ::ng-deep code {
+  background: var(--unops-surface-primary);
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--unops-radius-sm);
+  font-size: 0.875em;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.thought-content ::ng-deep ul,
+.thought-content ::ng-deep ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.thought-content ::ng-deep li {
+  margin-bottom: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .thought-header {
+    padding: 0.75rem;
+  }
+  
+  .thought-content {
+    padding: 0.75rem;
+  }
+  
+  .thought-icon {
+    font-size: 1rem;
+  }
+}

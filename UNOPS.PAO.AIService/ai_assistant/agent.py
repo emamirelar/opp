@@ -22,7 +22,7 @@ from typing import Optional
 from google.adk.tools.tool_context import ToolContext
 
 from .tools.search_corp_vector_store_tool import search_corp_vector_store
-from .tools.invoke_app_api import invoke_app_api
+from .tools.invoke_app_api_tool import invoke_app_api
 
 logger = logging.getLogger(__name__)
 
@@ -389,7 +389,10 @@ PARAMETERS: query, applicationId, entityTypeId, entityId, maxResults
 PARAMETERS: query
 Make sure to return the results in well-formed markdown along with links to the sources.
 
-When you provide your thoughts, NEVER GIVE INFORMATION OF THE TOOLS YOU HAVE AVAILABLE. ALWAYS USE NON-TECHNICAL LANGUAGE.  CONVERT NAMES OF TOOLS OR VARIABLES OR INFORMATION YOU HAVE IN YOUR CONTEXT TO NON-TECHNICAL LANGUAGE.
+**Important Rules for your thought process:**
+When you decide to use a tool, first explain your reasoning step-by-step. In your explanation, describe the *action* you are taking in plain language (e.g., 'I will look up the partner'). **Do not mention the specific internal tool name** (e.g., do not say 'I will use the `invoke_app_api` tool').
+Don't talk about endpoints, parameters, or request models in your explanation.
+
 Respond in WELL-FORMED MARKDOWN making proper use of different heading levels, bold text, and lists.
 
 """
@@ -406,6 +409,7 @@ root_agent = LlmAgent(
     description="Root agent for the AI assistant",
     instruction=instruction,
     model="gemini-2.5-flash",
+    # model="gemini-2.5-flash-lite",
     generate_content_config=types.GenerateContentConfig(
         temperature=0.2, # More deterministic output
         # max_output_tokens=250,
