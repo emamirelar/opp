@@ -115,31 +115,31 @@ Maintain the same title as the original thought and maintain the same general st
 Translated thought (user-friendly):"""
 
         # Use Google GenAI Client async API
-        client = Client(vertexai=True, project=project_id, location=location)
-        aclient = client.aio
+        aclient = Client(vertexai=True, project=project_id, location=location).aio
         
-        try:
-            response = await aclient.models.generate_content(
-                model="gemini-2.0-flash-lite",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    temperature=0.7,
-                    max_output_tokens=200,
-                    top_p=0.8,
-                    top_k=40
-                )
+        # try:
+        response = await aclient.models.generate_content(
+            model="gemini-2.0-flash-lite",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.7,
+                max_output_tokens=200,
+                top_p=0.8,
+                top_k=40
             )
-            
-            # Extract the translated text
-            if response.text:
-                translated_text = response.text.strip()
-                return translated_text
-            else:
-                logger.warning("Gemini returned no text, using original text")
-                return thought_text
-        finally:
-            # Close the async client to release resources
-            await aclient.aclose()
+        )
+        
+        # Extract the translated text
+        if response.text:
+            translated_text = response.text.strip()
+            return translated_text
+        else:
+            logger.warning("Gemini returned no text, using original text")
+            return thought_text
+        # finally:
+        #     # Close the async client to release resources
+        #     if aclient.aclose:
+        #         await aclient.aclose()
             
     except Exception as e:
         logger.error(f"Error calling Gemini for thought translation: {e}")
