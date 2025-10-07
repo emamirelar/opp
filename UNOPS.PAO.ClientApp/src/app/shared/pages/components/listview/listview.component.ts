@@ -262,7 +262,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
         sortField: value.defaultSortField!,
         sortOrder: value.defaultSortOrder!
       }));
-      this.currentSortConfig = `${value.defaultSortField}:${value.defaultSortOrder}`;
+      this.currentSortConfig.set(`${value.defaultSortField}:${value.defaultSortOrder}`);
     }
   }
 
@@ -307,7 +307,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   viewMode: 'card' = 'card';
   searchableFields: SearchField[] = [];
   searchValue: any = '';
-  currentSortConfig: string = '';
+  currentSortConfig = signal<string>('');
   operators = [
     { label: 'AND', value: 'AND' },
     { label: 'OR', value: 'OR' }
@@ -537,13 +537,24 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   }
 
   private executeSearch(value: string): void {
+    // When initiating a search, automatically set sort to relevance
+    const shouldAutoSetRelevance = value.trim().length > 0;
+    
     this.state.update(s => ({
       ...s,
       searchText: value,
       pageIndex: 1,
       data: [],
-      hasMoreData: true
+      hasMoreData: true,
+      // Auto-select relevance sorting when search is initiated
+      sortField: shouldAutoSetRelevance ? 'relevance' : s.sortField,
+      sortOrder: shouldAutoSetRelevance ? 'desc' : s.sortOrder
     }));
+
+    // Update the currentSortConfig for the dropdown
+    if (shouldAutoSetRelevance) {
+      this.currentSortConfig.set('relevance:desc');
+    }
 
     const searchParams = this.getSearchParams();
     this.searchChange.emit(searchParams);
@@ -592,6 +603,25 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     } else {
       this.state.update(s => ({ ...s, searchText: '' }));
       this.searchValue = '';
+    }
+
+    // Reset sort to default when clearing search (remove relevance)
+    const defaultSortField = this.config.defaultSortField || '';
+    const defaultSortOrder = this.config.defaultSortOrder || 'asc';
+    if (defaultSortField) {
+      this.currentSortConfig.set(`${defaultSortField}:${defaultSortOrder}`);
+      this.state.update(s => ({
+        ...s,
+        sortField: defaultSortField,
+        sortOrder: defaultSortOrder
+      }));
+    } else {
+      this.currentSortConfig.set('');
+      this.state.update(s => ({
+        ...s,
+        sortField: '',
+        sortOrder: 'asc'
+      }));
     }
 
     const searchParams = this.getSearchParams();
@@ -665,6 +695,17 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   sortOptions(): Array<{ label: string, value: string }> {
     const options: Array<{ label: string, value: string }> = [];
 
+    // Add "Relevance" option only when there's an active search (not advanced search)
+    const hasActiveSearch = this.hasActiveSearch();
+    const isAdvancedSearch = this.isAdvancedSearch();
+    
+    if (hasActiveSearch && !isAdvancedSearch) {
+      options.push({
+        label: this.translateService.instant('search.relevance'),
+        value: 'relevance:desc'
+      });
+    }
+
     this.sortableFields().forEach(field => {
       options.push({
         label: `${field.label} (${this.translateService.instant('label.ascending')})`,
@@ -701,6 +742,9 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
     const [field, order] = sortConfig.split(':');
 
+    // Update the signal to reflect the new sort config
+    this.currentSortConfig.set(sortConfig);
+
     this.state.update(s => ({
       ...s,
       sortField: field,
@@ -712,7 +756,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   }
 
   clearSort(): void {
-    this.currentSortConfig = '';
+    this.currentSortConfig.set('');
 
     this.state.update(s => ({
       ...s,
@@ -830,10 +874,15 @@ export class ListviewComponent<T = any> implements AfterViewInit {
       .set('pageIndex', pageIndex.toString())
       .set('pageSize', pageSize.toString());
 
+    // Always include orderBy parameter
+    // If sortField is 'relevance', pass it explicitly so backend can handle it
     if (sortField) {
-      params = params
-        .set('orderBy', sortField)
-        .set('ascending', (sortOrder === 'asc').toString());
+      params = params.set('orderBy', sortField);
+      
+      // Only include ascending parameter if sortField is NOT 'relevance'
+      if (sortField !== 'relevance') {
+        params = params.set('ascending', (sortOrder === 'asc').toString());
+      }
     }
 
     if (isAdvancedSearchMode && searchCriteria.length > 0) {

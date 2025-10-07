@@ -13,8 +13,16 @@ using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
+using NpgsqlTypes;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
+
+// DTO for SQL query
+public class UserRoleDto
+{
+    public string Email { get; set; }
+    public string RoleName { get; set; }
+}
 
 public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManager
 {
@@ -44,96 +52,187 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
 
     public async Task<PaginationResponse<UserManagementModel>> GetUsersAsync(ClaimsPrincipal user, UserManagementRequest request)
     {
-        // Start with UserProfile query joined with OrganizationHierarchy to get org unit descriptions
-        var userProfileQuery = from up in _context.UserProfile.Where(u => !u.IsDeleted)
-                              join oh in _context.OrganizationHierarchies on up.OrgUnit equals oh.Code into orgJoin
-                              from org in orgJoin.DefaultIfEmpty()
-                              select new { UserProfile = up, OrgHierarchy = org };
+        // OPTIMIZED APPROACH: Use SQL to get filtered UserIds, then get full data for those users
+        
+        // Step 1: Build SQL query to get filtered UserIds with role filtering at database level
+        var sqlParams = new List<object>();
+        var paramIndex = 0;
 
-        var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
-        var orgUnitId = await _context.OrganizationHierarchies
-            .Where(o => o.Code == currentUserOrgUnit)
-            .Select(o => o.Id)
-            .FirstOrDefaultAsync();
+        // Build WHERE conditions
+        var whereConditions = new List<string> { @"up.""IsDeleted"" = false" };
 
-        // Apply "Show My Org Unit Only" filter if requested
+        // Add "Show My Org Unit Only" filter if requested
         if (request.ShowMyOrgUnitOnly)
         {
+            var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             if (!string.IsNullOrEmpty(currentUserOrgUnit))
             {
-                userProfileQuery = userProfileQuery.Where(x => x.OrgHierarchy != null && orgUnitId == x.OrgHierarchy.Id);
+                // For a single value, we still use ANY but wrap it in an array
+                whereConditions.Add($@"up.""OrgUnit"" = ANY(@p{paramIndex})");
+                sqlParams.Add(new[] { currentUserOrgUnit });
+                paramIndex++;
             }
         }
 
-        // Apply org unit filter if specified
-        if (request.OrgUnitFilter != null && request.OrgUnitFilter.Any())
+        // Add org unit filter if provided (and not already filtered by ShowMyOrgUnitOnly)
+        if (!request.ShowMyOrgUnitOnly && request.OrgUnitFilter != null && request.OrgUnitFilter.Any())
         {
-            userProfileQuery = userProfileQuery.Where(x => x.OrgHierarchy != null && request.OrgUnitFilter.Contains(x.OrgHierarchy.Id));
+            var filteredOrgUnitCodes = await _context.OrganizationHierarchies
+                .Where(o => request.OrgUnitFilter.Contains(o.Id))
+                .Select(o => o.Code)
+                .ToListAsync();
+            
+            if (filteredOrgUnitCodes.Any())
+            {
+                whereConditions.Add($@"up.""OrgUnit"" = ANY(@p{paramIndex})");
+                sqlParams.Add(filteredOrgUnitCodes.ToArray());
+                paramIndex++;
+            }
         }
 
-        // Apply search term filter - use actual database fields instead of computed Name property
+        // Add search filter if provided
         if (!string.IsNullOrEmpty(request.SearchTerm))
         {
-            var searchLower = request.SearchTerm.ToLower();
-            userProfileQuery = userProfileQuery.Where(x => 
-                (x.UserProfile.FirstName != null && x.UserProfile.FirstName.ToLower().Contains(searchLower)) ||
-                (x.UserProfile.LastName != null && x.UserProfile.LastName.ToLower().Contains(searchLower)) ||
-                (x.UserProfile.UserEmail != null && x.UserProfile.UserEmail.ToLower().Contains(searchLower)));
+            whereConditions.Add($@"(
+                LOWER(up.""FirstName"") LIKE @p{paramIndex} OR 
+                LOWER(up.""LastName"") LIKE @p{paramIndex} OR 
+                LOWER(up.""UserEmail"") LIKE @p{paramIndex}
+            )");
+            sqlParams.Add($"%{request.SearchTerm.ToLower()}%");
+            paramIndex++;
         }
 
-        // Apply sorting - use actual database fields instead of computed Name property
-        userProfileQuery = request.SortBy?.ToLower() switch
+        var whereClause = string.Join(" AND ", whereConditions);
+
+        // Build HAVING clause for role filter
+        var havingClause = "";
+        if (request.RoleFilter != null && request.RoleFilter.Any())
         {
-            "email" => request.SortDirection?.ToLower() == "desc" 
-                ? userProfileQuery.OrderByDescending(x => x.UserProfile.UserEmail)
-                : userProfileQuery.OrderBy(x => x.UserProfile.UserEmail),
-            "orgunit" => request.SortDirection?.ToLower() == "desc"
-                ? userProfileQuery.OrderByDescending(x => x.OrgHierarchy.Description ?? x.UserProfile.OrgUnit)
-                : userProfileQuery.OrderBy(x => x.OrgHierarchy.Description ?? x.UserProfile.OrgUnit),
-            "lastmodified" => request.SortDirection?.ToLower() == "desc"
-                ? userProfileQuery.OrderByDescending(x => x.UserProfile.LastModifiedDate)
-                : userProfileQuery.OrderBy(x => x.UserProfile.LastModifiedDate),
-            _ => request.SortDirection?.ToLower() == "desc"
-                ? userProfileQuery.OrderByDescending(x => x.UserProfile.FirstName ?? x.UserProfile.LastName ?? x.UserProfile.UserEmail)
-                : userProfileQuery.OrderBy(x => x.UserProfile.FirstName ?? x.UserProfile.LastName ?? x.UserProfile.UserEmail)
+            var roleConditions = request.RoleFilter.Select((role, idx) => 
+            {
+                var paramName = $"@p{paramIndex + idx}";
+                sqlParams.Add($"%{role}%");
+                return $@"STRING_AGG(r.""Name"", ',') LIKE {paramName}";
+            });
+            havingClause = "HAVING " + string.Join(" OR ", roleConditions);
+            paramIndex += request.RoleFilter.Count();
+        }
+
+        // Build ORDER BY clause
+        var orderByColumn = request.SortBy?.ToLower() switch
+        {
+            "email" => @"up.""UserEmail""",
+            "orgunit" => @"up.""OrgUnit""",
+            "lastmodified" => @"up.""LastModifiedDate""",
+            _ => @"up.""FirstName"""
         };
+        var orderByDirection = request.SortDirection?.ToLower() == "desc" ? "DESC" : "ASC";
+        var orderBy = $"{orderByColumn} {orderByDirection}";
 
-        // Get total count before pagination
-        var totalCount = await userProfileQuery.CountAsync();
+        // Execute SQL to get filtered UserIds
+        var sql = $@"
+            SELECT up.""UserId""
+            FROM public.""UserProfile"" up
+            LEFT JOIN public.""AspNetUsers"" u ON up.""UserEmail"" = u.""Email""
+            LEFT JOIN public.""AspNetUserRoles"" ur ON u.""Id"" = ur.""UserId""
+            LEFT JOIN public.""AspNetRoles"" r ON ur.""RoleId"" = r.""Id""
+            WHERE {whereClause}
+            GROUP BY up.""UserId""
+            {havingClause}
+            ORDER BY {orderBy}";
 
-        // Apply pagination
-        var pagedUserProfiles = await userProfileQuery
-            .Skip(request.PageIndex * request.PageSize)
-            .Take(request.PageSize)
+        var filteredUserIds = await _context.Database
+            .SqlQueryRaw<int>(sql, sqlParams.ToArray())
             .ToListAsync();
 
-        // Get user roles for each user
-        var userModels = new List<UserManagementModel>();
-        foreach (var item in pagedUserProfiles)
+        // Get total count
+        var totalCount = filteredUserIds.Count;
+
+        // Apply pagination to UserIds
+        var pagedUserIds = filteredUserIds
+            .Skip(request.PageIndex * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+
+        // Step 2: Get full UserProfile data for the filtered and paginated UserIds
+        var pagedUserProfiles = await _context.UserProfile
+            .Where(u => pagedUserIds.Contains(u.UserId))
+            .ToListAsync();
+
+        // Restore original sorting on the in-memory list
+        pagedUserProfiles = request.SortBy?.ToLower() switch
         {
-            var userProfile = item.UserProfile;
-            var orgHierarchy = item.OrgHierarchy;
+            "email" => request.SortDirection?.ToLower() == "desc" 
+                ? pagedUserProfiles.OrderByDescending(x => x.UserEmail).ToList()
+                : pagedUserProfiles.OrderBy(x => x.UserEmail).ToList(),
+            "orgunit" => request.SortDirection?.ToLower() == "desc"
+                ? pagedUserProfiles.OrderByDescending(x => x.OrgUnit).ToList()
+                : pagedUserProfiles.OrderBy(x => x.OrgUnit).ToList(),
+            "lastmodified" => request.SortDirection?.ToLower() == "desc"
+                ? pagedUserProfiles.OrderByDescending(x => x.LastModifiedDate).ToList()
+                : pagedUserProfiles.OrderBy(x => x.LastModifiedDate).ToList(),
+            _ => request.SortDirection?.ToLower() == "desc"
+                ? pagedUserProfiles.OrderByDescending(x => x.FirstName ?? x.LastName ?? x.UserEmail).ToList()
+                : pagedUserProfiles.OrderBy(x => x.FirstName ?? x.LastName ?? x.UserEmail).ToList()
+        };
+
+        // Get organization hierarchy data
+        var orgUnitCodes = pagedUserProfiles.Select(x => x.OrgUnit).Distinct().ToList();
+        var orgHierarchies = await _context.OrganizationHierarchies
+            .Where(o => orgUnitCodes.Contains(o.Code) && o.Type == OrganizationUnitType.OrgUnit)
+            .GroupBy(o => o.Code)
+            .ToDictionaryAsync(g => g.Key, g => g.First());
+
+        // Get all user emails
+        var userEmails = pagedUserProfiles.Select(x => x.UserEmail).Where(e => !string.IsNullOrEmpty(e)).ToList();
+
+        Dictionary<string, PAOIdentityUser> aspNetUsers;
+        Dictionary<string, List<string>> userRolesDict;
+
+        if (userEmails.Any())
+        {
+            // Get AspNetUsers
+            aspNetUsers = await _userManager.Users
+                .Where(u => userEmails.Contains(u.Email))
+                .ToDictionaryAsync(u => u.Email, u => u);
+
+            // Get all roles in a single query using proper array parameter
+            var emailParam = new Npgsql.NpgsqlParameter("@p0", NpgsqlDbType.Array | NpgsqlDbType.Text)
+            {
+                Value = userEmails.ToArray()
+            };
             
+            var userRolesQuery = await _context.Database.SqlQueryRaw<UserRoleDto>(@"
+                SELECT u.""Email"", r.""Name"" as RoleName
+                FROM ""AspNetUsers"" u
+                INNER JOIN ""AspNetUserRoles"" ur ON u.""Id"" = ur.""UserId""
+                INNER JOIN ""AspNetRoles"" r ON ur.""RoleId"" = r.""Id""
+                WHERE u.""Email"" = ANY(@p0)
+            ", emailParam).ToListAsync();
+
+            userRolesDict = userRolesQuery
+                .GroupBy(ur => ur.Email)
+                .ToDictionary(g => g.Key, g => g.Select(x => x.RoleName).ToList());
+        }
+        else
+        {
+            aspNetUsers = new Dictionary<string, PAOIdentityUser>();
+            userRolesDict = new Dictionary<string, List<string>>();
+        }
+
+        // Build final result
+        var userModels = new List<UserManagementModel>();
+        foreach (var userProfile in pagedUserProfiles)
+        {
             if (string.IsNullOrEmpty(userProfile.UserEmail)) continue;
 
-            var aspNetUser = await _userManager.FindByEmailAsync(userProfile.UserEmail);
-            var roles = new List<string>();
-            var isActive = true; // Default to active if not found in AspNetUsers
+            var aspNetUser = aspNetUsers.GetValueOrDefault(userProfile.UserEmail);
+            var roles = userRolesDict.GetValueOrDefault(userProfile.UserEmail, new List<string>());
+            var isActive = aspNetUser != null 
+                ? !aspNetUser.LockoutEnabled || (aspNetUser.LockoutEnd == null || aspNetUser.LockoutEnd <= DateTimeOffset.UtcNow)
+                : true;
 
-            if (aspNetUser != null)
-            {
-                var userRoles = await _userManager.GetRolesAsync(aspNetUser);
-                roles = userRoles.ToList();
-                isActive = !aspNetUser.LockoutEnabled || 
-                          (aspNetUser.LockoutEnd == null || aspNetUser.LockoutEnd <= DateTimeOffset.UtcNow);
-            }
-            
-            // Apply role filter if specified
-            if (request.RoleFilter != null && request.RoleFilter.Any() && 
-                !request.RoleFilter.Any(rf => roles.Contains(rf)))
-            {
-                continue;
-            }
+            var orgHierarchy = orgHierarchies.GetValueOrDefault(userProfile.OrgUnit);
 
             userModels.Add(new UserManagementModel
             {
@@ -147,12 +246,6 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
                 LastModifiedDate = userProfile.LastModifiedDate,
                 IsActive = isActive
             });
-        }
-
-        // If role filter was applied, we need to adjust the total count
-        if (request.RoleFilter != null && request.RoleFilter.Any())
-        {
-            totalCount = userModels.Count;
         }
 
         return new PaginationResponse<UserManagementModel>
