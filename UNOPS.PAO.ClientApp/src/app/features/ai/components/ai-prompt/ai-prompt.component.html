@@ -166,13 +166,13 @@
     [draggable]="false"
     [resizable]="false"
     styleClass="overflow-hidden">
-    
+
     <ng-template pTemplate="header">
       <div class="flex justify-between items-center w-full ai-prompt-dialog-header">
         <h3 class="text-lg font-semibold text-gray-900">{{ dialogTitle() }}</h3>
         <div class="flex items-center gap-2">
           <!-- Tour Button -->
-          <app-tour-control 
+          <app-tour-control
             class="ai-prompt-tour-control"
             customTourFile="aiprompt-dialog-tour"
             tourContext="dialog">
@@ -357,7 +357,7 @@
                         <label class="block text-sm font-semibold text-gray-700">
                           {{ 'aiPrompt.temperature' | translate }}
                         </label>
-                        <i class="pi pi-question-circle text-gray-400 cursor-help"
+                        <i class="pi pi-question-circle text-gray-400 "
                            [pTooltip]="'aiPrompt.temperatureHelp' | translate"
                            tooltipPosition="top"></i>
                       </div>
@@ -383,7 +383,7 @@
                         <label class="block text-sm font-semibold text-gray-700">
                           {{ 'aiPrompt.topP' | translate }}
                         </label>
-                        <i class="pi pi-question-circle text-gray-400 cursor-help"
+                        <i class="pi pi-question-circle text-gray-400 "
                            [pTooltip]="'aiPrompt.topPHelp' | translate"
                            tooltipPosition="top"></i>
                       </div>
@@ -409,7 +409,7 @@
                         <label class="block text-sm font-semibold text-gray-700">
                           {{ 'aiPrompt.maxOutputTokens' | translate }}
                         </label>
-                        <i class="pi pi-question-circle text-gray-400 cursor-help"
+                        <i class="pi pi-question-circle text-gray-400 "
                            [pTooltip]="'aiPrompt.maxOutputTokensHelp' | translate"
                            tooltipPosition="top"></i>
                       </div>
@@ -459,7 +459,7 @@
                           {{ 'aiPrompt.useCache' | translate }}
                         </label>
                       </div>
-                      
+
                       <!-- Cache Duration (shown when useCache is enabled) -->
                       <div class="space-y-3" *ngIf="promptForm.get('useCache')?.value">
                         <div class="space-y-2">
@@ -485,34 +485,34 @@
                             {{ 'aiPrompt.cacheInvalidationMinutesError' | translate }}
                           </small>
                         </div>
-                        
+
                         <!-- Quick Duration Buttons -->
                         <div class="space-y-2">
                           <label class="block text-sm font-semibold text-gray-700">
                             {{ 'aiPrompt.quickDuration' | translate }}
                           </label>
                           <div class="flex flex-wrap gap-2">
-                            <button type="button" 
+                            <button type="button"
                                     class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                                     (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(30)">
                               30m
                             </button>
-                            <button type="button" 
+                            <button type="button"
                                     class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                                     (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(60)">
                               1h
                             </button>
-                            <button type="button" 
+                            <button type="button"
                                     class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                                     (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(180)">
                               3h
                             </button>
-                            <button type="button" 
+                            <button type="button"
                                     class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                                     (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(720)">
                               12h
                             </button>
-                            <button type="button" 
+                            <button type="button"
                                     class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
                                     (click)="promptForm.get('cacheInvalidationMinutes')?.setValue(1440)">
                               1d
@@ -595,8 +595,8 @@
             <div class="border-l border-gray-200 pl-6 flex flex-col overflow-hidden xl:col-span-1">
               <div class="space-y-6 h-full flex flex-col overflow-y-auto">
                 <!-- Test Section -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex-shrink-0 test-prompt-section" 
-                     [class.opacity-50]="isTestSectionDisabled()" 
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex-shrink-0 test-prompt-section"
+                     [class.opacity-50]="isTestSectionDisabled()"
                      [class.pointer-events-none]="isTestSectionDisabled()">
                   <div class="space-y-4">
                     <div>
@@ -827,7 +827,7 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- AI Prompt Writing Guide - Always Available -->
             <div class="relative border-l border-gray-200 flex flex-col overflow-hidden help-tab-section transition-all duration-300 xl:col-span-1 pl-6">
               <div *ngIf="showHelpTab()" class="h-full flex flex-col overflow-y-auto">
@@ -841,7 +841,7 @@
                     </div>
                     <p class="text-base text-green-700 leading-relaxed">{{ 'aiPrompt.helpDescription' | translate }}</p>
                   </div>
-                  
+
                 <div class="space-y-4 flex-1 overflow-y-auto">
                   <!-- Quick Tips -->
                   <div class="bg-white border border-gray-200 rounded-lg p-4">
