@@ -17,8 +17,8 @@ import { EntityConfigurationService } from '@features/shared/services/entity-con
 import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
 import { InteractionIconService } from '@shared/services/interaction-icon.service';
 import { InteractionPreviewComponent } from '../preview/interaction-preview.component';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
-import { OverlayPanel } from 'primeng/overlaypanel';
+import { PopoverModule } from 'primeng/popover';
+import { Popover } from 'primeng/popover';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { PageContextService } from '@shared/services/page-context.service';
@@ -48,7 +48,7 @@ import { PageContextService } from '@shared/services/page-context.service';
     TranslateModule,
     ListviewComponent,
     InteractionPreviewComponent,
-    OverlayPanelModule,
+    PopoverModule,
     MenuModule,
   ],
   providers: [
@@ -64,7 +64,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   listviewComponent?: ListviewComponent;
 
   @ViewChild("previewPanel")
-  previewPanel?: OverlayPanel;
+  previewPanel?: Popover;
 
   previewInteraction = signal<Interaction | null>(null);
 
