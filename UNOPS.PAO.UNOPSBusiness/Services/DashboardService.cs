@@ -368,14 +368,14 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
             List<int>? orgUnitIds = null;
             string orgUnitName = "your organization unit";
             int? orgUnitId = null;
-            
+
             if (globalFilters?.OrgUnitId.HasValue == true)
             {
                 orgUnitId = globalFilters.OrgUnitId.Value;
-                
+
                 // Get descendant org unit IDs for hierarchical filtering
                 orgUnitIds = await _hierarchyService.GetDescendantIdsAsync(globalFilters.OrgUnitId.Value);
-                _logger.LogInformation("Applying org unit filter for {OrgUnitId}, including {Count} descendant units", 
+                _logger.LogInformation("Applying org unit filter for {OrgUnitId}, including {Count} descendant units",
                     globalFilters.OrgUnitId.Value, orgUnitIds.Count);
 
                 // Logic to get the Org Unit Name directly from database
@@ -383,7 +383,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
                     .Where(oh => oh.Id == orgUnitId.Value)
                     .Select(oh => new { oh.Name })
                     .FirstOrDefaultAsync();
-                
+
                 if (orgUnit != null && !string.IsNullOrEmpty(orgUnit.Name))
                 {
                     orgUnitName = orgUnit.Name;
@@ -393,6 +393,25 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
                     orgUnitName = $"Org Unit {orgUnitId.Value}";
                 }
             }
+
+            // Build user name lookup dictionary from UserProfile
+            var userProfiles = await _context.Set<UserProfile>()
+                .Select(up => new { up.UserId, up.FirstName, up.LastName })
+                .ToListAsync();
+
+            var userNameLookup = userProfiles.ToDictionary(
+                up => up.UserId,
+                up => {
+                    if (!string.IsNullOrEmpty(up.FirstName) && !string.IsNullOrEmpty(up.LastName))
+                        return $"{up.FirstName} {up.LastName}".Trim();
+                    else if (!string.IsNullOrEmpty(up.FirstName))
+                        return up.FirstName;
+                    else if (!string.IsNullOrEmpty(up.LastName))
+                        return up.LastName;
+                    else
+                        return $"User {up.UserId}";
+                }
+            );
 
             var allUpdates = new List<RecentUpdateModel>();
 
@@ -415,18 +434,25 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
             // Apply RBAC filtering for partners
             var filteredPartners = await ApplyAccessControlFiltersWithEntityName(
-                partnerQuery.OrderByDescending(p => p.LastModifiedDate).Take(20), 
+                partnerQuery.OrderByDescending(p => p.LastModifiedDate).Take(20),
                 user, "read", "Partner");
-            
-            var recentPartners = filteredPartners.Select(p => new RecentUpdateModel
+
+            var recentPartners = filteredPartners.Select(p =>
             {
-                Id = p.Id,
-                Name = p.Name,
-                Type = "Partner",
-                LastModifiedDate = p.LastModifiedDate,
-                LastModifiedBy = p.LastModifiedBy,
-                Status = p.Status.ToString(),
-                EntityData = null
+                var userId = p.LastModifiedBy != 0 ? p.LastModifiedBy : p.CreatedBy;
+                return new RecentUpdateModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Type = "Partner",
+                    LastModifiedDate = p.LastModifiedDate,
+                    LastModifiedBy = userId,
+                    LastModifiedByName = userNameLookup.ContainsKey(userId)
+                        ? userNameLookup[userId]
+                        : $"User {userId}",
+                    Status = p.Status.ToString(),
+                    EntityData = null
+                };
             }).ToList();
 
             allUpdates.AddRange(recentPartners);
@@ -450,18 +476,25 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
             // Apply RBAC filtering for contacts
             var filteredContacts = await ApplyAccessControlFiltersWithEntityName(
-                contactQuery.OrderByDescending(c => c.LastModifiedDate).Take(20), 
+                contactQuery.OrderByDescending(c => c.LastModifiedDate).Take(20),
                 user, "read", "Contact");
-            
-            var recentContacts = filteredContacts.Select(c => new RecentUpdateModel
+
+            var recentContacts = filteredContacts.Select(c =>
             {
-                Id = c.Id,
-                Name = c.FirstName + " " + c.LastName,
-                Type = "Contact",
-                LastModifiedDate = c.LastModifiedDate,
-                LastModifiedBy = c.LastModifiedBy,
-                Status = c.Status.ToString(),
-                EntityData = null
+                var userId = c.LastModifiedBy != 0 ? c.LastModifiedBy : c.CreatedBy;
+                return new RecentUpdateModel
+                {
+                    Id = c.Id,
+                    Name = c.FirstName + " " + c.LastName,
+                    Type = "Contact",
+                    LastModifiedDate = c.LastModifiedDate,
+                    LastModifiedBy = userId,
+                    LastModifiedByName = userNameLookup.ContainsKey(userId)
+                        ? userNameLookup[userId]
+                        : $"User {userId}",
+                    Status = c.Status.ToString(),
+                    EntityData = null
+                };
             }).ToList();
 
             allUpdates.AddRange(recentContacts);
@@ -485,18 +518,25 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
             // Apply RBAC filtering for interactions
             var filteredInteractions = await ApplyAccessControlFiltersWithEntityName(
-                interactionQuery.OrderByDescending(i => i.LastModifiedDate).Take(20), 
+                interactionQuery.OrderByDescending(i => i.LastModifiedDate).Take(20),
                 user, "read", "Interaction");
-            
-            var recentInteractions = filteredInteractions.Select(i => new RecentUpdateModel
+
+            var recentInteractions = filteredInteractions.Select(i =>
             {
-                Id = i.Id,
-                Name = i.Subject ?? "Untitled Interaction",
-                Type = "Interaction",
-                LastModifiedDate = i.LastModifiedDate,
-                LastModifiedBy = i.LastModifiedBy,
-                Status = i.Status.ToString(),
-                EntityData = null
+                var userId = i.LastModifiedBy != 0 ? i.LastModifiedBy : i.CreatedBy;
+                return new RecentUpdateModel
+                {
+                    Id = i.Id,
+                    Name = i.Subject ?? "Untitled Interaction",
+                    Type = "Interaction",
+                    LastModifiedDate = i.LastModifiedDate,
+                    LastModifiedBy = userId,
+                    LastModifiedByName = userNameLookup.ContainsKey(userId)
+                        ? userNameLookup[userId]
+                        : $"User {userId}",
+                    Status = i.Status.ToString(),
+                    EntityData = null
+                };
             }).ToList();
 
             allUpdates.AddRange(recentInteractions);
