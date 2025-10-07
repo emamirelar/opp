@@ -22,7 +22,7 @@ from typing import Optional
 from google.adk.tools.tool_context import ToolContext
 
 from .tools.search_corp_vector_store_tool import search_corp_vector_store
-from .tools.invoke_app_api import invoke_app_api
+from .tools.invoke_app_api_tool import invoke_app_api
 
 logger = logging.getLogger(__name__)
 
