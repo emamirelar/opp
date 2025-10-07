@@ -138,7 +138,7 @@ public class PartnerModel
         }
         
         // Partner Approval Status Tags  
-        if (!string.IsNullOrEmpty(PartnerApprovalStatus))
+        if (!string.IsNullOrEmpty(PartnerApprovalStatus) && !string.IsNullOrEmpty(Status) && Status != "Closed" && Status != "Archived")
         {
             var approvalTag = PartnerApprovalStatus switch
             {
