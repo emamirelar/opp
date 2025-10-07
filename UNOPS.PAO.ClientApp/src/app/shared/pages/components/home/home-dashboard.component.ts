@@ -50,7 +50,8 @@ interface RecentUpdate {
   name: string;
   type: 'Partner' | 'Contact' | 'Interaction';
   lastModifiedDate: string;
-  lastModifiedBy: string;
+  lastModifiedBy: number;
+  lastModifiedByName?: string;
   status: string;
   entityData?: any; // Additional entity-specific data
 }
