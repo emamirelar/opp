@@ -1259,3 +1259,89 @@ INSERT INTO public."EntityPermissions" (
     null,
     '{"CanRead": ""}'
 );
+
+-- Translation Entity Permissions
+
+-- UNOPS General User role permissions for Translation
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Translation',
+    'UNOPS_GEN_USER',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Partnership Global Admin role permissions for Translation
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Translation',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    true,
+    true,
+    true,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Partnerships User role permissions for Translation
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Translation',
+    'PARTNER_USER',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Org Unit Admin role permissions for Translation
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Translation',
+    'ORG_UNIT_ADMIN',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);

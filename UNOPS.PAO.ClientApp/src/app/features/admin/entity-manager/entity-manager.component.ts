@@ -43,6 +43,7 @@ import {
   RelatedFieldOption
 } from '@features/shared/services/entity-configuration.service';
 import { InteractionIconService } from '@shared/services/interaction-icon.service';
+import { PermissionService, EntityPermissions } from '@core/services/permission.service';
 
 /**
  * @uiEntity EntityManager
@@ -101,6 +102,7 @@ export class EntityManagerComponent implements OnInit {
   private translateService = inject(TranslateService);
   private interactionIconService = inject(InteractionIconService);
   private destroyRef = inject(DestroyRef);
+  private permissionService = inject(PermissionService);
 
   // Auto-save timer for debounced saving
   private autoSaveTimer?: ReturnType<typeof setTimeout>;
@@ -137,14 +139,17 @@ export class EntityManagerComponent implements OnInit {
   });
 
   // Permissions
-  permissions = signal<EntityPermissionsModel>({
+  entityPermissions = signal<EntityPermissions>({
     entity: 'EntityManager',
-    canCreate: false,
-    canRead: false,
-    canUpdate: false,
-    canDelete: false,
-    canExport: false,
-    canImport: false
+    hasAccess: false,
+    permissions: {
+      canRead: false,
+      canCreate: false,
+      canUpdate: false,
+      canDelete: false,
+      canExport: false,
+      canImport: false
+    }
   });
 
   // UI state
@@ -217,8 +222,8 @@ export class EntityManagerComponent implements OnInit {
   }
 
   // Computed values
-  hasAccessToManage = computed(() => this.permissions().canUpdate);
-  canViewOnly = computed(() => this.permissions().canRead && !this.permissions().canUpdate);
+  hasAccessToManage = computed(() => this.entityPermissions().permissions.canUpdate);
+  canViewOnly = computed(() => this.entityPermissions().permissions.canRead && !this.entityPermissions().permissions.canUpdate);
   entityOptions = computed(() => 
     this.entities().map(entity => ({ 
       label: entity.entityName, 
@@ -332,22 +337,31 @@ export class EntityManagerComponent implements OnInit {
 
   private loadPermissions() {
     this.permissionsLoading.set(true);
-    this.entityConfigService.getEntityPermissions().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    
+    // Clear cache before loading to ensure fresh permissions
+    this.permissionService.clearPermissionCaches();
+    
+    // Get current route path for permission checking
+    const currentPath = this.router.url;
+    
+    // Load from server (cache was cleared above)
+    this.permissionService.getEntityPermissions(currentPath).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (permissions) => {
-        this.permissions.set(permissions);
+        this.entityPermissions.set(permissions);
         this.permissionsLoading.set(false);
         
-        if (!permissions.canRead) {
+        if (!permissions.hasAccess) {
           this.messageService.add({
             severity: 'error',
             summary: this.translateService.instant('entityManager.errors.accessDenied'),
             detail: this.translateService.instant('entityManager.errors.noPermissionToAccess')
           });
-          this.router.navigate(['/']);
+          this.router.navigate(['/access-denied']);
           return;
         }
         
         this.loadEntities();
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading permissions:', error);
@@ -357,6 +371,7 @@ export class EntityManagerComponent implements OnInit {
           summary: this.translateService.instant('entityManager.errors.error'),
           detail: this.translateService.instant('entityManager.errors.failedToLoadPermissions')
         });
+        this.cdr.detectChanges();
       }
     });
   }
@@ -1617,8 +1632,8 @@ export class EntityManagerComponent implements OnInit {
    */
   exportEntityConfigurationAsSql(): void {
     // Check read permissions
-    const permissions = this.permissions();
-    if (!permissions.canRead) {
+    const permissions = this.entityPermissions();
+    if (!permissions.permissions.canRead) {
       this.messageService.add({
         severity: 'warn',
         summary: this.translateService.instant('entityManager.errors.permissionDenied'),
