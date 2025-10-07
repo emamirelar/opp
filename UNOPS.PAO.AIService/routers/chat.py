@@ -87,10 +87,8 @@ async def _translate_with_gemini(thought_text: str) -> str:
         project_id = google_cloud_config.get("project")
         location = google_cloud_config.get("location", "us-central1")
         
-        # Initialize Vertex AI
-        import vertexai
-        from vertexai.generative_models import GenerativeModel, GenerationConfig, HarmBlockThreshold, HarmCategory
-        vertexai.init(project=project_id, location=location)
+        # Initialize Google GenAI Client
+        from google.genai import Client
         
         # Create prompt for translation
         prompt = f"""You are translating AI assistant internal thoughts into user-friendly language.
@@ -111,43 +109,37 @@ Instead, focus on:
 - Why this approach makes sense
 - What the user can expect next
 
-Keep the tone friendly and conversational. Use natural language that a non-technical user would understand.
+Keep the tone friendly, conversational, and fun. Use natural language that a non-technical user would understand.
+Maintain the same title as the original thought and maintain the same general style and fun attitude of the original thought.
 
 Translated thought (user-friendly):"""
 
-        # Safety settings
-        safety_settings = {
-            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-        }
+        # Use Google GenAI Client async API
+        client = Client(vertexai=True, project=project_id, location=location)
+        aclient = client.aio
         
-        # Create generation config
-        generation_config = GenerationConfig(
-            temperature=0.7,
-            max_output_tokens=500,
-            top_p=0.8,
-            top_k=40
-        )
-        
-        # Use gemini-2.0-flash-lite model
-        model = GenerativeModel("gemini-2.0-flash-lite")
-        
-        # Generate translated content
-        response = model.generate_content(
-            prompt,
-            generation_config=generation_config,
-            safety_settings=safety_settings
-        )
-        
-        # Extract the translated text
-        if response.candidates and response.candidates[0].content.parts:
-            translated_text = response.candidates[0].content.parts[0].text.strip()
-            return translated_text
-        else:
-            logger.warning("Gemini returned no candidates, using original text")
-            return thought_text
+        try:
+            response = await aclient.models.generate_content(
+                model="gemini-2.0-flash-lite",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.7,
+                    max_output_tokens=200,
+                    top_p=0.8,
+                    top_k=40
+                )
+            )
+            
+            # Extract the translated text
+            if response.text:
+                translated_text = response.text.strip()
+                return translated_text
+            else:
+                logger.warning("Gemini returned no text, using original text")
+                return thought_text
+        finally:
+            # Close the async client to release resources
+            await aclient.aclose()
             
     except Exception as e:
         logger.error(f"Error calling Gemini for thought translation: {e}")
@@ -463,6 +455,7 @@ async def _handle_streaming_response(runner, request_data, session_id, user_mess
                 sse_event = event.model_dump_json(exclude_none=True, by_alias=True)
                 
                 # Translate thought events to non-technical language
+                # Comment this lline out to output raw thoughts (which contain tool names, etc.)
                 sse_event = await translate_thought_to_non_technical(sse_event)
                 
                 data = f"data: {sse_event}\n\n"

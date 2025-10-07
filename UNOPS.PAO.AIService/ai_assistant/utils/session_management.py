@@ -325,7 +325,7 @@ async def get_or_create_session(
 
 def call_gemini_direct(prompt: str, model_name: str = "gemini-1.5-flash", max_tokens: int = 100, temperature: float = 0.7) -> str:
     """
-    Make a direct call to Gemini via Vertex AI.
+    Make a direct call to Gemini via Google GenAI SDK.
     
     Args:
         prompt (str): The prompt to send to Gemini
@@ -352,66 +352,61 @@ def call_gemini_direct(prompt: str, model_name: str = "gemini-1.5-flash", max_to
         if not project_id:
             raise ValueError("Google Cloud Project ID not found in configuration or environment variables")
         
-        logger.info(f"🔧 Initializing Vertex AI for project: {project_id}, location: {location}")
+        logger.info(f"🔧 Initializing Google GenAI Client for project: {project_id}, location: {location}")
         
-        # Initialize Vertex AI
-        import vertexai
-        from vertexai.generative_models import GenerativeModel, GenerationConfig, HarmBlockThreshold, HarmCategory
-        vertexai.init(project=project_id, location=location)
-
-        safety_settings = {
-            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-        }
+        # Initialize Google GenAI Client
+        from google.genai import Client, types
         
-        # Create generation config
-        generation_config = GenerationConfig(
-            temperature=temperature,
-            max_output_tokens=max_tokens,
-            top_p=0.8,
-            top_k=40
-        )
-        
-        # Create model and generate content
-        model = GenerativeModel(model_name)
-        logger.info(f"🤖 Sending prompt to Gemini model: {model_name}")
-        
-        response = model.generate_content(
-            prompt,
-            generation_config=generation_config,
-            safety_settings=safety_settings
-        )
-
-        print(response)
-        
-        # Extract the generated text
-        if response.candidates and response.candidates[0].content.parts:
-            generated_text = response.candidates[0].content.parts[0].text.strip()
-            logger.info(f"✅ Gemini response generated successfully: {generated_text[:50]}...")
-            return generated_text
-        else:
-            # Handle cases where no valid response was generated
-            print(f"🔍 DEBUG: Response object details:")
-            print(f"  - Response type: {type(response)}")
-            print(f"  - Has candidates: {hasattr(response, 'candidates')}")
-            print(f"  - Candidates: {getattr(response, 'candidates', 'N/A')}")
-            print(f"  - Response attributes: {dir(response)}")
+        # Create client with Vertex AI backend
+        with Client(vertexai=True, project=project_id, location=location) as client:
+            logger.info(f"🤖 Sending prompt to Gemini model: {model_name}")
             
-            if response.prompt_feedback and response.prompt_feedback.block_reason:
-                error_msg = f"Gemini blocked the response due to: {response.prompt_feedback.block_reason}"
-                logger.warning(f"⚠️ {error_msg}")
-                print(f"🔍 DEBUG: Prompt feedback details:")
-                print(f"  - Block reason: {response.prompt_feedback.block_reason}")
-                print(f"  - Safety ratings: {getattr(response.prompt_feedback, 'safety_ratings', 'N/A')}")
-                raise Exception(error_msg)
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=temperature,
+                    max_output_tokens=max_tokens,
+                    top_p=0.8,
+                    top_k=40,
+                    safety_settings=[
+                        types.SafetySetting(
+                            category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                            threshold=types.HarmBlockThreshold.BLOCK_NONE
+                        ),
+                        types.SafetySetting(
+                            category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                            threshold=types.HarmBlockThreshold.BLOCK_NONE
+                        ),
+                        types.SafetySetting(
+                            category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                            threshold=types.HarmBlockThreshold.BLOCK_NONE
+                        ),
+                        types.SafetySetting(
+                            category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                            threshold=types.HarmBlockThreshold.BLOCK_NONE
+                        )
+                    ]
+                )
+            )
+
+            print(response)
+            
+            # Extract the generated text
+            if response.text:
+                generated_text = response.text.strip()
+                logger.info(f"✅ Gemini response generated successfully: {generated_text[:50]}...")
+                return generated_text
             else:
+                # Handle cases where no valid response was generated
+                print(f"🔍 DEBUG: Response object details:")
+                print(f"  - Response type: {type(response)}")
+                print(f"  - Response attributes: {dir(response)}")
+                
                 error_msg = "No valid response could be generated from Gemini"
                 logger.warning(f"⚠️ {error_msg}")
-                print(f"🔍 DEBUG: No prompt feedback available")
-                print(f"  - Response text: {getattr(response, 'text', 'N/A')}")
-                print(f"  - Response content: {getattr(response, 'content', 'N/A')}")
+                print(f"🔍 DEBUG: No text in response")
+                print(f"  - Response: {response}")
                 raise Exception(error_msg)
                 
     except Exception as e:
