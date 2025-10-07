@@ -47,9 +47,7 @@ import { MessageService, ConfirmationService } from 'primeng/api';
             [dropdownIcon]="'pi pi-chevron-down'"
             [overlayOptions]="{
               styleClass: 'w-[600px] min-h-[300px]',
-              appendTo: 'body',
-              baseZIndex: 1000,
-              autoZIndex: true
+              appendTo: 'body'
             }"
             placeholder="Select roles">
             <ng-template let-role pTemplate="item">

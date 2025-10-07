@@ -17,7 +17,7 @@ import { ConfirmationService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
 import { SelectModule } from 'primeng/select';
 import { ChipModule } from 'primeng/chip';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { PopoverModule } from 'primeng/popover';
 import { ListviewCardComponent } from './card/listview-card.component';
 import { TooltipModule } from 'primeng/tooltip';
 import { SearchField } from '@shared/services/search-parser.service';
@@ -64,7 +64,7 @@ interface ListViewState<T> {
     DropdownModule,
     SelectModule,
     ChipModule,
-    OverlayPanelModule,
+    PopoverModule,
     ListviewCardComponent,
     TooltipModule,
     ListviewAdvancedSearchComponent,

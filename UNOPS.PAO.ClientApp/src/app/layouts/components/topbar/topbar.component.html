@@ -108,7 +108,7 @@
 			<!-- Notification badge positioned outside the button -->
 			<span *ngIf="unreadCount > 0" class="notification-badge" [attr.data-count]="unreadCount">{{getDisplayCount()}}</span>
 		</div>
-      <p-overlayPanel #notificationPanel [style]="{width: '450px', maxHeight: '600px'}">
+      <p-popover #notificationPanel [style]="{width: '450px', maxHeight: '600px'}">
         <div class="notification-panel">
           <div class="notification-header">
             <h3>{{ 'notifications.title' | translate }}</h3>
@@ -208,10 +208,10 @@
             </div>
           </div>
         </div>
-      </p-overlayPanel>
+      </p-popover>
       
       <!-- Chat History Panel -->
-      <p-overlayPanel #chatHistoryPanel [style]="{width: '400px', maxHeight: '500px'}">
+      <p-popover #chatHistoryPanel [style]="{width: '400px', maxHeight: '500px'}">
         <div class="chat-history-panel">
           <div class="chat-history-header">
             <h3>{{ 'chatHistory.title' | translate }}</h3>
@@ -280,7 +280,7 @@
             </div>
           </div>
         </div>
-      </p-overlayPanel>
+      </p-popover>
       
 		<!-- Priority 6: User Profile -->
 		<div class="ml-auto profile-menu" [class.search-expanded-hide-mobile]="isSearchExpanded">

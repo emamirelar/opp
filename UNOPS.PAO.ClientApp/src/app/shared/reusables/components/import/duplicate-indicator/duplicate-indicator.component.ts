@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TooltipModule } from 'primeng/tooltip';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { PopoverModule } from 'primeng/popover';
 import { TagModule } from 'primeng/tag';
 import { DividerModule } from 'primeng/divider';
 import { TranslateModule } from '@ngx-translate/core';
@@ -32,7 +32,7 @@ export interface DuplicateDetectionInfo {
     TooltipModule,
     BadgeModule,
     ButtonModule,
-    OverlayPanelModule,
+    PopoverModule,
     TagModule,
     DividerModule,
     TranslateModule
@@ -63,7 +63,7 @@ export interface DuplicateDetectionInfo {
         </div>
 
         <!-- Detailed Duplicate Information Overlay -->
-        <p-overlayPanel #op [showCloseIcon]="true" [style]="{ width: '400px' }">
+        <p-popover #op [style]="{ width: '400px' }">
           <div class="duplicate-details">
             <!-- Header -->
             <div class="duplicate-header">
@@ -193,7 +193,7 @@ export interface DuplicateDetectionInfo {
               </div>
             }
           </div>
-        </p-overlayPanel>
+        </p-popover>
       } @else {
         <!-- No Duplicates Indicator -->
         <button 
