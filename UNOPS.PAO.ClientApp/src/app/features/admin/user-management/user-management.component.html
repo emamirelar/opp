@@ -41,8 +41,8 @@
               <input
                 pInputText
                 id="search"
-                [(ngModel)]="searchTerm"
-                (ngModelChange)="onSearch()"
+                [ngModel]="searchTerm()"
+                (ngModelChange)="searchTerm.set($event); onSearch()"
                 [placeholder]="'placeholder.searchByNameOrEmail' | translate"
                 class="w-full">
             </span>
@@ -55,12 +55,12 @@
             </label>
             <p-multiSelect
               id="roleFilter"
-              [(ngModel)]="roleFilter"
+              [ngModel]="roleFilter()"
+              (ngModelChange)="roleFilter.set($event); onFilterChange()"
               [options]="roleOptions()"
               [placeholder]="'placeholder.selectRoles' | translate"
               [showClear]="true"
               [showToggleAll]="true"
-              (onChange)="onFilterChange()"
               class="w-full">
             </p-multiSelect>
           </div>
@@ -73,12 +73,12 @@
               </label>
               <p-multiSelect
                 id="orgUnitFilter"
-                [(ngModel)]="orgUnitFilter"
+                [ngModel]="orgUnitFilter()"
+                (ngModelChange)="orgUnitFilter.set($event); onFilterChange()"
                 [options]="orgUnitOptions()"
                 [placeholder]="'placeholder.selectOrgUnits' | translate"
                 [showClear]="true"
                 [showToggleAll]="true"
-                (onChange)="onFilterChange()"
                 [disabled]="showMyOrgUnitOnly()"
                 class="w-full">
               </p-multiSelect>
@@ -90,8 +90,8 @@
             <label class="block text-sm font-medium mb-2">&nbsp;</label>
             <div class="flex align-items-center">
               <p-checkbox
-                [(ngModel)]="showMyOrgUnitOnly"
-                (onChange)="onFilterChange()"
+                [ngModel]="showMyOrgUnitOnly()"
+                (ngModelChange)="showMyOrgUnitOnly.set($event); onFilterChange()"
                 [binary]="true"
                 [disabled]="isOrgUnitFilterDisabled()"
                 inputId="showMyOrgUnit">
@@ -291,7 +291,8 @@
 
             <div class="flex align-items-center gap-3 p-3 border-1 border-gray-200 border-round">
               <p-checkbox
-                [(ngModel)]="isPartnerUser"
+                [ngModel]="isPartnerUser()"
+                (ngModelChange)="isPartnerUser.set($event)"
                 [binary]="true"
                 inputId="partnerUserRole">
               </p-checkbox>
@@ -317,7 +318,8 @@
 
                 <div class="flex align-items-center gap-3 p-3 border-1 border-gray-200 border-round">
                   <p-checkbox
-                    [(ngModel)]="isSelfManagementEnabled"
+                    [ngModel]="isSelfManagementEnabled()"
+                    (ngModelChange)="isSelfManagementEnabled.set($event)"
                     [binary]="true"
                     inputId="selfManagementEnabled">
                   </p-checkbox>
