@@ -257,6 +257,92 @@ INSERT INTO public."EntityPermissions" (
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
+
+-- PartnerTreeManagement Entity Permissions (for route/page access control)
+
+-- UNOPS General User role permissions for PartnerTreeManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerTreeManagement',
+    'UNOPS_GEN_USER',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Partnership Global Admin role permissions for PartnerTreeManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerTreeManagement',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    true,
+    true,
+    true,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Partnerships User role permissions for PartnerTreeManagement (NO PAGE ACCESS)
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerTreeManagement',
+    'PARTNER_USER',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Org Unit Admin role permissions for PartnerTreeManagement (NO PAGE ACCESS)
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerTreeManagement',
+    'ORG_UNIT_ADMIN',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
 -- Interaction Entity Permissions
 
 -- UNOPS General User role permissions for Interaction
