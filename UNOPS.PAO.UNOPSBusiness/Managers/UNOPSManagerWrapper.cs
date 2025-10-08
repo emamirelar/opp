@@ -71,7 +71,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, globalFilterService, httpContextAccessor, serviceProvider);
         linkManager = new LinkManager(mapper, opsContext);
         // Create GeminiManager first (without userManagementManager dependency)
-        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, geminiManagerLogger, null, userInfoService, userManager, roleManager, userPreferenceService, userProfileCacheService, screenContextCacheService, geoTimeCacheService, aiPromptCacheService);
+        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, geminiManagerLogger, null, userInfoService, userManager, roleManager, userPreferenceService, userProfileCacheService, screenContextCacheService, geoTimeCacheService, aiPromptCacheService, memoryCache, httpClient);
         
         // Create UserManagementManager with GeminiManager dependency
         userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService, geminiManager, userManagementManagerLogger);

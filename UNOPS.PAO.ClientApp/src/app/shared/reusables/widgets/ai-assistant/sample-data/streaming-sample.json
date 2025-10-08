@@ -1,0 +1,279 @@
+data: {
+    "content": {
+        "parts": [
+            {
+                "thought": true,
+                "text": "**Determining the Response**\n\nI've identified the user's simple, factual query regarding the capital of Sweden. No specialized knowledge or system access is needed; the answer is easily accessible via general knowledge. Therefore, the focus now shifts to delivering a concise and accurate response.\n\n\n"
+            }
+        ],
+        "role": "model"
+    },
+    "partial": true,
+    "usageMetadata": {
+        "trafficType": "ON_DEMAND"
+    },
+    "invocationId": "e-c2410614-2258-42e1-a277-83db14cd8605",
+    "author": "root_agent",
+    "actions": {
+        "stateDelta": {},
+        "artifactDelta": {},
+        "requestedAuthConfigs": {}
+    },
+    "id": "a93242cf-c3bb-42ad-85ac-a7a8d9c483f2",
+    "timestamp": 1759657268.402573
+}
+
+data: {
+    "content": {
+        "parts": [
+            {
+                "thought": true,
+                "text": "**Formulating a Strategy**\n\nI'm now refining my approach. The most efficient path to answer the question is through a direct web search, leveraging readily available public information. My next step involves formulating the search query.\n\n\n"
+            }
+        ],
+        "role": "model"
+    },
+    "partial": true,
+    "usageMetadata": {
+        "trafficType": "ON_DEMAND"
+    },
+    "invocationId": "e-c2410614-2258-42e1-a277-83db14cd8605",
+    "author": "root_agent",
+    "actions": {
+        "stateDelta": {},
+        "artifactDelta": {},
+        "requestedAuthConfigs": {}
+    },
+    "id": "1fd20c9f-c6ff-4cdd-ac8b-1ffc1f11ac90",
+    "timestamp": 1759657272.543672
+}
+
+data: {
+    "content": {
+        "parts": [
+            {
+                "thought": true,
+                "text": "**Determining the Response**\n\nI've identified the user's simple, factual query regarding the capital of Sweden. No specialized knowledge or system access is needed; the answer is easily accessible via general knowledge. Therefore, the focus now shifts to delivering a concise and accurate response.\n\n\n**Formulating a Strategy**\n\nI'm now refining my approach. The most efficient path to answer the question is through a direct web search, leveraging readily available public information. My next step involves formulating the search query.\n\n\n"
+            }
+        ],
+        "role": "model"
+    },
+    "usageMetadata": {
+        "candidatesTokenCount": 9,
+        "candidatesTokensDetails": [
+            {
+                "modality": "TEXT",
+                "tokenCount": 9
+            }
+        ],
+        "promptTokenCount": 9567,
+        "promptTokensDetails": [
+            {
+                "modality": "TEXT",
+                "tokenCount": 9567
+            }
+        ],
+        "thoughtsTokenCount": 76,
+        "totalTokenCount": 9652,
+        "trafficType": "ON_DEMAND"
+    },
+    "invocationId": "e-c2410614-2258-42e1-a277-83db14cd8605",
+    "author": "root_agent",
+    "actions": {
+        "stateDelta": {},
+        "artifactDelta": {},
+        "requestedAuthConfigs": {}
+    },
+    "id": "66c81c85-6203-4988-8b06-ce679148a5d9",
+    "timestamp": 1759657272.92023
+}
+
+data: {
+    "content": {
+        "parts": [
+            {
+                "thoughtSignature": "CiwBH8yFtmeeJujK6BOPC4YjixrhYqOGgmMZLgGOOaM3bRLle3YDRtp0AI3NAAqCAQEfzIW2W6l9PmdeZZ_hE9gVvMN5ML7KktP2ibnfQMwvKqohudf_5epm2MBy6SC3WNwGIK9k64jzIS_ASNSsHrboW_Ye5EewwhDFcCCH1E5_-_vH0ZlV5ueDII-2PMlfK-ZaCtxOOk8mvc_eul4uan4Tz0Jp-Obyxdak_Dd3cvowV2cKfwEfzIW25uH0nNWGzPc7zMpKhAt53tV6eambnqPUHgoUNRhPTjTqzdnJzMsGjJ-4FOTloFdQ6Mhvi-Yjn_ludQq9VHXh7HeaxpEDIH5M3ab9qNZF2Wi0B0L-1V_cYUEoSFeXJJmGzU4orUegF6Z0Y-OtlFZ2dIxMl-7WujGPi9sK3gEBH8yFtvQHUxjw3kv2VZRMJzfqLD7_eaclz2whwrK71zv4-fa3JG97f8W9dnuQN1F9TkFP1bbmKTfDpfzmEGbhOUZ3EceM82-mY1dz0JItQKKvcnpmOGjAVSJfckPvtTeHrwN1LePPRHpalA1-2pDlJiPJ3x1mov6AD0j4CkCuN469VzpZstR12kr284cUbIIlRhIBmTHgK9SZ-KOGwAnt_TEjjaBWVErLzLJaClkBFoIH11SYdmP5aWyfdpdmKQUrj7qqcc-Fzh2PjQtJk_i4wZ3YhvcV6QOxJV6__h4KLwEfzIW2TyyKxWkelepBiOfNxupjF6KyNjMXPvawvlO2w5cdNsPwfaUQGIERTnba",
+                "functionCall": {
+                    "id": "adk-c400e33a-1839-4f3c-bad1-26c363352d21",
+                    "args": {
+                        "request": "capital of sweden"
+                    },
+                    "name": "google_search_agent"
+                }
+            }
+        ],
+        "role": "model"
+    },
+    "finishReason": "STOP",
+    "usageMetadata": {
+        "candidatesTokenCount": 9,
+        "candidatesTokensDetails": [
+            {
+                "modality": "TEXT",
+                "tokenCount": 9
+            }
+        ],
+        "promptTokenCount": 9567,
+        "promptTokensDetails": [
+            {
+                "modality": "TEXT",
+                "tokenCount": 9567
+            }
+        ],
+        "thoughtsTokenCount": 76,
+        "totalTokenCount": 9652,
+        "trafficType": "ON_DEMAND"
+    },
+    "invocationId": "e-c2410614-2258-42e1-a277-83db14cd8605",
+    "author": "root_agent",
+    "actions": {
+        "stateDelta": {},
+        "artifactDelta": {},
+        "requestedAuthConfigs": {}
+    },
+    "longRunningToolIds": [],
+    "id": "085463c1-5934-4c21-b51c-04917846be90",
+    "timestamp": 1759657273.053119
+}
+
+data: {
+    "content": {
+        "parts": [
+            {
+                "functionResponse": {
+                    "id": "adk-c400e33a-1839-4f3c-bad1-26c363352d21",
+                    "name": "google_search_agent",
+                    "response": {
+                        "result": "The capital of Sweden is Stockholm. Stockholm is located at the junction of Lake Mälaren and Salt Bay, an arm of the Baltic Sea. It is built upon numerous islands as well as the mainland of Uppland and Södermanland. Stockholm has been the capital since 1523.\n"
+                    }
+                }
+            }
+        ],
+        "role": "user"
+    },
+    "invocationId": "e-c2410614-2258-42e1-a277-83db14cd8605",
+    "author": "root_agent",
+    "actions": {
+        "stateDelta": {},
+        "artifactDelta": {},
+        "requestedAuthConfigs": {}
+    },
+    "id": "8ecb1744-0e5e-4c1c-afa0-25cdcef06630",
+    "timestamp": 1759657278.096185
+}
+
+data: {
+    "content": {
+        "parts": [
+            {
+                "text": "The capital of Sweden is Stockholm"
+            }
+        ],
+        "role": "model"
+    },
+    "partial": true,
+    "usageMetadata": {
+        "trafficType": "ON_DEMAND"
+    },
+    "invocationId": "e-c2410614-2258-42e1-a277-83db14cd8605",
+    "author": "root_agent",
+    "actions": {
+        "stateDelta": {},
+        "artifactDelta": {},
+        "requestedAuthConfigs": {}
+    },
+    "id": "c60152da-af57-4cdd-b660-33e24c954214",
+    "timestamp": 1759657278.371869
+}
+
+data: {
+    "content": {
+        "parts": [
+            {
+                "text": "."
+            }
+        ],
+        "role": "model"
+    },
+    "partial": true,
+    "finishReason": "STOP",
+    "usageMetadata": {
+        "cacheTokensDetails": [
+            {
+                "modality": "TEXT",
+                "tokenCount": 8553
+            }
+        ],
+        "cachedContentTokenCount": 8553,
+        "candidatesTokenCount": 7,
+        "candidatesTokensDetails": [
+            {
+                "modality": "TEXT",
+                "tokenCount": 7
+            }
+        ],
+        "promptTokenCount": 9819,
+        "promptTokensDetails": [
+            {
+                "modality": "TEXT",
+                "tokenCount": 9819
+            }
+        ],
+        "totalTokenCount": 9826,
+        "trafficType": "ON_DEMAND"
+    },
+    "invocationId": "e-c2410614-2258-42e1-a277-83db14cd8605",
+    "author": "root_agent",
+    "actions": {
+        "stateDelta": {},
+        "artifactDelta": {},
+        "requestedAuthConfigs": {}
+    },
+    "id": "3665e5d9-bce0-4566-9196-99dfebf08b33",
+    "timestamp": 1759657281.671164
+}
+
+data: {
+    "content": {
+        "parts": [
+            {
+                "text": "The capital of Sweden is Stockholm."
+            }
+        ],
+        "role": "model"
+    },
+    "usageMetadata": {
+        "cacheTokensDetails": [
+            {
+                "modality": "TEXT",
+                "tokenCount": 8553
+            }
+        ],
+        "cachedContentTokenCount": 8553,
+        "candidatesTokenCount": 7,
+        "candidatesTokensDetails": [
+            {
+                "modality": "TEXT",
+                "tokenCount": 7
+            }
+        ],
+        "promptTokenCount": 9819,
+        "promptTokensDetails": [
+            {
+                "modality": "TEXT",
+                "tokenCount": 9819
+            }
+        ],
+        "totalTokenCount": 9826,
+        "trafficType": "ON_DEMAND"
+    },
+    "invocationId": "e-c2410614-2258-42e1-a277-83db14cd8605",
+    "author": "root_agent",
+    "actions": {
+        "stateDelta": {},
+        "artifactDelta": {},
+        "requestedAuthConfigs": {}
+    },
+    "id": "fabbbd7e-f465-4874-a204-d9e34a76b150",
+    "timestamp": 1759657281.790671
+}

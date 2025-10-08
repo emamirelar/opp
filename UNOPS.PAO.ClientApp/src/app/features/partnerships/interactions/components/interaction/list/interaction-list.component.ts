@@ -17,10 +17,11 @@ import { EntityConfigurationService } from '@features/shared/services/entity-con
 import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
 import { InteractionIconService } from '@shared/services/interaction-icon.service';
 import { InteractionPreviewComponent } from '../preview/interaction-preview.component';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
-import { OverlayPanel } from 'primeng/overlaypanel';
+import { PopoverModule } from 'primeng/popover';
+import { Popover } from 'primeng/popover';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
+import { PageContextService } from '@shared/services/page-context.service';
 
 /**
  * @uiEntity InteractionList
@@ -47,7 +48,7 @@ import { MenuItem } from 'primeng/api';
     TranslateModule,
     ListviewComponent,
     InteractionPreviewComponent,
-    OverlayPanelModule,
+    PopoverModule,
     MenuModule,
   ],
   providers: [
@@ -63,7 +64,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   listviewComponent?: ListviewComponent;
 
   @ViewChild("previewPanel")
-  previewPanel?: OverlayPanel;
+  previewPanel?: Popover;
 
   previewInteraction = signal<Interaction | null>(null);
 
@@ -152,6 +153,16 @@ export class InteractionListComponent implements OnInit, OnDestroy {
           operators: ['after', 'before', 'between']
         }
       ] as SearchField[]
+    },
+    // Enable search metadata display
+    searchMetadata: {
+      enabled: true,
+      defaultVisible: false, // Hidden by default, user can toggle
+      searchQuery: '', // Will be populated automatically
+      extractMetadata: (item: any) => {
+        // Extract search metadata from the item
+        return item._searchMetadata || null;
+      }
     }
   }));
 
@@ -160,6 +171,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
   private dialogService = inject(DialogService);
   private translateService = inject(TranslateService);
+  private pageContextService = inject(PageContextService);
 
   constructor(
     private interactionService: InteractionService,
@@ -169,7 +181,8 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-
+    // Register component data for AI Assistant
+    this.pageContextService.setComponentData(this);
 
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
@@ -285,6 +298,9 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Clear component data for AI Assistant
+    this.pageContextService.clearComponentData();
+    
     // No need to clear caches manually - utility service handles this
   }
 
@@ -445,6 +461,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   onSearchChange(searchParams: SearchParams) {
     this.currentSearchText = searchParams.generalSearch || '';
   }
+
 
   // Import menu items
   importMenuItems = signal<MenuItem[]>([

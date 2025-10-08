@@ -21,12 +21,13 @@ import { AiPanelComponent } from '@shared/reusables/components/ai-panel/ai-panel
 import { Interaction } from '@partnerships/interactions/models/interaction.model';
 import { InteractionService } from '@partnerships/interactions/services/interaction.service';
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
-import { InteractionType } from '@partnerships/interactions/models/interaction-type.enum';
+import { InteractionType } from '../../../models/interaction-type.enum';
 import { PermissionUtilityService } from '@core/services/permission-utility.service';
 import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
 import { InteractionIconService } from '@shared/services/interaction-icon.service';
 import { CachedDataService } from '@shared/services/cached-data.service';
 import { GeminiService } from '@ai/services/gemini.service';
+import { PageContextService } from '@shared/services/page-context.service';
 
 @Component({
   selector: 'app-interaction-detail',
@@ -66,6 +67,7 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
   private cachedDataService = inject(CachedDataService);
   public geminiService = inject(GeminiService);
   private cdr = inject(ChangeDetectorRef);
+  private pageContextService = inject(PageContextService);
 
   @ViewChild('widthTracker', { static: false }) widthTracker?: ElementRef;
 
@@ -158,16 +160,17 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
   });
 
   ngOnInit() {
+    // Register component data for AI Assistant
+    this.pageContextService.setComponentData(this);
+    
     this.permissionUtils.loadPermissions(this.router);
     
-    // Subscribe to route parameter changes to handle navigation updates
-    this.route.paramMap.subscribe(paramMap => {
-      const newId = paramMap.get('id');
-      if (newId) {
-        this.loadInteraction(newId);
-      } else {
-        this.error.set(this.translateService.instant('interaction.detail.error.noIdProvided'));
-        this.loading.set(false);
+    // Subscribe to route parameter changes to reload interaction when navigating
+    // This fixes the issue where navigating back doesn't refresh the page data
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id) {
+        this.loadInteraction(id);
       }
     });
   }
@@ -185,6 +188,9 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
   }
 
   ngOnDestroy() {
+    // Clear component data for AI Assistant
+    this.pageContextService.clearComponentData();
+    
     if (this.widthTrackingInterval) {
       clearInterval(this.widthTrackingInterval);
     }
@@ -193,9 +199,8 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
     }
   }
 
-  private loadInteraction(id?: string) {
-    const interactionId = id || this.route.snapshot.params['id'];
-    if (!interactionId) {
+  private loadInteraction(id: string) {
+    if (!id) {
       this.error.set(this.translateService.instant('interaction.detail.error.noIdProvided'));
       this.loading.set(false);
       return;
@@ -204,10 +209,10 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
     this.loading.set(true);
     this.error.set(null); // Clear any previous errors
     
-    this.interactionService.getById(Number(interactionId)).subscribe({
+    this.interactionService.getById(Number(id)).subscribe({
       next: (response) => {
         if (response.status === 404) {
-          this.error.set(this.translateService.instant('interaction.detail.error.notFound', { id: interactionId }));
+          this.error.set(this.translateService.instant('interaction.detail.error.notFound', { id: id }));
         } else if (response.body) {
           this.interaction.set(response.body);
           this.error.set(null);
@@ -216,10 +221,10 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
         }
         this.loading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading interaction:', error);
         const errorMessage = error.status === 404
-          ? this.translateService.instant('interaction.detail.error.notFound', { id: interactionId })
+          ? this.translateService.instant('interaction.detail.error.notFound', { id: id })
           : this.translateService.instant('interaction.detail.error.loadFailed', { status: error.status || this.translateService.instant('common.error.networkError') });
         this.error.set(errorMessage);
         this.loading.set(false);
@@ -251,8 +256,10 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        // Reload the current interaction using its ID
-        this.loadInteraction(currentInteraction.id?.toString());
+        const id = this.route.snapshot.params['id'];
+        if (id) {
+          this.loadInteraction(id);
+        }
         this.feedbackDialogService.showSuccessToast({
           detail: this.translateService.instant('interaction.detail.success.updated')
         });

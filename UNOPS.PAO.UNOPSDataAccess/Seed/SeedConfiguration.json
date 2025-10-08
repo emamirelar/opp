@@ -97,6 +97,16 @@
     },
     {
       "order": 12,
+      "name": "SequenceResync",
+      "type": "seeder",
+      "className": "SequenceResyncSeeder",
+      "methodName": "ResyncAllSequencesAsync",
+      "filePath": "Seeders/SequenceResyncSeeder.cs",
+      "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
+      "forceExecuteIfAnyChanged": true
+    },
+    {
+      "order": 13,
       "name": "Contacts",
       "type": "seeder",
       "className": "ContactSeeder",

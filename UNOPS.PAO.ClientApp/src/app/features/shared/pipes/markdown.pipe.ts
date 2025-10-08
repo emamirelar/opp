@@ -7,9 +7,21 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
   standalone: true
 })
 export class MarkdownPipe implements PipeTransform {
-  private marked = new Marked();
+  private marked: Marked;
 
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(private sanitizer: DomSanitizer) {
+    // Configure marked to open all links in new tabs
+    this.marked = new Marked({
+      renderer: {
+        link: (token) => {
+          const href = token.href || '';
+          const title = token.title ? ` title="${token.title}"` : '';
+          const text = token.text || '';
+          return `<a href="${href}"${title} target="_blank" rel="noopener noreferrer">${text}</a>`;
+        }
+      }
+    });
+  }
 
   transform(value: string): SafeHtml {
     if (!value) return '';

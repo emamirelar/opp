@@ -8,16 +8,13 @@ metadata:
 
 source:
   type: "bigquery"
-  connection:
-    project_id: "unops-partneropportunity"
-    use_environment_auth: true
-  
+
   query: |
     SELECT 
       *
       , CURRENT_TIMESTAMP() as last_modified
     FROM
-      `unops-partneropportunity.integration.Table_Engagements`
+      `unops-opportunityplus-dev.integration.Table_Engagements`
   
   primary_key_field: "Base_Engagement"
   batch_size: 1000

@@ -103,7 +103,7 @@ public class ValuesRepository
 
     public IEnumerable<Contact> GetContacts()
         => context.Contacts.Where(x => !x.IsDeleted)
-           .Include(x => x.Partner);
+                   .Include(x => x.Partner);
 
     public IEnumerable<PAOUser> GetUsers()
         => context.PAOUsers;

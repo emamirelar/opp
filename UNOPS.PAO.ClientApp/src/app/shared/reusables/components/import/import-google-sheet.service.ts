@@ -14,6 +14,7 @@ declare const gapi: any;
 })
 export class ImportGoogleSheetService {
   private clientId;
+  private apiKey;
   private scope = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets.readonly';
   private oauthToken?: string;
   private tokenExpirationTime?: number;
@@ -45,6 +46,7 @@ export class ImportGoogleSheetService {
 
   constructor(configService: ConfigurationService) {
     this.clientId = configService.getConfig().googleClientId;
+    this.apiKey = configService.getConfig().googleApiKey;
     this.checkExistingToken();
     gapi.load('picker', { callback: this.onPickerApiLoad.bind(this) });
     gapi.load('client', { callback: this.initSheetsAPI.bind(this) });
@@ -56,11 +58,13 @@ export class ImportGoogleSheetService {
 
   private initSheetsAPI() {
     gapi.client.init({
-      apiKey: this.clientId,
+      apiKey: this.apiKey,
       discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
       scope: this.scope
     }).then(() => {
       this.sheetsApiReady = true;
+    }).catch((error: any) => {
+      console.error('Google Sheets API initialization error:', error);
     });
   }
 

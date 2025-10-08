@@ -2,26 +2,24 @@ metadata:
   name: "UserProfile Sync"
   description: "UserProfile data sync"
   version: "1.0"
-  enabled: false
+  enabled: true
   max_retry_attempts: 1
   timeout_minutes: 5
 
 source:
   type: "bigquery"
-  connection:
-    project_id: "unops-partneropportunity"
-    use_environment_auth: true
   
   query: |
     SELECT
-      ROW_NUMBER() OVER(ORDER BY Resource) AS Id
-      , Resource as UserId, CONCAT(First_Name, " ", Surname) as Name
+      PARSE_NUMERIC(Resource) as Id
+      , PARSE_NUMERIC(Resource) as UserId
+      , CONCAT(First_Name, " ", Middle_Name, " ", Surname) as Name
       , 1 as Status
       , 0 as CreatedBy
-      , "NOW()" as CreatedDate
+      , CURRENT_DATETIME() as CreatedDate
       , 0 as LastModifiedBy
-      , "NOW()" as LastModifiedDate
-      , false as IsDeleted
+      , CURRENT_DATETIME() as LastModifiedDate
+      , FALSE as IsDeleted
       , 0 as DeletedBy
       , NULL as DeletedDate
       , Surname as LastName
@@ -35,119 +33,114 @@ source:
       unopsreporting.Employment.People_Search_Report
     WHERE
       Effective_Date = CURRENT_DATE()
-      AND Resource IN (SELECT DISTINCT Resource 
-                       FROM
-                        unopsreporting.Employment.People_Search_Report
-                      WHERE
-                        Effective_Date = CURRENT_DATE()
-                        QUALIFY ROW_NUMBER() OVER (PARTITION BY Resource_Email_Address_Primary) = 1
-                      )
-      QUALIFY ROW_NUMBER() OVER (PARTITION BY Resource) = 1
-    ORDER BY
-      Resource
+      AND Employment_Status = 'N'
+      AND Employment_Type IN ('OPSSTAFF', 'OPSNONSTAFF')
+      AND TRIM(Resource_Email_Address_Primary) > ''
+      QUALIFY ROW_NUMBER() OVER (
+          PARTITION BY PARSE_NUMERIC(Resource)
+          ORDER BY Resource_Email_Address_Primary
+        ) = 1
+
   
-  primary_key_field: "Id"
+  primary_key_field: "UserId"
   batch_size: 1000
 
 destination:
   table_name: "UserProfile"
   schema: "public"
+  manage_table_structure: false  # Only validate, don't create/alter
+  add_standard_fields: false
   
   field_mappings:
-    - source_field: "Base_Engagement"
-      destination_field: "Name"  # Needed to implement BaseBusinessEntity
-      data_type: "varchar(50)"
-      is_required: false
+    - source_field: "Id"
+      destination_field: "Id"
+      data_type: "integer"
+      is_required: true
+
+    - source_field: "UserId"
+      destination_field: "UserId"
+      data_type: "integer"
+      is_unique: true  # IMPORTANT: Used for UPSERT operations (since the UserProfile table has made this the PK instead of ID!!)
+      is_required: true
+
+    - source_field: "Name"
+      destination_field: "Name"
+      data_type: "varchar(255)"
+      is_required: true
 
     - source_field: "Status"
-      destination_field: "Status"  # Needed to implement BaseBusinessEntity
-      data_type: "integer"         # Must be integer (BaseBusinessEntity requirement)
+      destination_field: "Status"
+      data_type: "integer"
+      is_required: true
+
+    - source_field: "CreatedBy"
+      destination_field: "CreatedBy"
+      data_type: "integer"
       is_required: false
 
-    - source_field: "Base_Engagement"
-      destination_field: "BaseEngagement"
-      data_type: "varchar(50)"
-      is_required: true
-      is_unique: true
-    
-    - source_field: "Engagement_Implementation_Start_Date"
-      destination_field: "EngagementImplementationStartDate"
-      data_type: "date"
+    - source_field: "CreatedDate"
+      destination_field: "CreatedDate"
+      data_type: "timestamp"
       is_required: false
-    
-    - source_field: "Engagement_Implementation_End_Date"
-      destination_field: "EngagementImplementationEndDate"
-      data_type: "date"
+
+    - source_field: "LastModifiedBy"
+      destination_field: "LastModifiedBy"
+      data_type: "integer"
       is_required: false
-    
-    - source_field: "Engagement_Signed_Date"
-      destination_field: "EngagementSignedDate"
-      data_type: "date"
+
+    - source_field: "LastModifiedDate"
+      destination_field: "LastModifiedDate"
+      data_type: "timestamp"
       is_required: false
-    
-    - source_field: "Engagement_Amount"
-      destination_field: "EngagementAmount"
-      data_type: "decimal(18,2)"
+
+    - source_field: "IsDeleted"
+      destination_field: "IsDeleted"
+      data_type: "boolean"
       is_required: false
-    
-    - source_field: "Engagement_Stage"
-      destination_field: "EngagementStage"
-      data_type: "varchar(100)"
+
+    - source_field: "DeletedBy"
+      destination_field: "DeletedBy"
+      data_type: "integer"
       is_required: false
-    
-    - source_field: "Engagement_Stage_Description"
-      destination_field: "EngagementStageDescription"
-      data_type: "varchar(500)"
+      
+    - source_field: "DeletedDate"
+      destination_field: "DeletedDate"
+      data_type: "timestamp"
       is_required: false
-    
-    - source_field: "Business_Developer"
-      destination_field: "BusinessDeveloper"
+
+    - source_field: "LastName"
+      destination_field: "LastName"
       data_type: "varchar(255)"
       is_required: false
-    
-    - source_field: "Business_Developer_Name"
-      destination_field: "BusinessDeveloperName"
+
+    - source_field: "FirstName"
+      destination_field: "FirstName"
       data_type: "varchar(255)"
       is_required: false
-    
-    - source_field: "Business_Developer_Email_Address"
-      destination_field: "BusinessDeveloperEmailAddress"
+
+    - source_field: "DutyStation"
+      destination_field: "DutyStation"
       data_type: "varchar(255)"
       is_required: false
-    
-    - source_field: "Engagement_Project_Executive"
-      destination_field: "EngagementProjectExecutive"
+
+    - source_field: "OrgUnit"
+      destination_field: "OrgUnit"
       data_type: "varchar(255)"
       is_required: false
-    
-    - source_field: "Engagement_Project_Executive_Name"
-      destination_field: "EngagementProjectExecutiveName"
+
+    - source_field: "Position"
+      destination_field: "Position"
       data_type: "varchar(255)"
       is_required: false
-    
-    - source_field: "Implementation_Countries_List"
-      destination_field: "ImplementationCountriesList"
-      data_type: "text"
+
+    - source_field: "SupervisorId"
+      destination_field: "SupervisorId"
+      data_type: "integer"
       is_required: false
-    
-    - source_field: "Outputs_List"
-      destination_field: "OutputsList"
-      data_type: "text"
-      is_required: false
-    
-    - source_field: "SDG_List"
-      destination_field: "SDGList"
-      data_type: "text"
-      is_required: false
-    
-    - source_field: "Engagement_Description"
-      destination_field: "EngagementDescription"
-      data_type: "text"
-      is_required: false
-    
-    - source_field: "Engagement_Long_Description"
-      destination_field: "EngagementLongDescription"
-      data_type: "text"
+
+    - source_field: "UserEmail"
+      destination_field: "UserEmail"
+      data_type: "varchar(255)"
       is_required: false
 
 sync_options:
@@ -156,8 +149,8 @@ sync_options:
 
 validation:
   required_source_fields:
-    - "Base_Engagement"
-    - "Engagement_Description"
+    - "UserId"
+    - "Name"
   
 error_handling:
   on_connection_error: RetryWithBackoff

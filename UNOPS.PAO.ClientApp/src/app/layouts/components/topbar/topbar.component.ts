@@ -5,7 +5,7 @@ import { LanguageSelectorComponent } from './language-selector/language-selector
 import { StyleClassModule } from 'primeng/styleclass';
 import { PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { PopoverModule } from 'primeng/popover';
 import { ToastModule } from 'primeng/toast';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TooltipModule } from 'primeng/tooltip';
@@ -71,7 +71,7 @@ interface UserInfo {
 
     StyleClassModule,
     ButtonModule,
-    OverlayPanelModule,
+    PopoverModule,
     ToastModule,
     ProgressBarModule,
     TooltipModule,
@@ -143,11 +143,18 @@ export class TopbarComponent implements OnInit, OnDestroy {
   private previousRoute: string = '/';
 
   // Chat history properties
-  chatSessions: any[] = [];
-  isLoadingChatSessions: boolean = false;
   chatSearchQuery: string = '';
   filteredChatSessions: any[] = [];
   isNewChatDisabled: boolean = false;
+  
+  // Use AI assistant service as single source of truth for sessions
+  get chatSessions(): any[] {
+    return this.aiAssistantService.userSessions();
+  }
+  
+  get isLoadingChatSessions(): boolean {
+    return this.aiAssistantService.isLoadingSessions();
+  }
 
   constructor(
     public layoutService: LayoutService,
@@ -1034,27 +1041,27 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   // Chat history methods
-  async loadChatSessions(): Promise<void> {
+  loadChatSessions(): void {
     if (!this.isOnAiPage()) return;
     
-    this.isLoadingChatSessions = true;
-    this.cdr.markForCheck();
-    
-    try {
-      const response = await this.http.post<any[]>('/api/ai-assistant/get-user-sessions', {}).toPromise();
-      if (response) {
-        const sortedSessions = response.sort((a, b) => 
-          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
-        );
-        this.chatSessions = sortedSessions;
-        this.filteredChatSessions = [...sortedSessions];
-      }
-    } catch (error) {
-      console.error('Error loading chat sessions:', error);
-      this.chatSessions = [];
-      this.filteredChatSessions = [];
-    } finally {
-      this.isLoadingChatSessions = false;
+    // Only load if we don't have cached sessions
+    // The service will handle loading state and caching
+    if (this.aiAssistantService.userSessions().length === 0) {
+      this.aiAssistantService.loadUserSessions().subscribe({
+        next: () => {
+          // Update filtered sessions after loading
+          this.filteredChatSessions = [...this.aiAssistantService.userSessions()];
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('Error loading chat sessions:', error);
+          this.filteredChatSessions = [];
+          this.cdr.markForCheck();
+        }
+      });
+    } else {
+      // Use cached sessions
+      this.filteredChatSessions = [...this.aiAssistantService.userSessions()];
       this.cdr.markForCheck();
     }
   }
@@ -1089,7 +1096,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   openChatSession(session: any): void {
     this.router.navigate(['/ai', session.id], { replaceUrl: true });
     this.aiAssistantService.switchToSession(session.id).subscribe({
-      error: (error) => console.error('Failed to switch session:', error)
+      error: (error: any) => console.error('Failed to switch session:', error)
     });
   }
 
@@ -1108,14 +1115,23 @@ export class TopbarComponent implements OnInit, OnDestroy {
       session.starred = newStarredState;
       this.cdr.markForCheck();
       
-      // Call backend API
+      // Call backend API using the service's method
       await this.http.post('/api/ai-assistant/update-star', {
         sessionId: session.id,
         starred: newStarredState
       }).toPromise();
       
-      // Reload sessions to ensure consistency
-      await this.loadChatSessions();
+      // Update the service's cached sessions
+      this.aiAssistantService.userSessions.update(sessions => 
+        sessions.map(s => s.id === session.id ? { ...s, starred: newStarredState } : s)
+      );
+      
+      // Update filtered sessions
+      this.filteredChatSessions = this.filteredChatSessions.map(s => 
+        s.id === session.id ? { ...s, starred: newStarredState } : s
+      );
+      
+      this.cdr.markForCheck();
       
     } catch (error) {
       console.error('Error updating star status:', error);
@@ -1125,10 +1141,11 @@ export class TopbarComponent implements OnInit, OnDestroy {
     }
   }
 
-  formatChatDate(dateString: string): string {
-    if (!dateString) return '';
+  formatChatDate(timestamp: string | number): string {
+    if (!timestamp) return '';
     
-    const date = new Date(dateString);
+    // Handle both numeric timestamps and date strings for backward compatibility
+    const date = typeof timestamp === 'number' ? new Date(timestamp * 1000) : new Date(timestamp);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

@@ -1989,6 +1989,36 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return await MapEntityToModelWithPermissionsAsync(model, user, entity);
     }
 
+    /// <summary>
+    /// Unapproves an approved partner (Admin only) - unlocks data fields and records unapproval audit trail
+    /// </summary>
+    public async Task<PartnerModel?> UnapprovePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request)
+    {
+        var entity = await PartnerRepository.GetByIdAsync(id, ["LiaisonOffice"]);
+        if (entity == null)
+            return null;
+
+        // Check if user has admin permissions for unapproval
+        var userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+        if (!userRoles.Contains("PARTNER_GLOB_ADMIN"))
+        {
+            throw new UnauthorizedAccessException("Only Partnership Global Administrators can unapprove partners.");
+        }
+
+        // Get user information for audit trail
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+        var userName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown Admin";
+
+        // Now unapprove the partner (this sets the approval status and audit trail)
+        entity.UnapprovePartner(int.Parse(userId), userName);
+        await PartnerRepository.UpdateAsync(entity);
+        
+        // Load relationships and return updated model
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
+        var model = await MapEntityToModelAsync(entity, _mapper, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user, entity);
+    }
+
     #endregion
 
     #region Partner Related Data Methods

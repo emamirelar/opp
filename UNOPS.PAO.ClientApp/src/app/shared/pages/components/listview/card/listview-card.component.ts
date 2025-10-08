@@ -122,7 +122,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   hasActionsTemplate = computed(() => !!this.actionsTemplate);
 
   // Search metadata support
-  showSearchMetadata = signal<boolean>(false);
+  showSearchMetadata = input<boolean>(false);
   searchMetadataEnabled = computed(() => this.config()?.searchMetadata?.enabled || false);
   searchMetadataDefaultVisible = computed(() => this.config()?.searchMetadata?.defaultVisible || false);
   searchQuery = computed(() => this.config()?.searchMetadata?.searchQuery || '');
@@ -434,10 +434,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
       this.scheduleObserveSentinel();
     }
 
-    // Initialize search metadata visibility
-    if (changes['config'] && this.searchMetadataEnabled()) {
-      this.showSearchMetadata.set(this.searchMetadataDefaultVisible());
-    }
+    // Search metadata visibility is now controlled by parent component
   }
 
   /**
@@ -983,12 +980,6 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
   // Search metadata helper methods
 
-  /**
-   * Toggle search metadata visibility
-   */
-  toggleSearchMetadata(): void {
-    this.showSearchMetadata.set(!this.showSearchMetadata());
-  }
 
   /**
    * Get search metadata for an item
@@ -1072,9 +1063,24 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
    */
   highlightSearchTerms(text: string, searchQuery: string): string {
     if (!text || !searchQuery) return text;
-
-    const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    return text.replace(regex, '<span class="search-highlight">$1</span>');
+    
+    // Escape special regex characters in search term
+    const escapedSearchTerm = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // Split search term into individual words for better highlighting
+    const words = escapedSearchTerm.split(/\s+/).filter(word => word.length > 0);
+    
+    let highlightedText = text;
+    
+    // Highlight each word separately
+    words.forEach(word => {
+      if (word.length > 1) { // Only highlight words with 2+ characters
+        const regex = new RegExp(`(${word})`, 'gi');
+        highlightedText = highlightedText.replace(regex, '<span class="search-highlight">$1</span>');
+      }
+    });
+    
+    return highlightedText;
   }
 
   /**

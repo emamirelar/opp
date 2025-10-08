@@ -23,14 +23,14 @@ import { FeedbackDialogService } from '../../../services/feedback-dialog.service
 import { LayoutService } from '@layouts/services/layout.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerEditDialogComponent } from '@partnerships/partners/components/partner/edit-dialog/partner-edit-dialog.component';
+import { PartnerEditDialogFooterComponent } from '@partnerships/partners/components/partner/edit-dialog/footer/partner-edit-dialog-footer.component';
 import { ContactEditDialogComponent } from '@partnerships/contacts/components/contact/edit-dialog/contact-edit-dialog.component';
 import { InteractionModalComponent } from '@partnerships/interactions/components/interaction/modal/interaction-modal.component';
 import { Partner } from '@partnerships/partners/models/partner.model';
 import { Contact } from '@partnerships/contacts/models/contact.model';
 import { Interaction } from '@partnerships/interactions/models/interaction.model';
 import { DashboardCardComponent, DashboardCardConfig, DashboardCardFilter } from '../../../components/dashboard-card';
-import { DynamicContentTestComponent } from '@features/shared/dynamic-content-test/dynamic-content-test.component';
-// import { InteractionType } from '@partnerships/interactions/models/interaction-type.enum'; // Uncomment for dummy data testing
+// import { InteractionType } from '../../../../features/internal/models/interaction-type.enum'; // Uncomment for dummy data testing
 
 interface DashboardData {
   myPartners: Partner[];
@@ -50,7 +50,8 @@ interface RecentUpdate {
   name: string;
   type: 'Partner' | 'Contact' | 'Interaction';
   lastModifiedDate: string;
-  lastModifiedBy: string;
+  lastModifiedBy: number;
+  lastModifiedByName?: string;
   status: string;
   entityData?: any; // Additional entity-specific data
 }
@@ -227,6 +228,18 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
     const threshold = 750; // Horizontal layout needs 750px of content width
     
     // Use vertical layout only when measured content width is below threshold
+    return componentWidth > 0 && componentWidth < threshold;
+  });
+
+  // Computed signal to determine if dashboard cards should use single-column layout
+  // Based on content width, not screen size
+  shouldUseCardVerticalLayout = computed(() => {
+    const componentWidth = this.componentWidth();
+    
+    // For cards, we need more space since we're showing 3 columns
+    // Use single column layout when width is below 900px
+    const threshold = 900; // 3-column layout needs at least 900px
+    
     return componentWidth > 0 && componentWidth < threshold;
   });
 
@@ -808,20 +821,21 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   openNewPartnerModal() {
     const ref = this.dialogService.open(PartnerEditDialogComponent, {
       header: 'New Partner',
-      width: '90vw',
-      style: { maxWidth: '800px' },
+      width: '40vw',
+      breakpoints: { '960px': '95vw' },
       closable: true,
+      templates: {
+        footer: PartnerEditDialogFooterComponent
+      },
       data: {
         mode: 'new',
-        record: {}
+        record: {},
+        requestingSaveSignal: signal<boolean>(false)
       }
     });
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        this.feedbackDialogService.showSuccessToast({
-          detail: 'Partner created successfully!'
-        });
         // Refresh dashboard data
         this.loadDashboardData();
       }
@@ -842,9 +856,6 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        this.feedbackDialogService.showSuccessToast({
-          detail: 'Contact created successfully!'
-        });
         // Refresh dashboard data
         this.loadDashboardData();
       }
@@ -865,9 +876,6 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        this.feedbackDialogService.showSuccessToast({
-          detail: 'Interaction created successfully!'
-        });
         // Refresh dashboard data
         this.loadDashboardData();
       }

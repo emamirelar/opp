@@ -6,6 +6,7 @@ import { Partner } from '@partnerships/partners/models/partner.model';
 import { PictureComponent } from '@shared/reusables/components/picture/picture.component';
 import { GoBackComponent } from '@shared/reusables/components/go-back/go-back.component';
 import { ResponsiveTabsComponent, ResponsiveTabItem } from '@shared/reusables/components/responsive-tabs';
+import { PartnerService } from '@partnerships/partners/services/partner.service';
 
 /**
  * @uiEntity PartnerTabs
@@ -81,45 +82,49 @@ export class PartnerTabsComponent implements OnInit {
   recordData: Partner = {} as Partner;
 
   constructor(
-    private activatedRoute: ActivatedRoute
+    private activatedRoute: ActivatedRoute,
+    private partnerService: PartnerService
   ) {}
 
   ngOnInit(): void {
-    this.recordId = this.activatedRoute.snapshot.paramMap.get('recordId') || '';
+    // Subscribe to parameter changes to handle back navigation properly
+    this.activatedRoute.paramMap.subscribe(paramMap => {
+      this.recordId = paramMap.get('recordId') || '';
+
+      // Update tabs when recordId changes
+      this.tabs = [
+        {
+          label: 'title.details',
+          route: `/partnerships/partners/${this.recordId}`,
+          icon: 'info'
+        },
+        {
+          label: 'title.contacts',
+          route: `/partnerships/partners/${this.recordId}/contacts`,
+          icon: 'contacts'
+        },
+        {
+          label: 'title.interactions',
+          route: `/partnerships/partners/${this.recordId}/interactions`,
+          icon: 'chat'
+        },
+        // {
+        //   label: 'title.fundingAndAgreements',
+        //   route: `/partnerships/partners/${this.recordId}/funding-agreements`,
+        //   icon: 'attach_money'
+        // },
+        {
+          label: 'title.dashboard',
+          route: `/partnerships/partners/${this.recordId}/data`,
+          icon: 'bar_chart'
+        },
+      ];
+    });
 
     // Get the resolved data from the route
     this.activatedRoute.data.subscribe(data => {
       this.recordData = data['partnerData'];
     });
-
-    // Create tabs based on recordId
-    this.tabs = [
-      {
-        label: 'title.details',
-        route: `/partnerships/partners/${this.recordId}`,
-        icon: 'info'
-      },
-      {
-        label: 'title.contacts',
-        route: `/partnerships/partners/${this.recordId}/contacts`,
-        icon: 'contacts'
-      },
-      {
-        label: 'title.interactions',
-        route: `/partnerships/partners/${this.recordId}/interactions`,
-        icon: 'chat'
-      },
-      // {
-      //   label: 'title.fundingAndAgreements',
-      //   route: `/partnerships/partners/${this.recordId}/funding-agreements`,
-      //   icon: 'attach_money'
-      // },
-      {
-        label: 'title.dashboard',
-        route: `/partnerships/partners/${this.recordId}/data`,
-        icon: 'bar_chart'
-      },
-    ];
   }
 
   getUploadLogoUrl(): string {
@@ -127,7 +132,14 @@ export class PartnerTabsComponent implements OnInit {
   }
 
   _loadRecordDetails(): void {
-    console.log('Logo updated, reloading partner details...');
+    this.partnerService.getPartnerById(this.recordId).subscribe({
+      next: (data) => {
+        this.recordData = data;
+      },
+      error: (error) => {
+        console.error('Error reloading partner data after logo upload:', error);
+      }
+    });
   }
 
   isMobile(): boolean {

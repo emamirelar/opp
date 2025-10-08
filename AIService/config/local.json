@@ -20,7 +20,7 @@
     },
     "server": {
       "serve_web_interface": true,
-      "api_base_url": "https://localhost:44426/",
+      "api_base_url": "https://localhost:44426/api/",
       "is_development": true,
       "host": "0.0.0.0",
       "port": 8000,
@@ -38,8 +38,8 @@
       "email": "tushard@unops.org"
     },
     "branding": {
-      "application_name": "Opportunity+",
-      "project_name": "Opportunity+",
+      "application_name": "Opportunity",
+      "project_name": "Opportunity",
       "organization": "UNOPS",
       "organization_full": "United Nations Office for Project Services",
       "description": "A comprehensive partner and opportunity management system"

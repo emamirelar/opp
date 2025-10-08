@@ -172,6 +172,10 @@ export class PartnerViewInteractionsComponent implements OnInit {
       placeholder: this.translateService.instant('partner.interactions.search.placeholder'),
       entityType: 'Interaction' as const,
       searchableFields: this.getSearchableFields()
+    },
+    searchMetadata: {
+      enabled: true,
+      defaultVisible: false
     }
   }));
 
@@ -490,6 +494,7 @@ export class PartnerViewInteractionsComponent implements OnInit {
   onSearchChange(searchParams: SearchParams) {
     // console.log('Partner interactions search changed:', searchParams);
   }
+
 
   onTimelineRangeChanged(range: {start: Date, end: Date}) {
   }

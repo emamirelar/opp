@@ -44,6 +44,7 @@ import { PermissionUtilityService } from '@core/services/permission-utility.serv
 import { AiPanelComponent } from '@shared/reusables/components/ai-panel/ai-panel.component';
 import { GeminiService } from '@ai/services/gemini.service';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { PageContextService } from '@shared/services/page-context.service';
 import { GoBackComponent } from '@shared/reusables/components/go-back/go-back.component';
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
@@ -51,7 +52,7 @@ import { PartnerApprovalDialogComponent } from '../approval-dialog/partner-appro
 import { AuthService } from '@core/services/auth.service';
 import { EntityTagsComponent } from '@shared/components/entity-tags/entity-tags.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { BaseEngagementListComponent } from '@features/shared/base-engagement/base-engagement-list.component';
 
 /**
@@ -122,6 +123,85 @@ import { BaseEngagementListComponent } from '@features/shared/base-engagement/ba
       border-bottom-right-radius: 8px !important;
     }
 
+    /* Action Button Styles - All buttons same size */
+    :host ::ng-deep .action-button .p-button,
+    :host ::ng-deep .utility-button .p-button {
+      padding: 0.5rem !important;
+      width: 2.5rem !important;
+      height: 2.5rem !important;
+      min-width: 2.5rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    :host ::ng-deep .action-button .p-button-icon,
+    :host ::ng-deep .utility-button .p-button-icon {
+      margin: 0 !important;
+      font-size: 1rem !important;
+    }
+
+    /* Remove any label display */
+    :host ::ng-deep .action-button .p-button-label,
+    :host ::ng-deep .utility-button .p-button-label {
+      display: none !important;
+    }
+
+    /* Custom color for Approve button - Green */
+    :host ::ng-deep .approve-button .p-button {
+      color: #22c55e !important;
+      border-color: #22c55e !important;
+    }
+    :host ::ng-deep .approve-button .p-button:hover {
+      background-color: #22c55e !important;
+      color: white !important;
+    }
+
+    /* Custom color for Activate button - Green (same as Approve) */
+    :host ::ng-deep .activate-button .p-button {
+      color: #22c55e !important;
+      border-color: #22c55e !important;
+    }
+    :host ::ng-deep .activate-button .p-button:hover {
+      background-color: #22c55e !important;
+      color: white !important;
+    }
+
+    /* Custom color for Unapprove button - Red */
+    :host ::ng-deep .unapprove-button .p-button {
+      color: #ef4444 !important;
+      border-color: #ef4444 !important;
+    }
+    :host ::ng-deep .unapprove-button .p-button:hover {
+      background-color: #ef4444 !important;
+      color: white !important;
+    }
+
+    /* Custom color for Close button - Yellow */
+    :host ::ng-deep .close-button .p-button {
+      color: #eab308 !important;
+      border-color: #eab308 !important;
+    }
+    :host ::ng-deep .close-button .p-button:hover {
+      background-color: #eab308 !important;
+      color: white !important;
+    }
+
+    /* Custom color for Archive button - Orange */
+    :host ::ng-deep .archive-button .p-button {
+      color: #f97316 !important;
+      border-color: #f97316 !important;
+    }
+    :host ::ng-deep .archive-button .p-button:hover {
+      background-color: #f97316 !important;
+      color: white !important;
+    }
+
+    /* Button group separators */
+    .border-l {
+      border-left: 1px solid var(--unops-neutral-200) !important;
+    }
+
   `]
 })
 export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
@@ -140,7 +220,9 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
   permissionService = inject(PermissionUtilityService);
   authService = inject(AuthService);
   confirmationService = inject(ConfirmationService);
+  messageService = inject(MessageService);
   private destroyRef = inject(DestroyRef);
+  private pageContextService = inject(PageContextService);
 
   // Permission management using utility service
   private permissionUtils = this.permissionService.createInstancePermissions('Partner');
@@ -158,6 +240,66 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
   showCommentDialog = false;
   entityTypePartner = EntityType.Partner;
   infoLoading = signal<boolean>(false);
+
+  // Computed property for Due Diligence expiry warning
+  dueDiligenceExpiryWarning = computed(() => {
+    const expiryDate = this.recordData().dueDiligenceExpiryDate;
+    if (!expiryDate) return null;
+
+    // Normalize today to start of day (midnight) in local timezone
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Ensure expiry is a Date object and normalize to start of day
+    const expiry = new Date(expiryDate);
+    expiry.setHours(0, 0, 0, 0);
+
+    // Calculate 6 months from today
+    const sixMonthsFromNow = new Date(today);
+    sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+
+    // Only show warning if expiry is within the next 6 months and not in the past
+    if (expiry > sixMonthsFromNow || expiry < today) {
+      return null;
+    }
+
+    // Calculate total difference in days
+    const diffTime = expiry.getTime() - today.getTime();
+    const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Calculate months and remaining days
+    let months = 0;
+    let days = totalDays;
+    
+    // Count full months
+    const tempDate = new Date(today);
+    while (true) {
+      const nextMonth = new Date(tempDate);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      
+      // Check if adding another month would exceed the expiry date
+      if (nextMonth > expiry) {
+        break;
+      }
+      
+      months++;
+      tempDate.setMonth(tempDate.getMonth() + 1);
+    }
+    
+    // Calculate remaining days after full months
+    if (months > 0) {
+      const afterMonthsDate = new Date(today);
+      afterMonthsDate.setMonth(afterMonthsDate.getMonth() + months);
+      const remainingMs = expiry.getTime() - afterMonthsDate.getTime();
+      days = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+    }
+
+    return {
+      months,
+      days,
+      totalDays
+    };
+  });
 
   // ViewChild reference for link list component
   @ViewChild('linkListComponent') linkListComponent!: LinkListComponent;
@@ -244,6 +386,9 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   ngOnDestroy(): void {
+    // Clear component data for AI Assistant
+    this.pageContextService.clearComponentData();
+    
     this.langChangeSubscription?.unsubscribe();
     if (this.widthTrackingInterval) {
       clearInterval(this.widthTrackingInterval);
@@ -254,6 +399,9 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   ngOnInit() {
+    // Register component data for AI Assistant
+    this.pageContextService.setComponentData(this);
+    
     // Check admin role
     this.authService.isAdmin().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (isAdmin) => {
@@ -265,45 +413,32 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
       }
     });
 
-    // If recordId is provided via Input (AI layout), load data directly
-    if (this.recordId && this.recordId !== '') {
+    // Load initial data if recordId is already set
+    if (this.recordId) {
       this._loadRecordDetails();
-      return;
     }
-
-    // Otherwise, use the route-based logic (normal navigation)
-    this.activatedRoute.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (paramMap) => {
-        this.recordId = paramMap.get("recordId") || '';
-
-        if (this.recordId != '') {
-          // Check if data is already available from the resolver
-          this.activatedRoute.parent?.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
-            if (data['partnerData']) {
-              const partnerData = data['partnerData'];
-              this.recordData.set(partnerData);
-
-              // Extract permissions from the resolver data if they exist
-              if (partnerData.permissions) {
-                this.recordPermissions.set({
-                  entity: 'Partner',
-                  hasAccess: true,
-                  permissions: partnerData.permissions
-                });
-              }
-
-              this.infoLoading.set(false);
-            } else {
-              // Fallback to loading details directly if resolver data isn't available
-              this._loadRecordDetails();
-            }
-          });
-
-          // Load permissions for this specific partner
-          // Permissions are now extracted from the partner response directly
+    
+    // ALWAYS subscribe to route parameter changes, regardless of initial recordId
+    // Note: recordId is on the parent route, not the child route
+    // So we need to subscribe to parent.paramMap, not paramMap
+    const parent = this.activatedRoute.parent;
+    if (parent) {
+      parent.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: (paramMap) => {
+          const newRecordId = paramMap.get("recordId") || '';
+          
+          // ALWAYS reload when recordId changes
+          if (newRecordId && newRecordId !== this.recordId) {
+            this.recordId = newRecordId;
+            this._loadRecordDetails();
+          } else if (newRecordId && !this.recordId) {
+            // First load when recordId is empty
+            this.recordId = newRecordId;
+            this._loadRecordDetails();
+          }
         }
-      }
-    });
+      });
+    }
 
     // Width tracking will be initialized in ngAfterViewInit
 
@@ -335,6 +470,7 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
         }
 
         this.infoLoading.set(false);
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading partner details:', error);
@@ -579,6 +715,69 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
       }
     });
   }
+  
+  /**
+ * @uiButton unapprove_partner
+ * @description Shows unapproval confirmation dialog for approved partners
+ * @label Unapprove
+ * @icon pi pi-times
+ * @when_to_use When approved partner needs to be unapproved and user has admin privileges
+ * @permissions canUnapprove
+ */
+  handleUnapprovalClick() {
+    console.log('Unapproval button clicked for partner:', this.recordData().name);
+    
+    const message = this.translateService.instant('partner.view.unapproval.confirmMessage', { 
+      partnerName: this.recordData().name 
+    });
+    
+    // Show confirmation dialog with HTML message
+    this.confirmationService.confirm({
+      message: message.replace(/\n\n/g, '<br><br>'),
+      header: this.translateService.instant('partner.view.unapproval.confirmHeader'),
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-warn',
+      rejectButtonStyleClass: 'p-button-secondary',
+      accept: () => {
+        console.log('Unapproval confirmed, proceeding with unapproval');
+        this.performUnapproval();
+      },
+      reject: () => {
+        console.log('Unapproval cancelled');
+      }
+    });
+  }
+
+  /**
+   * Performs the actual unapproval API call
+   */
+  private performUnapproval() {
+    const requestPayload = {
+      id: this.recordData().id,
+      notes: `Partner unapproved via UI on ${new Date().toISOString()}`
+    };
+
+    this.partnerService.unapprovePartner(requestPayload).subscribe({
+      next: (data: any) => {
+        console.log('Partner unapproved successfully:', data);
+        // Show success message
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.unapproval.successMessage', { 
+            partnerName: this.recordData().name 
+          })
+        });
+        // Reload partner details to show updated status
+        this._loadRecordDetails();
+      },
+      error: (error) => {
+        console.error('Failed to unapprove partner:', error);
+        // Show error message
+        this.feedbackDialogService.showErrorToast({ 
+          detail: this.translateService.instant('partner.view.unapproval.errorMessage')
+        });
+      }
+    });
+  }
 
   /**
    * @uiButton activate_partner
@@ -638,6 +837,122 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
     });
   }
 
+  /**
+   * @uiButton close_partner
+   * @description Opens close confirmation dialog and closes the partner
+   * @label Close
+   * @icon pi pi-times-circle
+   * @when_to_use When partner needs to be closed and user has close privileges
+   * @permissions canClose
+   */
+  handleCloseClick() {
+    const message = this.translateService.instant('partner.view.close.confirmMessage', {
+      partnerName: this.recordData().name
+    });
+    
+    // Show confirmation dialog with HTML message
+    this.confirmationService.confirm({
+      message: message.replace(/\n\n/g, '<br><br>'),
+      header: this.translateService.instant('message.confirmClose'),
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.performClose();
+      },
+      reject: () => {
+        console.log('Close cancelled');
+      }
+    });
+  }
+
+  /**
+   * Performs the actual close API call
+   */
+  private performClose() {
+    const requestPayload = {
+      id: this.recordData().id,
+      notes: `Partner closed via UI on ${new Date().toISOString()}`
+    };
+
+    this.partnerService.closePartner(requestPayload).subscribe({
+      next: (data: any) => {
+        console.log('Partner closed successfully:', data);
+        // Show success message
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.close.successMessage', { 
+            partnerName: this.recordData().name 
+          })
+        });
+        // Reload partner details to show updated status
+        this._loadRecordDetails();
+      },
+      error: (error) => {
+        console.error('Failed to close partner:', error);
+        // Show error message
+        this.feedbackDialogService.showErrorToast({ 
+          detail: this.translateService.instant('partner.view.close.errorMessage')
+        });
+      }
+    });
+  }
+
+  /**
+   * @uiButton archive_partner
+   * @description Opens archive confirmation dialog and archives the partner
+   * @label Archive
+   * @icon pi pi-archive
+   * @when_to_use When partner needs to be archived and user has archive privileges
+   * @permissions canArchive
+   */
+  handleArchiveClick() {
+    const message = this.translateService.instant('partner.view.archive.confirmMessage', {
+      partnerName: this.recordData().name
+    });
+    
+    // Show confirmation dialog with HTML message
+    this.confirmationService.confirm({
+      message: message.replace(/\n\n/g, '<br><br>'),
+      header: this.translateService.instant('message.confirmArchive'),
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.performArchive();
+      },
+      reject: () => {
+        console.log('Archive cancelled');
+      }
+    });
+  }
+
+  /**
+   * Performs the actual archive API call
+   */
+  private performArchive() {
+    const requestPayload = {
+      id: this.recordData().id,
+      notes: `Partner archived via UI on ${new Date().toISOString()}`
+    };
+
+    this.partnerService.archivePartner(requestPayload).subscribe({
+      next: (data: any) => {
+        console.log('Partner archived successfully:', data);
+        // Show success message
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('partner.view.archive.successMessage', { 
+            partnerName: this.recordData().name 
+          })
+        });
+        // Reload partner details to show updated status
+        this._loadRecordDetails();
+      },
+      error: (error) => {
+        console.error('Failed to archive partner:', error);
+        // Show error message
+        this.feedbackDialogService.showErrorToast({ 
+          detail: this.translateService.instant('partner.view.archive.errorMessage')
+        });
+      }
+    });
+  }
+
   /*selectOrganizationalStructure(type: 'summary' | 'risk' | 'news') {
 
 
@@ -656,7 +971,6 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
         overflow: 'hidden',
         backgroundColor: 'white'
       },
-      baseZIndex: 10000,
       dismissableMask: true,
       closeOnEscape: true,
       closable: true,
@@ -809,15 +1123,14 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
 
   @HostListener('window:resize', ['$event'])
   onResize() {
-    console.log('Partner View - Window resize detected');
-    setTimeout(() => {
-      this.updateComponentWidth();
-    }, 10);
+    if (this.updateComponentWidth) {
+      setTimeout(() => {
+        this.updateComponentWidth();
+      }, 10);
+    }
   }
 
   private startWidthTracking() {
-    console.log('Partner View - Starting width tracking'); // Debug log
-    
     // Initial width measurement with multiple attempts
     this.attemptWidthMeasurement();
 
@@ -829,7 +1142,6 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
           if (width > 0) {
             const currentWidth = this.componentWidth();
             if (currentWidth !== width) {
-              console.log('Partner View - ResizeObserver width changed from', currentWidth, 'to', width);
               this.componentWidth.set(width);
               this.cdr.detectChanges();
             }
@@ -838,10 +1150,8 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
       });
       
       this.resizeObserver.observe(this.widthTracker.nativeElement);
-      console.log('Partner View - ResizeObserver initialized');
     } else {
       // Fallback to polling for older browsers
-      console.log('Partner View - Using polling fallback');
       this.widthTrackingInterval = setInterval(() => {
         this.updateComponentWidth();
       }, 100);
@@ -855,7 +1165,7 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
     }
 
     if (this.updateComponentWidth()) {
-      console.log('Partner View - Width measurement successful');
+      // Width measurement successful
     } else {
       // Try again after a short delay
       setTimeout(() => {
@@ -872,7 +1182,6 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
       if (width > 0) {
         const currentWidth = this.componentWidth();
         if (currentWidth !== width) {
-          console.log('Partner View - Width changed from', currentWidth, 'to', width);
           this.componentWidth.set(width);
           // Trigger change detection
           this.cdr.detectChanges();

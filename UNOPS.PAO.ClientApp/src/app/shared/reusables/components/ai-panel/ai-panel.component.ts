@@ -308,6 +308,35 @@ export interface AiDataService {
       border-radius: 1px !important;
     }
 
+    /* Text truncation wrapper - uses max-height instead of webkit-box to avoid rendering issues */
+    .ai-panel .content-truncated-wrapper {
+      position: relative !important;
+      max-height: 15rem !important;
+      overflow: hidden !important;
+    }
+
+    .ai-panel .content-truncated-wrapper::after {
+      content: '' !important;
+      position: absolute !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: 4rem !important;
+      background: linear-gradient(to bottom, transparent 0%, white 90%) !important;
+      pointer-events: none !important;
+    }
+
+    .ai-panel .content-full-wrapper {
+      display: block !important;
+      overflow: visible !important;
+    }
+
+    /* Ensure markdown content displays properly in both states */
+    .ai-panel .content-truncated-wrapper .markdown-content,
+    .ai-panel .content-full-wrapper .markdown-content {
+      display: block !important;
+    }
+
     /* Responsive design */
     @media (max-width: 768px) {
       .ai-panel ::ng-deep .markdown-content h1 {
@@ -332,6 +361,15 @@ export interface AiDataService {
       .ai-panel ::ng-deep .markdown-content blockquote {
         margin: 0.75rem 0 !important;
         padding: 0.75rem 1rem !important;
+      }
+
+      /* Adjust truncation for mobile */
+      .ai-panel .content-truncated-wrapper {
+        max-height: 12rem !important;
+      }
+
+      .ai-panel .content-truncated-wrapper::after {
+        height: 3rem !important;
       }
     }
   `
@@ -374,18 +412,10 @@ export class AiPanelComponent implements OnInit, OnDestroy, DoCheck {
   shouldShowContent = computed(() => !this.isLoading() && !this.hasError() && this.content());
   shouldShowError = computed(() => !this.isLoading() && this.hasError());
 
-  // Content truncation logic
+  // Content truncation logic - now handled by CSS
   shouldTruncate = computed(() => {
     const content = this.content();
     return content && content.length > this.truncateLength() && !this.showFullContent();
-  });
-
-  displayContent = computed(() => {
-    const content = this.content();
-    if (this.shouldTruncate()) {
-      return content.substring(0, this.truncateLength()) + '...';
-    }
-    return content;
   });
 
   showSeeMoreButton = computed(() => {

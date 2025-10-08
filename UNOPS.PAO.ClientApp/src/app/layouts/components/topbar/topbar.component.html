@@ -23,7 +23,7 @@
 	<!-- Priority 2: Search bar - always visible -->
 	<div class="flex items-center gap-2 flex-1 max-w-2xl global-search-container">
 		<app-global-search-bar (searchExpanded)="onSearchExpanded($event)"></app-global-search-bar>
-		
+
 		<!-- Priority 5: Global Filters button - Desktop only (next to search) -->
 		<p-button
 			type="button"
@@ -68,28 +68,28 @@
 			[text]="true"
 			[ariaLabel]="isMobile ? ('topbar.aiAssistantOpenPage' | translate) : ('topbar.aiAssistantTogglePanel' | translate)"
 			data-ai-assistant-toggle
-			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center ai-assistant-toggle-btn"
+			styleClass="!w-12 !h-10 !p-0 flex items-center justify-center ai-assistant-toggle-btn"
 			[pTooltip]="isMobile ? ('topbar.aiAssistantOpenPage' | translate) : ('topbar.aiAssistantTogglePanel' | translate)"
 			tooltipPosition="bottom"
 			class="ai-assistant-toggle"
 			[class.search-expanded-hide-mobile]="isSearchExpanded">
 			<ng-template pTemplate="content">
-				<img 
-					src="./images/AI_visual_64.svg" 
-					[alt]="'topbar.aiAssistant' | translate" 
-					class="ai-icon w-6 h-6" 
-					style="display: block !important; width: 24px !important; height: 24px !important;"
+				<img
+					src="./images/AI_visual_64.svg"
+					[alt]="'topbar.aiAssistant' | translate"
+					class="ai-icon w-6 h-6"
+					style="display: block !important; width: 24px !important; height: 24px !important;transform: translateY(-1px)"
 					(error)="onImageError($event)"
 					(load)="onImageLoad($event)" />
 			</ng-template>
 		</p-button>
-		
+
 		<!-- Priority 8: Tour Control -->
 		<app-tour-control class="tour-control" [class.search-expanded-hide-mobile]="isSearchExpanded"></app-tour-control>
-		
+
 		<!-- Priority 7: Language Selector -->
 		<app-language-selector class="language-selector" [class.search-expanded-hide-mobile]="isSearchExpanded"></app-language-selector>
-		
+
 		<!-- Priority 4: Notifications -->
 		<div class="relative notifications-container" [class.search-expanded-hide-mobile]="isSearchExpanded">
 			<p-button
@@ -104,97 +104,97 @@
 					<i class="pi pi-bell text-xl"></i>
 				</ng-template>
 			</p-button>
-			
+
 			<!-- Notification badge positioned outside the button -->
 			<span *ngIf="unreadCount > 0" class="notification-badge" [attr.data-count]="unreadCount">{{getDisplayCount()}}</span>
 		</div>
-      <p-overlayPanel #notificationPanel [style]="{width: '450px', maxHeight: '600px'}">
+      <p-popover #notificationPanel [style]="{width: '450px', maxHeight: '600px'}">
         <div class="notification-panel">
           <div class="notification-header">
             <h3>{{ 'notifications.title' | translate }}</h3>
           </div>
-          
+
           <!-- Tab Navigation -->
           <div class="notification-tabs">
-            <button 
-              class="tab-button" 
+            <button
+              class="tab-button"
               [class.active]="activeNotificationTab === 'unread'"
               (click)="switchNotificationTab('unread')">
               {{ 'notifications.unread' | translate }}
               <span *ngIf="unreadCount > 0" class="tab-badge">{{unreadCount}}</span>
             </button>
-            <button 
-              class="tab-button" 
+            <button
+              class="tab-button"
               [class.active]="activeNotificationTab === 'all'"
               (click)="switchNotificationTab('all')">
               {{ 'notifications.all' | translate }}
               <span class="tab-badge">{{allNotifications.length}}</span>
             </button>
           </div>
-          
+
           <!-- Notification Content -->
           <div class="notification-list">
-            <div *ngFor="let notification of getLimitedNotifications()" 
-                 class="notification-item" 
+            <div *ngFor="let notification of getLimitedNotifications()"
+                 class="notification-item"
                  [ngClass]="{
                    'notification-progress': notification.status === 'Progress',
                    'notification-read': isNotificationRead(notification),
                    'notification-unread': !isNotificationRead(notification)
                  }"
                  (click)="notification.category !== 'file_analysis' && notification.status !== 'Progress' ? handleNotificationClick(notification) : null">
-              
+
               <!-- Category icon -->
-              <div class="notification-category-icon" 
+              <div class="notification-category-icon"
                    [style.background-color]="getCategoryIconColor(notification) + '20'">
-                <i [class]="getCategoryIcon(notification)" 
+                <i [class]="getCategoryIcon(notification)"
                    [style.color]="getCategoryIconColor(notification)"></i>
               </div>
-              
+
               <div class="notification-content">
                 <!-- Progress status indicator -->
                 <div *ngIf="notification.status === 'Progress'" class="notification-progress-indicator">
                   <p-progressBar mode="indeterminate" [style]="{'height': '6px'}"></p-progressBar>
                 </div>
-                
+
                 <!-- For messages with progress bars embedded in the text -->
                 <p *ngIf="notification.message && notification.message.includes('[')">
                   <span [innerHTML]="formatProgressMessage(notification.message)"></span>
                 </p>
-                
+
                 <!-- Regular message -->
                 <p *ngIf="!notification.message || !notification.message.includes('[')">
                   {{notification.message}}
                 </p>
-                
+
                 <!-- Timestamp -->
                 <div class="notification-timestamp" *ngIf="notification.createdAt">
                   <small>{{formatTimestamp(notification.createdAt)}}</small>
                 </div>
-                
+
                 <!-- Cancel button for file analysis operations in progress -->
-                <div *ngIf="notification.category === 'file_analysis' && notification.status === 'Progress'" 
+                <div *ngIf="notification.category === 'file_analysis' && notification.status === 'Progress'"
                      class="notification-actions">
-                  <p-button icon="pi pi-times" 
-                            [label]="'common.cancel' | translate" 
-                            severity="secondary" 
+                  <p-button icon="pi pi-times"
+                            [label]="'common.cancel' | translate"
+                            severity="secondary"
                             size="small"
                             (onClick)="cancelFileAnalysis(notification, $event)"></p-button>
                 </div>
               </div>
             </div>
-            
+
             <!-- See more button -->
             <div *ngIf="hasMoreNotifications()" class="see-more-container">
-              <p-button 
-                [label]="('notifications.seeAll' | translate) + ' ' + getCurrentNotifications().length + ' ' + ('notifications.items' | translate)" 
-                icon="pi pi-external-link" 
-                severity="secondary" 
+              <p-button
+                [label]="('notifications.seeAll' | translate) + ' ' + getCurrentNotifications().length + ' ' + ('notifications.items' | translate)"
+                icon="pi pi-external-link"
+                severity="secondary"
                 [text]="true"
                 styleClass="w-full"
                 (onClick)="openNotificationDialog()">
               </p-button>
             </div>
-            
+
             <!-- Empty states -->
             <div *ngIf="getCurrentNotifications().length === 0" class="no-notifications">
               <div *ngIf="activeNotificationTab === 'unread'">
@@ -208,35 +208,35 @@
             </div>
           </div>
         </div>
-      </p-overlayPanel>
-      
+      </p-popover>
+
       <!-- Chat History Panel -->
-      <p-overlayPanel #chatHistoryPanel [style]="{width: '400px', maxHeight: '500px'}">
+      <p-popover #chatHistoryPanel [style]="{width: '400px', maxHeight: '500px'}">
         <div class="chat-history-panel">
           <div class="chat-history-header">
             <h3>{{ 'chatHistory.title' | translate }}</h3>
-            <p-button 
-              icon="pi pi-plus" 
-              [label]="'chatHistory.newChat' | translate" 
+            <p-button
+              icon="pi pi-plus"
+              [label]="'chatHistory.newChat' | translate"
               size="small"
               (onClick)="startNewChat(); chatHistoryPanel.hide()"
               [disabled]="isNewChatDisabled"
               class="new-chat-btn">
             </p-button>
           </div>
-          
+
           <!-- Search -->
           <div class="chat-search-container" *ngIf="chatSessions.length > 0">
             <div class="search-input-wrapper">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 [(ngModel)]="chatSearchQuery"
                 (input)="onChatSearchInput($event)"
                 [placeholder]="'chatHistory.searchPlaceholder' | translate"
                 class="search-input"
               />
               <i class="pi pi-search search-icon"></i>
-              <button 
+              <button
                 *ngIf="chatSearchQuery"
                 (click)="clearChatSearch()"
                 class="clear-search-btn"
@@ -245,18 +245,18 @@
               </button>
             </div>
           </div>
-          
+
           <div class="chat-history-list">
             <div *ngIf="isLoadingChatSessions" class="loading-message">
               <div class="loading-spinner"></div>
               <span>{{ 'chatHistory.loading' | translate }}</span>
             </div>
-            
+
             <div *ngIf="!isLoadingChatSessions && chatSessions.length === 0" class="no-chats-message">
               <span class="text-sm text-gray-500">{{ 'chatHistory.noChats' | translate }}</span>
             </div>
-            
-            <div *ngFor="let session of filteredChatSessions; trackBy: trackByChatId" 
+
+            <div *ngFor="let session of filteredChatSessions; trackBy: trackByChatId"
                  class="chat-history-item"
                  [class.active]="isSelectedChatSession(session)"
                  (click)="openChatSession(session); chatHistoryPanel.hide()">
@@ -265,7 +265,7 @@
                 <div class="chat-date">{{ formatChatDate(session.lastUpdated) }}</div>
               </div>
               <div class="chat-item-actions">
-                <button 
+                <button
                   class="star-btn"
                   [class.starred]="session.starred"
                   (click)="toggleChatStar(session, $event)"
@@ -274,14 +274,14 @@
                 </button>
               </div>
             </div>
-            
+
             <div *ngIf="!isLoadingChatSessions && filteredChatSessions.length === 0 && chatSessions.length > 0" class="no-results-message">
               <span class="text-sm text-gray-500">{{ 'chatHistory.noResults' | translate }}</span>
             </div>
           </div>
         </div>
-      </p-overlayPanel>
-      
+      </p-popover>
+
 		<!-- Priority 6: User Profile -->
 		<div class="ml-auto profile-menu" [class.search-expanded-hide-mobile]="isSearchExpanded">
 			<div class="flex items-center gap-2">
@@ -309,86 +309,86 @@
 <app-global-filters-dialog></app-global-filters-dialog>
 
 <!-- Notification Dialog -->
-<p-dialog 
-  [(visible)]="showNotificationDialog" 
-  [modal]="true" 
+<p-dialog
+  [(visible)]="showNotificationDialog"
+  [modal]="true"
   [closable]="true"
   [draggable]="false"
   [resizable]="false"
   styleClass="notification-dialog"
   [header]="'notifications.allTitle' | translate"
   [style]="{width: '800px', maxWidth: '90vw', maxHeight: '80vh'}">
-  
+
   <div class="notification-dialog-wrapper">
     <!-- Tab Navigation -->
     <div class="notification-dialog-tabs">
-    <button 
-      class="tab-button" 
+    <button
+      class="tab-button"
       [class.active]="activeNotificationTab === 'unread'"
       (click)="switchNotificationTab('unread')">
       {{ 'notifications.unread' | translate }}
       <span *ngIf="unreadCount > 0" class="tab-badge">{{unreadCount}}</span>
     </button>
-    <button 
-      class="tab-button" 
+    <button
+      class="tab-button"
       [class.active]="activeNotificationTab === 'all'"
       (click)="switchNotificationTab('all')">
       {{ 'notifications.all' | translate }}
       <span class="tab-badge">{{allNotifications.length}}</span>
     </button>
   </div>
-  
+
   <!-- Notification Content -->
   <div class="notification-dialog-content">
-    <div *ngFor="let notification of getCurrentNotifications()" 
-         class="notification-item" 
+    <div *ngFor="let notification of getCurrentNotifications()"
+         class="notification-item"
          [ngClass]="{
            'notification-progress': notification.status === 'Progress',
            'notification-read': isNotificationRead(notification),
            'notification-unread': !isNotificationRead(notification)
          }"
          (click)="notification.category !== 'file_analysis' && notification.status !== 'Progress' ? handleNotificationClickFromDialog(notification) : null">
-      
+
       <!-- Category icon -->
-      <div class="notification-category-icon" 
+      <div class="notification-category-icon"
            [style.background-color]="getCategoryIconColor(notification) + '20'">
-        <i [class]="getCategoryIcon(notification)" 
+        <i [class]="getCategoryIcon(notification)"
            [style.color]="getCategoryIconColor(notification)"></i>
       </div>
-      
+
       <div class="notification-content">
         <!-- Progress status indicator -->
         <div *ngIf="notification.status === 'Progress'" class="notification-progress-indicator">
           <p-progressBar mode="indeterminate" [style]="{'height': '6px'}"></p-progressBar>
         </div>
-        
+
         <!-- For messages with progress bars embedded in the text -->
         <p *ngIf="notification.message && notification.message.includes('[')">
           <span [innerHTML]="formatProgressMessage(notification.message)"></span>
         </p>
-        
+
         <!-- Regular message -->
         <p *ngIf="!notification.message || !notification.message.includes('[')">
           {{notification.message}}
         </p>
-        
+
         <!-- Timestamp -->
         <div class="notification-timestamp" *ngIf="notification.createdAt">
           <small>{{formatTimestamp(notification.createdAt)}}</small>
         </div>
-        
+
         <!-- Cancel button for file analysis operations in progress -->
-        <div *ngIf="notification.category === 'file_analysis' && notification.status === 'Progress'" 
+        <div *ngIf="notification.category === 'file_analysis' && notification.status === 'Progress'"
              class="notification-actions">
-          <p-button icon="pi pi-times" 
-                    [label]="'common.cancel' | translate" 
-                    severity="secondary" 
+          <p-button icon="pi pi-times"
+                    [label]="'common.cancel' | translate"
+                    severity="secondary"
                     size="small"
                     (onClick)="cancelFileAnalysis(notification, $event)"></p-button>
         </div>
       </div>
     </div>
-    
+
     <!-- Empty states -->
     <div *ngIf="getCurrentNotifications().length === 0" class="no-notifications">
       <div *ngIf="activeNotificationTab === 'unread'">

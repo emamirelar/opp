@@ -215,44 +215,44 @@
           <div class="space-y-unops-md" [class.hidden]="!shouldUseVerticalLayout()" [class.block]="shouldUseVerticalLayout()">
             <!-- Quick Actions Label -->
             <h2 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
-              Quick Actions
+              {{ 'dashboard.quickActions' | translate }}
             </h2>
             
             <!-- Action Buttons -->
             <div class="flex flex-col space-y-unops-sm">
-              <button 
+              <button
                 *ngIf="partnerPermissions().permissions.canCreate"
-                pButton 
-                type="button" 
+                pButton
+                type="button"
                 class="p-button-sm unops-button-primary flex items-center justify-center w-full"
                 (click)="openNewPartnerModal()">
                 <i class="material-symbols-outlined text-unops-lg mr-unops-xs">corporate_fare</i>
-                New Partner
+                {{ 'dashboard.newPartner' | translate }}
               </button>
-              <button 
+              <button
                 *ngIf="contactPermissions().permissions.canCreate"
-                pButton 
-                type="button" 
+                pButton
+                type="button"
                 class="p-button-sm unops-button-primary flex items-center justify-center w-full"
                 (click)="openNewContactModal()">
                 <i class="material-symbols-outlined text-unops-lg mr-unops-xs">contacts</i>
-                New Contact
+                {{ 'dashboard.newContact' | translate }}
               </button>
-              <button 
+              <button
                 *ngIf="interactionPermissions().permissions.canCreate"
-                pButton 
-                type="button" 
+                pButton
+                type="button"
                 class="p-button-sm unops-button-primary flex items-center justify-center w-full"
                 (click)="openNewInteractionModal()">
                 <i class="material-symbols-outlined text-unops-lg mr-unops-xs">chat</i>
-                New Interaction
+                {{ 'dashboard.newInteraction' | translate }}
               </button>
             </div>
             
             <!-- Last Updated and Refresh -->
             <div class="flex items-center justify-between pt-unops-sm border-t border-unops-neutral-200">
               <div class="text-unops-body-small text-unops-neutral-500">
-                Last updated {{ lastUpdatedTime() }}
+                {{ 'dashboard.lastUpdated' | translate }} {{ lastUpdatedTime() }}
               </div>
               <button 
                 pButton 
@@ -349,7 +349,7 @@
                     </div>
                   }
                   <!-- Actions Grid -->
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unops-md actions-grid">
+                  <div class="grid gap-unops-md actions-grid" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-3]="!shouldUseCardVerticalLayout()">
                     @for (item of getDisplayedDraftActions(); track item.id) {
                       <div class="p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-warning/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
                            (click)="navigateToEntity(getDraftActionEntityType(item), getEntityId(item.id))">
@@ -458,7 +458,7 @@
                     </div>
                   }
                   <!-- Activity Grid -->
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unops-md activity-grid">
+                  <div class="grid gap-unops-md activity-grid" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-3]="!shouldUseCardVerticalLayout()">
                     @for (update of getDisplayedOrgUnitUpdates(); track update.id) {
                       <div class="p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-info/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
                            (click)="navigateToEntity(update.type, update.id)">
@@ -483,12 +483,12 @@
                               <span class="inline-flex items-center px-unops-sm py-1 rounded-unops-sm text-unops-label-small font-unops-medium"
                                     [ngClass]="{
                                       'bg-unops-info/10 text-unops-info': update.type === 'Partner',
-                                      'bg-unops-success/10 text-unops-success': update.type === 'Contact', 
+                                      'bg-unops-success/10 text-unops-success': update.type === 'Contact',
                                       'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
                                     }">
                                 {{ ('dashboard.' + update.type.toLowerCase()) | translate }}
                               </span>
-                              <span class="text-unops-body-small text-unops-neutral-600">by {{ update.lastModifiedBy }}</span>
+                              <span class="text-unops-body-small text-unops-neutral-600">by {{ update.lastModifiedByName || ('User ' + update.lastModifiedBy) }}</span>
                             </div>
                           </div>
                         </div>
@@ -528,7 +528,7 @@
                 </div>
               </div>
               <div class="p-unops-lg">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-unops-xl">
+                <div class="grid gap-unops-xl" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-2]="!shouldUseCardVerticalLayout()">
                   <!-- All Partners -->
               @if (dashboardData()!.myPartners.length > 0) {
                     <div>
@@ -656,7 +656,7 @@
                     </div>
                   }
                   <!-- Interactions Grid -->
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-unops-md interactions-grid">
+                  <div class="grid gap-unops-md interactions-grid" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-3]="!shouldUseCardVerticalLayout()">
                     @for (interaction of getDisplayedInteractions(); track interaction.id) {
                       <div class="p-unops-md rounded-unops-lg border border-unops-neutral-200 hover:border-unops-accent-orange/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
                            (click)="navigateToEntity('Interaction', getEntityId(interaction.id))">
@@ -728,8 +728,8 @@
           }
         </div>
       } @else {
-        <!-- Normal 3-Panel View -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-unops-xl mb-unops-xl">
+        <!-- Normal 3-Panel View - Responsive based on container width -->
+        <div class="grid gap-unops-xl mb-unops-xl" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-3]="!shouldUseCardVerticalLayout()">
         
           <!-- Left Panel: Actions Required -->
           <app-dashboard-card
@@ -821,12 +821,12 @@
                         <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium"
                               [ngClass]="{
                                 'bg-unops-info/10 text-unops-info': update.type === 'Partner',
-                                'bg-unops-success/10 text-unops-success': update.type === 'Contact', 
+                                'bg-unops-success/10 text-unops-success': update.type === 'Contact',
                                 'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
                               }">
                           {{ ('dashboard.' + update.type.toLowerCase()) | translate }}
                         </span>
-                        <span class="text-unops-body-small text-unops-neutral-600 truncate">by {{ update.lastModifiedBy }}</span>
+                        <span class="text-unops-body-small text-unops-neutral-600 truncate">by {{ update.lastModifiedByName || ('User ' + update.lastModifiedBy) }}</span>
                       </div>
                     </div>
                   </div>
@@ -921,7 +921,7 @@
           
           <!-- Content Template - Only show when there are interactions -->
           @if (dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0) {
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-unops-md interactions-grid">
+            <div class="grid gap-unops-md interactions-grid" [class.grid-cols-1]="shouldUseCardVerticalLayout()" [class.grid-cols-3]="!shouldUseCardVerticalLayout()">
               @for (interaction of getTruncatedInteractions(); track interaction.id) {
                 <div class="p-unops-sm rounded-unops-lg border border-unops-neutral-200 hover:border-unops-accent-orange/50 hover:shadow-unops-sm cursor-pointer transition-all duration-unops-short"
                      (click)="navigateToEntity('Interaction', getEntityId(interaction.id))">

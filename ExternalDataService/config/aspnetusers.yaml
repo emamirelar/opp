@@ -2,19 +2,16 @@ metadata:
   name: "ASPNetUsers Sync"
   description: "ASPNetUsers data sync"
   version: "1.0"
-  enabled: false
+  enabled: true
   max_retry_attempts: 1
   timeout_minutes: 5
 
 source:
   type: "bigquery"
-  connection:
-    project_id: "unops-partneropportunity"
-    use_environment_auth: true
   
   query: |
     SELECT DISTINCT
-      Resource as Id
+      PARSE_NUMERIC(Resource) as Id
       , true as IsInternal
       , Resource_Email_Address_Primary as UserName
       , UPPER(Resource_Email_Address_Primary) AS NormalizedUserName
@@ -34,8 +31,12 @@ source:
       unopsreporting.Employment.People_Search_Report
     WHERE
       Effective_Date = CURRENT_DATE()
+      AND Employment_Status = 'N'
+      AND Employment_Type IN ('OPSSTAFF', 'OPSNONSTAFF')
+      AND TRIM(Resource_Email_Address_Primary) > ''
       QUALIFY ROW_NUMBER() OVER (
-          PARTITION BY Resource_Email_Address_Primary
+          PARTITION BY PARSE_NUMERIC(Resource)
+          ORDER BY Resource_Email_Address_Primary
         ) = 1
   
   primary_key_field: "Id"
@@ -44,103 +45,91 @@ source:
 destination:
   table_name: "AspNetUsers"
   schema: "public"
+  manage_table_structure: false  # Only validate, don't create/alter
+  add_standard_fields: false
   
   field_mappings:
-    - source_field: "Base_Engagement"
-      destination_field: "Name"  # Needed to implement BaseBusinessEntity
-      data_type: "varchar(50)"
-      is_required: false
-
-    - source_field: "Status"
-      destination_field: "Status"  # Needed to implement BaseBusinessEntity
-      data_type: "integer"         # Must be integer (BaseBusinessEntity requirement)
-      is_required: false
-
-    - source_field: "Base_Engagement"
-      destination_field: "BaseEngagement"
-      data_type: "varchar(50)"
-      is_required: true
+    - source_field: "Id"
+      destination_field: "Id"
+      data_type: "integer"
       is_unique: true
-    
-    - source_field: "Engagement_Implementation_Start_Date"
-      destination_field: "EngagementImplementationStartDate"
-      data_type: "date"
+      is_required: true
+
+    - source_field: "IsInternal"
+      destination_field: "IsInternal"
+      data_type: "boolean"
       is_required: false
-    
-    - source_field: "Engagement_Implementation_End_Date"
-      destination_field: "EngagementImplementationEndDate"
-      data_type: "date"
+
+    - source_field: "UserName"
+      destination_field: "UserName"
+      data_type: "varchar(255)"
+      is_required: true
+
+    - source_field: "NormalizedUserName"
+      destination_field: "NormalizedUserName"
+      data_type: "varchar(255)"
+      is_required: true
+      
+    - source_field: "Email"
+      destination_field: "Email"
+      data_type: "varchar(255)"
+      is_required: true
+
+    - source_field: "NormalizedEmail"
+      destination_field: "NormalizedEmail"
+      data_type: "varchar(255)"
+      is_required: true
+
+    - source_field: "EmailConfirmed"
+      destination_field: "EmailConfirmed"
+      data_type: "boolean"
       is_required: false
-    
-    - source_field: "Engagement_Signed_Date"
-      destination_field: "EngagementSignedDate"
-      data_type: "date"
-      is_required: false
-    
-    - source_field: "Engagement_Amount"
-      destination_field: "EngagementAmount"
-      data_type: "decimal(18,2)"
-      is_required: false
-    
-    - source_field: "Engagement_Stage"
-      destination_field: "EngagementStage"
-      data_type: "varchar(100)"
-      is_required: false
-    
-    - source_field: "Engagement_Stage_Description"
-      destination_field: "EngagementStageDescription"
-      data_type: "varchar(500)"
-      is_required: false
-    
-    - source_field: "Business_Developer"
-      destination_field: "BusinessDeveloper"
+
+    - source_field: "PasswordHash"
+      destination_field: "PasswordHash"
       data_type: "varchar(255)"
       is_required: false
-    
-    - source_field: "Business_Developer_Name"
-      destination_field: "BusinessDeveloperName"
+
+    - source_field: "SecurityStamp"
+      destination_field: "SecurityStamp"
       data_type: "varchar(255)"
       is_required: false
-    
-    - source_field: "Business_Developer_Email_Address"
-      destination_field: "BusinessDeveloperEmailAddress"
+
+    - source_field: "ConcurrencyStamp"
+      destination_field: "ConcurrencyStamp"
       data_type: "varchar(255)"
       is_required: false
-    
-    - source_field: "Engagement_Project_Executive"
-      destination_field: "EngagementProjectExecutive"
+
+    - source_field: "PhoneNumber"
+      destination_field: "PhoneNumber"
       data_type: "varchar(255)"
       is_required: false
-    
-    - source_field: "Engagement_Project_Executive_Name"
-      destination_field: "EngagementProjectExecutiveName"
-      data_type: "varchar(255)"
+
+    - source_field: "PhoneNumberConfirmed"
+      destination_field: "PhoneNumberConfirmed"
+      data_type: "boolean"
       is_required: false
-    
-    - source_field: "Implementation_Countries_List"
-      destination_field: "ImplementationCountriesList"
-      data_type: "text"
+
+    - source_field: "TwoFactorEnabled"
+      destination_field: "TwoFactorEnabled"
+      data_type: "boolean"
       is_required: false
-    
-    - source_field: "Outputs_List"
-      destination_field: "OutputsList"
-      data_type: "text"
+
+    - source_field: "LockoutEnd"
+      destination_field: "LockoutEnd"
+      data_type: "timestamp"
       is_required: false
-    
-    - source_field: "SDG_List"
-      destination_field: "SDGList"
-      data_type: "text"
+
+    - source_field: "LockoutEnabled"
+      destination_field: "LockoutEnabled"
+      data_type: "boolean"
       is_required: false
-    
-    - source_field: "Engagement_Description"
-      destination_field: "EngagementDescription"
-      data_type: "text"
+
+    - source_field: "AccessFailedCount"
+      destination_field: "AccessFailedCount"
+      data_type: "integer"
       is_required: false
-    
-    - source_field: "Engagement_Long_Description"
-      destination_field: "EngagementLongDescription"
-      data_type: "text"
-      is_required: false
+
 
 sync_options:
   sync_mode: Upsert
@@ -148,8 +137,8 @@ sync_options:
 
 validation:
   required_source_fields:
-    - "Base_Engagement"
-    - "Engagement_Description"
+    - "Id"
+    - "UserName"
   
 error_handling:
   on_connection_error: RetryWithBackoff

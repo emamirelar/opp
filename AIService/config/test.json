@@ -46,7 +46,7 @@
     },
     "server": {
       "serve_web_interface": true,
-      "api_base_url": "https://opportunityplus.test.unops.org",
+      "api_base_url": "https://opportunityplus.test.unops.org/api/",
       "is_development": true,
       "host": "0.0.0.0",
       "port": 8000,
@@ -136,8 +136,8 @@
       "response_time": "24-48 hours"
     },
     "branding": {
-      "application_name": "Opportunity+ AI Agent",
-      "project_name": "Opportunity+",
+      "application_name": "Opportunity",
+      "project_name": "Opportunity",
       "organization": "UNOPS",
       "organization_full": "United Nations Office for Project Services",
       "description": "A comprehensive partner and opportunity management system"

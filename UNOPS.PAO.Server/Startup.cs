@@ -213,6 +213,9 @@ public class Startup
         // Add memory cache for permission caching
         services.AddMemoryCache();
         
+        // Add HttpClient for external service calls
+        services.AddHttpClient();
+        
         // Register AI prompt cache service
         services.AddScoped<IAiPromptCacheService, AiPromptCacheService>();
         

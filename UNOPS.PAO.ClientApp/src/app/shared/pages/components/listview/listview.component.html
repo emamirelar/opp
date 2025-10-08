@@ -45,6 +45,18 @@
     </div>
   }
 
+  <!-- Total Records Display (always visible) -->
+  @if(!shouldShowFilterToggle()) {
+    <div class="flex items-center space-x-2 px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
+      <i class="pi pi-database text-gray-600"></i>
+      <div class="flex-1">
+        <div class="text-gray-700 font-medium">
+          {{ getTotalRecordsText() }}
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Search bar -->
   @if (config.enableSearch) {
     <!-- Autocomplete Search Input (default mode) -->
@@ -84,6 +96,26 @@
               (onClick)="switchToAdvancedSearch()"
             ></p-button>
           }
+
+        <!-- Search Metadata Toggle Button -->
+        @if (searchMetadataEnabled() && hasActiveSearch()) {
+          <!-- Mobile: Icon only -->
+          <p-button
+            [icon]="showSearchMetadata() ? 'pi pi-eye-slash' : 'pi pi-eye'"
+            [class]="searchPanelClasses().advancedButtonMobile"
+            text rounded
+            [pTooltip]="getMetadataButtonTooltip()"
+            (onClick)="toggleSearchMetadata()"
+          ></p-button>
+          <!-- Desktop: Icon + Label -->
+          <p-button
+            [label]="getMetadataButtonLabel()"
+            [icon]="showSearchMetadata() ? 'pi pi-eye-slash' : 'pi pi-eye'"
+            [class]="searchPanelClasses().advancedButtonDesktop"
+            text rounded
+            (onClick)="toggleSearchMetadata()"
+          ></p-button>
+        }
         </div>
 
         <!-- Sort Dropdown -->
@@ -92,7 +124,7 @@
             <i class="pi pi-sort-alt text-gray-600"></i>
             <p-select
               [options]="sortOptions()"
-              [(ngModel)]="currentSortConfig"
+              [ngModel]="currentSortConfig()"
               (ngModelChange)="onSortConfigChange($event)"
               optionLabel="label"
               optionValue="value"
@@ -128,13 +160,14 @@
     <!-- Card view -->
       <app-listview-card
         [columns]="columns()"
-        [config]="config"
+        [config]="getEnhancedConfig()"
         [data]="currentPageData()"
         [totalRecords]="totalRecordsCount()"
         [loading]="isLoading()"
         [error]="hasError()"
         [hasMoreData]="hasMoreDataAvailable()"
         [isLoadingMore]="isLoadingMore()"
+        [showSearchMetadata]="showSearchMetadata()"
         (loadMore)="onLoadMore()"
         (sortChange)="onSortChange($event)"
         (rowClick)="onRowClick($event)"

@@ -1,17 +1,22 @@
-<div class="content-item" [ngSwitch]="item.type" *ngIf="shouldShow">
-  <!-- Markdown content without typewriter effect -->
+<div class="content-item" [ngSwitch]="item.type" *ngIf="shouldShow" [class.user-message]="isUserMessage" [class.ai-message]="!isUserMessage">
+  <!-- User message content - special handling for user messages -->
+  <div *ngSwitchCase="'user-message'" class="content-markdown user-message">
+    <div class="user-message-text">{{ getStringMessage() }}</div>
+  </div>
+  
+  <!-- Markdown content - AI messages only -->
   <div *ngSwitchCase="'markdown'" class="content-markdown">
     <markdown [data]="getStringMessage()"></markdown>
   </div>
   
-  <!-- Thought content with different styling -->
-  <div *ngSwitchCase="'thoughts'" class="content-thought">
-    <markdown [data]="getStringMessage()"></markdown>
+  <!-- Thought content with collapsible styling -->
+  <div *ngSwitchCase="'thoughts'">
+    <app-collapsible-thought [content]="getStringMessage()"></app-collapsible-thought>
   </div>
   
   <!-- Single thought content (for dynamic service) -->
-  <div *ngSwitchCase="'thought'" class="content-thought">
-    <markdown [data]="getStringMessage()"></markdown>
+  <div *ngSwitchCase="'thought'">
+    <app-collapsible-thought [content]="getStringMessage()"></app-collapsible-thought>
   </div>
   
   <!-- Grid/Table content -->
@@ -20,7 +25,7 @@
       <span class="content-type-label">{{ getContentTypeLabel() }}</span>
     </div>
     <app-entity-grid 
-      [entityType]="item.entity || 'Item'"
+      [entityType]="item.entityType || 'Item'"
       [gridData]="getArrayMessage()"
       (cardClicked)="cardClicked.emit($event)">
     </app-entity-grid>
@@ -32,7 +37,7 @@
       <span class="content-type-label">{{ getContentTypeLabel() }}</span>
     </div>
     <app-entity-grid 
-      [entityType]="item.entity || 'Item'"
+      [entityType]="item.entityType || 'Item'"
       [gridData]="getArrayMessage()"
       (cardClicked)="cardClicked.emit($event)">
     </app-entity-grid>
@@ -63,7 +68,7 @@
     <div class="content-type-header">
       <span class="content-type-label">{{ getContentTypeLabel() }}</span>
     </div>
-    <pre><code [class]="'language-' + (item.language || 'javascript')">{{ getStringMessage() }}</code></pre>
+    <pre><code class="language-javascript">{{ getStringMessage() }}</code></pre>
   </div>
   
   <!-- Function Call content -->

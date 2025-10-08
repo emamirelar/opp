@@ -133,8 +133,6 @@ export class PartnerEditDialogComponent implements OnInit {
       partnerLevyStatus: new FormControl(null),
       reasonForLevy: new FormControl(null),
       levyTreatment: new FormControl(null),
-      canCreateNewOpportunities: new FormControl(false),
-      reasonForNoNewOpportunity: new FormControl(null),
 
       // System fields
       discriminator: new FormControl(null),
@@ -172,8 +170,11 @@ export class PartnerEditDialogComponent implements OnInit {
 
   showValidationFailedError = signal<boolean>(false);
   isAdmin = signal<boolean>(false);
+  isGlobalAdmin = signal<boolean>(false);
   validationMode = signal<'save' | 'activate'>('save');
   partnerLevyStatusValue = signal<string>('');
+  dueDiligenceRequiredValue = signal<string>('');
+  dueDiligenceApprovalValue = signal<string>('');
   allPartnerStatusData = this.cachedDataService.allPartnerStatus;
   allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
   allDueDiligenceRequiredData = this.cachedDataService.allDueDiligenceRequired;
@@ -212,17 +213,22 @@ export class PartnerEditDialogComponent implements OnInit {
     return (partnerLevyStatus === 'DoesNotApply' || partnerLevyStatus === 'PotentiallyNotApplied');
   });
 
+  // Show "Due Diligence Approval" only when Due Diligence Required is "Required"
+  shouldShowDueDiligenceApproval = computed(() => {
+    return this.dueDiligenceRequiredValue() === 'Required';
+  });
+
+  // Show "Due Diligence Approval Date" and "Due Diligence Expiry Date" only when Due Diligence Approval is "Approved"
+  shouldShowDueDiligenceDates = computed(() => {
+    return this.dueDiligenceApprovalValue() === 'Approved';
+  });
+
   showApprovalFields = computed(() => {
     return this.recordData()?.partnerApprovalStatus === 'Approved';
   });
 
   approvalFieldsEnabled = computed(() => {
-    return this.isAdmin();
-  });
-
-  // Check if reason field should be required (when approval fields are visible and enabled)
-  reasonFieldRequired = computed(() => {
-    return this.showApprovalFields() && this.approvalFieldsEnabled();
+    return this.isGlobalAdmin();
   });
 
   // Check which fields should show asterisks based on validation mode
@@ -256,14 +262,6 @@ export class PartnerEditDialogComponent implements OnInit {
         label: this.translateService.instant(option.labelKey)
       }));
   });
-
-  /**
-   * Check if status field should be visible
-   */
-  showStatusField = computed(() => {
-    return !!(this.recordData().permissions?.canClose || this.recordData().permissions?.canArchive);
-  });
-
 
 
   // Signal to track form control changes (first element of array for single org unit)
@@ -340,21 +338,6 @@ export class PartnerEditDialogComponent implements OnInit {
       this.validationMode.set(mode);
     });
 
-    // Effect to handle conditional validation for reason field
-    effect(() => {
-      const shouldRequireReason = this.showApprovalFields() && this.approvalFieldsEnabled();
-      const reasonControl = this.formGroup?.get('reasonForNoNewOpportunity');
-
-      if (reasonControl) {
-        if (shouldRequireReason) {
-          reasonControl.setValidators([Validators.required]);
-        } else {
-          reasonControl.clearValidators();
-        }
-        reasonControl.updateValueAndValidity();
-      }
-    });
-
     // Effect to handle conditional validation for reasonForLevy field
     effect(() => {
       const shouldRequireReasonForLevy = this.shouldShowReasonForLevy();
@@ -387,9 +370,7 @@ export class PartnerEditDialogComponent implements OnInit {
         'keyGlobalPartner',
         'unAndStateEntity',
         'unSecretariatPartner',
-        'pooledFund',
-        'canCreateNewOpportunities',
-        'reasonForNoNewOpportunity'
+        'pooledFund'
       ];
 
       approvalFieldNames.forEach(fieldName => {
@@ -531,6 +512,17 @@ export class PartnerEditDialogComponent implements OnInit {
       }
     });
 
+    // Check global admin role
+    this.authService.isGlobalAdmin().subscribe({
+      next: (isGlobalAdmin) => {
+        this.isGlobalAdmin.set(isGlobalAdmin);
+      },
+      error: (error) => {
+        console.error('Error checking global admin role:', error);
+        this.isGlobalAdmin.set(false);
+      }
+    });
+
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';
@@ -635,6 +627,52 @@ export class PartnerEditDialogComponent implements OnInit {
         this.formGroup.get('reasonForLevy')?.setValue(null);
       }
     });
+
+    // Subscribe to Due Diligence Required changes
+    this.formGroup.get('dueDiligenceRequired')?.valueChanges.subscribe(value => {
+      this.dueDiligenceRequiredValue.set(value || '');
+      
+      // Clear Due Diligence Approval fields when Due Diligence is not Required
+      if (value !== 'Required') {
+        this.formGroup.get('dueDiligenceApproval')?.setValue(null);
+        this.formGroup.get('dueDiligenceApprovalDate')?.setValue(null);
+        this.formGroup.get('dueDiligenceExpiryDate')?.setValue(null);
+        this.formGroup.get('dueDiligenceApproval')?.clearValidators();
+        this.formGroup.get('dueDiligenceApprovalDate')?.clearValidators();
+        this.formGroup.get('dueDiligenceExpiryDate')?.clearValidators();
+      }
+      this.formGroup.get('dueDiligenceApproval')?.updateValueAndValidity();
+      this.formGroup.get('dueDiligenceApprovalDate')?.updateValueAndValidity();
+      this.formGroup.get('dueDiligenceExpiryDate')?.updateValueAndValidity();
+    });
+    
+    // Subscribe to Due Diligence Approval changes
+    this.formGroup.get('dueDiligenceApproval')?.valueChanges.subscribe(value => {
+      this.dueDiligenceApprovalValue.set(value || '');
+      
+      const approvalDateControl = this.formGroup.get('dueDiligenceApprovalDate');
+      const expiryDateControl = this.formGroup.get('dueDiligenceExpiryDate');
+      
+      if (value === 'Approved') {
+        // Make dates required when Approved
+        approvalDateControl?.setValidators([Validators.required]);
+        expiryDateControl?.setValidators([Validators.required]);
+      } else {
+        // Clear dates and validators when not Approved
+        approvalDateControl?.setValue(null);
+        expiryDateControl?.setValue(null);
+        approvalDateControl?.clearValidators();
+        expiryDateControl?.clearValidators();
+      }
+      
+      approvalDateControl?.updateValueAndValidity();
+      expiryDateControl?.updateValueAndValidity();
+    });
+    
+    // Initialize the signals with the current form values
+    this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
+    this.dueDiligenceRequiredValue.set(this.formGroup.get('dueDiligenceRequired')?.value || '');
+    this.dueDiligenceApprovalValue.set(this.formGroup.get('dueDiligenceApproval')?.value || '');
 
     // Subscribe to liaisonOfficeId changes to set the display name
     this.formGroup.get('liaisonOfficeId')?.valueChanges.subscribe(value => {
@@ -968,9 +1006,7 @@ export class PartnerEditDialogComponent implements OnInit {
         levyTreatment: data.levyTreatment || this.formGroup.get('levyTreatment')?.value,
 
         // Additional fields
-        pooledFund: data.pooledFund ?? this.formGroup.get('pooledFund')?.value,
-        canCreateNewOpportunities: data.canCreateNewOpportunities ?? this.formGroup.get('canCreateNewOpportunities')?.value,
-        reasonForNoNewOpportunity: data.reasonForNoNewOpportunity || this.formGroup.get('reasonForNoNewOpportunity')?.value
+        pooledFund: data.pooledFund ?? this.formGroup.get('pooledFund')?.value
       });
 
       // Handle organization unit relationships from AI transcription

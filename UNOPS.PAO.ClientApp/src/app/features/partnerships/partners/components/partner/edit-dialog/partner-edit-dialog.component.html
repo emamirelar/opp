@@ -11,7 +11,7 @@
       <div class="flex flex-col gap-6">
         <!-- Section Title -->
         <p-skeleton width="30%" height="1.5rem"></p-skeleton>
-        
+
         <!-- First Row - 2 columns -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="flex flex-col gap-2">
@@ -116,7 +116,7 @@
       </div>
     </div>
   } @else {
-  
+
   @if( showValidationFailedError() === true ){
   <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">{{ 'validation.pleaseFullAllRequired' | translate }}</p-message>
   }
@@ -148,7 +148,7 @@
         <div class="flex flex-col gap-2">
           <label class="flex items-center gap-2">
             {{ "label.partner.partnerDescription" | translate }} *
-            <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+            <i class="pi pi-info-circle text-sm text-gray-500 "
                [pTooltip]="'tooltip.partner.partnerDescription' | translate"
                tooltipPosition="right"></i>
           </label>
@@ -164,11 +164,16 @@
         <div class="flex flex-col gap-2">
           <label for="partnerShortDescription" class="flex items-center gap-2">
             {{ 'label.partner.partnerShortDescription' | translate }} *
-            <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+            <i class="pi pi-info-circle text-sm text-gray-500 "
                [pTooltip]="'tooltip.partner.shortDescription' | translate"
                tooltipPosition="right"></i>
           </label>
           <input pInputText formControlName="partnerShortDescription" fluid="true" id="partnerShortDescription" />
+          @if( formGroup.get("partnerShortDescription")?.invalid && showValidationFailedError() ) {
+          <p-message severity="error" variant="simple">
+            {{ validationMode() === 'activate' ? 'Partner Short Description is required to activate.' : 'Partner Short Description is required.' }}
+          </p-message>
+          }
         </div>
 
       </div>
@@ -177,7 +182,7 @@
       <div class="flex flex-col gap-2">
         <label for="partnerLongDescription" class="flex items-center gap-2">
           {{ 'label.partner.partnerLongDescription' | translate }}
-          <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+          <i class="pi pi-info-circle text-sm text-gray-500 "
              [pTooltip]="'tooltip.partner.longDescription' | translate"
              tooltipPosition="right"></i>
         </label>
@@ -189,7 +194,7 @@
         <div class="flex flex-col gap-2">
         <label for="selectedOrgUnitId" class="flex items-center gap-2">
           {{ 'label.partner.partnerOrgUnit' | translate }}
-          <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+          <i class="pi pi-info-circle text-sm text-gray-500 "
              [pTooltip]="'tooltip.partner.partnerOrgUnit' | translate"
              tooltipPosition="right"></i>
         </label>
@@ -213,7 +218,7 @@
         <div class="flex flex-col gap-2">
         <label for="partnerFocalPointUserId" class="flex items-center gap-2">
           {{ 'label.partner.partnerFocalPoint' | translate }}
-          <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+          <i class="pi pi-info-circle text-sm text-gray-500 "
              [pTooltip]="'tooltip.partner.partnerFocalPoint' | translate"
              tooltipPosition="right"></i>
         </label>
@@ -245,7 +250,7 @@
         <div class="flex flex-col gap-2">
         <label for="liaisonOfficeId" class="flex items-center gap-2">
           {{ 'label.partner.partnerLiaisonOffice' | translate }} *
-          <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+          <i class="pi pi-info-circle text-sm text-gray-500 "
              [pTooltip]="'tooltip.partner.partnerLiaisonOffice' | translate"
              tooltipPosition="right"></i>
         </label>
@@ -266,7 +271,7 @@
         <div class="flex flex-col gap-2">
         <label for="partnerGroupId" class="flex items-center gap-2">
           {{ 'label.partner.partnerGroup' | translate }} *
-          <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+          <i class="pi pi-info-circle text-sm text-gray-500 "
              [pTooltip]="'tooltip.partner.partnerGroup' | translate"
              tooltipPosition="right"></i>
         </label>
@@ -292,26 +297,6 @@
         }
       </div>
 
-      <!-- Status Field - Only visible if user has close/archive permissions -->
-        @if (showStatusField()) {
-        <div class="flex flex-col gap-2">
-        <label for="status" class="flex items-center gap-2">
-          {{ 'label.partner.status' | translate }}
-          <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
-             [pTooltip]="'tooltip.partner.status' | translate"
-             tooltipPosition="right"></i>
-        </label>
-        <p-select formControlName="status" [options]="statusOptions()"
-                  optionLabel="label"
-                  optionValue="value"
-                  [showClear]="true"
-                  [appendTo]="'body'"
-                  fluid="true" id="status"
-                  [ariaLabel]="'aria.selectStatus' | translate">
-        </p-select>
-        </div>
-        }
-
       </div>
 
     </div>
@@ -333,7 +318,7 @@
         <div class="flex flex-col gap-2">
         <label for="dueDiligenceRequired" class="flex items-center gap-2">
           {{ 'label.partner.dueDiligenceRequired' | translate }}
-          <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+          <i class="pi pi-info-circle text-sm text-gray-500 "
              [pTooltip]="'tooltip.partner.dueDiligenceRequired' | translate"
              tooltipPosition="right"></i>
         </label>
@@ -347,11 +332,12 @@
                   [ariaLabel]="'aria.selectDueDiligenceRequired' | translate" />
       </div>
 
-        <!-- Due Diligence (Approval) -->
+        <!-- Due Diligence (Approval) - Only show when Due Diligence Required is "Required" -->
+        @if (shouldShowDueDiligenceApproval()) {
         <div class="flex flex-col gap-2">
         <label for="dueDiligenceApproval" class="flex items-center gap-2">
           {{ 'label.partner.dueDiligenceApproval' | translate }}
-          <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+          <i class="pi pi-info-circle text-sm text-gray-500 "
              [pTooltip]="'tooltip.partner.dueDiligenceApproval' | translate"
              tooltipPosition="right"></i>
         </label>
@@ -364,36 +350,47 @@
                   fluid="true" id="dueDiligenceApproval"
                   [ariaLabel]="'aria.selectDueDiligenceApproval' | translate" />
       </div>
+      }
 
-        <!-- Due Diligence Approval Date -->
+        <!-- Due Diligence Approval Date - Only show when Due Diligence Approval is "Approved" -->
+        @if (shouldShowDueDiligenceDates()) {
         <div class="flex flex-col gap-2">
         <label for="dueDiligenceApprovalDate" class="flex items-center gap-2">
-          {{ 'label.partner.dueDiligenceApprovalDate' | translate }}
-          <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+          {{ 'label.partner.dueDiligenceApprovalDate' | translate }} *
+          <i class="pi pi-info-circle text-sm text-gray-500 "
              [pTooltip]="'tooltip.partner.dueDiligenceApprovalDate' | translate"
              tooltipPosition="right"></i>
         </label>
         <p-datepicker formControlName="dueDiligenceApprovalDate"
                       fluid="true" id="dueDiligenceApprovalDate" />
+        @if( formGroup.get("dueDiligenceApprovalDate")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">{{ 'validation.required' | translate }}</p-message>
+        }
       </div>
+      }
 
-        <!-- Due Diligence Expiry Date -->
+        <!-- Due Diligence Expiry Date - Only show when Due Diligence Approval is "Approved" -->
+        @if (shouldShowDueDiligenceDates()) {
         <div class="flex flex-col gap-2">
           <label for="dueDiligenceExpiryDate" class="flex items-center gap-2">
-            {{ 'label.partner.dueDiligenceExpiryDate' | translate }}
-            <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+            {{ 'label.partner.dueDiligenceExpiryDate' | translate }} *
+            <i class="pi pi-info-circle text-sm text-gray-500 "
                [pTooltip]="'tooltip.partner.dueDiligenceExpiryDate' | translate"
                tooltipPosition="right"></i>
           </label>
           <p-datepicker formControlName="dueDiligenceExpiryDate"
                         fluid="true" id="dueDiligenceExpiryDate" />
+          @if( formGroup.get("dueDiligenceExpiryDate")?.invalid && showValidationFailedError() ) {
+          <p-message severity="error" variant="simple">{{ 'validation.required' | translate }}</p-message>
+          }
         </div>
+        }
 
         <!-- Partner Approval Date -->
         <div class="flex flex-col gap-2">
           <label for="partnerApprovalDate" class="flex items-center gap-2">
             {{ 'label.partner.partnerApprovalDate' | translate }}
-            <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+            <i class="pi pi-info-circle text-sm text-gray-500 "
                [pTooltip]="'tooltip.partner.partnerApprovalDate' | translate"
                tooltipPosition="right"></i>
           </label>
@@ -405,7 +402,7 @@
         <div class="flex flex-col gap-2">
           <label for="partnerApprovalReference" class="flex items-center gap-2">
             {{ 'label.partner.partnerApprovalReference' | translate }}
-            <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+            <i class="pi pi-info-circle text-sm text-gray-500 "
                [pTooltip]="'tooltip.partner.partnerApprovalReference' | translate"
                tooltipPosition="right"></i>
           </label>
@@ -467,7 +464,7 @@
           </p-checkbox>
           <label for="unAndStateEntity" class="flex items-center gap-2">
             {{ 'label.partner.unAndStateEntity' | translate }}
-            <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+            <i class="pi pi-info-circle text-sm text-gray-500 "
                [pTooltip]="'tooltip.partner.unAndStateEntity' | translate"
                tooltipPosition="right"></i>
           </label>
@@ -481,7 +478,7 @@
           </p-checkbox>
           <label for="unSecretariatPartner" class="flex items-center gap-2">
             {{ 'label.partner.unSecretariatPartner' | translate }}
-            <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+            <i class="pi pi-info-circle text-sm text-gray-500 "
                [pTooltip]="'tooltip.partner.unSecretariatPartner' | translate"
                tooltipPosition="right"></i>
           </label>
@@ -495,41 +492,12 @@
           </p-checkbox>
           <label for="pooledFund" class="flex items-center gap-2">
             {{ 'label.partner.pooledFund' | translate }}
-            <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
+            <i class="pi pi-info-circle text-sm text-gray-500 "
                [pTooltip]="'tooltip.partner.pooledFund' | translate"
                tooltipPosition="right"></i>
           </label>
         </div>
 
-        <!-- Can create new opportunities? -->
-        <div class="flex items-center gap-3">
-          <p-checkbox formControlName="canCreateNewOpportunities"
-                      [binary]="true"
-                      inputId="canCreateNewOpportunities">
-          </p-checkbox>
-          <label for="canCreateNewOpportunities" class="flex items-center gap-2">
-            {{ 'label.partner.canCreateNewOpportunities' | translate }}
-            <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
-               [pTooltip]="'tooltip.partner.canCreateNewOpportunities' | translate"
-               tooltipPosition="right"></i>
-          </label>
-        </div>
-
-      </div>
-
-      <!-- Reason -->
-      <div class="flex flex-col gap-2">
-        <label for="reasonForNoNewOpportunity" class="flex items-center gap-2">
-          {{ 'label.partner.reasonForNoNewOpportunity' | translate }}@if (reasonFieldRequired()) { *}
-          <i class="pi pi-info-circle text-sm text-gray-500 cursor-help"
-             [pTooltip]="'tooltip.partner.reasonForNoNewOpportunity' | translate"
-             tooltipPosition="right"></i>
-        </label>
-        <textarea pTextarea formControlName="reasonForNoNewOpportunity"
-                  fluid="true" id="reasonForNoNewOpportunity" rows="2"></textarea>
-        @if( formGroup.get("reasonForNoNewOpportunity")?.invalid && showValidationFailedError() && reasonFieldRequired() ) {
-        <p-message severity="error" variant="simple">{{ 'validation.reasonRequired' | translate }}</p-message>
-        }
       </div>
 
       @if (!approvalFieldsEnabled()) {

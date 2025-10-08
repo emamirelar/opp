@@ -21,27 +21,33 @@ export class LanguageSelectorComponent implements OnInit, OnDestroy {
   private languageSubscription?: Subscription;
 
   constructor(
-    private languageService: LanguageService, 
+    private languageService: LanguageService,
     private translateService: TranslateService,
     private cdr: ChangeDetectorRef
   ) {
     this.languages = this.languageService.getLanguages();
-
-    this.languageItems = this.languages.map(lang => ({
-      label: lang.name,
-      icon: `pi pi-globe`,
-      command: () => this.languageService.switchLanguage(lang)
-    }));
+    this.languageItems = this.buildLanguageItems();
   }
 
   get currentLanguage(): Language {
     return this.languageService.currentLanguage();
   }
 
+  private buildLanguageItems(): MenuItem[] {
+    const currentLang = this.currentLanguage;
+    return this.languages.map(lang => ({
+      label: lang.name,
+      icon: lang.code === currentLang.code ? 'pi pi-check' : 'pi pi-globe',
+      command: () => this.languageService.switchLanguage(lang)
+    }));
+  }
+
   ngOnInit() {
-    // Subscribe to language changes to trigger change detection
+    // Subscribe to language changes to update menu items and trigger change detection
     this.languageSubscription = this.translateService.onLangChange.subscribe((langChangeEvent) => {
       console.log('Language changed to:', langChangeEvent.lang);
+      // Rebuild menu items to update checkmarks
+      this.languageItems = this.buildLanguageItems();
       // Trigger change detection to update the UI
       this.cdr.detectChanges();
     });
