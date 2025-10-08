@@ -1915,6 +1915,7 @@
 	"validation.ddRequiredRequired": "DD Requis doit être saisi.",
 	"validation.ddeacDoneRequired": "DD/EAC Terminé doit être saisi.",
 	"validation.emailRequired": "L'email doit être saisi.",
+	"validation.emailInvalid": "Veuillez saisir une adresse e-mail valide.",
 	"validation.lastNameRequired": "Le nom de famille doit être saisi.",
 	"validation.levyPotentiallyAppliesRequired": "Prélèvement potentiellement applicable doit être saisi.",
 	"validation.maxLength": "La longueur maximale est de {{max}} caractères",

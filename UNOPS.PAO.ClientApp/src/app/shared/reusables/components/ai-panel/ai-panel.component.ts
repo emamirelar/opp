@@ -308,17 +308,32 @@ export interface AiDataService {
       border-radius: 1px !important;
     }
 
-    /* Text truncation with CSS ellipsis */
-    .ai-panel .content-truncated {
-      display: -webkit-box !important;
-      -webkit-line-clamp: 8 !important;
-      -webkit-box-orient: vertical !important;
+    /* Text truncation wrapper - uses max-height instead of webkit-box to avoid rendering issues */
+    .ai-panel .content-truncated-wrapper {
+      position: relative !important;
+      max-height: 15rem !important;
       overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      max-height: 12rem !important; /* Fallback for browsers that don't support line-clamp */
     }
 
-    .ai-panel .content-full {
+    .ai-panel .content-truncated-wrapper::after {
+      content: '' !important;
+      position: absolute !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: 4rem !important;
+      background: linear-gradient(to bottom, transparent 0%, white 90%) !important;
+      pointer-events: none !important;
+    }
+
+    .ai-panel .content-full-wrapper {
+      display: block !important;
+      overflow: visible !important;
+    }
+
+    /* Ensure markdown content displays properly in both states */
+    .ai-panel .content-truncated-wrapper .markdown-content,
+    .ai-panel .content-full-wrapper .markdown-content {
       display: block !important;
     }
 
@@ -349,9 +364,12 @@ export interface AiDataService {
       }
 
       /* Adjust truncation for mobile */
-      .ai-panel .content-truncated {
-        -webkit-line-clamp: 6 !important;
-        max-height: 9rem !important;
+      .ai-panel .content-truncated-wrapper {
+        max-height: 12rem !important;
+      }
+
+      .ai-panel .content-truncated-wrapper::after {
+        height: 3rem !important;
       }
     }
   `

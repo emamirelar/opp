@@ -113,8 +113,11 @@
                  tooltipPosition="right"></i>
             </label>
             <input pInputText fluid="true" formControlName="email" />
-            @if( formGroup.get("email")?.invalid && showValidationFailedError() ) {
+            @if( formGroup.get("email")?.hasError('required') && showValidationFailedError() ) {
             <p-message severity="error" variant="simple">{{ 'validation.emailRequired' | translate }}</p-message>
+            }
+            @if( formGroup.get("email")?.hasError('email') && !formGroup.get("email")?.hasError('required') && showValidationFailedError() ) {
+            <p-message severity="error" variant="simple">{{ 'validation.emailInvalid' | translate }}</p-message>
             }
           </div>
 

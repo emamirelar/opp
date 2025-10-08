@@ -1924,6 +1924,7 @@
   "validation.ddRequiredRequired": "DD Required must be entered.",
   "validation.ddeacDoneRequired": "DD/EAC Done must be entered.",
   "validation.emailRequired": "Email must be entered.",
+  "validation.emailInvalid": "Please enter a valid email address.",
   "validation.lastNameRequired": "Last Name must be entered.",
   "validation.levyPotentiallyAppliesRequired": "Levy Potentially Applies must be entered.",
   "validation.maxLength": "Maximum length is {{max}} characters",

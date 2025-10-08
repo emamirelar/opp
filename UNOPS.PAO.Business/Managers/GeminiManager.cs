@@ -110,7 +110,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req)
+    public Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req, System.Security.Claims.ClaimsPrincipal user = null)
     {
         throw new NotImplementedException();
     }
