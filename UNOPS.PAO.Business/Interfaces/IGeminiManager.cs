@@ -17,7 +17,7 @@ public interface IGeminiManager
     string FindFileType(IFormFile file);
     Task<string> UploadFileToGCS(IFormFile file);
     Task<string> ScanFileForGeminiProcessing(GeminiFileRequest req);
-    Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req);
+    Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req, ClaimsPrincipal user = null);
     Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req);
     Task<bool> UpdateSessionStar(string sessionId, bool starred);
     Task<bool> UpdateSessionArchive(string sessionId, bool archived);
