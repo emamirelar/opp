@@ -337,7 +337,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
 
     // Only update code if it's empty and name has a value
     if (!codeValue && nameValue) {
-      const formattedCode = nameValue.toUpperCase().replace(/\s+/g, '_');
+      const formattedCode = nameValue.toUpperCase().replace(/\s+/g, '_').substring(0, 25);
       this.formGroup.patchValue({ code: formattedCode });
     }
   }
