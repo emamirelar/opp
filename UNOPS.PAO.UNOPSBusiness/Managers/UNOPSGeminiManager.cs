@@ -393,7 +393,7 @@ public class UNOPSGeminiManager : IGeminiManager
         }
     }
 
-    public async Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req)
+    public async Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req, ClaimsPrincipal user = null)
     {
         string relatedMessage = "";
 
@@ -457,6 +457,12 @@ public class UNOPSGeminiManager : IGeminiManager
                         args.Add(_configuration);
                     else if (paramType == typeof(PartnerTreeService))
                         args.Add(partnerTreeService);
+                    else if (paramType == typeof(IPermissionService))
+                        args.Add(null); // IPermissionService is optional and can be null
+                    else if (paramType == typeof(UserManager<PAOIdentityUser>))
+                        args.Add(_userManager);
+                    else if (paramType == typeof(IHttpContextAccessor))
+                        args.Add(null); // IHttpContextAccessor not available in this context
                     else
                         args.Add(null); // Pass null for other dependencies we don't have
                 }
@@ -464,12 +470,30 @@ public class UNOPSGeminiManager : IGeminiManager
                 // Create instance of the manager
                 var managerInstance = Activator.CreateInstance(managerType, args.ToArray());
                 
+                if (managerInstance == null)
+                {
+                    throw new InvalidOperationException($"Failed to create instance of {managerType.Name}");
+                }
+                
+                // Verify that _context is set in the manager instance
+                var contextField = managerType.BaseType?.GetField("_context", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (contextField != null)
+                {
+                    var contextValue = contextField.GetValue(managerInstance);
+                    if (contextValue == null)
+                    {
+                        _logger.LogError("_context is null in manager instance {ManagerType}", managerType.Name);
+                        throw new InvalidOperationException($"_context is null in {managerType.Name}");
+                    }
+                }
+                
                 // Check if it's a BaseUNOPSManager that has CallFunctionByNameAsync
                 var callFunctionMethod = managerType.GetMethod("CallFunctionByNameAsync");
                 if (callFunctionMethod != null)
                 {
                     // Use the BaseUNOPSManager's CallFunctionByNameAsync method which handles parameter matching
-                    var task = (Task<object>)callFunctionMethod.Invoke(managerInstance, new object[] { dataRetrievalMethod, req.Id, null });
+                    // Pass the user parameter so that methods can access user context
+                    var task = (Task<object>)callFunctionMethod.Invoke(managerInstance, new object[] { dataRetrievalMethod, req.Id, user });
                     var entityData = await task;
                     
                     if (entityData != null)

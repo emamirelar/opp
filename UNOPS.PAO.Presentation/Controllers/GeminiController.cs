@@ -582,7 +582,8 @@ public class GeminiController : BaseController
                 throw new BusinessException("Invalid request");
             }
 
-            var response = await _manager.ProcessDataRelatedSummaryDetails(req);
+            // Pass User context like other methods (e.g., ChatWithGemini)
+            var response = await _manager.ProcessDataRelatedSummaryDetails(req, User);
             
             if (string.IsNullOrEmpty(response))
             {
