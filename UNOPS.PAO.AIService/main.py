@@ -19,6 +19,8 @@ from google.adk.cli.fast_api import get_fast_api_app
 
 # Configuration
 from ai_assistant.utils.config import get_config
+from ai_assistant.utils.config import get_database_url
+
 # Routers
 from routers.chat import router as chat_router
 from routers.session import router as session_router
@@ -124,7 +126,7 @@ def create_app():
     agents_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ai_assistant') # Points to the ai_assistant directory (root of the agents)
     fastapi_app_instance = get_fast_api_app(
         agents_dir = agents_dir,
-        session_service_uri = database_config.get('url'),
+        session_service_uri = get_database_url(),
         artifact_service_uri = artifact_service_uri,
         allow_origins = server_config.get('allow_origins'),
         web = server_config.get('serve_web_interface'),
@@ -176,7 +178,17 @@ if __name__ == "__main__":
         logger.info(f"📍 Host: {server_config.get('host')}")
         logger.info(f"🔌 Port: {server_config.get('port')}")
         logger.info(f"🌐 Web Interface: {server_config.get('serve_web_interface')}")
-        logger.info(f"💾 Database: {database_config.get('url')}")
+        
+        # Smart database logging - show URL for local, secret name for hosted
+        if 'url' in database_config:
+            # Local development - show the URL
+            logger.info(f"💾 Database: {database_config['url']}")
+        elif 'secret_name' in database_config:
+            # Hosted environment - show the secret name (not the actual credentials)
+            logger.info(f"💾 Database: Secret Manager ({database_config['secret_name']})")
+        else:
+            logger.info(f"💾 Database: Configuration missing")
+
         logger.info(f"🔧 Development Mode: {is_development}")
         logger.info(f"🏢 Application: {branding_config.get('application_name')}")
 
