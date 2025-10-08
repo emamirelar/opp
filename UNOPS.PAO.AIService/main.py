@@ -9,21 +9,34 @@ main.py loads the single environment variable CURRENT_ENV which is used to load 
 All other configuration is loaded from the configuration file (through utils.config.py which references the CURRENT_ENV environment variable to load the correct configuration file).
 """
 
+print("🐍 Python service starting...")
+print(f"🐍 Python version: {__import__('sys').version}")
+print(f"🐍 Working directory: {os.getcwd()}")
+print(f"🐍 Environment variables: CURRENT_ENV={os.getenv('CURRENT_ENV', 'NOT SET')}")
+
+print("🐍 Loading basic imports...")
 import logging
 import os
 from contextlib import asynccontextmanager
 
+print("🐍 Loading FastAPI and uvicorn...")
 import uvicorn
 from fastapi import FastAPI
+
+print("🐍 Loading Google ADK...")
 from google.adk.cli.fast_api import get_fast_api_app
 
+print("🐍 Loading configuration modules...")
 # Configuration
 from ai_assistant.utils.config import get_config
 from ai_assistant.utils.config import get_database_url
 
+print("🐍 Loading routers...")
 # Routers
 from routers.chat import router as chat_router
 from routers.session import router as session_router
+
+print("🐍 All imports completed successfully!")
 
 # Fix OpenTelemetry context issues
 import warnings
