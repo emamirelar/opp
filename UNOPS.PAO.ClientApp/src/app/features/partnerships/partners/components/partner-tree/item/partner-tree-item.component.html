@@ -8,7 +8,7 @@
   </div>
   <div class="flex flex-col gap-2">
     <label>{{ "label.partnerTree.code" | translate }} <span>*</span></label>
-    <input pInputText fluid="true" formControlName="code" [readonly]="record?.id !== null" [disabled]="!permissionUtilityService.canUpdate(recordPermissions())"/>
+    <input pInputText fluid="true" formControlName="code" maxlength="25" [readonly]="record?.id !== null" [disabled]="!permissionUtilityService.canUpdate(recordPermissions())"/>
     <small *ngIf="formGroup.get('code')?.invalid && formGroup.get('code')?.touched" class="p-error">
       {{ "validation.required" | translate }}
     </small>
