@@ -10,8 +10,8 @@ All other configuration is loaded from the configuration file (through utils.con
 """
 
 print("🐍 Python service starting...")
-print(f"🐍 Python version: {__import__('sys').version}")
-
+import sys
+print(f"🐍 Python version: {sys.version}")
 print("🐍 Loading basic imports...")
 import logging
 import os
@@ -104,13 +104,19 @@ async def lifespan(app_instance: FastAPI):
 
 def add_routers_and_endpoints(app: FastAPI):
     """Add all routers and endpoints to the FastAPI app"""
+    print("🔧 Adding routers to FastAPI app...")
+    
     # ROUTE on just /
+    print("🔧 Adding chat_router and session_router to root...")
     app.include_router(chat_router)
     app.include_router(session_router)
 
     # ROUTE on /api/ai-assistant
+    print("🔧 Adding chat_router and session_router to /api/ai-assistant...")
     app.include_router(chat_router, prefix='/api/ai-assistant')
     app.include_router(session_router, prefix='/api/ai-assistant')
+    
+    print("🔧 Routers added successfully!")
     
 
 
