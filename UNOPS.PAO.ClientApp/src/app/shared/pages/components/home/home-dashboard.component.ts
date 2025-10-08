@@ -836,9 +836,6 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        this.feedbackDialogService.showSuccessToast({
-          detail: 'Partner created successfully!'
-        });
         // Refresh dashboard data
         this.loadDashboardData();
       }
@@ -859,9 +856,6 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        this.feedbackDialogService.showSuccessToast({
-          detail: 'Contact created successfully!'
-        });
         // Refresh dashboard data
         this.loadDashboardData();
       }
@@ -882,9 +876,6 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        this.feedbackDialogService.showSuccessToast({
-          detail: 'Interaction created successfully!'
-        });
         // Refresh dashboard data
         this.loadDashboardData();
       }

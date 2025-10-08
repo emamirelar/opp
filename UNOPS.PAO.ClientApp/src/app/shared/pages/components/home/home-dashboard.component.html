@@ -215,44 +215,44 @@
           <div class="space-y-unops-md" [class.hidden]="!shouldUseVerticalLayout()" [class.block]="shouldUseVerticalLayout()">
             <!-- Quick Actions Label -->
             <h2 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900 mb-0">
-              Quick Actions
+              {{ 'dashboard.quickActions' | translate }}
             </h2>
             
             <!-- Action Buttons -->
             <div class="flex flex-col space-y-unops-sm">
-              <button 
+              <button
                 *ngIf="partnerPermissions().permissions.canCreate"
-                pButton 
-                type="button" 
+                pButton
+                type="button"
                 class="p-button-sm unops-button-primary flex items-center justify-center w-full"
                 (click)="openNewPartnerModal()">
                 <i class="material-symbols-outlined text-unops-lg mr-unops-xs">corporate_fare</i>
-                New Partner
+                {{ 'dashboard.newPartner' | translate }}
               </button>
-              <button 
+              <button
                 *ngIf="contactPermissions().permissions.canCreate"
-                pButton 
-                type="button" 
+                pButton
+                type="button"
                 class="p-button-sm unops-button-primary flex items-center justify-center w-full"
                 (click)="openNewContactModal()">
                 <i class="material-symbols-outlined text-unops-lg mr-unops-xs">contacts</i>
-                New Contact
+                {{ 'dashboard.newContact' | translate }}
               </button>
-              <button 
+              <button
                 *ngIf="interactionPermissions().permissions.canCreate"
-                pButton 
-                type="button" 
+                pButton
+                type="button"
                 class="p-button-sm unops-button-primary flex items-center justify-center w-full"
                 (click)="openNewInteractionModal()">
                 <i class="material-symbols-outlined text-unops-lg mr-unops-xs">chat</i>
-                New Interaction
+                {{ 'dashboard.newInteraction' | translate }}
               </button>
             </div>
             
             <!-- Last Updated and Refresh -->
             <div class="flex items-center justify-between pt-unops-sm border-t border-unops-neutral-200">
               <div class="text-unops-body-small text-unops-neutral-500">
-                Last updated {{ lastUpdatedTime() }}
+                {{ 'dashboard.lastUpdated' | translate }} {{ lastUpdatedTime() }}
               </div>
               <button 
                 pButton 
