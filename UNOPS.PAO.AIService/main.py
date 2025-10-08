@@ -124,9 +124,18 @@ def create_app():
 
     # Create the FastAPI app with ADK integration
     agents_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ai_assistant') # Points to the ai_assistant directory (root of the agents)
+    
+    print("🔍 Attempting to get database URL...")
+    try:
+        db_url = get_database_url()
+        print(f"✅ Database URL obtained: {db_url[:20]}..." if db_url else "❌ Database URL is None")
+    except Exception as e:
+        print(f"❌ Database URL loading failed: {e}")
+        raise
+    
     fastapi_app_instance = get_fast_api_app(
         agents_dir = agents_dir,
-        session_service_uri = get_database_url(),
+        session_service_uri = db_url,
         artifact_service_uri = artifact_service_uri,
         allow_origins = server_config.get('allow_origins'),
         web = server_config.get('serve_web_interface'),
@@ -150,7 +159,14 @@ def create_app():
 
 
 # Initialize configuration and create the FastAPI app globally
-config = get_config()
+print("🔍 Attempting to load configuration...")
+try:
+    config = get_config()
+    print("✅ Configuration loaded successfully")
+except Exception as e:
+    print(f"❌ Configuration loading failed: {e}")
+    raise
+
 server_config = config.get('server')
 # Raise an error if the server config is not set
 if server_config is None:
