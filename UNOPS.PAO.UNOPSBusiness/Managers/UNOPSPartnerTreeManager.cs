@@ -378,6 +378,19 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
                 .ThenInclude(ip => ip.Partner)
             .ToListAsync();
 
+        // Get unique org unit codes from interaction users
+        var orgUnitCodes = recentInteractions
+            .SelectMany(i => i.InteractionUsers ?? new List<Domain.Entities.InteractionUser>())
+            .Select(iu => iu.User?.UserProfile?.OrgUnit)
+            .Where(code => !string.IsNullOrEmpty(code))
+            .Distinct()
+            .ToList();
+
+        // Load organization hierarchy data for these codes
+        var orgUnitLookup = await _context.OrganizationHierarchies
+            .Where(oh => orgUnitCodes.Contains(oh.Code))
+            .ToDictionaryAsync(oh => oh.Code, oh => oh.Name);
+
         // Create structured JSON for AI prompt placeholders
         var result = new
         {
@@ -424,7 +437,10 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
                     id = iu.User.Id,
                     name = iu.User.Name,
                     title = iu.User.UserProfile?.Position,
-                    office = iu.User.UserProfile?.OrgUnit
+                    orgUnitCode = iu.User.UserProfile?.OrgUnit,
+                    orgUnitName = !string.IsNullOrEmpty(iu.User.UserProfile?.OrgUnit) && orgUnitLookup.ContainsKey(iu.User.UserProfile.OrgUnit) 
+                        ? orgUnitLookup[iu.User.UserProfile.OrgUnit] 
+                        : iu.User.UserProfile?.OrgUnit
                 }).ToList()
             }).Cast<dynamic>().ToList(),
 
@@ -515,6 +531,19 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
                 .ThenInclude(ip => ip.Partner)
             .ToListAsync();
 
+        // Get unique org unit codes from interaction users
+        var orgUnitCodes = recentInteractions
+            .SelectMany(i => i.InteractionUsers ?? new List<Domain.Entities.InteractionUser>())
+            .Select(iu => iu.User?.UserProfile?.OrgUnit)
+            .Where(code => !string.IsNullOrEmpty(code))
+            .Distinct()
+            .ToList();
+
+        // Load organization hierarchy data for these codes
+        var orgUnitLookup = await _context.OrganizationHierarchies
+            .Where(oh => orgUnitCodes.Contains(oh.Code))
+            .ToDictionaryAsync(oh => oh.Code, oh => oh.Name);
+
         // Create structured JSON for AI prompt placeholders
         var result = new
         {
@@ -562,7 +591,10 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
                     id = iu.User.Id,
                     name = iu.User.Name,
                     title = iu.User.UserProfile?.Position,
-                    office = iu.User.UserProfile?.OrgUnit
+                    orgUnitCode = iu.User.UserProfile?.OrgUnit,
+                    orgUnitName = !string.IsNullOrEmpty(iu.User.UserProfile?.OrgUnit) && orgUnitLookup.ContainsKey(iu.User.UserProfile.OrgUnit) 
+                        ? orgUnitLookup[iu.User.UserProfile.OrgUnit] 
+                        : iu.User.UserProfile?.OrgUnit
                 }).ToList()
             }).Cast<dynamic>().ToList(),
 
@@ -597,7 +629,10 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
             {
                 createdDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
                 lastModifiedDate = partnerGroup.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not available" ?? "Not modified"
-            }
+            },
+            
+            // User profile information for context
+            userProfile = await GetUserProfileForAIAsync(user)
         };
 
         return result;

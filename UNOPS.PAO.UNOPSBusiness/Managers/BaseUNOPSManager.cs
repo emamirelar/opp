@@ -1484,9 +1484,9 @@ public abstract class BaseUNOPSManager
                 .Select(up => new
                 {
                     Profile = up,
-                    // Get organization unit name from OrganizationHierarchies
+                    // Get organization unit name from OrganizationHierarchies (match by Code, not Name)
                     OrgUnitName = _context.OrganizationHierarchies
-                        .Where(oh => oh.Name == up.OrgUnit && !oh.IsDeleted)
+                        .Where(oh => oh.Code == up.OrgUnit && !oh.IsDeleted)
                         .Select(oh => oh.Name)
                         .FirstOrDefault(),
                     // Get supervisor information
