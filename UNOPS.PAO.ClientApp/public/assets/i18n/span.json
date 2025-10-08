@@ -1891,6 +1891,7 @@
 	"validation.ddRequiredRequired": "DD Requerido debe ser ingresado.",
 	"validation.ddeacDoneRequired": "DD/EAC Completado debe ser ingresado.",
 	"validation.emailRequired": "El email debe ser ingresado.",
+	"validation.emailInvalid": "Por favor, ingrese una dirección de correo electrónico válida.",
 	"validation.lastNameRequired": "El apellido debe ser ingresado.",
 	"validation.levyPotentiallyAppliesRequired": "Gravamen potencialmente aplicable debe ser ingresado.",
 	"validation.maxLength": "La longitud máxima es de {{max}} caracteres",
