@@ -164,9 +164,22 @@ public abstract class BaseUNOPSManager
     {
         if (user == null) return string.Empty;
 
-        var userEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? 
-                       user.FindFirst("email")?.Value;
-        
+        // Try multiple ways to get the current user's email from claims
+        var userEmail = user.FindFirst(ClaimTypes.Email)?.Value ??
+                          user.FindFirst("email")?.Value ??
+                          user.Identity?.Name;
+
+        // Extract email from identity provider format if needed
+        // Format: "securetoken.google.com/unops-partneropportunity:email@domain.com"
+        if (!string.IsNullOrEmpty(userEmail) && userEmail.Contains(':'))
+        {
+            var emailParts = userEmail.Split(':');
+            if (emailParts.Length > 1)
+            {
+                userEmail = emailParts[emailParts.Length - 1]; // Take the last part after colon
+            }
+        }
+
         if (string.IsNullOrEmpty(userEmail))
         {
             return string.Empty;
