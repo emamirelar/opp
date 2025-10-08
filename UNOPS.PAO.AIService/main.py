@@ -11,13 +11,14 @@ All other configuration is loaded from the configuration file (through utils.con
 
 print("🐍 Python service starting...")
 print(f"🐍 Python version: {__import__('sys').version}")
-print(f"🐍 Working directory: {os.getcwd()}")
-print(f"🐍 Environment variables: CURRENT_ENV={os.getenv('CURRENT_ENV', 'NOT SET')}")
 
 print("🐍 Loading basic imports...")
 import logging
 import os
 from contextlib import asynccontextmanager
+
+print(f"🐍 Working directory: {os.getcwd()}")
+print(f"🐍 Environment variables: CURRENT_ENV={os.getenv('CURRENT_ENV', 'NOT SET')}")
 
 print("🐍 Loading FastAPI and uvicorn...")
 import uvicorn
