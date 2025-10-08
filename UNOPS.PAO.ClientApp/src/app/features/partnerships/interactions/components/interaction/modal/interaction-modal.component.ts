@@ -20,7 +20,6 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ContactService } from '@partnerships/contacts/services/contact.service';
 import { PartnerService } from '@partnerships/partners/services/partner.service';
 import { CommonModule } from '@angular/common';
-import { MessageService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
 import { DynamicDialogRef, DynamicDialogConfig, DialogService } from 'primeng/dynamicdialog';
 import { DuplicateConfirmationDialogComponent } from '@partnerships/contacts/components/contact/duplicate-confirmation-dialog/duplicate-confirmation-dialog.component';
@@ -102,8 +101,7 @@ interface DuplicateDetectionResponse {
     TooltipModule,
   ],
   providers: [
-    DialogService,
-    MessageService
+    DialogService
   ],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -277,7 +275,6 @@ export class InteractionModalComponent {
     protected contactService: ContactService,
     protected partnerService: PartnerService,
     private dialogService: DialogService,
-    private messageService: MessageService,
     private translateService: TranslateService,
     private permissionUtilityService: PermissionUtilityService,
     private feedbackDialogService: FeedbackDialogService
@@ -596,18 +593,14 @@ export class InteractionModalComponent {
 
   private showSuccessMessage(messageKey: string): void {
     this.isSaving.set(false);
-    this.messageService.add({
-      severity: 'success',
-      summary: this.translateService.instant('message.success'),
+    this.feedbackDialogService.showSuccessToast({
       detail: this.translateService.instant(messageKey)
     });
   }
 
   private showErrorMessage(messageKey: string, error?: any): void {
     this.isSaving.set(false);
-    this.messageService.add({
-      severity: 'error',
-      summary: this.translateService.instant('message.error'),
+    this.feedbackDialogService.showErrorToast({
       detail: this.translateService.instant(messageKey)
     });
     if (error) {
@@ -762,11 +755,8 @@ export class InteractionModalComponent {
   validateEmail(email: any) {
     if (!this.isValidEmail(email)) {
       this.invalidEmails = [...this.invalidEmails, email];
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Invalid Email',
-        detail: `"${email}" is not valid`,
-        life: 3000
+      this.feedbackDialogService.showWarningToast({
+        detail: `"${email}" is not valid`
       });
     }
   }

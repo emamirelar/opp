@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, signal } from '@angular/core';
+import { Component, Input, OnInit, signal, inject } from '@angular/core';
 import { Panel } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -11,6 +11,9 @@ import { ContactViewModel, GroupedContact } from './contact-view.model';
 import { ContactService } from '@partnerships/contacts/services/contact.service';
 import { PartnerViewContactsDialogComponent } from './dialog/partner-view-contacts-dialog.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ContactEditDialogComponent } from '@partnerships/contacts/components/contact/edit-dialog/contact-edit-dialog.component';
+import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
 
 @Component({
   selector: 'app-partner-view-contacts',
@@ -34,6 +37,15 @@ export class PartnerViewContactsComponent implements OnInit {
   isLoading = signal<boolean>(false);
   contacts: ContactViewModel[] = [];
 
+  // Inject services
+  public permissionUtilityService = inject(PermissionUtilityService);
+  private feedbackDialogService = inject(FeedbackDialogService);
+
+  // Permission handling for contacts
+  private permissionUtils = this.permissionUtilityService.createEntityPermissions('Contact');
+  entityPermissions = this.permissionUtils.entityPermissions;
+  permissionsLoading = this.permissionUtils.permissionsLoading;
+
   constructor(
     private dialogService: DialogService,
     private contactService: ContactService,
@@ -42,6 +54,9 @@ export class PartnerViewContactsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Load permissions
+    this.permissionUtils.loadPermissions(this.router);
+
     if (this.partnerId) {
       this.loadContacts();
     }
@@ -120,5 +135,40 @@ export class PartnerViewContactsComponent implements OnInit {
         this.contacts = data;
         this.isLoading.set(false);
       });
+  }
+
+  /**
+   * Opens the contact creation dialog pre-filled with the current partner information
+   */
+  openNewContactDialog(): void {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: this.translateService.instant('message.noPermissionToCreate'),
+        summary: this.translateService.instant('message.permissionDenied')
+      });
+      return;
+    }
+
+    const ref = this.dialogService.open(ContactEditDialogComponent, {
+      header: this.translateService.instant('title.newContact'),
+      width: '40vw',
+      breakpoints: { '960px': '95vw' },
+      closable: true,
+      data: {
+        mode: 'new',
+        record: {},
+        partnerContext: {
+          partnerId: this.partnerId,
+          lockPartner: true
+        }
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        this.loadContacts();
+      }
+    });
   }
 }

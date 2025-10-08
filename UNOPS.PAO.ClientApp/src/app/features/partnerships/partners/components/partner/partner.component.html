@@ -35,8 +35,8 @@
       @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
         <p-button
           icon="pi pi-plus"
-          label="New"
-          title="New Partner"
+          label="{{ 'button.newPartner' | translate }}"
+          title="{{ 'title.newPartner' | translate }}"
           rounded
           (onClick)="openPartnerEditDialog()"
           class="partner-new-button"
