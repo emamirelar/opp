@@ -9,21 +9,35 @@ main.py loads the single environment variable CURRENT_ENV which is used to load 
 All other configuration is loaded from the configuration file (through utils.config.py which references the CURRENT_ENV environment variable to load the correct configuration file).
 """
 
+print("🐍 Python service starting...")
+import sys
+print(f"🐍 Python version: {sys.version}")
+print("🐍 Loading basic imports...")
 import logging
 import os
 from contextlib import asynccontextmanager
 
+print(f"🐍 Working directory: {os.getcwd()}")
+print(f"🐍 Environment variables: CURRENT_ENV={os.getenv('CURRENT_ENV', 'NOT SET')}")
+
+print("🐍 Loading FastAPI and uvicorn...")
 import uvicorn
 from fastapi import FastAPI
+
+print("🐍 Loading Google ADK...")
 from google.adk.cli.fast_api import get_fast_api_app
 
+print("🐍 Loading configuration modules...")
 # Configuration
 from ai_assistant.utils.config import get_config
 from ai_assistant.utils.config import get_database_url
 
+print("🐍 Loading routers...")
 # Routers
 from routers.chat import router as chat_router
 from routers.session import router as session_router
+
+print("🐍 All imports completed successfully!")
 
 # Fix OpenTelemetry context issues
 import warnings
@@ -90,13 +104,19 @@ async def lifespan(app_instance: FastAPI):
 
 def add_routers_and_endpoints(app: FastAPI):
     """Add all routers and endpoints to the FastAPI app"""
+    print("🔧 Adding routers to FastAPI app...")
+    
     # ROUTE on just /
+    print("🔧 Adding chat_router and session_router to root...")
     app.include_router(chat_router)
     app.include_router(session_router)
 
     # ROUTE on /api/ai-assistant
+    print("🔧 Adding chat_router and session_router to /api/ai-assistant...")
     app.include_router(chat_router, prefix='/api/ai-assistant')
     app.include_router(session_router, prefix='/api/ai-assistant')
+    
+    print("🔧 Routers added successfully!")
     
 
 
