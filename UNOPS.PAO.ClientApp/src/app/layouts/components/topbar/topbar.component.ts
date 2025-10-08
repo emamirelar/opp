@@ -5,7 +5,7 @@ import { LanguageSelectorComponent } from './language-selector/language-selector
 import { StyleClassModule } from 'primeng/styleclass';
 import { PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { PopoverModule } from 'primeng/popover';
 import { ToastModule } from 'primeng/toast';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TooltipModule } from 'primeng/tooltip';
@@ -71,7 +71,7 @@ interface UserInfo {
 
     StyleClassModule,
     ButtonModule,
-    OverlayPanelModule,
+    PopoverModule,
     ToastModule,
     ProgressBarModule,
     TooltipModule,

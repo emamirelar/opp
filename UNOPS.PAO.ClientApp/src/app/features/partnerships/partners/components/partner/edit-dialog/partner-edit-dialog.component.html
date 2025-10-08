@@ -169,6 +169,11 @@
                tooltipPosition="right"></i>
           </label>
           <input pInputText formControlName="partnerShortDescription" fluid="true" id="partnerShortDescription" />
+          @if( formGroup.get("partnerShortDescription")?.invalid && showValidationFailedError() ) {
+          <p-message severity="error" variant="simple">
+            {{ validationMode() === 'activate' ? 'Partner Short Description is required to activate.' : 'Partner Short Description is required.' }}
+          </p-message>
+          }
         </div>
 
       </div>

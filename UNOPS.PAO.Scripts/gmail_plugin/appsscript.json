@@ -3,71 +3,96 @@
     "exceptionLogging": "STACKDRIVER",
     "runtimeVersion": "V8",
     "dependencies": {
-      "enabledAdvancedServices": [
-        {
-          "userSymbol": "Gmail",
-          "serviceId": "gmail",
-          "version": "v1"
-        }
-      ],
-      "libraries": [
-        {
-          "userSymbol": "OAuth2",
-          "libraryId": "1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF",
-          "version": "43"
-        }
-      ]
+        "enabledAdvancedServices": [
+            {
+                "userSymbol": "Gmail",
+                "serviceId": "gmail",
+                "version": "v1"
+            }
+        ],
+        "libraries": [
+            {
+                "userSymbol": "OAuth2",
+                "libraryId": "1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF",
+                "version": "43"
+            }
+        ]
     },
     "oauthScopes": [
-      "openid",
-      "https://www.googleapis.com/auth/script.locale",
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/gmail.readonly",
-      "https://www.googleapis.com/auth/gmail.addons.current.message.readonly",
-      "https://www.googleapis.com/auth/gmail.addons.current.message.action",
-      "https://www.googleapis.com/auth/gmail.addons.current.message.metadata",
-      "https://www.googleapis.com/auth/gmail.addons.execute",
-      "https://www.googleapis.com/auth/script.external_request"
+        "openid",
+        "https://www.googleapis.com/auth/script.locale",
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/gmail.addons.current.message.readonly",
+        "https://www.googleapis.com/auth/gmail.addons.current.message.action",
+        "https://www.googleapis.com/auth/gmail.addons.current.message.metadata",
+        "https://www.googleapis.com/auth/gmail.addons.execute",
+        "https://www.googleapis.com/auth/script.external_request"
     ],
     "urlFetchWhitelist": [
-      "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp",
-      "https://test-opportunityplus.unops.org/user/claims",
-      "https://www.googleapis.com/oauth2/v3/userinfo",
-      "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/auth",
-      "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/refresh",
-      "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/revoke",
-      "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/interactions",
-      "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/interactions/*",
-      "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/create-records",
-      "https://test-opportunityplus.unops.org/api/gmail-addon/auth",
-      "https://test-opportunityplus.unops.org/api/gmail-addon/refresh",
-      "https://test-opportunityplus.unops.org/api/gmail-addon/revoke",
-      "https://test-opportunityplus.unops.org/api/gmail-addon/interactions",
-      "https://test-opportunityplus.unops.org/api/gmail-addon/interactions/*",
-      "https://test-opportunityplus.unops.org/api/gmail-addon/create-records"
+        "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp",
+        "https://identitytoolkit.googleapis.com/v1/tenants/Personnel-ylvvz/accounts:signInWithIdp",
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/auth",
+        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/refresh",
+        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/revoke",
+        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/interactions",
+        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/interactions/*",
+        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/create-records",
+        "https://test-opportunityplus.unops.org/user/claims",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/auth",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/refresh",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/revoke",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/interactions",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/interactions/*",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/create-records",
+        "https://opportunityplus.dev.unops.org/api/user/claims",
+        "https://opportunityplus.dev.unops.org/user/claims",
+        "https://opportunityplus.dev.unops.org/api/gmail-addon/auth",
+        "https://opportunityplus.dev.unops.org/api/gmail-addon/refresh",
+        "https://opportunityplus.dev.unops.org/api/gmail-addon/revoke",
+        "https://opportunityplus.dev.unops.org/api/gmail-addon/interactions",
+        "https://opportunityplus.dev.unops.org/api/gmail-addon/interactions/*",
+        "https://opportunityplus.dev.unops.org/api/gmail-addon/create-records",
+        "https://opportunityplus.qa.unops.org/api/user/claims",
+        "https://opportunityplus.qa.unops.org/user/claims",
+        "https://opportunityplus.qa.unops.org/api/gmail-addon/auth",
+        "https://opportunityplus.qa.unops.org/api/gmail-addon/refresh",
+        "https://opportunityplus.qa.unops.org/api/gmail-addon/revoke",
+        "https://opportunityplus.qa.unops.org/api/gmail-addon/interactions",
+        "https://opportunityplus.qa.unops.org/api/gmail-addon/interactions/*",
+        "https://opportunityplus.qa.unops.org/api/gmail-addon/create-records",
+        "https://opportunityplus.unops.org/api/user/claims",
+        "https://opportunityplus.unops.org/user/claims",
+        "https://opportunityplus.unops.org/api/gmail-addon/auth",
+        "https://opportunityplus.unops.org/api/gmail-addon/refresh",
+        "https://opportunityplus.unops.org/api/gmail-addon/revoke",
+        "https://opportunityplus.unops.org/api/gmail-addon/interactions",
+        "https://opportunityplus.unops.org/api/gmail-addon/interactions/*",
+        "https://opportunityplus.unops.org/api/gmail-addon/create-records"
     ],
     "addOns": {
-      "common": {
-        "name": "Opportunity+",
-        "logoUrl": "https://storage.googleapis.com/opportunity_plus_logo/Opportunity%20Logo%20Graphic1000px.png",
-        "layoutProperties": {
-          "primaryColor": "#005073",
-          "secondaryColor": "#73c3e6"
+        "common": {
+            "name": "Opportunity+",
+            "logoUrl": "https://storage.googleapis.com/opportunity_plus_logo/Opportunity%20Logo%20Graphic1000px.png",
+            "layoutProperties": {
+                "primaryColor": "#005073",
+                "secondaryColor": "#73c3e6"
+            },
+            "useLocaleFromApp": true,
+            "homepageTrigger": {
+                "runFunction": "onHomePageOpen",
+                "enabled": true
+            }
         },
-        "useLocaleFromApp": true,
-        "homepageTrigger": {
-          "runFunction": "onHomePageOpen",
-          "enabled": true
+        "gmail": {
+            "contextualTriggers": [
+                {
+                    "unconditional": {},
+                    "onTriggerFunction": "onGmailMessageOpen"
+                }
+            ]
         }
-      },
-      "gmail": {
-        "contextualTriggers": [
-          {
-            "unconditional": {},
-            "onTriggerFunction": "onGmailMessageOpen"
-          }
-        ]
-      }
     }
-  }
+}

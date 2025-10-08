@@ -170,6 +170,7 @@ export class PartnerEditDialogComponent implements OnInit {
 
   showValidationFailedError = signal<boolean>(false);
   isAdmin = signal<boolean>(false);
+  isGlobalAdmin = signal<boolean>(false);
   validationMode = signal<'save' | 'activate'>('save');
   partnerLevyStatusValue = signal<string>('');
   dueDiligenceRequiredValue = signal<string>('');
@@ -227,7 +228,7 @@ export class PartnerEditDialogComponent implements OnInit {
   });
 
   approvalFieldsEnabled = computed(() => {
-    return this.isAdmin();
+    return this.isGlobalAdmin();
   });
 
   // Check which fields should show asterisks based on validation mode
@@ -508,6 +509,17 @@ export class PartnerEditDialogComponent implements OnInit {
       error: (error) => {
         console.error('Error checking admin role:', error);
         this.isAdmin.set(false);
+      }
+    });
+
+    // Check global admin role
+    this.authService.isGlobalAdmin().subscribe({
+      next: (isGlobalAdmin) => {
+        this.isGlobalAdmin.set(isGlobalAdmin);
+      },
+      error: (error) => {
+        console.error('Error checking global admin role:', error);
+        this.isGlobalAdmin.set(false);
       }
     });
 

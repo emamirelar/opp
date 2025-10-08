@@ -23,6 +23,7 @@ import { FeedbackDialogService } from '../../../services/feedback-dialog.service
 import { LayoutService } from '@layouts/services/layout.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerEditDialogComponent } from '@partnerships/partners/components/partner/edit-dialog/partner-edit-dialog.component';
+import { PartnerEditDialogFooterComponent } from '@partnerships/partners/components/partner/edit-dialog/footer/partner-edit-dialog-footer.component';
 import { ContactEditDialogComponent } from '@partnerships/contacts/components/contact/edit-dialog/contact-edit-dialog.component';
 import { InteractionModalComponent } from '@partnerships/interactions/components/interaction/modal/interaction-modal.component';
 import { Partner } from '@partnerships/partners/models/partner.model';
@@ -49,7 +50,8 @@ interface RecentUpdate {
   name: string;
   type: 'Partner' | 'Contact' | 'Interaction';
   lastModifiedDate: string;
-  lastModifiedBy: string;
+  lastModifiedBy: number;
+  lastModifiedByName?: string;
   status: string;
   entityData?: any; // Additional entity-specific data
 }
@@ -819,12 +821,16 @@ export class HomeDashboardComponent implements OnInit, OnDestroy {
   openNewPartnerModal() {
     const ref = this.dialogService.open(PartnerEditDialogComponent, {
       header: 'New Partner',
-      width: '90vw',
-      style: { maxWidth: '800px' },
+      width: '40vw',
+      breakpoints: { '960px': '95vw' },
       closable: true,
+      templates: {
+        footer: PartnerEditDialogFooterComponent
+      },
       data: {
         mode: 'new',
-        record: {}
+        record: {},
+        requestingSaveSignal: signal<boolean>(false)
       }
     });
 

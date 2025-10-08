@@ -379,6 +379,18 @@ export class AuthService {
     );
   }
 
+  public isGlobalAdmin(): Observable<boolean> {
+    return this.getUserRoles().pipe(
+      map(roles => {
+        return roles.includes('PARTNER_GLOB_ADMIN');
+      }),
+      catchError((error) => {
+        console.error('DEBUG - Error in isGlobalAdmin():', error);
+        return of(false);
+      })
+    );
+  }
+
   public getUserRoles(): Observable<string[]> {
     return this.user().pipe(
       map(claims => {
