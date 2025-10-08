@@ -13,7 +13,7 @@
 /* Responsive design - Remove padding on mobile */
 .layout-topbar {
   padding: 0 1rem;
-  
+
   @media (max-width: 768px) {
     padding: 0;
   }
@@ -48,7 +48,7 @@
   border: 2px solid var(--unops-surface-primary);
   box-shadow: var(--unops-shadow-sm);
   transform: translateY(4px);
-  
+
   /* Auto-adjust width for larger numbers */
   width: auto;
   max-width: 60px;
@@ -71,13 +71,13 @@
       align-items: center;
       text-decoration: none;
       outline: none;
-      
+
       &:focus-visible {
         outline: 2px solid var(--unops-primary);
         outline-offset: 2px;
         border-radius: var(--unops-radius-md);
       }
-      
+
       &:hover {
         opacity: 0.8;
       }
@@ -87,11 +87,11 @@
 
 .notification-panel {
   padding: 0;
-  
+
   .notification-header {
     padding: 1rem 1rem 0.5rem 1rem;
     border-bottom: 1px solid var(--unops-neutral-200);
-    
+
     h3 {
       margin: 0;
       font-size: 1.1rem;
@@ -99,13 +99,13 @@
       color: var(--unops-neutral-900);
     }
   }
-  
+
   .notification-tabs {
     display: flex;
     padding: 0 1rem;
     margin-bottom: 0.5rem;
     border-bottom: 1px solid var(--unops-neutral-200);
-    
+
     .tab-button {
       flex: 1;
       padding: 0.75rem 1rem;
@@ -121,18 +121,18 @@
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      
+
       &:hover {
         color: var(--unops-neutral-900);
         background-color: var(--unops-neutral-50);
       }
-      
+
       &.active {
         color: var(--unops-primary);
         border-bottom-color: var(--unops-primary);
         background-color: rgba(var(--unops-primary-rgb), 0.05);
       }
-      
+
       .tab-badge {
         background-color: var(--unops-neutral-200);
         color: var(--unops-neutral-900);
@@ -143,17 +143,17 @@
         min-width: 20px;
         text-align: center;
       }
-      
+
       &.active .tab-badge {
         background-color: var(--unops-primary);
         color: white;
       }
     }
   }
-  
+
   .notification-list {
     padding: 0;
-    
+
     .notification-item {
       display: flex;
       gap: 0.5rem;
@@ -161,34 +161,34 @@
       border-bottom: 1px solid var(--unops-neutral-100);
       cursor: pointer;
       transition: background-color 0.2s ease;
-      
+
       &:hover {
         background-color: var(--unops-neutral-50);
       }
-      
+
       &.notification-read {
         opacity: 0.7;
-        
+
         .notification-content p {
           color: var(--unops-neutral-600);
         }
       }
-      
+
       &.notification-unread {
         background-color: rgba(var(--unops-primary-rgb), 0.02);
         border-left: 3px solid var(--unops-primary);
-        
+
         .notification-content p {
           font-weight: 500;
           color: var(--unops-neutral-900);
         }
       }
-      
+
       &.notification-progress {
         background-color: var(--unops-primary-container-soft);
         border-left: 3px solid var(--unops-accent-blue);
       }
-      
+
       .notification-category-icon {
         flex-shrink: 0;
         width: 40px;
@@ -199,16 +199,16 @@
         align-items: center;
         justify-content: center;
         margin-top: 0.25rem;
-        
+
         i {
           font-size: 16px;
         }
-        
+
         .pi-spinner {
           animation: spin 1s linear infinite;
         }
       }
-      
+
       @keyframes spin {
         from {
           transform: rotate(0deg);
@@ -217,51 +217,51 @@
           transform: rotate(360deg);
         }
       }
-      
+
       .notification-content {
         flex: 1;
-        
+
         p {
           margin: 0 0 0.5rem 0;
           line-height: 1.4;
           font-size: 14px;
         }
-        
+
         .notification-timestamp {
           margin-top: 0.5rem;
-          
+
           small {
             color: var(--unops-neutral-400);
             font-size: 11px;
           }
         }
-        
+
         .notification-progress-indicator {
           margin-bottom: 0.5rem;
         }
-        
+
         .notification-actions {
           margin-top: 0.75rem;
         }
       }
     }
-    
+
     .see-more-container {
       padding: 1rem;
       border-top: 1px solid var(--unops-neutral-100);
       background-color: var(--unops-neutral-50);
     }
-    
+
     .no-notifications {
       text-align: center;
       padding: 3rem 2rem;
       color: var(--unops-neutral-600);
-      
+
       i {
         display: block;
         margin-bottom: 1rem;
       }
-      
+
       p {
         margin: 0;
         font-size: 14px;
@@ -275,7 +275,7 @@
   .p-dialog-content {
     padding: 0;
   }
-  
+
   .p-dialog-header {
     padding: 1.5rem 2rem 1rem 2rem;
     border-bottom: 1px solid var(--unops-neutral-200);
@@ -292,7 +292,7 @@
   border-bottom: 1px solid var(--unops-neutral-200);
   margin: 0 -2rem 1rem -2rem;
   padding: 0 2rem;
-  
+
   .tab-button {
     flex: 1;
     padding: 0.75rem 1rem;
@@ -308,18 +308,18 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    
+
     &:hover {
       color: var(--unops-neutral-900);
       background-color: var(--unops-neutral-50);
     }
-    
+
     &.active {
       color: var(--unops-primary);
       border-bottom-color: var(--unops-primary);
       background-color: rgba(var(--unops-primary-rgb), 0.05);
     }
-    
+
     .tab-badge {
       background-color: var(--unops-neutral-200);
       color: var(--unops-neutral-900);
@@ -330,7 +330,7 @@
       min-width: 20px;
       text-align: center;
     }
-    
+
     &.active .tab-badge {
       background-color: var(--unops-primary);
       color: white;
@@ -342,7 +342,7 @@
   max-height: 60vh;
   overflow-y: auto;
   margin: 0 -2rem;
-  
+
   .notification-item {
     display: flex;
     gap: 0.5rem;
@@ -350,40 +350,40 @@
     border-bottom: 1px solid var(--unops-neutral-100);
     cursor: pointer;
     transition: all 0.2s ease;
-    
+
     &:hover {
       background-color: var(--unops-neutral-50);
       transform: translateY(-1px);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
-    
+
     &:active {
       transform: translateY(0);
     }
-    
+
     &.notification-read {
       opacity: 0.7;
-      
+
       .notification-content p {
         color: var(--unops-neutral-600);
       }
     }
-    
+
     &.notification-unread {
       background-color: rgba(var(--unops-primary-rgb), 0.02);
       border-left: 3px solid var(--unops-primary);
-      
+
       .notification-content p {
         font-weight: 500;
         color: var(--unops-neutral-900);
       }
     }
-    
+
     &.notification-progress {
       background-color: var(--unops-primary-container-soft);
       border-left: 3px solid var(--unops-accent-blue);
     }
-    
+
     .notification-category-icon {
       flex-shrink: 0;
       width: 40px;
@@ -394,55 +394,55 @@
       align-items: center;
       justify-content: center;
       margin-top: 0.25rem;
-      
+
       i {
         font-size: 16px;
       }
-      
+
       .pi-spinner {
         animation: spin 1s linear infinite;
       }
     }
-    
+
     .notification-content {
       flex: 1;
-      
+
       p {
         margin: 0 0 0.5rem 0;
         line-height: 1.4;
         font-size: 14px;
       }
-      
+
       .notification-timestamp {
         margin-top: 0.5rem;
-        
+
         small {
           color: var(--unops-neutral-400);
           font-size: 11px;
         }
       }
-      
+
       .notification-progress-indicator {
         margin-bottom: 0.5rem;
       }
-      
+
       .notification-actions {
         margin-top: 0.75rem;
       }
     }
   }
-  
+
   .no-notifications {
     text-align: center;
     padding: 3rem 2rem;
     color: var(--unops-neutral-600);
     margin: 0 2rem;
-    
+
     i {
       display: block;
       margin-bottom: 1rem;
     }
-    
+
     p {
       margin: 0;
       font-size: 14px;
@@ -460,7 +460,7 @@
     opacity: 1 !important;
     visibility: visible !important;
   }
-  
+
   // Target the image directly with multiple selectors
   img,
   button img,
@@ -486,7 +486,7 @@
     opacity: 1 !important;
     visibility: visible !important;
   }
-  
+
   img,
   .ai-icon {
     display: block !important;
@@ -520,33 +520,33 @@
     @media (min-width: 769px) {
       display: flex !important;
     }
-    
+
     // Hide on mobile/tablet
     @media (max-width: 768px) {
       display: none !important;
     }
   }
-  
+
   .global-filters-mobile {
     // Hide by default on all screens
     display: none !important;
-    
+
     // Show on mobile/tablet only (401px to 768px)
     @media (min-width: 401px) and (max-width: 768px) {
       display: flex !important;
-      
+
       // Hide when search is expanded on mobile
       &.search-expanded-hide-mobile {
         display: none !important;
       }
     }
-    
+
     // Explicitly hide on desktop (769px and above)
     @media (min-width: 769px) {
       display: none !important;
     }
   }
-  
+
   // Global Filters Button - Common styles
   .global-filters-button {
     .p-button {
@@ -554,7 +554,7 @@
       align-items: center !important;
       justify-content: center !important;
       transition: all var(--unops-duration-short) var(--unops-easing-smooth) !important;
-      
+
       i {
         display: flex !important;
         align-items: center !important;
@@ -562,12 +562,11 @@
         margin: 0 !important;
         margin-top: -3px !important;
         line-height: 1 !important;
-        transform: translateY(2px) !important;
         color: var(--unops-neutral-600) !important;
         transition: all var(--unops-duration-short) var(--unops-easing-smooth) !important;
       }
     }
-    
+
     // Subtle active state styling when filters are active
     &.filters-active {
       .p-button {
@@ -575,27 +574,27 @@
         background-color: var(--unops-primary-container-soft) !important;
         // Subtle border for indication
         border: 1px solid var(--unops-primary-200) !important;
-        
+
         i {
           color: var(--unops-primary) !important;
         }
-        
+
         &:hover {
           background-color: var(--unops-primary-container) !important;
           border-color: var(--unops-primary) !important;
-          
+
           i {
             color: var(--unops-primary-dark) !important;
           }
         }
-        
+
         &:focus {
           // Keep focus indicator for accessibility
           box-shadow: 0 0 0 2px rgba(var(--unops-primary-rgb, 0, 146, 209), 0.3) !important;
         }
       }
     }
-    
+
     // Enhanced hover state for inactive filters
     &:not(.filters-active) {
       .p-button:hover {
@@ -604,95 +603,90 @@
         }
       }
     }
-    
+
   }
-  
+
   // Notifications Button
   .notifications-button {
     .p-button {
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      
+
       i {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         margin: 0 !important;
         line-height: 1 !important;
-        transform: translateY(2px) !important;
       }
     }
   }
-  
+
   // Profile Menu Button
   .profile-menu-button {
     .p-button {
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      
+
       i {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         margin: 0 !important;
         line-height: 1 !important;
-        transform: translateY(2px) !important;
       }
     }
   }
-  
+
   // Language Selector Button (in child component)
   app-language-selector {
     .p-button {
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      
+
       i {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         margin: 0 !important;
         line-height: 1 !important;
-        transform: translateY(2px) !important;
       }
     }
   }
-  
+
   // Tour Control Button (in child component)
   app-tour-control {
     .p-button {
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      
+
       i {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         margin: 0 !important;
         line-height: 1 !important;
-        transform: translateY(2px) !important;
       }
     }
   }
-  
+
   // Generic fallback for any other p-buttons in topbar
   p-button {
     .p-button {
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      
+
       i {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         margin: 0 !important;
         line-height: 1 !important;
-        transform: translateY(2px) !important;
       }
     }
   }
@@ -704,7 +698,7 @@
    - sm: 481-768px (phones)
    - md: 769-1024px (tablets)
    - lg: 1025px+ (desktop)
-   
+
    Elements are hidden in reverse order of importance as screen size decreases
 */
 
@@ -769,15 +763,15 @@
 @media (max-width: 768px) {
   .layout-topbar {
     gap: 0.5rem;
-    
+
     .layout-topbar-logo-container {
       gap: 0.25rem;
-      
+
       .menu-toggle-button {
         margin-right: 0.5rem;
       }
     }
-    
+
     .global-search-container {
       max-width: none;
       flex: 1;
@@ -798,7 +792,7 @@
   .layout-topbar {
     /* Ensure minimum spacing on very small screens */
     min-height: 64px;
-    
+
     .layout-topbar-logo-container {
       /* Reduce spacing between burger and logo on mobile */
       .menu-toggle-button {
@@ -813,7 +807,7 @@
   .layout-topbar {
     /* Optimize spacing for tablet screens */
     gap: 1rem;
-    
+
     .global-search-container {
       max-width: 400px;
     }
@@ -825,7 +819,7 @@
   .layout-topbar {
     /* Full spacing on desktop */
     gap: 1.5rem;
-    
+
     .global-search-container {
       max-width: 600px;
     }
@@ -874,7 +868,7 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  
+
   /* But respect the search expansion hiding on mobile */
   &.search-expanded-hide-mobile {
     @media (max-width: 768px) {
