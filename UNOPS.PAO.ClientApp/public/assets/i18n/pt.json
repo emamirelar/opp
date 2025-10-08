@@ -1890,6 +1890,7 @@
 	"validation.ddRequiredRequired": "DD Obrigatório deve ser inserido.",
 	"validation.ddeacDoneRequired": "DD/EAC Concluído deve ser inserido.",
 	"validation.emailRequired": "O email deve ser inserido.",
+	"validation.emailInvalid": "Por favor, insira um endereço de e-mail válido.",
 	"validation.lastNameRequired": "O sobrenome deve ser inserido.",
 	"validation.levyPotentiallyAppliesRequired": "Taxa potencialmente aplicável deve ser inserida.",
 	"validation.maxLength": "O comprimento máximo é de {{max}} caracteres",
