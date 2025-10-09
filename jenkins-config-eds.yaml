@@ -12,7 +12,7 @@ environments:
     secrets: "ConnectionStrings__DefaultConnection=Prod_Monitoring_DB_Connection_String:latest,ConnectionStrings__ApplicationConnection=Prod_DB_Connection_String:latest"
     env_vars: "ASPNETCORE_ENVIRONMENT=Production,GOOGLE_CLOUD_PROJECT=unops-opportunityplus-prod,ExternalDataService__ConfigurationPath=./ExternalDataService/config"
     credentials_id: "cicd-sa-oplus-prod"
-    service_account: "cicd-sa@unops-opportunityplus-prod.iam.gserviceaccount.com"
+    service_account: "eds-service@unops-opportunityplus-prod.iam.gserviceaccount.com"
     invoker_service_accounts: "service-70092411004@gcp-sa-iap.iam.gserviceaccount.com"
     dockerfile: "Dockerfile"
     port: "8080"
