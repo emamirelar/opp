@@ -288,20 +288,27 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                     _logger.LogInformation("🔄 [IMPERSONATION] {AuthUser} requesting impersonation of {TargetUser}", 
                         user.Email, impersonatedEmail);
                     
-                    // Look up the impersonated user
-                    var impersonatedUser = await _userManager.FindByEmailAsync(impersonatedEmail);
+                    // Look up the impersonated user (normalize email to ensure case-insensitive lookup)
+                    var normalizedEmail = _userManager.NormalizeEmail(impersonatedEmail);
+                    _logger.LogDebug("🔍 [IMPERSONATION-DEBUG] Looking up user: Original={OriginalEmail}, Normalized={NormalizedEmail}", 
+                        impersonatedEmail, normalizedEmail);
+                    
+                    var impersonatedUser = await _userManager.Users
+                        .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
                     
                     if (impersonatedUser != null)
                     {
                         effectiveUser = impersonatedUser;
                         isImpersonating = true;
-                        _logger.LogInformation("✅ [IMPERSONATION] Successfully impersonating {ImpersonatedUser} (authenticated as {AuthUser})",
-                            impersonatedEmail, authenticatedUserEmail);
+                        var impersonatedUserRoles = await _userManager.GetRolesAsync(impersonatedUser);
+                        _logger.LogInformation("✅ [IMPERSONATION] Successfully impersonating {ImpersonatedUser} (authenticated as {AuthUser}). Impersonated user has roles: {Roles}",
+                            impersonatedEmail, authenticatedUserEmail, string.Join(", ", impersonatedUserRoles));
                     }
                     else
                     {
-                        _logger.LogWarning("⚠️ [IMPERSONATION] Impersonated user not found: {ImpersonatedEmail}. Proceeding with original user.", 
-                            impersonatedEmail);
+                        var serviceAccountRoles = await _userManager.GetRolesAsync(user);
+                        _logger.LogWarning("⚠️ [IMPERSONATION] Impersonated user not found: {ImpersonatedEmail} (normalized: {NormalizedEmail}). Proceeding with service account '{ServiceAccount}' which has roles: {Roles}", 
+                            impersonatedEmail, normalizedEmail, user.Email, string.Join(", ", serviceAccountRoles));
                     }
                 }
                 else
