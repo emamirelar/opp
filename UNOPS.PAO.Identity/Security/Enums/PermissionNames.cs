@@ -10,5 +10,6 @@ namespace UNOPS.PAO.Identity.Security.Enums
     {
         // Admin configuration
         public const string CanRunMigrations = nameof(CanRunMigrations);
+        public const string CanRunSeedings = nameof(CanRunSeedings);
     }
 }
