@@ -2,8 +2,7 @@
 -- This script manages both entity manager definitions and their field configurations
 
 -- Clear existing data and reset
-TRUNCATE TABLE public."EntityManagers" RESTART IDENTITY CASCADE;
-TRUNCATE TABLE public."EntityFieldManagers" RESTART IDENTITY CASCADE;
+TRUNCATE TABLE public."EntityManagers" CASCADE;
 
 -- Insert Entity Managers
 INSERT INTO public."EntityManagers" (
