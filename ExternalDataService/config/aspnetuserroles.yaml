@@ -23,7 +23,7 @@ source:
       QUALIFY ROW_NUMBER() OVER (
           PARTITION BY PARSE_NUMERIC(Resource)
           ORDER BY Resource_Email_Address_Primary
-        ) = 1
+        ) = 1;
   
   primary_key_field: "UserId"
   batch_size: 1000
@@ -53,7 +53,7 @@ destination:
       is_required: true
 
 sync_options:
-  sync_mode: Upsert
+  sync_mode: InsertOnly
   batch_processing: true
 
 validation:
