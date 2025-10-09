@@ -41,7 +41,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly BaseEngagementManager baseEngagementManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
-                               UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) : base(mapper, context, userManager, httpContextAccessor)
+                               UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) : base(mapper, context, userManager, httpContextAccessor, configuration, serviceProvider)
     {
         // Create a MemoryCache instance for services that need it
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -64,7 +64,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
 
         var notificationManager = serviceProvider.GetRequiredService<NotificationManager>();
 
-        systemAdminManager = new UNOPSSystemAdminManager(opsContext);
+        systemAdminManager = new UNOPSSystemAdminManager(opsContext, configuration, serviceProvider);
         contactManager = new UNOPSContactManager(mapper, opsContext, configuration, permissionService, globalFilterService, httpContextAccessor, contactManagerLogger, serviceProvider);
         interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, partnerTreeService, permissionService, globalFilterService, httpContextAccessor, serviceProvider);
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration, partnerTreeService, permissionService);

@@ -1,5 +1,5 @@
 
-TRUNCATE TABLE public."EntityPermissions" RESTART IDENTITY CASCADE;
+TRUNCATE TABLE public."EntityPermissions";
 
 -- UNOPS General User role permissions for Partner
 INSERT INTO public."EntityPermissions" (

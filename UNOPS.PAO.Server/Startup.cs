@@ -418,8 +418,8 @@ public class Startup
         // Register Global Filter Service for centralized global filter logic
         services.AddScoped<GlobalFilterService>();
         
-        // Add data seeding services
-        services.AddDataSeeding();
+        // Data seeding is now triggered manually via API endpoint: POST /api/system-admin/seeding/run
+        // services.AddDataSeeding(); // REMOVED - no longer runs on startup
 
         // Register HttpContextAccessor for accessing request context in managers
         services.AddHttpContextAccessor();
