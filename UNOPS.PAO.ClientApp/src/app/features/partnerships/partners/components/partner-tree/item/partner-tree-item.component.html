@@ -1,4 +1,4 @@
-<form class="grid sm:grid-cols-2 gap-4" [formGroup]="formGroup">
+<form class="grid sm:grid-cols-2 grid-cols-1  gap-4" [formGroup]="formGroup">
   <div class="flex flex-col gap-2">
     <label>{{ "label.partnerTree.name" | translate }} <span>*</span></label>
     <input pInputText fluid="true" formControlName="name" (blur)="onNameBlur()" [disabled]="!permissionUtilityService.canUpdate(recordPermissions())" />
@@ -13,7 +13,7 @@
       {{ "validation.required" | translate }}
     </small>
   </div>
-  <div class="flex flex-col gap-2 col-span-2">
+  <div class="flex flex-col gap-2 sm:col-span-2">
     <label>{{ "label.partnerTree.description" | translate }} <span>*</span></label>
     <textarea rows="5" cols="30" pTextarea fluid="true" formControlName="description" [disabled]="!permissionUtilityService.canUpdate(recordPermissions())"></textarea>
     <small *ngIf="formGroup.get('description')?.invalid && formGroup.get('description')?.touched" class="p-error">
