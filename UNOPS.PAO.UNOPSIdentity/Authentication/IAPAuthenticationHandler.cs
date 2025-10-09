@@ -91,19 +91,106 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         if (Context.User?.Identity?.IsAuthenticated == true && 
             Context.User.HasClaim(c => c.Type == "iap-jwt-verified" && c.Value == "true"))
         {
-            // If we have a valid Bearer token, merge its claims
-            if (bearerPrincipal != null)
+            _logger.LogInformation("🔍 [MIDDLEWARE-AUTH] User already authenticated by middleware: {Email}", 
+                Context.User.FindFirstValue(ClaimTypes.Email));
+            
+            // Handle impersonation for middleware-authenticated users
+            var middlewarePrincipal = Context.User;
+            var authenticatedEmail = Context.User.FindFirstValue(ClaimTypes.Email);
+            
+            if (Options.EnableImpersonation && 
+                Request.Headers.TryGetValue(Options.ImpersonationHeaderName, out var middlewareImpersonatedEmailValues))
             {
-                var userIdentity = Context.User.Identity as ClaimsIdentity;
-                foreach (var claim in bearerPrincipal.Claims)
+                var middlewareImpersonatedEmail = middlewareImpersonatedEmailValues.ToString()?.Trim();
+                _logger.LogInformation("🔍 [MIDDLEWARE-IMPERSONATION] Impersonation header found: {ImpersonatedEmail}", middlewareImpersonatedEmail);
+                
+                if (!string.IsNullOrEmpty(middlewareImpersonatedEmail) && middlewareImpersonatedEmail != authenticatedEmail)
                 {
-                    if (!userIdentity.HasClaim(c => c.Type == claim.Type && c.Value == claim.Value))
+                    // Check if authenticated user is trusted
+                    bool isTrusted = Options.TrustedServiceAccounts?.Any(sa => 
+                        sa.Equals(authenticatedEmail, StringComparison.OrdinalIgnoreCase)) == true;
+                    
+                    if (isTrusted)
                     {
-                        userIdentity.AddClaim(claim);
+                        _logger.LogInformation("🔄 [MIDDLEWARE-IMPERSONATION] Trusted service account {AuthUser} requesting impersonation of {TargetUser}", 
+                            authenticatedEmail, middlewareImpersonatedEmail);
+                        
+                        // Look up the impersonated user
+                        var middlewareNormalizedEmail = _userManager.NormalizeEmail(middlewareImpersonatedEmail);
+                        var middlewareImpersonatedUser = await _userManager.Users
+                            .FirstOrDefaultAsync(u => u.NormalizedEmail == middlewareNormalizedEmail);
+                        
+                        if (middlewareImpersonatedUser != null)
+                        {
+                            // Get impersonated user's roles and claims
+                            var middlewareUserRoles = await _userManager.GetRolesAsync(middlewareImpersonatedUser);
+                            var middlewareUserClaims = await _userManager.GetClaimsAsync(middlewareImpersonatedUser);
+                            
+                            _logger.LogInformation("✅ [MIDDLEWARE-IMPERSONATION] Successfully impersonating {ImpersonatedUser}. Roles: {Roles}",
+                                middlewareImpersonatedEmail, string.Join(", ", middlewareUserRoles));
+                            
+                            // Create new identity with impersonated user's information
+                            var middlewareImpersonatedIdentity = new ClaimsIdentity(middlewareUserClaims, "IAP", ClaimTypes.Name, ClaimTypes.Role);
+                            
+                            // Add essential claims
+                            if (!middlewareImpersonatedIdentity.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
+                                middlewareImpersonatedIdentity.AddClaim(new Claim(ClaimTypes.NameIdentifier, middlewareImpersonatedUser.Id.ToString()));
+                            
+                            if (!middlewareImpersonatedIdentity.HasClaim(c => c.Type == ClaimTypes.Name))
+                                middlewareImpersonatedIdentity.AddClaim(new Claim(ClaimTypes.Name, middlewareImpersonatedUser.UserName ?? middlewareImpersonatedUser.Email ?? ""));
+                            
+                            if (!middlewareImpersonatedIdentity.HasClaim(c => c.Type == ClaimTypes.Email))
+                                middlewareImpersonatedIdentity.AddClaim(new Claim(ClaimTypes.Email, middlewareImpersonatedUser.Email ?? ""));
+                            
+                            if (!middlewareImpersonatedIdentity.HasClaim(c => c.Type == "IsInternal"))
+                                middlewareImpersonatedIdentity.AddClaim(new Claim("IsInternal", middlewareImpersonatedUser.IsInternal.ToString()));
+                            
+                            // Add role claims
+                            foreach (var role in middlewareUserRoles)
+                            {
+                                if (!middlewareImpersonatedIdentity.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == role))
+                                    middlewareImpersonatedIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
+                            }
+                            
+                            // Add impersonation audit claims
+                            middlewareImpersonatedIdentity.AddClaim(new Claim("IsImpersonating", "true"));
+                            middlewareImpersonatedIdentity.AddClaim(new Claim("AuthenticatedServiceAccount", authenticatedEmail ?? ""));
+                            middlewareImpersonatedIdentity.AddClaim(new Claim("ImpersonatedUser", middlewareImpersonatedEmail));
+                            middlewareImpersonatedIdentity.AddClaim(new Claim("iap-jwt-verified", "true"));
+                            
+                            middlewarePrincipal = new ClaimsPrincipal(middlewareImpersonatedIdentity);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("⚠️ [MIDDLEWARE-IMPERSONATION] Impersonated user not found: {ImpersonatedEmail} (normalized: {NormalizedEmail})", 
+                                middlewareImpersonatedEmail, middlewareNormalizedEmail);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("🚫 [MIDDLEWARE-IMPERSONATION] User {UserEmail} is not in trusted service accounts list. Impersonation denied.",
+                            authenticatedEmail);
                     }
                 }
             }
-            return AuthenticateResult.Success(new AuthenticationTicket(Context.User, Scheme.Name));
+            
+            // If we have a valid Bearer token, merge its claims
+            if (bearerPrincipal != null)
+            {
+                var userIdentity = middlewarePrincipal.Identity as ClaimsIdentity;
+                if (userIdentity != null)
+                {
+                    foreach (var claim in bearerPrincipal.Claims)
+                    {
+                        if (!userIdentity.HasClaim(c => c.Type == claim.Type && c.Value == claim.Value))
+                        {
+                            userIdentity.AddClaim(claim);
+                        }
+                    }
+                }
+            }
+            
+            return AuthenticateResult.Success(new AuthenticationTicket(middlewarePrincipal, Scheme.Name));
         }
 
         // Validate IAP JWT if required
