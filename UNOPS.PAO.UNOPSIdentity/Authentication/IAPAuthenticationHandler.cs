@@ -186,6 +186,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         
     ProcessUser:
         // Find or create user based on Google identity
+        _logger.LogInformation("🔍 [AUTH] Looking up user by email: {Email}", userEmail);
         var user = await _userManager.FindByEmailAsync(userEmail);
         if (user == null)
         {
@@ -255,14 +256,26 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         // Process IAP groups if available
         await ProcessGroupsAsync(user);
 
+        // Log authenticated user details before impersonation
+        var authenticatedUserRoles = await _userManager.GetRolesAsync(user);
+        _logger.LogInformation("🔍 [AUTH] Authenticated user: {Email}, Roles: {Roles}", 
+            user.Email, string.Join(", ", authenticatedUserRoles));
+
         // Handle user impersonation if enabled and requested
         PAOIdentityUser effectiveUser = user;
         string authenticatedUserEmail = user.Email;
         bool isImpersonating = false;
         
+        // Diagnostic logging for impersonation setup
+        _logger.LogInformation("🔍 [IMPERSONATION-CHECK] EnableImpersonation={EnableImpersonation}, HeaderName={HeaderName}, AuthenticatedUser={AuthUser}", 
+            Options.EnableImpersonation, Options.ImpersonationHeaderName, user.Email);
+        _logger.LogInformation("🔍 [IMPERSONATION-CHECK] Request headers: {Headers}", 
+            string.Join(", ", Request.Headers.Select(h => $"{h.Key}={h.Value.ToString().Substring(0, Math.Min(50, h.Value.ToString().Length))}")));
+        
         if (Options.EnableImpersonation && 
             Request.Headers.TryGetValue(Options.ImpersonationHeaderName, out var impersonatedEmailValues))
         {
+            _logger.LogInformation("🔍 [IMPERSONATION-CHECK] Found impersonation header: {HeaderValue}", impersonatedEmailValues.ToString());
             var impersonatedEmail = impersonatedEmailValues.ToString()?.Trim();
             
             if (!string.IsNullOrEmpty(impersonatedEmail) && impersonatedEmail != user.Email)
@@ -318,6 +331,16 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                         user.Email);
                 }
             }
+            else
+            {
+                _logger.LogInformation("🔍 [IMPERSONATION-CHECK] Impersonation header present but empty or same as authenticated user: {ImpersonatedEmail} vs {AuthUser}", 
+                    impersonatedEmail, user.Email);
+            }
+        }
+        else
+        {
+            _logger.LogInformation("🔍 [IMPERSONATION-CHECK] Impersonation not attempted. EnableImpersonation={EnableImpersonation}, HeaderPresent={HeaderPresent}", 
+                Options.EnableImpersonation, Request.Headers.ContainsKey(Options.ImpersonationHeaderName ?? ""));
         }
 
         // Get user roles and claims from the effective user (impersonated or original)
