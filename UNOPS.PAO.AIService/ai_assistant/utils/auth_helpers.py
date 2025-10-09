@@ -366,15 +366,16 @@ def build_request_headers(
                         )
                         print(f"🔍 [AUTH-HEADERS] Using service account token for Google API")
                     else:
-                        # For IAP APIs, use proper Google Cloud ID token (not Firebase/GCIP)
-                        # The token will identify the service account, and impersonation
-                        # is handled via the x-unops-impersonated-user header
-                        idp_token = get_iap_token_with_impersonation(
+                        # For IAP with Identity Platform (GCIP), we need a GCIP token
+                        # The token identifies the service account (for trust check)
+                        # Impersonation is handled via the x-unops-impersonated-user header
+                        idp_token = get_service_account_oidc_token(
                             target_audience,
                             target_principal,
-                            user_email
+                            use_idp=True,
+                            subject=None  # ← Service account identity, NOT user
                         )
-                        print(f"🔍 [AUTH-HEADERS] Using IAP token (service account identity) with impersonation header")
+                        print(f"🔍 [AUTH-HEADERS] Using GCIP token for service account with impersonation header")
                     
                     if idp_token:
                         request_headers['Authorization'] = f"Bearer {idp_token}"
