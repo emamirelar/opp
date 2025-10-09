@@ -10,11 +10,53 @@ source:
   type: "bigquery"
   
   query: |
-    SELECT 
-      * 
+    WITH ENG AS (
+      SELECT
+        *
+      FROM
+        `unopsreporting.Engagements.Engagement` E
+      WHERE
+        E.Engagement_Stage NOT IN ('CANCELLED')
+        AND EXTRACT(YEAR FROM E.Engagement_Implementation_Start_Date) > 1900
+        AND E.Latest_Finalised_Flag = 'Yes'
+    )
+    , CLIENTS AS (
+    SELECT DISTINCT
+      CONCAT(E.Base_Engagement, '-CLIENT-', EC.Partner) AS Key
+      , E.Base_Engagement
+      , 'CLIENT' AS Partner_Type
+      , EC.Partner
+      , EC.Partner_Description
+    FROM
+      ENG E
+
+      CROSS JOIN UNNEST(E.Clients) AS EC
+    )
+    , DONORS AS (
+    SELECT DISTINCT
+      CONCAT(E.Base_Engagement, '-DONOR-', EF.Partner) AS Key
+      , E.Base_Engagement
+      , 'DONOR' AS Partner_Type
+      , EF.Partner
+      , EF.Partner_Description
+    FROM
+      ENG E
+
+      CROSS JOIN UNNEST(E.Funding_Sources) AS EF
+    )
+    SELECT
+      *
+      , 'Active' AS Status
       , CURRENT_TIMESTAMP() as last_modified
     FROM
-      `unops-opportunityplus-dev.integration.Table_EngagementPartners`
+      CLIENTS
+    UNION ALL
+    SELECT
+      *
+      , 'Active' AS Status
+      , CURRENT_TIMESTAMP() as last_modified
+    FROM
+      DONORS
   
   primary_key_field: "Key"
   batch_size: 1000

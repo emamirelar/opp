@@ -35,7 +35,7 @@ source:
       Effective_Date = CURRENT_DATE()
       AND Employment_Status = 'N'
       AND Employment_Type IN ('OPSSTAFF', 'OPSNONSTAFF')
-      AND TRIM(Resource_Email_Address_Primary) > ''
+      AND UPPER(Resource_Email_Address_Primary) LIKE '%UNOPS.ORG'
       QUALIFY ROW_NUMBER() OVER (
           PARTITION BY PARSE_NUMERIC(Resource)
           ORDER BY Resource_Email_Address_Primary
@@ -82,6 +82,7 @@ destination:
       destination_field: "CreatedDate"
       data_type: "timestamp"
       is_required: false
+      insert_only: true  # Preserve existing CreatedDate to maintain creation date
 
     - source_field: "LastModifiedBy"
       destination_field: "LastModifiedBy"
