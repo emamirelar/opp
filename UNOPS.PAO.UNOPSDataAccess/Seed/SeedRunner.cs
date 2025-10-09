@@ -40,7 +40,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
 
             // Seed data using new generic configuration-driven system
             Console.WriteLine("Running all configured seed steps...");
-            await GenericSeedRunner.ExecuteConfiguredSeedsAsync(context);
+            // Note: serviceProvider is null here - seeders that require it won't work in this standalone context
+            await GenericSeedRunner.ExecuteConfiguredSeedsAsync(context, serviceProvider: null, configuration);
             Console.WriteLine("All seed steps completed successfully.");
 
             Console.WriteLine("All configuration data seeding complete!");
