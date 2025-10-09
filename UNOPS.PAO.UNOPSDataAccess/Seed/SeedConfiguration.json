@@ -16,40 +16,33 @@
     },
     {
       "order": 2,
-      "name": "AspNetUsers",
-      "type": "sql",
-      "path": "AspNetUsers.sql",
-      "description": "Seed AspNet Identity users required by Partners"
-    },
-    {
-      "order": 3,
       "name": "EntityManagers", 
       "type": "sql",
       "path": "EntityManagers_Complete.sql",
       "description": "Entity managers and field managers complete configuration"
     },
     {
-      "order": 4,
+      "order": 3,
       "name": "DocumentTypes",
       "type": "sql", 
       "path": "DocumentTypes.sql",
       "description": "Document types configuration"
     },
     {
-      "order": 5,
+      "order": 4,
       "name": "LiaisonOffices",
       "type": "sql",
       "path": "LiaisonOffices.sql", 
       "description": "Liaison offices data"
     },
     {
-      "order": 6,
+      "order": 5,
       "description": "Partner tree structure",
       "name": "PartnerTree",
       "type": "seeder",
-      "className": "PartnerTreeSeeder",
+      "className": "PartnerTreeSeeder_v2",
       "methodName": "SeedPartnerTreesAsync",
-      "filePath": "Seeders/PartnerTreeSeeder.cs"
+      "filePath": "Seeders/PartnerTreeSeeder_v2.cs"
     },
     {
       "order": 6,
@@ -60,43 +53,40 @@
     },
     {
       "order": 7,
-      "name": "AiPrompts",
-      "type": "sql",
-      "path": "AiPrompts.sql",
-      "description": "AI prompts configuration"
-    },
-    {
-      "order": 8,
       "name": "EntityPermissions", 
       "type": "sql",
       "path": "EntityPermissions.sql",
       "description": "Entity permissions configuration"
     },
     {
-      "order": 9,
-      "name": "UserProfiles",
-      "type": "sql",
-      "path": "UserProfiles.sql",
-      "description": "User profiles data seeding"
-    },
-    {
-      "order": 10,
+      "order": 8,
       "name": "Partners",
       "type": "seeder",
-      "className": "PartnerSeeder",
-      "methodName": "SeedPartnersAsync",
-      "filePath": "Seeders/PartnerSeeder.cs",
+      "className": "PartnerSeeder_v2",
+      "methodName": "SeedPartnersV2Async",
+      "filePath": "Seeders/PartnerSeeder_v2.cs",
       "description": "Partners data seeding"
     },
     {
-      "order": 11,
-      "name": "OrganizationUnits",
-      "type": "sql",
-      "path": "OrganizationUnits.sql",
-      "description": "Organization units data import"
+      "order": 9,
+      "name": "Prospects",
+      "type": "seeder",
+      "className": "ProspectAccountsSeeder",
+      "methodName": "SeedProspectAccountsAsync",
+      "filePath": "Seeders/ProspectAccountsSeeder.cs",
+      "description": "Partners data seeding"
     },
     {
-      "order": 12,
+      "order": 10,
+      "name": "Contacts",
+      "type": "seeder",
+      "className": "ContactSeeder",
+      "methodName": "SeedContactsAsync",
+      "filePath": "Seeders/ContactSeeder.cs",
+      "description": "Contacts data seeding"
+    },
+    {
+      "order": 11,
       "name": "SequenceResync",
       "type": "seeder",
       "className": "SequenceResyncSeeder",
@@ -104,15 +94,6 @@
       "filePath": "Seeders/SequenceResyncSeeder.cs",
       "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
       "forceExecuteIfAnyChanged": true
-    },
-    {
-      "order": 13,
-      "name": "Contacts",
-      "type": "seeder",
-      "className": "ContactSeeder",
-      "methodName": "SeedContactsAsync",
-      "filePath": "Seeders/ContactSeeder.cs",
-      "description": "Contacts data seeding"
     }
   ]
 }
