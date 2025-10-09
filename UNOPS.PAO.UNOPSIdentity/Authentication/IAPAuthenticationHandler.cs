@@ -98,6 +98,13 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             var middlewarePrincipal = Context.User;
             var authenticatedEmail = Context.User.FindFirstValue(ClaimTypes.Email);
             
+            // Strip identity provider prefix if present (e.g., "securetoken.google.com/project/tenant:email@domain.com" -> "email@domain.com")
+            if (authenticatedEmail?.Contains(':') == true)
+            {
+                authenticatedEmail = authenticatedEmail.Split(':').Last();
+                _logger.LogDebug("🔍 [MIDDLEWARE-AUTH] Stripped email prefix, using: {Email}", authenticatedEmail);
+            }
+            
             if (Options.EnableImpersonation && 
                 Request.Headers.TryGetValue(Options.ImpersonationHeaderName, out var middlewareImpersonatedEmailValues))
             {
