@@ -2,10 +2,11 @@
   <!-- Loader overlay -->
   <div class="flex flex-col items-center justify-center gap-4 relative min-h-[400px]" [ngClass]="isProcessing || isUploading() ? 'opacity-50' : ''">
     @if (isProcessing || isUploading()) {
-      <div class="absolute z-10 flex flex-col items-center">
-        <p-progress-spinner/>
+      <div class="absolute z-10 flex flex-col items-center bg-white px-6 py-4 rounded-lg shadow-lg">
         @if (isUploading() && uploadProgress() > 0) {
-          <div class="mt-2 text-sm">{{ 'label.pictureEditor.uploadProgress' | translate: {progress: uploadProgress()} }}</div>
+          <div class="mt-2 text-sm font-medium">{{ 'label.pictureEditor.uploadProgress' | translate: {progress: uploadProgress()} }}</div>
+        } @else if (isProcessing) {
+          <div class="mt-2 text-sm font-medium">{{ 'label.pictureEditor.loadingImage' | translate }}</div>
         }
       </div>
     }
@@ -14,8 +15,11 @@
     <div class="flex flex-col gap-4 w-full">
       <!-- Drop zone when no image is selected -->
       @if (!imageChangedEvent) {
-        <div class="flex flex-col items-center justify-center w-full min-h-[400px] bg-gray-100 rounded-lg"
+        <div class="flex flex-col items-center justify-center w-full min-h-[400px] rounded-lg transition-all duration-200"
+            [ngClass]="isDraggingOver ? 'bg-blue-50 border-2 border-dashed border-blue-400 ring-2 ring-blue-300' : 'bg-gray-100'"
+            (dragenter)="handleDragEnter($event)"
             (dragover)="$event.preventDefault()"
+            (dragleave)="handleDragLeave($event)"
             (drop)="handleDrop($event)">
           <i class="pi pi-image text-6xl text-gray-600"></i>
           <p>{{ 'label.pictureEditor.dropImageHere' | translate }}</p>
@@ -32,14 +36,14 @@
             chooseIcon="pi pi-upload"
             [chooseLabel]="'button.chooseImage' | translate"
             (uploadHandler)="handleFileUpload($event)"
-            styleClass="mt-4 p-button-secondary">
+            >
           </p-fileUpload>
         </div>
       }
 
       <!-- Image cropper when image is loaded -->
       @if (imageChangedEvent) {
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4 overflow-auto">
           <image-cropper
               [imageChangedEvent]="imageChangedEvent"
               [imageBase64]="imageBase64!"

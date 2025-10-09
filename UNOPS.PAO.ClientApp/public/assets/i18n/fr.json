@@ -1103,6 +1103,7 @@
 	"label.pending": "En attente",
 	"label.pictureEditor.croppedImage": "Image recadrée",
 	"label.pictureEditor.dropImageHere": "Déposez une image ici ou utilisez le bouton ci-dessous",
+	"label.pictureEditor.loadingImage": "Chargement de l'image...",
 	"label.pictureEditor.uploadProgress": "Progression : {{progress}}%",
 	"label.postedDate": "Date de Publication",
 	"label.readOnly": "Lecture Seule",
