@@ -1103,6 +1103,7 @@
 	"label.pending": "Pendiente",
 	"label.pictureEditor.croppedImage": "Imagen recortada",
 	"label.pictureEditor.dropImageHere": "Suelta una imagen aquí o usa el botón de abajo",
+	"label.pictureEditor.loadingImage": "Cargando imagen...",
 	"label.pictureEditor.uploadProgress": "Progreso: {{progress}}%",
 	"label.postedDate": "Fecha de Publicación",
 	"label.readOnly": "Solo Lectura",

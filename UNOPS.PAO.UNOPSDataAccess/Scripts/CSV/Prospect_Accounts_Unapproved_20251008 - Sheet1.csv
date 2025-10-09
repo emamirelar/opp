@@ -1,0 +1,26 @@
+Name,SF_PRM_ShortName__c,SF_PRM_Status__c,SF_PRM_NewEngagement__c,Phone,Website,BillingStreet,BillingCity,BillingState,BillingPostalCode,BillingCountry,ShippingStreet,ShippingCity,ShippingState,ShippingPostalCode,ShippingCountry,SF_PRM_InternalReportingLevel__c,SF_PRM_ExternalReportingLevel__c,SF_PRM_PooledFund__c,SF_PRM_DDRequired__c,SF_PRM_DDEACDone__c,SF_PRM_EACReference__c,SF_PRM_GlobalKeyAccountPartner__c,SF_PRM_UNSecretariatEntity__c,SF_PRM_LevyPotentiallyApplies__c,SF_PRM_ReasonForLevyNotApplying__c,SF_PRM_LevyTreatment__c,SF_PRM_PartnerScope__c,SF_PRM_PartnerCategory__c,SF_PRM_PartnerCategory__r,SF_PRM_Partner_Level__c,SF_PRM_Partner_Level__r,SF_PRM_LiaisonOffice__c,Owner.Email,Owner.Department,CreatedBy.Email
+"Ministry of Health, Labour and Welfare (MHLW) Japan",,Active,,,,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,yuichis@unops.org,"DP, PLG, Partnerships and Liaison Group",yuichis@unops.org
+"Ministry of Economy, Trade and Industry (METI) Japan",,Active,,,https://www.meti.go.jp/english/,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,yuichis@unops.org,"DP, PLG, Partnerships and Liaison Group",yuichis@unops.org
+"AAIC Japan Co., Ltd.",,Active,,,https://aa-ic.com/en/about-en/company-information/,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,yuichis@unops.org,"DP, PLG, Partnerships and Liaison Group",yuichis@unops.org
+FPI - European Commission,,Active,,,,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,mariacarmenco@unops.org,"DP, PLG, Partnerships and Liaison Group",mariacarmenco@unops.org
+Ministry of Foreign Affairs of Italy,,Active,,,,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,mariacarmenco@unops.org,"DP, PLG, Partnerships and Liaison Group",mariacarmenco@unops.org
+Japan Embassy Conakry,,Active,,,,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,seynaboud@unops.org,"AFR, WAMCO, Senegal",seynaboud@unops.org
+Japan Embassy Guinea,,Active,,,,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,seynaboud@unops.org,"AFR, WAMCO, Senegal",seynaboud@unops.org
+RCO Mali,,Active,,,,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,michaeld@unops.org,"AFR, WAMCO, Mali",michaeld@unops.org
+Hotel New Otani Tokyo,,Active,,,https://www.newotani.co.jp/en/tokyo/about-us/,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,yuichis@unops.org,"DP, PLG, Partnerships and Liaison Group",yuichis@unops.org
+NEC Corporation,,Active,,,https://www.nec.com/en/global/about/profile.html,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,yuichis@unops.org,"DP, PLG, Partnerships and Liaison Group",yuichis@unops.org
+Allm Inc.,,Active,,,https://g.allm.net/,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,yuichis@unops.org,"DP, PLG, Partnerships and Liaison Group",yuichis@unops.org
+Nomura Research Institute (NRI),,Active,,,https://www.nri.com/en,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,yuichis@unops.org,"DP, PLG, Partnerships and Liaison Group",yuichis@unops.org
+Twinbird Corporation,,Active,,,https://www.twinbird.jp/,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,yuichis@unops.org,"DP, PLG, Partnerships and Liaison Group",yuichis@unops.org
+"Yamaha Motor Co., Ltd.",,Active,,,https://global.yamaha-motor.com/about/overview/,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,yuichis@unops.org,"DP, PLG, Partnerships and Liaison Group",yuichis@unops.org
+AEF Africa-Europe Foundation,,Active,,,https://www.africaeuropefoundation.org/,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,celiaafricak@unops.org,"DP, PLG, Partnerships and Liaison Group",celiaafricak@unops.org
+Human Practice Foundation,,Active,,4593932774,https://www.humanpractice.org/,2 Brolæggerstræde,København,,1211,Denmark,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,asbjornb@unops.org,"DP, PLG, Partnerships and Liaison Group",asbjornb@unops.org
+UN Integrated Strategy for the Sahel (UNISS),,Active,,,,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,abdoulazizs@unops.org,"AFR, WAMCO, West Africa MCO",abdoulazizs@unops.org
+"Ministry of Climate, Energy and Utilities of Denmark",,Active,,,https://www.en.kefm.dk/,20 Holmens Kanal,København,,1060,Denmark,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,asbjornb@unops.org,"DP, PLG, Partnerships and Liaison Group",asbjornb@unops.org
+Secretaría de Relaciones Exteriores y Cooperación Internacional,,Active,,,https://sreci.gob.hn/,"Bulevar Kuwait, contiguo a la Corte Suprema de Justicia (CSJ)",,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,lauragi@unops.org,"LCR, CEMCO, Honduras",lauragi@unops.org
+Camara de Comercio de Cortes,,Active,,,,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,lauragi@unops.org,"LCR, CEMCO, Honduras",lauragi@unops.org
+Carlsberg Group A/S,,Active,,4533273300,www.carlsberggroup.com,1 J. C. Jacobsens Gade,København,,1799,Denmark,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,asbjornb@unops.org,"DP, PLG, Partnerships and Liaison Group",asbjornb@unops.org
+UN in Rome,,Active,,,,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,martina@unops.org,"DP, PLG, Partnerships and Liaison Group",martina@unops.org
+British Virgin Islands,,Active,,,,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,williamsg@unops.org,"LCR, ICMCO, Costa Rica",williamsg@unops.org
+Comunità Sant'Egidio,,Active,,,,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,martina@unops.org,"DP, PLG, Partnerships and Liaison Group",martina@unops.org
+IFU - Impact Fund Denmark,,Active,,4533637500,https://impactfund.dk/,,,,,,,,,,,,,,,,,FALSE,FALSE,,,,,,,,,,asbjornb@unops.org,"DP, PLG, Partnerships and Liaison Group",asbjornb@unops.org
