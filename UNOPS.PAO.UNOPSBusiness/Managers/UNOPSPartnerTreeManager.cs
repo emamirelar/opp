@@ -14,6 +14,7 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using UNOPS.PAO.Domain.Enums;
 
 public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
 {
@@ -388,8 +389,9 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
 
         // Load organization hierarchy data for these codes
         var orgUnitLookup = await _context.OrganizationHierarchies
-            .Where(oh => orgUnitCodes.Contains(oh.Code))
-            .ToDictionaryAsync(oh => oh.Code, oh => oh.Name);
+            .Where(oh => orgUnitCodes.Contains(oh.Code) && oh.Type == OrganizationUnitType.OrgUnit)
+            .GroupBy(oh => oh.Code)
+            .ToDictionaryAsync(g => g.Key, g => g.First().Name);
 
         // Create structured JSON for AI prompt placeholders
         var result = new
@@ -541,8 +543,9 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
 
         // Load organization hierarchy data for these codes
         var orgUnitLookup = await _context.OrganizationHierarchies
-            .Where(oh => orgUnitCodes.Contains(oh.Code))
-            .ToDictionaryAsync(oh => oh.Code, oh => oh.Name);
+            .Where(oh => orgUnitCodes.Contains(oh.Code) && oh.Type == OrganizationUnitType.OrgUnit)
+            .GroupBy(oh => oh.Code)
+            .ToDictionaryAsync(g => g.Key, g => g.First().Name);
 
         // Create structured JSON for AI prompt placeholders
         var result = new

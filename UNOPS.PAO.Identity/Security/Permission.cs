@@ -14,5 +14,6 @@ namespace UNOPS.PAO.Identity.Security
         }
 
         public static Permission CanRunMigrations = new Permission(PermissionNames.CanRunMigrations, "Can run DB migrations.");
+        public static Permission CanRunSeedings = new Permission(PermissionNames.CanRunSeedings, "Can run data seedings.");
     }
 }
