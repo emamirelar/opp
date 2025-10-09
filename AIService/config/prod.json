@@ -1,128 +1,51 @@
 {
-    "environment": "prod",
-    "cache": {
-      "rules": {
-        "Contact": [
-          "screen_context"
-        ],
-        "Partner": [
-          "screen_context"
-        ],
-        "Interaction": [
-          "screen_context"
-        ],
-        "User": [
-          "user_profile"
-        ],
-        "UserData": [
-          "user_profile"
-        ],
-        "UserPreferences": [
-          "user_profile"
-        ]
-      },
-      "url_patterns": {
-        "contacts": "Contact",
-        "partners": "Partner",
-        "interactions": "Interaction",
-        "user": "User",
-        "userdata": "UserData",
-        "preferences": "UserPreferences"
-      },
-      "ttl": {
-        "user_profile": 3600,
-        "screen_context": 600,
-        "general": 1800
-      },
-      "enable_cache": true,
-      "cache_backend": "memory"
-    },
-    "google_cloud": {
-      "use_vertex_ai": true,
-      "project": "unops-opportunityplus-prod",
-      "location": "europe-west4",
-      "oauth": {
-        "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
-        "client_id": "371670193592-bn61tuncg15f1dk6pp1oori72f6kdt5s.apps.googleusercontent.com",
-        "target_principal": "pno-ai-service@unops-opportunityplus-prod.iam.gserviceaccount.com"
-      }
-    },
-    "database": {
-      "url": "postgresql://user:password@localhost:5432/your_database_test"
-    },
-    "artifacts": {
-      "service_type": "GcsArtifactService",
-      "gcs_bucket_name": "pno-file-storage-prod"
-    },
-    "server": {
-      "serve_web_interface": true,
-      "api_base_url": "https://opportunityplus.unops.org/api/",
-      "is_development": false,
-      "host": "0.0.0.0",
-      "port": 8001,
-      "allow_origins": [
-        "https://opportunityplus.unops.org"
-      ]
-    },
-    "google_drive": {
-      "enabled": true,
-      "project_id": "unops-opportunityplus-prod",
-      "oauth_enabled": true,
-      "oauth_use_existing_client": true,
-      "oauth_client_secret_name": "IdentityToolkitAPIKey",
-      "oauth_redirect_ports": [
-        8080,
-        8081,
-        8082,
-        9000,
-        9001,
-        9876
-      ],
-      "secret_name": "GoogleDriveAI",
-      "service_account_email": "google-drive-ai@unops-opportunityplus-prod.iam.gserviceaccount.com",
-      "scopes": [
-        "https://www.googleapis.com/auth/drive",
-        "https://www.googleapis.com/auth/documents"
-      ]
-    },
-    "developer": {
-      "email": "anushas@unops.org"
-    },
-    "agent": {
-      "enable_google_drive_agent": true,
-      "enable_workflow_agent": true,
-      "enable_search_agent": true,
-      "enable_contextual_agent": true
-    },
-    "action_logging": {
-        "enabled": true,
-        "auto_log_actions": true,
-        "log_followup_suggestions": true,
-        "retention_days": 90,
-        "enable_analytics": true
-    },
-    "support": {
-      "email": "larsj@unops.org",
-      "response_template": "For technical support with {application_name}, please send an email to {support_email}.",
-      "hours": "During business hours",
-      "response_time": "24-48 hours"
-    },
-    "branding": {
-      "application_name": "Opportunity",
-      "project_name": "Opportunity",
-      "organization": "UNOPS",
-      "organization_full": "United Nations Office for Project Services",
-      "description": "A comprehensive partner and opportunity management system"
-    },
-    "runtime": {
-      "gemini_model": "gemini-2.5-flash",
-      "gemini_adhoc_model": "gemini-2.0-flash-001",
-      "api_timeout": 300,
-      "default_page_size": 10,
-      "max_retries": 3,
-      "user_profile_cache_ttl": 3600,
-      "screen_context_cache_ttl": 7200,
-      "default_agent_timeout": 60
-    },
-    "description": "Production environment configuration"
+  "environment": "prod",
+  "description": "Production environment configuration for the AI Agent Framework",
+  "google_cloud": {
+    "use_vertex_ai": true,
+    "project": "unops-opportunityplus-prod",
+    "location": "europe-west4",
+    "oauth": {
+      "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
+      "client_id": "70092411004-11phmrui30mqom8krpo739796gd22lj3.apps.googleusercontent.com",
+      "target_principal": "eds-service@unops-opportunityplus-prod.iam.gserviceaccount.com"
+    }
+  },
+  "database": {
+    "secret_name": "Prod_DB_Connection_String"
+  },
+  "artifacts": {
+    "service_type": "GcsArtifactService",
+    "gcs_bucket_name": "pno-file-storage-prod"
+  },
+  "server": {
+    "serve_web_interface": true,
+    "api_base_url": "https://opportunityplus.unops.org/api/",
+    "is_development": true,
+    "host": "0.0.0.0",
+    "port": 8000,
+    "allow_origins": [
+      "https://opportunityplus.unops.org",
+      "https://localhost:44426/"
+    ]
+  },
+  "developer": {
+    "email": "anushas@unops.org"
+  },
+  "branding": {
+    "application_name": "Opportunity",
+    "project_name": "Opportunity",
+    "organization": "UNOPS",
+    "organization_full": "United Nations Office for Project Services",
+    "description": "A comprehensive partner and opportunity management system"
+  },
+  "runtime": {
+    "gemini_model": "gemini-2.5-flash",
+    "gemini_adhoc_model": "gemini-2.0-flash-001",
+    "api_timeout": 300,
+    "max_retries": 3,
+    "default_agent_timeout": 60,
+    "default_host": "0.0.0.0",
+    "default_port": 8000
   }
+} 
