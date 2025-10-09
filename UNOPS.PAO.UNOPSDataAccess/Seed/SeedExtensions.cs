@@ -22,7 +22,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 var dbContext = services.GetRequiredService<UNOPSAppDbContext>();
                 var configuration = services.GetRequiredService<IConfiguration>();
                 // Now handled by generic configurable system
-                await GenericSeedRunner.ExecuteConfiguredSeedsAsync(dbContext, configuration);
+                await GenericSeedRunner.ExecuteConfiguredSeedsAsync(dbContext, services, configuration);
             }
             catch (Exception ex)
             {
@@ -36,10 +36,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         /// Seeds the entity permissions if they don't exist yet.
         /// This method can be called from controllers or services as needed.
         /// </summary>
-        public static async Task SeedEntityPermissionsAsync(this UNOPSAppDbContext context, IConfiguration? configuration = null)
+        public static async Task SeedEntityPermissionsAsync(this UNOPSAppDbContext context, IServiceProvider? serviceProvider = null, IConfiguration? configuration = null)
         {
             // Now handled by generic configurable system
-            await GenericSeedRunner.ExecuteConfiguredSeedsAsync(context, configuration);
+            await GenericSeedRunner.ExecuteConfiguredSeedsAsync(context, serviceProvider, configuration);
         }
 
         /// <summary>
@@ -79,12 +79,14 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         private readonly UNOPSAppDbContext _context;
         private readonly ILogger<DataSeeder> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IServiceProvider _serviceProvider;
 
-        public DataSeeder(UNOPSAppDbContext context, ILogger<DataSeeder> logger, IConfiguration configuration)
+        public DataSeeder(UNOPSAppDbContext context, ILogger<DataSeeder> logger, IConfiguration configuration, IServiceProvider serviceProvider)
         {
             _context = context;
             _logger = logger;
             _configuration = configuration;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task SeedDataAsync()
@@ -93,7 +95,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
             {
                 // ALL configuration seeding is now done via generic configurable system!
                 _logger.LogInformation("Running all configured seed steps...");
-                await GenericSeedRunner.ExecuteConfiguredSeedsAsync(_context, _configuration);
+                await GenericSeedRunner.ExecuteConfiguredSeedsAsync(_context, _serviceProvider, _configuration);
                 _logger.LogInformation("All seed steps completed successfully.");
             }
             catch (Exception ex)
