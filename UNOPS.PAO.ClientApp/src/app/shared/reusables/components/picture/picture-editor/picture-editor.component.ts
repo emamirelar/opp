@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, inject, Input, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, inject, Input, computed, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { FileUploadModule } from 'primeng/fileupload';
@@ -43,6 +43,7 @@ export class PictureEditorComponent implements OnInit {
   private readonly dataLoader = inject(PictureEditorDataLoaderService);
   private readonly translateService = inject(TranslateService);
   private readonly feedbackService = inject(FeedbackDialogService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   imageChangedEvent: any = '';
   imageBase64: string | null = null;
@@ -50,6 +51,7 @@ export class PictureEditorComponent implements OnInit {
   croppedBlob: Blob | null = null;
   isProcessing: boolean = false;
   isCropperReady: boolean = false;
+  isDraggingOver: boolean = false;
 
   readonly isUploading = computed(() => this.dataLoader.isLoading());
   readonly uploadProgress = computed(() => this.dataLoader.uploadProgress());
@@ -69,14 +71,16 @@ export class PictureEditorComponent implements OnInit {
 
     this.resetState();
     this.isProcessing = true;
+    this.cdr.markForCheck();
 
     this.readFileAsBase64(file).then((base64) => {
       this.imageBase64 = base64;
       this.imageChangedEvent = { target: { files: [file] } };
-      this.isProcessing = false;
+      this.cdr.markForCheck();
     }).catch(() => {
       this.showError('message.failedToLoadImage');
       this.isProcessing = false;
+      this.cdr.markForCheck();
     });
   }
 
@@ -87,8 +91,22 @@ export class PictureEditorComponent implements OnInit {
     }
   }
 
+  handleDragEnter(event: DragEvent): void {
+    event.preventDefault();
+    this.isDraggingOver = true;
+    this.cdr.markForCheck();
+  }
+
+  handleDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.isDraggingOver = false;
+    this.cdr.markForCheck();
+  }
+
   handleDrop(event: DragEvent): void {
     event.preventDefault();
+    this.isDraggingOver = false;
+    this.cdr.markForCheck();
     if (event.dataTransfer?.files?.length) {
       this.handleFileInput(event.dataTransfer.files[0]);
     }
@@ -103,17 +121,20 @@ export class PictureEditorComponent implements OnInit {
 
   imageLoaded(): void {
     this.isProcessing = false;
+    this.cdr.markForCheck();
   }
 
   cropperReady(): void {
     this.isProcessing = false;
     this.isCropperReady = true;
+    this.cdr.markForCheck();
   }
 
   loadImageFailed(): void {
     this.showError('message.failedToLoadImage');
     this.isProcessing = false;
     this.isCropperReady = false;
+    this.cdr.markForCheck();
   }
 
   applyChanges(): void {

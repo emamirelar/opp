@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, ChangeDetectionStrategy, ChangeDetectorRef, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
@@ -23,8 +23,17 @@ export class PictureComponent {
 
   private dialogRef: DynamicDialogRef | null = null;
   private translateService = inject(TranslateService);
+  private cdr = inject(ChangeDetectorRef);
+  private imageUrlSignal = signal<string | null>(null);
 
-  constructor(private dialogService: DialogService) {}
+  constructor(private dialogService: DialogService) {
+    effect(() => {
+      const url = this.imageUrlSignal();
+      if (url) {
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
   getSizeClass(): string {
     switch(this.size) {
@@ -50,6 +59,7 @@ export class PictureComponent {
     this.dialogRef.onClose.subscribe((result: string | undefined) => {
       if (result) {
         this.imageUrl = result;
+        this.imageUrlSignal.set(result);
       }
       this.imageChanged.emit(result);
     });

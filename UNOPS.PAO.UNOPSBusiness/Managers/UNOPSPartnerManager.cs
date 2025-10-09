@@ -1022,12 +1022,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             // Upload the file to Google Cloud Storage
             var fileName = $"partners/{partnerId}/logo_{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             var publicUrl = await GoogleCloudStorageService.UploadFileAsync(file, fileName);
-            
+
             // Update the entity with the logo URL
             entity.LogoUrl = publicUrl;
             await PartnerRepository.UpdateAsync(entity);
-            
-            return publicUrl;
+
+            return await GoogleCloudStorageService.GenerateSignedUrlFromStorageUrl(publicUrl);
         }
         catch (Exception ex)
         {
