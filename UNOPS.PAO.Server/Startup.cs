@@ -324,6 +324,33 @@ public class Startup
                         options.ExternalGroupMappings[child.Key] = child.Value;
                     }
                 }
+                
+                // Configure user impersonation settings
+                options.EnableImpersonation = iapConfig.GetValue<bool>("EnableImpersonation", false);
+                options.ImpersonationHeaderName = iapConfig.GetValue<string>("ImpersonationHeaderName", "x-unops-impersonated-user");
+                
+                // Load trusted service accounts list
+                options.TrustedServiceAccounts = new List<string>();
+                var trustedAccounts = iapConfig.GetSection("TrustedServiceAccounts");
+                if (trustedAccounts.Exists())
+                {
+                    foreach (var child in trustedAccounts.GetChildren())
+                    {
+                        var account = child.Value;
+                        if (!string.IsNullOrEmpty(account))
+                        {
+                            options.TrustedServiceAccounts.Add(account);
+                        }
+                    }
+                }
+                
+                // Also add DefaultServiceAccount if specified
+                var defaultServiceAccount = iapConfig.GetValue<string>("DefaultServiceAccount", "");
+                if (!string.IsNullOrEmpty(defaultServiceAccount) && 
+                    !options.TrustedServiceAccounts.Contains(defaultServiceAccount))
+                {
+                    options.TrustedServiceAccounts.Add(defaultServiceAccount);
+                }
             });
         }
 

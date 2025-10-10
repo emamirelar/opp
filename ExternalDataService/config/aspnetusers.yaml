@@ -19,8 +19,8 @@ source:
       , UPPER(Resource_Email_Address_Primary) AS NormalizedEmail
       , true as EmailConfirmed
       , NULL AS PasswordHash
-      , NULL as SecurityStamp
-      , NULL as ConcurrencyStamp
+      , GENERATE_UUID() as SecurityStamp
+      , GENERATE_UUID() as ConcurrencyStamp
       , NULL as PhoneNumber
       , false as PhoneNumberConfirmed
       , false as TwoFactorEnabled
@@ -33,7 +33,7 @@ source:
       Effective_Date = CURRENT_DATE()
       AND Employment_Status = 'N'
       AND Employment_Type IN ('OPSSTAFF', 'OPSNONSTAFF')
-      AND TRIM(Resource_Email_Address_Primary) > ''
+      AND UPPER(Resource_Email_Address_Primary) LIKE '%UNOPS.ORG'
       QUALIFY ROW_NUMBER() OVER (
           PARTITION BY PARSE_NUMERIC(Resource)
           ORDER BY Resource_Email_Address_Primary
@@ -94,11 +94,13 @@ destination:
       destination_field: "SecurityStamp"
       data_type: "varchar(255)"
       is_required: false
+      insert_only: true  # Preserve existing SecurityStamp to avoid logging users out
 
     - source_field: "ConcurrencyStamp"
       destination_field: "ConcurrencyStamp"
       data_type: "varchar(255)"
       is_required: false
+      insert_only: true  # Preserve existing ConcurrencyStamp for concurrency control
 
     - source_field: "PhoneNumber"
       destination_field: "PhoneNumber"
