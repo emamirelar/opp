@@ -170,13 +170,13 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       
       // Only render if:
       // 1. We have messages
-      // 2. Not currently loading/streaming
-      // 3. Haven't rendered these messages yet
-      // 4. View is initialized
-      // 5. Not switching sessions
-      // 6. Not currently rendering (to prevent race conditions)
+      // 2. Haven't rendered these messages yet (OR we're loading and need to show existing messages)
+      // 3. View is initialized
+      // 4. Not switching sessions
+      // 5. Not currently rendering (to prevent race conditions)
+      // CRITICAL FIX: Changed condition to allow rendering during streaming when messages exist
+      // This ensures user messages are visible when switching modes mid-stream
       if (messages.length > 0 && 
-          !isLoading && 
           !this.hasRenderedInitialMessages && 
           this.viewInitialized && 
           !this.isSwitchingSession &&
@@ -248,6 +248,18 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
             // ViewChild is available
             this.dynamicContentService.setViewContainer(this.dynamicContentContainer);
             this.dynamicContentService.setCardClickCallback(this.onCardClicked.bind(this));
+            
+            // CRITICAL FIX: If we haven't rendered existing messages yet (e.g., just switched modes during streaming),
+            // render them FIRST before processing new streaming chunks
+            // This ensures the user message is visible before AI response continues streaming
+            if (!this.hasRenderedInitialMessages && !this.isCurrentlyRendering) {
+              const existingMessages = this.chatMessages();
+              if (existingMessages.length > 0) {
+                // Render all existing messages (including user message and any partial AI response)
+                this.renderExistingMessages();
+                // hasRenderedInitialMessages is set to true inside renderExistingMessages()
+              }
+            }
             
             // Check if there are buffered chunks that need to be processed first
             if (this.chunkBuffer.length > 0) {
@@ -326,8 +338,10 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       
       // Check if there are existing messages in the session that need to be rendered
       // This handles the case when switching between sidebar and fullscreen modes
+      // CRITICAL FIX: Render existing messages EVEN when streaming is active (isLoading = true)
+      // This ensures user messages are visible when switching modes during streaming
       const existingMessages = this.chatMessages();
-      if (existingMessages.length > 0 && !this.aiAssistantService.isLoading() && !this.hasRenderedInitialMessages) {
+      if (existingMessages.length > 0 && !this.hasRenderedInitialMessages) {
         // Use setTimeout to ensure the view is fully initialized
         setTimeout(() => {
           this.renderExistingMessages();
@@ -983,23 +997,29 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   private renderExistingMessages(): void {
     // Prevent concurrent rendering calls
     if (this.isCurrentlyRendering) {
+      console.log('⚠️ Skipping renderExistingMessages - already rendering');
       return;
     }
     
     if (!this.dynamicContentContainer) {
+      console.log('⚠️ Skipping renderExistingMessages - no container');
       return;
     }
 
     const chatMessages = this.chatMessages();
     if (chatMessages.length === 0) {
+      console.log('⚠️ Skipping renderExistingMessages - no messages');
       return;
     }
+
+    console.log(`📝 Rendering ${chatMessages.length} existing messages (mode switch or load)`);
 
     // Mark as currently rendering
     this.isCurrentlyRendering = true;
 
     try {
       // Clear any existing components first to avoid duplicates
+      // This is safe even during streaming because we'll re-render the partial response
       this.dynamicContentService.clearAllComponents();
       
       // Ensure view container and callback are set
@@ -1010,7 +1030,8 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       const sortedMessages = [...chatMessages].sort((a, b) => a.timestamp - b.timestamp);
       
       // Process each message through the dynamic content service
-      sortedMessages.forEach((message) => {
+      // This includes user messages and any partial AI responses that exist in the session
+      sortedMessages.forEach((message, index) => {
         this.dynamicContentService.processChunk(message);
       });
       

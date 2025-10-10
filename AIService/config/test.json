@@ -34,7 +34,8 @@
     "oauth": {
       "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
       "client_id": "11994381361-9n974ebjfsjsb3rc5ejaidgm7jgdoqbt.apps.googleusercontent.com",
-      "target_principal": "pno-ai-service@unops-opportunityplus-test.iam.gserviceaccount.com"
+      "target_principal": "pno-ai-service@unops-opportunityplus-test.iam.gserviceaccount.com",
+      "tenant_id": "Personnel-ylvvz"
     }
   },
   "database": {

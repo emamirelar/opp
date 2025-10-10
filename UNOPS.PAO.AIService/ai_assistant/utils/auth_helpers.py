@@ -8,10 +8,14 @@ from google.auth.transport.requests import Request
 SIGN_IN_WITH_IDP_API = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp'
 
 def exchange_google_id_token_for_gcip_id_token(google_open_id_connect_token: str) -> str:
-  from .config import get_identity_toolkit_api_key
+  from .config import get_identity_toolkit_api_key, get_tenant_id
   api_key = get_identity_toolkit_api_key()
   if not api_key:
     raise Exception("Identity Toolkit API key is empty or not configured")
+  
+  tenant_id = get_tenant_id()
+  if not tenant_id:
+    raise Exception("Tenant ID is empty or not configured")
   
   url = SIGN_IN_WITH_IDP_API + '?key=' + api_key
   print(f"🔐 Fetching IdP token from: {url}")
@@ -20,7 +24,7 @@ def exchange_google_id_token_for_gcip_id_token(google_open_id_connect_token: str
     'postBody':'id_token=' + google_open_id_connect_token + '&providerId=google.com',
     'returnSecureToken': True,
     'returnIdpCredential': True,
-    'tenantId': 'Personnel-ylvvz'
+    'tenantId': tenant_id
   }
   print(f"🔐 Exchanging Google ID token for GCIP ID token: {data}")
   resp = requests.post(url, data)
@@ -49,10 +53,14 @@ def exchange_google_id_token_for_gcip_id_token(google_open_id_connect_token: str
   return id_token
 
 def exchange_google_access_token_for_gcip_id_token(google_access_token: str) -> str:
-  from .config import get_identity_toolkit_api_key
+  from .config import get_identity_toolkit_api_key, get_tenant_id
   api_key = get_identity_toolkit_api_key()
   if not api_key:
     raise Exception("Identity Toolkit API key is empty or not configured")
+  
+  tenant_id = get_tenant_id()
+  if not tenant_id:
+    raise Exception("Tenant ID is empty or not configured")
   
   url = SIGN_IN_WITH_IDP_API + '?key=' + api_key
   print(f"🔐 Fetching IdP token from: {url}")
@@ -61,7 +69,7 @@ def exchange_google_access_token_for_gcip_id_token(google_access_token: str) -> 
     'postBody':'access_token=' + google_access_token + '&providerId=google.com',
     'returnSecureToken': True,
     'returnIdpCredential': True,
-    'tenantId': 'Personnel-ylvvz'
+    'tenantId': tenant_id
   }
   print(f"🔐 Exchanging Google access token for GCIP ID token: {data}")
   resp = requests.post(url, data)
