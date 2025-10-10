@@ -215,7 +215,11 @@ def generate_partner_seeder():
         cs_content.append(f"                    PartnerApprovalStatus = {partner['approval_status']},")
         cs_content.append(f"                    PartnerApprovalReference = {partner['approval_reference']},")
         cs_content.append(f"                    KeyGlobalPartner = {partner['key_global_partner']},")
-        cs_content.append("                    PartnerApprovedBy = \"Data Migration\",")
+        # Only set PartnerApprovedBy to "Data Migration" if approval status is Approved
+        if partner['approval_status'] == '(PartnerApprovalStatus)1':
+            cs_content.append("                    PartnerApprovedBy = \"Data Migration\",")
+        else:
+            cs_content.append("                    PartnerApprovedBy = null,")
         cs_content.append("                    CreatedBy = 0,")
         cs_content.append("                    CreatedDate = DateTime.UtcNow,")
         cs_content.append("                    LastModifiedBy = 0,")
@@ -276,6 +280,7 @@ def generate_partner_seeder():
     cs_content.append("                        existingPartner.PartnerShortDescription = partnerData.PartnerShortDescription;")
     cs_content.append("                        existingPartner.PartnerLongDescription = partnerData.PartnerLongDescription;")
     cs_content.append("                        existingPartner.LogoUrl = partnerData.LogoUrl;")
+    cs_content.append("                        existingPartner.Status = partnerData.Status;")
     cs_content.append("                        existingPartner.PartnerCategoryId = partnerData.PartnerCategoryId;")
     cs_content.append("                        existingPartner.PartnerGroupId = partnerData.PartnerGroupId;")
     cs_content.append("                        existingPartner.LiaisonOfficeId = partnerData.LiaisonOfficeId;")
@@ -287,6 +292,7 @@ def generate_partner_seeder():
     cs_content.append("                        existingPartner.CanCreateNewOpportunities = partnerData.CanCreateNewOpportunities;")
     cs_content.append("                        existingPartner.PartnerApprovalStatus = partnerData.PartnerApprovalStatus;")
     cs_content.append("                        existingPartner.PartnerApprovalReference = partnerData.PartnerApprovalReference;")
+    cs_content.append("                        existingPartner.PartnerApprovedBy = partnerData.PartnerApprovedBy;")
     cs_content.append("                        existingPartner.KeyGlobalPartner = partnerData.KeyGlobalPartner;")
     cs_content.append("                        existingPartner.LastModifiedBy = 0;")
     cs_content.append("                        existingPartner.LastModifiedDate = DateTime.UtcNow;")
