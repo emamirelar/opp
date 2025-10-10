@@ -294,6 +294,23 @@ def get_identity_toolkit_api_key() -> str:
         raise ConfigurationError(f"Could not load Identity Toolkit API key from secret: {e}")
 
 
+def get_tenant_id() -> str:
+    """Get tenant ID from the config loader"""
+    config = get_config()
+    try:
+        google_cloud_config = config.get("google_cloud", {})
+        oauth_config = google_cloud_config.get("oauth", {})
+        
+        tenant_id = oauth_config.get("tenant_id")
+        if not tenant_id:
+            raise ConfigurationError("No tenant_id configured in OAuth settings")
+        
+        return tenant_id
+            
+    except Exception as e:
+        raise ConfigurationError(f"Could not load tenant ID from config: {e}")
+
+
 def get_api_base_url() -> str:
     """Get the API base URL"""
     config = get_config()
