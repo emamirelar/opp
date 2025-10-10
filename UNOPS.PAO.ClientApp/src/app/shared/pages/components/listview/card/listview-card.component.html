@@ -77,24 +77,6 @@
         }
       }
     }
-    @case ('interactionIcon') {
-      @if (hasFieldValue(item, column)) {
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-lg"
-                [style.color]="getInteractionColor(item, column)">
-            {{ getInteractionMaterialIcon(item, column) }}
-          </span>
-          <span [class]="getFieldClasses(column, context)"
-                [title]="getFieldTooltip(item, column)">
-            {{ getFieldValue(item, column.field) }}
-          </span>
-        </div>
-      } @else {
-        @if (context !== 'field5') {
-          <span [class]="getFieldClasses(column, context)" [title]="getFieldTooltip(item, column)">--</span>
-        }
-      }
-    }
     @case ('avatar') {
       <div class="flex items-center gap-2">
         @if (getFieldValue(item, column.field)) {
@@ -134,7 +116,7 @@
 <div class="flex flex-col gap-4 ">
   <!-- Width tracker - measures the exact component width -->
   <div #widthTracker class="w-full h-px opacity-0 pointer-events-none relative"></div>
-  
+
   @if (loading()) {
     <div [class]="responsiveGridClasses()">
       @for (i of [1, 2, 3, 4, 5, 6]; track i) {
@@ -228,14 +210,14 @@
                 } @else if (shouldShowAvatar() && shouldShowInteractionAvatar() && interactionIconColumn()) {
                   <div class="flex-shrink-0">
                     <div
-                      [class]="cardSize() === 'medium' ? 'w-10 h-10' : 'w-12 h-12'"
+                      [class]="'w-10 h-10'"
                       class="rounded-full flex items-center justify-center border border-solid"
                       [style]="{
                         'background': 'linear-gradient(135deg, ' + getInteractionColor(item, interactionIconColumn()!) + '15 0%, ' + getInteractionColor(item, interactionIconColumn()!) + '25 100%)',
                         'color': getInteractionColor(item, interactionIconColumn()!),
                         'border-color': getInteractionColor(item, interactionIconColumn()!) + '30'
                       }">
-                      <span [class]="'material-symbols-outlined font-medium ' + (cardSize() === 'medium' ? 'text-xl' : 'text-2xl')">
+                      <span [class]="'material-symbols-outlined font-medium ' + (cardSize() === 'medium' ? 'text-xl' : 'text-xl')">
                         {{ getInteractionMaterialIconFilled(item, interactionIconColumn()!) }}
                       </span>
                     </div>
