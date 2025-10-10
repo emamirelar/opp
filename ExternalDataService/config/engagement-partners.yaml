@@ -46,14 +46,14 @@ source:
     )
     SELECT
       *
-      , 'Active' AS Status
+      , 1 AS Status
       , CURRENT_TIMESTAMP() as last_modified
     FROM
       CLIENTS
     UNION ALL
     SELECT
       *
-      , 'Active' AS Status
+      , 1 AS Status
       , CURRENT_TIMESTAMP() as last_modified
     FROM
       DONORS
