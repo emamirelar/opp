@@ -198,6 +198,31 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
       this.aiAssistantService.setViewContainerRef(this.viewContainerRef);
     }
     
+    // CRITICAL: Check for router state to preserve session data when switching modes
+    // This handles navigating from fullscreen back to sidebar with active session
+    const routerState = (window.history.state as any);
+    if (routerState?.preserveData && routerState?.chatSession && routerState?.reopenSidebar) {
+      console.log('📦 Restoring session data in sidebar from router state');
+      
+      // Only restore if the service doesn't already have this session
+      const currentSession = this.aiAssistantService.currentChatSession();
+      if (!currentSession || currentSession.session?.id !== routerState.chatSession.session?.id) {
+        this.aiAssistantService.currentChatSession.set(routerState.chatSession);
+        
+        // Update related signals
+        if (routerState.chatSession.session) {
+          if (routerState.chatSession.session.id) {
+            this.aiAssistantService.currentSessionId.set(routerState.chatSession.session.id);
+          }
+          if (routerState.chatSession.session.title) {
+            this.aiAssistantService.sessionTitle.set(routerState.chatSession.session.title);
+          }
+          this.aiAssistantService.sessionStarred.set(routerState.chatSession.session.starred || false);
+          this.aiAssistantService.sessionArchived.set(routerState.chatSession.session.archived || false);
+        }
+      }
+    }
+    
     // Load user sessions on initialization
     this.aiAssistantService.loadUserSessions().subscribe({
       next: () => {
@@ -1132,23 +1157,28 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   // UNIFIED NAVIGATION - Expand to fullscreen with proper session data handling
   onExpandToFullScreen(): void {
     const currentSession = this.currentChatSession();
-    if (currentSession?.session?.id) {
+    
+    // Check if we have any chat messages or a session, not just a valid session ID
+    // This handles new sessions that haven't received a server ID yet
+    if (currentSession && (currentSession.session?.id || currentSession.chatMessages.length > 0)) {
       // Only load user sessions if we don't already have them
       if (this.aiAssistantService.userSessions().length === 0) {
         this.aiAssistantService.loadUserSessions().subscribe();
       }
       
       // Pass current session data to full screen component
-      // This avoids reloading from server
-      this.router.navigate(['/ai'], {
-        queryParams: { sessionId: currentSession.session.id },
+      // This ensures content is preserved even for new sessions without IDs yet
+      // Use session ID if available, otherwise use a temporary route
+      const navigationPath = currentSession.session?.id ? ['/ai', currentSession.session.id] : ['/ai'];
+      
+      this.router.navigate(navigationPath, {
         state: { 
           chatSession: currentSession,
           preserveData: true 
         }
       });
     } else {
-      // No current session, navigate to AI without session
+      // No current session or messages, navigate to AI without session
       this.router.navigate(['/ai']);
     }
   }
@@ -1162,9 +1192,17 @@ export class AiAssistantPanelComponent implements OnInit, AfterViewInit, OnDestr
   minimizeFullscreen(): void {
     // Navigate back to previous route or home page when minimizing from fullscreen
     const previousRoute = this.getPreviousRoute();
+    const currentSession = this.currentChatSession();
     
     // Navigate to the previous route (or home if none exists)
-    this.router.navigate([previousRoute === '/ai' ? '/' : previousRoute]).then(() => {
+    // Pass session data via router state to preserve it when reopening sidebar
+    this.router.navigate([previousRoute === '/ai' ? '/' : previousRoute], {
+      state: currentSession ? {
+        chatSession: currentSession,
+        preserveData: true,
+        reopenSidebar: true // Signal to reopen sidebar with preserved data
+      } : undefined
+    }).then(() => {
       // After navigation, explicitly open the AI assistant in sidebar/popup mode (not toggle)
       setTimeout(() => {
         this.layoutService.layoutState.update(state => ({

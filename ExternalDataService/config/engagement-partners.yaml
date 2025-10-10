@@ -46,14 +46,14 @@ source:
     )
     SELECT
       *
-      , 'Active' AS Status
+      , 1 AS Status
       , CURRENT_TIMESTAMP() as last_modified
     FROM
       CLIENTS
     UNION ALL
     SELECT
       *
-      , 'Active' AS Status
+      , 1 AS Status
       , CURRENT_TIMESTAMP() as last_modified
     FROM
       DONORS
@@ -64,6 +64,8 @@ source:
 destination:
   table_name: "BaseEngagementPartners"
   schema: "public"
+  manage_table_structure: true
+  add_standard_fields: true
   
   field_mappings:
     - source_field: "Partner_Description"
