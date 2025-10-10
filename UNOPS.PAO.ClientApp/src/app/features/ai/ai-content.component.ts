@@ -344,11 +344,38 @@ export class AiContentComponent implements OnInit, OnDestroy {
     // Set the ViewContainerRef for the AI assistant data service
     this.aiAssistantService.setViewContainerRef(this.viewContainerRef);
     
-    // Handle sessionId from route parameter
+    // CRITICAL: Check for router state first (used when navigating from sidebar to fullscreen)
+    // This preserves session data for new sessions that don't have a server ID yet
+    const navigation = this.router.getCurrentNavigation();
+    const routerState = navigation?.extras?.state || (window.history.state as any);
+    
+    if (routerState?.preserveData && routerState?.chatSession) {
+      // Session data was passed via router state - use it directly
+      // This handles the case where we're switching modes with a new session
+      console.log('📦 Using session data from router state');
+      this.aiAssistantService.currentChatSession.set(routerState.chatSession);
+      
+      // Update related signals from the session data
+      if (routerState.chatSession.session) {
+        if (routerState.chatSession.session.id) {
+          this.aiAssistantService.currentSessionId.set(routerState.chatSession.session.id);
+        }
+        if (routerState.chatSession.session.title) {
+          this.aiAssistantService.sessionTitle.set(routerState.chatSession.session.title);
+        }
+        this.aiAssistantService.sessionStarred.set(routerState.chatSession.session.starred || false);
+        this.aiAssistantService.sessionArchived.set(routerState.chatSession.session.archived || false);
+      }
+      
+      // Don't load from server - we already have the data
+      return;
+    }
+    
+    // Handle sessionId from route parameter (for direct URL navigation or browser refresh)
     this.route.params.subscribe(params => {
       const sessionId = params['sessionId'];
-      if (sessionId) {
-        // Load the specific session
+      if (sessionId && sessionId !== this.aiAssistantService.currentSessionId()) {
+        // Load the specific session from server
         this.aiAssistantService.switchToSession(sessionId).subscribe({
           error: (error) => {
             console.error('Failed to load session from URL:', error);

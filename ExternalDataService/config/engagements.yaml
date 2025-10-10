@@ -53,16 +53,16 @@ source:
       , IFNULL(E.Engagement_Description, '') AS Engagement_Description
       , IFNULL(E.Engagement_Long_Description, '') AS Engagement_Long_Description
       , (CASE E.Base_Engagement_Stage
-          WHEN 'CLOSED' THEN 'Closed'
-          WHEN 'CANCELLED' THEN 'Archived'
-          WHEN 'OPP' THEN 'Draft'
-          WHEN 'CLOSING' THEN 'Active'
-          WHEN 'IMPLEMENTATION' THEN 'Active'
-          WHEN 'PENDING_IMPL' THEN 'Draft'
-          WHEN 'AWARD' THEN 'Active'
-          WHEN 'PRE-ENG' THEN 'Draft'
-          WHEN 'INIT' THEN 'Draft'
-          ELSE 'Inactive' END) AS Status
+          WHEN 'CLOSED' THEN 2
+          WHEN 'CANCELLED' THEN 4
+          WHEN 'OPP' THEN 3
+          WHEN 'CLOSING' THEN 1
+          WHEN 'IMPLEMENTATION' THEN 1
+          WHEN 'PENDING_IMPL' THEN 3
+          WHEN 'AWARD' THEN 1
+          WHEN 'PRE-ENG' THEN 3
+          WHEN 'INIT' THEN 3
+          ELSE 0 END) AS Status
       , CURRENT_TIMESTAMP() as last_modified
     FROM
       ENG E
