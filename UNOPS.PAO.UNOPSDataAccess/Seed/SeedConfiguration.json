@@ -95,6 +95,24 @@
         },
         {
             "order": 11,
+            "name": "InteractionFromTasks",
+            "type": "seeder",
+            "className": "InteractionFromTaskSeeder",
+            "methodName": "SeedInteractionsFromTasksAsync",
+            "filePath": "Seeders/InteractionFromTaskSeeder.cs",
+            "description": "Interactions from tasks data seeding"
+        },
+        {
+            "order": 12,
+            "name": "InteractionFromEvents",
+            "type": "seeder",
+            "className": "InteractionFromEventSeeder",
+            "methodName": "SeedInteractionsFromEventsAsync",
+            "filePath": "Seeders/InteractionFromEventSeeder.cs",
+            "description": "Interactions from events data seeding"
+        },
+        {
+            "order": 13,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",
