@@ -8,7 +8,8 @@
     "oauth": {
       "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
       "client_id": "70092411004-11phmrui30mqom8krpo739796gd22lj3.apps.googleusercontent.com",
-      "target_principal": "pno-ai-service@unops-opportunityplus-prod.iam.gserviceaccount.com"
+      "target_principal": "pno-ai-service@unops-opportunityplus-prod.iam.gserviceaccount.com",
+      "tenant_id": "Google-wd0jd"
     }
   },
   "database": {
