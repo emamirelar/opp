@@ -96,6 +96,8 @@ source:
 destination:
   table_name: "BaseEngagements"
   schema: "public"
+  manage_table_structure: true
+  add_standard_fields: true
   
   field_mappings:
     - source_field: "Base_Engagement"
