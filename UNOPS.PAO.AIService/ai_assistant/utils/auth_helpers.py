@@ -347,7 +347,7 @@ def build_request_headers(
                     is_google_api = False
                     if url:
                         is_google_api = any(google_path in url for google_path in [
-                            '/google-drive/', '/convert/url', '/convert/markdown-to-google-doc'
+                            '/google-drive/', '/vector-store/', '/convert/url', '/convert/markdown-to-google-doc'
                         ])
 
                     print(f"🔍 [AUTH-HEADERS] target_audience: {target_audience}")
