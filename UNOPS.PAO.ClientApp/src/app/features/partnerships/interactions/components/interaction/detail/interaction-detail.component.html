@@ -3,23 +3,97 @@
 
 <div class="flex flex-col gap-8">
   <!-- Header -->
-  <div class="shadow-sm border border-solid bg-white border-gray-50 rounded-xl p-6">
-    <div class="flex justify-between items-center w-full">
+  <div class="shadow-sm border border-solid bg-white border-gray-50 rounded-xl p-4 sm:p-6">
+    <!-- Mobile Layout -->
+    <div class="flex flex-col gap-3 sm:hidden">
+      <!-- Line 1: Type icon + Title -->
+      <div class="flex items-center gap-3">
+        @if (loading()) {
+          <p-skeleton width="2.5rem" height="2.5rem" shape="circle" class="flex-shrink-0"></p-skeleton>
+          <p-skeleton width="100%" height="2rem" class="flex-1"></p-skeleton>
+        } @else if (interaction()) {
+          <div
+            class="w-10 h-10 rounded-full flex items-center justify-center border border-solid flex-shrink-0"
+            [style]="{
+              'background': 'linear-gradient(135deg, ' + interactionIconService.getInteractionColor(interaction()!.type) + '15 0%, ' + interactionIconService.getInteractionColor(interaction()!.type) + '25 100%)',
+              'color': interactionIconService.getInteractionColor(interaction()!.type),
+              'border-color': interactionIconService.getInteractionColor(interaction()!.type) + '30'
+            }">
+            <span class="material-symbols-outlined text-xl font-medium">
+              {{ interactionIconService.getInteractionMaterialIconFilled(interaction()!.type) }}
+            </span>
+          </div>
+          <span class="text-lg font-semibold truncate flex-1">{{ interaction()!.subject }}</span>
+        }
+      </div>
+
+      <!-- Line 2: Back button + Status tag + Action buttons -->
+      <div class="flex items-center justify-between gap-2">
+        <button
+          pButton
+          pRipple
+          icon="pi pi-arrow-left"
+          class="p-button-text p-button-rounded flex-shrink-0"
+          (click)="goBack()"
+          [pTooltip]="'tooltip.backToInteractions' | translate">
+        </button>
+
+        <div class="flex items-center gap-2">
+          @if (!loading() && interaction()) {
+            <p-tag
+              [value]="interaction()!.status"
+              [severity]="interaction()!.status === 'Active' ? 'success' : 'secondary'"
+              class="capitalize">
+            </p-tag>
+          }
+          @if (!loading() && interaction() && canEdit()) {
+            <button
+              pButton
+              pRipple
+              icon="pi pi-pencil"
+              [rounded]="true"
+              [text]="true"
+              [size]="'small'"
+              class="edit-button"
+              (click)="openEditModal()"
+              [pTooltip]="'tooltip.editInteraction' | translate">
+            </button>
+          }
+          @if (!loading() && interaction() && canDelete()) {
+            <button
+              pButton
+              pRipple
+              icon="pi pi-trash"
+              [rounded]="true"
+              [text]="true"
+              [size]="'small'"
+              severity="danger"
+              class="delete-button"
+              (click)="deleteInteraction()"
+              [pTooltip]="'tooltip.deleteInteraction' | translate">
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Layout -->
+    <div class="hidden sm:flex sm:justify-between sm:items-center w-full">
       <div class="flex items-center gap-4">
         <button
           pButton
           pRipple
           icon="pi pi-arrow-left"
-          class="p-button-text p-button-rounded"
+          class="p-button-text p-button-rounded flex-shrink-0"
           (click)="goBack()"
           [pTooltip]="'tooltip.backToInteractions' | translate">
         </button>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 min-w-0 flex-1">
           @if (loading()) {
-            <p-skeleton width="3rem" height="3rem" shape="circle"></p-skeleton>
+            <p-skeleton width="3rem" height="3rem" shape="circle" class="flex-shrink-0"></p-skeleton>
           } @else if (interaction()) {
             <div
-              class="w-12 h-12 rounded-full flex items-center justify-center border border-solid"
+              class="w-12 h-12 rounded-full flex items-center justify-center border border-solid flex-shrink-0"
               [style]="{
                 'background': 'linear-gradient(135deg, ' + interactionIconService.getInteractionColor(interaction()!.type) + '15 0%, ' + interactionIconService.getInteractionColor(interaction()!.type) + '25 100%)',
                 'color': interactionIconService.getInteractionColor(interaction()!.type),
@@ -30,7 +104,7 @@
               </span>
             </div>
           }
-          <div>
+          <div class="min-w-0 flex-1">
             @if (loading()) {
               <p-skeleton width="20rem" height="2rem" class="mb-2"></p-skeleton>
               <p-skeleton width="10rem" height="1rem"></p-skeleton>
