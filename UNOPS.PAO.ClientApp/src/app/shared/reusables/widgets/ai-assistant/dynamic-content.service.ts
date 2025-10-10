@@ -155,12 +155,18 @@ export class DynamicContentService {
           if (parsedResult.response) {
             cardData = parsedResult.response;
             
-            // If the response has records property, use that
+            // If the response has records property, use that (for list/search operations)
             if (parsedResult.response.records) {
               cardData = parsedResult.response.records;
             }
+            // If the response has data property, use that (for create/update operations)
+            else if (parsedResult.response.data) {
+              cardData = parsedResult.response.data;
+            }
           } else if (parsedResult.records) {
             cardData = parsedResult.records;
+          } else if (parsedResult.data) {
+            cardData = parsedResult.data;
           }
           
           // Determine entity type from the actual resource being fetched (not the parent path)
