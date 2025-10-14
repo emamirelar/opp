@@ -1,4 +1,4 @@
-import { EntityPermissions } from '@core/services/permission.service';
+import { EntityPermissions } from '@core/services/auth';
 
 /**
  * Shared permission type for entity models

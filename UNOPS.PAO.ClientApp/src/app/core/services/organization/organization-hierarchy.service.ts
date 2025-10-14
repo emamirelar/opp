@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, map, catchError, of } from 'rxjs';
-import { OrganizationHierarchyTreeModel, PrimeOrgChartNode } from '../models/organization-hierarchy.model';
+import { OrganizationHierarchyTreeModel, PrimeOrgChartNode } from '../../models/organization-hierarchy.model';
 import { TreeNode } from 'primeng/api';
 
 @Injectable({

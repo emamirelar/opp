@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { PermissionService, EntityPermissions } from '@core/services/permission.service';
+import { PermissionService, EntityPermissions } from '@core/services/auth';
 
 export interface EntityDropdownModel {
   id: number;

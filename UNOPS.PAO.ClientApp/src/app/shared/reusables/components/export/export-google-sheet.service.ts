@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { ConfigurationService } from '@core/services/configuration.service';
+import { ConfigurationService } from '@core/services/configuration';
 import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
 import { Observable, from, of, throwError } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';

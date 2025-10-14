@@ -16,11 +16,11 @@ import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Subject } from 'rxjs';
 import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { GlobalFilterService } from '@core/services/global-filter.service';
-import { UserPreferenceService, GlobalFilters } from '@core/services/user-preference.service';
-import { OrganizationHierarchyService } from '@core/services/organization-hierarchy.service';
-import { AuthService } from '@core/services/auth.service';
-import { GlobalFiltersDialogService } from '@core/services/global-filters-dialog.service';
+import { GlobalFilterService } from '@core/services/filters';
+import { UserPreferenceService, GlobalFilters } from '@core/services/user';
+import { OrganizationHierarchyService } from '@core/services/organization';
+import { AuthService } from '@core/services/auth';
+import { GlobalFiltersDialogService } from '@core/services/filters';
 
 /**
  * @uiEntity SearchResult

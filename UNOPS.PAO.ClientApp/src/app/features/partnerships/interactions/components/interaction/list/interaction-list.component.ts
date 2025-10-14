@@ -10,7 +10,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ListviewComponent } from '@shared/pages/components/listview/listview.component';
 import { ListViewColumn, ListViewConfig, SearchParams } from '@shared/pages/components/listview/listview.model';
 import { DialogService } from 'primeng/dynamicdialog';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
 import { SearchField } from '@shared/services/search-parser.service';
 import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';

@@ -28,7 +28,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 import { PartnerTree } from '@partnerships/partners/models/partner-tree.model';
 import { ListViewColumn } from '@shared/pages/components/listview/listview.model';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 
 @Component({
   selector: 'app-partner-tree-data',

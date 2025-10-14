@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { MenuItem } from 'primeng/api';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/services/auth';
 import { switchMap, catchError, of, Observable } from 'rxjs';
 
 export interface Language {

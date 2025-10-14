@@ -14,7 +14,7 @@ import { DialogModule } from 'primeng/dialog';
 import { PartnerTree } from '@partnerships/partners/models/partner-tree.model';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { PartnerTreeItemFooterComponent } from './partner-tree-item-footer.component';
 
 interface PartnerTreeFormControls {

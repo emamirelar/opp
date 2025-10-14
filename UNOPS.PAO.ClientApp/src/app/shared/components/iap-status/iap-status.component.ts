@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/services/auth';
 
 @Component({
   selector: 'app-iap-status',

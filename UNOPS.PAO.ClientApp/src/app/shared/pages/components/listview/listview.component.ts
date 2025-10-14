@@ -8,7 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { Subject, debounceTime, distinctUntilChanged, catchError, tap, of, switchMap } from 'rxjs';
-import { GlobalFilterService } from '@core/services/global-filter.service';
+import { GlobalFilterService } from '@core/services/filters';
 import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
 import { ListviewExportService } from './listview-export.service';
@@ -28,9 +28,9 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { SavedFilter } from '../../../interfaces/saved-filter.interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { UserPreferenceService, GlobalFilters } from '@core/services/user-preference.service';
-import { AuthService } from '@core/services/auth.service';
-import { GlobalFiltersDialogService } from '@core/services/global-filters-dialog.service';
+import { UserPreferenceService, GlobalFilters } from '@core/services/user';
+import { AuthService } from '@core/services/auth';
+import { GlobalFiltersDialogService } from '@core/services/filters';
 
 interface ListViewState<T> {
   loading: boolean;

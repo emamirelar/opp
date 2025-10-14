@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, inject, Input } from '@angular/core';
+import { Component, OnInit, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ButtonModule } from 'primeng/button';
@@ -56,7 +56,7 @@ export class TourControlComponent implements OnInit {
           this.http.get<any>('/assets/tours/tour-registry.json')
         );
       } catch (error) {
-        console.error('❌ Failed to load tour registry:', error);
+        console.error('? Failed to load tour registry:', error);
         throw error;
       }
     }
@@ -115,7 +115,7 @@ export class TourControlComponent implements OnInit {
         const driverSteps = this.convertToDriverSteps(tourConfig, registry.fallbackSelectors);
 
         if (driverSteps.length === 0) {
-          console.warn('❌ No valid steps found for tour');
+          console.warn('? No valid steps found for tour');
           return;
         }
 
@@ -151,7 +151,7 @@ export class TourControlComponent implements OnInit {
         this.showFallbackTour();
       }
     } catch (error) {
-      console.error('❌ Failed to load or start tour:', error);
+      console.error('? Failed to load or start tour:', error);
     }
   }
 
@@ -162,10 +162,10 @@ export class TourControlComponent implements OnInit {
         const element = this.findBestElement(step, fallbackSelectors);
 
         if (!element && step.element) {
-          console.warn(`⚠️ Step ${index + 1} skipped - element not found, hidden, or disabled: "${step.element}"`);
-          console.warn(`   📝 Step title key: "${step.popover?.titleKey}"`);
+          console.warn(`?? Step ${index + 1} skipped - element not found, hidden, or disabled: "${step.element}"`);
+          console.warn(`   ?? Step title key: "${step.popover?.titleKey}"`);
           if (step.fallbackType) {
-            console.warn(`   🔄 Tried fallback type: "${step.fallbackType}"`);
+            console.warn(`   ?? Tried fallback type: "${step.fallbackType}"`);
           }
           // Skip steps where element is not found, hidden, or disabled
           return null;
@@ -407,9 +407,9 @@ export class TourControlComponent implements OnInit {
       showProgress: false,
       allowClose: true,
       popoverOffset: 10,
-      nextBtnText: '—›',
-      prevBtnText: '‹—',
-      doneBtnText: '✕',
+      nextBtnText: '��',
+      prevBtnText: '��',
+      doneBtnText: '?',
       steps: [
         {
           popover: {

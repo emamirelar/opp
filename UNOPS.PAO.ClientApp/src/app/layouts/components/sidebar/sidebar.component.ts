@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import {MenuItem} from 'primeng/api';
 import {MenuComponent} from '../menu/menu.component';
-import {AuthService} from '@core/services/auth.service';
+import {AuthService} from '@core/services/auth';
 import {TranslateModule, TranslateService} from '@ngx-translate/core';
 import {LanguageService} from '@shared/services/language.service';
 import {Subscription} from 'rxjs/internal/Subscription';
@@ -19,7 +19,7 @@ import { HttpClientModule} from '@angular/common/http';
 import { RouterModule} from '@angular/router';
 
 import {ButtonModule} from 'primeng/button';
-import {GlobalFilterService} from '@core/services/global-filter.service';
+import {GlobalFilterService} from '@core/services/filters';
 
 
 @Component({

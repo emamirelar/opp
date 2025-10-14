@@ -24,7 +24,7 @@ import {ListViewColumn, ListViewConfig, SearchParams} from '@shared/pages/compon
 import {Contact} from '../../../models/contact.model';
 import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
 import { SearchField } from '@shared/services/search-parser.service';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
 import { PageContextService } from '@shared/services/page-context.service';
 

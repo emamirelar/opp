@@ -6,7 +6,7 @@ import {
   GoogleSigninButtonModule,
 } from '@abacritt/angularx-social-login';
 
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/services/auth';
 import { firstValueFrom } from 'rxjs';
 
 @Component({

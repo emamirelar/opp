@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ExportGoogleSheetService } from './export-google-sheet.service';
-import { ConfigurationService } from '@core/services/configuration.service';
+import { ConfigurationService } from '@core/services/configuration';
 import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
 
 describe('ExportGoogleSheetService', () => {

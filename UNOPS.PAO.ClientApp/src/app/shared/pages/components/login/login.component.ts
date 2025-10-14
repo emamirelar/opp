@@ -8,7 +8,7 @@ import { DialogModule } from 'primeng/dialog';
 import { Router } from '@angular/router';
 
 import { SociaAuth } from './socialAuth/socialAuth.component';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/services/auth';
 import { SignUpComponent } from './sign-up/sign-up.component';
 import { NgIf } from '@angular/common';
 import { firstValueFrom } from 'rxjs';

@@ -1,5 +1,5 @@
 import {EventEmitter, inject, Injectable, Output} from '@angular/core';
-import { ConfigurationService } from '@core/services/configuration.service';
+import { ConfigurationService } from '@core/services/configuration';
 import { ImportService } from './import.service';
 import {ImportDialogService} from './dialog/import-dialog.service';
 import {Contact} from '@partnerships/contacts/models/contact.model';

@@ -1,5 +1,5 @@
 import { EventEmitter, Injectable, Output } from '@angular/core';
-import { ConfigurationService } from '@core/services/configuration.service';
+import { ConfigurationService } from '@core/services/configuration';
 
 declare const google: any;
 declare const gapi: any;

@@ -17,7 +17,7 @@ import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { PartnerTree } from '../../models/partner-tree.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from './item/partner-tree-item.component';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
 import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
 import { ListViewColumn } from '@shared/pages/components/listview/listview.model';

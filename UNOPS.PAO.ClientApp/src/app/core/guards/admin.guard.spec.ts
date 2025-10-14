@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { adminGuard } from './admin.guard';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../services/auth';
 import { of } from 'rxjs';
 
 describe('adminGuard', () => {

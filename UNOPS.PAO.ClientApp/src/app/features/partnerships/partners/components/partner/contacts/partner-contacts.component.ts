@@ -24,8 +24,8 @@ import { ListViewColumn, ListViewConfig } from '@shared/pages/components/listvie
 import { SearchField } from '@shared/services/search-parser.service';
 import { ContactService } from '@partnerships/contacts/services/contact.service';
 import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
-import { PermissionService, EntityPermissions } from '@core/services/permission.service';
+import { PermissionUtilityService } from '@core/services/auth';
+import { PermissionService, EntityPermissions } from '@core/services/auth';
 import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
 import { ContactEditDialogComponent } from '@partnerships/contacts/components/contact/edit-dialog/contact-edit-dialog.component';
 import { Contact } from '@partnerships/contacts/models/contact.model';

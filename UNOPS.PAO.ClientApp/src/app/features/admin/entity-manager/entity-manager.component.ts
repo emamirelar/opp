@@ -43,7 +43,7 @@ import {
   RelatedFieldOption
 } from '@features/shared/services/entity-configuration.service';
 import { InteractionIconService } from '@shared/services/interaction-icon.service';
-import { PermissionService, EntityPermissions } from '@core/services/permission.service';
+import { PermissionService, EntityPermissions } from '@core/services/auth';
 
 /**
  * @uiEntity EntityManager

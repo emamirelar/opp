@@ -21,8 +21,8 @@ import { TooltipModule } from 'primeng/tooltip';
 
 import { MessageService, ConfirmationService, MenuItem } from 'primeng/api';
 import { UserManagementService } from './user-management.service';
-import { PermissionService, EntityPermissions } from '@core/services/permission.service';
-import { AuthService } from '@core/services/auth.service';
+import { PermissionService, EntityPermissions } from '@core/services/auth';
+import { AuthService } from '@core/services/auth';
 import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
 import { MenuModule } from 'primeng/menu';
 

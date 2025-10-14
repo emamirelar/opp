@@ -32,7 +32,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PanelModule } from 'primeng/panel';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
 import {Divider} from 'primeng/divider';
 import { TooltipModule } from 'primeng/tooltip';

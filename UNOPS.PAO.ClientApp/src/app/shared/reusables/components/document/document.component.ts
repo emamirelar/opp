@@ -17,7 +17,7 @@ import { UploadDocumentComponent } from './upload/upload-document.component';
 import { DocumentService } from './../../../services/document.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/services/auth';
 import { DocumentLinkModel } from '../../../interfaces/document.interface';
 
 @Component({

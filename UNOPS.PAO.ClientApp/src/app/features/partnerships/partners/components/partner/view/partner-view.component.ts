@@ -40,7 +40,7 @@ import { EntityType } from '@shared/models/link.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
 import { Partner, getPrimaryOrganizationUnit } from '@partnerships/partners/models/partner.model';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { AiPanelComponent } from '@shared/reusables/components/ai-panel/ai-panel.component';
 import { GeminiService } from '@ai/services/gemini.service';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
@@ -49,7 +49,7 @@ import { GoBackComponent } from '@shared/reusables/components/go-back/go-back.co
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
 import { PartnerApprovalDialogComponent } from '../approval-dialog/partner-approval-dialog.component';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/services/auth';
 import { EntityTagsComponent } from '@shared/components/entity-tags/entity-tags.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';

@@ -35,7 +35,7 @@ import { EntityType } from '@shared/models/link.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTree } from '@partnerships/partners/models/partner-tree.model';
 import { PartnerTreeItemComponent } from '../../item/partner-tree-item.component';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { ListViewColumn } from '@shared/pages/components/listview/listview.model';
 import { ListviewComponent } from '@shared/pages/components/listview/listview.component';
 /**

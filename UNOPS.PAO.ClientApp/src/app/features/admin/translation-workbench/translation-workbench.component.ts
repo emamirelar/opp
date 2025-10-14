@@ -9,7 +9,7 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
 // Services
-import { PermissionService, EntityPermissions } from '@core/services/permission.service';
+import { PermissionService, EntityPermissions } from '@core/services/auth';
 import { ComingSoonComponent } from '@shared/pages/components/coming-soon/coming-soon.component';
 
 /**

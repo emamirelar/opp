@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ImportGoogleSheetService } from './import-google-sheet.service';
-import { ConfigurationService } from '@core/services/configuration.service';
+import { ConfigurationService } from '@core/services/configuration';
 import { of } from 'rxjs';
 
 describe('ImportGoogleSheetService', () => {

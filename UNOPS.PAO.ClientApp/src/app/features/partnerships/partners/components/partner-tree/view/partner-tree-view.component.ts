@@ -10,7 +10,7 @@ import { PartnerTreeViewNavigationComponent } from './navigation/partner-tree-vi
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from '../item/partner-tree-item.component';
 import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { CachedDataService } from '@shared/services/cached-data.service';
 
 

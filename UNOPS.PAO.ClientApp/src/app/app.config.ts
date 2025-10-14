@@ -34,10 +34,10 @@ import { ConfirmationService } from 'primeng/api';
 import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
 import { authInterceptor } from '@core/interceptors/auth.interceptor';
 import { serverErrorInterceptor } from '@core/interceptors/server-error.interceptor';
-import { AuthService } from '@core/services/auth.service';
-import { ConfigurationService } from '@core/services/configuration.service';
+import { AuthService } from '@core/services/auth';
+import { ConfigurationService } from '@core/services/configuration';
 import { HasPermissionDirective } from '@core/directives/has-permission.directive';
-import { PermissionService } from '@core/services/permission.service';
+import { PermissionService } from '@core/services/auth';
 import { LanguageService } from '@shared/services/language.service';
 
 /******* PrimeNG specifc imports *********/

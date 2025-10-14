@@ -6,7 +6,7 @@ import { Button } from 'primeng/button';
 import { HttpClient } from '@angular/common/http';
 import { ListviewComponent } from '@shared/pages/components/listview/listview.component';
 import { ListViewColumn, ListViewConfig, SearchParams } from '@shared/pages/components/listview/listview.model';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
 import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
 import { DialogService } from 'primeng/dynamicdialog';

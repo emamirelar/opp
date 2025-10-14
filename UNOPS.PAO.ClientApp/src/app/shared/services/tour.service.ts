@@ -1,4 +1,4 @@
-﻿import { Injectable, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router, NavigationEnd } from '@angular/router';
 import { BehaviorSubject, Observable, filter, firstValueFrom } from 'rxjs';
@@ -47,13 +47,13 @@ export class TourService {
           );
           existingTours.push(tourId);
         } catch (error) {
-          console.warn(`⚠️ Tour file referenced in registry but not found: ${tourId}.json`);
+          console.warn(`?? Tour file referenced in registry but not found: ${tourId}.json`);
         }
       }
 
       this.availableTours = existingTours;
     } catch (error) {
-      console.error('❌ Error initializing tours:', error);
+      console.error('? Error initializing tours:', error);
       this.availableTours = [];
     }
   }

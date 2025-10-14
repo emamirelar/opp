@@ -45,7 +45,7 @@ import { ContactEditDialogFooterComponent } from '../edit-dialog/footer/contact-
 import { ContactEditDialogComponent } from '../edit-dialog/contact-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { Contact, getPrimaryOrganizationUnit } from '../../../models/contact.model';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { PageContextService } from '@shared/services/page-context.service';
 
 

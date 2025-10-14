@@ -40,7 +40,7 @@ import { JsonPipe } from '@angular/common';
 import { PartnerTreeService } from '@partnerships/partners/services/partner-tree.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SkeletonModule } from 'primeng/skeleton';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/services/auth';
 import { ENTITY_STATUS_OPTIONS } from '@features/shared/models/entity-status.enum';
 import { TooltipModule } from 'primeng/tooltip';
 

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { roleGuard } from './role.guard';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../services/auth';
 import { of, throwError } from 'rxjs';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 

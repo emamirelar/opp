@@ -9,7 +9,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ListviewComponent } from './listview.component';
 import { ListviewExportService } from './listview-export.service';
 import { ListViewColumn, ListViewConfig, SearchCriteria } from './listview.model';
-import { GlobalFilterService } from '@core/services/global-filter.service';
+import { GlobalFilterService } from '@core/services/filters';
 
 describe('ListviewComponent', () => {
   let component: ListviewComponent;

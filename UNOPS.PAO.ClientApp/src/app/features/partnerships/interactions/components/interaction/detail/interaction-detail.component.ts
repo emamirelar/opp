@@ -22,7 +22,7 @@ import { Interaction } from '@partnerships/interactions/models/interaction.model
 import { InteractionService } from '@partnerships/interactions/services/interaction.service';
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
 import { InteractionType } from '../../../models/interaction-type.enum';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
 import { InteractionIconService } from '@shared/services/interaction-icon.service';
 import { CachedDataService } from '@shared/services/cached-data.service';

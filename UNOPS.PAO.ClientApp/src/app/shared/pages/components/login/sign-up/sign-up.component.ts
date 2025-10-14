@@ -1,4 +1,4 @@
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/services/auth';
 import { ChangeDetectionStrategy, Component, EventEmitter, Output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';

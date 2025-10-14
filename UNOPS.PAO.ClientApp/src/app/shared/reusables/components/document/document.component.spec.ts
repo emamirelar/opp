@@ -4,7 +4,7 @@ import { of, throwError } from 'rxjs';
 import { DocumentComponent } from './document.component';
 import { DocumentService } from './../../../services/document.service';
 import { FeedbackDialogService } from '../../../services/feedback-dialog.service';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/services/auth';
 
 describe('DocumentComponent', () => {
   let component: DocumentComponent;

@@ -15,8 +15,8 @@ import { PartnerEditDialogComponent } from './edit-dialog/partner-edit-dialog.co
 import { DialogService } from 'primeng/dynamicdialog';
 import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
 import { SearchField } from '@shared/services/search-parser.service';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
-import { EntityPermissions } from '@core/services/permission.service';
+import { PermissionUtilityService } from '@core/services/auth';
+import { EntityPermissions } from '@core/services/auth';
 import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
 import { CachedDataService } from '@shared/services/cached-data.service';
 import { MenuModule } from 'primeng/menu';

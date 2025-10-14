@@ -29,8 +29,8 @@ import { ConfirmationService } from 'primeng/api';
 // Services and models
 import { AiPromptService, AiPrompt, AiPromptFilterRequest, GeminiModel, GenerationConfig, ToolsConfig, TestPromptRequest, TestPromptResponse } from '../../services/ai-prompt.service';
 import { PaginationResponse } from '@shared/models/pagination-response.model';
-import { PermissionService, EntityPermissions } from '@core/services/permission.service';
-import { ConfigurationService } from '@core/services/configuration.service';
+import { PermissionService, EntityPermissions } from '@core/services/auth';
+import { ConfigurationService } from '@core/services/configuration';
 
 interface LocalAiPromptFilterRequest {
   pageIndex: number;

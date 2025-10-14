@@ -8,9 +8,9 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { UserPreferenceService } from '@core/services/user-preference.service';
-import { AuthService } from '@core/services/auth.service';
-import { GlobalFilterService } from '@core/services/global-filter.service';
+import { UserPreferenceService } from '@core/services/user';
+import { AuthService } from '@core/services/auth';
+import { GlobalFilterService } from '@core/services/filters';
 import { OrgUnitSelectorComponent } from '../org-unit-selector/org-unit-selector.component';
 
 @Component({

@@ -4,11 +4,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SearchResultComponent } from './search-result.component';
 import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
-import { GlobalFilterService } from '@core/services/global-filter.service';
-import { UserPreferenceService } from '@core/services/user-preference.service';
-import { OrganizationHierarchyService } from '@core/services/organization-hierarchy.service';
-import { AuthService } from '@core/services/auth.service';
-import { GlobalFiltersDialogService } from '@core/services/global-filters-dialog.service';
+import { GlobalFilterService } from '@core/services/filters';
+import { UserPreferenceService } from '@core/services/user';
+import { OrganizationHierarchyService } from '@core/services/organization';
+import { AuthService } from '@core/services/auth';
+import { GlobalFiltersDialogService } from '@core/services/filters';
 import { of, Subject, BehaviorSubject } from 'rxjs';
 
 describe('SearchResultComponent', () => {

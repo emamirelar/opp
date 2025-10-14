@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { routePermissionGuard } from './route-permission.guard';
-import { PermissionService } from '../services/permission.service';
-import { of, throwError } from 'rxjs';
-import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { PermissionService } from '../services/auth';
+import { of, throwError, Observable } from 'rxjs';
+import { ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree, GuardResult } from '@angular/router';
 
 describe('routePermissionGuard', () => {
   let mockPermissionService: jasmine.SpyObj<PermissionService>;
@@ -41,7 +41,7 @@ describe('routePermissionGuard', () => {
       return;
     }
 
-    result.subscribe((canActivate) => {
+    (result as Observable<boolean | UrlTree>).subscribe((canActivate: boolean | UrlTree) => {
       expect(canActivate).toBeTrue();
       expect(mockPermissionService.canAccessRoute).toHaveBeenCalledWith(
         '/admin/users'
@@ -61,7 +61,7 @@ describe('routePermissionGuard', () => {
       return;
     }
 
-    result.subscribe((canActivate) => {
+    (result as Observable<boolean | UrlTree>).subscribe((canActivate: boolean | UrlTree) => {
       expect(canActivate).toBeFalse();
       expect(mockPermissionService.canAccessRoute).toHaveBeenCalledWith(
         '/admin/users'
@@ -83,7 +83,7 @@ describe('routePermissionGuard', () => {
       return;
     }
 
-    result.subscribe((canActivate) => {
+    (result as Observable<boolean | UrlTree>).subscribe((canActivate: boolean | UrlTree) => {
       expect(canActivate).toBeFalse();
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/access-denied']);
       done();
