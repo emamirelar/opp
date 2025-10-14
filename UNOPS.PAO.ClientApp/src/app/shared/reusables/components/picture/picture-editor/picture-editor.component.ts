@@ -14,6 +14,7 @@ import { FeedbackDialogService } from '../../../../services/feedback-dialog.serv
 @Component({
   selector: 'app-picture-editor',
   templateUrl: './picture-editor.component.html',
+  styleUrls: ['./picture-editor.component.scss'],
   standalone: true,
   imports: [
     CommonModule,

@@ -7,17 +7,9 @@ import {Button} from 'primeng/button';
   selector: 'app-go-back',
   standalone: true,
   imports: [TranslateModule, Button],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <p-button
-      type="button"
-      icon="pi pi-arrow-left"
-      text rounded
-      [label]=" 'button.back' | translate "
-      (click)="goBack()">
-    </p-button>
-  `,
-  styles: []
+  templateUrl: './go-back.component.html',
+  styleUrls: ['./go-back.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GoBackComponent implements OnInit {
   private router = inject(Router);

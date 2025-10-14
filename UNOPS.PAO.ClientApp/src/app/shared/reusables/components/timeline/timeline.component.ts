@@ -100,7 +100,7 @@ export interface CacheGap {
   standalone: true,
   imports: [CommonModule, TranslatePipe],
   templateUrl: './timeline.component.html',
-  styleUrls: ['./timeline.component.css'],
+  styleUrls: ['./timeline.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TimelineComponent implements OnDestroy, AfterViewInit, OnChanges {

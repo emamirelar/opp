@@ -1,0 +1,10 @@
+:host ::ng-deep {
+  --p-tabs-tablist-background: transparent;
+}
+
+:host ::ng-deep .p-tab-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+

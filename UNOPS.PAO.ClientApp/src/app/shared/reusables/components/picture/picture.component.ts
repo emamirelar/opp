@@ -10,6 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
   standalone: true,
   imports: [CommonModule, ButtonModule],
   templateUrl: './picture.component.html',
+  styleUrls: ['./picture.component.scss'],
   providers: [DialogService],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
