@@ -1967,6 +1967,7 @@
 	"tour.welcome.description": "¡Bienvenido a tu plataforma integral de gestión de socios y oportunidades! Estamos emocionados de ayudarte a comenzar. Hagamos un tour rápido de las características principales para ayudarte a navegar y aprovechar al máximo este poderoso sistema.",
 	"tour.welcome.startButton": "Iniciar Tour",
 	"tour.welcome.title": "🎉 ¡Bienvenido a UNOPS Opportunity+!",
+	"validation.assistantEmailRequired": "El correo electrónico del asistente debe ser ingresado.",
 	"validation.ddRequiredRequired": "DD Requerido debe ser ingresado.",
 	"validation.ddeacDoneRequired": "DD/EAC Completado debe ser ingresado.",
 	"validation.emailInvalid": "Por favor, ingrese una dirección de correo electrónico válida.",
