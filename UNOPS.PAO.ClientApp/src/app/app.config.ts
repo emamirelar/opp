@@ -44,7 +44,7 @@ import { LanguageService } from '@shared/services/language.service';
 import { providePrimeNG } from 'primeng/config';
 //TODO: JW- remove this import
 //  import Aura from '@primeng/themes/aura';
-import UnopsPreset from '@shared/themes/unops.preset';
+import UnopsPreset from '../styles/themes/unops.preset';
 import { routes } from './app.routes';
 
 /********************************/

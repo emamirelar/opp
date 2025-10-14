@@ -1,6 +1,7 @@
-﻿import { Injectable } from '@angular/core';
+﻿import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Router, NavigationEnd } from '@angular/router';
-import { BehaviorSubject, Observable, filter } from 'rxjs';
+import { BehaviorSubject, Observable, filter, firstValueFrom } from 'rxjs';
 import { driver, Driver } from 'driver.js';
 import { TourConfig, TourPreferences, TourTrigger, TourProgress } from '../interfaces/tour.interface';
 
@@ -8,6 +9,7 @@ import { TourConfig, TourPreferences, TourTrigger, TourProgress } from '../inter
   providedIn: 'root'
 })
 export class TourService {
+  private http = inject(HttpClient);
   private currentDriver: Driver | null = null;
   private toursCache = new Map<string, TourConfig>();
   private preferencesSubject = new BehaviorSubject<TourPreferences>(this.getDefaultPreferences());
@@ -24,8 +26,9 @@ export class TourService {
     // Dynamically discover all tour files from the tour registry
     try {
       // Load tour registry to get all available tour files dynamically
-      const registryModule = await import('../tours/tour-registry.json');
-      const registry = registryModule.default || registryModule;
+      const registry = await firstValueFrom(
+        this.http.get<any>('/assets/tours/tour-registry.json')
+      );
 
       // Extract all tour file names from the registry
       const knownTourFiles = registry.routes.map((route: any) => route.tourFile);
@@ -35,14 +38,14 @@ export class TourService {
 
 
       // Filter out any tours that don't actually exist
-      const existingTours: string[] = [];
+      const existingTours: any[] = [];
       for (const tourId of uniqueTourFiles) {
         try {
-          // Check if tour file exists (now using translation keys)
-          const tourModule = await import(`../tours/${tourId}.json`);
-          if (tourModule.default || tourModule) {
-            existingTours.push(tourId);
-          }
+          // Check if tour file exists
+          await firstValueFrom(
+            this.http.get<any>(`/assets/tours/${tourId}.json`)
+          );
+          existingTours.push(tourId);
         } catch (error) {
           console.warn(`⚠️ Tour file referenced in registry but not found: ${tourId}.json`);
         }
@@ -72,9 +75,10 @@ export class TourService {
     }
 
     try {
-      // Dynamic import of JSON files
-      const tourModule = await import(`../tours/${tourId}.json`);
-      const tourConfig: TourConfig = tourModule.default || tourModule;
+      // Load from assets via HTTP
+      const tourConfig = await firstValueFrom(
+        this.http.get<TourConfig>(`/assets/tours/${tourId}.json`)
+      );
       this.toursCache.set(tourId, tourConfig);
       return tourConfig;
     } catch (error) {

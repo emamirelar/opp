@@ -1,11 +1,13 @@
 ﻿import { Component, OnInit, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { driver } from 'driver.js';
 import { WelcomeTourService } from '../../services/welcome-tour.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-tour-control',
@@ -41,6 +43,7 @@ export class TourControlComponent implements OnInit {
   @Input() tourContext?: string; // Additional context for tour selection
   @Input() hideNotificationDot: boolean = false; // Allow hiding the notification dot
 
+  private http = inject(HttpClient);
   private router = inject(Router);
   private translateService = inject(TranslateService);
   private welcomeTourService = inject(WelcomeTourService);
@@ -49,8 +52,9 @@ export class TourControlComponent implements OnInit {
   private async loadTourRegistry() {
     if (!this.tourRegistry) {
       try {
-        const registryModule = await import('../../tours/tour-registry.json');
-        this.tourRegistry = registryModule.default || registryModule;
+        this.tourRegistry = await firstValueFrom(
+          this.http.get<any>('/assets/tours/tour-registry.json')
+        );
       } catch (error) {
         console.error('❌ Failed to load tour registry:', error);
         throw error;
@@ -103,8 +107,9 @@ export class TourControlComponent implements OnInit {
 
       if (tourFileName) {
         // Load tour configuration (uses translation keys now)
-        const tourModule = await import(`../../tours/${tourFileName}.json`);
-        const tourConfig = tourModule.default || tourModule;
+        const tourConfig = await firstValueFrom(
+          this.http.get<any>(`/assets/tours/${tourFileName}.json`)
+        );
 
         // Convert tour steps to Driver.js format
         const driverSteps = this.convertToDriverSteps(tourConfig, registry.fallbackSelectors);

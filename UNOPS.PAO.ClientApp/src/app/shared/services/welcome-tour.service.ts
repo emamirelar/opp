@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Router, NavigationEnd } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, take } from 'rxjs/operators';
+import { filter, take, firstValueFrom } from 'rxjs';
 import { driver } from 'driver.js';
 
 export interface WelcomeTourState {
@@ -16,6 +17,7 @@ export interface WelcomeTourState {
   providedIn: 'root'
 })
 export class WelcomeTourService {
+  private http = inject(HttpClient);
   private router = inject(Router);
   private translateService = inject(TranslateService);
 
@@ -115,12 +117,14 @@ export class WelcomeTourService {
   private async startHomepageTour(): Promise<void> {
     try {
       // Load homepage tour configuration (now uses translation keys)
-      const tourModule = await import(`../tours/homepage-tour.json`);
-      const tourConfig = tourModule.default || tourModule;
+      const tourConfig = await firstValueFrom(
+        this.http.get<any>('/assets/tours/homepage-tour.json')
+      );
 
       // Load tour registry for fallback selectors
-      const registryModule = await import('../tours/tour-registry.json');
-      const registry = registryModule.default || registryModule;
+      const registry = await firstValueFrom(
+        this.http.get<any>('/assets/tours/tour-registry.json')
+      );
 
       // Convert tour steps (using simplified version of tour-control logic)
       const driverSteps = this.convertToDriverSteps(tourConfig, registry.fallbackSelectors);
