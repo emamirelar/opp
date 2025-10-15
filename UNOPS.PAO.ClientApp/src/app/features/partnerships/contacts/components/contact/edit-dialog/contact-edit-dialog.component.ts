@@ -162,6 +162,17 @@ export class ContactEditDialogComponent implements OnInit {
 
     // Set up partner ID change listener to update partner name
     this.setupPartnerIdChangeListener();
+
+    // Set up conditional validation for assistant email
+    effect(() => {
+      const assistantEmailControl = this.formGroup.get('assistantEmail');
+      if (this.showAssistantFields()) {
+        assistantEmailControl?.setValidators([Validators.required, Validators.email]);
+      } else {
+        assistantEmailControl?.clearValidators();
+      }
+      assistantEmailControl?.updateValueAndValidity();
+    });
   }
 
   ngOnInit() {

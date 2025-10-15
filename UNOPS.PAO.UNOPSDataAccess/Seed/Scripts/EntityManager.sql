@@ -152,7 +152,7 @@ BEGIN
         "Name", "Status", "CreatedBy", "CreatedDate", "LastModifiedBy", "LastModifiedDate", "IsDeleted", "DeletedBy", "DeletedDate"
     ) VALUES 
         -- Primary List View Fields
-        (3, 'Type', 'enum', 'Type of interaction (Meeting, Email, Call, etc.)', true, true, NULL, NULL, 1, true, 1, NULL, 'type', NULL, 'Type', 'badge', '10%', false, true, NULL, 'Interaction type classification', 'Type', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (3, 'Type', 'enum', 'Type of interaction (Meeting, Email, Call, etc.)', true, true, NULL, NULL, 1, true, 1, NULL, 'type', NULL, 'Type', 'interactionIcon', '10%', false, true, NULL, 'Interaction type classification', 'Type', 0, 1, NOW(), 0, NULL, false, 0, NULL),
         (3, 'Date', 'datetime', 'Date and time of the interaction', true, true, NULL, NULL, 2, true, 2, NULL, 'date', NULL, 'Date', 'date', '15%', false, true, NULL, 'When the interaction occurred', 'Date', 0, 1, NOW(), 0, NULL, false, 0, NULL),
         (3, 'Subject', 'string', 'Subject or title of the interaction', true, true, NULL, 300, 3, true, 3, NULL, 'subject', NULL, 'Subject', 'text', '35%', true, true, NULL, 'Interaction subject or title', 'Subject', 0, 1, NOW(), 0, NULL, false, 0, NULL),
         (3, 'Description', 'string', 'Detailed description of the interaction', false, true, NULL, 2000, 4, true, 4, NULL, 'description', NULL, 'Description', 'text', '30%', true, false, NULL, 'Detailed interaction description', 'Description', 0, 1, NOW(), 0, NULL, false, 0, NULL),

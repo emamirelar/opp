@@ -23,7 +23,7 @@
 }
 
 .content-item {
-  margin: 1rem 0;
+  margin: 0.6rem 0;
   padding: 0;
   position: relative;
   transition: all 0.3s ease;
@@ -121,7 +121,7 @@
 }
 
 .mermaid-container {
-  margin: 1rem 0;
+  margin: 0.6rem 0;
   text-align: center;
   background: var(--unops-surface-primary);
   border-radius: 12px;
@@ -144,7 +144,7 @@
 }
 
 .code-container {
-  margin: 1rem 0;
+  margin: 0.6rem 0;
   width: 100%;
 }
 
@@ -157,7 +157,7 @@
 }
 
 .text-content {
-  margin: 0.5rem 0;
+  margin: 0.4rem 0;
 }
 
 /* Enhanced Markdown styling with professional appearance */
@@ -263,7 +263,7 @@
 
 /* AI message styling - clean appearance */
 .content-item.ai-message {
-  margin: 0.75rem 0 !important;
+  margin: 0.5rem 0 !important;
   padding: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -280,8 +280,8 @@
 .content-item markdown h1 {
   font-size: var(--unops-font-size-headline-large) !important;
   font-weight: var(--unops-font-weight-bold) !important;
-  margin-top: 1.5rem !important;
-  margin-bottom: 1rem !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.6rem !important;
   color: var(--unops-neutral-black) !important;
   background: linear-gradient(135deg, #4ec3e0 0%, #1bb3a6 100%) !important;
   background-clip: text !important;
@@ -304,16 +304,16 @@
 .content-item markdown h2 {
   font-size: var(--unops-font-size-headline-medium) !important;
   font-weight: var(--unops-font-weight-semibold) !important;
-  margin-top: 1.25rem !important;
-  margin-bottom: 0.75rem !important;
+  margin-top: 0.8rem !important;
+  margin-bottom: 0.5rem !important;
   color: var(--unops-neutral-800) !important;
 }
 
 .content-item markdown h3 {
   font-size: var(--unops-font-size-headline-small) !important;
   font-weight: var(--unops-font-weight-semibold) !important;
-  margin-top: 1rem !important;
-  margin-bottom: 0.5rem !important;
+  margin-top: 0.6rem !important;
+  margin-bottom: 0.4rem !important;
   color: var(--unops-neutral-700) !important;
 }
 
@@ -322,15 +322,15 @@
 .content-item markdown h6 {
   font-size: var(--unops-font-size-lg) !important;
   font-weight: var(--unops-font-weight-semibold) !important;
-  margin-top: 0.75rem !important;
-  margin-bottom: 0.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.3rem !important;
   color: var(--unops-neutral-600) !important;
 }
 
 /* Paragraphs with better spacing */
 .content-item markdown p {
-  margin: 0.75rem 0 !important;
-  line-height: 1.7 !important;
+  margin: 0.4rem 0 !important;
+  line-height: 1.3 !important;
 }
 
 /* Links with UNOPS styling */
@@ -360,12 +360,14 @@
 .content-item markdown ul,
 .content-item markdown ol {
   margin: 0.75rem 0 !important;
+  margin-top: -1rem !important;
   padding-left: 1.5rem !important;
+  line-height: 1.3 !important;
 }
 
 .content-item markdown li {
-  margin-bottom: 0.5rem !important;
-  line-height: 1.6 !important;
+  margin-bottom: 0.1rem !important;
+  line-height: 1.3 !important;
   position: relative !important;
   list-style: none !important;
 }
@@ -411,7 +413,7 @@
 /* Nested lists */
 .content-item markdown li ul,
 .content-item markdown li ol {
-  margin: 0.25rem 0 !important;
+  margin: 0.1rem 0 !important;
 }
 
 /* Text formatting */
@@ -443,7 +445,7 @@
   padding: 1.25rem !important;
   border-radius: var(--unops-radius-md) !important;
   overflow-x: auto !important;
-  margin: 1rem 0 !important;
+  margin: 0.6rem 0 !important;
   border: 1px solid var(--unops-neutral-700) !important;
   position: relative !important;
 }
@@ -470,8 +472,8 @@
 
 /* Blockquotes */
 .content-item markdown blockquote {
-  margin: 1rem 0 !important;
-  padding: 1rem 1.25rem !important;
+  margin: 0.6rem 0 !important;
+  padding: 0.8rem 1rem !important;
   background: var(--unops-surface-secondary) !important;
   border-left: 4px solid var(--unops-primary) !important;
   border-radius: 0 var(--unops-radius-md) var(--unops-radius-md) 0 !important;
@@ -495,7 +497,7 @@
 .content-item markdown table {
   border-collapse: collapse !important;
   width: 100% !important;
-  margin: 1rem 0 !important;
+  margin: 0.6rem 0 !important;
   border-radius: var(--unops-radius-md) !important;
   overflow: hidden !important;
   box-shadow: var(--unops-shadow-sm) !important;
@@ -530,7 +532,7 @@
   border: none !important;
   height: 2px !important;
   background: linear-gradient(90deg, transparent 0%, #4ec3e0 50%, transparent 100%) !important;
-  margin: 2rem 0 !important;
+  margin: 1rem 0 !important;
   border-radius: 1px !important;
 }
 
@@ -563,7 +565,7 @@
 
 /* Chart.js container styles */
 .chartjs-container {
-  margin: 1rem 0;
+  margin: 0.6rem 0;
   padding: 1rem;
   background: var(--surface-card);
   border-radius: 8px;
@@ -581,7 +583,7 @@
   background: var(--unops-surface-secondary);
   border-left: 3px solid var(--unops-primary);
   padding: 1rem;
-  margin: 0.75rem 0;
+  margin: 0.5rem 0;
   border-radius: var(--unops-radius-md);
   font-style: italic;
   position: relative;
@@ -640,7 +642,7 @@
   background: var(--unops-surface-secondary);
   border-radius: var(--unops-radius-md);
   padding: 1.25rem;
-  margin: 0.75rem 0;
+  margin: 0.5rem 0;
   box-shadow: var(--unops-shadow-sm);
 }
 
@@ -677,7 +679,7 @@
   background: var(--unops-surface-secondary);
   border-radius: var(--unops-radius-md);
   padding: 1.25rem;
-  margin: 0.75rem 0;
+  margin: 0.5rem 0;
   box-shadow: var(--unops-shadow-sm);
   width: 100%;
 }
