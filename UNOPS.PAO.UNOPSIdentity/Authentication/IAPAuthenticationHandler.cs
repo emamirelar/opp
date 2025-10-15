@@ -4,6 +4,7 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -90,19 +91,113 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         if (Context.User?.Identity?.IsAuthenticated == true && 
             Context.User.HasClaim(c => c.Type == "iap-jwt-verified" && c.Value == "true"))
         {
-            // If we have a valid Bearer token, merge its claims
-            if (bearerPrincipal != null)
+            _logger.LogInformation("🔍 [MIDDLEWARE-AUTH] User already authenticated by middleware: {Email}", 
+                Context.User.FindFirstValue(ClaimTypes.Email));
+            
+            // Handle impersonation for middleware-authenticated users
+            var middlewarePrincipal = Context.User;
+            var authenticatedEmail = Context.User.FindFirstValue(ClaimTypes.Email);
+            
+            // Strip identity provider prefix if present (e.g., "securetoken.google.com/project/tenant:email@domain.com" -> "email@domain.com")
+            if (authenticatedEmail?.Contains(':') == true)
             {
-                var userIdentity = Context.User.Identity as ClaimsIdentity;
-                foreach (var claim in bearerPrincipal.Claims)
+                authenticatedEmail = authenticatedEmail.Split(':').Last();
+                _logger.LogDebug("🔍 [MIDDLEWARE-AUTH] Stripped email prefix, using: {Email}", authenticatedEmail);
+            }
+            
+            if (Options.EnableImpersonation && 
+                Request.Headers.TryGetValue(Options.ImpersonationHeaderName, out var middlewareImpersonatedEmailValues))
+            {
+                var middlewareImpersonatedEmail = middlewareImpersonatedEmailValues.ToString()?.Trim();
+                _logger.LogInformation("🔍 [MIDDLEWARE-IMPERSONATION] Impersonation header found: {ImpersonatedEmail}", middlewareImpersonatedEmail);
+                
+                if (!string.IsNullOrEmpty(middlewareImpersonatedEmail) && middlewareImpersonatedEmail != authenticatedEmail)
                 {
-                    if (!userIdentity.HasClaim(c => c.Type == claim.Type && c.Value == claim.Value))
+                    // Check if authenticated user is trusted
+                    bool isTrusted = Options.TrustedServiceAccounts?.Any(sa => 
+                        sa.Equals(authenticatedEmail, StringComparison.OrdinalIgnoreCase)) == true;
+                    
+                    if (isTrusted)
                     {
-                        userIdentity.AddClaim(claim);
+                        _logger.LogInformation("🔄 [MIDDLEWARE-IMPERSONATION] Trusted service account {AuthUser} requesting impersonation of {TargetUser}", 
+                            authenticatedEmail, middlewareImpersonatedEmail);
+                        
+                        // Look up the impersonated user
+                        var middlewareNormalizedEmail = _userManager.NormalizeEmail(middlewareImpersonatedEmail);
+                        var middlewareImpersonatedUser = await _userManager.Users
+                            .FirstOrDefaultAsync(u => u.NormalizedEmail == middlewareNormalizedEmail);
+                        
+                        if (middlewareImpersonatedUser != null)
+                        {
+                            // Get impersonated user's roles and claims
+                            var middlewareUserRoles = await _userManager.GetRolesAsync(middlewareImpersonatedUser);
+                            var middlewareUserClaims = await _userManager.GetClaimsAsync(middlewareImpersonatedUser);
+                            
+                            _logger.LogInformation("✅ [MIDDLEWARE-IMPERSONATION] Successfully impersonating {ImpersonatedUser}. Roles: {Roles}",
+                                middlewareImpersonatedEmail, string.Join(", ", middlewareUserRoles));
+                            
+                            // Create new identity with impersonated user's information
+                            var middlewareImpersonatedIdentity = new ClaimsIdentity(middlewareUserClaims, "IAP", ClaimTypes.Name, ClaimTypes.Role);
+                            
+                            // Add essential claims
+                            if (!middlewareImpersonatedIdentity.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
+                                middlewareImpersonatedIdentity.AddClaim(new Claim(ClaimTypes.NameIdentifier, middlewareImpersonatedUser.Id.ToString()));
+                            
+                            if (!middlewareImpersonatedIdentity.HasClaim(c => c.Type == ClaimTypes.Name))
+                                middlewareImpersonatedIdentity.AddClaim(new Claim(ClaimTypes.Name, middlewareImpersonatedUser.UserName ?? middlewareImpersonatedUser.Email ?? ""));
+                            
+                            if (!middlewareImpersonatedIdentity.HasClaim(c => c.Type == ClaimTypes.Email))
+                                middlewareImpersonatedIdentity.AddClaim(new Claim(ClaimTypes.Email, middlewareImpersonatedUser.Email ?? ""));
+                            
+                            if (!middlewareImpersonatedIdentity.HasClaim(c => c.Type == "IsInternal"))
+                                middlewareImpersonatedIdentity.AddClaim(new Claim("IsInternal", middlewareImpersonatedUser.IsInternal.ToString()));
+                            
+                            // Add role claims
+                            foreach (var role in middlewareUserRoles)
+                            {
+                                if (!middlewareImpersonatedIdentity.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == role))
+                                    middlewareImpersonatedIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
+                            }
+                            
+                            // Add impersonation audit claims
+                            middlewareImpersonatedIdentity.AddClaim(new Claim("IsImpersonating", "true"));
+                            middlewareImpersonatedIdentity.AddClaim(new Claim("AuthenticatedServiceAccount", authenticatedEmail ?? ""));
+                            middlewareImpersonatedIdentity.AddClaim(new Claim("ImpersonatedUser", middlewareImpersonatedEmail));
+                            middlewareImpersonatedIdentity.AddClaim(new Claim("iap-jwt-verified", "true"));
+                            
+                            middlewarePrincipal = new ClaimsPrincipal(middlewareImpersonatedIdentity);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("⚠️ [MIDDLEWARE-IMPERSONATION] Impersonated user not found: {ImpersonatedEmail} (normalized: {NormalizedEmail})", 
+                                middlewareImpersonatedEmail, middlewareNormalizedEmail);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("🚫 [MIDDLEWARE-IMPERSONATION] User {UserEmail} is not in trusted service accounts list. Impersonation denied.",
+                            authenticatedEmail);
                     }
                 }
             }
-            return AuthenticateResult.Success(new AuthenticationTicket(Context.User, Scheme.Name));
+            
+            // If we have a valid Bearer token, merge its claims
+            if (bearerPrincipal != null)
+            {
+                var userIdentity = middlewarePrincipal.Identity as ClaimsIdentity;
+                if (userIdentity != null)
+                {
+                    foreach (var claim in bearerPrincipal.Claims)
+                    {
+                        if (!userIdentity.HasClaim(c => c.Type == claim.Type && c.Value == claim.Value))
+                        {
+                            userIdentity.AddClaim(claim);
+                        }
+                    }
+                }
+            }
+            
+            return AuthenticateResult.Success(new AuthenticationTicket(middlewarePrincipal, Scheme.Name));
         }
 
         // Validate IAP JWT if required
@@ -148,14 +243,26 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             if (env?.IsDevelopment() == true && 
                 config?.GetValue<bool>("Development:IAPSimulation:Enabled", false) == true)
             {
-                // Look for dev auth cookie
+                // Look for dev auth cookie first
                 if (Request.Cookies.TryGetValue("DevIAPAuth", out var emailFromCookie) && !string.IsNullOrEmpty(emailFromCookie))
                 {
                     userEmailValues = new Microsoft.Extensions.Primitives.StringValues(emailFromCookie);
+                    _logger.LogDebug("Using email from DevIAPAuth cookie: {Email}", emailFromCookie);
                 }
                 else
                 {
-                    return AuthenticateResult.NoResult();
+                    // Fall back to configured UserEmail for dev simulation
+                    var configuredDevEmail = config?.GetValue<string>("Development:IAPSimulation:UserEmail");
+                    if (!string.IsNullOrEmpty(configuredDevEmail))
+                    {
+                        userEmailValues = new Microsoft.Extensions.Primitives.StringValues(configuredDevEmail);
+                        _logger.LogInformation("🔧 [DEV-MODE] Using configured development user: {Email}", configuredDevEmail);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Development IAP simulation enabled but no UserEmail configured and no cookie found");
+                        return AuthenticateResult.NoResult();
+                    }
                 }
             }
             else
@@ -173,6 +280,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         
     ProcessUser:
         // Find or create user based on Google identity
+        _logger.LogInformation("🔍 [AUTH] Looking up user by email: {Email}", userEmail);
         var user = await _userManager.FindByEmailAsync(userEmail);
         if (user == null)
         {
@@ -242,25 +350,122 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         // Process IAP groups if available
         await ProcessGroupsAsync(user);
 
-        // Get user roles and claims
-        var roles = await _userManager.GetRolesAsync(user);
-        var claims = await _userManager.GetClaimsAsync(user);
+        // Log authenticated user details before impersonation
+        var authenticatedUserRoles = await _userManager.GetRolesAsync(user);
+        _logger.LogInformation("🔍 [AUTH] Authenticated user: {Email}, Roles: {Roles}", 
+            user.Email, string.Join(", ", authenticatedUserRoles));
+
+        // Handle user impersonation if enabled and requested
+        PAOIdentityUser effectiveUser = user;
+        string authenticatedUserEmail = user.Email;
+        bool isImpersonating = false;
+        
+        // Diagnostic logging for impersonation setup
+        _logger.LogInformation("🔍 [IMPERSONATION-CHECK] EnableImpersonation={EnableImpersonation}, HeaderName={HeaderName}, AuthenticatedUser={AuthUser}", 
+            Options.EnableImpersonation, Options.ImpersonationHeaderName, user.Email);
+        _logger.LogInformation("🔍 [IMPERSONATION-CHECK] Request headers: {Headers}", 
+            string.Join(", ", Request.Headers.Select(h => $"{h.Key}={h.Value.ToString().Substring(0, Math.Min(50, h.Value.ToString().Length))}")));
+        
+        if (Options.EnableImpersonation && 
+            Request.Headers.TryGetValue(Options.ImpersonationHeaderName, out var impersonatedEmailValues))
+        {
+            _logger.LogInformation("🔍 [IMPERSONATION-CHECK] Found impersonation header: {HeaderValue}", impersonatedEmailValues.ToString());
+            var impersonatedEmail = impersonatedEmailValues.ToString()?.Trim();
+            
+            if (!string.IsNullOrEmpty(impersonatedEmail) && impersonatedEmail != user.Email)
+            {
+                // Check if user is trusted to impersonate
+                bool isTrusted = Options.TrustedServiceAccounts?.Any(sa => sa.Equals(user.Email, StringComparison.OrdinalIgnoreCase)) == true;
+                
+                // In development mode, also trust the configured dev user for testing
+                var devEnv = Context.RequestServices.GetService(typeof(IWebHostEnvironment)) as IWebHostEnvironment;
+                var devConfig = Context.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
+                if (devEnv?.IsDevelopment() == true)
+                {
+                    var configuredDevEmail = devConfig?.GetValue<string>("Development:IAPSimulation:UserEmail");
+                    if (!string.IsNullOrEmpty(configuredDevEmail) && 
+                        configuredDevEmail.Equals(user.Email, StringComparison.OrdinalIgnoreCase))
+                    {
+                        isTrusted = true;
+                        _logger.LogDebug("🔧 [DEV-MODE] Allowing impersonation for configured dev user: {Email}", configuredDevEmail);
+                    }
+                }
+                
+                if (isTrusted)
+                {
+                    _logger.LogInformation("🔄 [IMPERSONATION] {AuthUser} requesting impersonation of {TargetUser}", 
+                        user.Email, impersonatedEmail);
+                    
+                    // Look up the impersonated user (normalize email to ensure case-insensitive lookup)
+                    var normalizedEmail = _userManager.NormalizeEmail(impersonatedEmail);
+                    _logger.LogDebug("🔍 [IMPERSONATION-DEBUG] Looking up user: Original={OriginalEmail}, Normalized={NormalizedEmail}", 
+                        impersonatedEmail, normalizedEmail);
+                    
+                    var impersonatedUser = await _userManager.Users
+                        .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
+                    
+                    if (impersonatedUser != null)
+                    {
+                        effectiveUser = impersonatedUser;
+                        isImpersonating = true;
+                        var impersonatedUserRoles = await _userManager.GetRolesAsync(impersonatedUser);
+                        _logger.LogInformation("✅ [IMPERSONATION] Successfully impersonating {ImpersonatedUser} (authenticated as {AuthUser}). Impersonated user has roles: {Roles}",
+                            impersonatedEmail, authenticatedUserEmail, string.Join(", ", impersonatedUserRoles));
+                    }
+                    else
+                    {
+                        var serviceAccountRoles = await _userManager.GetRolesAsync(user);
+                        _logger.LogWarning("⚠️ [IMPERSONATION] Impersonated user not found: {ImpersonatedEmail} (normalized: {NormalizedEmail}). Proceeding with service account '{ServiceAccount}' which has roles: {Roles}", 
+                            impersonatedEmail, normalizedEmail, user.Email, string.Join(", ", serviceAccountRoles));
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("🚫 [IMPERSONATION] User {UserEmail} is not in trusted service accounts list. Impersonation denied.",
+                        user.Email);
+                }
+            }
+            else
+            {
+                _logger.LogInformation("🔍 [IMPERSONATION-CHECK] Impersonation header present but empty or same as authenticated user: {ImpersonatedEmail} vs {AuthUser}", 
+                    impersonatedEmail, user.Email);
+            }
+        }
+        else
+        {
+            _logger.LogInformation("🔍 [IMPERSONATION-CHECK] Impersonation not attempted. EnableImpersonation={EnableImpersonation}, HeaderPresent={HeaderPresent}", 
+                Options.EnableImpersonation, Request.Headers.ContainsKey(Options.ImpersonationHeaderName ?? ""));
+        }
+
+        // Get user roles and claims from the effective user (impersonated or original)
+        var roles = await _userManager.GetRolesAsync(effectiveUser);
+        var claims = await _userManager.GetClaimsAsync(effectiveUser);
         
         // Create identity with explicit authentication type
         var identity = new ClaimsIdentity(claims, "IAP", ClaimTypes.Name, ClaimTypes.Role);
         
-        // Make sure all essential claims are present
+        // Make sure all essential claims are present (use effectiveUser for permissions)
         if (!identity.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
-            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, effectiveUser.Id.ToString()));
         
         if (!identity.HasClaim(c => c.Type == ClaimTypes.Name))
-            identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
+            identity.AddClaim(new Claim(ClaimTypes.Name, effectiveUser.UserName));
         
         if (!identity.HasClaim(c => c.Type == ClaimTypes.Email))
-            identity.AddClaim(new Claim(ClaimTypes.Email, user.Email));
+            identity.AddClaim(new Claim(ClaimTypes.Email, effectiveUser.Email));
         
         if (!identity.HasClaim(c => c.Type == "IsInternal"))
-            identity.AddClaim(new Claim("IsInternal", user.IsInternal.ToString()));
+            identity.AddClaim(new Claim("IsInternal", effectiveUser.IsInternal.ToString()));
+        
+        // Add impersonation audit claims if applicable
+        if (isImpersonating)
+        {
+            identity.AddClaim(new Claim("IsImpersonating", "true"));
+            identity.AddClaim(new Claim("AuthenticatedServiceAccount", authenticatedUserEmail));
+            identity.AddClaim(new Claim("ImpersonatedUser", effectiveUser.Email));
+            _logger.LogInformation("🔐 [IMPERSONATION-AUDIT] Request authenticated as {ServiceAccount}, acting as {ImpersonatedUser}",
+                authenticatedUserEmail, effectiveUser.Email);
+        }
         
         // Add IAPAuthenticated claim if not present
         if (!claims.Any(c => c.Type == "IAPAuthenticated"))
@@ -300,8 +505,8 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         if (hostEnv?.IsDevelopment() == true && 
             appConfig?.GetValue<bool>("Development:IAPSimulation:Enabled", false) == true)
         {
-            // Set a dev auth cookie to persist authentication
-            Response.Cookies.Append("DevIAPAuth", userEmail, new Microsoft.AspNetCore.Http.CookieOptions
+            // Set a dev auth cookie to persist authentication (use effective user for consistency)
+            Response.Cookies.Append("DevIAPAuth", effectiveUser.Email, new Microsoft.AspNetCore.Http.CookieOptions
             {
                 HttpOnly = true,
                 Secure = Request.IsHttps,
@@ -779,4 +984,9 @@ public class IAPAuthenticationOptions : AuthenticationSchemeOptions
     
     // Map IAP group names to roles (e.g., unops-admins -> Administrator)
     public Dictionary<string, string> ExternalGroupMappings { get; set; } = new();
+    
+    // User impersonation settings
+    public bool EnableImpersonation { get; set; } = false;
+    public List<string> TrustedServiceAccounts { get; set; } = new();
+    public string ImpersonationHeaderName { get; set; } = "x-unops-impersonated-user";
 } 

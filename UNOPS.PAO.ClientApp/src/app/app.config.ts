@@ -31,20 +31,20 @@ import { SecurityContext } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ConfirmationService } from 'primeng/api';
-import { FeedbackDialogService } from './common/pages/services/feedback-dialog.service';
-import { authInterceptor } from './essentials/interceptors/auth.interceptor';
-import { serverErrorInterceptor } from './essentials/interceptors/server-error.interceptor';
-import { AuthService } from './essentials/services/auth.service';
-import { ConfigurationService } from './essentials/services/configuration.service';
-import { HasPermissionDirective } from './essentials/directives/has-permission.directive';
-import { PermissionService } from './essentials/services/permission.service';
-import { LanguageService } from './common/services/language.service';
+import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { authInterceptor } from '@core/interceptors/auth.interceptor';
+import { serverErrorInterceptor } from '@core/interceptors/server-error.interceptor';
+import { AuthService } from '@core/services/auth.service';
+import { ConfigurationService } from '@core/services/configuration.service';
+import { HasPermissionDirective } from '@core/directives/has-permission.directive';
+import { PermissionService } from '@core/services/permission.service';
+import { LanguageService } from '@shared/services/language.service';
 
 /******* PrimeNG specifc imports *********/
 import { providePrimeNG } from 'primeng/config';
 //TODO: JW- remove this import
 //  import Aura from '@primeng/themes/aura';
-import UnopsPreset from './common/themes/unops.preset';
+import UnopsPreset from '@shared/themes/unops.preset';
 import { routes } from './app.routes';
 
 /********************************/
@@ -118,7 +118,6 @@ export const appConfig: ApplicationConfig = {
       theme: {
         preset: UnopsPreset,
         options: {
-          darkModeSelector: '.app-dark',
           ripple: true,
           animations: true,
           typography: true,
@@ -131,6 +130,8 @@ export const appConfig: ApplicationConfig = {
           zIndex: true,
           rtl: false,
           ltr: true,
+          colorScheme: 'light',
+          darkModeSelector: '.fake-dark-mode',
         },
       },
     }),

@@ -1022,12 +1022,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             // Upload the file to Google Cloud Storage
             var fileName = $"partners/{partnerId}/logo_{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             var publicUrl = await GoogleCloudStorageService.UploadFileAsync(file, fileName);
-            
+
             // Update the entity with the logo URL
             entity.LogoUrl = publicUrl;
             await PartnerRepository.UpdateAsync(entity);
-            
-            return publicUrl;
+
+            return await GoogleCloudStorageService.GenerateSignedUrlFromStorageUrl(publicUrl);
         }
         catch (Exception ex)
         {
@@ -1466,8 +1466,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return false;
         }
 
-        // Load organization unit relationships for single partner
-        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
+        // Soft delete associated OrganizationUnitRelationship records
+        await SoftDeleteOrganizationUnitRelationshipsAsync(id, "Partner");
 
         await PartnerRepository.Delete(entity);
         return true;
@@ -1665,6 +1665,9 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         if (entity != null)
         {
+            // Soft delete associated OrganizationUnitRelationship records
+            await SoftDeleteOrganizationUnitRelationshipsAsync(id, "Partner");
+            
             await PartnerRepository.Delete(entity);
         }
     }
@@ -1986,6 +1989,36 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return await MapEntityToModelWithPermissionsAsync(model, user, entity);
     }
 
+    /// <summary>
+    /// Unapproves an approved partner (Admin only) - unlocks data fields and records unapproval audit trail
+    /// </summary>
+    public async Task<PartnerModel?> UnapprovePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request)
+    {
+        var entity = await PartnerRepository.GetByIdAsync(id, ["LiaisonOffice"]);
+        if (entity == null)
+            return null;
+
+        // Check if user has admin permissions for unapproval
+        var userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+        if (!userRoles.Contains("PARTNER_GLOB_ADMIN"))
+        {
+            throw new UnauthorizedAccessException("Only Partnership Global Administrators can unapprove partners.");
+        }
+
+        // Get user information for audit trail
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+        var userName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown Admin";
+
+        // Now unapprove the partner (this sets the approval status and audit trail)
+        entity.UnapprovePartner(int.Parse(userId), userName);
+        await PartnerRepository.UpdateAsync(entity);
+        
+        // Load relationships and return updated model
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
+        var model = await MapEntityToModelAsync(entity, _mapper, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user, entity);
+    }
+
     #endregion
 
     #region Partner Related Data Methods
@@ -2194,6 +2227,28 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             _logger?.LogWarning(ex, "Error filtering accessible partners, returning empty list");
             return new List<UNOPSPartner>();
         }
+    }
+
+    /// <summary>
+    /// Soft deletes OrganizationUnitRelationship records for a given entity
+    /// </summary>
+    private async Task SoftDeleteOrganizationUnitRelationshipsAsync(int entityId, string entityType)
+    {
+        var relationships = await _context.OrganizationUnitRelationships
+            .Where(r => r.EntityId == entityId && r.EntityType == entityType && !r.IsDeleted)
+            .ToListAsync();
+
+        // Get current user ID from claims
+        var currentUser = GetCurrentUserOrSystemContext();
+        var userIdClaim = currentUser?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = int.TryParse(userIdClaim, out var id) ? id : 0;
+
+        foreach (var relationship in relationships)
+        {
+            relationship.SetDeleteAuditData(userId);
+        }
+
+        await _context.SaveChangesAsync();
     }
 
 }

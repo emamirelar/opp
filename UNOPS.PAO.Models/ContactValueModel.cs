@@ -11,6 +11,7 @@ public class ContactValueModel
     public string Email { get; set; }
     public string? Phone { get; set; }
     public int? PartnerId { get; set; }
+    public PartnerValueModel Partner { get; set; }
     public string Name => string.Join(" ", new[]
     {
         Salutation,

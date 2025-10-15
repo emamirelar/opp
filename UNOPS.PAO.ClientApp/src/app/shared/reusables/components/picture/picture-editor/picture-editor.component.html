@@ -1,0 +1,68 @@
+<div class="flex flex-col gap-6">
+  <!-- Loader overlay -->
+  <div class="flex flex-col items-center justify-center gap-4 relative min-h-[400px]" [ngClass]="isProcessing || isUploading() ? 'opacity-50' : ''">
+    @if (isProcessing || isUploading()) {
+      <div class="absolute z-10 flex flex-col items-center bg-white px-6 py-4 rounded-lg shadow-lg">
+        @if (isUploading() && uploadProgress() > 0) {
+          <div class="mt-2 text-sm font-medium">{{ 'label.pictureEditor.uploadProgress' | translate: {progress: uploadProgress()} }}</div>
+        } @else if (isProcessing) {
+          <div class="mt-2 text-sm font-medium">{{ 'label.pictureEditor.loadingImage' | translate }}</div>
+        }
+      </div>
+    }
+
+    <!-- Main editing area -->
+    <div class="flex flex-col gap-4 w-full">
+      <!-- Drop zone when no image is selected -->
+      @if (!imageChangedEvent) {
+        <div class="flex flex-col items-center justify-center w-full min-h-[400px] rounded-lg transition-all duration-200"
+            [ngClass]="isDraggingOver ? 'bg-blue-50 border-2 border-dashed border-blue-400 ring-2 ring-blue-300' : 'bg-gray-100'"
+            (dragenter)="handleDragEnter($event)"
+            (dragover)="$event.preventDefault()"
+            (dragleave)="handleDragLeave($event)"
+            (drop)="handleDrop($event)">
+          <i class="pi pi-image text-6xl text-gray-600"></i>
+          <p>{{ 'label.pictureEditor.dropImageHere' | translate }}</p>
+
+          <!-- File upload area -->
+          <p-fileUpload
+            mode="basic"
+            name="profile"
+            [auto]="true"
+            [customUpload]="true"
+            [showUploadButton]="false"
+            [showCancelButton]="false"
+            accept="image/*"
+            chooseIcon="pi pi-upload"
+            [chooseLabel]="'button.chooseImage' | translate"
+            (uploadHandler)="handleFileUpload($event)"
+            >
+          </p-fileUpload>
+        </div>
+      }
+
+      <!-- Image cropper when image is loaded -->
+      @if (imageChangedEvent) {
+        <div class="flex flex-col gap-4 overflow-auto">
+          <image-cropper
+              [imageChangedEvent]="imageChangedEvent"
+              [imageBase64]="imageBase64!"
+              [maintainAspectRatio]="true"
+              [aspectRatio]="1"
+              [resizeToWidth]="200"
+              [roundCropper]="true"
+              format="png"
+              (imageCropped)="imageCropped($event)"
+              (imageLoaded)="imageLoaded()"
+              (cropperReady)="cropperReady()"
+              (loadImageFailed)="loadImageFailed()">
+          </image-cropper>
+        </div>
+      }
+    </div>
+  </div>
+      <div class="flex w-full gap-2 justify-end">
+          <p-button [label]="'button.cancel' | translate" rounded icon="pi pi-times" (onClick)="hide()" styleClass="p-button-secondary" [text]="true"></p-button>
+          <p-button [label]="'button.save' | translate" rounded icon="pi pi-check" (onClick)="applyChanges()" [disabled]="!croppedImage || isUploading()"></p-button>
+      </div>
+</div>

@@ -1,0 +1,262 @@
+{
+    "title": "what do we know about this partner",
+    "status": "Active",
+    "starred": false,
+    "archived": false,
+    "screen_url": "/partnerships/partners/443",
+    "user_email": "tushard@unops.org",
+    "url_section": "",
+    "user_profile": {
+        "Roles": [
+            "UNOPS_GEN_USER",
+            "PARTNER_GLOB_ADMIN"
+        ],
+        "CanManageOffice": true,
+        "UserPreferences": {
+            "Id": 10,
+            "Name": "UserPreferences_55050",
+            "Status": 0,
+            "UserId": 55050,
+            "CreatedBy": 55050,
+            "DeletedBy": 0,
+            "IsDeleted": false,
+            "CreatedDate": "2025-09-26T08:33:57.720725Z",
+            "DeletedDate": null,
+            "UserProfile": null,
+            "GlobalFilters": {
+                "Theme": "light",
+                "DateOn": null,
+                "DateTo": null,
+                "DateFrom": null,
+                "OrgUnitId": null,
+                "OrgUnitName": null,
+                "RelatedToMe": false,
+                "ActivityTimeframe": "all",
+                "PreferredLanguage": "en"
+            },
+            "LastModifiedBy": 55050,
+            "GlobalFilterJson": "{\"OrgUnitId\":null,\"OrgUnitName\":null,\"RelatedToMe\":false,\"DateOn\":null,\"DateFrom\":null,\"DateTo\":null,\"PreferredLanguage\":\"en\",\"Theme\":\"light\",\"ActivityTimeframe\":\"all\"}",
+            "LastModifiedDate": "2025-10-02T07:40:20.968188Z",
+            "AdditionalSettingsJson": null
+        },
+        "IsPartnerGlobalAdmin": true,
+        "userInfoWithOrgSettings": {
+            "Name": "Tushar DIGHE",
+            "UserId": 55050,
+            "OrgUnit": "B0009",
+            "LastName": "DIGHE",
+            "Position": "Chief Information Officer",
+            "FirstName": "Tushar",
+            "UserEmail": "TusharD@unops.org",
+            "DutyStation": "Copenhagen - Denmark",
+            "SupervisorId": 233132,
+            "SupervisorName": "Sonja Siobhan LEIGHTON-KONE",
+            "SupervisorEmail": "SonjaLK@unops.org",
+            "OrgUnitDescription": "MP, ITG, IT Group",
+            "IsSelfManagementEnabled": false
+        }
+    },
+    "url_entity_id": "",
+    "screen_context": {
+        "screen_url": "/partnerships/partners/443",
+        "screen_data": {
+            "entity": "Partner",
+            "entity_id": null,
+            "view_type": "list",
+            "detected_entity": "Partner",
+            "parsed_from_state": "/partnerships/partners/443",
+            "intelligent_context": true
+        },
+        "screen_name": "Partner List",
+        "screen_type": "entity_list_page",
+        "entity_details": null,
+        "entity_in_focus": "Partner",
+        "recommendations": [
+            "User is focusing on this context - prioritize this entity in responses"
+        ],
+        "entity_id_in_focus": null,
+        "focus_relationship": "same",
+        "original_screen_url": "/partnerships/partners/443",
+        "original_user_focus_context": "",
+        "resolved_user_focus_context": "/partnerships/partners/443"
+    },
+    "user_geo_stats": {
+        "location": {
+            "isp": "TDC Holding A/S",
+            "city": "Holte",
+            "region": "Capital Region",
+            "status": "success",
+            "country": "Denmark",
+            "latitude": 55.8214,
+            "query_ip": "80.160.124.39",
+            "timezone": "Europe/Copenhagen",
+            "longitude": 12.4802,
+            "country_code": "DK"
+        },
+        "cache_info": {
+            "cached": false,
+            "generated_for_ip": "server_default"
+        },
+        "generated_at": "2025-10-05T18:37:36.238062Z",
+        "current_datetime": "2025-10-05T18:37:36.2380620Z",
+        "current_timestamp_utc": 1759689456
+    },
+    "aiGenerateTitle": true,
+    "url_entity_type": "",
+    "url_query_params": "",
+    "page_context_auto": {
+        "route": {
+            "url": "/partnerships/partners/443",
+            "path": "/partnerships/partners/443",
+            "params": {
+                "recordId": "443"
+            },
+            "queryParams": {}
+        },
+        "extracted_at": "2025-10-05T18:37:55.72Z",
+        "component_data": {
+            "isAdmin": true,
+            "recordId": "443",
+            "destroyRef": {},
+            "formatDate": "Not available",
+            "recordData": {
+                "id": 443,
+                "name": "The World Bank",
+                "tags": [
+                    {
+                        "tag": "[Max depth reached]",
+                        "color": "[Max depth reached]"
+                    },
+                    {
+                        "tag": "[Max depth reached]",
+                        "color": "[Max depth reached]"
+                    }
+                ],
+                "status": "Active",
+                "logoUrl": "https://logo.clearbit.com/worldbank.org",
+                "contacts": [],
+                "createdBy": 0,
+                "documents": [],
+                "uniqueKey": "b11974bb-3e00-4b18-9b7f-e308795971ea",
+                "partnerKey": "2e8cb5fa-b80e-4745-9abb-db14d82eb0d2",
+                "pooledFund": false,
+                "createdDate": "2025-09-26T18:45:00.992975Z",
+                "erpDimValue": 1646,
+                "permissions": {
+                    "notes": null,
+                    "canRead": true,
+                    "canClose": false,
+                    "canCreate": true,
+                    "canDelete": false,
+                    "canExport": true,
+                    "canImport": true,
+                    "canUpdate": true,
+                    "canApprove": false,
+                    "canArchive": false,
+                    "canActivate": false,
+                    "canEditFields": null,
+                    "permissionSource": null
+                },
+                "interactions": null,
+                "createdByName": null,
+                "levyTreatment": "N/A",
+                "reasonForLevy": "3d) International Financial Institution",
+                "lastModifiedBy": 0,
+                "partnerGroupId": 96,
+                "partnerOrgUnit": "",
+                "partnerTypeKey": "1b346bd1-96fe-4424-9ce2-ce419d929285",
+                "liaisonOfficeId": 3,
+                "keyGlobalPartner": true,
+                "lastModifiedDate": "2025-09-26T18:45:00.992975Z",
+                "partnerGroupCode": "WBG",
+                "partnerGroupName": "WBG World Bank Group",
+                "unAndStateEntity": false,
+                "liaisonOfficeName": "Washington Liaison Office",
+                "partnerCategoryId": 9,
+                "partnerLevyStatus": "DoesNotApply",
+                "lastModifiedByName": null,
+                "partnerCategoryKey": "ba09990b-4eda-42cf-9a99-d1159d1e3f67",
+                "partnerApprovalDate": "2025-09-26T18:45:00.363716Z",
+                "partnerCategoryCode": "IFI",
+                "partnerCategoryName": "IFI International Financial Institutions",
+                "dueDiligenceApproval": "NotApproved",
+                "dueDiligenceRequired": "Required",
+                "first5ContactsByDate": [],
+                "unSecretariatPartner": false,
+                "partnerApprovalStatus": "Approved",
+                "partnerFocalPointName": "Christine BOWERS",
+                "dueDiligenceExpiryDate": null,
+                "partnerLongDescription": null,
+                "partnerFocalPointUserId": 226953,
+                "partnerShortDescription": "WB",
+                "dueDiligenceApprovalDate": null,
+                "partnerApprovalReference": null,
+                "canCreateNewOpportunities": true,
+                "partnerFocalPointUserName": "ChristineBO@unops.org",
+                "reasonForNoNewOpportunity": "",
+                "partnerCategoryInternalKey": "d9b9bd84-77f1-4279-9a5e-c89862c230e2",
+                "organizationUnitRelationships": []
+            },
+            "infoLoading": false,
+            "widthTracker": {
+                "nativeElement": "[Angular Component]"
+            },
+            "canEditPartner": true,
+            "componentWidth": 505.203125,
+            "resizeObserver": {},
+            "gdriveComponent": "[Angular Component]",
+            "permissionUtils": {
+                "loadPermissions": "(entityId, cdr) => {\n if (!entityId)\n return;\n this.permissionService.clearPermissionCaches();\n this.permissionService.getEntityInstancePermissions(entityName, entityId).subscribe({\n next: (permissions) => {\n recordPermissions.set(permissions);\n cdr?.detectChanges();\n },\n error: (error) => {\n console.error(`Error loading ${entityName} instance permissions:`, error);\n recordPermissions.set({\n entity: entityName,\n hasAccess: false,\n permissions: {\n canRead: false,\n canCreate: false,\n canUpdate: false,\n canDelete: false,\n canExport: false,\n canImport: false\n }\n });\n cdr?.detectChanges();\n }\n });\n }",
+                "recordPermissions": "[Signal: [object Object]]"
+            },
+            "showFullContent": false,
+            "documentComponent": "[Angular Component]",
+            "entityTypePartner": "Partner",
+            "linkListComponent": "[Angular Component]",
+            "partnerIdAsNumber": 443,
+            "recordPermissions": {
+                "entity": "Partner",
+                "hasAccess": true,
+                "permissions": {
+                    "notes": null,
+                    "canRead": true,
+                    "canClose": false,
+                    "canCreate": true,
+                    "canDelete": false,
+                    "canExport": true,
+                    "canImport": true,
+                    "canUpdate": true,
+                    "canApprove": false,
+                    "canArchive": false,
+                    "canActivate": false,
+                    "canEditFields": null,
+                    "permissionSource": null
+                }
+            },
+            "showCommentDialog": false,
+            "showAdditionalInfo": true,
+            "langChangeSubscription": {
+                "closed": false
+            },
+            "onRecordCreationSuccess": {
+                "destroyed": false,
+                "listeners": null,
+                "destroyRef": {}
+            },
+            "responsiveLayoutClasses": {
+                "container": "flex flex-col gap-8",
+                "leftColumn": "flex flex-col gap-8 h-full w-full",
+                "mainLayout": "flex flex-col gap-8",
+                "rightColumn": "w-full flex flex-col gap-8"
+            },
+            "shouldShowSeeLessButton": false,
+            "shouldShowSeeMoreButton": true,
+            "showValidationFailedError": false,
+            "acceptedMiMIETypesForgDrive": "application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet"
+        },
+        "component_name": "_PartnerViewComponent"
+    },
+    "global_org_unit_id": null,
+    "user_focus_context": "",
+    "global_filter_enabled": false
+}

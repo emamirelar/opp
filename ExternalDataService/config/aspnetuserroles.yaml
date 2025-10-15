@@ -1,0 +1,71 @@
+metadata:
+  name: "ASPNetUserRoles Sync"
+  description: "ASPNetUserRoles data sync"
+  version: "1.0"
+  enabled: true
+  max_retry_attempts: 1
+  timeout_minutes: 5
+
+source:
+  type: "bigquery"
+  
+  query: |
+    SELECT DISTINCT
+      PARSE_NUMERIC(Resource) as UserId
+      , 1 as RoleId
+    FROM
+      unopsreporting.Employment.People_Search_Report
+    WHERE
+      Effective_Date = CURRENT_DATE()
+      AND Employment_Status = 'N'
+      AND Employment_Type IN ('OPSSTAFF', 'OPSNONSTAFF')
+      AND UPPER(Resource_Email_Address_Primary) LIKE '%UNOPS.ORG'
+      QUALIFY ROW_NUMBER() OVER (
+          PARTITION BY PARSE_NUMERIC(Resource)
+          ORDER BY Resource_Email_Address_Primary
+        ) = 1;
+  
+  primary_key_field: "UserId"
+  batch_size: 1000
+
+destination:
+  table_name: "AspNetUserRoles"
+  schema: "public"
+  manage_table_structure: false  # Only validate, don't create/alter
+  add_standard_fields: false
+  
+  # Composite unique key: The combination of UserId + RoleId must be unique
+  composite_unique_keys:
+    - fields:
+        - "UserId"
+        - "RoleId"
+      index_name: "PK_AspNetUserRoles"
+  
+  field_mappings:
+    - source_field: "UserId"
+      destination_field: "UserId"
+      data_type: "integer"
+      is_required: true
+
+    - source_field: "RoleId"
+      destination_field: "RoleId"
+      data_type: "integer"
+      is_required: true
+
+sync_options:
+  sync_mode: InsertOnly
+  batch_processing: true
+
+validation:
+  required_source_fields:
+    - "UserId"
+    - "RoleId"
+  
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+
+logging:
+  log_level: "Debug"
+  log_sql_queries: true
+  log_record_details: true

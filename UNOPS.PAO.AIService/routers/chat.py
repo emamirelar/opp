@@ -7,7 +7,8 @@ extracted from main.py for better organization.
 
 import logging
 import uuid
-from typing import List, Any
+import json
+from typing import List, Any, Dict, Union
 from fastapi import APIRouter, HTTPException, Request, Form, File, UploadFile
 from fastapi.responses import StreamingResponse, FileResponse
 from google.adk.agents import RunConfig
@@ -17,7 +18,7 @@ from google.adk.sessions import DatabaseSessionService
 from google.genai import types
 from pydantic import BaseModel
 
-from ai_assistant.utils.config import get_database_url
+from ai_assistant.utils.config import get_database_url, get_config
 from ai_assistant.utils.session_management import get_or_create_session, parse_request_state
 from ai_assistant.utils.iap_validation import validate_iap_headers, extract_iap_headers_for_forwarding
 
@@ -25,6 +26,125 @@ logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter()
+
+
+async def translate_thought_to_non_technical(event_json_str: str) -> str:
+    """
+    Check if the SSE event is a thought and translate it to non-technical language.
+    
+    Args:
+        event_json_str: JSON string of the SSE event
+        
+    Returns:
+        JSON string of the event (modified if it was a thought, original otherwise)
+    """
+    try:
+        # Parse the event
+        event_data = json.loads(event_json_str)
+        
+        # Check if this is a thought event
+        content = event_data.get('content', {})
+        parts = content.get('parts', [])
+        
+        # Look for a thought part
+        thought_found = False
+        for part in parts:
+            if isinstance(part, dict) and part.get('thought', False):
+                thought_found = True
+                original_text = part.get('text', '')
+                
+                if original_text:
+                    # Translate the thought to non-technical language
+                    translated_text = await _translate_with_gemini(original_text)
+                    
+                    # Update the text in the event
+                    part['text'] = translated_text
+                    logger.info(f"Translated thought: {original_text[:50]}... -> {translated_text[:50]}...")
+                    
+        # Return the modified event as JSON string
+        return json.dumps(event_data)
+        
+    except Exception as e:
+        logger.error(f"Error translating thought: {e}")
+        # Return original event if translation fails
+        return event_json_str
+
+
+async def _translate_with_gemini(thought_text: str) -> str:
+    """
+    Use Gemini to translate technical thought text to non-technical language.
+    
+    Args:
+        thought_text: The original technical thought text
+        
+    Returns:
+        Translated non-technical text
+    """
+    try:
+        # Get configuration
+        config = get_config()
+        google_cloud_config = config.get("google_cloud", {})
+        project_id = google_cloud_config.get("project")
+        location = google_cloud_config.get("location", "us-central1")
+        
+        # Initialize Google GenAI Client
+        from google.genai import Client
+        
+        # Create prompt for translation
+        prompt = f"""You are translating AI assistant internal thoughts into user-friendly language.
+
+Original thought (contains technical details):
+{thought_text}
+
+Rewrite this thought to be conversational and non-technical. Remove any mentions of:
+- Tool names (like google_search, invoke_app_api, etc.)
+- Technical endpoints or API calls
+- Parameter names or JSON structures
+- Function calls or code references
+- System prompts or instructions
+
+Instead, focus on:
+- What the assistant is trying to accomplish
+- The strategy or approach being taken
+- Why this approach makes sense
+- What the user can expect next
+
+Keep the tone friendly, conversational, and fun. Use natural language that a non-technical user would understand.
+Maintain the same title as the original thought and maintain the same general style and fun attitude of the original thought.
+
+Translated thought (user-friendly):"""
+
+        # Use Google GenAI Client async API
+        aclient = Client(vertexai=True, project=project_id, location=location).aio
+        
+        # try:
+        response = await aclient.models.generate_content(
+            model="gemini-2.0-flash-lite",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.7,
+                max_output_tokens=200,
+                top_p=0.8,
+                top_k=40
+            )
+        )
+        
+        # Extract the translated text
+        if response.text:
+            translated_text = response.text.strip()
+            return translated_text
+        else:
+            logger.warning("Gemini returned no text, using original text")
+            return thought_text
+        # finally:
+        #     # Close the async client to release resources
+        #     if aclient.aclose:
+        #         await aclient.aclose()
+            
+    except Exception as e:
+        logger.error(f"Error calling Gemini for thought translation: {e}")
+        # Return original text if translation fails
+        return thought_text
 
 
 @router.get("/test-stream")
@@ -103,7 +223,7 @@ class ChatRequest(BaseModel):
     state: Any = ""
 
 
-@router.post("/chat")
+@router.api_route("/chat", methods=["POST", "HEAD"])
 async def chat_endpoint(
     request: Request,
     # Form fields (for multipart requests)
@@ -119,8 +239,21 @@ async def chat_endpoint(
 ):
     """
     Custom chat endpoint that handles both JSON and multipart form data with files
+    Supports HEAD method for interceptor header capture
     """
     try:
+        # Handle HEAD requests for interceptor support
+        if request.method == "HEAD":
+            from fastapi import Response
+            response = Response()
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, HEAD, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            return response
+        
         # Determine request type and parse data
         content_type = request.headers.get("content-type", "")
         is_multipart = "multipart/form-data" in content_type
@@ -150,8 +283,8 @@ async def chat_endpoint(
             request_data = ChatRequest(**body)
             files = []  # No files in JSON requests
 
-        # Import agent here to avoid circular imports
-        from ai_assistant.agent import root_agent
+        # Import agent function here to avoid circular imports
+        from ai_assistant.agent import root_agent, create_agent_with_context
 
         # Create session service
         db_url = get_database_url()
@@ -164,6 +297,9 @@ async def chat_endpoint(
         # Prepare initial state
         initial_state = parsed_state or {}
         initial_state['user_email'] = user_email
+        
+        # Extract page context for dynamic agent creation (not for user message)
+        # page_context = initial_state.get('page_context_auto') if initial_state else None
 
         # Convert uploaded files to types.Part objects
         message_parts = []
@@ -218,26 +354,52 @@ async def chat_endpoint(
                 initial_state['audio_files_metadata'] = audio_files_for_artifacts
 
         # Get or create session
+        logger.info(f"🔍 Session management: app={request_data.app_name}, user={request_data.user_id}, session={request_data.session_id}")
         session, actual_session_id, is_new_session = await get_or_create_session(
             session_service = session_service,
             app_name = request_data.app_name,
             user_id = request_data.user_id,
             session_id = request_data.session_id,
-            initial_state = initial_state
+            initial_state = initial_state,
+            user_prompt = text_message
         )
+        
+        # Log session context for debugging
+        logger.info(f"📋 Session context: id={actual_session_id}, is_new={is_new_session}")
+        if hasattr(session, 'events') and session.events:
+            logger.info(f"📝 Session has {len(session.events)} existing events")
+            # Log the last few events for context
+            recent_events = session.events[-3:] if len(session.events) > 3 else session.events
+            for i, event in enumerate(recent_events):
+                author = getattr(event, 'author', 'unknown')
+                logger.info(f"   Event {i+1}: author={author}")
+        else:
+            logger.info("📝 Session has no existing events (new conversation)")
 
         # Ensure state is properly set before creating runner
         if not hasattr(session, 'state') or session.state is None:
             session.state = {}
 
-        # Create runner
+        # Title is now set during session creation using the user prompt
+
+        # Create agent with dynamic state context (injected into instruction, not user message)
+        # This keeps context out of conversation history while making it available to the agent
+        if initial_state:
+            agent = create_agent_with_context(initial_state)
+            logger.info("Created agent with state instruction")
+        else:
+            agent = root_agent
+            logger.info("Using root agent without state")
+
+        # Create runner with the appropriate agent
         runner = Runner(
             app_name = request_data.app_name,
-            agent = root_agent,
+            agent = agent,
             session_service = session_service
         )
-
+        
         # Create user message with all parts (text + files)
+        # NO context injection here - it's in the agent instruction instead
         user_message = types.Content(
             parts=message_parts,
             role="user"
@@ -249,7 +411,7 @@ async def chat_endpoint(
         streaming = request_data.streaming
         streaming = True
         if streaming:
-            return await _handle_streaming_response(runner, request_data, actual_session_id, user_message)
+            return await _handle_streaming_response(runner, request_data, actual_session_id, user_message, session_service)
         else:
             return await _handle_regular_response(runner, request_data, actual_session_id, user_message)
 
@@ -266,7 +428,7 @@ async def chat_endpoint(
         }
 
 
-async def _handle_streaming_response(runner, request_data, session_id, user_message):
+async def _handle_streaming_response(runner, request_data, session_id, user_message, session_service):
     """Handle streaming response using the pattern that avoids buffering"""
     
     import asyncio
@@ -277,10 +439,11 @@ async def _handle_streaming_response(runner, request_data, session_id, user_mess
         """Async generator that processes events and yields immediately"""
         try:
             stream_mode = StreamingMode.SSE
+            event_count = 0
             
-            # Send an immediate ping to establish the stream
-            ping_data = f"data: {{'ping': 'stream_started', 'timestamp': {time.time()}}}\n\n"
-            yield ping_data
+            # Send an immediate response with the session_id
+            session_response = f'data: {{"session_id": "{session_id}", "timestamp": {time.time()}}}\n\n'
+            yield session_response
             
             async for event in runner.run_async(
                 user_id=request_data.user_id,
@@ -288,9 +451,32 @@ async def _handle_streaming_response(runner, request_data, session_id, user_mess
                 new_message=user_message,
                 run_config=RunConfig(streaming_mode=stream_mode),
             ):
+                event_count += 1
                 sse_event = event.model_dump_json(exclude_none=True, by_alias=True)
+                
+                # Translate thought events to non-technical language
+                # Comment this lline out to output raw thoughts (which contain tool names, etc.)
+                sse_event = await translate_thought_to_non_technical(sse_event)
+                
                 data = f"data: {sse_event}\n\n"
                 yield data
+                
+            # Log completion and verify session persistence
+            logger.info(f"✅ Streaming completed with {event_count} events for session {session_id}")
+            
+            # Verify session has been updated with the conversation
+            try:
+                session = await session_service.get_session(
+                    app_name=request_data.app_name,
+                    user_id=request_data.user_id,
+                    session_id=session_id
+                )
+                if session and hasattr(session, 'events'):
+                    logger.info(f"📋 Session {session_id} now has {len(session.events)} events stored")
+                else:
+                    logger.warning(f"⚠️ Session {session_id} not found or has no events after streaming")
+            except Exception as verify_error:
+                logger.error(f"❌ Error verifying session persistence: {verify_error}")
                 
         except Exception as e:
             logger.error(f"Error in streaming: {e}")

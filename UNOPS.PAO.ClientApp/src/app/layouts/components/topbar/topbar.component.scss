@@ -1,0 +1,891 @@
+/* Import UNOPS design tokens */
+@use '../../../../styles/unops-design-tokens.scss' as tokens;
+
+/* Fix topbar height for proper AI layout positioning */
+:host {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  background-color: var(--unops-surface-primary);
+  border-bottom: 1px solid var(--unops-neutral-200);
+}
+
+/* Responsive design - Remove padding on mobile */
+.layout-topbar {
+  padding: 0 1rem;
+
+  @media (max-width: 768px) {
+    padding: 0;
+  }
+}
+
+/* Notifications container - similar to tour control */
+.notifications-container {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: var(--unops-primary);
+  color: var(--unops-primary-on);
+  border-radius: var(--unops-radius-lg);
+  padding: var(--unops-spacing-xs) var(--unops-spacing-sm);
+  font-size: var(--unops-font-size-caption);
+  min-width: 20px;
+  height: 20px;
+  text-align: center;
+  z-index: var(--unops-z-dropdown);
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  box-sizing: border-box;
+  line-height: 1;
+  font-weight: var(--unops-font-weight-semibold);
+  border: 2px solid var(--unops-surface-primary);
+  box-shadow: var(--unops-shadow-sm);
+  transform: translateY(4px);
+
+  /* Auto-adjust width for larger numbers */
+  width: auto;
+  max-width: 60px;
+}
+
+.layout-topbar {
+  .layout-topbar-logo-container {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+
+    .brand-logo {
+      height: 2rem;
+      width: auto;
+    }
+
+    // Ensure logo link is clickable and has proper styling
+    a {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      outline: none;
+
+      &:focus-visible {
+        outline: 2px solid var(--unops-primary);
+        outline-offset: 2px;
+        border-radius: var(--unops-radius-md);
+      }
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
+}
+
+.notification-panel {
+  padding: 0;
+
+  .notification-header {
+    padding: 1rem 1rem 0.5rem 1rem;
+    border-bottom: 1px solid var(--unops-neutral-200);
+
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--unops-neutral-900);
+    }
+  }
+
+  .notification-tabs {
+    display: flex;
+    padding: 0 1rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--unops-neutral-200);
+
+    .tab-button {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: none;
+      background: none;
+      cursor: pointer;
+      position: relative;
+      font-weight: 500;
+      color: var(--unops-neutral-600);
+      transition: all 0.2s ease;
+      border-bottom: 2px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+
+      &:hover {
+        color: var(--unops-neutral-900);
+        background-color: var(--unops-neutral-50);
+      }
+
+      &.active {
+        color: var(--unops-primary);
+        border-bottom-color: var(--unops-primary);
+        background-color: rgba(var(--unops-primary-rgb), 0.05);
+      }
+
+      .tab-badge {
+        background-color: var(--unops-neutral-200);
+        color: var(--unops-neutral-900);
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        min-width: 20px;
+        text-align: center;
+      }
+
+      &.active .tab-badge {
+        background-color: var(--unops-primary);
+        color: white;
+      }
+    }
+  }
+
+  .notification-list {
+    padding: 0;
+
+    .notification-item {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1rem;
+      border-bottom: 1px solid var(--unops-neutral-100);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: var(--unops-neutral-50);
+      }
+
+      &.notification-read {
+        opacity: 0.7;
+
+        .notification-content p {
+          color: var(--unops-neutral-600);
+        }
+      }
+
+      &.notification-unread {
+        background-color: rgba(var(--unops-primary-rgb), 0.02);
+        border-left: 3px solid var(--unops-primary);
+
+        .notification-content p {
+          font-weight: 500;
+          color: var(--unops-neutral-900);
+        }
+      }
+
+      &.notification-progress {
+        background-color: var(--unops-primary-container-soft);
+        border-left: 3px solid var(--unops-accent-blue);
+      }
+
+      .notification-category-icon {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 20px;
+        background-color: var(--unops-neutral-100);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0.25rem;
+
+        i {
+          font-size: 16px;
+        }
+
+        .pi-spinner {
+          animation: spin 1s linear infinite;
+        }
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .notification-content {
+        flex: 1;
+
+        p {
+          margin: 0 0 0.5rem 0;
+          line-height: 1.4;
+          font-size: 14px;
+        }
+
+        .notification-timestamp {
+          margin-top: 0.5rem;
+
+          small {
+            color: var(--unops-neutral-400);
+            font-size: 11px;
+          }
+        }
+
+        .notification-progress-indicator {
+          margin-bottom: 0.5rem;
+        }
+
+        .notification-actions {
+          margin-top: 0.75rem;
+        }
+      }
+    }
+
+    .see-more-container {
+      padding: 1rem;
+      border-top: 1px solid var(--unops-neutral-100);
+      background-color: var(--unops-neutral-50);
+    }
+
+    .no-notifications {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: var(--unops-neutral-600);
+
+      i {
+        display: block;
+        margin-bottom: 1rem;
+      }
+
+      p {
+        margin: 0;
+        font-size: 14px;
+      }
+    }
+  }
+}
+
+// Notification Dialog Styles - Global styles to override PrimeNG dialog
+:host ::ng-deep .notification-dialog {
+  .p-dialog-content {
+    padding: 0;
+  }
+
+  .p-dialog-header {
+    padding: 1.5rem 2rem 1rem 2rem;
+    border-bottom: 1px solid var(--unops-neutral-200);
+  }
+}
+
+.notification-dialog-wrapper {
+  padding: 1.5rem 2rem;
+}
+
+.notification-dialog-tabs {
+  display: flex;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--unops-neutral-200);
+  margin: 0 -2rem 1rem -2rem;
+  padding: 0 2rem;
+
+  .tab-button {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    position: relative;
+    font-weight: 500;
+    color: var(--unops-neutral-600);
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+
+    &:hover {
+      color: var(--unops-neutral-900);
+      background-color: var(--unops-neutral-50);
+    }
+
+    &.active {
+      color: var(--unops-primary);
+      border-bottom-color: var(--unops-primary);
+      background-color: rgba(var(--unops-primary-rgb), 0.05);
+    }
+
+    .tab-badge {
+      background-color: var(--unops-neutral-200);
+      color: var(--unops-neutral-900);
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    &.active .tab-badge {
+      background-color: var(--unops-primary);
+      color: white;
+    }
+  }
+}
+
+.notification-dialog-content {
+  max-height: 60vh;
+  overflow-y: auto;
+  margin: 0 -2rem;
+
+  .notification-item {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--unops-neutral-100);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: var(--unops-neutral-50);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &.notification-read {
+      opacity: 0.7;
+
+      .notification-content p {
+        color: var(--unops-neutral-600);
+      }
+    }
+
+    &.notification-unread {
+      background-color: rgba(var(--unops-primary-rgb), 0.02);
+      border-left: 3px solid var(--unops-primary);
+
+      .notification-content p {
+        font-weight: 500;
+        color: var(--unops-neutral-900);
+      }
+    }
+
+    &.notification-progress {
+      background-color: var(--unops-primary-container-soft);
+      border-left: 3px solid var(--unops-accent-blue);
+    }
+
+    .notification-category-icon {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 20px;
+      background-color: var(--unops-neutral-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.25rem;
+
+      i {
+        font-size: 16px;
+      }
+
+      .pi-spinner {
+        animation: spin 1s linear infinite;
+      }
+    }
+
+    .notification-content {
+      flex: 1;
+
+      p {
+        margin: 0 0 0.5rem 0;
+        line-height: 1.4;
+        font-size: 14px;
+      }
+
+      .notification-timestamp {
+        margin-top: 0.5rem;
+
+        small {
+          color: var(--unops-neutral-400);
+          font-size: 11px;
+        }
+      }
+
+      .notification-progress-indicator {
+        margin-bottom: 0.5rem;
+      }
+
+      .notification-actions {
+        margin-top: 0.75rem;
+      }
+    }
+  }
+
+  .no-notifications {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--unops-neutral-600);
+    margin: 0 2rem;
+
+    i {
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+  }
+}
+
+// AI Assistant Button Styles
+.ai-assistant-toggle {
+  // Ensure the button is visible and properly sized
+  button.p-button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  // Target the image directly with multiple selectors
+  img,
+  button img,
+  .p-button img,
+  button.p-button img {
+    display: block !important;
+    width: 24px !important;
+    height: 24px !important;
+    object-fit: contain !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+}
+
+// Global override using ::ng-deep to penetrate Angular's view encapsulation
+:host ::ng-deep .ai-assistant-toggle {
+  button.p-button {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  img,
+  .ai-icon {
+    display: block !important;
+    width: 24px !important;
+    height: 24px !important;
+    object-fit: contain !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+}
+
+// Additional global override for the ai-icon class specifically
+:host ::ng-deep .ai-icon {
+  display: block !important;
+  width: 24px !important;
+  height: 24px !important;
+  object-fit: contain !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+// Fix icon centering in ALL topbar buttons - apply same aggressive styling as AI assistant
+:host ::ng-deep {
+  // Global Filters Button - Simple responsive visibility
+  .global-filters-desktop {
+    // Show on desktop only
+    @media (min-width: 769px) {
+      display: flex !important;
+    }
+
+    // Hide on mobile/tablet
+    @media (max-width: 768px) {
+      display: none !important;
+    }
+  }
+
+  .global-filters-mobile {
+    // Hide by default on all screens
+    display: none !important;
+
+    // Show on mobile/tablet only (401px to 768px)
+    @media (min-width: 401px) and (max-width: 768px) {
+      display: flex !important;
+
+      // Hide when search is expanded on mobile
+      &.search-expanded-hide-mobile {
+        display: none !important;
+      }
+    }
+
+    // Explicitly hide on desktop (769px and above)
+    @media (min-width: 769px) {
+      display: none !important;
+    }
+  }
+
+  // Global Filters Button - Common styles
+  .global-filters-button {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transition: all var(--unops-duration-short) var(--unops-easing-smooth) !important;
+
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        margin-top: -3px !important;
+        line-height: 1 !important;
+        color: var(--unops-neutral-600) !important;
+        transition: all var(--unops-duration-short) var(--unops-easing-smooth) !important;
+      }
+    }
+
+    // Subtle active state styling when filters are active
+    &.filters-active {
+      .p-button {
+        // Subtle background with primary container color
+        background-color: var(--unops-primary-container-soft) !important;
+        // Subtle border for indication
+        border: 1px solid var(--unops-primary-200) !important;
+
+        i {
+          color: var(--unops-primary) !important;
+        }
+
+        &:hover {
+          background-color: var(--unops-primary-container) !important;
+          border-color: var(--unops-primary) !important;
+
+          i {
+            color: var(--unops-primary-dark) !important;
+          }
+        }
+
+        &:focus {
+          // Keep focus indicator for accessibility
+          box-shadow: 0 0 0 2px rgba(var(--unops-primary-rgb, 0, 146, 209), 0.3) !important;
+        }
+      }
+    }
+
+    // Enhanced hover state for inactive filters
+    &:not(.filters-active) {
+      .p-button:hover {
+        i {
+          color: var(--unops-neutral-900) !important;
+        }
+      }
+    }
+
+  }
+
+  // Notifications Button
+  .notifications-button {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+      }
+    }
+  }
+
+  // Profile Menu Button
+  .profile-menu-button {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+      }
+    }
+  }
+
+  // Language Selector Button (in child component)
+  app-language-selector {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+      }
+    }
+  }
+
+  // Tour Control Button (in child component)
+  app-tour-control {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+      }
+    }
+  }
+
+  // Generic fallback for any other p-buttons in topbar
+  p-button {
+    .p-button {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      i {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+      }
+    }
+  }
+}
+
+/* Responsive Design - Hide elements based on importance order */
+/* Breakpoints follow a progressive enhancement approach:
+   - xs: 0-480px (very small phones)
+   - sm: 481-768px (phones)
+   - md: 769-1024px (tablets)
+   - lg: 1025px+ (desktop)
+
+   Elements are hidden in reverse order of importance as screen size decreases
+*/
+
+/* Priority 10 (lowest): Application Name - hide first on very small screens */
+@media (max-width: 480px) {
+  .app-name {
+    display: none !important;
+  }
+}
+
+/* Priority 9: Application Logo - hide on small phones */
+@media (max-width: 600px) {
+  .app-logo {
+    display: none !important;
+  }
+}
+
+/* Priority 8: Take a tour icon - hide on tablets and below */
+@media (max-width: 1024px) {
+  .tour-control {
+    display: none !important;
+  }
+}
+
+/* Priority 7: Language selection icon - hide on tablets and below */
+@media (max-width: 900px) {
+  .language-selector {
+    display: none !important;
+  }
+}
+
+/* Priority 6: User profile icon - hide on tablets and below */
+@media (max-width: 768px) {
+  .profile-menu {
+    display: none !important;
+  }
+}
+
+/* Priority 5: Global filters icon - handled in main responsive section above */
+
+/* Priority 4: Notification icon - hide on very small phones */
+@media (max-width: 400px) {
+  .notifications-container {
+    display: none !important;
+  }
+}
+
+/* Priority 3: AI icon - hide on small phones only */
+@media (max-width: 480px) {
+  .ai-assistant-toggle {
+    display: none !important;
+  }
+}
+
+/* Priority 2: Search bar - never hide, but can be collapsed */
+/* Search bar should always be visible but may collapse on very small screens */
+
+/* Priority 1: Burger icon - never hide, highest importance */
+/* Menu toggle button should always be visible */
+
+/* Additional responsive adjustments */
+@media (max-width: 768px) {
+  .layout-topbar {
+    gap: 0.5rem;
+
+    .layout-topbar-logo-container {
+      gap: 0.25rem;
+
+      .menu-toggle-button {
+        margin-right: 0.5rem;
+      }
+    }
+
+    .global-search-container {
+      max-width: none;
+      flex: 1;
+      margin: 0 0.5rem;
+    }
+  }
+}
+
+/* Ensure search bar remains functional on mobile */
+@media (max-width: 480px) {
+  .global-search-container {
+    margin: 0 0.25rem;
+  }
+}
+
+/* Enhanced mobile experience */
+@media (max-width: 600px) {
+  .layout-topbar {
+    /* Ensure minimum spacing on very small screens */
+    min-height: 64px;
+
+    .layout-topbar-logo-container {
+      /* Reduce spacing between burger and logo on mobile */
+      .menu-toggle-button {
+        margin-right: 0.25rem;
+      }
+    }
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .layout-topbar {
+    /* Optimize spacing for tablet screens */
+    gap: 1rem;
+
+    .global-search-container {
+      max-width: 400px;
+    }
+  }
+}
+
+/* Desktop optimizations */
+@media (min-width: 1025px) {
+  .layout-topbar {
+    /* Full spacing on desktop */
+    gap: 1.5rem;
+
+    .global-search-container {
+      max-width: 600px;
+    }
+  }
+}
+
+/* Smooth transitions for responsive changes */
+.layout-topbar,
+.layout-topbar > *,
+.global-search-container,
+.ai-assistant-toggle,
+.notifications-container,
+.profile-menu,
+.language-selector,
+.tour-control,
+.global-filters-button,
+.app-logo {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Ensure elements don't jump during transitions */
+@media (prefers-reduced-motion: reduce) {
+  .layout-topbar,
+  .layout-topbar > *,
+  .global-search-container,
+  .ai-assistant-toggle,
+  .notifications-container,
+  .profile-menu,
+  .language-selector,
+  .tour-control,
+  .global-filters-button,
+  .app-logo {
+    transition: none;
+  }
+}
+
+/* Mobile search expansion behavior - this rule is handled per-component now */
+
+/* Ensure responsive elements are properly displayed by default */
+.ai-assistant-toggle,
+.notifications-container,
+.language-selector,
+.tour-control,
+.profile-menu {
+  /* Make sure these elements are visible by default */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  /* But respect the search expansion hiding on mobile */
+  &.search-expanded-hide-mobile {
+    @media (max-width: 768px) {
+      display: none !important;
+    }
+  }
+}
+
+/* Global filters mobile has its own specific responsive behavior defined above */
+
+/* Global filters responsive behavior with search expansion - now handled in main rules above */
+
+/* Logo also needs to hide when search expands on mobile */
+.app-logo {
+  &.search-expanded-hide-mobile {
+    @media (max-width: 768px) {
+      display: none !important;
+    }
+  }
+}

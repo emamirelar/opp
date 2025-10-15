@@ -42,8 +42,7 @@
               "node_modules/primeicons/primeicons.css",
               "src/styles.scss"
             ],
-            "scripts": [
-            ]
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -62,8 +61,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "20kB",
+                  "maximumError": "40kB"
                 }
               ],
               "outputHashing": "all"
@@ -88,8 +87,7 @@
                   "maximumError": "2mb"
                 }
               ],
-              "fileReplacements": [
-              ],
+              "fileReplacements": [],
               "outputHashing": "all"
             },
             "qa": {
@@ -112,8 +110,7 @@
                   "maximumError": "2mb"
                 }
               ],
-              "fileReplacements": [
-              ],
+              "fileReplacements": [],
               "outputHashing": "all"
             },
             "test": {
@@ -136,8 +133,7 @@
                   "maximumError": "2mb"
                 }
               ],
-              "fileReplacements": [
-              ],
+              "fileReplacements": [],
               "outputHashing": "all"
             },
             "development": {

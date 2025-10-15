@@ -8,16 +8,87 @@ metadata:
 
 source:
   type: "bigquery"
-  connection:
-    project_id: "unops-partneropportunity"
-    use_environment_auth: true
-  
+
   query: |
-    SELECT 
-      *
+    WITH ENG AS (
+      SELECT
+        *
+      FROM
+        `unopsreporting.Engagements.Engagement` E
+      WHERE
+        E.Engagement_Stage NOT IN ('CANCELLED')
+        AND EXTRACT(YEAR FROM E.Engagement_Implementation_Start_Date) > 1900
+        AND E.Latest_Finalised_Flag = 'Yes'
+    )
+    , SDG AS (
+      SELECT DISTINCT
+        E.Engagement
+        , ES.Primary_SDG_Contribution_Flag
+        , ES.SDG
+        , CONCAT('SDG ', ES.SDG, ': ', ES.SDG_Description) AS SDG_Name
+      FROM
+        ENG E
+
+        CROSS JOIN UNNEST(E.SDGs) AS ES
+      ORDER BY
+        ES.Primary_SDG_Contribution_Flag DESC
+        , ES.SDG
+    )
+    SELECT
+      E.Base_Engagement
+      , E.Engagement_Implementation_Start_Date
+      , E.Engagement_Implementation_End_Date
+      , E.Engagement_Signed_Date
+      , E.Engagement_Amount
+      , E.Engagement_Stage
+      , E.Engagement_Stage_Description
+      , E.Business_Developer
+      , E.Business_Developer_Name
+      , E.Business_Developer_Email_Address
+      , E.Engagement_Project_Executive
+      , E.Engagement_Project_Executive_Name
+      , IFNULL(E.Implementation_Countries_Description_Concatenated, '') AS Implementation_Countries_List
+      , IFNULL(ARRAY_TO_STRING(ARRAY_AGG(DISTINCT EO.Output_Description ORDER BY EO.Output_Description), ', ', ''), '') AS Outputs_List
+      , IFNULL(ARRAY_TO_STRING(ARRAY_AGG(DISTINCT SDG.SDG_Name), ', ', ''), '') AS SDG_List
+      , IFNULL(E.Engagement_Description, '') AS Engagement_Description
+      , IFNULL(E.Engagement_Long_Description, '') AS Engagement_Long_Description
+      , (CASE E.Base_Engagement_Stage
+          WHEN 'CLOSED' THEN 2
+          WHEN 'CANCELLED' THEN 4
+          WHEN 'OPP' THEN 3
+          WHEN 'CLOSING' THEN 1
+          WHEN 'IMPLEMENTATION' THEN 1
+          WHEN 'PENDING_IMPL' THEN 3
+          WHEN 'AWARD' THEN 1
+          WHEN 'PRE-ENG' THEN 3
+          WHEN 'INIT' THEN 3
+          ELSE 0 END) AS Status
       , CURRENT_TIMESTAMP() as last_modified
     FROM
-      `unops-partneropportunity.integration.Table_Engagements`
+      ENG E
+
+      CROSS JOIN UNNEST(E.Outputs) AS EO
+
+      INNER JOIN SDG
+      ON SDG.Engagement = E.Engagement
+    GROUP BY
+      E.Base_Engagement
+      , E.Engagement_Implementation_Start_Date
+      , E.Engagement_Implementation_End_Date
+      , E.Engagement_Signed_Date
+      , E.Engagement_Amount
+      , E.Engagement_Stage
+      , E.Engagement_Stage_Description
+      , E.Business_Developer
+      , E.Business_Developer_Name
+      , E.Business_Developer_Email_Address
+      , E.Engagement_Project_Executive
+      , E.Engagement_Project_Executive_Name
+      , E.Engagement_Project_Executive_Name
+      , E.Implementation_Countries_Description_Concatenated
+      , E.Engagement_Description
+      , E.Engagement_Long_Description
+      , E.Base_Engagement_Stage
   
   primary_key_field: "Base_Engagement"
   batch_size: 1000
@@ -25,6 +96,8 @@ source:
 destination:
   table_name: "BaseEngagements"
   schema: "public"
+  manage_table_structure: true
+  add_standard_fields: true
   
   field_mappings:
     - source_field: "Base_Engagement"

@@ -1,0 +1,106 @@
+<div class="content-item" [ngSwitch]="item.type" *ngIf="shouldShow" [class.user-message]="isUserMessage" [class.ai-message]="!isUserMessage">
+  <!-- User message content - special handling for user messages -->
+  <div *ngSwitchCase="'user-message'" class="content-markdown user-message">
+    <div class="user-message-text">{{ getStringMessage() }}</div>
+  </div>
+  
+  <!-- Markdown content - AI messages only -->
+  <div *ngSwitchCase="'markdown'" class="content-markdown">
+    <markdown [data]="getStringMessage()"></markdown>
+  </div>
+  
+  <!-- Thought content with collapsible styling -->
+  <div *ngSwitchCase="'thoughts'">
+    <app-collapsible-thought [content]="getStringMessage()"></app-collapsible-thought>
+  </div>
+  
+  <!-- Single thought content (for dynamic service) -->
+  <div *ngSwitchCase="'thought'">
+    <app-collapsible-thought [content]="getStringMessage()"></app-collapsible-thought>
+  </div>
+  
+  <!-- Grid/Table content -->
+  <div *ngSwitchCase="'grid'" class="fade-in-content content-grid">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
+    <app-entity-grid 
+      [entityType]="item.entityType || 'Item'"
+      [gridData]="getArrayMessage()"
+      (cardClicked)="cardClicked.emit($event)">
+    </app-entity-grid>
+  </div>
+  
+  <!-- Card content (using same grid component) -->
+  <div *ngSwitchCase="'card'" class="fade-in-content content-card">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
+    <app-entity-grid 
+      [entityType]="item.entityType || 'Item'"
+      [gridData]="getArrayMessage()"
+      (cardClicked)="cardClicked.emit($event)">
+    </app-entity-grid>
+  </div>
+  
+  <!-- Chart.js charts -->
+  <div *ngSwitchCase="'chartjs'" class="chartjs-container fade-in-content content-chartjs">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
+    <app-chart-js 
+      [chartType]="getChartType()"
+      [chartConfig]="getChartConfig()"
+      [chartData]="getChartData()">
+    </app-chart-js>
+  </div>
+  
+  <!-- Mermaid diagram -->
+  <div *ngSwitchCase="'mermaid'" class="mermaid-container fade-in-content content-mermaid">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
+    <div #mermaidElement class="mermaid">{{ getStringMessage() }}</div>
+  </div>
+  
+  <!-- Code block -->
+  <div *ngSwitchCase="'code'" class="code-container fade-in-content content-code">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
+    <pre><code class="language-javascript">{{ getStringMessage() }}</code></pre>
+  </div>
+  
+  <!-- Function Call content -->
+  <div *ngSwitchCase="'functionCall'" class="content-function-call">
+    <div class="content-type-header">
+      <span class="content-type-label">Function Call</span>
+    </div>
+    <pre class="function-call-content"><code>{{ getStringMessage() }}</code></pre>
+  </div>
+  
+  <!-- Function Response content -->
+  <div *ngSwitchCase="'functionResponse'" class="content-function-response">
+    <div class="content-type-header">
+      <span class="content-type-label">Function Response</span>
+    </div>
+    <pre class="function-response-content"><code>{{ getStringMessage() }}</code></pre>
+  </div>
+  
+  <!-- Chart content (generic chart type) -->
+  <div *ngSwitchCase="'chart'" class="fade-in-content content-chart">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
+    <app-chart-js 
+      [chartType]="getChartType()"
+      [chartConfig]="getChartConfig()"
+      [chartData]="getChartData()">
+    </app-chart-js>
+  </div>
+  
+  <!-- Plain text fallback without typewriter effect -->
+  <div *ngSwitchDefault class="text-content content-text">
+    <markdown [data]="getStringMessage()"></markdown>
+  </div>
+</div> 

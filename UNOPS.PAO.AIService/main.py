@@ -9,19 +9,35 @@ main.py loads the single environment variable CURRENT_ENV which is used to load 
 All other configuration is loaded from the configuration file (through utils.config.py which references the CURRENT_ENV environment variable to load the correct configuration file).
 """
 
+print("🐍 Python service starting...")
+import sys
+print(f"🐍 Python version: {sys.version}")
+print("🐍 Loading basic imports...")
 import logging
 import os
 from contextlib import asynccontextmanager
 
+print(f"🐍 Working directory: {os.getcwd()}")
+print(f"🐍 Environment variables: CURRENT_ENV={os.getenv('CURRENT_ENV', 'NOT SET')}")
+
+print("🐍 Loading FastAPI and uvicorn...")
 import uvicorn
 from fastapi import FastAPI
+
+print("🐍 Loading Google ADK...")
 from google.adk.cli.fast_api import get_fast_api_app
 
+print("🐍 Loading configuration modules...")
 # Configuration
 from ai_assistant.utils.config import get_config
+from ai_assistant.utils.config import get_database_url
+
+print("🐍 Loading routers...")
 # Routers
 from routers.chat import router as chat_router
 from routers.session import router as session_router
+
+print("🐍 All imports completed successfully!")
 
 # Fix OpenTelemetry context issues
 import warnings
@@ -87,12 +103,20 @@ async def lifespan(app_instance: FastAPI):
 
 
 def add_routers_and_endpoints(app: FastAPI):
+    """Add all routers and endpoints to the FastAPI app"""
+    print("🔧 Adding routers to FastAPI app...")
+    
+    # ROUTE on just /
+    print("🔧 Adding chat_router and session_router to root...")
     app.include_router(chat_router)
     app.include_router(session_router)
 
-    """Add all routers and endpoints to the FastAPI app"""
+    # ROUTE on /api/ai-assistant
+    print("🔧 Adding chat_router and session_router to /api/ai-assistant...")
     app.include_router(chat_router, prefix='/api/ai-assistant')
     app.include_router(session_router, prefix='/api/ai-assistant')
+    
+    print("🔧 Routers added successfully!")
     
 
 
@@ -120,9 +144,18 @@ def create_app():
 
     # Create the FastAPI app with ADK integration
     agents_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ai_assistant') # Points to the ai_assistant directory (root of the agents)
+    
+    print("🔍 Attempting to get database URL...")
+    try:
+        db_url = get_database_url()
+        print(f"✅ Database URL obtained: {db_url[:20]}..." if db_url else "❌ Database URL is None")
+    except Exception as e:
+        print(f"❌ Database URL loading failed: {e}")
+        raise
+    
     fastapi_app_instance = get_fast_api_app(
         agents_dir = agents_dir,
-        session_service_uri = database_config.get('url'),
+        session_service_uri = db_url,
         artifact_service_uri = artifact_service_uri,
         allow_origins = server_config.get('allow_origins'),
         web = server_config.get('serve_web_interface'),
@@ -146,7 +179,14 @@ def create_app():
 
 
 # Initialize configuration and create the FastAPI app globally
-config = get_config()
+print("🔍 Attempting to load configuration...")
+try:
+    config = get_config()
+    print("✅ Configuration loaded successfully")
+except Exception as e:
+    print(f"❌ Configuration loading failed: {e}")
+    raise
+
 server_config = config.get('server')
 # Raise an error if the server config is not set
 if server_config is None:
@@ -174,7 +214,17 @@ if __name__ == "__main__":
         logger.info(f"📍 Host: {server_config.get('host')}")
         logger.info(f"🔌 Port: {server_config.get('port')}")
         logger.info(f"🌐 Web Interface: {server_config.get('serve_web_interface')}")
-        logger.info(f"💾 Database: {database_config.get('url')}")
+        
+        # Smart database logging - show URL for local, secret name for hosted
+        if 'url' in database_config:
+            # Local development - show the URL
+            logger.info(f"💾 Database: {database_config['url']}")
+        elif 'secret_name' in database_config:
+            # Hosted environment - show the secret name (not the actual credentials)
+            logger.info(f"💾 Database: Secret Manager ({database_config['secret_name']})")
+        else:
+            logger.info(f"💾 Database: Configuration missing")
+
         logger.info(f"🔧 Development Mode: {is_development}")
         logger.info(f"🏢 Application: {branding_config.get('application_name')}")
 

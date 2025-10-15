@@ -10,7 +10,9 @@ import time
 import base64
 import requests
 import traceback
+import logging
 
+from pathlib import Path
 from google.adk.agents import LlmAgent
 from google.adk.tools.agent_tool import AgentTool
 from google.adk.planners import BuiltInPlanner
@@ -20,25 +22,79 @@ from typing import Optional
 from google.adk.tools.tool_context import ToolContext
 
 from .tools.search_corp_vector_store_tool import search_corp_vector_store
+from .tools.invoke_app_api_tool import invoke_app_api
 
-# Load entities metadata
+logger = logging.getLogger(__name__)
+
+
+class MetadataError(Exception):
+    """Raised when metadata loading fails"""
+    pass
+
+
+def _find_entities_metadata_file() -> str:
+    """
+    Find the entities-metadata.json file by checking multiple possible locations.
+    
+    Returns:
+        str: Path to the entities-metadata.json file
+        
+    Raises:
+        MetadataError: If entities-metadata.json file is not found
+    """
+    current_dir = Path(__file__).parent.absolute()
+    
+    # Possible locations to check for entities-metadata.json
+    possible_paths = [
+        # Jenkins deployment: AIService copied into UNOPS.PAO.AIService directory
+        current_dir.parent.parent / "AIService" / "metadata" / "entities-metadata.json",  # /app/AIService/metadata/entities-metadata.json
+        # Same level as current directory (for deployment scenarios)
+        current_dir / "AIService" / "metadata" / "entities-metadata.json",
+        # One level up from current directory (development scenario)
+        current_dir.parent / "AIService" / "metadata" / "entities-metadata.json",
+        # Two levels up (from utils -> ai_assistant -> UNOPS.PAO.AIService -> root)
+        current_dir.parent.parent.parent / "AIService" / "metadata" / "entities-metadata.json",
+        # Three levels up (alternative structure)
+        current_dir.parent.parent.parent.parent / "AIService" / "metadata" / "entities-metadata.json"
+    ]
+    
+    for path in possible_paths:
+        if path.exists() and path.is_file():
+            logger.debug(f"Found entities-metadata.json at: {path}")
+            return str(path)
+    
+    # If not found, raise an error with helpful information
+    searched_paths = [str(p) for p in possible_paths]
+    raise MetadataError(
+        f"entities-metadata.json file not found. Searched locations:\n" + 
+        "\n".join(f"  - {p}" for p in searched_paths)
+    )
+
+
 def load_entities_metadata():
     """Load the entities metadata JSON file"""
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    metadata_path = os.path.join(current_dir, '..', '..', 'AIService', 'metadata', 'entities-metadata.json')
-    
     try:
+        metadata_path = _find_entities_metadata_file()
+        
         with open(metadata_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        print(f"Warning: entities-metadata.json not found at {metadata_path}")
+            metadata = json.load(f)
+        
+        logger.info(f"Entities metadata loaded successfully from: {metadata_path}")
+        return metadata
+        
+    except MetadataError as e:
+        logger.error(f"Metadata file not found: {e}")
+        print(f"Warning: {e}")
         return {}
     except json.JSONDecodeError as e:
+        logger.error(f"Error parsing entities-metadata.json: {e}")
         print(f"Warning: Error parsing entities-metadata.json: {e}")
         return {}
+    except Exception as e:
+        logger.error(f"Unexpected error loading entities metadata: {e}")
+        print(f"Warning: Unexpected error loading entities metadata: {e}")
+        return {}
 
-# Load the metadata
-entities_metadata = load_entities_metadata()
 
 def format_entities_metadata_as_markdown(metadata):
     """Convert entities metadata JSON to markdown format to avoid ADK template conflicts"""
@@ -86,7 +142,7 @@ def format_entities_metadata_as_markdown(metadata):
     # Handle entities section
     if 'entities' in metadata:
         markdown_content.append("## Entities")
-        markdown_content.append("Available entities in the UNOPS PAO system:")
+        markdown_content.append("Available entities in the UNOPS CRM system:")
         markdown_content.append("")
         
         for entity_name, entity_info in metadata['entities'].items():
@@ -111,10 +167,11 @@ def format_entities_metadata_as_markdown(metadata):
             if 'apiEndpoints' in entity_info and entity_info['apiEndpoints']:
                 markdown_content.append("**API Endpoints:**")
                 for endpoint in entity_info['apiEndpoints']:
-                    endpoint_line = f"- **{endpoint.get('method', 'GET')}** {endpoint.get('endpoint', '')}"
+                    endpoint_line = f"- **{endpoint.get('endpoint', '')}**"
                     if 'description' in endpoint:
                         endpoint_line += f" - {endpoint['description']}"
                     markdown_content.append(endpoint_line)
+                    markdown_content.append(f"  **Method:** {endpoint.get('method', 'GET')}")
                     
                     if 'parameters' in endpoint and endpoint['parameters']:
                         markdown_content.append("  **Parameters:**")
@@ -140,251 +197,137 @@ def format_entities_metadata_as_markdown(metadata):
     return result
 
 
-def prepare_api_url(url: str) -> str:
-    """
-    Prepare the final URL for API calls by ensuring the base URL comes from config manager.
-    For absolute URLs, extracts the path and combines it with the config base URL.
-    For relative URLs, combines directly with the config base URL.
+def format_user_context_for_instruction(state: dict) -> str:
+    """Format user information from state into a concise instruction-friendly string"""
+    if not state:
+        return ""
     
-    Args:
-        url: URL to prepare - can be relative (e.g., /api/partners) or absolute (e.g., https://localhost:44426/api/partners)
+    user_profile = state.get('user_profile', {})
+    user_info = user_profile.get('userInfoWithOrgSettings', {})
     
-    Returns:
-        str: The final URL to use for the API call with base URL from config
+    if not user_info:
+        return ""
     
-    Examples:
-        # Relative URL - will be combined with base URL from config
-        final_url = prepare_api_url("/api/users")
-        
-        # Absolute URL - path will be extracted and combined with config base URL
-        final_url = prepare_api_url("https://someother.com/api/users")
-        # Result: https://config-base-url/api/users
-    """
-    try:
-        from .utils.config import get_api_base_url
-        base_url = get_api_base_url()
-        
-        # Extract path from URL (works for both absolute and relative URLs)
-        if url.startswith(('http://', 'https://')):
-            # For absolute URLs, extract the path part
-            from urllib.parse import urlparse
-            parsed_url = urlparse(url)
-            path = parsed_url.path
-            # Include query string and fragment if present
-            if parsed_url.query:
-                path += '?' + parsed_url.query
-            if parsed_url.fragment:
-                path += '#' + parsed_url.fragment
-        else:
-            # For relative URLs, use as-is
-            path = url
-        
-        # Ensure proper URL joining with the config base URL
-        if base_url.endswith('/') and path.startswith('/'):
-            return base_url + path[1:]
-        elif not base_url.endswith('/') and not path.startswith('/'):
-            return base_url + '/' + path
-        else:
-            return base_url + path
-            
-    except ImportError:
-        # Config manager not available, return url as-is
-        return url
+    context_parts = []
+    
+    # Add user name and basic info
+    if user_info.get('Name'):
+        context_parts.append(f"**User Name:** {user_info['Name']}")
+    
+    if user_info.get('Position'):
+        context_parts.append(f"**Position:** {user_info['Position']}")
+    
+    if user_info.get('UserEmail'):
+        context_parts.append(f"**Email:** {user_info['UserEmail']}")
+    
+    # Add organizational information
+    if user_info.get('OrgUnitDescription'):
+        context_parts.append(f"**Organization Unit:** {user_info['OrgUnitDescription']}")
+    elif user_info.get('OrgUnit'):
+        context_parts.append(f"**Organization Unit:** {user_info['OrgUnit']}")
+    
+    if user_info.get('DutyStation'):
+        context_parts.append(f"**Duty Station:** {user_info['DutyStation']}")
+    
+    # Add supervisor information
+    if user_info.get('SupervisorName'):
+        supervisor_info = user_info['SupervisorName']
+        if user_info.get('SupervisorEmail'):
+            supervisor_info += f" ({user_info['SupervisorEmail']})"
+        context_parts.append(f"**Supervisor:** {supervisor_info}")
+    
+    if context_parts:
+        return "\n\n---\n**USER CONTEXT:**\n" + "\n".join(context_parts) + "\n---\n"
+    return ""
 
-def invoke_app_api(url: str, method: str, params: Optional[dict] = None, headers: Optional[dict] = None, tool_context: Optional[ToolContext] = None) -> dict:
-    """
-    Invoke an API endpoint with minimal logging
-    
-    Args:
-        url: URL to call - can be relative (e.g., /api/partners) or absolute (e.g., https://localhost:44426/api/partners)
-        method: HTTP method (GET, POST, PUT, DELETE)
-        params: Request parameters/body
-        headers: Optional additional headers
-    
-    Returns:
-        dict: API response or error information
-    
-    Examples:
-        # GET request with relative URL (will use base URL from config)
-        result = invoke_app_api("/api/users", "GET")
-        
-        # GET request with absolute URL (will use as-is)
-        result = invoke_app_api("https://api.example.com/users", "GET")
-        
-        # POST request with data
-        result = invoke_app_api(
-            "/api/users", 
-            "POST", 
-            params={"name": "John", "email": "john@example.com"}
-        )
-        
-        # GET request with query parameters
-        result = invoke_app_api(
-            "/api/users", 
-            "GET", 
-            params={"search": "john", "limit": 10}
-        )
-        
-        # PUT request with custom headers
-        result = invoke_app_api(
-            "/api/users/123", 
-            "PUT", 
-            params={"name": "John Updated"},
-            headers={"X-Custom-Header": "value"}
-        )
-    """
 
-    # print(tool_context)
+def format_geo_context_for_instruction(state: dict) -> str:
+    """Format geo information from state into a concise instruction-friendly string"""
+    if not state:
+        return ""
     
-    try:
-        # Prepare the final URL using the dedicated function
-        final_url = prepare_api_url(url)
+    geo_stats = state.get('user_geo_stats', {})
+    if not geo_stats:
+        return ""
+    
+    context_parts = []
+    
+    # Extract location information
+    location = geo_stats.get('location', {})
+    if location and location.get('status') == 'success':
+        # Add city and country
+        location_parts = []
+        if location.get('city'):
+            location_parts.append(location['city'])
+        if location.get('region'):
+            location_parts.append(location['region'])
+        if location.get('country'):
+            location_parts.append(location['country'])
         
-        # Use the common utility to build request headers
-        from .utils.auth_helpers import build_request_headers
-        request_headers = build_request_headers(
-            tool_context=tool_context,
-            additional_headers=headers,
-            url=url
-        )
+        if location_parts:
+            context_parts.append(f"**Location:** {', '.join(location_parts)}")
+        
+        # Add timezone
+        if location.get('timezone'):
+            context_parts.append(f"**Timezone:** {location['timezone']}")
+        
+        # Add coordinates if available
+        if location.get('latitude') and location.get('longitude'):
+            context_parts.append(f"**Coordinates:** {location['latitude']}, {location['longitude']}")
+        
+        # Add ISP information if available
+        if location.get('isp'):
+            context_parts.append(f"**ISP:** {location['isp']}")
+    
+    # Add current datetime
+    if geo_stats.get('current_datetime'):
+        context_parts.append(f"**Current DateTime (UTC):** {geo_stats['current_datetime']}")
+    
+    if context_parts:
+        return "\n\n---\n**GEO CONTEXT:**\n" + "\n".join(context_parts) + "\n---\n"
+    return ""
 
-        # Get API timeout (default to 30 seconds if config not available)
-        api_timeout = 30
-        try:
-            from .utils.config import get_api_timeout
-            api_timeout = get_api_timeout()
-        except ImportError:
-            pass
-        
-        # Prepare request body
-        body = params or {}
-        
-        # Make the appropriate HTTP request based on method
-        if method.upper() == 'GET':
-            # Handle GET parameters properly
-            if body:
-                # For GET requests, convert body to query parameters
-                query_params = '&'.join([f"{k}={v}" for k, v in body.items() if v is not None])
-                if query_params:
-                    separator = '&' if '?' in final_url else '?'
-                    final_url += separator + query_params
-            
-            # Make GET request
-            print(f"🌐 [HTTP-REQUEST] Making GET request to: {final_url}")
-            # Log headers safely (mask sensitive values)
-            safe_headers = {k: ("Bearer ***" if k == "Authorization" and v.startswith("Bearer ") else v) for k, v in request_headers.items()}
-            print(f"🌐 [HTTP-REQUEST] Headers: {safe_headers}")
-            print(f"🌐 [HTTP-REQUEST] Timeout: {api_timeout}s")
-            
-            try:
-                response = requests.get(final_url, headers=request_headers, timeout=api_timeout, verify=False)
-                print(f"🌐 [HTTP-RESPONSE] Status Code: {response.status_code}")
-                print(f"🌐 [HTTP-RESPONSE] Response Headers: {dict(response.headers)}")
-                print(f"🌐 [HTTP-RESPONSE] Response Size: {len(response.content)} bytes")
-                if response.status_code != 200:
-                    print(f"🌐 [HTTP-RESPONSE] Error Response Body: {response.text[:500]}")
-            except requests.exceptions.RequestException as e:
-                print(f"❌ [HTTP-REQUEST] Request failed with exception: {e}")
-                raise
-            
-        elif method.upper() == 'POST':
-            # Make POST request with JSON body
-            print(f"🌐 [HTTP-REQUEST] Making POST request to: {final_url}")
-            # Log headers safely (mask sensitive values)
-            safe_headers = {k: ("Bearer ***" if k == "Authorization" and v.startswith("Bearer ") else v) for k, v in request_headers.items()}
-            print(f"🌐 [HTTP-REQUEST] Headers: {safe_headers}")
-            print(f"🌐 [HTTP-REQUEST] Body: {str(body)[:200]}..." if body and len(str(body)) > 200 else f"🌐 [HTTP-REQUEST] Body: {body}")
-            print(f"🌐 [HTTP-REQUEST] Timeout: {api_timeout}s")
-            
-            try:
-                response = requests.post(final_url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
-                print(f"🌐 [HTTP-RESPONSE] Status Code: {response.status_code}")
-                print(f"🌐 [HTTP-RESPONSE] Response Headers: {dict(response.headers)}")
-                print(f"🌐 [HTTP-RESPONSE] Response Size: {len(response.content)} bytes")
-                if response.status_code != 200:
-                    print(f"🌐 [HTTP-RESPONSE] Error Response Body: {response.text[:500]}")
-            except requests.exceptions.RequestException as e:
-                print(f"❌ [HTTP-REQUEST] Request failed with exception: {e}")
-                raise
-            
-        elif method.upper() == 'PUT':
-            # Make PUT request with JSON body
-            response = requests.put(final_url, json=body, headers=request_headers, timeout=api_timeout, verify=False)
-            
-        elif method.upper() == 'DELETE':
-            # Make DELETE request
-            response = requests.delete(final_url, headers=request_headers, timeout=api_timeout, verify=False)
-            
+
+def format_page_context_for_instruction(page_context: dict) -> str:
+    """Format page context data into a concise instruction-friendly string"""
+    if not page_context:
+        return ""
+    
+    component_data = page_context.get('component_data', {})
+    context_parts = []
+    
+    # Add route information
+    if 'route' in page_context:
+        route = page_context['route']
+        context_parts.append(f"**Current Page:** {route.get('path', 'Unknown')}")
+    
+    # Extract the main data object (recordData, partner, contact, interactions, etc.)
+    if 'recordData' in component_data:
+        record = component_data['recordData']
+        # Extract key fields only to keep it concise
+        if isinstance(record, dict):
+            key_fields = {}
+            for key in ['id', 'name', 'partnerCategoryName', 'status', 'partnerGroupName']:
+                if key in record:
+                    key_fields[key] = record[key]
+            context_parts.append(f"\n**Currently Viewing Entity:** {key_fields}")
         else:
-            return {
-                "status": "error",
-                "error": f"Unsupported HTTP method: {method}",
-                "supported_methods": ["GET", "POST", "PUT", "DELETE"]
-            }
-        
-        # Process response
-        if response.status_code >= 200 and response.status_code < 300:
-            try:
-                response_data = response.json()
-                
-                return {
-                    "status": "success",
-                    "status_code": response.status_code,
-                    "response": response_data,
-                    "api_call": f"{method.upper()} {final_url}",
-                    "headers_sent": list(request_headers.keys())
-                }
-                
-            except json.JSONDecodeError:
-                return {
-                    "status": "success",
-                    "status_code": response.status_code,
-                    "response": {"text": response.text},
-                    "api_call": f"{method.upper()} {final_url}",
-                    "headers_sent": list(request_headers.keys()),
-                    "note": "Response was not JSON"
-                }
-                
-        else:
-            error_message = f"HTTP {response.status_code}"
-            try:
-                error_data = response.json()
-                if isinstance(error_data, dict):
-                    error_message = error_data.get('message', error_data.get('error', error_message))
-            except:
-                error_message = response.text if response.text else error_message
-            
-            return {
-                "status": "error",
-                "status_code": response.status_code,
-                "error": error_message,
-                "api_call": f"{method.upper()} {final_url}",
-                "headers_sent": list(request_headers.keys())
-            }
-            
-    except requests.exceptions.ConnectionError as conn_error:
-        return {
-            "status": "error",
-            "error": f"Connection error: {str(conn_error)}",
-            "api_call": f"{method.upper()} {final_url}",
-            "connection_error": True
-        }
-        
-    except requests.exceptions.Timeout as timeout_error:
-        return {
-            "status": "error",
-            "error": f"Request timeout: {str(timeout_error)}",
-            "api_call": f"{method.upper()} {final_url}",
-            "timeout_error": True
-        }
-        
-    except Exception as request_error:
-        return {
-            "status": "error",
-            "error": f"Request failed: {str(request_error)}",
-            "api_call": f"{method.upper()} {final_url}",
-            "traceback": traceback.format_exc()
-        }
+            context_parts.append(f"\n**Currently Viewing Entity:** {record}")
+    
+    # Add any other relevant data from component_data
+    for key, value in component_data.items():
+        if key in ['partner', 'contact', 'interaction'] and key != 'recordData':
+            # Extract key fields only
+            if isinstance(value, dict):
+                key_fields = {k: v for k, v in value.items() if k in ['id', 'name', 'status']}
+                context_parts.append(f"\n**{key.title()}:** {key_fields}")
+            else:
+                context_parts.append(f"\n**{key.title()}:** {value}")
+    
+    if context_parts:
+        return "\n\n---\n**CURRENT PAGE CONTEXT:**\n" + "\n".join(context_parts) + "\n---\n"
+    return ""
+
 
 google_search_agent = LlmAgent(
     model="gemini-2.0-flash",
@@ -401,9 +344,23 @@ Your goal is to help the user with their request.
 You will use the tools provided to you to help the user.
 Respond in well-formed markdown.
 
-## UNOPS PAO System Entities and API Reference
+## IMPORTANT: Page Context Awareness
 
-You have access to a comprehensive UNOPS PAO system with the following entities and capabilities:
+The user's messages will include **CURRENT PAGE CONTEXT** information that tells you:
+- What page the user is currently viewing
+- What data is loaded on their screen (partner details, contact information, interaction records, etc.)
+- The specific entity they are looking at (with full details)
+
+**ALWAYS use this context to understand what the user is referring to.** For example:
+- If they say "Tell me about this partner" and the context shows they're viewing "The World Bank" (ID: 443), you know they mean The World Bank
+- If they ask "What contacts do we have?" and the context shows a partner record with associated contacts, use that data
+- If they ask "Summarize this" and there's a record loaded, summarize that specific record
+
+<**DO NOT ask the user to clarify which entity they mean if the context already provides it.**>
+
+## UNOPS CRM System Entities and API Reference
+
+You have access to a comprehensive UNOPS CRM system with the following entities and capabilities:
 
 {entities_metadata}
 
@@ -414,34 +371,37 @@ Use this metadata to understand:
 - Request model structures for complex operations
 - Relationships between entities
 
-When processing requests, refer to this metadata to ensure accurate API calls and data handling.
-
 ## Tools Available
 
-**invoke_app_api** - Use this tool to search for any of the corporate entities in the CRM application you have been provided metadata about (Partners, Contacts, Interactions, etc.).
+**invoke_app_api** - Use this tool to search for any of the entities in the CRM application you have been provided metadata about (Partners, Contacts, Interactions, etc.).
 Based on the information you have in the entity metadata, identify which would be the appropriate endpoint to call and use this tool to make direct HTTP requests to API endpoints
 You have all the information needed to use this tool to retrieve information from the application (you have information about about the entities available, their data model, the endpoints they support, and the parameters and request models for the APIs).
-PARAMETERS: url, method, params, headers, tool_context
+DO: When processing requests with the invoke_app_api tool, refer to the UNOPS CRM System Entities and API Reference metadata and use the endpoint EXACTLY AS STATED IN THE METADATA.  STRICTLY USE ONLY the endpoints EXACTLY AS STATED IN THE METADATA.
+DO NOT: Make up, augment, or modify the endpoints, parameters, or request models in ANY WAY, SHAPE, OR FORM.
+PARAMETERS: url, method, params, headers
 
 **search_corp_vector_store** - Searches corporate vector store/knowledge base.  Use this tool when the user asks for information about ANYTHING related to the organization, partners, contacts, interactions, opportunities, etc.
-Use relevant entityTypeIds to get the most relevant information.  The entityTypeIds are: "ENGAGEMENT", "PROJECT", "POLICY", "LEGAL_AGREEMENT".
-If you are not sure about the entityTypeIds, leave it blank.
-PARAMETERS: query, applicationId, entityTypeId, entityId, maxResults, isMultiToolRequest
+Use relevant entityTypeIds to get the most relevant information.  The entityTypeIds are: "BUSINESS_OPPORTUNITY", "FUNDING_SOURCE", "CONTINENT", "DUTY_STATION", "ORGANIZATION", "RFX", "PO", "GUIDANCE", "CONTRACT", "LTA", "POLICY", "SUPPLIER", "CLIENT", "COUNTRY", "BANK", "ORG_UNIT", "GEO_REGION", "PROCESS", "STANDARD", "INVOICE", "PAYMENT", "AGREEMENT", "HOST_COUNTRY_AGREEMENT", "PERSON", "PERSON_SKILL", "ENGAGEMENT", "PARTNER", "PROJECT", "SDG", "OUTPUT", "PERSON_ROLE", "LESSON_LEARNT", "PROPOSAL", "ORG_REPORT", "ORG_STRATEGY", "MOU", "EXTERNAL_PUBLICATION", "TEMPLATE", "RISK", "ISSUE".
+If you are not sure about the entityTypeId, or if there are too many entityTypeIds, leave it blank which will return a wide spectrum of information.  You may wish to adjust the maxResults in that case.
+PARAMETERS: query, applicationId, entityTypeId, entityId, maxResults
 
 **google_search** - Searches the web for information.
 PARAMETERS: query
 Make sure to return the results in well-formed markdown along with links to the sources.
 
-When you provide your thoughts, make sure to not use the names of the specific tools. Just describe what you would do and substitute the tool name with a short description of what the tool does.  Use non-technical language.
+**Important Rules for your thought process:**
+When you decide to use a tool, first explain your reasoning step-by-step. In your explanation, describe the *action* you are taking in plain language (e.g., 'I will look up the partner'). **Do not mention the specific internal tool name** (e.g., do not say 'I will use the `invoke_app_api` tool').
+Don't talk about endpoints, parameters, or request models in your explanation.
+
 Respond in WELL-FORMED MARKDOWN making proper use of different heading levels, bold text, and lists.
 
 """
 
 # Create the final instruction by substituting the metadata
+entities_metadata = load_entities_metadata()  # Load the metadata
 instruction = instruction_template.format(
     entities_metadata=format_entities_metadata_as_markdown(entities_metadata)
 )
-# print(instruction)
 
 
 root_agent = LlmAgent(
@@ -449,6 +409,7 @@ root_agent = LlmAgent(
     description="Root agent for the AI assistant",
     instruction=instruction,
     model="gemini-2.5-flash",
+    # model="gemini-2.5-flash-lite",
     generate_content_config=types.GenerateContentConfig(
         temperature=0.2, # More deterministic output
         # max_output_tokens=250,
@@ -467,3 +428,60 @@ root_agent = LlmAgent(
     ),
     tools=[invoke_app_api, search_corp_vector_store, AgentTool(google_search_agent)]
 )
+
+
+def create_agent_with_context(state: dict = None) -> LlmAgent:
+    """
+    Create an agent instance with optional user, page, and geo context injected into the instruction.
+    This allows dynamic context without polluting the conversation history.
+    
+    Args:
+        state: Optional state dictionary containing user_profile, page_context_auto, and user_geo_stats
+        
+    Returns:
+        LlmAgent instance with context-aware instruction
+    """
+    # Build the instruction with optional user, page, and geo context
+    user_context_instruction = ""
+    page_context_instruction = ""
+    geo_context_instruction = ""
+    
+    if state:
+        user_context_instruction = format_user_context_for_instruction(state)
+        geo_context_instruction = format_geo_context_for_instruction(state)
+        page_context = state.get('page_context_auto')
+        if page_context:
+            page_context_instruction = format_page_context_for_instruction(page_context)
+    
+    # Combine base instruction with context (user context, geo context, then page context)
+    full_instruction = instruction
+    if user_context_instruction or geo_context_instruction or page_context_instruction:
+        # Insert context right after the Page Context Awareness section
+        combined_context = user_context_instruction + geo_context_instruction + page_context_instruction
+        full_instruction = instruction.replace(
+            "<**DO NOT ask the user to clarify which entity they mean if the context already provides it.**>",
+            f"**DO NOT ask the user to clarify which entity they mean if the context already provides it.**\n\n{combined_context}"
+        )
+    
+    return LlmAgent(
+        name="root_agent",
+        description="Root agent for the AI assistant",
+        instruction=full_instruction,
+        model="gemini-2.5-flash",
+        generate_content_config=types.GenerateContentConfig(
+            temperature=0.2,
+            safety_settings=[
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    threshold=types.HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
+                )
+            ]
+        ),
+        planner=BuiltInPlanner(
+            thinking_config=types.ThinkingConfig(
+                include_thoughts=True,
+                thinking_budget=1024,
+            )
+        ),
+        tools=[invoke_app_api, search_corp_vector_store, AgentTool(google_search_agent)]
+    )

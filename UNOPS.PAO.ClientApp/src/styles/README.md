@@ -8,7 +8,6 @@ The UNOPS styling system provides a complete design foundation that ensures:
 - **Brand Consistency**: All components follow UNOPS visual identity
 - **PrimeNG Integration**: Seamless override of PrimeNG defaults
 - **Accessibility**: WCAG compliant components and interactions
-- **Dark Mode Support**: Automatic theme switching
 - **Responsive Design**: Mobile-first approach with UNOPS breakpoints
 
 ## 📁 File Structure
@@ -30,7 +29,6 @@ src/styles/
 The single source of truth for all UNOPS design tokens as CSS custom properties. This file:
 - Defines the complete UNOPS color palette
 - Maps PrimeNG tokens to UNOPS colors
-- Provides dark theme support
 - Includes comprehensive token aliases
 
 ### 2. `primeng-unops-theme.scss`
@@ -38,7 +36,6 @@ Comprehensive PrimeNG component overrides that:
 - **Override ALL PrimeNG component styles** with UNOPS design
 - Use `!important` declarations to ensure precedence
 - Maintain accessibility and interaction states
-- Support dark theme automatically
 
 ### 3. `unops-utilities.scss`
 Ready-to-use utility classes for common patterns:
@@ -108,14 +105,6 @@ Ready-to-use utility classes for common patterns:
 - **LG**: `var(--unops-radius-lg)` - 12px
 - **Full**: `var(--unops-radius-full)` - 9999px
 
-## 🌙 Dark Mode
-
-Dark mode is automatically supported through CSS custom properties. The system:
-- Detects the `.app-dark` class on the root element
-- Automatically adjusts surface colors and text contrast
-- Maintains UNOPS brand colors for interactive elements
-- Preserves accessibility contrast ratios
-
 ## 📱 Responsive Design
 
 The system includes UNOPS-specific breakpoints:
@@ -159,11 +148,6 @@ The styling system completely overrides PrimeNG defaults:
 2. Check that `!important` declarations are present
 3. Verify CSS loading order in `styles.scss`
 
-### Dark Mode Not Working
-1. Confirm `.app-dark` class is applied to root element
-2. Check that CSS custom properties are defined for both themes
-3. Verify component uses tokens, not hardcoded colors
-
 ### Utility Classes Not Working
 1. Ensure `unops-utilities.scss` is imported after theme
 2. Check for conflicting styles with higher specificity
@@ -183,9 +167,8 @@ When updating the design system:
 1. **Update design tokens** in `unops-design-tokens.css`
 2. **Update PrimeNG overrides** in `primeng-unops-theme.scss`
 3. **Add utility classes** in `unops-utilities.scss`
-4. **Test in both light and dark modes**
-5. **Verify accessibility compliance**
-6. **Update documentation**
+4. **Verify accessibility compliance**
+5. **Update documentation**
 
 ---
 

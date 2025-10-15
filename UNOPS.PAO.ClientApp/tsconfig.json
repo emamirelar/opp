@@ -21,11 +21,15 @@
     "baseUrl": "./",
     "paths": {
       "@app/*": ["src/app/*"],
-      "@models/*": ["src/app/models/*"],
-      "@services/*": ["src/app/services/*"],
+      "@core/*": ["src/app/core/*"],
+      "@shared/*": ["src/app/shared/*"],
+      "@layouts/*": ["src/app/layouts/*"],
       "@features/*": ["src/app/features/*"],
-      "@common/*": ["src/app/common/*"],
-      "@essentials/*": ["src/app/essentials/*"]
+      "@partnerships/*": ["src/app/features/partnerships/*"],
+      "@admin/*": ["src/app/features/admin/*"],
+      "@ai/*": ["src/app/features/ai/*"],
+      "@search/*": ["src/app/features/search/*"],
+      "@features/shared/*": ["src/app/features/shared/*"]
     }
   },
   "angularCompilerOptions": {

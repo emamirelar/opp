@@ -1,0 +1,35 @@
+@if (showUploadButton()) {
+  <p-button
+    icon="pi pi-google"
+    label="{{ 'button.uploadDocument' | translate }}"
+    (onClick)="handleOnSelectDriveBtnClick()"
+  />
+}
+
+@defer (when showAddLinkDialog) {
+  <p-dialog
+    header="{{ 'button.addLink' | translate }}"
+    [modal]="true"
+    [(visible)]="showAddLinkDialog"
+    [styleClass]="'add-link-dialog'"
+    [maximizable]="true"
+    (onHide)="handleOnAddLinkDialogClose(addLinkComponent)"
+  >
+    <app-document-gdrive-addlink
+      #addLinkComponent
+      [entityId]="entityId()"
+      [entityName]="entityName()"
+      [acceptedMIMETypes]="acceptedMIMETypes()"
+      (onAddLinkSuccess)="handleOnAddLinkSuccess()"
+    ></app-document-gdrive-addlink>
+
+    <ng-template #footer>
+      <p-button label="{{ 'button.cancel' | translate }}" severity="secondary" (click)="showAddLinkDialog = false" />
+      <p-button
+        icon="pi pi-link"
+        label="{{ 'button.addLink' | translate }}"
+        (onClick)="handleOnAddLinkBtnClick(addLinkComponent)"
+      />
+    </ng-template>
+  </p-dialog>
+}

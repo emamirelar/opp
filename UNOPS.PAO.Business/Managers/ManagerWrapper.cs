@@ -4,6 +4,7 @@ using System;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
@@ -31,12 +32,14 @@ public class ManagerWrapper : IManagerWrapper
     
     public ManagerWrapper(IMapper mapper, AppDbContext context,
                           UserManager<PAOIdentityUser> userManager, 
-                          IHttpContextAccessor httpContextAccessor)
+                          IHttpContextAccessor httpContextAccessor,
+                          IConfiguration configuration,
+                          IServiceProvider serviceProvider)
     {
         this.UserManager = userManager;
         workflowManager = new WorkflowManager(context);
 
-        systemAdminManager = new SystemAdminManager(context);
+        systemAdminManager = new SystemAdminManager(context, configuration, serviceProvider);
 
         contactManager = new ContactManager(mapper, context);
         interactionManager = new InteractionManager(mapper, context);

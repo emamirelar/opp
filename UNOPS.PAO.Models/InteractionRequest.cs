@@ -14,9 +14,7 @@ public class InteractionRequest : ExtensibleModel
     public string? Description { get; set; }
     [Newtonsoft.Json.JsonConverter(typeof(StringOrStringArrayConverter))]
     public List<string>? EmailAddresses { get; set; } = new List<string>();
-    
-    [Newtonsoft.Json.JsonConverter(typeof(StringOrStringArrayConverter))]
-    public List<string>? PhoneNumbers { get; set; } = new List<string>();
+
     public List<int>? ContactIds { get; set; } = new List<int>();
     public List<int>? PartnerIds { get; set; } = new List<int>();
     public List<int>? UserIds { get; set; } = new List<int>();

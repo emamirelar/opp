@@ -59,8 +59,6 @@ public class PartnerModel
     public string? ReasonForLevy { get; set; }
     public string? LevyTreatment { get; set; }
     public bool PooledFund { get; set; }
-    public bool CanCreateNewOpportunities { get; set; }
-    public string? ReasonForNoNewOpportunity { get; set; }
 
     // System Status
     public string Status { get; set; } // Draft / Active / Closed / Archived
@@ -138,7 +136,7 @@ public class PartnerModel
         }
         
         // Partner Approval Status Tags  
-        if (!string.IsNullOrEmpty(PartnerApprovalStatus))
+        if (!string.IsNullOrEmpty(PartnerApprovalStatus) && !string.IsNullOrEmpty(Status) && Status != "Closed" && Status != "Archived")
         {
             var approvalTag = PartnerApprovalStatus switch
             {

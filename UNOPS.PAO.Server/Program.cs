@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using UNOPS.PAO.UNOPSDataAccess.Seed;
 
 namespace UNOPS.PAO.Server;
 
@@ -78,8 +77,8 @@ public class Program
     {
         var app = CreateHostBuilder(args).Build();
         
-        // Seed entity permissions on startup
-        app.SeedEntityPermissionsOnStartupAsync().GetAwaiter().GetResult();
+        // Data seeding is now triggered manually via API endpoint: POST /api/system-admin/seeding/run
+        // Role/permission seeding still happens automatically in Startup.cs
         
         app.Run();
     }

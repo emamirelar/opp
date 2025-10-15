@@ -1,4 +1,4 @@
-const IS_TEST_DEPLOYMENT = true; 
+const IS_TEST_DEPLOYMENT = false;
 
 /**
  * Returns the base URL based on the current deployment environment.
@@ -25,8 +25,9 @@ function getApiBaseUrl() {
 }
 
 const API_BASE_URL = getApiBaseUrl();
-//const BASE_URL = 'https://test-opportunityplus.unops.org';
+const BASE_URL = getBaseUrl();
 //const DEV_BASE_URL = 'https://swift-legible-raven.ngrok-free.app';
+const USER_CLAIMS_ENDPOINT = `${BASE_URL}/user/claims`;
 const AUTH_ENDPOINT = `${API_BASE_URL}/gmail-addon/auth`;
 const CONTACT_ENDPOINT = `${API_BASE_URL}/api/contact`;
 const INTERACTION_API_ENDPOINT = `${API_BASE_URL}/gmail-addon/interactions`;

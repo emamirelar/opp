@@ -1,0 +1,209 @@
+<div class="flex flex-col h-full gap-4 md:gap-6 p-4 md:p-6">
+  <!-- Search Header with Metadata -->
+  <div class="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
+    <div class="flex flex-col space-y-3 md:space-y-4">
+      <!-- Header with Title and Loading -->
+      <div class="flex flex-col md:flex-row md:items-start md:justify-between space-y-2 md:space-y-0">
+      <div class="min-w-0 flex-1">
+        <h1 class="text-xl md:text-3xl font-bold text-gray-900 mb-2 break-words">
+          {{ 'search.results' | translate }}: <span style="color: color-mix(in srgb, var(--p-primary-color) calc(100% * var(--tw-text-opacity, 1)), transparent);">"{{ searchQuery() }}"</span>
+        </h1>
+                 @if(searchResponse) {
+           <div class="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 text-sm text-gray-500">
+             <span>{{ getTotalResultsCount() }} {{ 'search.totalResults' | translate }}</span>
+             
+             <!-- Enhanced Global Filter Information with Toggle -->
+             @if(shouldShowFilterToggle()) {
+               <div class="flex items-center space-x-2 px-3 py-2 rounded-lg border transition-all duration-200"
+                    style="background-color: color-mix(in srgb, var(--p-primary-color) 10%, transparent); border-color: color-mix(in srgb, var(--p-primary-color) 30%, transparent);">
+                 <i class="pi pi-filter text-sm" style="color: color-mix(in srgb, var(--p-primary-color) calc(100% * var(--tw-text-opacity, 1)), transparent);"></i>
+                <div class="flex-1">
+                  <div class="text-xs md:text-sm" style="color: color-mix(in srgb, var(--p-primary-color) 90%, transparent); font-weight: 500;">
+                    @if(isFilterTemporarilyDisabled()) {
+                      {{ 'search.globalFiltersOff' | translate }}
+                    } @else {
+                      {{ 'search.filteredBy' | translate }}: 
+                      @for(label of activeFilterLabels(); track label; let isLast = $last) {
+                        <span>{{ label }}@if(!isLast) {<span>, </span>}</span>
+                      }
+                    }
+                  </div>
+                  <div class="text-xs mt-1 opacity-90" style="color: color-mix(in srgb, var(--p-primary-color) 80%, transparent);">
+                    {{ getRecordCountText() }}
+                  </div>
+                </div>
+                 <div class="flex items-center space-x-1">
+                   <button 
+                     pButton 
+                     type="button"
+                     class="p-button-sm p-button-outlined"
+                     [class.p-button-success]="isFilterTemporarilyDisabled()"
+                     [class.p-button-secondary]="!isFilterTemporarilyDisabled()"
+                     (click)="toggleGlobalFilter()"
+                     [title]="getToggleButtonText()">
+                     <i class="pi" [class.pi-eye]="isFilterTemporarilyDisabled()" [class.pi-filter]="!isFilterTemporarilyDisabled()"></i>
+                     <span class="ml-1 hidden md:inline">{{ getToggleButtonText() }}</span>
+                   </button>
+                   <button 
+                     pButton 
+                     type="button"
+                     icon="pi pi-sliders-h"
+                     class="p-button-sm p-button-outlined p-button-secondary"
+                     (click)="openGlobalFiltersDialog()"
+                     [title]="'search.clickToModifyFilters' | translate">
+                   </button>
+                 </div>
+               </div>
+             }
+           </div>
+         }
+      </div>
+      
+      @if(isLoading()) {
+        <div class="flex items-center space-x-2" style="color: color-mix(in srgb, var(--p-primary-color) calc(100% * var(--tw-text-opacity, 1)), transparent);">
+          <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>{{ 'search.searching' | translate }}</span>
+        </div>
+      }
+      </div>
+
+      <!-- Search Bar and Controls -->
+      <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+        <!-- Search Bar -->
+        <div class="flex-1 max-w-2xl">
+          <div class="relative flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              [formControl]="searchControl"
+              class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              [placeholder]="'search.placeholder' | translate"
+              (keydown.enter)="goToResultsPage()"
+            />
+            @if(searchControl.value) {
+              <button
+                (click)="clearSearch()"
+                class="absolute right-3 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Toggle Controls -->
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-3">
+            <span class="text-sm font-medium text-gray-700">{{ 'search.showMetadata' | translate }}</span>
+            <p-toggleswitch
+              [ngModel]="_showSearchMetadata()"
+              (ngModelChange)="_showSearchMetadata.set($event)"
+              class="scale-75">
+            </p-toggleswitch>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic Tabs -->
+  @if(entityTabs.length > 0 && !isLoading()) {
+    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      
+      <!-- Mobile Tab Dropdown (visible on mobile only) -->
+      <div class="md:hidden border-b border-gray-200 bg-gray-50 p-4">
+        <label for="mobile-tab-select" class="block text-sm font-medium text-gray-700 mb-2">{{ 'search.selectCategory' | translate }}</label>
+        <select 
+          id="mobile-tab-select"
+          [ngModel]="activeTabKey" 
+          (ngModelChange)="selectTab($event)"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm focus:outline-none focus:ring-2 focus:ring-offset-2"
+          [style]="'focus:ring-color: color-mix(in srgb, var(--p-primary-color) calc(100% * var(--tw-ring-opacity, 0.5)), transparent); focus:border-color: color-mix(in srgb, var(--p-primary-color) calc(100% * var(--tw-border-opacity, 1)), transparent);'">
+          @for(tab of entityTabs; track tab.key) {
+            <option [value]="tab.key">
+              {{ tab.label }} ({{ tab.count }})
+            </option>
+          }
+        </select>
+      </div>
+
+      <!-- Desktop Tab Navigation (hidden on mobile) -->
+      <div class="hidden md:block border-b border-gray-200 bg-gray-50">
+        <nav class="flex space-x-1 p-2">
+          @for(tab of entityTabs; track trackByTabKey($index, tab)) {
+            <button
+              (click)="selectTab(tab.key)"
+              [class]="'flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 relative ' +
+                      (activeTabKey === tab.key 
+                        ? 'text-white shadow-lg transform -translate-y-0.5 z-10' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 bg-white hover:shadow-sm')"
+              [style]="activeTabKey === tab.key 
+                        ? 'background-color: color-mix(in srgb, var(--p-primary-color) calc(100% * var(--tw-bg-opacity, 1)), transparent); box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 3px color-mix(in srgb, var(--p-primary-color) 25%, transparent); border: 2px solid color-mix(in srgb, var(--p-primary-color) 90%, transparent);' 
+                        : 'border: 2px solid transparent;'"
+              type="button">
+                
+                <!-- Tab Icon -->
+                <span class="material-symbols-outlined text-lg">{{ tab.icon }}</span>
+                
+                <span>{{ tab.label }}</span>
+                <span [class]="'px-2 py-0.5 text-xs rounded-full font-medium bg-' + tab.color + '-100 text-' + tab.color + '-700'">
+                  {{ tab.count }}
+                </span>
+              </button>
+            }
+        </nav>
+      </div>
+
+      <!-- Tab Content with Improved Mobile Layout -->
+      <div class="h-[calc(100vh-280px)] overflow-y-auto">
+        <div class="p-4 md:p-6">
+          @if(currentResults.length > 0) {
+            <!-- Single Listview Card for All Results -->
+            <app-listview-card
+              [columns]="currentColumns"
+              [data]="currentResults"
+              [config]="cardConfig"
+              [totalRecords]="currentResults.length"
+              [loading]="false"
+              [error]="false"
+              [hasMoreData]="false"
+              [isLoadingMore]="false"
+              [showSearchMetadata]="showSearchMetadata()"
+              (rowClick)="onCardClick($event)">
+            </app-listview-card>
+
+            <!-- Search Statistics -->
+            @if (searchResponse && getTotalResultsCount() > 0) {
+              <div class="mt-6 text-center text-sm text-gray-500">
+                <p>{{ 'search.found' | translate }} {{ currentResults.length }} {{ 'search.resultsIn' | translate }} {{ activeTabKey }}
+                  ({{ 'search.totalOf' | translate }} {{ getTotalResultsCount() }} {{ 'search.results' | translate }})</p>
+              </div>
+            }
+          } @else {
+            <!-- Empty State -->
+            <div class="text-center py-12">
+              <p class="text-gray-500 text-lg">{{ 'search.noResultsFound' | translate }}</p>
+              <p class="text-gray-400 text-sm mt-2">{{ 'search.tryDifferentTerms' | translate }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  } @else if(!isLoading()) {
+    <div class="bg-white rounded-lg border border-gray-200 p-12 text-center">
+      <svg class="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">{{ 'search.startSearching' | translate }}</h3>
+      <p class="text-gray-500">{{ 'search.enterTermsAbove' | translate }}</p>
+    </div>
+  }
+</div>
+

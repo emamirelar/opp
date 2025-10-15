@@ -8,16 +8,55 @@ metadata:
 
 source:
   type: "bigquery"
-  connection:
-    project_id: "unops-partneropportunity"
-    use_environment_auth: true
   
   query: |
-    SELECT 
-      * 
+    WITH ENG AS (
+      SELECT
+        *
+      FROM
+        `unopsreporting.Engagements.Engagement` E
+      WHERE
+        E.Engagement_Stage NOT IN ('CANCELLED')
+        AND EXTRACT(YEAR FROM E.Engagement_Implementation_Start_Date) > 1900
+        AND E.Latest_Finalised_Flag = 'Yes'
+    )
+    , CLIENTS AS (
+    SELECT DISTINCT
+      CONCAT(E.Base_Engagement, '-CLIENT-', EC.Partner) AS Key
+      , E.Base_Engagement
+      , 'CLIENT' AS Partner_Type
+      , EC.Partner
+      , EC.Partner_Description
+    FROM
+      ENG E
+
+      CROSS JOIN UNNEST(E.Clients) AS EC
+    )
+    , DONORS AS (
+    SELECT DISTINCT
+      CONCAT(E.Base_Engagement, '-DONOR-', EF.Partner) AS Key
+      , E.Base_Engagement
+      , 'DONOR' AS Partner_Type
+      , EF.Partner
+      , EF.Partner_Description
+    FROM
+      ENG E
+
+      CROSS JOIN UNNEST(E.Funding_Sources) AS EF
+    )
+    SELECT
+      *
+      , 1 AS Status
       , CURRENT_TIMESTAMP() as last_modified
     FROM
-      `unops-partneropportunity.integration.Table_EngagementPartners`
+      CLIENTS
+    UNION ALL
+    SELECT
+      *
+      , 1 AS Status
+      , CURRENT_TIMESTAMP() as last_modified
+    FROM
+      DONORS
   
   primary_key_field: "Key"
   batch_size: 1000
@@ -25,6 +64,8 @@ source:
 destination:
   table_name: "BaseEngagementPartners"
   schema: "public"
+  manage_table_structure: true
+  add_standard_fields: true
   
   field_mappings:
     - source_field: "Partner_Description"

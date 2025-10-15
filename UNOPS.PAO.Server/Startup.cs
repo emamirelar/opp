@@ -213,6 +213,9 @@ public class Startup
         // Add memory cache for permission caching
         services.AddMemoryCache();
         
+        // Add HttpClient for external service calls
+        services.AddHttpClient();
+        
         // Register AI prompt cache service
         services.AddScoped<IAiPromptCacheService, AiPromptCacheService>();
         
@@ -321,6 +324,33 @@ public class Startup
                         options.ExternalGroupMappings[child.Key] = child.Value;
                     }
                 }
+                
+                // Configure user impersonation settings
+                options.EnableImpersonation = iapConfig.GetValue<bool>("EnableImpersonation", false);
+                options.ImpersonationHeaderName = iapConfig.GetValue<string>("ImpersonationHeaderName", "x-unops-impersonated-user");
+                
+                // Load trusted service accounts list
+                options.TrustedServiceAccounts = new List<string>();
+                var trustedAccounts = iapConfig.GetSection("TrustedServiceAccounts");
+                if (trustedAccounts.Exists())
+                {
+                    foreach (var child in trustedAccounts.GetChildren())
+                    {
+                        var account = child.Value;
+                        if (!string.IsNullOrEmpty(account))
+                        {
+                            options.TrustedServiceAccounts.Add(account);
+                        }
+                    }
+                }
+                
+                // Also add DefaultServiceAccount if specified
+                var defaultServiceAccount = iapConfig.GetValue<string>("DefaultServiceAccount", "");
+                if (!string.IsNullOrEmpty(defaultServiceAccount) && 
+                    !options.TrustedServiceAccounts.Contains(defaultServiceAccount))
+                {
+                    options.TrustedServiceAccounts.Add(defaultServiceAccount);
+                }
             });
         }
 
@@ -415,8 +445,8 @@ public class Startup
         // Register Global Filter Service for centralized global filter logic
         services.AddScoped<GlobalFilterService>();
         
-        // Add data seeding services
-        services.AddDataSeeding();
+        // Data seeding is now triggered manually via API endpoint: POST /api/system-admin/seeding/run
+        // services.AddDataSeeding(); // REMOVED - no longer runs on startup
 
         // Register HttpContextAccessor for accessing request context in managers
         services.AddHttpContextAccessor();

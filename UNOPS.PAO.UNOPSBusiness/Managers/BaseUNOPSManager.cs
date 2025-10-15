@@ -164,9 +164,22 @@ public abstract class BaseUNOPSManager
     {
         if (user == null) return string.Empty;
 
-        var userEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? 
-                       user.FindFirst("email")?.Value;
-        
+        // Try multiple ways to get the current user's email from claims
+        var userEmail = user.FindFirst(ClaimTypes.Email)?.Value ??
+                          user.FindFirst("email")?.Value ??
+                          user.Identity?.Name;
+
+        // Extract email from identity provider format if needed
+        // Format: "securetoken.google.com/unops-partneropportunity:email@domain.com"
+        if (!string.IsNullOrEmpty(userEmail) && userEmail.Contains(':'))
+        {
+            var emailParts = userEmail.Split(':');
+            if (emailParts.Length > 1)
+            {
+                userEmail = emailParts[emailParts.Length - 1]; // Take the last part after colon
+            }
+        }
+
         if (string.IsNullOrEmpty(userEmail))
         {
             return string.Empty;
@@ -253,6 +266,7 @@ public abstract class BaseUNOPSManager
                     CanClose = GetCanClose(result, entityPermissions),
                     CanArchive = GetCanArchive(result, entityPermissions),
                     CanApprove = GetCanApprove(result, entityPermissions),
+                    CanUnapprove = GetCanUnapprove(result, entityPermissions),
                     CanExport = _permissionService?.CanExport(user) ?? false,
                     CanImport = _permissionService?.CanImport(user) ?? false
                 };
@@ -721,9 +735,10 @@ public abstract class BaseUNOPSManager
         if (_entityName != "Partner" || result == null)
             return null;
 
-        // Check if user has update permission (required for closing)
-        var hasUpdatePermission = entityPermissions.Any(p => p.CanUpdate);
-        if (!hasUpdatePermission)
+        // Check if user has admin-level permissions (only global admins can close)
+        // Admin users should have specific roles like PARTNER_GLOB_ADMIN
+        var hasAdminPermission = entityPermissions.Any(p => p.Role == "PARTNER_GLOB_ADMIN");
+        if (!hasAdminPermission)
             return false;
 
         // Use reflection to check partner status and approval status
@@ -764,9 +779,10 @@ public abstract class BaseUNOPSManager
         if (_entityName != "Partner" || result == null)
             return null;
 
-        // Check if user has update permission (required for archiving)
-        var hasUpdatePermission = entityPermissions.Any(p => p.CanUpdate);
-        if (!hasUpdatePermission)
+        // Check if user has admin-level permissions (only global admins can archive)
+        // Admin users should have specific roles like PARTNER_GLOB_ADMIN
+        var hasAdminPermission = entityPermissions.Any(p => p.Role == "PARTNER_GLOB_ADMIN");
+        if (!hasAdminPermission)
             return false;
 
         // Use reflection to check partner status and approval status
@@ -836,6 +852,50 @@ public abstract class BaseUNOPSManager
             var isNotApproved = approvalStatus?.ToString() == "NotApproved" || approvalStatus?.ToString() == "0"; // PartnerApprovalStatus.NotApproved = 0
             
             return isNotApproved;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Determines if the user can unapprove a Partner entity
+    /// </summary>
+    private bool? GetCanUnapprove(object result, List<EntityPermission> entityPermissions)
+    {
+        // Only applicable to Partner entities
+        if (_entityName != "Partner" || result == null)
+            return null;
+
+        // Check if user has admin-level permissions (only admins can unapprove)
+        // Admin users should have specific roles like PARTNER_GLOB_ADMIN
+        var hasAdminPermission = entityPermissions.Any(p => p.Role == "PARTNER_GLOB_ADMIN");
+        if (!hasAdminPermission)
+            return false;
+
+        // Use reflection to check partner status and approval status
+        var resultType = result.GetType();
+        var statusProperty = resultType.GetProperty("Status");
+        var approvalStatusProperty = resultType.GetProperty("PartnerApprovalStatus");
+
+        if (statusProperty == null || approvalStatusProperty == null)
+            return null;
+
+        try
+        {
+            // Check if partner is Active
+            var status = statusProperty.GetValue(result);
+            var isActive = status?.ToString() == "Active" || status?.ToString() == "1"; // EntityStatus.Active = 1
+            
+            if (!isActive)
+                return false; // Can only unapprove Active partners
+
+            // Check if partner is Approved (can only unapprove already approved partners)
+            var approvalStatus = approvalStatusProperty.GetValue(result);
+            var isApproved = approvalStatus?.ToString() == "Approved" || approvalStatus?.ToString() == "1"; // PartnerApprovalStatus.Approved = 1
+            
+            return isApproved;
         }
         catch
         {
@@ -1424,9 +1484,9 @@ public abstract class BaseUNOPSManager
                 .Select(up => new
                 {
                     Profile = up,
-                    // Get organization unit name from OrganizationHierarchies
+                    // Get organization unit name from OrganizationHierarchies (match by Code, not Name)
                     OrgUnitName = _context.OrganizationHierarchies
-                        .Where(oh => oh.Name == up.OrgUnit && !oh.IsDeleted)
+                        .Where(oh => oh.Code == up.OrgUnit && !oh.IsDeleted)
                         .Select(oh => oh.Name)
                         .FirstOrDefault(),
                     // Get supervisor information

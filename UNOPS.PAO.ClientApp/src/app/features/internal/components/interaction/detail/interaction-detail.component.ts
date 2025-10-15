@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, computed, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, AfterViewInit, OnDestroy, OnChanges, SimpleChanges, signal, computed, WritableSignal, ViewChild, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -23,7 +23,7 @@ import { InteractionService } from '../../../services/interaction.service';
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
 import { InteractionType } from '../../../models/interaction-type.enum';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
-import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
 import { InteractionIconService } from '../../../../../common/services/interaction-icon.service';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { GeminiService } from '../../../services/gemini.service';
@@ -53,7 +53,7 @@ import { GeminiService } from '../../../services/gemini.service';
   styleUrl: './interaction-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class InteractionDetailComponent implements OnInit {
+export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private interactionService = inject(InteractionService);
@@ -65,11 +65,56 @@ export class InteractionDetailComponent implements OnInit {
   public interactionIconService = inject(InteractionIconService);
   private cachedDataService = inject(CachedDataService);
   public geminiService = inject(GeminiService);
+  private cdr = inject(ChangeDetectorRef);
+
+  @ViewChild('widthTracker', { static: false }) widthTracker?: ElementRef;
 
   interaction: WritableSignal<Interaction | null> = signal(null);
   loading = signal(true);
   error = signal<string | null>(null);
   showFullDescription = signal<boolean>(false);
+
+  // Width tracking for responsive layout
+  componentWidth = signal<number>(0);
+  private widthTrackingInterval?: ReturnType<typeof setInterval>;
+  private resizeObserver?: ResizeObserver;
+
+  // Computed responsive layout classes based on component width
+  // Note: Interaction detail uses 60% left, 40% right layout (same as partner/contact)
+  responsiveLayoutClasses = computed(() => {
+    const width = this.componentWidth();
+    
+    // Use component width to determine layout
+    // For container widths >= 700px, use side-by-side layout
+    // For container widths < 700px, use stacked layout
+    // Default to stacked layout when width is 0 (measuring)
+    const useSideBySideLayout = width >= 700;
+    
+    if (useSideBySideLayout) {
+      return {
+        container: 'flex flex-col gap-8',
+        mainLayout: 'flex flex-row gap-8 items-stretch',
+        leftColumn: 'flex flex-col gap-8 w-[60%] h-full sticky top-0',
+        rightColumn: 'flex flex-col gap-8 w-[40%]'
+      };
+    } else {
+      return {
+        container: 'flex flex-col gap-8',
+        mainLayout: 'flex flex-col gap-8',
+        leftColumn: 'flex flex-col gap-8 w-full h-full',
+        rightColumn: 'flex flex-col gap-8 w-full'
+      };
+    }
+  });
+
+  // Debug method to check current width and layout (can be called from browser console)
+  getCurrentWidth() {
+    return {
+      componentWidth: this.componentWidth(),
+      useSideBySideLayout: this.componentWidth() >= 700,
+      layoutClasses: this.responsiveLayoutClasses()
+    };
+  }
 
   // Cached data access
   allContacts = this.cachedDataService.allContacts;
@@ -114,22 +159,55 @@ export class InteractionDetailComponent implements OnInit {
 
   ngOnInit() {
     this.permissionUtils.loadPermissions(this.router);
-    this.loadInteraction();
+    
+    // Subscribe to route parameter changes to handle navigation updates
+    this.route.paramMap.subscribe(paramMap => {
+      const newId = paramMap.get('id');
+      if (newId) {
+        this.loadInteraction(newId);
+      } else {
+        this.error.set(this.translateService.instant('interaction.detail.error.noIdProvided'));
+        this.loading.set(false);
+      }
+    });
   }
 
-  private loadInteraction() {
-    const id = this.route.snapshot.params['id'];
-    if (!id) {
+  ngAfterViewInit() {
+    // Start width tracking after the view is fully initialized
+    setTimeout(() => {
+      this.startWidthTracking();
+    }, 100);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // This component gets ID from route parameters, not from @Input
+    // So ngOnChanges won't trigger - route parameter subscription handles this
+  }
+
+  ngOnDestroy() {
+    if (this.widthTrackingInterval) {
+      clearInterval(this.widthTrackingInterval);
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+  }
+
+  private loadInteraction(id?: string) {
+    const interactionId = id || this.route.snapshot.params['id'];
+    if (!interactionId) {
       this.error.set(this.translateService.instant('interaction.detail.error.noIdProvided'));
       this.loading.set(false);
       return;
     }
 
     this.loading.set(true);
-    this.interactionService.getById(Number(id)).subscribe({
+    this.error.set(null); // Clear any previous errors
+    
+    this.interactionService.getById(Number(interactionId)).subscribe({
       next: (response) => {
         if (response.status === 404) {
-          this.error.set(this.translateService.instant('interaction.detail.error.notFound', { id }));
+          this.error.set(this.translateService.instant('interaction.detail.error.notFound', { id: interactionId }));
         } else if (response.body) {
           this.interaction.set(response.body);
           this.error.set(null);
@@ -141,7 +219,7 @@ export class InteractionDetailComponent implements OnInit {
       error: (error) => {
         console.error('Error loading interaction:', error);
         const errorMessage = error.status === 404
-          ? this.translateService.instant('interaction.detail.error.notFound', { id })
+          ? this.translateService.instant('interaction.detail.error.notFound', { id: interactionId })
           : this.translateService.instant('interaction.detail.error.loadFailed', { status: error.status || this.translateService.instant('common.error.networkError') });
         this.error.set(errorMessage);
         this.loading.set(false);
@@ -173,7 +251,8 @@ export class InteractionDetailComponent implements OnInit {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        this.loadInteraction();
+        // Reload the current interaction using its ID
+        this.loadInteraction(currentInteraction.id?.toString());
         this.feedbackDialogService.showSuccessToast({
           detail: this.translateService.instant('interaction.detail.success.updated')
         });
@@ -285,7 +364,7 @@ export class InteractionDetailComponent implements OnInit {
   }
 
   getPartnerName(partnerId: number): string {
-    const partner = this.allPartners().find(p => p.id === partnerId);
+    const partner = this.allPartners().find(p => p.id?.toString() === partnerId?.toString());
     return partner?.name || this.translateService.instant('interaction.detail.fallback.partner', { id: partnerId });
   }
 
@@ -332,5 +411,73 @@ export class InteractionDetailComponent implements OnInit {
 
   onSummaryError(error: Error) {
     console.error('AI Summary error:', error);
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    setTimeout(() => {
+      this.updateComponentWidth();
+    }, 10);
+  }
+
+  private startWidthTracking() {
+    // Initial width measurement with multiple attempts
+    this.attemptWidthMeasurement();
+
+    // Use ResizeObserver for more efficient width tracking if available
+    if (typeof ResizeObserver !== 'undefined' && this.widthTracker?.nativeElement) {
+      this.resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const width = entry.contentRect.width;
+          if (width > 0) {
+            const currentWidth = this.componentWidth();
+            if (currentWidth !== width) {
+              this.componentWidth.set(width);
+              this.cdr.detectChanges();
+            }
+          }
+        }
+      });
+      
+      this.resizeObserver.observe(this.widthTracker.nativeElement);
+    } else {
+      // Fallback to polling for older browsers
+      this.widthTrackingInterval = setInterval(() => {
+        this.updateComponentWidth();
+      }, 100);
+    }
+  }
+
+  private attemptWidthMeasurement(attempts: number = 0) {
+    if (attempts > 10) {
+      return;
+    }
+
+    if (this.updateComponentWidth()) {
+      // Width measurement successful
+    } else {
+      // Try again after a short delay
+      setTimeout(() => {
+        this.attemptWidthMeasurement(attempts + 1);
+      }, 50);
+    }
+  }
+
+  private updateComponentWidth(): boolean {
+    if (typeof window !== 'undefined' && this.widthTracker?.nativeElement) {
+      const element = this.widthTracker.nativeElement;
+      const width = element.offsetWidth || element.clientWidth || 0;
+      
+      if (width > 0) {
+        const currentWidth = this.componentWidth();
+        if (currentWidth !== width) {
+          this.componentWidth.set(width);
+          // Trigger change detection
+          this.cdr.detectChanges();
+        }
+        return true;
+      }
+    }
+    return false;
   }
 }

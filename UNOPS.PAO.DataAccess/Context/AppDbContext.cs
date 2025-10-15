@@ -154,16 +154,6 @@ public class AppDbContext : AuditableDbContext<int, int>
                                   c => c.ToList()))
                   .HasColumnType("text");
 
-        entity.Property(e => e.PhoneNumbers)
-                  .HasConversion(
-                      v => string.Join(',', v),
-                      v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
-                            new ValueComparer<List<string>>(
-                              (c1, c2) => c1.SequenceEqual(c2),
-                              c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                              c => c.ToList()))
-                  .HasColumnType("text");
-
             entity.HasMany(i => i.InteractionContacts)
                 .WithOne(ic => ic.Interaction)
                 .HasForeignKey(ic => ic.InteractionId);
@@ -203,8 +193,7 @@ public class AppDbContext : AuditableDbContext<int, int>
         modelBuilder
             .Entity<AiPrompt>();
 
-        modelBuilder
-            .Entity<AiChatSession>();
+        // AiChatSession entity removed - session data now managed by ADK session state
 
         modelBuilder.Entity<Document>(doc =>
         {

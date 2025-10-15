@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDataAccess.Seed.Models;
 using UNOPS.PAO.UNOPSDomain.Entities;
@@ -37,27 +38,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         /// <summary>
         /// Executes all configured seed steps (SQL scripts and C# seeders) in the specified order
         /// </summary>
-        public static async Task ExecuteConfiguredSeedsAsync(UNOPSAppDbContext context, IConfiguration? appConfiguration = null)
+        public static async Task ExecuteConfiguredSeedsAsync(UNOPSAppDbContext context, IServiceProvider? serviceProvider = null, IConfiguration? appConfiguration = null)
         {
             Console.WriteLine("Starting generic seed execution...");
             Console.WriteLine($"Reading seed files from: {AppDomain.CurrentDomain.BaseDirectory}");
             
             var seedConfiguration = await LoadSeedConfigurationAsync();
             var orderedSteps = seedConfiguration.SeedSteps.OrderBy(s => s.Order).ToList();
-            
+
             Console.WriteLine($"Found {orderedSteps.Count} seed steps to process");
-            
+
+            bool anyStepExecuted = false;
+
             foreach (var step in orderedSteps)
             {
                 Console.WriteLine($"Processing step {step.Order}: {step.Name} ({step.Type})");
-                
+
                 try
                 {
                     var currentHash = await CalculateStepHashAsync(step);
                     var existingScript = await context.SeedScripts
                         .FirstOrDefaultAsync(s => s.ScriptName == step.Name);
 
-                    bool shouldExecute = ShouldExecuteStep(existingScript, currentHash, step);
+                    bool shouldExecute = ShouldExecuteStep(existingScript, currentHash, step, anyStepExecuted);
 
                     if (!shouldExecute)
                     {
@@ -66,6 +69,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     }
 
                     var action = existingScript == null ? "NEW" : "CHANGED";
+                    if (step.ForceExecuteIfAnyChanged && anyStepExecuted)
+                    {
+                        action = "FORCED (previous steps changed)";
+                    }
                     Console.WriteLine($"Executing step: {step.Name} ({action})");
 
                     if (step.IsSqlScript)
@@ -74,9 +81,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     }
                     else if (step.IsSeeder)
                     {
-                        await ExecuteSeederStepAsync(context, step, currentHash, existingScript);
+                        await ExecuteSeederStepAsync(context, step, currentHash, existingScript, serviceProvider);
                     }
 
+                    anyStepExecuted = true;
                     Console.WriteLine($"Step {step.Name} executed successfully.");
                 }
                 catch (Exception ex)
@@ -87,6 +95,53 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
             }
             
             Console.WriteLine("All configured seed steps processed.");
+        }
+
+        /// <summary>
+        /// Executes a specific seed step by name, forcing execution regardless of hash
+        /// </summary>
+        public static async Task ExecuteSpecificSeederAsync(UNOPSAppDbContext context, IServiceProvider? serviceProvider = null, IConfiguration? appConfiguration = null, string seederName = "")
+        {
+            Console.WriteLine($"🎯 Executing specific seeder: {seederName}");
+            Console.WriteLine($"Reading seed files from: {AppDomain.CurrentDomain.BaseDirectory}");
+            
+            var seedConfiguration = await LoadSeedConfigurationAsync();
+            var step = seedConfiguration.SeedSteps.FirstOrDefault(s => 
+                s.Name.Equals(seederName, StringComparison.OrdinalIgnoreCase));
+
+            if (step == null)
+            {
+                var availableSteps = string.Join(", ", seedConfiguration.SeedSteps.Select(s => s.Name));
+                throw new InvalidOperationException(
+                    $"Seeder '{seederName}' not found in configuration. Available seeders: {availableSteps}");
+            }
+
+            Console.WriteLine($"Found step: {step.Name} (Order: {step.Order}, Type: {step.Type})");
+
+            try
+            {
+                var currentHash = await CalculateStepHashAsync(step);
+                var existingScript = await context.SeedScripts
+                    .FirstOrDefaultAsync(s => s.ScriptName == step.Name);
+
+                Console.WriteLine($"🔄 Force executing step: {step.Name}");
+
+                if (step.IsSqlScript)
+                {
+                    await ExecuteSqlStepAsync(context, step, currentHash, existingScript, appConfiguration);
+                }
+                else if (step.IsSeeder)
+                {
+                    await ExecuteSeederStepAsync(context, step, currentHash, existingScript, serviceProvider);
+                }
+
+                Console.WriteLine($"✅ Step {step.Name} executed successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error executing step {step.Name}: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -190,7 +245,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         /// <summary>
         /// Determines if a step should be executed based on hash comparison
         /// </summary>
-        private static bool ShouldExecuteStep(SeedScript? existingScript, string currentHash, SeedStep step)
+        private static bool ShouldExecuteStep(SeedScript? existingScript, string currentHash, SeedStep step, bool anyPreviousStepExecuted)
         {
             if (existingScript == null)
             {
@@ -200,6 +255,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
             if (existingScript.FileHash != currentHash)
             {
                 return true; // Changed step
+            }
+
+            if (step.ForceExecuteIfAnyChanged && anyPreviousStepExecuted)
+            {
+                return true; // Force execution if any previous step was executed
             }
 
             return false; // Unchanged step
@@ -223,7 +283,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
         /// <summary>
         /// Executes a C# seeder step using reflection
         /// </summary>
-        private static async Task ExecuteSeederStepAsync(UNOPSAppDbContext context, SeedStep step, string currentHash, SeedScript? existingScript)
+        private static async Task ExecuteSeederStepAsync(UNOPSAppDbContext context, SeedStep step, string currentHash, SeedScript? existingScript, IServiceProvider? serviceProvider = null)
         {
             try
             {
@@ -231,7 +291,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 var assembly = Assembly.GetExecutingAssembly();
                 var seederType = assembly.GetTypes()
                     .FirstOrDefault(t => t.Name == step.ClassName && 
-                        (t.Namespace?.Contains("Seed.Seeders") == true || t.Namespace?.Contains("Seed") == true));
+(t.Namespace?.Contains("Seed.Seeders") == true || t.Namespace?.Contains("Seed") == true));
 
                 if (seederType == null)
                 {
@@ -248,8 +308,28 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 object? result;
                 if (method.IsStatic)
                 {
-                    // Invoke static method with context parameter
-                    result = method.Invoke(null, new object[] { context });
+                    // Check method parameters to determine what to pass
+                    var parameters = method.GetParameters();
+                    var parameterValues = new List<object>();
+                    
+                    foreach (var param in parameters)
+                    {
+                        if (param.ParameterType == typeof(UNOPSAppDbContext))
+                        {
+                            parameterValues.Add(context);
+                        }
+                        else if (param.ParameterType == typeof(IServiceProvider) && serviceProvider != null)
+                        {
+                            parameterValues.Add(serviceProvider);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Unsupported parameter type: {param.ParameterType.Name} in {step.ClassName}.{step.MethodName}");
+                        }
+                    }
+                    
+                    // Invoke static method with appropriate parameters
+                    result = method.Invoke(null, parameterValues.ToArray());
                 }
                 else
                 {

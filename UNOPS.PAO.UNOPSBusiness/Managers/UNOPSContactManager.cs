@@ -450,6 +450,9 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var entity = await contactRepository.GetByIdAsync(id);
         if (entity == null) return;
 
+        // Soft delete associated OrganizationUnitRelationship records
+        await SoftDeleteOrganizationUnitRelationshipsAsync(id, "Contact");
+
         await contactRepository.Delete(entity);
     }
 
@@ -708,8 +711,25 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     /// </summary>
     public async Task<object> GetContactWithInteractionsAsync(ClaimsPrincipal user, int id)
     {
-        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup", "Interactions", "Documents"]);
+        // Load contact with interactions through the junction table
+        var entity = await _context.Contacts
+            .Where(c => c.Id == id && !c.IsDeleted)
+            .Include(c => c.Partner)
+                .ThenInclude(p => p.PartnerGroup)
+            .Include(c => c.Partner)
+                .ThenInclude(p => p.LiaisonOffice)
+            .Include(c => c.Documents)
+            .FirstOrDefaultAsync();
+            
         if (entity == null) return new { error = "Contact not found" };
+        
+        // Get interactions for this contact through the junction table
+        var interactions = await _context.Interactions
+            .Where(i => i.InteractionContacts.Any(ic => ic.ContactId == id) && !i.IsDeleted)
+            .Include(i => i.InteractionUsers)
+                .ThenInclude(iu => iu.User)
+            .OrderByDescending(i => i.Date)
+            .ToListAsync();
         
         // Create structured JSON for AI prompt placeholders
         var result = new
@@ -740,7 +760,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             } : null,
             
             // Interaction history with full details
-            interactions = entity.Interactions?.Select(i => new
+            interactions = interactions.Select(i => new
             {
                 id = i.Id,
                 subject = i.Subject,
@@ -748,8 +768,13 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 date = i.Date.ToString("yyyy-MM-dd HH:mm"),
                 type = i.Type.ToString(),
                 location = i.Location,
-                status = "Active" // Default status for interactions
-            }).Cast<dynamic>().ToList() ?? new List<dynamic>(),
+                status = "Active", // Default status for interactions
+                users = i.InteractionUsers?.Select(iu => new
+                {
+                    id = iu.User.Id,
+                    name = iu.User.Name
+                }).ToList()
+            }).Cast<dynamic>().ToList(),
             
             // Contact details and communication info
             contactDetails = new
@@ -803,15 +828,15 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             // Summary statistics
             summary = new
             {
-                totalInteractions = entity.Interactions?.Count ?? 0,
+                totalInteractions = interactions.Count,
                 totalDocuments = entity.Documents?.Count ?? 0,
                 hasCV = entity.Documents?.Any(d => 
                     d.Link?.ToLower().Contains("cv") == true || 
                     d.Link?.ToLower().Contains("resume") == true ||
                     d.Type?.ToLower().Contains("cv") == true ||
                     d.Type?.ToLower().Contains("resume") == true) ?? false,
-                lastInteractionDate = entity.Interactions?.OrderByDescending(i => i.Date).FirstOrDefault()?.Date.ToString("yyyy-MM-dd"),
-                recentInteractions = entity.Interactions?.Where(i => i.Date >= DateTime.UtcNow.AddDays(-30)).Count() ?? 0
+                lastInteractionDate = interactions.OrderByDescending(i => i.Date).FirstOrDefault()?.Date.ToString("yyyy-MM-dd"),
+                recentInteractions = interactions.Where(i => i.Date >= DateTime.UtcNow.AddDays(-30)).Count()
             },
             
             // Audit information
@@ -955,6 +980,9 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     {
         var entity = await contactRepository.GetByIdAsync(id);
         if (entity == null) return;
+
+        // Soft delete associated OrganizationUnitRelationship records
+        await SoftDeleteOrganizationUnitRelationshipsAsync(id, "Contact");
 
         await contactRepository.Delete(entity);
     }
@@ -1687,5 +1715,27 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             _logger?.LogError(ex, "Error retrieving contact search fields");
             return new List<SearchFieldInfo>();
         }
+    }
+
+    /// <summary>
+    /// Soft deletes OrganizationUnitRelationship records for a given entity
+    /// </summary>
+    private async Task SoftDeleteOrganizationUnitRelationshipsAsync(int entityId, string entityType)
+    {
+        var relationships = await _context.OrganizationUnitRelationships
+            .Where(r => r.EntityId == entityId && r.EntityType == entityType && !r.IsDeleted)
+            .ToListAsync();
+
+        // Get current user ID from claims
+        var currentUser = GetCurrentUserOrSystemContext();
+        var userIdClaim = currentUser?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = int.TryParse(userIdClaim, out var id) ? id : 0;
+
+        foreach (var relationship in relationships)
+        {
+            relationship.SetDeleteAuditData(userId);
+        }
+
+        await _context.SaveChangesAsync();
     }
 }

@@ -24,9 +24,6 @@ namespace UNOPS.PAO.Domain.Entities
         [JsonIgnore]
         public virtual List<string>? EmailAddresses { get; set; } = new List<string>();
 
-        [JsonIgnore]
-        public virtual List<string>? PhoneNumbers { get; set; } = new List<string>();
-
         // Many-to-many with Contacts
         [JsonIgnore]
         public virtual ICollection<InteractionContact>? InteractionContacts { get; set; }

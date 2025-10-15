@@ -47,12 +47,7 @@ public class GeminiManager : IGeminiManager
         return entity;
     }
 
-    public Task<SessionWithChats> GetSessionDataWithChats(string sessionId, int userId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IEnumerable<AiChatSession>> GetSessionData(string sessionId, int userId)
+    public Task<string> GetSessionDataWithChats(string sessionId, int userId)
     {
         throw new NotImplementedException();
     }
@@ -115,7 +110,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req)
+    public Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req, System.Security.Claims.ClaimsPrincipal user = null)
     {
         throw new NotImplementedException();
     }
@@ -155,10 +150,6 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public async Task<bool> CanGenerateTitle(string sessionId)
-    {
-        throw new NotImplementedException();
-    }
 
     public async Task UpdateSessionTitleAndFlag(string sessionId, string title)
     {
@@ -170,17 +161,15 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public async Task<string> GenerateTitle(string sessionId)
+    public async IAsyncEnumerable<string> ChatWithGeminiStreaming(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null)
     {
         throw new NotImplementedException();
+        yield break; // This line will never be reached, but is required for compilation
     }
 
-    public Task<string> GenerateTitle(string sessionId, int userId)
-    {
-        throw new NotImplementedException();
-    }
 
-    public Task<object> GenerateSuggestions(int userId)
+
+    public Task<SessionConfiguration> GetSessionConfigurationAsync()
     {
         throw new NotImplementedException();
     }
