@@ -1,0 +1,77 @@
+---
+description: Cure to generate a task list from a PRD
+globs: 
+alwaysApply: false
+---
+# Rule: Generating a Task List from a PRD
+
+## Goal
+
+To guide an AI assistant in creating a detailed, step-by-step task list in Markdown format based on an existing Product Requirements Document (PRD). The task list should guide a developer through implementation.
+
+## Output
+
+- **Format:** Markdown (`.md`)
+- **Location:** `/tasks/[prd-name]`
+- **Filename:** `[prd-name]-tasks.md` (e.g., `user-profile-editing-tasks.md`)
+
+## Process
+
+1.  **Receive PRD Reference:** The user points the AI to a specific PRD file
+2.  **Analyze Technical Requirements in PRD:** The AI reads and analyzes the architecture, any data model changes, any data and event flow changes, backend and frontend architecture changes, and technical considerations.
+3.  **Analyze Functional Requirements in PRD:** The AI reads and analyzes the functional requirements, user stories, and other sections of the specified PRD.
+4.  **Phase 1: Generate Parent Tasks:** Based on the PRD analysis, create the file and generate the main, high-level tasks required to implement the feature. Ensure that the high-level tasks are ordered in a way to do the technical groundwork / address foundational technical dependencies first.  Use your judgement on how many high-level tasks to use. It's likely to be about 5. Present these tasks to the user in the specified format (without sub-tasks yet). Inform the user: "I have generated the high-level tasks based on the PRD. Should I generate the sub-tasks? Respond with 'Yes' to proceed."
+5.  **Wait for Confirmation:** Pause and wait for the user to respond with "Yes".
+6.  **Phase 2: Generate Sub-Tasks:** Once the user confirms, break down each parent task into smaller, actionable sub-tasks necessary to complete the parent task. Ensure sub-tasks logically follow from the parent task and cover the implementation details implied by the PRD.  Ensure that the sub-tasks are ordered in a way to do the technical groundwork / address foundational technical dependencies first.
+7.  **Identify Relevant Files:** Based on the tasks and PRD, identify potential files that will need to be created or modified. List these under the `Relevant Files` section, including corresponding test files if applicable.
+8.  **Generate Final Output:** Combine the parent tasks, sub-tasks, relevant files, and notes into the final Markdown structure.
+9. **Review Task:** A final sub-task in all parent tasks should be to review the code of all the sub-tasks implemented under the parent task to ensure that the implementation is complete and everything is connected.
+10.  **Save Task List:** Save the generated document in the `/tasks/[prd-name]` folder with the filename `[prd-name-prd]-tasks.md`, where the `prd-name` is derived from the `[file-name-prd]` specified as the input PRD file (e.g., if the input was `user-profile-editing-prd.md`, the output is `user-profile-editing-tasks.md`).
+
+## Output Format
+
+The generated task list _must_ follow this structure:
+
+```markdown
+## Relevant Files
+
+**Frontend Files (Angular):**
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/components/[component-name].component.ts` - Main Angular component
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/components/[component-name].component.html` - Component template
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/components/[component-name].component.scss` - Component styles
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/components/[component-name].component.spec.ts` - Component unit tests
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/services/[service-name].service.ts` - Angular service
+- `UNOPS.PAO.ClientApp/src/app/features/[feature]/models/[model-name].model.ts` - TypeScript models
+
+**Backend Files (.NET Core):**
+- `UNOPS.PAO.Presentation/Controllers/[Entity]Controller.cs` - API controller
+- `UNOPS.PAO.Business/Managers/[Entity]Manager.cs` - Business logic manager
+- `UNOPS.PAO.Domain/Entities/[Entity].cs` - Domain entity
+- `UNOPS.PAO.Models/[Entity]Model.cs` - DTO/Model for API responses
+- `UNOPS.PAO.DataAccess/Migrations/[Migration].cs` - EF migration file (if needed)
+- `UNOPS.PAO.Business/Mapping/MappingProfile.cs` - AutoMapper configuration
+
+### Notes
+
+- Unit tests should typically be placed alongside the code files they are testing (e.g., `MyComponent.tsx` and `MyComponent.test.tsx` in the same directory).
+- Run tests as needed.
+
+## Tasks
+
+- [ ] 1.0 Parent Task Title
+  - [ ] 1.1 [Sub-task description 1.1]
+  - [ ] 1.2 [Sub-task description 1.2]
+- [ ] 2.0 Parent Task Title
+  - [ ] 2.1 [Sub-task description 2.1]
+- [ ] 3.0 Parent Task Title (may not require sub-tasks if purely structural or configuration)
+```
+
+## Interaction Model
+
+The process explicitly requires a pause after generating parent tasks to get user confirmation ("Yes") before proceeding to generate the detailed sub-tasks. This ensures the high-level plan aligns with user expectations before diving into details.
+
+## Target Audience
+
+
+
+Assume the primary reader of the task list is a **junior developer** who will implement the feature.
