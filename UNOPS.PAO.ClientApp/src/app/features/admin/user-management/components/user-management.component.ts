@@ -20,7 +20,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
 
 import { MessageService, ConfirmationService, MenuItem } from 'primeng/api';
-import { UserManagementService } from './user-management.service';
+import { UserManagementService } from '../services/user-management.service';
 import { PermissionService, EntityPermissions } from '@core/services/auth';
 import { AuthService } from '@core/services/auth';
 import { ImportDialogService } from '@features/import-export/components/import/dialog/import-dialog.service';

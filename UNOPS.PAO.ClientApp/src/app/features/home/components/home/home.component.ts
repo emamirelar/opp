@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { HomeDashboardComponent } from './home-dashboard.component';
+import { HomeDashboardComponent } from '../home-dashboard/home-dashboard.component';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  styleUrl: './home.component.css',
+  styleUrl: './home.component.scss',
   standalone: true,
   imports: [TranslateModule, HomeDashboardComponent]
 })

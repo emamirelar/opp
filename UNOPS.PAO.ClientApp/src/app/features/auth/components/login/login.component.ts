@@ -7,9 +7,9 @@ import { PasswordModule } from 'primeng/password';
 import { DialogModule } from 'primeng/dialog';
 import { Router } from '@angular/router';
 
-import { SociaAuth } from './socialAuth/socialAuth.component';
+import { SocialAuthComponent } from '../social-auth/social-auth.component';
 import { AuthService } from '@core/services/auth';
-import { SignUpComponent } from './sign-up/sign-up.component';
+import { SignUpComponent } from '../sign-up/sign-up.component';
 import { NgIf } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { IapStatusComponent } from '@app/shared/components/feedback/iap-status/iap-status.component';
@@ -24,7 +24,7 @@ import { IapStatusComponent } from '@app/shared/components/feedback/iap-status/i
     ButtonModule,
     PasswordModule,
     DialogModule,
-    SociaAuth,
+    SocialAuthComponent,
     SignUpComponent,
     NgIf,
     IapStatusComponent

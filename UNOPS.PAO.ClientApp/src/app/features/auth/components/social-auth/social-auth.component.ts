@@ -11,11 +11,11 @@ import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-social-auth',
-  templateUrl: './socialAuth.component.html',
-  styleUrl: './socialAuth.component.css',
+  templateUrl: './social-auth.component.html',
+  styleUrl: './social-auth.component.scss',
   imports: [GoogleSigninButtonModule],
 })
-export class SociaAuth implements OnInit {
+export class SocialAuthComponent implements OnInit {
   constructor(
     private socialAuthService: SocialAuthService,
     private authService: AuthService
@@ -32,3 +32,4 @@ export class SociaAuth implements OnInit {
     });
   }
 }
+

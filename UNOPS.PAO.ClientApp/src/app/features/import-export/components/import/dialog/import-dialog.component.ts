@@ -26,7 +26,7 @@ import { ComponentResolverService } from '@shared/services/utils/component-resol
 import { ListViewColumn } from '@features/list-view/components/listview/listview.model';
 import { ImportService } from '../import.service';
 import { DuplicateIndicatorComponent } from '../duplicate-indicator/duplicate-indicator.component';
-import { UserManagementService } from '@admin/user-management/user-management.service';
+import { UserManagementService } from '@admin/user-management/services/user-management.service';
 import { DuplicateSummaryComponent } from '../duplicate-summary/duplicate-summary.component';
 
 // Custom interface for import columns that extends ListViewColumn
