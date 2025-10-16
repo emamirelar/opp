@@ -3,7 +3,7 @@ import { Injectable, signal, ViewContainerRef, effect } from '@angular/core';
 import { Observable, map, throwError, timer, Subject, of } from 'rxjs';
 import { catchError, mergeMap, retry, retryWhen, tap, switchMap, finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { FetchStreamService } from '@shared/services/fetch-stream.service';
+import { FetchStreamService } from '@shared/services/utils';
 import {
   AiAssistantRequest,
   AiAssistantSessionRequest,
@@ -21,8 +21,8 @@ import {
   ChatMessage, 
   ChatFile,
   ContentPart
-} from '@shared/reusables/widgets/ai-assistant/ai-assistant.model';
-import { ComponentResolverService } from '@features/shared/services/component-resolver.service';
+} from '@features/ai/widgets/ai-assistant/ai-assistant.model';
+import { ComponentResolverService } from '@shared/services/utils/component-resolver.service';
 
 
 // Legacy interface - will be replaced by unified ChatSession

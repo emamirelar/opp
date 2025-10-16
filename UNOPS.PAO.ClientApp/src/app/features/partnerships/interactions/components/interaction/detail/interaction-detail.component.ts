@@ -14,20 +14,20 @@ import { AvatarModule } from 'primeng/avatar';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DocumentComponent } from '@shared/reusables/components/document/document.component';
-import { GDriveDocumentComponent } from '@features/shared/overrides/reusables/components/document/gdrive/document-gdrive.component';
-import { AiPanelComponent } from '@shared/reusables/components/ai-panel/ai-panel.component';
+import { DocumentComponent } from '@shared/components/documents/document/document.component';
+import { GDriveDocumentComponent } from '@shared/components/documents/gdrive/document-gdrive.component';
+import { AiPanelComponent } from '@features/ai/components/ai-panel/ai-panel.component';
 
 import { Interaction } from '@partnerships/interactions/models/interaction.model';
 import { InteractionService } from '@partnerships/interactions/services/interaction.service';
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
 import { InteractionType } from '../../../models/interaction-type.enum';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
-import { InteractionIconService } from '@shared/services/interaction-icon.service';
-import { CachedDataService } from '@shared/services/cached-data.service';
+import { PermissionUtilityService } from '@core/services/auth';
+import { FeedbackDialogService } from '@shared/services/ui';
+import { InteractionIconService } from '@shared/services/domain';
+import { CachedDataService } from '@shared/services/utils';
 import { GeminiService } from '@ai/services/gemini.service';
-import { PageContextService } from '@shared/services/page-context.service';
+import { PageContextService } from '@shared/services/utils';
 
 @Component({
   selector: 'app-interaction-detail',

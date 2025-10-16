@@ -1,4 +1,4 @@
-﻿export interface TourStep {
+export interface TourStep {
   element?: string;
   popover: {
     title: string;

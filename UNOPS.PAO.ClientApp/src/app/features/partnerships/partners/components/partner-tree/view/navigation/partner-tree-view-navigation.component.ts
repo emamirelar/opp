@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
 import { PartnerTreeService } from '@partnerships/partners/services/partner-tree.service';
 import { PartnerTree } from '@partnerships/partners/models/partner-tree.model';
-import { CachedDataService } from '@shared/services/cached-data.service';
+import { CachedDataService } from '@shared/services/utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PartnerCategoryGroup, PartnerGroup } from '@partnerships/partners/models/partner-category-group.model';
 import { ButtonModule } from 'primeng/button';

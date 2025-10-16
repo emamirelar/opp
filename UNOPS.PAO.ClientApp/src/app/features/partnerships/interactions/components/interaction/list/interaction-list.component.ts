@@ -7,21 +7,21 @@ import { Router, ActivatedRoute} from '@angular/router';
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
 import { INTERACTION_TYPE_TRANSLATION_KEYS, InteractionType } from '@partnerships/interactions/models/interaction-type.enum';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ListviewComponent } from '@shared/pages/components/listview/listview.component';
-import { ListViewColumn, ListViewConfig, SearchParams } from '@shared/pages/components/listview/listview.model';
+import { ListviewComponent } from '@features/list-view/components/listview/listview.component';
+import { ListViewColumn, ListViewConfig, SearchParams } from '@features/list-view/components/listview/listview.model';
 import { DialogService } from 'primeng/dynamicdialog';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
-import { SearchField } from '@shared/services/search-parser.service';
-import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
-import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
-import { InteractionIconService } from '@shared/services/interaction-icon.service';
+import { PermissionUtilityService } from '@core/services/auth';
+import { FeedbackDialogService } from '@shared/services/ui';
+import { SearchField } from '@shared/services/utils';
+import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
+import { ImportDialogService } from '@features/import-export/components/import/dialog/import-dialog.service';
+import { InteractionIconService } from '@shared/services/domain';
 import { InteractionPreviewComponent } from '../preview/interaction-preview.component';
 import { PopoverModule } from 'primeng/popover';
 import { Popover } from 'primeng/popover';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { PageContextService } from '@shared/services/page-context.service';
+import { PageContextService } from '@shared/services/utils';
 
 /**
  * @uiEntity InteractionList

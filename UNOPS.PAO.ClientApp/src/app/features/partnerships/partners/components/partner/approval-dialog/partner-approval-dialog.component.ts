@@ -17,8 +17,8 @@ import { TextareaModule } from 'primeng/textarea';
 
 // Services
 import { PartnerService } from '@partnerships/partners/services/partner.service';
-import { CachedDataService } from '@shared/services/cached-data.service';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { CachedDataService } from '@shared/services/utils';
+import { FeedbackDialogService } from '@shared/services/ui';
 
 // Models
 import { Partner } from '@partnerships/partners/models/partner.model';

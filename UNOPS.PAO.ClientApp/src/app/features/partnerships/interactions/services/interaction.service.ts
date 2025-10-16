@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import {HttpClient, HttpResponse, HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Interaction } from '../models/interaction.model';
-import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
+import { ImportDialogService } from '@features/import-export/components/import/dialog/import-dialog.service';
 import { PaginationResponse } from '@shared/models/pagination-response.model';
 import {PaginationParams, toHttpParams} from '@shared/models/pagination-params.model';
 import { InteractionFilterParams } from '../models/interaction-filter-params.model';

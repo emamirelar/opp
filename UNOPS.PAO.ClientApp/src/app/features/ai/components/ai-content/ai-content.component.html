@@ -1,0 +1,92 @@
+<div class="ai-content-wrapper h-full w-full flex font-unops-body">
+  <!-- Main AI Assistant Area -->
+  <div class="ai-main-area flex-1 flex flex-col" 
+       [class.with-right-panel]="rightPanelVisible">
+    
+    <app-ai-assistant-panel 
+      [hideHeader]="false"
+      [viewContainerRef]="viewContainerRef"
+      [rightPanelEntityType]="rightPanelEntityType"
+      [rightPanelEntityId]="rightPanelEntityId"
+      mode="fullscreen"
+      (cardClicked)="onCardClicked($event)"
+      (urlClicked)="onUrlClicked($event)">
+    </app-ai-assistant-panel>
+  </div>
+
+  <!-- Right Panel (Entity Details) -->
+  <div class="ai-right-panel" 
+       [class.panel-visible]="rightPanelVisible" 
+       [class.resizing]="resizing"
+       [style.flex-basis]="rightPanelVisible ? rightPanelWidth + 'px' : '0px'"
+       [style.min-width]="rightPanelVisible ? '500px' : '0px'"
+       [style.max-width]="rightPanelVisible ? '60vw' : '0px'"
+       [style.display]="rightPanelVisible ? 'flex' : 'none'">
+    
+    <div class="right-panel-content">
+      <div class="right-panel-header unops-surface-secondary" *ngIf="rightPanelVisible">
+        <div class="panel-title">
+          <h4 class="unops-text-headline-medium unops-text-secondary">{{ getEntityDisplayName() }}</h4>
+          <span class="panel-subtitle unops-text-body-medium unops-text-muted">{{ rightPanelEntityType | titlecase }} • ID: {{ rightPanelEntityId }}</span>
+        </div>
+        <div class="panel-actions unops-flex unops-items-center unops-gap-sm">
+          <p-button 
+            icon="pi pi-external-link"
+            [text]="true"
+            [rounded]="true"
+            size="small"
+            (onClick)="openRightPanelInNewTab()" 
+            pTooltip="Open in new tab"
+            tooltipPosition="left">
+          </p-button>
+          <p-button 
+            icon="pi pi-times"
+            [text]="true"
+            [rounded]="true"
+            size="small"
+            (onClick)="closeRightPanel()" 
+            pTooltip="Close panel"
+            tooltipPosition="left">
+          </p-button>
+        </div>
+      </div>
+      
+      <div class="entity-content-container" *ngIf="rightPanelType === 'component' && rightPanelComponent">
+        <ng-container [ngSwitch]="rightPanelEntityType">
+          <app-partner-view *ngSwitchCase="'Partner'" [recordId]="rightPanelEntityId || ''"></app-partner-view>
+          <app-contact-view *ngSwitchCase="'Contact'" [recordId]="rightPanelEntityId || ''"></app-contact-view>
+          <app-interaction-modal *ngSwitchCase="'Interaction'" [recordId]="rightPanelEntityId || ''"></app-interaction-modal>
+        </ng-container>
+      </div>
+      
+      <div class="entity-content-container" *ngIf="rightPanelType === 'component' && !rightPanelComponent">
+        <!-- <div class="coming-soon-container">
+          <div class="coming-soon-icon">
+            <i class="pi pi-cog pi-spin"></i>
+          </div>
+          <h4>Coming Soon</h4>
+          <p>{{ rightPanelEntityType | titlecase }} details panel is under development.</p>
+          <div class="entity-info">
+            <div class="info-item">
+              <strong>Entity Type:</strong> {{ rightPanelEntityType }}
+            </div>
+            <div class="info-item">
+              <strong>Entity ID:</strong> {{ rightPanelEntityId }}
+            </div>
+          </div>
+        </div> -->
+        <!-- TAD: Defaulting to partner for now -->
+        <app-partner-view [recordId]="rightPanelEntityId || ''"></app-partner-view>
+      </div>
+      
+      <ng-container *ngIf="rightPanelType === 'url'">
+        <iframe [src]="rightPanelUrl" width="100%" height="100%" frameborder="0"></iframe>
+      </ng-container>
+    </div>
+    
+    <div class="resize-handle" (mousedown)="startResizing($event)"></div>
+  </div>
+</div>
+
+<p-confirmDialog></p-confirmDialog>
+

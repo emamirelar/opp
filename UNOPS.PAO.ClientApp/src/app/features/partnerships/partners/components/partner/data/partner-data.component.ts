@@ -3,7 +3,7 @@ import { ActivatedRoute, ParamMap } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { PartnerService } from '@partnerships/partners/services/partner.service';
 import { Partner } from '@partnerships/partners/models/partner.model';
-import { LookerstudioComponent } from '@shared/reusables/components/lookerstudio/lookerstudio.component';
+import { LookerstudioComponent } from '@shared/components/analytics/lookerstudio/lookerstudio.component';
 
 @Component({
   selector: 'app-partner-data',

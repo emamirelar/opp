@@ -4,7 +4,7 @@ import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { MenubarModule } from 'primeng/menubar';
-import { Language, LanguageService } from '@shared/services/language.service';
+import { Language, LanguageService } from '@shared/services/utils';
 import { Subscription } from 'rxjs';
 
 @Component({
