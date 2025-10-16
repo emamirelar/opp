@@ -13,7 +13,7 @@ import { TranslateModule } from '@ngx-translate/core';
   standalone: true,
   imports: [CommonModule, ListviewCardComponent, TranslateModule],
   templateUrl: './entity-grid.component.html',
-  styleUrls: ['./entity-grid.component.css'],
+  styleUrls: ['./entity-grid.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EntityGridComponent implements OnInit, AfterViewInit, OnDestroy {

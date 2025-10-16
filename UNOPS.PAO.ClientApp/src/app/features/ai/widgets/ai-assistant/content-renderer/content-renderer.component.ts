@@ -11,7 +11,7 @@ import { CollapsibleThoughtComponent } from './collapsible-thought/collapsible-t
   standalone: true,
   imports: [CommonModule, MarkdownModule, EntityGridComponent, ChartJsComponent, CollapsibleThoughtComponent],
   templateUrl: './content-renderer.component.html',
-  styleUrls: ['./content-renderer.component.css'],
+  styleUrls: ['./content-renderer.component.scss'],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })

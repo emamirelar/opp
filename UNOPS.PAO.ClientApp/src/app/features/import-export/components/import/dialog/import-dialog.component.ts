@@ -282,7 +282,6 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     // Clear any previous import errors to prevent state leakage
     this.importDialogService.clearImportErrorDetails();
-    console.log('🧹 Cleared import errors on component init');
     
     // Set the table columns based on the current import type (with permissions)
     await this.updateColumnsForEntityType();
@@ -300,13 +299,11 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
       
       // Sync component selection with service selection
       if (serviceSelection.length !== this.selectedRows().length) {
-        console.log('🔄 Syncing component selection with service:', serviceSelection.length, 'records');
         this.selectedRows.set([...serviceSelection]);
       }
       
       // Update pagination when data changes
       if (serviceData.length !== this.totalRecords()) {
-        console.log('🔄 Updating total records:', this.totalRecords(), '->', serviceData.length);
         this.totalRecords.set(serviceData.length);
         this.updatePaginatedData();
       }
@@ -730,11 +727,6 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
     try {
       const translated = this.translateService.instant(key);
       
-      // Debug: log first few translations
-      if (key === 'DUPLICATE_DETECTION.duplicate' || key === 'contact.firstName') {
-        console.log(`Key: '${key}' -> Translation: '${translated}' -> Same? ${translated === key}`);
-      }
-      
       // If translation returns the key itself, it means translation failed
       if (translated !== key) {
         return translated;
@@ -1020,7 +1012,6 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
               this.selectedRows.set(updatedSelectedRows);
               // Also update the service
               this.importDialogService.setSelectedRows(updatedSelectedRows);
-              console.log(`✅ Updated selected row ${importRowId} with edited data for import`);
             }
             
             // Check for missing required fields
@@ -1362,8 +1353,6 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
     const customEvent = event as CustomEvent;
     const { importRowId, duplicateInfo } = customEvent.detail;
     
-    console.log('Received duplicate info update for row:', importRowId, duplicateInfo);
-    
     // Find and update the record in the import data
     const allData = this.importDialogService.data();
     const recordIndex = allData.findIndex(item => item._importRowId === importRowId);
@@ -1382,7 +1371,6 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
       // Update paginated data to refresh the UI
       this.updatePaginatedData();
       
-      console.log('✅ Updated duplicate info for import record:', importRowId);
     } else {
       console.warn('Could not find record with importRowId:', importRowId);
     }

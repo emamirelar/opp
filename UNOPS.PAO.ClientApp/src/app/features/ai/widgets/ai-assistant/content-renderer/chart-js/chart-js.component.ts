@@ -6,17 +6,8 @@ import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
   selector: 'app-chart-js',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="chart-container">
-      <div class="chart-header" *ngIf="chartConfig?.title">
-        <h3 class="chart-title">{{ chartConfig.title }}</h3>
-      </div>
-      <div class="chart-wrapper">
-        <canvas #chartCanvas></canvas>
-      </div>
-    </div>
-  `,
-  styleUrls: ['./chart-js.component.css']
+  templateUrl: './chart-js.component.html',
+  styleUrls: ['./chart-js.component.scss']
 })
 export class ChartJsComponent implements OnInit, AfterViewInit {
   @Input() chartType: string = 'pie';

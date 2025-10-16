@@ -29,7 +29,7 @@ import { PageContextService } from '@shared/services/utils/page-context.service'
   selector: 'app-ai-assistant-panel',
   templateUrl: './ai-assistant-panel.component.html',
   standalone: true,
-  styleUrls: ['./ai-assistant-panel.component.css'],
+  styleUrls: ['./ai-assistant-panel.component.scss'],
   imports: [
     CommonModule,
     FormsModule,

@@ -7,7 +7,7 @@ import { MarkdownModule } from 'ngx-markdown';
   standalone: true,
   imports: [CommonModule, MarkdownModule],
   templateUrl: './collapsible-thought.component.html',
-  styleUrls: ['./collapsible-thought.component.css']
+  styleUrls: ['./collapsible-thought.component.scss']
 })
 export class CollapsibleThoughtComponent {
   @Input() content: string = '';
