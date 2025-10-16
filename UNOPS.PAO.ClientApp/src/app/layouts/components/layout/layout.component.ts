@@ -5,11 +5,11 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { TopbarComponent } from '../topbar/topbar.component';
 import { Subscription, filter } from 'rxjs';
 import { LayoutService } from '@layouts/services/layout.service';
-import { LanguageService } from '@shared/services/language.service';
-import { SplitterComponent, SplitterPanel, SplitterResizeEvent } from '@shared/reusables/components/splitter/splitter.component';
-import { AiAssistantPanelComponent } from '@shared/reusables/widgets/ai-assistant/ai-assistant-panel.component';
-import { LoadingOverlayComponent, LoadingOverlayService } from '@shared/reusables/components/loading-overlay/loading-overlay.component';
-import { WelcomeTourService } from '@shared/services/welcome-tour.service';
+import { LanguageService } from '@shared/services/utils';
+import { SplitterComponent, SplitterPanel, SplitterResizeEvent } from '@shared/components/layout/splitter/splitter.component';
+import { AiAssistantPanelComponent } from '@features/ai/widgets/ai-assistant/ai-assistant-panel.component';
+import { LoadingOverlayComponent, LoadingOverlayService } from '@shared/components/layout/loading-overlay/loading-overlay.component';
+import { WelcomeTourService } from '@shared/services/ui';
 
 
 @Component({

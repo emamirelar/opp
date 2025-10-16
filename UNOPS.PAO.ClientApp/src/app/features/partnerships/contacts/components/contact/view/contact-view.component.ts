@@ -1,52 +1,40 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, OnChanges, AfterViewInit, output, signal, computed, Input, ViewChild, ElementRef, HostListener, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CachedDataService } from '@shared/services/cached-data.service';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 
 import { PanelModule } from 'primeng/panel';
-import { DropdownModule } from "primeng/dropdown";
-import { DatePickerModule } from 'primeng/datepicker';
-import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule } from 'primeng/checkbox';
 
 
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
-import { DocumentService } from '@features/shared/services/document.service';
-import { ParentEntityType } from '@features/shared/overrides/interfaces/types';
-import { DocumentLinkModel } from '@features/shared/overrides/interfaces/types';
-import { DocumentComponent } from '@shared/reusables/components/document/document.component';
-import { GDriveDocumentComponent } from '@features/shared/overrides/reusables/components/document/gdrive/document-gdrive.component';
-import { PictureComponent } from '@shared/reusables/components/picture/picture.component';
-import { AiPanelComponent } from '@shared/reusables/components/ai-panel/ai-panel.component';
+import { FeedbackDialogService } from '@shared/services/ui';
+import { DocumentService } from '@shared/services/api/document.service';
+import { ParentEntityType } from '@shared/interfaces/types';
+import { DocumentLinkModel } from '@app/shared';
+import { DocumentComponent } from '@shared/components/documents/document/document.component';
+import { GDriveDocumentComponent } from '@shared/components/documents/gdrive/document-gdrive.component';
+import { AiPanelComponent } from '@features/ai/components/ai-panel/ai-panel.component';
 import { GeminiService } from '@ai/services/gemini.service';
 
 //Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { LanguageService } from '@shared/services/language.service';
+import { LanguageService } from '@shared/services/utils';
 import { Subscription } from 'rxjs/internal/Subscription';
 
 //PrimeNG imports
-import { InputTextModule } from 'primeng/inputtext';
 import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
-import { TextareaModule } from 'primeng/textarea';
-import { SelectModule } from 'primeng/select';
-import { AutoFocusModule } from 'primeng/autofocus';
-import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { ContactService } from '@partnerships/contacts/services/contact.service';
-import { CardModule } from 'primeng/card';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { LinkListComponent } from '@shared/reusables/components/link/list/link-list.component';
+import { LinkListComponent } from '@shared/components/links/link/list/link-list.component';
 import { EntityType } from '@shared/models/link.model';
 import { ContactEditDialogFooterComponent } from '../edit-dialog/footer/contact-edit-dialog-footer.component';
 import { ContactEditDialogComponent } from '../edit-dialog/contact-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { Contact, getPrimaryOrganizationUnit } from '../../../models/contact.model';
 import { PermissionUtilityService } from '@core/services/auth';
-import { PageContextService } from '@shared/services/page-context.service';
+import { PageContextService } from '@shared/services/utils';
 
 
 /**
@@ -326,7 +314,7 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy, O
     const formData = new FormData();
     for (let file of response.files) {
       formData.append('file', file);
-      formData.append('parentEntityType', ParentEntityType.Contact.toString());
+      formData.append('parentEntityName', ParentEntityType.Contact.toString());
       formData.append('parentEntityId', this.recordId);
       formData.append('name', file.name);
       formData.append('documentTypeId', '1');
@@ -356,9 +344,11 @@ export class ContactViewComponent implements OnInit, AfterViewInit, OnDestroy, O
     const file = response[0];
     const req: DocumentLinkModel = {
       link: file.url,
+      googleId: file.id,
       name: file.name,
       type: file.mimeType,
-      parentEntityType: ParentEntityType.Contact,
+      documentTypeId: 0,  // Default document type
+      parentEntityName: 'Contact',  // Backend expects entity type name as string
       parentEntityId: parseInt(this.recordId),
     };
 

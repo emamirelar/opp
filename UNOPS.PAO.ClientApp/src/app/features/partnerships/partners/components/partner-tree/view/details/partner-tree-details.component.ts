@@ -1,19 +1,19 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal, viewChild } from '@angular/core';
-import { CachedDataService } from '@shared/services/cached-data.service';
+import { CachedDataService } from '@shared/services/utils';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, delay } from 'rxjs';
-import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
+import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
 
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
-import { DocumentService } from '@features/shared/services/document.service';
-import { DocumentComponent } from '@shared/reusables/components/document/document.component';
-import { GDriveDocumentComponent } from '@features/shared/overrides/reusables/components/document/gdrive/document-gdrive.component';
-import { AiPanelComponent, AiDataService } from '@shared/reusables/components/ai-panel/ai-panel.component';
+import { FeedbackDialogService } from '@shared/services/ui';
+import { DocumentService } from '@shared/services/api/document.service';
+import { DocumentComponent } from '@shared/components/documents/document/document.component';
+import { GDriveDocumentComponent } from '@shared/components/documents/gdrive/document-gdrive.component';
+import { AiPanelComponent, AiDataService } from '@features/ai/components/ai-panel/ai-panel.component';
 import { GeminiService } from '@ai/services/gemini.service';
 
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -30,14 +30,14 @@ import { MessageModule } from 'primeng/message';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { LinkListComponent } from '@shared/reusables/components/link/list/link-list.component';
+import { LinkListComponent } from '@shared/components/links/link/list/link-list.component';
 import { EntityType } from '@shared/models/link.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTree } from '@partnerships/partners/models/partner-tree.model';
 import { PartnerTreeItemComponent } from '../../item/partner-tree-item.component';
 import { PermissionUtilityService } from '@core/services/auth';
-import { ListViewColumn } from '@shared/pages/components/listview/listview.model';
-import { ListviewComponent } from '@shared/pages/components/listview/listview.component';
+import { ListViewColumn } from '@features/list-view/components/listview/listview.model';
+import { ListviewComponent } from '@features/list-view/components/listview/listview.component';
 /**
  * @uiEntity PartnerTreeDetails
  * @route /admin/partner-tree/:recordId

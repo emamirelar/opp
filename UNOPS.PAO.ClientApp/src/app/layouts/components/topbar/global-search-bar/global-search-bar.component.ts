@@ -5,8 +5,8 @@ import { debounceTime, distinctUntilChanged, filter, Subject, takeUntil } from '
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
-import { ListViewColumn, ListViewConfig } from '@shared/pages/components/listview/listview.model';
+import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
+import { ListViewColumn, ListViewConfig } from '@features/list-view/components/listview/listview.model';
 
 interface SearchMetadata {
   matchedField?: string;

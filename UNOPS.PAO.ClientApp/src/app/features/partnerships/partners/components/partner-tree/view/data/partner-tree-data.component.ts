@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CachedDataService } from '@shared/services/cached-data.service';
+import { CachedDataService } from '@shared/services/utils';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, of } from 'rxjs';
@@ -8,10 +8,10 @@ import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { FeedbackDialogService } from '@shared/services/ui';
 
 import { TranslateModule } from '@ngx-translate/core';
-import { LookerstudioComponent } from '@shared/reusables/components/lookerstudio/lookerstudio.component';
+import { LookerstudioComponent } from '@shared/components/analytics/lookerstudio/lookerstudio.component';
 
 //PrimeNG imports
 import { InputTextModule } from 'primeng/inputtext';
@@ -27,7 +27,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 import { PartnerTree } from '@partnerships/partners/models/partner-tree.model';
-import { ListViewColumn } from '@shared/pages/components/listview/listview.model';
+import { ListViewColumn } from '@features/list-view/components/listview/listview.model';
 import { PermissionUtilityService } from '@core/services/auth';
 
 @Component({

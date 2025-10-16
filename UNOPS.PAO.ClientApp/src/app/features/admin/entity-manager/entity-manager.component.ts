@@ -29,8 +29,8 @@ import { Tab, TabList, Tabs } from 'primeng/tabs';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 
 // Listview components
-import { ListviewCardComponent } from '@shared/pages/components/listview/card/listview-card.component';
-import { ListViewColumn, ListViewConfig } from '@shared/pages/components/listview/listview.model';
+import { ListviewCardComponent } from '@features/list-view/components/listview/card/listview-card.component';
+import { ListViewColumn, ListViewConfig } from '@features/list-view/components/listview/listview.model';
 
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { 
@@ -41,8 +41,8 @@ import {
   UpdateEntityConfigurationRequest,
   EntityPermissionsModel,
   RelatedFieldOption
-} from '@features/shared/services/entity-configuration.service';
-import { InteractionIconService } from '@shared/services/interaction-icon.service';
+} from '@shared/services/api/entity-configuration.service';
+import { InteractionIconService } from '@shared/services/domain';
 import { PermissionService, EntityPermissions } from '@core/services/auth';
 
 /**

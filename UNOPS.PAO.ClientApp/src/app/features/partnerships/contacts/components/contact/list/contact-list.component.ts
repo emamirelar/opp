@@ -17,16 +17,16 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {DialogModule} from 'primeng/dialog';
 import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.component';
 import {BusinessCardScannerComponent} from './business-card-scanner/business-card-scanner.component';
-import {ListviewComponent} from '@shared/pages/components/listview/listview.component';
+import {ListviewComponent} from '@features/list-view/components/listview/listview.component';
 import {ContactService} from '../../../services/contact.service';
-import {FeedbackDialogService} from '@shared/services/feedback-dialog.service';
-import {ListViewColumn, ListViewConfig, SearchParams} from '@shared/pages/components/listview/listview.model';
+import {FeedbackDialogService} from '@shared/services/ui';
+import {ListViewColumn, ListViewConfig, SearchParams} from '@features/list-view/components/listview/listview.model';
 import {Contact} from '../../../models/contact.model';
-import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
-import { SearchField } from '@shared/services/search-parser.service';
+import { ImportDialogService } from '@features/import-export/components/import/dialog/import-dialog.service';
+import { SearchField } from '@shared/services/utils';
 import { PermissionUtilityService } from '@core/services/auth';
-import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
-import { PageContextService } from '@shared/services/page-context.service';
+import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
+import { PageContextService } from '@shared/services/utils';
 
 /**
  * @uiEntity Contact

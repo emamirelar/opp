@@ -13,7 +13,7 @@ import { PartnerViewContactsDialogComponent } from './dialog/partner-view-contac
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ContactEditDialogComponent } from '@partnerships/contacts/components/contact/edit-dialog/contact-edit-dialog.component';
 import { PermissionUtilityService } from '@core/services/auth';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { FeedbackDialogService } from '@shared/services/ui';
 
 @Component({
   selector: 'app-partner-view-contacts',

@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from '@shared/pages/components/login/login.component';
-import { NotFoundComponent } from '@shared/pages/components/not-found/not-found.component';
-import { AccessDeniedComponent } from '@shared/pages/components/access-denied/access-denied.component';
+import { LoginComponent } from '@features/auth/components/login/login.component';
+import { NotFoundComponent } from '@features/static-pages/components/not-found/not-found.component';
+import { AccessDeniedComponent } from '@features/static-pages/components/access-denied/access-denied.component';
 import { LayoutComponent } from '@layouts/components/layout/layout.component';
-import { HomeComponent } from '@shared/pages/components/home/home.component';
+import { HomeComponent } from '@features/home/components/home/home.component';
 import { authGuard, adminGuard, routePermissionGuard } from '@core/guards';
 import { InteractionListComponent } from '@partnerships/interactions/components/interaction/list/interaction-list.component';
 import { InteractionDetailComponent } from '@partnerships/interactions/components/interaction/detail/interaction-detail.component';
@@ -15,7 +15,7 @@ import { ContactListComponent } from '@partnerships/contacts/components/contact/
 import { ContactViewComponent } from '@partnerships/contacts/components/contact/view/contact-view.component';
 import { ContactTabsComponent } from '@partnerships/contacts/components/contact/tabs/contact-tabs.component';
 import { PartnerTabsComponent } from '@partnerships/partners/components/partner/tabs/partner-tabs.component';
-import { ComingSoonComponent } from '@shared/pages/components/coming-soon/coming-soon.component';
+import { ComingSoonComponent } from '@features/static-pages/components/coming-soon/coming-soon.component';
 import { SearchResultComponent } from '@search/components/search-result/search-result.component';
 import { PartnerTreeViewComponent } from '@partnerships/partners/components/partner-tree/view/partner-tree-view.component';
 import { PartnerTreeDetailsComponent } from '@partnerships/partners/components/partner-tree/view/details/partner-tree-details.component';

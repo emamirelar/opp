@@ -1,25 +1,25 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnChanges, SimpleChanges, OnInit, AfterViewInit, output, signal, computed, Input, ViewChild, DestroyRef, ElementRef, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnChanges, SimpleChanges, OnInit, AfterViewInit, output, signal, computed, Input, ViewChild, DestroyRef, ElementRef, HostListener } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { CachedDataService } from '@shared/services/cached-data.service';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { CachedDataService } from '@shared/services/utils';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
-import { DocumentService } from '@features/shared/services/document.service';
-import { ParentEntityType } from '@features/shared/overrides/interfaces/types';
-import { DocumentLinkModel } from '@features/shared/overrides/interfaces/types';
-import { DocumentComponent } from '@shared/reusables/components/document/document.component';
-import { GDriveDocumentComponent } from '@features/shared/overrides/reusables/components/document/gdrive/document-gdrive.component';
+import { FeedbackDialogService } from '@shared/services/ui';
+import { DocumentService } from '@shared/services/api/document.service';
+import { ParentEntityType } from '@shared/interfaces/types';
+import { DocumentLinkModel } from '@shared/interfaces/document.interface';
+import { DocumentComponent } from '@shared/components/documents/document/document.component';
+import { GDriveDocumentComponent } from '@shared/components/documents/gdrive/document-gdrive.component';
 
 
 //Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { LanguageService } from '@shared/services/language.service';
+import { LanguageService } from '@shared/services/utils';
 import { Subscription } from 'rxjs/internal/Subscription';
 
 //PrimeNG imports
@@ -35,25 +35,24 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { CardModule } from 'primeng/card';
 import { PartnerService } from '@partnerships/partners/services/partner.service';
 import { PartnerContactsComponent } from '../contacts/partner-contacts.component';
-import { LinkListComponent } from '@shared/reusables/components/link/list/link-list.component';
+import { LinkListComponent } from '@shared/components/links/link/list/link-list.component';
 import { EntityType } from '@shared/models/link.model';
 import { DialogService } from 'primeng/dynamicdialog';
-import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
 import { Partner, getPrimaryOrganizationUnit } from '@partnerships/partners/models/partner.model';
 import { PermissionUtilityService } from '@core/services/auth';
-import { AiPanelComponent } from '@shared/reusables/components/ai-panel/ai-panel.component';
+import { AiPanelComponent } from '@features/ai/components/ai-panel/ai-panel.component';
 import { GeminiService } from '@ai/services/gemini.service';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
-import { PageContextService } from '@shared/services/page-context.service';
-import { GoBackComponent } from '@shared/reusables/components/go-back/go-back.component';
+import { PageContextService } from '@shared/services/utils';
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
 import { PartnerApprovalDialogComponent } from '../approval-dialog/partner-approval-dialog.component';
 import { AuthService } from '@core/services/auth';
-import { EntityTagsComponent } from '@shared/components/entity-tags/entity-tags.component';
+import { EntityTagsComponent } from '@shared/components/data-display/entity-tags/entity-tags.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { BaseEngagementListComponent } from '@features/shared/base-engagement/base-engagement-list.component';
+import { BaseEngagementListComponent } from '@shared/base-classes/base-engagement-list.component';
+import { GDriveAddLinkComponent } from '@app/shared/components/documents/gdrive/add-link/document-gdrive-addlink.component';
 
 /**
  * @uiEntity Partner
@@ -561,9 +560,11 @@ export class PartnerViewComponent implements OnInit, AfterViewInit, OnChanges {
     const file = response[0];
     const req: DocumentLinkModel = {
       link: file.url,
+      googleId: file.id,
       name: file.name,
       type: file.mimeType,
-      parentEntityType: ParentEntityType.Partner,
+      documentTypeId: 0,  // Default document type
+      parentEntityName: 'Partner',  // Backend expects entity type name as string
       parentEntityId: parseInt(this.recordId),
     };
 

@@ -10,7 +10,7 @@ import { ToastModule } from 'primeng/toast';
 
 // Services
 import { PermissionService, EntityPermissions } from '@core/services/auth';
-import { ComingSoonComponent } from '@shared/pages/components/coming-soon/coming-soon.component';
+import { ComingSoonComponent } from '@features/static-pages/components/coming-soon/coming-soon.component';
 
 /**
  * @uiEntity TranslationWorkbench

@@ -1,9 +1,9 @@
 import { InteractionType } from './interaction-type.enum';
-import { EntityPermissionSet } from '@features/shared/models/shared-types';
+import { EntityPermissionSet } from '@shared/models/shared-types';
 import { OrganizationUnitRelationshipModel } from '@partnerships/partners/models/organization-unit-relationship.model';
 import { Contact } from '@partnerships/contacts/models/contact.model';
 import { Partner } from '@partnerships/partners/models/partner.model';
-import { UserValueModel } from '@features/shared/models/user.model';
+import { UserValueModel } from '@shared/models/user.model';
 
 export interface DocumentModel {
   id: number;

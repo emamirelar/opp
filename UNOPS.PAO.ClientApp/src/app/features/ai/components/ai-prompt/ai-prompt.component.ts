@@ -22,13 +22,12 @@ import { SliderModule } from 'primeng/slider';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { MarkdownModule } from 'ngx-markdown';
-import { TourControlComponent } from '@shared/components/tour-control/tour-control.component';
+import { TourControlComponent } from '@app/shared';
 import { MessageService } from 'primeng/api';
 import { ConfirmationService } from 'primeng/api';
 
 // Services and models
-import { AiPromptService, AiPrompt, AiPromptFilterRequest, GeminiModel, GenerationConfig, ToolsConfig, TestPromptRequest, TestPromptResponse } from '../../services/ai-prompt.service';
-import { PaginationResponse } from '@shared/models/pagination-response.model';
+import { AiPromptService, AiPrompt, GeminiModel, GenerationConfig, TestPromptRequest } from '../../services/ai-prompt.service';
 import { PermissionService, EntityPermissions } from '@core/services/auth';
 import { ConfigurationService } from '@core/services/configuration';
 

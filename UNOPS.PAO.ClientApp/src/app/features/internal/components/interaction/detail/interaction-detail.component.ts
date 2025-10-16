@@ -14,19 +14,19 @@ import { AvatarModule } from 'primeng/avatar';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DocumentComponent } from '../../../../../common/reusables/components/document/document.component';
-import { GDriveDocumentComponent } from '../../../overrides/reusables/components/document/gdrive/document-gdrive.component';
-import { AiPanelComponent } from '../../../../../common/reusables/components/ai-panel/ai-panel.component';
+import { DocumentComponent } from '@shared/components/documents/document/document.component';
+import { GDriveDocumentComponent } from '@shared/components/documents/gdrive/document-gdrive.component';
+import { AiPanelComponent } from '@features/ai/components/ai-panel/ai-panel.component';
 
-import { Interaction } from '../../../models/interaction.model';
-import { InteractionService } from '../../../services/interaction.service';
-import { InteractionModalComponent } from '../modal/interaction-modal.component';
-import { InteractionType } from '../../../models/interaction-type.enum';
-import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
-import { FeedbackDialogService } from '../../../../../common/services/feedback-dialog.service';
-import { InteractionIconService } from '../../../../../common/services/interaction-icon.service';
-import { CachedDataService } from '../../../../../common/services/cached-data.service';
-import { GeminiService } from '../../../services/gemini.service';
+import { Interaction } from '@partnerships/interactions/models/interaction.model';
+import { InteractionService } from '@partnerships/interactions/services/interaction.service';
+import { InteractionModalComponent } from '@partnerships/interactions/components/interaction/modal/interaction-modal.component';
+import { InteractionType } from '@partnerships/interactions/models/interaction-type.enum';
+import { PermissionUtilityService } from '@core/services/auth';
+import { FeedbackDialogService } from '@shared/services/ui';
+import { InteractionIconService } from '@shared/services/domain';
+import { CachedDataService } from '@shared/services/utils/cached-data.service';
+import { GeminiService } from '@ai/services/gemini.service';
 
 @Component({
   selector: 'app-interaction-detail',

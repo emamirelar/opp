@@ -3,7 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SearchResultComponent } from './search-result.component';
-import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
+import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
 import { GlobalFilterService } from '@core/services/filters';
 import { UserPreferenceService } from '@core/services/user';
 import { OrganizationHierarchyService } from '@core/services/organization';

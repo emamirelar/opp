@@ -7,7 +7,7 @@ import { DividerModule } from 'primeng/divider';
 
 import { Interaction } from '@partnerships/interactions/models/interaction.model';
 import { InteractionType } from '@partnerships/interactions/models/interaction-type.enum';
-import { InteractionIconService } from '@shared/services/interaction-icon.service';
+import { InteractionIconService } from '@shared/services/domain';
 
 @Component({
   selector: 'app-interaction-preview',

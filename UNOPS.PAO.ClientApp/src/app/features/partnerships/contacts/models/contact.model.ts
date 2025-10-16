@@ -1,5 +1,5 @@
 import {Partner} from '@partnerships/partners/models/partner.model';
-import { EntityPermissionSet } from '@features/shared/models/shared-types';
+import { EntityPermissionSet } from '@shared/models/shared-types';
 import { OrganizationUnitRelationshipModel } from '@partnerships/partners/models/organization-unit-relationship.model';
 import { OrganizationHierarchyModel } from '@core/models/organization-hierarchy.model';
 

@@ -12,15 +12,15 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { CachedDataService } from '@shared/services/cached-data.service';
+import { CachedDataService } from '@shared/services/utils';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { PartnerTree } from '../../models/partner-tree.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from './item/partner-tree-item.component';
 import { PermissionUtilityService } from '@core/services/auth';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
-import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
-import { ListViewColumn } from '@shared/pages/components/listview/listview.model';
+import { FeedbackDialogService } from '@shared/services/ui';
+import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
+import { ListViewColumn } from '@features/list-view/components/listview/listview.model';
 import { Subscription } from 'rxjs';
 
 /**

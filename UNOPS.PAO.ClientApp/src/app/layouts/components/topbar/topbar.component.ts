@@ -3,7 +3,6 @@ import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../../services/layout.service';
 import { LanguageSelectorComponent } from './language-selector/language-selector.component';
 import { StyleClassModule } from 'primeng/styleclass';
-import { PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { PopoverModule } from 'primeng/popover';
 import { ToastModule } from 'primeng/toast';
@@ -11,16 +10,16 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { TooltipModule } from 'primeng/tooltip';
 import { TabViewModule } from 'primeng/tabview';
 import { DialogModule } from 'primeng/dialog';
-import { NotificationService, Notification } from '@shared/services/notification.service';
+import { NotificationService, Notification } from '@shared/services/ui';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
-import { ComponentResolverService } from '@features/shared/services/component-resolver.service';
+import { ComponentResolverService } from '@shared/services/utils/component-resolver.service';
 import { interval, Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { AuthService } from '@core/services/auth';
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
-import { ImportService } from '@shared/reusables/components/import/import.service';
+import { ImportDialogService } from '@features/import-export/components/import/dialog/import-dialog.service';
+import { ImportService } from '@features/import-export/components/import/import.service';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MenuModule } from 'primeng/menu';
@@ -37,7 +36,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { GlobalFilterService } from '@core/services/filters';
 import { UserPreferenceService } from '@core/services/user';
 import { GlobalFiltersDialogService } from '@core/services/filters';
-import { TourControlComponent } from '@shared/components/tour-control/tour-control.component';
+import { TourControlComponent } from '@shared/components/tours/tour-control/tour-control.component';
 import { ConfigurationService } from '@core/services/configuration';
 import { AiAssistantService } from '@ai/services/ai-assistant.service';
 import { FormsModule } from '@angular/forms';
@@ -1172,19 +1171,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
   onImageError(event: any): void {
     console.error('AI assistant image failed to load:', event);
     console.error('Image src:', event.target?.src);
-    // Try alternative paths first
-    const img = event.target;
-    if (img.src.includes('./images/')) {
-      console.log('Trying alternative path: images/AI_visual_64.svg');
-      img.src = 'images/AI_visual_64.svg';
-    } else if (img.src.includes('images/AI_visual_64.svg') && !img.src.includes('assets/')) {
-      console.log('Trying alternative path: assets/images/AI_visual_64.svg');
-      img.src = 'assets/images/AI_visual_64.svg';
-    } else {
-      // All paths failed, show fallback icon
-      console.log('All image paths failed, showing fallback icon');
-      this.showFallbackIcon = true;
-      this.cdr.markForCheck();
-    }
+    // Images are now in assets/images/ - show fallback icon if path fails
+    console.log('Image path failed, showing fallback icon');
+    this.showFallbackIcon = true;
+    this.cdr.markForCheck();
   }
 }

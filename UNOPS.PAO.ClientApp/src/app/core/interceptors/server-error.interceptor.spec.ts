@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, HttpErrorResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { serverErrorInterceptor } from './server-error.interceptor';
-import { ErrorHandlerService } from '@shared/services/error-handler.service';
+import { ErrorHandlerService } from '@shared/services/utils';
 
 describe('serverErrorInterceptor', () => {
   let httpClient: HttpClient;

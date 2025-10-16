@@ -3,8 +3,8 @@ import { Observable } from 'rxjs';
 import { switchMap, tap, catchError, map } from 'rxjs/operators';
 import { Contact } from '../models/contact.model';
 import { ContactService } from './contact.service';
-import { ExportGoogleSheetService } from '@shared/reusables/components/export/export-google-sheet.service';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { ExportGoogleSheetService } from '@features/import-export/services/export-google-sheet.service';
+import { FeedbackDialogService } from '@shared/services/ui';
 import { ConfirmationService } from 'primeng/api';
 
 @Injectable({

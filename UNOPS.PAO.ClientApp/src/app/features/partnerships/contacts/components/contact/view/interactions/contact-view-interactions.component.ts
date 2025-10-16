@@ -5,13 +5,13 @@ import { Button } from 'primeng/button';
 import { DialogService } from 'primeng/dynamicdialog';
 import { InteractionModalComponent } from '@partnerships/interactions/components/interaction/modal/interaction-modal.component';
 import { Router, ActivatedRoute } from '@angular/router';
-import {ListViewColumn, ListViewConfig, SearchParams} from '@shared/pages/components/listview/listview.model';
-import {ListviewComponent} from '@shared/pages/components/listview/listview.component';
-import {FeedbackDialogService} from '@shared/services/feedback-dialog.service';
+import {ListViewColumn, ListViewConfig, SearchParams} from '@features/list-view/components/listview/listview.model';
+import {ListviewComponent} from '@features/list-view/components/listview/listview.component';
+import {FeedbackDialogService} from '@shared/services/ui';
 import {PermissionUtilityService} from '@core/services/auth';
-import {SearchField} from '@shared/services/search-parser.service';
-import {EntityConfigurationService} from '@features/shared/services/entity-configuration.service';
-import {InteractionIconService} from '@shared/services/interaction-icon.service';
+import {SearchField} from '@shared/services/utils';
+import {EntityConfigurationService} from '@shared/services/api/entity-configuration.service';
+import {InteractionIconService} from '@shared/services/domain';
 
 @Component({
   selector: 'app-contact-view-interactions',

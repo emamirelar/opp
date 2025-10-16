@@ -1,0 +1,182 @@
+.dashboard-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-header {
+  flex-shrink: 0;
+}
+
+.card-content {
+  flex: 1;
+  min-height: 0; /* Important for flex children */
+}
+
+.normal-content {
+  height: calc(100% - 80px); /* Subtract header height */
+}
+
+.expanded-content {
+  min-height: 400px;
+}
+
+.main-content {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.card-footer {
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.filter-section {
+  flex-shrink: 0;
+}
+
+.empty-state {
+  min-height: 200px;
+}
+
+/* Size-based styling */
+.card-size-fixed {
+  height: 420px !important;
+}
+
+.card-size-compact {
+  height: 280px !important;
+}
+
+.card-size-tall {
+  height: 520px !important;
+}
+
+.card-size-auto {
+  height: auto !important;
+  min-height: 300px;
+}
+
+/* Responsive height management for different zoom levels */
+@media screen and (min-width: 1024px) {
+  .dashboard-card.card-size-fixed:not(.expanded) {
+    height: 420px !important;
+  }
+  
+  .dashboard-card:not(.expanded):not(.card-size-fixed):not(.card-size-compact):not(.card-size-tall):not(.card-size-auto) {
+    height: 420px;
+  }
+}
+
+@media screen and (max-width: 1023px) {
+  .dashboard-card.card-size-fixed:not(.expanded) {
+    height: auto !important;
+    min-height: 350px;
+  }
+  
+  .dashboard-card:not(.expanded):not(.card-size-fixed):not(.card-size-compact):not(.card-size-tall):not(.card-size-auto) {
+    height: auto;
+    min-height: 350px;
+  }
+}
+
+/* Handle high zoom levels (when viewport becomes smaller) */
+@media screen and (max-width: 768px) {
+  .dashboard-card.card-size-fixed:not(.expanded),
+  .dashboard-card.card-size-compact:not(.expanded) {
+    height: auto !important;
+    min-height: 300px;
+  }
+  
+  .dashboard-card:not(.expanded):not(.card-size-fixed):not(.card-size-compact):not(.card-size-tall):not(.card-size-auto) {
+    height: auto;
+    min-height: 300px;
+  }
+  
+  .main-content {
+    max-height: 250px;
+  }
+}
+
+/* Very high zoom or small screens */
+@media screen and (max-width: 480px) {
+  .dashboard-card.card-size-fixed:not(.expanded),
+  .dashboard-card.card-size-compact:not(.expanded) {
+    height: auto !important;
+    min-height: 280px;
+  }
+  
+  .dashboard-card:not(.expanded):not(.card-size-fixed):not(.card-size-compact):not(.card-size-tall):not(.card-size-auto) {
+    height: auto;
+    min-height: 280px;
+  }
+  
+  .main-content {
+    max-height: 200px;
+  }
+}
+
+/* Ensure footer is always visible by using CSS Grid when needed */
+@supports (display: grid) {
+  .card-content.normal-content {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100%;
+  }
+  
+  .filter-section {
+    grid-row: 1;
+  }
+  
+  .main-content {
+    grid-row: 2;
+    overflow-y: auto;
+  }
+  
+  .card-footer {
+    grid-row: 3;
+    margin-top: 0;
+  }
+}
+
+/* Fallback for browsers without grid support */
+@supports not (display: grid) {
+  .card-content.normal-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  
+  .card-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+  }
+}
+
+/* Mobile mode - natural height, no restrictions */
+.dashboard-card.mobile-mode {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.dashboard-card.mobile-mode .card-content {
+  height: auto !important;
+}
+
+.dashboard-card.mobile-mode .main-content {
+  overflow-y: visible !important;
+  max-height: none !important;
+  min-height: 0 !important;
+}
+
+.dashboard-card.mobile-mode .card-content.normal-content {
+  display: flex;
+  flex-direction: column;
+  height: auto !important;
+}
+

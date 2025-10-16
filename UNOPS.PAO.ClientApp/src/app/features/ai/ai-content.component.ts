@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, computed, ViewContainerRef, effect, 
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { AiAssistantPanelComponent } from '@shared/reusables/widgets/ai-assistant/ai-assistant-panel.component';
+import { AiAssistantPanelComponent } from '@features/ai/widgets/ai-assistant/ai-assistant-panel.component';
 import { AiAssistantService } from '@ai/services/ai-assistant.service';
 
 import { DialogModule } from 'primeng/dialog';
