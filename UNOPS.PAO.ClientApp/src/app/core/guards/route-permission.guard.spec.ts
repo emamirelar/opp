@@ -1,92 +1,114 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
+import { of, throwError, isObservable, firstValueFrom } from 'rxjs';
 import { routePermissionGuard } from './route-permission.guard';
-import { PermissionService } from '../services/auth';
-import { of, throwError, Observable } from 'rxjs';
-import { ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree, GuardResult } from '@angular/router';
+import { PermissionService } from '../services/auth/permission.service';
 
 describe('routePermissionGuard', () => {
   let mockPermissionService: jasmine.SpyObj<PermissionService>;
   let mockRouter: jasmine.SpyObj<Router>;
-  let mockRoute: ActivatedRouteSnapshot;
-  let mockState: RouterStateSnapshot;
 
   beforeEach(() => {
-    // Create spies
-    mockPermissionService = jasmine.createSpyObj('PermissionService', [
-      'canAccessRoute',
-    ]);
+    // Create mocks
+    mockPermissionService = jasmine.createSpyObj('PermissionService', ['canAccessRoute']);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
 
     // Configure TestBed
     TestBed.configureTestingModule({
       providers: [
         { provide: PermissionService, useValue: mockPermissionService },
-        { provide: Router, useValue: mockRouter },
-      ],
+        { provide: Router, useValue: mockRouter }
+      ]
     });
-
-    // Create mock route and state
-    mockRoute = {} as ActivatedRouteSnapshot;
-    mockState = { url: '/admin/users' } as RouterStateSnapshot;
   });
 
-  it('should allow access when user has permission', (done) => {
+  it('should allow access when permission service grants access', async () => {
+    const mockRoute: any = {};
+    const mockState: any = { url: '/dashboard' };
+
     mockPermissionService.canAccessRoute.and.returnValue(of(true));
 
-    const result = routePermissionGuard(mockRoute, mockState);
-
-    if (typeof result === 'boolean') {
-      fail('Expected Observable');
-      return;
-    }
-
-    (result as Observable<boolean | UrlTree>).subscribe((canActivate: boolean | UrlTree) => {
-      expect(canActivate).toBeTrue();
-      expect(mockPermissionService.canAccessRoute).toHaveBeenCalledWith(
-        '/admin/users'
-      );
+    await TestBed.runInInjectionContext(async () => {
+      const result = routePermissionGuard(mockRoute, mockState);
+      
+      let finalResult: boolean | UrlTree;
+      if (typeof result === 'boolean') {
+        finalResult = result;
+      } else if (result instanceof UrlTree) {
+        finalResult = result;
+      } else if (isObservable(result)) {
+        finalResult = await firstValueFrom(result) as boolean | UrlTree;
+      } else {
+        finalResult = await result as boolean | UrlTree;
+      }
+      
+      expect(finalResult).toBe(true);
       expect(mockRouter.navigate).not.toHaveBeenCalled();
-      done();
     });
   });
 
-  it('should deny access and redirect when user lacks permission', (done) => {
+  it('should deny access and redirect to access-denied when permission is denied', async () => {
+    const mockRoute: any = {};
+    const mockState: any = { url: '/admin' };
+
     mockPermissionService.canAccessRoute.and.returnValue(of(false));
 
-    const result = routePermissionGuard(mockRoute, mockState);
-
-    if (typeof result === 'boolean') {
-      fail('Expected Observable');
-      return;
-    }
-
-    (result as Observable<boolean | UrlTree>).subscribe((canActivate: boolean | UrlTree) => {
-      expect(canActivate).toBeFalse();
-      expect(mockPermissionService.canAccessRoute).toHaveBeenCalledWith(
-        '/admin/users'
-      );
+    await TestBed.runInInjectionContext(async () => {
+      const result = routePermissionGuard(mockRoute, mockState);
+      
+      let finalResult: boolean | UrlTree;
+      if (typeof result === 'boolean') {
+        finalResult = result;
+      } else if (result instanceof UrlTree) {
+        finalResult = result;
+      } else if (isObservable(result)) {
+        finalResult = await firstValueFrom(result) as boolean | UrlTree;
+      } else {
+        finalResult = await result as boolean | UrlTree;
+      }
+      
+      expect(finalResult).toBe(false);
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/access-denied']);
-      done();
     });
   });
 
-  it('should handle errors and redirect to access-denied', (done) => {
+  it('should redirect to access-denied on service error', async () => {
+    const mockRoute: any = {};
+    const mockState: any = { url: '/dashboard' };
+
     mockPermissionService.canAccessRoute.and.returnValue(
-      throwError(() => new Error('Permission check failed'))
+      throwError(() => new Error('Service error'))
     );
 
-    const result = routePermissionGuard(mockRoute, mockState);
-
-    if (typeof result === 'boolean') {
-      fail('Expected Observable');
-      return;
-    }
-
-    (result as Observable<boolean | UrlTree>).subscribe((canActivate: boolean | UrlTree) => {
-      expect(canActivate).toBeFalse();
+    await TestBed.runInInjectionContext(async () => {
+      const result = routePermissionGuard(mockRoute, mockState);
+      
+      let finalResult: boolean | UrlTree;
+      if (typeof result === 'boolean') {
+        finalResult = result;
+      } else if (result instanceof UrlTree) {
+        finalResult = result;
+      } else if (isObservable(result)) {
+        finalResult = await firstValueFrom(result) as boolean | UrlTree;
+      } else {
+        finalResult = await result as boolean | UrlTree;
+      }
+      
+      expect(finalResult).toBe(false);
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/access-denied']);
-      done();
+    });
+  });
+
+  it('should check correct route URL', async () => {
+    const mockRoute: any = {};
+    const mockState: any = { url: '/partnerships/contacts' };
+
+    mockPermissionService.canAccessRoute.and.returnValue(of(true));
+
+    await TestBed.runInInjectionContext(async () => {
+      routePermissionGuard(mockRoute, mockState);
+      
+      expect(mockPermissionService.canAccessRoute).toHaveBeenCalledWith('/partnerships/contacts');
     });
   });
 });

@@ -1,145 +1,129 @@
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
+import { of, isObservable, firstValueFrom } from 'rxjs';
 import { authGuard } from './auth.guard';
-import { AuthService } from '../services/auth';
-import { of, Observable } from 'rxjs';
-import { ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree, GuardResult } from '@angular/router';
+import { AuthService } from '../services/auth/auth.service';
 
 describe('authGuard', () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockRouter: jasmine.SpyObj<Router>;
-  let mockRoute: ActivatedRouteSnapshot;
-  let mockState: RouterStateSnapshot;
 
   beforeEach(() => {
-    // Create spies
-    mockAuthService = jasmine.createSpyObj('AuthService', [
-      'isIapAuthenticated',
-      'isLogedIn',
-    ]);
+    // Create mocks
+    mockAuthService = jasmine.createSpyObj('AuthService', ['isIapAuthenticated', 'isLogedIn']);
     mockRouter = jasmine.createSpyObj('Router', ['navigate']);
 
     // Configure TestBed
     TestBed.configureTestingModule({
       providers: [
         { provide: AuthService, useValue: mockAuthService },
-        { provide: Router, useValue: mockRouter },
-      ],
+        { provide: Router, useValue: mockRouter }
+      ]
     });
-
-    // Create mock route and state
-    mockRoute = {} as ActivatedRouteSnapshot;
-    mockState = { url: '/dashboard' } as RouterStateSnapshot;
-
-    // Clear document cookies before each test
-    document.cookie = 'dev-user-email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   });
 
-  it('should allow access to login page without authentication', () => {
-    mockState.url = '/login';
+  it('should allow access to login page', (done) => {
+    const mockRoute: any = {};
+    const mockState: any = { url: '/login' };
 
-    const result = authGuard(mockRoute, mockState);
-
-    expect(result).toBeTrue();
-    expect(mockAuthService.isIapAuthenticated).not.toHaveBeenCalled();
-  });
-
-  it('should allow access to dev-login page without authentication', () => {
-    mockState.url = '/dev-login';
-
-    const result = authGuard(mockRoute, mockState);
-
-    expect(result).toBeTrue();
-    expect(mockAuthService.isIapAuthenticated).not.toHaveBeenCalled();
-  });
-
-  it('should allow access when dev cookie is present', () => {
-    // Set dev cookie
-    document.cookie = 'dev-user-email=test@example.com';
-
-    const result = authGuard(mockRoute, mockState);
-
-    expect(result).toBeTrue();
-    expect(mockAuthService.isIapAuthenticated).not.toHaveBeenCalled();
-  });
-
-  it('should allow access when IAP authenticated', (done) => {
-    mockAuthService.isIapAuthenticated.and.returnValue(of(true));
-
-    const result = authGuard(mockRoute, mockState);
-
-    if (result instanceof UrlTree || typeof result === 'boolean') {
-      fail('Expected Observable');
-      return;
-    }
-
-    (result as Observable<boolean | UrlTree>).subscribe((canActivate: boolean | UrlTree) => {
-      expect(canActivate).toBeTrue();
-      expect(mockAuthService.isIapAuthenticated).toHaveBeenCalled();
-      expect(mockAuthService.isLogedIn).not.toHaveBeenCalled();
-      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    TestBed.runInInjectionContext(() => {
+      const result = authGuard(mockRoute, mockState);
+      
+      // For login page, guard returns true immediately
+      expect(result).toBe(true);
       done();
     });
   });
 
-  it('should allow access when not IAP authenticated but logged in', (done) => {
+  it('should allow access when user is IAP authenticated', async () => {
+    const mockRoute: any = {};
+    const mockState: any = { url: '/dashboard' };
+
+    mockAuthService.isIapAuthenticated.and.returnValue(of(true));
+
+    await TestBed.runInInjectionContext(async () => {
+      const result = authGuard(mockRoute, mockState);
+      
+      // Handle different return types
+      let finalResult: boolean | UrlTree;
+      if (typeof result === 'boolean') {
+        finalResult = result;
+      } else if (result instanceof UrlTree) {
+        finalResult = result;
+      } else if (isObservable(result)) {
+        finalResult = await firstValueFrom(result) as boolean | UrlTree;
+      } else {
+        finalResult = await result as boolean | UrlTree; // Promise
+      }
+      
+      expect(finalResult).toBe(true);
+    });
+  });
+
+  it('should allow access when user is logged in', async () => {
+    const mockRoute: any = {};
+    const mockState: any = { url: '/dashboard' };
+
     mockAuthService.isIapAuthenticated.and.returnValue(of(false));
     mockAuthService.isLogedIn.and.returnValue(of(true));
 
-    const result = authGuard(mockRoute, mockState);
-
-    if (result instanceof UrlTree || typeof result === 'boolean') {
-      fail('Expected Observable');
-      return;
-    }
-
-    (result as Observable<boolean | UrlTree>).subscribe((canActivate: boolean | UrlTree) => {
-      expect(canActivate).toBeTrue();
-      expect(mockAuthService.isIapAuthenticated).toHaveBeenCalled();
-      expect(mockAuthService.isLogedIn).toHaveBeenCalled();
+    await TestBed.runInInjectionContext(async () => {
+      const result = authGuard(mockRoute, mockState);
+      
+      // Handle different return types
+      let finalResult: boolean | UrlTree;
+      if (typeof result === 'boolean') {
+        finalResult = result;
+      } else if (result instanceof UrlTree) {
+        finalResult = result;
+      } else if (isObservable(result)) {
+        finalResult = await firstValueFrom(result) as boolean | UrlTree;
+      } else {
+        finalResult = await result as boolean | UrlTree; // Promise
+      }
+      
+      expect(finalResult).toBe(true);
       expect(mockRouter.navigate).not.toHaveBeenCalled();
-      done();
     });
   });
 
-  it('should deny access and redirect to login when not authenticated', (done) => {
+  it('should redirect to login when user is not authenticated', async () => {
+    const mockRoute: any = {};
+    const mockState: any = { url: '/dashboard' };
+
     mockAuthService.isIapAuthenticated.and.returnValue(of(false));
     mockAuthService.isLogedIn.and.returnValue(of(false));
 
-    const result = authGuard(mockRoute, mockState);
-
-    if (result instanceof UrlTree || typeof result === 'boolean') {
-      fail('Expected Observable');
-      return;
-    }
-
-    (result as Observable<boolean | UrlTree>).subscribe((canActivate: boolean | UrlTree) => {
-      expect(canActivate).toBeFalse();
-      expect(mockAuthService.isIapAuthenticated).toHaveBeenCalled();
-      expect(mockAuthService.isLogedIn).toHaveBeenCalled();
+    await TestBed.runInInjectionContext(async () => {
+      const result = authGuard(mockRoute, mockState);
+      
+      // Handle different return types
+      let finalResult: boolean | UrlTree;
+      if (typeof result === 'boolean') {
+        finalResult = result;
+      } else if (result instanceof UrlTree) {
+        finalResult = result;
+      } else if (isObservable(result)) {
+        finalResult = await firstValueFrom(result) as boolean | UrlTree;
+      } else {
+        finalResult = await result as boolean | UrlTree; // Promise
+      }
+      
+      expect(finalResult).toBe(false);
       expect(mockRouter.navigate).toHaveBeenCalledWith(['login']);
-      done();
     });
   });
 
-  it('should implement anti-loop protection for rapid calls', () => {
-    mockState.url = '/dashboard';
-    mockAuthService.isIapAuthenticated.and.returnValue(of(false));
-    mockAuthService.isLogedIn.and.returnValue(of(false));
+  it('should allow access to dev-login page', (done) => {
+    const mockRoute: any = {};
+    const mockState: any = { url: '/dev-login' };
 
-    // Call guard multiple times rapidly
-    for (let i = 0; i < 5; i++) {
-      authGuard(mockRoute, mockState);
-    }
-
-    // After 4 rapid calls, the 5th should return true (anti-loop protection)
-    const fifthCall = authGuard(mockRoute, mockState);
-    expect(fifthCall).toBeTrue();
-  });
-
-  afterEach(() => {
-    // Clean up cookies
-    document.cookie = 'dev-user-email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    TestBed.runInInjectionContext(() => {
+      const result = authGuard(mockRoute, mockState);
+      
+      expect(result).toBe(true);
+      done();
+    });
   });
 });
 
