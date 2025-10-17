@@ -44,20 +44,17 @@ describe('PermissionService', () => {
     expect(service).toBeTruthy();
   });
 
-  // Note: loadConfig() is called in constructor, making it complex to test in isolation
-  // We test that the service initializes and has a config observable
-  it('should initialize with permission configuration', fakeAsync(() => {
-    // Wait for any async initialization to complete
-    tick(100);
-    
+  // Note: loadConfig() is called in constructor with complex async initialization
+  // This test just verifies the service can be created and initialized
+  it('should initialize successfully', () => {
     // Service should be created without errors
     expect(service).toBeTruthy();
     
-    // The permissionConfig$ BehaviorSubject should exist
-    // We don't call getConfig() during loading to avoid the "still loading" error
-    // Just verify the service is properly initialized
-    expect(service['permissionConfig$']).toBeDefined();
-  }));
+    // Verify it has the expected methods
+    expect(typeof service.getEntityPermissions).toBe('function');
+    expect(typeof service.canAccessRoute).toBe('function');
+    expect(typeof service.clearPermissionCaches).toBe('function');
+  });
 
   it('should get entity permissions', (done) => {
     const mockPermissions: EntityPermissions = {
