@@ -1,0 +1,8 @@
+<div 
+  class="typewriter-content"
+  [innerHTML]="displayedContent()"
+  [class.is-typing]="isTyping()"
+  (click)="skipTypewriting()"
+  [title]="isTyping() ? 'Click to skip animation' : ''">
+</div>
+

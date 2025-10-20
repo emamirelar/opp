@@ -19,14 +19,14 @@ import { ConfirmDialog } from 'primeng/confirmdialog';
 import { DialogService } from 'primeng/dynamicdialog';
 
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ListviewComponent } from '@shared/pages/components/listview/listview.component';
-import { ListViewColumn, ListViewConfig } from '@shared/pages/components/listview/listview.model';
-import { SearchField } from '@shared/services/search-parser.service';
+import { ListviewComponent } from '@features/list-view/components/listview/listview.component';
+import { ListViewColumn, ListViewConfig } from '@features/list-view/components/listview/listview.model';
+import { SearchField } from '@shared/services/utils';
 import { ContactService } from '@partnerships/contacts/services/contact.service';
-import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
-import { PermissionService, EntityPermissions } from '@core/services/permission.service';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
+import { PermissionUtilityService } from '@core/services/auth';
+import { PermissionService, EntityPermissions } from '@core/services/auth';
+import { FeedbackDialogService } from '@shared/services/ui';
 import { ContactEditDialogComponent } from '@partnerships/contacts/components/contact/edit-dialog/contact-edit-dialog.component';
 import { Contact } from '@partnerships/contacts/models/contact.model';
 

@@ -1,19 +1,19 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, effect, inject, OnDestroy, Input, OnInit, Output, signal, computed } from '@angular/core';
-import { CachedDataService } from '@shared/services/cached-data.service';
+import { CachedDataService } from '@shared/services/utils';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { FeedbackDialogService } from '@shared/services/ui';
 import { DialogService } from 'primeng/dynamicdialog';
 import { DuplicateConfirmationDialogComponent } from '@partnerships/contacts/components/contact/duplicate-confirmation-dialog/duplicate-confirmation-dialog.component';
 
 //Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { UserSearchService } from '@shared/services/user-search.service';
-import { LanguageService } from '@shared/services/language.service';
+import { UserSearchService } from '@shared/services/user';
+import { LanguageService } from '@shared/services/utils';
 import { Subscription } from 'rxjs/internal/Subscription';
 
 //PrimeNG imports
@@ -30,18 +30,18 @@ import { PartnerService } from '@partnerships/partners/services/partner.service'
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ActivatedRoute, Router } from '@angular/router';
-import {MarkdownPipe} from '@features/shared/pipes/markdown.pipe';
-import {LinkListComponent} from '@shared/reusables/components/link/list/link-list.component';
+import {MarkdownPipe} from '@shared/pipes/markdown.pipe';
+import {LinkListComponent} from '@shared/components/links/link/list/link-list.component';
 import {EntityType} from '@shared/models/link.model';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Partner } from '@partnerships/partners/models/partner.model';
-import { AiTranscribeComponent } from '@shared/reusables/components/ai-transcribe/ai-transcribe.component';
+import { AiTranscribeComponent } from '@features/ai/components/ai-transcribe/ai-transcribe.component';
 import { JsonPipe } from '@angular/common';
 import { PartnerTreeService } from '@partnerships/partners/services/partner-tree.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SkeletonModule } from 'primeng/skeleton';
-import { AuthService } from '@core/services/auth.service';
-import { ENTITY_STATUS_OPTIONS } from '@features/shared/models/entity-status.enum';
+import { AuthService } from '@core/services/auth';
+import { ENTITY_STATUS_OPTIONS } from '@shared/models/entity-status.enum';
 import { TooltipModule } from 'primeng/tooltip';
 
 // Interface for duplicate detection response

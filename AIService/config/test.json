@@ -39,7 +39,7 @@
     }
   },
   "database": {
-    "secret_name": "QA_DB_Connection_String"
+    "secret_name": "Test_DB_Connection_String"
   },
   "artifacts": {
     "service_type": "GcsArtifactService",

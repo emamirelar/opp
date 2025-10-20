@@ -31,20 +31,20 @@ import { SecurityContext } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ConfirmationService } from 'primeng/api';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { FeedbackDialogService } from '@shared/services/ui';
 import { authInterceptor } from '@core/interceptors/auth.interceptor';
 import { serverErrorInterceptor } from '@core/interceptors/server-error.interceptor';
-import { AuthService } from '@core/services/auth.service';
-import { ConfigurationService } from '@core/services/configuration.service';
-import { HasPermissionDirective } from '@core/directives/has-permission.directive';
-import { PermissionService } from '@core/services/permission.service';
-import { LanguageService } from '@shared/services/language.service';
+import { AuthService } from '@core/services/auth';
+import { ConfigurationService } from '@core/services/configuration';
+import { HasPermissionDirective } from './shared';
+import { PermissionService } from '@core/services/auth';
+import { LanguageService } from '@shared/services/utils';
 
 /******* PrimeNG specifc imports *********/
 import { providePrimeNG } from 'primeng/config';
 //TODO: JW- remove this import
 //  import Aura from '@primeng/themes/aura';
-import UnopsPreset from '@shared/themes/unops.preset';
+import UnopsPreset from '../styles/themes/unops.preset';
 import { routes } from './app.routes';
 
 /********************************/

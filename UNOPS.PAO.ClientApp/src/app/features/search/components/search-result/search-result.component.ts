@@ -8,19 +8,19 @@ import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { BadgeModule } from 'primeng/badge';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ListViewColumn, ListViewConfig } from '@shared/pages/components/listview/listview.model';
-import { ListviewCardComponent } from '@shared/pages/components/listview/card/listview-card.component';
-import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
+import { ListViewColumn, ListViewConfig } from '@features/list-view/components/listview/listview.model';
+import { ListviewCardComponent } from '@features/list-view/components/listview/card/listview-card.component';
+import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
 import { HttpClient } from '@angular/common/http';
 import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Subject } from 'rxjs';
 import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { GlobalFilterService } from '@core/services/global-filter.service';
-import { UserPreferenceService, GlobalFilters } from '@core/services/user-preference.service';
-import { OrganizationHierarchyService } from '@core/services/organization-hierarchy.service';
-import { AuthService } from '@core/services/auth.service';
-import { GlobalFiltersDialogService } from '@core/services/global-filters-dialog.service';
+import { GlobalFilterService } from '@core/services/filters';
+import { UserPreferenceService, GlobalFilters } from '@core/services/user';
+import { OrganizationHierarchyService } from '@core/services/organization';
+import { AuthService } from '@core/services/auth';
+import { GlobalFiltersDialogService } from '@core/services/filters';
 
 /**
  * @uiEntity SearchResult
@@ -85,112 +85,8 @@ interface EntityTab {
     ToggleSwitchModule
   ],
   templateUrl: './search-result.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  styles: `
-    :host ::ng-deep {
-      --p-tabs-tablist-background: transparent;
-      
-      .p-tabpanels {
-        padding: 0;
-      }
-
-      .search-highlight {
-        background-color: #fef3c7 !important;
-        background-image: linear-gradient(120deg, #fef3c7 0%, #fde047 100%) !important;
-        padding: 2px 4px !important;
-        border-radius: 3px !important;
-        font-weight: 600 !important;
-        color: #854d0e !important;
-        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-      }
-
-      /* Mobile-specific improvements */
-      @media (max-width: 768px) {
-        /* Better mobile scrolling */
-        .h-\\[calc\\(100vh-240px\\)\\] {
-          height: calc(100vh - 200px) !important;
-          -webkit-overflow-scrolling: touch;
-        }
-
-        /* Improved card interactions on mobile */
-        .transform {
-          transition: transform 0.15s ease-in-out;
-        }
-
-        /* Better focus states for mobile dropdown */
-        select:focus {
-          outline: none;
-          ring: 2px;
-          ring-offset: 2px;
-        }
-
-        /* Improved touch targets */
-        button, select {
-          min-height: 44px;
-        }
-
-        /* Better spacing for mobile cards */
-        .space-y-4 > * + * {
-          margin-top: 1rem !important;
-        }
-      }
-    }
-    
-    .search-highlight {
-      background-color: #fef3c7;
-      background-image: linear-gradient(120deg, #fef3c7 0%, #fde047 100%);
-      padding: 2px 4px;
-      border-radius: 3px;
-      font-weight: 600;
-      color: #854d0e;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .animate-fadeIn {
-      animation: fadeIn 0.3s ease-out;
-    }
-
-    .metadata-section {
-      transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
-    }
-    
-    .metadata-hidden {
-      opacity: 0;
-      transform: translateY(-5px);
-      pointer-events: none;
-      height: 0;
-      overflow: hidden;
-    }
-    
-    .metadata-visible {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-      height: auto;
-    }
-
-    /* Enhanced mobile card styling */
-    @media (max-width: 640px) {
-      .rounded-lg {
-        border-radius: 0.75rem;
-      }
-      
-      .shadow-sm {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      }
-      
-      .hover\\:shadow-md:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-      }
-    }
-  `
+  styleUrls: ['./search-result.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SearchResultComponent implements OnInit {
   private route = inject(ActivatedRoute);

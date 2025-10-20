@@ -1,0 +1,135 @@
+﻿<div class="dashboard-card bg-unops-surface-primary rounded-unops-lg shadow-unops-md border border-unops-neutral-200 overflow-hidden"
+     [style.height]="cardHeight"
+     [class.card-size-auto]="cardSize === 'auto'"
+     [class.card-size-fixed]="cardSize === 'fixed'"
+     [class.card-size-compact]="cardSize === 'compact'"
+     [class.card-size-tall]="cardSize === 'tall'"
+     [class.mobile-mode]="isMobile">
+  
+  <!-- Header -->
+  <div class="card-header p-unops-lg border-b border-unops-neutral-200">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-unops-md">
+        <div class="flex items-center justify-center w-10 h-10 rounded-unops-lg"
+             [ngClass]="config.iconColor">
+          <i class="material-symbols-outlined text-unops-xl" 
+             [ngClass]="getIconTextColor()">{{ config.icon }}</i>
+        </div>
+        <div>
+          <h3 class="font-unops-display text-unops-headline-small font-unops-semibold text-unops-neutral-900">
+            {{ config.title }}
+          </h3>
+          <p class="font-unops-body text-unops-body-small text-unops-neutral-600">
+            {{ config.subtitle }}
+          </p>
+        </div>
+      </div>
+      
+      <!-- Collapse button for expanded view -->
+      @if (isExpanded) {
+        <button 
+          pButton 
+          type="button" 
+          icon="pi pi-times" 
+          class="p-button-outlined p-button-sm"
+          (click)="onCollapse()"
+          pTooltip="{{ 'dashboard.card.collapse' | translate }}"
+          tooltipPosition="bottom">
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Content Area -->
+  <div class="card-content flex flex-col" 
+       [class.expanded-content]="isExpanded"
+       [class.normal-content]="!isExpanded">
+    
+    <!-- Filters (if enabled and provided) -->
+    @if (config.showFilters && filters && filters.length > 0) {
+      <div class="filter-section p-unops-lg pb-0">
+        <div class="flex flex-wrap gap-unops-sm">
+          @for (filter of filters; track filter.id) {
+            <button 
+              class="px-unops-md py-unops-sm rounded-unops-md font-unops-body text-unops-body-small font-unops-medium transition-all duration-unops-short border"
+              [class.bg-unops-primary]="filter.active"
+              [class.text-unops-white]="filter.active"
+              [class.border-unops-primary]="filter.active"
+              [class.bg-unops-surface-cool]="!filter.active"
+              [class.text-unops-neutral-700]="!filter.active"
+              [class.border-unops-neutral-300]="!filter.active"
+              (click)="onFilterClick(filter)">
+              {{ filter.label }}
+              @if (filter.count !== undefined) {
+                ({{ filter.count }})
+              }
+            </button>
+          }
+          @if (hasActiveFilter()) {
+            <button 
+              class="px-unops-sm py-unops-sm rounded-unops-md bg-unops-neutral-200 text-unops-neutral-600 hover:bg-unops-neutral-300 transition-colors"
+              (click)="onClearFilter()">
+              <i class="material-symbols-outlined text-unops-sm">close</i>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Main Content Area -->
+    <div class="main-content flex-1 p-unops-lg" 
+         [class.pt-unops-sm]="config.showFilters && filters && filters.length > 0">
+      
+      <!-- Content Template -->
+      @if (contentTemplate) {
+        <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+      } @else if (hasContent) {
+        <ng-content></ng-content>
+      } @else {
+        <!-- Empty State -->
+        <div class="empty-state flex flex-col items-center justify-center h-full text-center py-unops-lg">
+          <div class="flex items-center justify-center w-12 h-12 bg-unops-neutral-200 rounded-unops-full mb-unops-md">
+            <i class="material-symbols-outlined text-unops-xl text-unops-neutral-400">
+              {{ config.emptyStateIcon || 'inbox' }}
+            </i>
+          </div>
+          <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-unops-sm">
+            {{ config.emptyStateTitle || ('dashboard.card.noItemsFound' | translate) }}
+          </h4>
+          <p class="font-unops-body text-unops-body-medium text-unops-neutral-500 mb-unops-sm">
+            {{ config.emptyStateMessage || ('dashboard.card.noDataMessage' | translate) }}
+          </p>
+          @if (config.emptyStateActionLabel) {
+            <button 
+              pButton 
+              type="button" 
+              icon="pi pi-plus" 
+              [label]="config.emptyStateActionLabel"
+              class="p-button-sm unops-button-primary"
+              (click)="onEmptyStateAction()">
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Footer with View All (hidden on mobile) -->
+    @if (config.showViewAll !== false && !isExpanded && !isMobile) {
+      <div class="card-footer border-t border-unops-neutral-200 p-unops-md">
+        @if (showViewAllButton) {
+          <div class="text-center">
+            <button 
+              class="text-unops-body-small text-unops-primary hover:text-unops-primary-dark font-unops-medium transition-colors"
+              (click)="onViewAll()">
+              {{ getViewAllText() }}
+            </button>
+          </div>
+        } @else {
+          <div class="text-center text-unops-body-small text-unops-neutral-400">
+            &nbsp;
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

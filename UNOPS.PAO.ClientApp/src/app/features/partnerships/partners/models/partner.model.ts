@@ -1,5 +1,5 @@
 import { PartnerTree } from "./partner-tree.model";
-import { EntityPermissionSet } from '@features/shared/models/shared-types';
+import { EntityPermissionSet } from '@shared/models/shared-types';
 import { OrganizationUnitRelationshipModel } from '@partnerships/partners/models/organization-unit-relationship.model';
 import { OrganizationHierarchyModel } from '@core/models/organization-hierarchy.model';
 import { EntityTag, TaggedEntity } from '@shared/models/entity-tag.model';

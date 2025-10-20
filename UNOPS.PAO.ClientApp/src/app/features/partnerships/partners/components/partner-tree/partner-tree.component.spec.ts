@@ -7,7 +7,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { of } from 'rxjs';
 
 import { PartnerTreeComponent } from './partner-tree.component';
-import { PermissionService } from '@core/services/permission.service';
+import { PermissionService } from '@core/services/auth';
 
 describe('PartnerTreeComponent', () => {
   let component: PartnerTreeComponent;

@@ -11,16 +11,16 @@ import {
   signal, ViewChild,
   Input, SimpleChanges
 } from '@angular/core';
-import { CachedDataService } from '@shared/services/cached-data.service';
+import { CachedDataService } from '@shared/services/utils';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { FeedbackDialogService } from '@shared/services/ui';
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { LanguageService } from '@shared/services/language.service';
+import { LanguageService } from '@shared/services/utils';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { InputTextModule } from 'primeng/inputtext';
 import { DividerModule } from 'primeng/divider';
