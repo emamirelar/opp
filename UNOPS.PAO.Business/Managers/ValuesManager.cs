@@ -5,9 +5,15 @@ using UNOPS.PAO.Business.Repositories;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Interfaces;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.Models.Users;
+using UNOPS.PAO.Models.LiaisonOffices;
+using UNOPS.PAO.Models.OrganizationUnits;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Locations;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Contacts;
 
 public class ValuesManager : IApplicationService
 {

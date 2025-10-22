@@ -8,6 +8,8 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using System.Text.Json;
+using UNOPS.PAO.Models.Filters;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Business.Services
 {

@@ -16,6 +16,8 @@ using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using System.Security.Claims;
+using UNOPS.PAO.Models.AI;
+using UNOPS.PAO.Models.Shared;
 
 public class GeminiManager : IGeminiManager
 {

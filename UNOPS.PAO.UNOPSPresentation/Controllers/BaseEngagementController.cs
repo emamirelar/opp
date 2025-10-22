@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
-using UNOPS.PAO.Presentation.Controllers;
+using UNOPS.PAO.Presentation.Controllers.Shared;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSBusiness.Attributes;

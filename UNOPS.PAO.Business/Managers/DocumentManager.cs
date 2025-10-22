@@ -5,6 +5,7 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Documents;
 
 namespace UNOPS.PAO.Business.Managers;
 

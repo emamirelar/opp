@@ -1,0 +1,137 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.Presentation.Security;
+using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.Presentation;
+using UNOPS.PAO.Presentation.Helpers;
+using UNOPS.PAO.Presentation.Controllers.Shared;
+
+namespace UNOPS.PAO.Presentation.Controllers.Dashboard;
+
+/// <summary>
+/// Dedicated controller for dashboard data with user-specific filtering
+/// This keeps dashboard logic separate from core entity APIs
+/// </summary>
+[Authorize(AuthenticationSchemes = "IAP")]
+public class DashboardController : BaseController
+{
+    private readonly IDashboardService _dashboardService;
+
+    public DashboardController(
+        IDashboardService dashboardService,
+        UserResolverService<int> userResolverService,
+        ILogger<DashboardController> logger,
+        IAuthorizationService authorizationService)
+        : base(logger, authorizationService, userResolverService)
+    {
+        _dashboardService = dashboardService;
+    }
+
+    /// <summary>
+    /// Gets partners for the current user's dashboard (created by or modified by current user, excluding drafts)
+    /// </summary>
+    /// <param name="pageSize">Number of records to return (default: 1000)</param>
+    /// <returns>Partners related to the current user</returns>
+    [HttpGet(APIDictionary.DashboardMyPartners)]
+    public async Task<ActionResult> GetMyPartners([FromQuery] int pageSize = 1000)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _dashboardService.GetMyPartnersAsync(User, pageSize);
+            return result;
+        });
+    }
+
+    /// <summary>
+    /// Gets contacts for the current user's dashboard (created by or modified by current user, excluding drafts)
+    /// </summary>
+    /// <param name="pageSize">Number of records to return (default: 1000)</param>
+    /// <returns>Contacts related to the current user</returns>
+    [HttpGet(APIDictionary.DashboardMyContacts)]
+    public async Task<ActionResult> GetMyContacts([FromQuery] int pageSize = 1000)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _dashboardService.GetMyContactsAsync(User, pageSize);
+            return result;
+        });
+    }
+
+    /// <summary>
+    /// Gets draft partners for the current user's dashboard (created by or modified by current user, draft status only)
+    /// </summary>
+    /// <param name="pageSize">Number of records to return (default: 1000)</param>
+    /// <returns>Draft partners related to the current user</returns>
+    [HttpGet(APIDictionary.DashboardMyDraftPartners)]
+    public async Task<ActionResult> GetMyDraftPartners([FromQuery] int pageSize = 1000)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _dashboardService.GetMyDraftPartnersAsync(User, pageSize);
+            return result;
+        });
+    }
+
+    /// <summary>
+    /// Gets draft contacts for the current user's dashboard (created by or modified by current user, draft status only)
+    /// </summary>
+    /// <param name="pageSize">Number of records to return (default: 1000)</param>
+    /// <returns>Draft contacts related to the current user</returns>
+    [HttpGet(APIDictionary.DashboardMyDraftContacts)]
+    public async Task<ActionResult> GetMyDraftContacts([FromQuery] int pageSize = 1000)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _dashboardService.GetMyDraftContactsAsync(User, pageSize);
+            return result;
+        });
+    }
+
+    /// <summary>
+    /// Gets interactions for the current user's dashboard (created by or modified by current user, excluding drafts)
+    /// </summary>
+    /// <param name="pageSize">Number of records to return (default: 1000)</param>
+    /// <returns>Interactions related to the current user</returns>
+    [HttpGet(APIDictionary.DashboardMyInteractions)]
+    public async Task<ActionResult> GetMyInteractions([FromQuery] int pageSize = 1000)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _dashboardService.GetMyInteractionsAsync(User, pageSize);
+            return result;
+        });
+    }
+
+    /// <summary>
+    /// Gets draft interactions for the current user's dashboard (created by or modified by current user, draft status only)
+    /// </summary>
+    /// <param name="pageSize">Number of records to return (default: 1000)</param>
+    /// <returns>Draft interactions related to the current user</returns>
+    [HttpGet(APIDictionary.DashboardMyDraftInteractions)]
+    public async Task<ActionResult> GetMyDraftInteractions([FromQuery] int pageSize = 1000)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _dashboardService.GetMyDraftInteractionsAsync(User, pageSize);
+            return result;
+        });
+    }
+
+    /// <summary>
+    /// Gets recent updates from all entity types in the org unit (Partners, Contacts, Interactions)
+    /// </summary>
+    /// <param name="pageSize">Number of records to return (default: 10)</param>
+    /// <returns>Recent updates across all entity types</returns>
+    [HttpGet(APIDictionary.DashboardOrgUnitRecentUpdates)]
+    public async Task<ActionResult> GetOrgUnitRecentUpdates([FromQuery] int pageSize = 10)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _dashboardService.GetOrgUnitRecentUpdatesAsync(User, pageSize);
+            return result;
+        });
+    }
+}

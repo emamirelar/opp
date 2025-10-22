@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Domain.Infrastructure;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
@@ -15,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Models.PartnerTrees;
 
 public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
 {
