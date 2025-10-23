@@ -53,6 +53,32 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<SavedFilter> SavedFilters { get; set; }
 
+    // Opportunity and related entities
+    public DbSet<Opportunity> Opportunities { get; set; }
+    public DbSet<OpportunityFundingPartner> OpportunityFundingPartners { get; set; }
+    public DbSet<OpportunityClientPartner> OpportunityClientPartners { get; set; }
+    public DbSet<OpportunityStakeholder> OpportunityStakeholders { get; set; }
+    public DbSet<OpportunityDeliverable> OpportunityDeliverables { get; set; }
+    public DbSet<OpportunityCountry> OpportunityCountries { get; set; }
+    public DbSet<OpportunitySDG> OpportunitySDGs { get; set; }
+
+    // Infrastructure entities
+    public DbSet<WorkflowStage> WorkflowStages { get; set; }
+    public DbSet<EntityRole> EntityRoles { get; set; }
+    public DbSet<EntityRolePerson> EntityRolePersons { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<ProposedInitiativeType> ProposedInitiativeTypes { get; set; }
+
+    // Artifacts system entities
+    public DbSet<ArtifactDataType> ArtifactDataTypes { get; set; }
+    public DbSet<ArtifactType> ArtifactTypes { get; set; }
+    public DbSet<EntityArtifact> EntityArtifacts { get; set; }
+    public DbSet<ArtifactExtractionRule> ArtifactExtractionRules { get; set; }
+
+    // External Data Service entities (Read-Only)
+    public DbSet<SDG> SDGs { get; set; }
+    public DbSet<ExchangeRate> ExchangeRates { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ConfigureWarnings(warnings => warnings
@@ -319,5 +345,265 @@ public class AppDbContext : AuditableDbContext<int, int>
 
         // Ignore GlobalFilters class - it's not an entity, just a plain class for JSON serialization
         modelBuilder.Ignore<GlobalFilters>();
+
+        // Opportunity entity configuration
+        modelBuilder.Entity<Opportunity>(entity =>
+        {
+            entity.HasOne(x => x.WorkflowStage)
+                .WithMany()
+                .HasForeignKey(x => x.WorkflowStageId)
+                .IsRequired(false);
+                
+            entity.HasOne(x => x.ResponsibleOrgUnit)
+                .WithMany()
+                .HasForeignKey(x => x.ResponsibleOrgUnitId)
+                .IsRequired(false);
+                
+            entity.HasOne(x => x.ProposedInitiativeType)
+                .WithMany()
+                .HasForeignKey(x => x.ProposedInitiativeTypeId)
+                .IsRequired(false);
+                
+            entity.Property(x => x.Description)
+                .IsRequired();
+                
+            entity.HasIndex(x => x.Name);
+            entity.HasIndex(x => x.Status);
+            entity.HasIndex(x => x.WorkflowStageId);
+        });
+
+        // OpportunityFundingPartner configuration
+        modelBuilder.Entity<OpportunityFundingPartner>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.FundingPartners)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.Partner)
+                .WithMany()
+                .HasForeignKey(x => x.PartnerId);
+                
+            entity.HasOne(x => x.Currency)
+                .WithMany()
+                .HasForeignKey(x => x.CurrencyId)
+                .IsRequired();
+                
+            entity.HasIndex(x => x.OpportunityId);
+        });
+
+        // OpportunityClientPartner configuration
+        modelBuilder.Entity<OpportunityClientPartner>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.ClientPartners)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.Partner)
+                .WithMany()
+                .HasForeignKey(x => x.PartnerId);
+                
+            entity.HasIndex(x => x.OpportunityId);
+        });
+
+        // OpportunityStakeholder configuration
+        modelBuilder.Entity<OpportunityStakeholder>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.Stakeholders)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .IsRequired(false);
+                
+            entity.HasOne(x => x.EntityRole)
+                .WithMany()
+                .HasForeignKey(x => x.EntityRoleId)
+                .IsRequired(false);
+                
+            entity.HasIndex(x => x.OpportunityId);
+        });
+
+        // OpportunityDeliverable configuration
+        modelBuilder.Entity<OpportunityDeliverable>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.Deliverables)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasIndex(x => x.OpportunityId);
+        });
+
+        // OpportunityCountry configuration
+        modelBuilder.Entity<OpportunityCountry>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.Countries)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.Country)
+                .WithMany()
+                .HasForeignKey(x => x.CountryId);
+                
+            entity.HasIndex(x => x.OpportunityId);
+        });
+
+        // OpportunitySDG configuration
+        modelBuilder.Entity<OpportunitySDG>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.SDGs)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.SDG)
+                .WithMany()
+                .HasForeignKey(x => x.SDGId);
+                
+            entity.HasIndex(x => x.OpportunityId);
+            entity.HasIndex(x => x.SDGId);
+            entity.HasIndex(x => x.AlignmentType);
+        });
+
+        // WorkflowStage configuration
+        modelBuilder.Entity<WorkflowStage>(entity =>
+        {
+            entity.HasIndex(x => new { x.EntityType, x.Order });
+        });
+
+        // EntityRole configuration
+        modelBuilder.Entity<EntityRole>(entity =>
+        {
+            entity.HasIndex(x => new { x.EntityType, x.Name });
+        });
+
+        // EntityRolePerson configuration
+        modelBuilder.Entity<EntityRolePerson>(entity =>
+        {
+            entity.HasOne(x => x.EntityRole)
+                .WithMany()
+                .HasForeignKey(x => x.EntityRoleId);
+                
+            entity.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .IsRequired(false);
+                
+            entity.HasOne(x => x.Contact)
+                .WithMany()
+                .HasForeignKey(x => x.ContactId)
+                .IsRequired(false);
+                
+            entity.HasIndex(x => new { x.EntityType, x.EntityId, x.EntityRoleId });
+        });
+
+        // AuditLog configuration
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.HasIndex(x => new { x.EntityType, x.EntityId });
+            entity.HasIndex(x => x.Timestamp);
+        });
+
+        // ArtifactDataType configuration
+        modelBuilder.Entity<ArtifactDataType>(entity =>
+        {
+            entity.HasIndex(x => x.Name).IsUnique();
+            entity.HasIndex(x => x.Order);
+        });
+
+        // ArtifactType configuration
+        modelBuilder.Entity<ArtifactType>(entity =>
+        {
+            entity.HasOne(x => x.ArtifactDataType)
+                .WithMany(x => x.ArtifactTypes)
+                .HasForeignKey(x => x.ArtifactDataTypeId);
+                
+            entity.HasIndex(x => x.ArtifactTypeCode).IsUnique();
+            entity.HasIndex(x => x.Category);
+            entity.HasIndex(x => x.Order);
+        });
+
+        // EntityArtifact configuration
+        modelBuilder.Entity<EntityArtifact>(entity =>
+        {
+            entity.HasOne(x => x.ArtifactType)
+                .WithMany(x => x.EntityArtifacts)
+                .HasForeignKey(x => x.ArtifactTypeId);
+                
+            entity.HasOne(x => x.Document)
+                .WithMany()
+                .HasForeignKey(x => x.DocumentId)
+                .IsRequired(false);
+                
+            entity.HasOne(x => x.SourceArtifact)
+                .WithMany(x => x.ExtractedArtifacts)
+                .HasForeignKey(x => x.SourceArtifactId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            entity.HasIndex(x => new { x.EntityType, x.EntityId });
+            entity.HasIndex(x => x.ArtifactTypeId);
+            entity.HasIndex(x => x.EffectiveDate);
+            entity.HasIndex(x => x.IsExtracted);
+        });
+
+        // ArtifactExtractionRule configuration
+        modelBuilder.Entity<ArtifactExtractionRule>(entity =>
+        {
+            entity.HasOne(x => x.SourceArtifactType)
+                .WithMany(x => x.SourceExtractionRules)
+                .HasForeignKey(x => x.SourceArtifactTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            entity.HasOne(x => x.ExtractedArtifactType)
+                .WithMany(x => x.TargetExtractionRules)
+                .HasForeignKey(x => x.ExtractedArtifactTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            entity.HasIndex(x => x.SourceArtifactTypeId);
+            entity.HasIndex(x => x.IsActive);
+            entity.HasIndex(x => x.ExecutionOrder);
+        });
+
+        // SDG configuration (External Data Service - Read Only)
+        modelBuilder.Entity<SDG>(entity =>
+        {
+            entity.HasIndex(x => x.SDGNumber);
+            entity.HasIndex(x => x.SDGId);
+            entity.HasIndex(x => x.Status);
+        });
+
+        // Country configuration (External Data Service - Read Only)
+        modelBuilder.Entity<Country>(entity =>
+        {
+            entity.HasIndex(x => x.Iso2Code).IsUnique();
+            entity.HasIndex(x => x.Iso3Code);
+            entity.HasIndex(x => x.Name);
+            entity.HasIndex(x => x.Status);
+        });
+
+        // Currency configuration (External Data Service - Read Only)
+        modelBuilder.Entity<Currency>(entity =>
+        {
+            entity.HasIndex(x => x.Code).IsUnique();
+            entity.HasIndex(x => x.Name);
+            entity.HasIndex(x => x.Status);
+        });
+
+        // ExchangeRate configuration (External Data Service - Read Only)
+        modelBuilder.Entity<ExchangeRate>(entity =>
+        {
+            entity.HasIndex(x => new { x.Currency, x.Effective_Date });
+            entity.HasIndex(x => x.Is_Current_Flag);
+            entity.HasIndex(x => x.Exchange_Rate_Start_Date);
+            entity.HasIndex(x => x.Exchange_Rate_End_Date);
+            entity.HasIndex(x => x.Status);
+        });
     }
 }

@@ -1431,3 +1431,84 @@ INSERT INTO public."EntityPermissions" (
     null,
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
+
+-- Opportunity Entity Permissions
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Opportunity',
+    'UNOPS_GEN_USER',
+    true,
+    true,
+    true,
+    true,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Opportunity',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    true,
+    true,
+    true,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Opportunity',
+    'PARTNER_USER',
+    true,
+    true,
+    true,
+    true,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Opportunity',
+    'ORG_UNIT_ADMIN',
+    true,
+    true,
+    true,
+    true,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);

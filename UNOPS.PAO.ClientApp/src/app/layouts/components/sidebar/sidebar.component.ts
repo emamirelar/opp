@@ -76,6 +76,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
             icon: 'chat',
             routerLink: ['/partnerships/interactions']
           },
+          {
+            label: 'title.opportunities',
+            icon: 'lightbulb',
+            routerLink: ['/partnerships/opportunities']
+          },
           // {
           //   label: 'title.partnerTree',
           //   icon: 'account_tree',

@@ -68,6 +68,33 @@
         },
         {
             "order": 8,
+            "name": "WorkflowStages",
+            "type": "seeder",
+            "className": "WorkflowStageSeeder",
+            "methodName": "SeedWorkflowStagesAsync",
+            "filePath": "Seeders/WorkflowStageSeeder.cs",
+            "description": "Workflow stages for entities"
+        },
+        {
+            "order": 9,
+            "name": "EntityRoles",
+            "type": "seeder",
+            "className": "EntityRoleSeeder",
+            "methodName": "SeedEntityRolesAsync",
+            "filePath": "Seeders/EntityRoleSeeder.cs",
+            "description": "Entity roles for entities"
+        },
+        {
+            "order": 10,
+            "name": "ProposedInitiativeTypes",
+            "type": "seeder",
+            "className": "ProposedInitiativeTypeSeeder",
+            "methodName": "SeedProposedInitiativeTypesAsync",
+            "filePath": "Seeders/ProposedInitiativeTypeSeeder.cs",
+            "description": "Proposed initiative types (Project, Programme, Portfolio)"
+        },
+        {
+            "order": 11,
             "name": "Partners",
             "type": "seeder",
             "className": "PartnerSeeder_v2",
@@ -76,7 +103,7 @@
             "description": "Partners data seeding"
         },
         {
-            "order": 9,
+            "order": 12,
             "name": "Prospects",
             "type": "seeder",
             "className": "ProspectAccountsSeeder",
@@ -85,7 +112,7 @@
             "description": "Partners data seeding"
         },
         {
-            "order": 10,
+            "order": 13,
             "name": "Contacts",
             "type": "seeder",
             "className": "ContactSeeder",
@@ -94,7 +121,7 @@
             "description": "Contacts data seeding"
         },
         {
-            "order": 11,
+            "order": 14,
             "name": "InteractionFromTasks",
             "type": "seeder",
             "className": "InteractionFromTaskSeeder",
@@ -103,7 +130,7 @@
             "description": "Interactions from tasks data seeding"
         },
         {
-            "order": 12,
+            "order": 15,
             "name": "InteractionFromEvents",
             "type": "seeder",
             "className": "InteractionFromEventSeeder",
@@ -112,7 +139,7 @@
             "description": "Interactions from events data seeding"
         },
         {
-            "order": 13,
+            "order": 16,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",

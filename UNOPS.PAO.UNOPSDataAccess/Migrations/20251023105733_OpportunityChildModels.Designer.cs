@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251023105733_OpportunityChildModels")]
+    partial class OpportunityChildModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1904,71 +1907,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.ToTable("OpportunityFundingPartners", "public");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDG", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("AlignmentNotes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("AlignmentType")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("ContributionLevel")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DeletedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("LastModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("OpportunityId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SDGId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AlignmentType");
-
-                    b.HasIndex("OpportunityId");
-
-                    b.HasIndex("SDGId");
-
-                    b.ToTable("OpportunitySDGs", "public");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityStakeholder", b =>
                 {
                     b.Property<int>("Id")
@@ -3631,25 +3569,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("Partner");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDG", b =>
-                {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Opportunity", "Opportunity")
-                        .WithMany("SDGs")
-                        .HasForeignKey("OpportunityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.SDG", "SDG")
-                        .WithMany()
-                        .HasForeignKey("SDGId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Opportunity");
-
-                    b.Navigation("SDG");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityStakeholder", b =>
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.EntityRole", "EntityRole")
@@ -3821,8 +3740,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("Documents");
 
                     b.Navigation("FundingPartners");
-
-                    b.Navigation("SDGs");
 
                     b.Navigation("Stakeholders");
                 });

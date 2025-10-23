@@ -1,0 +1,172 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.Models;
+using UNOPS.PAO.Presentation.Helpers;
+using UNOPS.PAO.UNOPSBusiness.Attributes;
+
+namespace UNOPS.PAO.Presentation.Controllers;
+
+[Route("/")]
+[Authorize(AuthenticationSchemes = "IAP")]
+public class OpportunityController : BaseController
+{
+    private readonly IOpportunityManager _manager;
+
+    public OpportunityController(
+        IManagerWrapper manager,
+        UserResolverService<int> userResolverService,
+        ILogger<OpportunityController> logger,
+        IAuthorizationService authorizationService)
+        : base(logger, authorizationService, userResolverService)
+    {
+        _manager = manager.OpportunityManager;
+    }
+
+    /// <summary>
+    /// Creates a new opportunity
+    /// </summary>
+    [HttpPost(APIDictionary.Opportunity)]
+    [AccessControlled(EntityTypes.Opportunity, "create")]
+    public async Task<ActionResult> Create([FromBody] OpportunityRequest req)
+    {
+        var validationErrors = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(req.Name))
+        {
+            validationErrors.Add("Name is required for opportunity creation");
+        }
+        
+        if (string.IsNullOrWhiteSpace(req.Description))
+        {
+            validationErrors.Add("Description is required for opportunity creation");
+        }
+
+        if (validationErrors.Any())
+        {
+            var errorMessage = $"Missing required fields for opportunity creation: {string.Join(", ", validationErrors)}";
+            return BadRequest(new
+            {
+                error = errorMessage,
+                missingFields = validationErrors
+            });
+        }
+
+        var result = await _manager.CreateOpportunityAsync(req);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Gets a specific opportunity by ID
+    /// </summary>
+    [HttpGet(APIDictionary.Opportunity + "/{id}")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> Get(int id)
+    {
+        var result = await _manager.GetOpportunityAsync(id);
+
+        if (result == null)
+        {
+            return NotFound(new { error = $"Opportunity with ID {id} not found" });
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Gets all opportunities with pagination support
+    /// </summary>
+    [HttpGet(APIDictionary.Opportunity)]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> GetAllOpportunities(
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = "name",
+        [FromQuery] bool ascending = true,
+        [FromQuery] bool filterActive = true)
+    {
+        try
+        {
+            _logger.LogInformation("=== GET ALL OPPORTUNITIES ENDPOINT ===");
+            _logger.LogInformation("Page: {PageIndex}, Size: {PageSize}, OrderBy: {OrderBy}", pageIndex, pageSize, orderBy);
+
+            // Get all opportunities from manager
+            var opportunities = await _manager.GetAllOpportunitiesAsync();
+
+            // Apply ordering
+            var orderedOpportunities = orderBy?.ToLower() switch
+            {
+                "name" => ascending ? opportunities.OrderBy(o => o.Name) : opportunities.OrderByDescending(o => o.Name),
+                "createddate" => ascending ? opportunities.OrderBy(o => o.CreatedDate) : opportunities.OrderByDescending(o => o.CreatedDate),
+                "lastmodifieddate" => ascending ? opportunities.OrderBy(o => o.LastModifiedDate) : opportunities.OrderByDescending(o => o.LastModifiedDate),
+                _ => ascending ? opportunities.OrderBy(o => o.Name) : opportunities.OrderByDescending(o => o.Name)
+            };
+
+            // Apply pagination
+            var totalCount = orderedOpportunities.Count();
+            var paginatedOpportunities = orderedOpportunities
+                .Skip((pageIndex - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var response = new PaginationResponse<OpportunityModel>
+            {
+                Records = paginatedOpportunities,
+                TotalCount = totalCount,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            _logger.LogInformation("Returned {Count} opportunities out of {TotalCount}", paginatedOpportunities.Count, totalCount);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting opportunities");
+            return StatusCode(500, new { error = "Internal server error while fetching opportunities", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Updates an existing opportunity
+    /// </summary>
+    [HttpPut(APIDictionary.Opportunity + "/{id}")]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> Update(int id, [FromBody] UpdateOpportunityRequest req)
+    {
+        if (id != req.Id)
+        {
+            return BadRequest(new { error = "ID mismatch between route and request body" });
+        }
+
+        var result = await _manager.UpdateOpportunityAsync(req);
+
+        if (result == null)
+        {
+            return NotFound(new { error = $"Opportunity with ID {id} not found" });
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Deletes an opportunity
+    /// </summary>
+    [HttpDelete(APIDictionary.Opportunity + "/{id}")]
+    [AccessControlled(EntityTypes.Opportunity, "delete")]
+    public async Task<ActionResult> Delete(int id)
+    {
+        var result = await _manager.DeleteOpportunityAsync(id);
+
+        if (!result)
+        {
+            return NotFound(new { error = $"Opportunity with ID {id} not found" });
+        }
+
+        return Ok(new { message = "Opportunity deleted successfully", id });
+    }
+}
+
