@@ -8,7 +8,7 @@ import {
   signal,
   computed,
   ViewChild,
-  DestroyRef
+  DestroyRef,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIf } from '@angular/common';
@@ -18,12 +18,16 @@ import { ButtonModule } from 'primeng/button';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ListviewComponent } from '@features/list-view/components/listview/listview.component';
 import { OpportunityService } from '../../../services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui';
-import { ListViewColumn, ListViewConfig, SearchParams } from '@features/list-view/components/listview/listview.model';
+import {
+  ListViewColumn,
+  ListViewConfig,
+  SearchParams,
+} from '@features/list-view/components/listview/listview.model';
 import { Opportunity } from '../../../models/opportunity.model';
 import { SearchField } from '@shared/services/utils';
 import { PermissionUtilityService } from '@core/services/auth';
@@ -57,9 +61,10 @@ import { PageContextService } from '@shared/services/utils';
     ListviewComponent,
     ConfirmDialog,
     NgIf,
-    TranslateModule
+    TranslateModule,
+    RouterModule,
   ],
-  providers: [ConfirmationService]
+  providers: [ConfirmationService],
 })
 export class OpportunityListComponent implements OnInit, OnDestroy {
   router = inject(Router);
@@ -74,7 +79,8 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
   private pageContextService = inject(PageContextService);
 
   // Permission management using utility service
-  private permissionUtils = this.permissionUtilityService.createEntityPermissions('Opportunity');
+  private permissionUtils =
+    this.permissionUtilityService.createEntityPermissions('Opportunity');
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
 
@@ -93,7 +99,9 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
     pageSizeOptions: [20, 50, 100],
     enableSorting: true,
     enableSearch: true,
-    enableExport: this.entityPermissions().permissions.canCreate || this.entityPermissions().permissions.canUpdate,
+    enableExport:
+      this.entityPermissions().permissions.canCreate ||
+      this.entityPermissions().permissions.canUpdate,
     entityName: 'Opportunity',
     scrollable: true,
     scrollHeight: 'flex',
@@ -102,7 +110,7 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
     sortableFields: [
       { field: 'name', label: 'Name' },
       { field: 'createdDate', label: 'Created Date' },
-      { field: 'lastModifiedDate', label: 'Last Updated Date' }
+      { field: 'lastModifiedDate', label: 'Last Updated Date' },
     ],
     searchConfig: {
       useAdvancedSearch: true,
@@ -112,57 +120,63 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
           field: 'name',
           label: 'label.opportunity.name',
           type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
+          operators: ['is', 'is not', 'like', 'not like'],
         },
         {
           field: 'description',
           label: 'label.opportunity.description',
           type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
+          operators: ['is', 'is not', 'like', 'not like'],
         },
         {
           field: 'status',
           label: 'label.opportunity.status',
           type: 'string',
-          operators: ['is', 'is not']
+          operators: ['is', 'is not'],
         },
         {
           field: 'partnerReference',
           label: 'label.opportunity.partnerReference',
           type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
+          operators: ['is', 'is not', 'like', 'not like'],
         },
         {
           field: 'workflowStage.name',
           label: 'label.opportunity.workflowStage',
           type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
+          operators: ['is', 'is not', 'like', 'not like'],
         },
         {
           field: 'initiativeBudgetUSD',
           label: 'label.opportunity.budgetUSD',
           type: 'number',
-          operators: ['equals', 'not equals', 'greater than', 'less than', 'between']
+          operators: [
+            'equals',
+            'not equals',
+            'greater than',
+            'less than',
+            'between',
+          ],
         },
         {
           field: 'targetSigningDate',
           label: 'label.opportunity.targetSigningDate',
           type: 'date',
-          operators: ['after', 'before', 'between']
+          operators: ['after', 'before', 'between'],
         },
         {
           field: 'createdDate',
           label: 'Created Date',
           type: 'date',
-          operators: ['after', 'before', 'between']
+          operators: ['after', 'before', 'between'],
         },
         {
           field: 'lastModifiedDate',
           label: 'Last Modified Date',
           type: 'date',
-          operators: ['after', 'before', 'between']
-        }
-      ] as SearchField[]
+          operators: ['after', 'before', 'between'],
+        },
+      ] as SearchField[],
     },
     // Enable search metadata display
     searchMetadata: {
@@ -171,8 +185,8 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
       searchQuery: '',
       extractMetadata: (item: any) => {
         return item._searchMetadata || null;
-      }
-    }
+      },
+    },
   }));
 
   // Track current search term
@@ -191,12 +205,15 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
 
   private loadOpportunityColumns() {
     this.columnsLoading.set(true);
-    this.entityConfigurationService.getEntityListViewConfiguration('Opportunity')
+    this.entityConfigurationService
+      .getEntityListViewConfiguration('Opportunity')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (columns: any) => {
           // Convert backend columns to frontend format and add template functions
-          const processedColumns = columns.map((col: any) => this.processColumn(col));
+          const processedColumns = columns.map((col: any) =>
+            this.processColumn(col),
+          );
           this.opportunityColumns.set(processedColumns);
           this.columnsLoading.set(false);
           this.cdr.detectChanges();
@@ -207,7 +224,7 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
           this.setFallbackColumns();
           this.columnsLoading.set(false);
           this.cdr.detectChanges();
-        }
+        },
       });
   }
 
@@ -219,11 +236,15 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
       sortable: column.sortable,
       width: column.width,
       ellipsis: column.ellipsis,
-      helperText: column.helperText
+      helperText: column.helperText,
     };
 
     // Handle nested field paths (fields with dots) by adding a template function
-    if (column.field && column.field.includes('.') && column.type !== 'template') {
+    if (
+      column.field &&
+      column.field.includes('.') &&
+      column.type !== 'template'
+    ) {
       // Keep the original field for identification but add a template function to access nested data
       processedColumn.templateFn = (rowData: any) => {
         const value = this.getNestedProperty(rowData, column.field);
@@ -235,20 +256,24 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
 
     // Add template function for template type columns
     if (column.type === 'template' && column.templatePattern) {
-      processedColumn.templateFn = this.createTemplateFunction(column.templatePattern);
+      processedColumn.templateFn = this.createTemplateFunction(
+        column.templatePattern,
+      );
     }
 
     return processedColumn;
   }
 
-  private createTemplateFunction(templatePattern: string): (rowData: any) => string {
+  private createTemplateFunction(
+    templatePattern: string,
+  ): (rowData: any) => string {
     return (rowData: any) => {
       let result = templatePattern;
 
       // Replace field placeholders like {name}, {description} with actual values
       const fieldMatches = templatePattern.match(/\{([^}]+)\}/g);
       if (fieldMatches) {
-        fieldMatches.forEach(match => {
+        fieldMatches.forEach((match) => {
           const fieldName = match.replace(/[{}]/g, '');
           const fieldValue = this.getNestedProperty(rowData, fieldName) || '';
           result = result.replace(match, fieldValue);
@@ -272,7 +297,7 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
         type: 'text',
         sortable: true,
         width: '25%',
-        ellipsis: true
+        ellipsis: true,
       },
       {
         field: 'description',
@@ -280,14 +305,14 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
         type: 'text',
         sortable: false,
         width: '30%',
-        ellipsis: true
+        ellipsis: true,
       },
       {
         field: 'status',
         label: 'label.opportunity.status',
         type: 'badge',
         sortable: true,
-        width: '10%'
+        width: '10%',
       },
       {
         field: 'workflowStageName',
@@ -295,15 +320,15 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
         type: 'text',
         sortable: false,
         width: '15%',
-        ellipsis: true
+        ellipsis: true,
       },
       {
         field: 'initiativeBudgetUSD',
         label: 'label.opportunity.budgetUSD',
         type: 'currency',
         sortable: true,
-        width: '12%'
-      }
+        width: '12%',
+      },
     ];
 
     this.opportunityColumns.set(fallbackColumns);
@@ -319,9 +344,15 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
       record = record.data;
     }
     if (record && record.id !== undefined && record.id !== null) {
-      this.router.navigate(['partnerships/opportunities', record.id.toString()]);
+      this.router.navigate([
+        'partnerships/opportunities',
+        record.id.toString(),
+      ]);
     } else {
-      console.error('Cannot navigate: record or record.id is undefined', record);
+      console.error(
+        'Cannot navigate: record or record.id is undefined',
+        record,
+      );
     }
   }
 
@@ -330,7 +361,7 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
     if (!this.permissionUtilityService.canDelete(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'message.noPermissionToDelete',
-        summary: 'message.permissionDenied'
+        summary: 'message.permissionDenied',
       });
       return;
     }
@@ -340,19 +371,24 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.opportunityService.deleteOpportunityById(record.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.feedbackDialogService.showSuccessToast({ detail: 'message.recordDeletedSuccessfully' });
-        // Trigger a refresh for the listview
-        window.dispatchEvent(new CustomEvent('refresh-listview'));
-      },
-      error: (error: any) => {
-        this.feedbackDialogService.showErrorToast({
-          detail: 'message.failedToDeleteRecord',
-          summary: error.message || 'message.anErrorOccurred'
-        });
-      }
-    });
+    this.opportunityService
+      .deleteOpportunityById(record.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.feedbackDialogService.showSuccessToast({
+            detail: 'message.recordDeletedSuccessfully',
+          });
+          // Trigger a refresh for the listview
+          window.dispatchEvent(new CustomEvent('refresh-listview'));
+        },
+        error: (error: any) => {
+          this.feedbackDialogService.showErrorToast({
+            detail: 'message.failedToDeleteRecord',
+            summary: error.message || 'message.anErrorOccurred',
+          });
+        },
+      });
   }
 
   /**
@@ -368,7 +404,7 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'message.noPermissionToCreate',
-        summary: 'message.permissionDenied'
+        summary: 'message.permissionDenied',
       });
       return;
     }
@@ -376,7 +412,7 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
     // TODO: Implement opportunity edit dialog
     this.feedbackDialogService.showInfoToast({
       detail: 'Opportunity creation dialog coming soon',
-      summary: 'Feature in Development'
+      summary: 'Feature in Development',
     });
   }
 
@@ -406,4 +442,3 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
     this.currentSearchText = searchParams.generalSearch || '';
   }
 }
-

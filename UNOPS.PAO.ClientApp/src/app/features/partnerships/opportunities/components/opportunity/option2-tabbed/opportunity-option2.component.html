@@ -1,0 +1,1041 @@
+<div class="flex flex-col h-screen bg-gray-50">
+  <!-- Header -->
+  <div class="bg-white shadow-sm border-b border-gray-200 p-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-4">
+          <a
+            routerLink="/partnerships/opportunities"
+            class="text-gray-600 hover:text-gray-900"
+          >
+            <i class="pi pi-arrow-left text-xl"></i>
+          </a>
+          <div>
+            <div class="text-sm text-gray-500 mb-1">
+              Option 2: Tabbed Content Organization
+            </div>
+            <h1 class="text-2xl font-bold text-gray-900">
+              {{ opportunity()?.name || "Loading..." }}
+            </h1>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <p-badge [value]="opportunity()?.status || ''" severity="info" />
+          <p-badge
+            [value]="opportunity()?.workflowStage || ''"
+            severity="warn"
+          />
+        </div>
+      </div>
+
+      @if (opportunity()) {
+        <!-- Context Bar -->
+        <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+          <div class="grid grid-cols-4 gap-4 text-sm">
+            <div>
+              <span class="text-gray-600">Manager:</span>
+              <span class="font-semibold ml-2">{{
+                opportunity()!.opportunityManager.name
+              }}</span>
+            </div>
+            <div>
+              <span class="text-gray-600">Budget:</span>
+              <span class="font-semibold ml-2">{{
+                formatCurrency(opportunity()!.initiativeBudgetUSD)
+              }}</span>
+            </div>
+            <div>
+              <span class="text-gray-600">Target:</span>
+              <span class="font-semibold ml-2">{{
+                formatDate(opportunity()!.targetSigningDate)
+              }}</span>
+            </div>
+            <div>
+              <span class="text-gray-600">Countries:</span>
+              <span class="font-semibold ml-2">{{
+                opportunity()!.implementationCountries.length
+              }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="flex items-center justify-center flex-1">
+      <i class="pi pi-spin pi-spinner text-4xl text-unops-primary"></i>
+    </div>
+  }
+
+  @if (!loading() && opportunity()) {
+    <div class="flex-1 overflow-hidden">
+      <div class="max-w-7xl mx-auto h-full flex flex-col p-6">
+        <!-- AI Assistant Panel -->
+        <div
+          class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm p-4 mb-6 border border-blue-100"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 flex-1">
+              <div
+                class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center"
+              >
+                <i class="pi pi-sparkles text-white text-sm"></i>
+              </div>
+              <div class="flex-1">
+                <div class="font-semibold text-gray-900 mb-1">
+                  AI Assistant - Active Assistance
+                </div>
+                @if (showAIPanel()) {
+                  <div class="flex flex-wrap gap-2">
+                    @for (suggestion of tabAISuggestions(); track $index) {
+                      <div
+                        class="bg-white rounded px-3 py-1 text-xs text-gray-700 border border-blue-200"
+                      >
+                        <i class="pi pi-info-circle text-blue-600 mr-1"></i>
+                        {{ suggestion }}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <p-badge
+                [value]="opportunity()!.completeness + '%'"
+                severity="info"
+              />
+              <p-button
+                [icon]="showAIPanel() ? 'pi pi-minus' : 'pi pi-plus'"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                (onClick)="toggleAIPanel()"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div
+          class="bg-white rounded-lg shadow-sm flex-1 overflow-hidden flex flex-col"
+        >
+          <p-tabView
+            (onChange)="onTabChange($event)"
+            [scrollable]="true"
+            class="h-full flex flex-col"
+          >
+            <!-- Overview Tab -->
+            <p-tabPanel>
+              <ng-template pTemplate="header">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-list"></i>
+                  <span>Overview</span>
+                  @if (getTabCompleteness(0) === 100) {
+                    <i class="pi pi-check-circle text-green-600"></i>
+                  }
+                </div>
+              </ng-template>
+
+              <div
+                class="p-6 space-y-6 overflow-y-auto"
+                style="max-height: calc(100vh - 400px)"
+              >
+                <!-- Basic Information -->
+                <div>
+                  <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">
+                      📝 Basic Information
+                    </h2>
+                    <p-button
+                      label="Edit Section"
+                      icon="pi pi-pencil"
+                      [outlined]="true"
+                      size="small"
+                    />
+                  </div>
+
+                  <div class="bg-gray-50 rounded-lg p-6 space-y-4">
+                    <div>
+                      <label
+                        class="text-sm font-semibold text-gray-600 block mb-2"
+                        >Description</label
+                      >
+                      <p class="text-gray-700 leading-relaxed">
+                        {{ opportunity()!.description }}
+                      </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          class="text-sm font-semibold text-gray-600 block mb-1"
+                          >Partner Reference</label
+                        >
+                        <p class="text-gray-900">
+                          {{ opportunity()!.partnerReference }}
+                        </p>
+                      </div>
+                      <div>
+                        <label
+                          class="text-sm font-semibold text-gray-600 block mb-1"
+                          >Responsible Org Unit</label
+                        >
+                        <p class="text-gray-900">
+                          {{ opportunity()!.responsibleOrgUnit }}
+                        </p>
+                      </div>
+                      <div>
+                        <label
+                          class="text-sm font-semibold text-gray-600 block mb-1"
+                          >Initiative Type</label
+                        >
+                        <p class="text-gray-900">
+                          {{ opportunity()!.proposedInitiativeType }}
+                        </p>
+                      </div>
+                      <div>
+                        <label
+                          class="text-sm font-semibold text-gray-600 block mb-1"
+                          >Initiative Budget</label
+                        >
+                        <p class="text-gray-900 font-semibold">
+                          {{
+                            formatCurrency(opportunity()!.initiativeBudgetUSD)
+                          }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Deliverables -->
+                <div>
+                  <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">
+                      📦 Deliverables ({{ opportunity()!.deliverables.length }})
+                    </h2>
+                    <p-button
+                      label="Add Deliverable"
+                      icon="pi pi-plus"
+                      [outlined]="true"
+                      size="small"
+                    />
+                  </div>
+
+                  <div class="space-y-3">
+                    @for (
+                      deliverable of opportunity()!.deliverables;
+                      track deliverable.id
+                    ) {
+                      <div
+                        class="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
+                      >
+                        <div class="flex items-start justify-between">
+                          <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                              <span
+                                class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-semibold"
+                                >{{ $index + 1 }}</span
+                              >
+                              <h3 class="font-semibold text-gray-900">
+                                {{ deliverable.name }}
+                              </h3>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-3">
+                              {{ deliverable.description }}
+                            </p>
+                            <p-chip
+                              [label]="deliverable.serviceLine"
+                              styleClass="text-xs"
+                            />
+                          </div>
+                          <div class="flex gap-1">
+                            <p-button
+                              icon="pi pi-pencil"
+                              [rounded]="true"
+                              [text]="true"
+                              size="small"
+                            />
+                            <p-button
+                              icon="pi pi-trash"
+                              [rounded]="true"
+                              [text]="true"
+                              size="small"
+                              severity="danger"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Completion Status -->
+                <div>
+                  <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    📊 Completion Status
+                  </h2>
+                  <div
+                    class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100"
+                  >
+                    <div class="mb-4">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-semibold text-gray-700"
+                          >Overall Progress</span
+                        >
+                        <span class="text-sm font-bold text-blue-700"
+                          >{{ opportunity()!.completeness }}%</span
+                        >
+                      </div>
+                      <p-progressBar
+                        [value]="opportunity()!.completeness"
+                        [showValue]="false"
+                      />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                      <div class="flex items-center gap-2">
+                        <i class="pi pi-check-circle text-green-600"></i>
+                        <span class="text-gray-700"
+                          >Basic Information: Complete</span
+                        >
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <i class="pi pi-check-circle text-green-600"></i>
+                        <span class="text-gray-700"
+                          >Deliverables: Complete</span
+                        >
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <i
+                          class="pi pi-exclamation-triangle text-orange-500"
+                        ></i>
+                        <span class="text-gray-700">Stakeholders: 75%</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <i class="pi pi-check-circle text-green-600"></i>
+                        <span class="text-gray-700">Geography: Complete</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </p-tabPanel>
+
+            <!-- Stakeholders Tab -->
+            <p-tabPanel>
+              <ng-template pTemplate="header">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-users"></i>
+                  <span>Stakeholders</span>
+                  @if (getTabCompleteness(1) < 100) {
+                    <p-badge value="75%" severity="warn" />
+                  }
+                </div>
+              </ng-template>
+
+              <div
+                class="p-6 space-y-6 overflow-y-auto"
+                style="max-height: calc(100vh - 400px)"
+              >
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <!-- Partners List -->
+                  <div class="lg:col-span-1 space-y-6">
+                    <!-- Funding Partners -->
+                    <div>
+                      <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-gray-900">
+                          💰 Funding Partners
+                        </h3>
+                        <p-button
+                          icon="pi pi-plus"
+                          [rounded]="true"
+                          [text]="true"
+                          size="small"
+                        />
+                      </div>
+                      @for (
+                        partner of opportunity()!.fundingPartners;
+                        track partner.id
+                      ) {
+                        <div
+                          class="bg-blue-50 rounded-lg p-3 mb-2 border border-blue-200 cursor-pointer hover:shadow-md transition-shadow"
+                        >
+                          <div class="font-semibold text-gray-900 mb-1">
+                            {{ partner.name }}
+                          </div>
+                          <div class="text-sm text-gray-600">
+                            {{ formatCurrency(partner.amount) }} ({{
+                              partner.percentage
+                            }}%)
+                          </div>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Client Partners -->
+                    <div>
+                      <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-gray-900">
+                          🏢 Client Partners
+                        </h3>
+                        <p-button
+                          icon="pi pi-plus"
+                          [rounded]="true"
+                          [text]="true"
+                          size="small"
+                        />
+                      </div>
+                      @for (
+                        client of opportunity()!.clientPartners;
+                        track client.id
+                      ) {
+                        <div
+                          class="bg-gray-50 rounded-lg p-3 mb-2 border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+                        >
+                          <div class="font-semibold text-gray-900">
+                            {{ client.name }}
+                          </div>
+                          <div class="text-sm text-gray-600">
+                            {{ client.type }}
+                          </div>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Internal Team -->
+                    <div>
+                      <h3 class="font-semibold text-gray-900 mb-3">
+                        👥 Internal Team
+                      </h3>
+                      <div class="space-y-2">
+                        <div
+                          class="flex items-center gap-2 p-2 bg-white rounded border border-gray-200"
+                        >
+                          <p-avatar
+                            [label]="
+                              opportunity()!.opportunityManager.name.charAt(0)
+                            "
+                            shape="circle"
+                          />
+                          <div class="flex-1">
+                            <div class="text-sm font-semibold">
+                              {{ opportunity()!.opportunityManager.name }}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                              {{ opportunity()!.opportunityManager.role }}
+                            </div>
+                          </div>
+                        </div>
+                        @for (
+                          member of opportunity()!.internalTeam;
+                          track member.id
+                        ) {
+                          <div
+                            class="flex items-center gap-2 p-2 bg-white rounded border border-gray-200"
+                          >
+                            <p-avatar
+                              [label]="member.name.charAt(0)"
+                              shape="circle"
+                            />
+                            <div class="flex-1">
+                              <div class="text-sm font-semibold">
+                                {{ member.name }}
+                              </div>
+                              <div class="text-xs text-gray-500">
+                                {{ member.role }}
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Partner Details Panel -->
+                  <div class="lg:col-span-2">
+                    <div
+                      class="bg-gray-50 rounded-lg p-6 border border-gray-200"
+                    >
+                      <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        Partner Details: World Bank
+                      </h3>
+
+                      <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                          <div>
+                            <label
+                              class="text-sm font-semibold text-gray-600 block mb-1"
+                              >Partner Type</label
+                            >
+                            <p class="text-gray-900">
+                              Multilateral Development Bank
+                            </p>
+                          </div>
+                          <div>
+                            <label
+                              class="text-sm font-semibold text-gray-600 block mb-1"
+                              >Funded Amount</label
+                            >
+                            <p class="text-gray-900 font-semibold">
+                              {{ formatCurrency(1800000) }} USD
+                            </p>
+                          </div>
+                          <div>
+                            <label
+                              class="text-sm font-semibold text-gray-600 block mb-1"
+                              >Fee Percentage</label
+                            >
+                            <p class="text-gray-900">
+                              7% ({{ formatCurrency(126000) }})
+                            </p>
+                          </div>
+                          <div>
+                            <label
+                              class="text-sm font-semibold text-gray-600 block mb-1"
+                              >Commitment Status</label
+                            >
+                            <p-badge value="Confirmed" severity="success" />
+                          </div>
+                        </div>
+
+                        <p-divider />
+
+                        <div>
+                          <label
+                            class="text-sm font-semibold text-gray-600 block mb-2"
+                            >Partnership Agreement</label
+                          >
+                          <div
+                            class="flex items-center justify-between bg-white p-3 rounded border border-gray-200"
+                          >
+                            <span class="text-gray-900"
+                              >UNOPS-WorldBank-MOU-2023</span
+                            >
+                            <p-button
+                              label="View"
+                              icon="pi pi-eye"
+                              size="small"
+                              [text]="true"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label
+                            class="text-sm font-semibold text-gray-600 block mb-2"
+                            >Payment Terms</label
+                          >
+                          <p class="text-gray-700">Quarterly disbursements</p>
+                        </div>
+
+                        <p-message severity="info" styleClass="mt-4">
+                          <span class="text-sm">
+                            <i class="pi pi-sparkles mr-2"></i>
+                            <strong>AI Note:</strong> This partner has funded 12
+                            similar water infrastructure projects
+                          </span>
+                        </p-message>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </p-tabPanel>
+
+            <!-- Finances Tab -->
+            <p-tabPanel>
+              <ng-template pTemplate="header">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-dollar"></i>
+                  <span>Finances</span>
+                  <i class="pi pi-check-circle text-green-600"></i>
+                </div>
+              </ng-template>
+
+              <div
+                class="p-6 space-y-6 overflow-y-auto"
+                style="max-height: calc(100vh - 400px)"
+              >
+                <div
+                  class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 border border-green-200"
+                >
+                  <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                    {{ formatCurrency(totalFunding()) }}
+                  </h2>
+                  <p class="text-gray-600">
+                    Total Funding from
+                    {{ opportunity()!.fundingPartners.length }} partners
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  @for (
+                    partner of opportunity()!.fundingPartners;
+                    track partner.id
+                  ) {
+                    <div
+                      class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm"
+                    >
+                      <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                          {{ partner.name }}
+                        </h3>
+                        <p-badge
+                          [value]="partner.percentage + '%'"
+                          severity="info"
+                          styleClass="text-lg"
+                        />
+                      </div>
+
+                      <div class="space-y-3">
+                        <div class="flex justify-between">
+                          <span class="text-gray-600">Contribution:</span>
+                          <span class="font-semibold text-gray-900"
+                            >{{ formatCurrency(partner.amount) }}
+                            {{ partner.currency }}</span
+                          >
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-gray-600">Fee Rate:</span>
+                          <span class="font-semibold text-gray-900"
+                            >{{ partner.feePercentage }}%</span
+                          >
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-gray-600">Fee Amount:</span>
+                          <span class="font-semibold text-green-600"
+                            >{{ formatCurrency(partner.feeAmount) }}
+                            {{ partner.currency }}</span
+                          >
+                        </div>
+
+                        <p-divider />
+
+                        <div class="flex justify-between items-center">
+                          <span class="text-gray-600">Status:</span>
+                          <p-badge
+                            [value]="partner.commitmentStatus"
+                            severity="success"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
+                  <h3 class="font-semibold text-gray-900 mb-3">Fee Summary</h3>
+                  <div class="space-y-2">
+                    <div class="flex justify-between">
+                      <span class="text-gray-700">Total Fees Collected:</span>
+                      <span class="font-bold text-blue-700">{{
+                        formatCurrency(totalFees())
+                      }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-700">Effective Fee Rate:</span>
+                      <span class="font-bold text-blue-700"
+                        >{{
+                          ((totalFees() / totalFunding()) * 100).toFixed(2)
+                        }}%</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </p-tabPanel>
+
+            <!-- Timeline Tab -->
+            <p-tabPanel>
+              <ng-template pTemplate="header">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-calendar"></i>
+                  <span>Timeline</span>
+                </div>
+              </ng-template>
+
+              <div
+                class="p-6 space-y-6 overflow-y-auto"
+                style="max-height: calc(100vh - 400px)"
+              >
+                <div class="grid grid-cols-2 gap-6">
+                  <div
+                    class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm"
+                  >
+                    <label
+                      class="text-sm font-semibold text-gray-600 block mb-2"
+                      >Target Signing Date</label
+                    >
+                    <p class="text-2xl font-bold text-blue-600">
+                      {{ formatDate(opportunity()!.targetSigningDate) }}
+                    </p>
+                  </div>
+                  <div
+                    class="bg-white rounded-lg p-6 border border-gray-200 shadow-sm"
+                  >
+                    <label
+                      class="text-sm font-semibold text-gray-600 block mb-2"
+                      >Target Delivery Date</label
+                    >
+                    <p class="text-2xl font-bold text-green-600">
+                      {{ formatDate(opportunity()!.targetDeliveryDate) }}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    Development Timeline
+                  </h3>
+                  <div class="relative pl-8">
+                    <div
+                      class="absolute left-3 top-0 bottom-0 w-0.5 bg-blue-200"
+                    ></div>
+                    <div class="space-y-6">
+                      <div class="relative">
+                        <div
+                          class="absolute -left-5 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center"
+                        >
+                          <i class="pi pi-check text-white text-xs"></i>
+                        </div>
+                        <div
+                          class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm"
+                        >
+                          <h4 class="font-semibold text-gray-900">
+                            Project Approval & Kickoff
+                          </h4>
+                          <p class="text-sm text-gray-600">
+                            Week 1 - Completed
+                          </p>
+                        </div>
+                      </div>
+                      <div class="relative">
+                        <div
+                          class="absolute -left-5 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center"
+                        >
+                          <i
+                            class="pi pi-spin pi-spinner text-white text-xs"
+                          ></i>
+                        </div>
+                        <div
+                          class="bg-blue-50 rounded-lg p-4 border border-blue-200 shadow-sm"
+                        >
+                          <h4 class="font-semibold text-gray-900">
+                            Milestone & Resource Planning
+                          </h4>
+                          <p class="text-sm text-gray-600">
+                            Week 5 - Current Phase
+                          </p>
+                        </div>
+                      </div>
+                      <div class="relative">
+                        <div
+                          class="absolute -left-5 w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center"
+                        >
+                          <i class="pi pi-circle text-white text-xs"></i>
+                        </div>
+                        <div
+                          class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm"
+                        >
+                          <h4 class="font-semibold text-gray-900">
+                            Beta Test & Documentation
+                          </h4>
+                          <p class="text-sm text-gray-600">Week 9 - Pending</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </p-tabPanel>
+
+            <!-- Geography Tab -->
+            <p-tabPanel>
+              <ng-template pTemplate="header">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-map-marker"></i>
+                  <span>Geography</span>
+                </div>
+              </ng-template>
+
+              <div
+                class="p-6 space-y-6 overflow-y-auto"
+                style="max-height: calc(100vh - 400px)"
+              >
+                <div class="flex items-center justify-between mb-4">
+                  <h2 class="text-xl font-semibold text-gray-900">
+                    Implementation Countries ({{
+                      opportunity()!.implementationCountries.length
+                    }})
+                  </h2>
+                  <p-button
+                    label="Add Country"
+                    icon="pi pi-plus"
+                    [outlined]="true"
+                    size="small"
+                  />
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  @for (
+                    country of opportunity()!.implementationCountries;
+                    track country.id
+                  ) {
+                    <div
+                      class="bg-white rounded-lg p-6 border-2 border-gray-200 shadow-sm hover:shadow-lg transition-shadow"
+                    >
+                      <div class="flex items-center gap-3 mb-4">
+                        <span class="text-4xl">{{ country.flag }}</span>
+                        <div class="flex-1">
+                          <h3 class="text-lg font-semibold text-gray-900">
+                            {{ country.name }}
+                          </h3>
+                          <p class="text-sm text-gray-600">
+                            {{ country.code }}
+                          </p>
+                        </div>
+                        @if (country.riskScore) {
+                          <p-badge
+                            [value]="country.riskScore.toString()"
+                            severity="danger"
+                          />
+                        }
+                      </div>
+
+                      <div class="mb-4">
+                        <label
+                          class="text-sm font-semibold text-gray-600 block mb-1"
+                          >Implementation Areas</label
+                        >
+                        <p class="text-gray-900">{{ country.specificAreas }}</p>
+                      </div>
+
+                      @if (country.contextWarning) {
+                        <p-message
+                          [severity]="
+                            country.riskScore && country.riskScore > 7
+                              ? 'error'
+                              : 'warn'
+                          "
+                          styleClass="w-full"
+                        >
+                          <span class="text-xs">{{
+                            country.contextWarning
+                          }}</span>
+                        </p-message>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            </p-tabPanel>
+
+            <!-- AI Insights Tab -->
+            <p-tabPanel>
+              <ng-template pTemplate="header">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-sparkles"></i>
+                  <span>AI Insights</span>
+                  <p-badge
+                    [value]="opportunity()!.dstAnalysis.risks.length.toString()"
+                    severity="warn"
+                  />
+                </div>
+              </ng-template>
+
+              <div
+                class="p-6 space-y-6 overflow-y-auto"
+                style="max-height: calc(100vh - 400px)"
+              >
+                <!-- DST Score -->
+                <div
+                  class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-8 border border-purple-200 text-center"
+                >
+                  <div class="text-sm text-gray-600 mb-2">
+                    DST Complexity Score
+                  </div>
+                  <div class="text-5xl font-bold text-purple-700 mb-2">
+                    {{ opportunity()!.dstAnalysis.overallScore
+                    }}<span class="text-2xl">/10</span>
+                  </div>
+                  <div class="text-lg text-gray-700 mb-4">
+                    {{ opportunity()!.dstAnalysis.complexity }}
+                  </div>
+                  <p-button
+                    label="Refresh Analysis"
+                    icon="pi pi-refresh"
+                    [outlined]="true"
+                  />
+                </div>
+
+                <!-- Risks & Recommendations Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <!-- Risks -->
+                  <div>
+                    <div class="flex items-center justify-between mb-4">
+                      <h3 class="text-lg font-semibold text-gray-900">
+                        ⚠️ Identified Risks
+                      </h3>
+                      <p-button
+                        label="Add All to Register"
+                        icon="pi pi-plus"
+                        size="small"
+                        [outlined]="true"
+                      />
+                    </div>
+                    @for (
+                      risk of opportunity()!.dstAnalysis.risks;
+                      track risk.id
+                    ) {
+                      <div
+                        class="bg-white rounded-lg p-4 mb-3 border border-gray-200 shadow-sm"
+                      >
+                        <div class="flex items-start justify-between mb-2">
+                          <h4 class="font-semibold text-gray-900 flex-1">
+                            {{ risk.title }}
+                          </h4>
+                          <p-tag
+                            [value]="risk.severity"
+                            [severity]="getSeverityClass(risk.severity)"
+                          />
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">
+                          {{ risk.description }}
+                        </p>
+                        <div
+                          class="text-xs text-gray-500 bg-gray-50 rounded p-2 mt-2"
+                        >
+                          <strong>Recommendation:</strong>
+                          {{ risk.recommendation }}
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Recommendations -->
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                      💡 AI Recommendations
+                    </h3>
+                    @for (
+                      rec of opportunity()!.dstAnalysis.recommendations;
+                      track rec.id
+                    ) {
+                      <div
+                        class="bg-blue-50 rounded-lg p-4 mb-3 border border-blue-200"
+                      >
+                        <h4 class="font-semibold text-gray-900 mb-2">
+                          {{ rec.title }}
+                        </h4>
+                        <p class="text-sm text-gray-600 mb-3">
+                          {{ rec.rationale }}
+                        </p>
+                        <div class="flex gap-2">
+                          <p-button
+                            label="Accept"
+                            icon="pi pi-check"
+                            size="small"
+                            severity="success"
+                          />
+                          <p-button
+                            label="Dismiss"
+                            icon="pi pi-times"
+                            size="small"
+                            severity="secondary"
+                            [outlined]="true"
+                          />
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Similar Opportunities -->
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    🔍 Similar Opportunities
+                  </h3>
+                  <div class="space-y-3">
+                    @for (
+                      similar of opportunity()!.dstAnalysis
+                        .similarOpportunities;
+                      track similar.id
+                    ) {
+                      <div
+                        class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm"
+                      >
+                        <div class="flex items-start justify-between mb-2">
+                          <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900 mb-1">
+                              {{ similar.name }}
+                            </h4>
+                            <div class="flex gap-4 text-sm text-gray-600 mb-2">
+                              <span>{{ formatCurrency(similar.budget) }}</span>
+                              <span>{{ similar.duration }}</span>
+                            </div>
+                          </div>
+                          <div class="text-right">
+                            <p-badge
+                              [value]="similar.relevance + '%'"
+                              severity="success"
+                              styleClass="mb-2"
+                            />
+                            <p-chip
+                              [label]="similar.status"
+                              styleClass="text-xs"
+                            />
+                          </div>
+                        </div>
+                        <div
+                          class="text-sm text-gray-700 bg-green-50 rounded p-3 border border-green-200"
+                        >
+                          <strong>Key Lessons:</strong> {{ similar.keyLessons }}
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </p-tabPanel>
+          </p-tabView>
+        </div>
+
+        <!-- Action Bar -->
+        <div
+          class="bg-white rounded-lg shadow-lg p-4 mt-4 border border-gray-200"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <p-progressBar
+                [value]="opportunity()!.completeness"
+                [showValue]="false"
+                styleClass="w-48"
+              />
+              <span class="text-sm text-gray-600"
+                ><strong>{{ opportunity()!.completeness }}%</strong>
+                Complete</span
+              >
+            </div>
+            <div class="flex gap-2">
+              <p-button
+                label="Save"
+                icon="pi pi-save"
+                severity="secondary"
+                [outlined]="true"
+              />
+              <p-button
+                label="Export PDF"
+                icon="pi pi-file-pdf"
+                severity="secondary"
+                [outlined]="true"
+              />
+              <p-button label="Submit for Review" icon="pi pi-send" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

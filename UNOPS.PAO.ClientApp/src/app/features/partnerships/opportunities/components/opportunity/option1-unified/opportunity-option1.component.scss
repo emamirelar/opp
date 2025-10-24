@@ -1,0 +1,13 @@
+// Option 1: Unified Dashboard - Minimal custom styles
+// Most styling handled by Tailwind classes
+
+:host {
+  display: block;
+}
+
+// Smooth scrolling behavior
+::ng-deep {
+  html {
+    scroll-behavior: smooth;
+  }
+}
