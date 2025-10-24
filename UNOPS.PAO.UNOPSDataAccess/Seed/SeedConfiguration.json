@@ -95,6 +95,24 @@
         },
         {
             "order": 11,
+            "name": "SDGs",
+            "type": "seeder",
+            "className": "SDGSeeder",
+            "methodName": "SeedSDGsAsync",
+            "filePath": "Seeders/SDGSeeder.cs",
+            "description": "UN Sustainable Development Goals (SDGs)"
+        },
+        {
+            "order": 12,
+            "name": "SDGTargets",
+            "type": "seeder",
+            "className": "SDGTargetSeeder",
+            "methodName": "SeedSDGTargetsAsync",
+            "filePath": "Seeders/SDGTargetSeeder.cs",
+            "description": "UN SDG Targets (169 targets under the 17 SDGs)"
+        },
+        {
+            "order": 13,
             "name": "Partners",
             "type": "seeder",
             "className": "PartnerSeeder_v2",
@@ -103,7 +121,7 @@
             "description": "Partners data seeding"
         },
         {
-            "order": 12,
+            "order": 14,
             "name": "Prospects",
             "type": "seeder",
             "className": "ProspectAccountsSeeder",
@@ -112,7 +130,7 @@
             "description": "Partners data seeding"
         },
         {
-            "order": 13,
+            "order": 15,
             "name": "Contacts",
             "type": "seeder",
             "className": "ContactSeeder",
@@ -121,7 +139,7 @@
             "description": "Contacts data seeding"
         },
         {
-            "order": 14,
+            "order": 16,
             "name": "InteractionFromTasks",
             "type": "seeder",
             "className": "InteractionFromTaskSeeder",
@@ -130,7 +148,7 @@
             "description": "Interactions from tasks data seeding"
         },
         {
-            "order": 15,
+            "order": 17,
             "name": "InteractionFromEvents",
             "type": "seeder",
             "className": "InteractionFromEventSeeder",
@@ -139,7 +157,7 @@
             "description": "Interactions from events data seeding"
         },
         {
-            "order": 16,
+            "order": 18,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",

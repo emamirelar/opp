@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251024105306_OpportunityChildTableModels")]
+    partial class OpportunityChildTableModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -562,10 +565,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ContinentDescription")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -583,16 +582,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("RegionDescription")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ContinentDescription");
 
                     b.HasIndex("Iso2Code")
                         .IsUnique();
@@ -600,8 +593,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("Iso3Code");
 
                     b.HasIndex("Name");
-
-                    b.HasIndex("RegionDescription");
 
                     b.HasIndex("Status");
 
@@ -1251,27 +1242,60 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
+                    b.Property<string>("Currency_Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Currency_Type")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateTime?>("Effective_Date")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal?>("Exchange_Rate")
                         .HasColumnType("decimal(18, 8)");
 
+                    b.Property<DateTime?>("Exchange_Rate_End_Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Exchange_Rate_Line_Source")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<int?>("Exchange_Rate_Sequence_No")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("Exchange_Rate_Start_Date")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<int?>("Is_Current_Flag")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<DateTime?>("Rate_Expiration")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("Registered_Rate")
+                        .HasColumnType("decimal(18, 8)");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Exchange_Rate_End_Date");
+
+                    b.HasIndex("Exchange_Rate_Start_Date");
+
+                    b.HasIndex("Is_Current_Flag");
 
                     b.HasIndex("Status");
 

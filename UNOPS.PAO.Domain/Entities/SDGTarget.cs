@@ -1,20 +1,20 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.Domain.Entities;
 
 /// <summary>
-/// Exchange Rate entity for currency conversion
-/// Data synced from External Data Service - Read Only
+/// SDG Target entity - represents specific targets under each SDG
+/// Data synced from External Data Service (ERP Database) - Read Only
+/// All fields are strings for fallback and flexibility
 /// </summary>
-public class ExchangeRate : IBaseBusinessEntity<int>
+public class SDGTarget : IBaseBusinessEntity<int>
 {
     // IBaseBusinessEntity requirements
     public int Id { get; set; }
     
     /// <summary>
-    /// Exchange Rate Name (computed: "Currency - Rate: X.XX (Effective: YYYY-MM-DD)")
+    /// SDG Target Name (computed or descriptive name)
     /// Maps to IBaseBusinessEntity.Name requirement
     /// </summary>
     [MaxLength(500)]
@@ -29,26 +29,27 @@ public class ExchangeRate : IBaseBusinessEntity<int>
     public bool IsDeleted { get; set; } = false;
     
     /// <summary>
-    /// Currency code (e.g., "USD", "EUR", "GBP")
+    /// SDG_Target_ID - External system identifier for the target
     /// </summary>
-    [MaxLength(10)]
-    public string? Currency { get; set; }
+    [MaxLength(100)]
+    public string? SDGTargetId { get; set; }
     
     /// <summary>
-    /// Effective_Date - Date when this exchange rate becomes effective
+    /// SDG_ID - Foreign key reference to parent SDG
     /// </summary>
-    public DateTime? Effective_Date { get; set; }
+    [MaxLength(100)]
+    public string? SDGId { get; set; }
     
     /// <summary>
-    /// Exchange_Rate_Sequence_No - Sequence number for ordering exchange rates
+    /// Target_Description - Description of the specific target
     /// </summary>
-    public int? Exchange_Rate_Sequence_No { get; set; }
+    [MaxLength(2000)]
+    public string? TargetDescription { get; set; }
     
     /// <summary>
-    /// Exchange_Rate - Actual exchange rate value to be used for conversions
+    /// Target_Type - Type or category of the target
     /// </summary>
-    [Column(TypeName = "decimal(18, 8)")]
-    public decimal? Exchange_Rate { get; set; }
+    [MaxLength(100)]
+    public string? TargetType { get; set; }
 }
-
 

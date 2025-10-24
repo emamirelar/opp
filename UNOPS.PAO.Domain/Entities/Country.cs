@@ -40,6 +40,18 @@ public class Country : IBaseBusinessEntity<int>
     [MaxLength(3)]
     public string? Iso3Code { get; set; }
     
+    /// <summary>
+    /// Region Description (e.g., "Eastern and Southern Africa")
+    /// </summary>
+    [MaxLength(255)]
+    public string? RegionDescription { get; set; }
+    
+    /// <summary>
+    /// Continent Description (e.g., "Africa", "Asia", "Europe")
+    /// </summary>
+    [MaxLength(255)]
+    public string? ContinentDescription { get; set; }
+    
     // Computed properties for list/search operations
     [NotMapped]
     public int PartnerCount { get; set; } // Will be populated by service

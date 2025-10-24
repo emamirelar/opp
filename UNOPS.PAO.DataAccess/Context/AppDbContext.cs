@@ -77,6 +77,8 @@ public class AppDbContext : AuditableDbContext<int, int>
 
     // External Data Service entities (Read-Only)
     public DbSet<SDG> SDGs { get; set; }
+    public DbSet<SDGTarget> SDGTargets { get; set; }
+    public DbSet<UNCFOutcome> UNCFOutcomes { get; set; }
     public DbSet<ExchangeRate> ExchangeRates { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -579,12 +581,34 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasIndex(x => x.Status);
         });
 
+        // SDGTarget configuration (External Data Service - Read Only)
+        modelBuilder.Entity<SDGTarget>(entity =>
+        {
+            entity.HasIndex(x => x.SDGTargetId);
+            entity.HasIndex(x => x.SDGId);
+            entity.HasIndex(x => x.TargetType);
+            entity.HasIndex(x => x.Status);
+        });
+
+        // UNCFOutcome configuration (External Data Service - Read Only)
+        modelBuilder.Entity<UNCFOutcome>(entity =>
+        {
+            entity.HasIndex(x => x.UNCFOutcomeId);
+            entity.HasIndex(x => x.Country);
+            entity.HasIndex(x => x.UNCooperationFrameworkVersionNo);
+            entity.HasIndex(x => x.UNCFOutcomeStartDate);
+            entity.HasIndex(x => x.UNCFOutcomeEndDate);
+            entity.HasIndex(x => x.Status);
+        });
+
         // Country configuration (External Data Service - Read Only)
         modelBuilder.Entity<Country>(entity =>
         {
             entity.HasIndex(x => x.Iso2Code).IsUnique();
             entity.HasIndex(x => x.Iso3Code);
             entity.HasIndex(x => x.Name);
+            entity.HasIndex(x => x.RegionDescription);
+            entity.HasIndex(x => x.ContinentDescription);
             entity.HasIndex(x => x.Status);
         });
 
@@ -600,9 +624,6 @@ public class AppDbContext : AuditableDbContext<int, int>
         modelBuilder.Entity<ExchangeRate>(entity =>
         {
             entity.HasIndex(x => new { x.Currency, x.Effective_Date });
-            entity.HasIndex(x => x.Is_Current_Flag);
-            entity.HasIndex(x => x.Exchange_Rate_Start_Date);
-            entity.HasIndex(x => x.Exchange_Rate_End_Date);
             entity.HasIndex(x => x.Status);
         });
     }
