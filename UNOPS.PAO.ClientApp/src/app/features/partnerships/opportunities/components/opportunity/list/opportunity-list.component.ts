@@ -409,11 +409,8 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // TODO: Implement opportunity edit dialog
-    this.feedbackDialogService.showInfoToast({
-      detail: 'Opportunity creation dialog coming soon',
-      summary: 'Feature in Development',
-    });
+    // Navigate to unified creation interface
+    this.router.navigate(['/partnerships/opportunities/create']);
   }
 
   onRowClick(opportunity: Opportunity) {
