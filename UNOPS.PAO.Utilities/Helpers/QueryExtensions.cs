@@ -7,6 +7,8 @@ using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Domain.Interfaces;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Notifications;
+using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Utilities.Helpers;
 
 public static class QueryExtensions

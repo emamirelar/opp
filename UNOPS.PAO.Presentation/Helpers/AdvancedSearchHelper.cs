@@ -1,6 +1,6 @@
 using System.Text.Json;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.Models.Search;
 
 namespace UNOPS.PAO.Presentation.Helpers;
 

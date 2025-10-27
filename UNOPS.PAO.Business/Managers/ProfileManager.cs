@@ -3,7 +3,7 @@
 using System.Threading.Tasks;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Infrastructure;
-using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Users;
 using UNOPS.PAO.Utilities.Interfaces;
 
 

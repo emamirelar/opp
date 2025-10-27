@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Integrations;
 
 namespace UNOPS.PAO.Business.Managers;
 

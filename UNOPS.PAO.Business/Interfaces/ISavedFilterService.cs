@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Filters;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Business.Interfaces
 {

@@ -2,7 +2,13 @@
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers.Mapping;
 using AutoMapper;
-using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.AI;
+using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Documents;
+using UNOPS.PAO.Models.Interactions;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.PartnerTrees;
+using UNOPS.PAO.Models.Users;
 using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
@@ -10,13 +16,13 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<UNOPSPartner, UNOPS.PAO.Models.PartnerSummaryModel>();
+        CreateMap<UNOPSPartner, UNOPS.PAO.Models.Contacts.PartnerSummaryModel>();
         CreateMap<ContactRequest, UNOPSContact>()
             .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         CreateMap<UNOPSContact, ContactModel>()
             .PreserveReferences()
             .MaxDepth(2)
-            .ForMember(dest => dest.Partner, opt => opt.MapFrom(src => src.Partner != null ? new UNOPS.PAO.Models.PartnerSummaryModel { Id = src.Partner.Id, Name = src.Partner.Name } : null))
+            .ForMember(dest => dest.Partner, opt => opt.MapFrom(src => src.Partner != null ? new UNOPS.PAO.Models.Contacts.PartnerSummaryModel { Id = src.Partner.Id, Name = src.Partner.Name } : null))
             .ForMember(dest => dest.ProfilePictureUrl, opt => opt.MapFrom(src => src.ProfilePictureUrl))
             .ForMember(dest => dest.Interactions, opt => opt.Ignore()); // Avoid circular reference - handle separately if needed
         CreateMap<ContactModel, UNOPSContact>()
@@ -42,7 +48,7 @@ public class MappingProfile : Profile
                         Phone = ic.Contact.Phone,
                         Title = ic.Contact.Title,
                         ProfilePictureUrl = ic.Contact.ProfilePictureUrl,
-                        Partner = ic.Contact.Partner != null ? new UNOPS.PAO.Models.PartnerSummaryModel { Id = ic.Contact.Partner.Id, Name = ic.Contact.Partner.Name } : null,
+                        Partner = ic.Contact.Partner != null ? new UNOPS.PAO.Models.Contacts.PartnerSummaryModel { Id = ic.Contact.Partner.Id, Name = ic.Contact.Partner.Name } : null,
                         Interactions = null // Explicitly break circular reference
                     }).ToList() 
                     : new List<ContactModel>()))
@@ -114,7 +120,7 @@ public class MappingProfile : Profile
                         Email = contact.Email,
                         Phone = contact.Phone,
                         Title = contact.Title,
-                        Partner = contact.Partner != null ? new UNOPS.PAO.Models.PartnerSummaryModel { Id = contact.Partner.Id, Name = contact.Partner.Name } : null,
+                        Partner = contact.Partner != null ? new UNOPS.PAO.Models.Contacts.PartnerSummaryModel { Id = contact.Partner.Id, Name = contact.Partner.Name } : null,
                         Interactions = null // Explicitly break circular reference
                     }).ToList()
                     : new List<ContactModel>()));

@@ -20,6 +20,8 @@ using UNOPS.PAO.Utilities.Helpers;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.Models.AI;
+using UNOPS.PAO.Models.Shared;
 
 public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
 {

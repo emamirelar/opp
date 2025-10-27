@@ -1,6 +1,6 @@
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
-using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.OrganizationUnits;
 
 namespace UNOPS.PAO.Business.Interfaces;
 

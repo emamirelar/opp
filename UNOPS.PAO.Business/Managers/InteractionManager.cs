@@ -11,11 +11,14 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Specifications;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Helpers;
 using UNOPS.PAO.Business.Repositories;
 using System.Security.Claims;
 using System.Security.Principal;
+using UNOPS.PAO.Models.Integrations;
+using UNOPS.PAO.Models.Interactions;
+using UNOPS.PAO.Models.Search;
+using UNOPS.PAO.Models.Shared;
 
 public class InteractionManager : IInteractionManager
 {

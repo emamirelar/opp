@@ -2,7 +2,7 @@ namespace UNOPS.PAO.UNOPSPresentation.ContextPermissionHandlers;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
-using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Users;
 using UNOPS.PAO.Presentation.Security;
 
 public class UNOPSProfileAuthorizationHandler :

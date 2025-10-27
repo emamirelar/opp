@@ -8,7 +8,6 @@ using System.Data;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Domain.Entities;
@@ -20,6 +19,11 @@ using NpgsqlTypes;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using AutoMapper;
 using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Search;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Interactions;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services;
 

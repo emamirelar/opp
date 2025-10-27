@@ -12,12 +12,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Server;
 using Xunit;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
 {

@@ -8,6 +8,7 @@ using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.Models.EntityConfiguration;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 

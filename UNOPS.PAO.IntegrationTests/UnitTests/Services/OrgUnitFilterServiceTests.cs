@@ -22,6 +22,8 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.UNOPSDomain.Specifications;
 using Xunit;
+using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Interactions;
 
 namespace UNOPS.PAO.IntegrationTests.UnitTests.Services
 {

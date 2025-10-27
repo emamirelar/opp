@@ -1,7 +1,17 @@
 using AutoMapper;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Models;
 using System.Text.Json;
+using UNOPS.PAO.Models.LiaisonOffices;
+using UNOPS.PAO.Models.OrganizationUnits;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.PartnerTrees;
+using UNOPS.PAO.Models.Users;
+using UNOPS.PAO.Models.Links;
+using UNOPS.PAO.Models.Interactions;
+using UNOPS.PAO.Models.Locations;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Notifications;
 
 public class MappingProfile : Profile
 {
