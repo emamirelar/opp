@@ -1,3 +1,5 @@
+using UNOPS.PAO.Models.Documents;
+
 namespace UNOPS.PAO.Models;
 
 public class OpportunityModel
