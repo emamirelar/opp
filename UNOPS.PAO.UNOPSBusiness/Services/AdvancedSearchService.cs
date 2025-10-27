@@ -33,18 +33,21 @@ public class AdvancedSearchService
     private readonly ILogger<AdvancedSearchService> _logger;
     private readonly IMapper _mapper;
     private readonly GlobalFilterService _globalFilterService;
+    private readonly GoogleCloudStorageService? _googleCloudStorageService;
     private const int SIMILARITY_THRESHOLD_PERCENT = 30; // 30% similarity threshold
 
     public AdvancedSearchService(
         UNOPSAppDbContext context,
         ILogger<AdvancedSearchService> logger,
         IMapper mapper,
-        GlobalFilterService globalFilterService)
+        GlobalFilterService globalFilterService,
+        GoogleCloudStorageService? googleCloudStorageService = null)
     {
         _context = context;
         _logger = logger;
         _mapper = mapper;
         _globalFilterService = globalFilterService;
+        _googleCloudStorageService = googleCloudStorageService;
     }
 
     #region Main Search Methods
@@ -2159,7 +2162,15 @@ public class AdvancedSearchService
             if (entity is UNOPSPartner partner)
             {
                 // Use AutoMapper just like UNOPSPartnerManager does
-                return _mapper.Map<UNOPSPartner, PartnerModel>(partner);
+                var result = _mapper.Map<UNOPSPartner, PartnerModel>(partner);
+                
+                // Convert LogoUrl to signed URL if it exists and contains Google Cloud Storage path
+                if (!string.IsNullOrEmpty(result.LogoUrl) && _googleCloudStorageService != null)
+                {
+                    result.LogoUrl = await _googleCloudStorageService.GenerateSignedUrlFromStorageUrl(result.LogoUrl);
+                }
+                
+                return result;
             }
         }
         catch (Exception ex)
@@ -2176,7 +2187,15 @@ public class AdvancedSearchService
             if (entity is UNOPSContact contact)
             {
                 // Use AutoMapper for ContactModel mapping
-                return _mapper.Map<UNOPSContact, ContactModel>(contact);
+                var result = _mapper.Map<UNOPSContact, ContactModel>(contact);
+                
+                // Convert ProfilePictureUrl to signed URL if it exists and contains Google Cloud Storage path
+                if (!string.IsNullOrEmpty(result.ProfilePictureUrl) && _googleCloudStorageService != null)
+                {
+                    result.ProfilePictureUrl = await _googleCloudStorageService.GenerateSignedUrlFromStorageUrl(result.ProfilePictureUrl);
+                }
+                
+                return result;
             }
         }
         catch (Exception ex)
