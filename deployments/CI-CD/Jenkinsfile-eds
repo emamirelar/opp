@@ -164,8 +164,8 @@ node("app-build") {
                 
                 # Copy ExternalDataService configuration files into the service directory
                 echo "Copying ExternalDataService configuration files to build context..."
-                if [ -d "../../ExternalDataService" ]; then
-                    cp -r ../../ExternalDataService UNOPS.PAO.ExternalDataService/
+                if [ -d "ExternalDataService" ]; then
+                    cp -r ExternalDataService UNOPS.PAO.ExternalDataService/
                     echo "✓ ExternalDataService configuration files copied to build context"
                     echo "Config files:"
                     ls -la UNOPS.PAO.ExternalDataService/ExternalDataService/config/

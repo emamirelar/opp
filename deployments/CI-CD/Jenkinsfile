@@ -212,7 +212,7 @@ node("app-build") {
                         gcloud config set project ${PROJECT_ID}
                         
                         # Copy AIService configuration files into the AI service directory
-                        cp -r ../../AIService UNOPS.PAO.AIService/
+                        cp -r AIService UNOPS.PAO.AIService/
                         
                         # Navigate to AI service directory
                         cd UNOPS.PAO.AIService
