@@ -1,228 +1,339 @@
 <p-confirmDialog></p-confirmDialog>
 
-<div class="flex flex-col gap-8">
-  <!-- Header with back button and opportunity name -->
-  <div class="flex flex-col gap-4">
-    <div class="w-full flex justify-between items-center">
-      <div class="font-semibold text-gray-400">
-        {{ 'title.opportunity' | translate }}
+<div class="flex flex-col gap-6 p-6 bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <div class="flex flex-col gap-4 bg-white rounded-lg shadow-sm p-6">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a
+          routerLink="/partnerships/opportunities"
+          class="text-gray-600 hover:text-gray-900"
+        >
+          <i class="pi pi-arrow-left text-xl"></i>
+        </a>
+        <div>
+          <div class="text-sm text-gray-500 mb-1">
+            {{ 'title.opportunity' | translate }}
+          </div>
+          <h1 class="text-3xl font-bold text-gray-900">
+            {{ opportunity()?.name || "Loading..." }}
+          </h1>
+        </div>
       </div>
-      <app-go-back></app-go-back>
+      <div class="flex items-center gap-3">
+        @if (opportunity()?.status) {
+          <p-badge [value]="opportunity()?.status || ''" [severity]="getStatusSeverity(opportunity()?.status)" />
+        }
+        @if (opportunity()?.workflowStageName) {
+          <p-badge [value]="opportunity()?.workflowStageName || ''" severity="info" />
+        }
+      </div>
     </div>
 
-    <div class="flex gap-4 w-full items-center">
-      <div class="flex flex-col flex-1">
-        <div class="text-2xl md:text-4xl font-bold">
-          {{ recordData().name || ('title.opportunity' | translate) }}
-        </div>
-        @if(recordData().status) {
-          <div class="text-lg text-gray-600">
-            {{ recordData().status }}
-          </div>
+    @if (opportunity()) {
+      <div class="flex items-center gap-2 text-sm text-gray-600 flex-wrap">
+        @if (opportunity()!.partnerReference) {
+          <span><strong>{{ 'label.opportunity.partnerReference' | translate }}:</strong> {{ opportunity()!.partnerReference }}</span>
+          <span class="text-gray-300">|</span>
+        }
+        @if (opportunity()!.responsibleOrgUnitName) {
+          <span><strong>{{ 'label.opportunity.responsibleOrgUnit' | translate }}:</strong> {{ opportunity()!.responsibleOrgUnitName }}</span>
+        }
+        @if (opportunity()!.proposedInitiativeTypeName) {
+          <span class="text-gray-300">|</span>
+          <span><strong>{{ 'label.opportunity.proposedInitiativeType' | translate }}:</strong> {{ opportunity()!.proposedInitiativeTypeName }}</span>
         }
       </div>
-      
-      <!-- Action buttons -->
-      <div class="flex items-center gap-2">
-        @if (recordPermissions().permissions.canUpdate) {
-          <p-button icon="pi pi-pencil"
-                    [rounded]="true"
-                    [text]="true"
-                    [size]="'small'"
-                    class="edit-button opportunity-edit-button"
-                    (onClick)="handleEditClick()"></p-button>
-        }
-        @if (recordPermissions().permissions.canDelete) {
-          <p-button icon="pi pi-trash"
-                    [rounded]="true"
-                    [text]="true"
-                    [size]="'small'"
-                    severity="danger"
-                    class="delete-button opportunity-delete-button"
-                    (onClick)="deleteOpportunity()"></p-button>
-        }
-      </div>
+    }
+
+    <!-- Action buttons -->
+    <div class="flex items-center gap-2">
+      @if (recordPermissions().permissions.canUpdate) {
+        <p-button
+          [label]="'button.edit' | translate"
+          icon="pi pi-pencil"
+          [outlined]="true"
+          size="small"
+          (onClick)="handleEditClick()"
+        />
+      }
+      @if (recordPermissions().permissions.canDelete) {
+        <p-button
+          [label]="'button.delete' | translate"
+          icon="pi pi-trash"
+          [outlined]="true"
+          severity="danger"
+          size="small"
+          (onClick)="deleteOpportunity()"
+        />
+      }
     </div>
   </div>
 
-  <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} unops-card unops-surface-elevated unops-rounded-lg unops-shadow-lg">
-    <ng-template pTemplate="header">
-      <div class="flex justify-between items-center w-full">
-        <div class="flex items-center gap-2">
-          <span class="unops-text-headline-medium">{{ 'title.opportunityDetails' | translate }}</span>
+  @if (loading()) {
+    <div class="flex items-center justify-center py-12">
+      <i class="pi pi-spin pi-spinner text-4xl text-unops-primary"></i>
+    </div>
+  }
+
+  @if (!loading() && opportunity()) {
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Total Budget -->
+      @if (opportunity()!.initiativeBudgetUSD) {
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <i class="pi pi-dollar text-green-600 text-xl"></i>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-gray-900">
+                {{ formatCurrency(opportunity()!.initiativeBudgetUSD) }}
+              </div>
+              <div class="text-xs text-gray-500">{{ 'label.opportunity.budgetUSD' | translate }}</div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Target Signing Date -->
+      @if (opportunity()!.targetSigningDate) {
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <i class="pi pi-calendar text-blue-600 text-xl"></i>
+            </div>
+            <div>
+              <div class="text-lg font-semibold text-gray-900">
+                {{ formatDate(opportunity()!.targetSigningDate) }}
+              </div>
+              <div class="text-xs text-gray-500">{{ 'label.opportunity.targetSigningDate' | translate }}</div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Target Delivery Date -->
+      @if (opportunity()!.targetDeliveryDate) {
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+              <i class="pi pi-calendar-plus text-purple-600 text-xl"></i>
+            </div>
+            <div>
+              <div class="text-lg font-semibold text-gray-900">
+                {{ formatDate(opportunity()!.targetDeliveryDate) }}
+              </div>
+              <div class="text-xs text-gray-500">{{ 'label.opportunity.targetDeliveryDate' | translate }}</div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Status Card -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+            <i class="pi pi-check-circle text-indigo-600 text-xl"></i>
+          </div>
+          <div>
+            <div class="text-lg font-semibold text-gray-900">
+              {{ opportunity()!.status || 'N/A' }}
+            </div>
+            <div class="text-xs text-gray-500">{{ 'label.opportunity.status' | translate }}</div>
+          </div>
         </div>
       </div>
-    </ng-template>
-
-    <div class="flex flex-col gap-4 pb-2 opportunity-info-content">
-      
-      <!-- Description Section -->
-      @if(recordData().description){
-        <div class="unops-mb-md">
-          <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
-            <i class="pi pi-align-left unops-text-info" style="font-size: 1rem;"></i>
-            {{ 'label.opportunity.description' | translate }}
-          </div>
-          <div class="unops-p-md unops-rounded-md" style="background-color: var(--unops-neutral-100); border: 1px solid var(--unops-neutral-200);">
-            <div class="unops-text-body-large unops-text-secondary" style="line-height: 1.6;">{{recordData().description}}</div>
-          </div>
-        </div>
-      }
-
-      @if(showAdditionalInfo() && showFullContent()) {
-        <!-- Workflow Stage Section -->
-        @if(recordData().workflowStageName){
-          <div class="unops-mb-md">
-            <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
-              <i class="pi pi-sitemap unops-text-warning" style="font-size: 1rem;"></i>
-              {{ 'label.opportunity.workflowStage' | translate }}
-            </div>
-            <div class="unops-flex unops-flex-col unops-gap-sm">
-              <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                <span class="unops-text-label-large unops-text-muted">{{ 'label.opportunity.workflowStage' | translate }}</span>
-                <span class="unops-text-body-medium unops-text-secondary">{{recordData().workflowStageName}}</span>
-              </div>
-            </div>
-          </div>
-        }
-
-        <!-- Responsible Organization Unit Section -->
-        @if(recordData().responsibleOrgUnitName){
-          <div class="unops-mb-md">
-            <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
-              <i class="pi pi-building unops-text-info" style="font-size: 1rem;"></i>
-              {{ 'label.opportunity.responsibleOrgUnit' | translate }}
-            </div>
-            <div class="unops-flex unops-flex-col unops-gap-sm">
-              <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                <span class="unops-text-label-large unops-text-muted">{{ 'label.opportunity.responsibleOrgUnit' | translate }}</span>
-                <span class="unops-text-body-medium unops-text-secondary">{{recordData().responsibleOrgUnitName}}</span>
-              </div>
-            </div>
-          </div>
-        }
-
-        <!-- Financial Information Section -->
-        @if(recordData().initiativeBudgetUSD || recordData().proposedInitiativeTypeName){
-          <div class="unops-mb-md">
-            <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
-              <i class="pi pi-dollar unops-text-success" style="font-size: 1rem;"></i>
-              {{ 'label.opportunity.financialInformation' | translate }}
-            </div>
-            <div class="unops-flex unops-flex-col unops-gap-sm">
-              @if(recordData().initiativeBudgetUSD){
-                <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                  <span class="unops-text-label-large unops-text-muted">{{ 'label.opportunity.budgetUSD' | translate }}</span>
-                  <span class="unops-text-body-medium unops-text-secondary" style="font-weight: var(--unops-font-weight-semibold);">{{formatCurrency(recordData().initiativeBudgetUSD)}}</span>
-                </div>
-              }
-              @if(recordData().proposedInitiativeTypeName){
-                <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                  <span class="unops-text-label-large unops-text-muted">{{ 'label.opportunity.proposedInitiativeType' | translate }}</span>
-                  <span class="unops-text-body-medium unops-text-secondary">{{recordData().proposedInitiativeTypeName}}</span>
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Timeline Information Section -->
-        @if(recordData().targetSigningDate || recordData().targetDeliveryDate){
-          <div class="unops-mb-md">
-            <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
-              <i class="pi pi-calendar unops-text-info" style="font-size: 1rem;"></i>
-              {{ 'label.opportunity.timeline' | translate }}
-            </div>
-            <div class="unops-flex unops-flex-col unops-gap-sm">
-              @if(recordData().targetSigningDate){
-                <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                  <span class="unops-text-label-large unops-text-muted">{{ 'label.opportunity.targetSigningDate' | translate }}</span>
-                  <span class="unops-text-body-medium unops-text-secondary">{{formatDate(recordData().targetSigningDate)}}</span>
-                </div>
-              }
-              @if(recordData().targetDeliveryDate){
-                <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                  <span class="unops-text-label-large unops-text-muted">{{ 'label.opportunity.targetDeliveryDate' | translate }}</span>
-                  <span class="unops-text-body-medium unops-text-secondary">{{formatDate(recordData().targetDeliveryDate)}}</span>
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Reference Information Section -->
-        @if(recordData().partnerReference || recordData().partnershipAgreementReference){
-          <div class="unops-mb-md">
-            <div class="unops-text-label-large unops-text-secondary unops-mb-sm unops-flex unops-items-center unops-gap-sm">
-              <i class="pi pi-tag unops-text-warning" style="font-size: 1rem;"></i>
-              {{ 'label.opportunity.references' | translate }}
-            </div>
-            <div class="unops-flex unops-flex-col unops-gap-sm">
-              @if(recordData().partnerReference){
-                <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                  <span class="unops-text-label-large unops-text-muted">{{ 'label.opportunity.partnerReference' | translate }}</span>
-                  <span class="unops-text-body-medium unops-text-secondary">{{recordData().partnerReference}}</span>
-                </div>
-              }
-              @if(recordData().partnershipAgreementReference){
-                <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                  <span class="unops-text-label-large unops-text-muted">{{ 'label.opportunity.partnershipAgreementReference' | translate }}</span>
-                  <span class="unops-text-body-medium unops-text-secondary">{{recordData().partnershipAgreementReference}}</span>
-                </div>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Audit Information Section -->
-        @if(recordData().createdDate || recordData().lastModifiedDate){
-          <div class="unops-mb-lg">
-            <div class="unops-text-headline-small unops-text-secondary unops-mb-md">{{ 'label.opportunity.auditInformation' | translate }}</div>
-            <div class="unops-flex unops-flex-col unops-gap-sm">
-              @if(recordData().createdDate){
-                <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                  <span class="unops-text-label-large unops-text-muted">{{ 'label.opportunity.createdDate' | translate }}</span>
-                  <span class="unops-text-body-medium unops-text-secondary">{{formatDate(recordData().createdDate)}} @if(recordData().createdByName){ by {{recordData().createdByName}} }</span>
-                </div>
-              }
-              @if(recordData().lastModifiedDate){
-                <div class="unops-flex unops-justify-between unops-items-center unops-p-sm unops-rounded-sm unops-border-light">
-                  <span class="unops-text-label-large unops-text-muted">{{ 'label.opportunity.lastModifiedDate' | translate }}</span>
-                  <span class="unops-text-body-medium unops-text-secondary">{{formatDate(recordData().lastModifiedDate)}} @if(recordData().lastModifiedByName){ by {{recordData().lastModifiedByName}} }</span>
-                </div>
-              }
-            </div>
-          </div>
-        }
-      }
-
-      <!-- See More / See Less Button -->
-      @if (shouldShowSeeMoreButton()) {
-        <div class="flex justify-center -mb-4">
-          <p-button
-            label="{{ 'button.seeMore' | translate }}"
-            icon="pi pi-chevron-down"
-            [rounded]="true"
-            [size]="'small'"
-            [text]="true"
-            (onClick)="toggleFullContent()"
-          />
-        </div>
-      }
-
-      @if (shouldShowSeeLessButton()) {
-        <div class="flex justify-center -mb-4">
-          <p-button
-            label="{{ 'button.seeLess' | translate }}"
-            icon="pi pi-chevron-up"
-            [rounded]="true"
-            [size]="'small'"
-            [text]="true"
-            (onClick)="toggleFullContent()"
-          />
-        </div>
-      }
     </div>
-  </p-panel>
-</div>
 
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Column - Main Details -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Description Card -->
+        @if (opportunity()!.description) {
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="flex items-center gap-3 px-6 pt-6">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <i class="pi pi-align-left text-blue-600"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">{{ 'label.opportunity.description' | translate }}</h2>
+              </div>
+            </ng-template>
+            <div class="text-gray-700 leading-relaxed whitespace-pre-wrap">
+              {{ opportunity()!.description }}
+            </div>
+          </p-card>
+        }
+
+        <!-- Financial Information -->
+        @if (opportunity()!.initiativeBudgetUSD || opportunity()!.proposedInitiativeTypeName || opportunity()!.partnershipAgreementReference) {
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="flex items-center gap-3 px-6 pt-6">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <i class="pi pi-dollar text-green-600"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">{{ 'label.opportunity.financialInformation' | translate }}</h2>
+              </div>
+            </ng-template>
+            <div class="space-y-3">
+              @if (opportunity()!.initiativeBudgetUSD) {
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span class="text-sm font-medium text-gray-600">{{ 'label.opportunity.budgetUSD' | translate }}</span>
+                  <span class="text-lg font-bold text-green-600">{{ formatCurrency(opportunity()!.initiativeBudgetUSD) }}</span>
+                </div>
+              }
+              @if (opportunity()!.proposedInitiativeTypeName) {
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span class="text-sm font-medium text-gray-600">{{ 'label.opportunity.proposedInitiativeType' | translate }}</span>
+                  <span class="text-sm font-semibold text-gray-900">{{ opportunity()!.proposedInitiativeTypeName }}</span>
+                </div>
+              }
+              @if (opportunity()!.partnershipAgreementReference) {
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span class="text-sm font-medium text-gray-600">{{ 'label.opportunity.partnershipAgreementReference' | translate }}</span>
+                  <span class="text-sm font-semibold text-gray-900">{{ opportunity()!.partnershipAgreementReference }}</span>
+                </div>
+              }
+            </div>
+          </p-card>
+        }
+
+        <!-- Timeline Information -->
+        @if (opportunity()!.targetSigningDate || opportunity()!.targetDeliveryDate) {
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="flex items-center gap-3 px-6 pt-6">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <i class="pi pi-calendar text-blue-600"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">{{ 'label.opportunity.timeline' | translate }}</h2>
+              </div>
+            </ng-template>
+            <div class="space-y-3">
+              @if (opportunity()!.targetSigningDate) {
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span class="text-sm font-medium text-gray-600">{{ 'label.opportunity.targetSigningDate' | translate }}</span>
+                  <span class="text-sm font-semibold text-gray-900">{{ formatDate(opportunity()!.targetSigningDate) }}</span>
+                </div>
+              }
+              @if (opportunity()!.targetDeliveryDate) {
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span class="text-sm font-medium text-gray-600">{{ 'label.opportunity.targetDeliveryDate' | translate }}</span>
+                  <span class="text-sm font-semibold text-gray-900">{{ formatDate(opportunity()!.targetDeliveryDate) }}</span>
+                </div>
+              }
+            </div>
+          </p-card>
+        }
+      </div>
+
+      <!-- Right Column - Sidebar Information -->
+      <div class="space-y-6">
+        <!-- Status & Workflow -->
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="flex items-center gap-3 px-6 pt-6">
+              <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                <i class="pi pi-sitemap text-indigo-600"></i>
+              </div>
+              <h2 class="text-xl font-semibold text-gray-900">{{ 'label.opportunity.statusAndWorkflow' | translate }}</h2>
+            </div>
+          </ng-template>
+          <div class="space-y-3">
+            @if (opportunity()!.status) {
+              <div>
+                <div class="text-xs font-medium text-gray-500 mb-1">{{ 'label.opportunity.status' | translate }}</div>
+                <p-badge [value]="opportunity()!.status!" [severity]="getStatusSeverity(opportunity()!.status)" class="text-sm" />
+              </div>
+            }
+            @if (opportunity()!.workflowStageName) {
+              <p-divider />
+              <div>
+                <div class="text-xs font-medium text-gray-500 mb-1">{{ 'label.opportunity.workflowStage' | translate }}</div>
+                <p-chip [label]="opportunity()!.workflowStageName!" icon="pi pi-sitemap" />
+              </div>
+            }
+          </div>
+        </p-card>
+
+        <!-- Organization Information -->
+        @if (opportunity()!.responsibleOrgUnitName) {
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="flex items-center gap-3 px-6 pt-6">
+                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <i class="pi pi-building text-purple-600"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">{{ 'label.opportunity.organizationInfo' | translate }}</h2>
+              </div>
+            </ng-template>
+            <div class="space-y-3">
+              <div>
+                <div class="text-xs font-medium text-gray-500 mb-1">{{ 'label.opportunity.responsibleOrgUnit' | translate }}</div>
+                <div class="text-sm font-semibold text-gray-900">{{ opportunity()!.responsibleOrgUnitName }}</div>
+              </div>
+            </div>
+          </p-card>
+        }
+
+        <!-- Reference Information -->
+        @if (opportunity()!.partnerReference) {
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="flex items-center gap-3 px-6 pt-6">
+                <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <i class="pi pi-tag text-orange-600"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">{{ 'label.opportunity.references' | translate }}</h2>
+              </div>
+            </ng-template>
+            <div class="space-y-3">
+              <div>
+                <div class="text-xs font-medium text-gray-500 mb-1">{{ 'label.opportunity.partnerReference' | translate }}</div>
+                <div class="text-sm font-semibold text-gray-900">{{ opportunity()!.partnerReference }}</div>
+              </div>
+            </div>
+          </p-card>
+        }
+
+        <!-- Audit Information -->
+        @if (opportunity()!.createdDate || opportunity()!.lastModifiedDate) {
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="flex items-center gap-3 px-6 pt-6">
+                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                  <i class="pi pi-clock text-gray-600"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">{{ 'label.opportunity.auditInformation' | translate }}</h2>
+              </div>
+            </ng-template>
+            <div class="space-y-3 text-xs text-gray-600">
+              @if (opportunity()!.createdDate) {
+                <div>
+                  <div class="font-medium text-gray-500 mb-1">{{ 'label.opportunity.createdDate' | translate }}</div>
+                  <div>{{ formatDate(opportunity()!.createdDate) }}</div>
+                  @if (opportunity()!.createdByName) {
+                    <div class="text-gray-500">{{ 'label.by' | translate }} {{ opportunity()!.createdByName }}</div>
+                  }
+                </div>
+              }
+              @if (opportunity()!.lastModifiedDate) {
+                <p-divider />
+                <div>
+                  <div class="font-medium text-gray-500 mb-1">{{ 'label.opportunity.lastModifiedDate' | translate }}</div>
+                  <div>{{ formatDate(opportunity()!.lastModifiedDate) }}</div>
+                  @if (opportunity()!.lastModifiedByName) {
+                    <div class="text-gray-500">{{ 'label.by' | translate }} {{ opportunity()!.lastModifiedByName }}</div>
+                  }
+                </div>
+              }
+            </div>
+          </p-card>
+        }
+      </div>
+    </div>
+  }
+</div>

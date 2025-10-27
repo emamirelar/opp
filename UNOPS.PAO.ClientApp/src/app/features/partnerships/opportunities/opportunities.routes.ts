@@ -5,20 +5,12 @@ import { OpportunityViewComponent } from '@partnerships/opportunities/components
 import { OpportunityOption1Component } from '@partnerships/opportunities/components/opportunity/option1-unified/opportunity-option1.component';
 import { OpportunityOption2Component } from '@partnerships/opportunities/components/opportunity/option2-tabbed/opportunity-option2.component';
 import { OpportunityOption3Component } from '@partnerships/opportunities/components/opportunity/option3-wizard/opportunity-option3.component';
-import { OpportunityUnifiedCreateComponent } from '@partnerships/opportunities/components/opportunity/unified-create/opportunity-unified-create.component';
 
 export const OPPORTUNITIES_ROUTES: Routes = [
   {
     path: '',
     component: OpportunityListComponent,
     canActivate: [authGuard, routePermissionGuard],
-  },
-  // Create new opportunity
-  {
-    path: 'create',
-    component: OpportunityUnifiedCreateComponent,
-    canActivate: [authGuard],
-    title: 'Create New Opportunity'
   },
   // Demo UI Options
   {

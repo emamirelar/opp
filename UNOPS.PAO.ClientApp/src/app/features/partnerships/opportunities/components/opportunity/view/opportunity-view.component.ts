@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Opportunity View Component - Unified Dashboard View
+ * @author UNOPS Opportunity+ System Development Team
+ */
+
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -10,6 +15,10 @@ import { DividerModule } from 'primeng/divider';
 import { MessageModule } from 'primeng/message';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { CardModule } from 'primeng/card';
+import { BadgeModule } from 'primeng/badge';
+import { TagModule } from 'primeng/tag';
+import { ChipModule } from 'primeng/chip';
 
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
@@ -21,6 +30,18 @@ import { Opportunity } from '../../../models/opportunity.model';
 // Components
 import { GoBackComponent } from '@shared/components/navigation/go-back/go-back.component';
 
+/**
+ * @class OpportunityViewComponent
+ * @description Unified Dashboard View - displays all opportunity information in a single scrolling page
+ * with comprehensive details. Uses real API data from the Opportunity backend.
+ *
+ * @example
+ * ```html
+ * <app-opportunity-view></app-opportunity-view>
+ * ```
+ *
+ * @since 1.0.0
+ */
 @Component({
   selector: 'app-opportunity-view',
   standalone: true,
@@ -33,9 +54,14 @@ import { GoBackComponent } from '@shared/components/navigation/go-back/go-back.c
     MessageModule,
     RouterModule,
     ConfirmDialogModule,
-    GoBackComponent
+    GoBackComponent,
+    CardModule,
+    BadgeModule,
+    TagModule,
+    ChipModule,
   ],
   templateUrl: './opportunity-view.component.html',
+  styleUrls: ['./opportunity-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ConfirmationService]
 })
@@ -50,12 +76,10 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
   confirmationService = inject(ConfirmationService);
   private pageContextService = inject(PageContextService);
 
-  infoLoading = signal<boolean>(false);
+  // State
+  loading = signal<boolean>(true);
   recordId: string = '';
-  recordData = signal<Opportunity>({
-    name: '',
-    description: ''
-  });
+  opportunity = signal<Opportunity | null>(null);
 
   // Permission management using utility service
   private permissionUtils = this.permissionUtilityService.createInstancePermissions('Opportunity');
@@ -63,7 +87,8 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
 
   // Computed properties for conditional display
   showAdditionalInfo = computed(() => {
-    const data = this.recordData();
+    const data = this.opportunity();
+    if (!data) return false;
     return data.workflowStageName || data.responsibleOrgUnitName || 
            data.partnershipAgreementReference || data.initiativeBudgetUSD ||
            data.targetSigningDate || data.targetDeliveryDate || 
@@ -104,48 +129,54 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
   /**
    * Load opportunity record details
    */
-  _loadRecordDetails() {
-    this.infoLoading.set(true);
+  private _loadRecordDetails() {
+    this.loading.set(true);
     this.opportunityService.getOpportunityById(+this.recordId).subscribe({
       next: (data: Opportunity) => {
-        this.recordData.set(data);
-        this.infoLoading.set(false);
+        this.opportunity.set(data);
+        this.loading.set(false);
         this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading opportunity details:', error);
-        this.infoLoading.set(false);
+        this.loading.set(false);
         this.feedbackDialogService.showErrorToast({
-          detail: 'Failed to load opportunity details',
-          summary: 'Error'
+          detail: this.translateService.instant('message.opportunity.loadFailed'),
+          summary: this.translateService.instant('message.error')
         });
       }
     });
   }
 
+  /**
+   * Handle edit button click
+   */
   handleEditClick() {
     // Check if user has update permission
     if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit this opportunity',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('message.noPermissionToEdit'),
+        summary: this.translateService.instant('message.permissionDenied')
       });
       return;
     }
 
     // TODO: Implement edit dialog
     this.feedbackDialogService.showInfoToast({
-      detail: 'Edit functionality coming soon',
-      summary: 'Info'
+      detail: this.translateService.instant('message.opportunity.editComingSoon'),
+      summary: this.translateService.instant('message.info')
     });
   }
 
+  /**
+   * Delete opportunity with confirmation
+   */
   deleteOpportunity(): void {
     // Check if user has delete permission
     if (!this.permissionUtilityService.canDelete(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to delete this opportunity',
-        summary: 'Permission Denied'
+        detail: this.translateService.instant('message.noPermissionToDelete'),
+        summary: this.translateService.instant('message.permissionDenied')
       });
       return;
     }
@@ -155,19 +186,18 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
       header: this.translateService.instant('title.deleteOpportunity'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        if (this.recordData().id) {
-          this.opportunityService.deleteOpportunityById(this.recordData().id!).subscribe({
+        if (this.opportunity()?.id) {
+          this.opportunityService.deleteOpportunityById(this.opportunity()!.id!).subscribe({
             next: () => {
               this.feedbackDialogService.showSuccessToast({
-                detail: this.translateService.instant('message.opportunity.deletedSuccessfully')
+                detail: this.translateService.instant('message.opportunity.deletedSuccessfully'),
+                summary: this.translateService.instant('message.success')
               });
               this.router.navigate(['/partnerships/opportunities']);
             },
             error: (error) => {
               console.error('Error deleting opportunity:', error);
-              this.feedbackDialogService.showErrorToast({
-                detail: this.translateService.instant('message.opportunity.deleteFailed')
-              });
+              // Error handled by global interceptor
             }
           });
         }
@@ -175,25 +205,55 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Toggle full content display
+   */
   toggleFullContent() {
     this.showFullContent.update(value => !value);
   }
 
+  /**
+   * Format currency value
+   */
   formatCurrency(value: number | undefined | null): string {
-    if (value === undefined || value === null) return '';
+    if (value === undefined || value === null) return 'N/A';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(value);
   }
 
+  /**
+   * Format date value
+   */
   formatDate(date: Date | undefined | null): string {
-    if (!date) return '';
+    if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric'
     });
+  }
+
+  /**
+   * Get status severity class for badges
+   */
+  getStatusSeverity(status: string | undefined): string {
+    if (!status) return 'secondary';
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'onhold':
+        return 'danger';
+      case 'inactive':
+        return 'secondary';
+      default:
+        return 'info';
+    }
   }
 }
 

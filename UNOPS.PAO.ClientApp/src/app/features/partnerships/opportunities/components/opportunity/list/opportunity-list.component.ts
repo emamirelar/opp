@@ -17,6 +17,12 @@ import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputTextareaModule } from 'primeng/inputtextarea';
+import { FloatLabelModule } from 'primeng/floatlabel';
+import { MessageModule } from 'primeng/message';
+import { FormsModule } from '@angular/forms';
 
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -63,6 +69,12 @@ import { PageContextService } from '@shared/services/utils';
     NgIf,
     TranslateModule,
     RouterModule,
+    DialogModule,
+    InputTextModule,
+    InputTextareaModule,
+    FloatLabelModule,
+    MessageModule,
+    FormsModule,
   ],
   providers: [ConfirmationService],
 })
@@ -191,6 +203,15 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
 
   // Track current search term
   currentSearchText = '';
+
+  // Create opportunity dialog
+  showCreateDialog = signal(false);
+  isCreating = signal(false);
+  showValidationError = signal(false);
+  
+  // Form data
+  opportunityName = '';
+  opportunityDescription = '';
 
   ngOnInit() {
     // Register component data for AI Assistant
@@ -409,8 +430,66 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Navigate to unified creation interface
-    this.router.navigate(['/partnerships/opportunities/create']);
+    // Reset form and open dialog
+    this.opportunityName = '';
+    this.opportunityDescription = '';
+    this.showValidationError.set(false);
+    this.showCreateDialog.set(true);
+  }
+
+  /**
+   * Cancel create dialog
+   */
+  cancelCreateDialog() {
+    this.showCreateDialog.set(false);
+    this.opportunityName = '';
+    this.opportunityDescription = '';
+    this.showValidationError.set(false);
+  }
+
+  /**
+   * Create a new opportunity
+   */
+  createOpportunity() {
+    // Validate required fields
+    if (!this.opportunityName.trim() || !this.opportunityDescription.trim()) {
+      this.showValidationError.set(true);
+      return;
+    }
+
+    this.isCreating.set(true);
+
+    const opportunityRequest = {
+      name: this.opportunityName.trim(),
+      description: this.opportunityDescription.trim(),
+    };
+
+    this.opportunityService
+      .createOpportunity(opportunityRequest)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response: any) => {
+          this.isCreating.set(false);
+          this.showCreateDialog.set(false);
+          this.feedbackDialogService.showSuccessToast({
+            summary: this.translateService.instant('message.success'),
+            detail: this.translateService.instant('message.opportunityCreatedSuccessfully'),
+          });
+          
+          // Refresh the listview
+          window.dispatchEvent(new CustomEvent('refresh-listview'));
+          
+          // Navigate to the new opportunity detail page
+          if (response && response.id) {
+            this.router.navigate(['/partnerships/opportunities', response.id]);
+          }
+        },
+        error: (error: any) => {
+          this.isCreating.set(false);
+          // Error handling done by global HTTP interceptor
+          console.error('Error creating opportunity:', error);
+        },
+      });
   }
 
   onRowClick(opportunity: Opportunity) {
