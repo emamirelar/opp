@@ -92,6 +92,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   error = input(false);
   hasMoreData = input(true);
   isLoadingMore = input(false);
+  entityType = input<string>();
 
   // Events
   @Output() loadMore = new EventEmitter<void>();
@@ -663,10 +664,18 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
   /**
    * Safely get the avatar image URL from the item
+   * Returns default placeholder images for Contact and Partner entities when no image is available
    */
   getAvatarUrl(item: T, field: string): string | undefined {
     const value = this.getFieldValue(item, field);
     if (!value || typeof value !== 'string' || value.trim() === '') {
+      // Return default placeholder image based on entity type
+      const entityType = this.entityType();
+      if (entityType === 'Contact') {
+        return 'assets/images/Contact.png';
+      } else if (entityType === 'Partner') {
+        return 'assets/images/Partner.png';
+      }
       return undefined;
     }
     return value.trim();

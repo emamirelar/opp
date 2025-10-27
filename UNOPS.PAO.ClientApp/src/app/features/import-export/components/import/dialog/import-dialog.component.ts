@@ -164,6 +164,9 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
   showInternalDuplicateWarning = signal<boolean>(false);
   internalDuplicateWarningMessage = signal<string>('');
 
+  // Loading state for data enrichment
+  isEnrichingData = signal<boolean>(false);
+
   // Pagination properties
   first = signal(0);
   rows = signal(10);
@@ -286,8 +289,8 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
     // Set the table columns based on the current import type (with permissions)
     await this.updateColumnsForEntityType();
     
-    // Immediately check data on init
-    this.checkAndProcessData();
+    // Immediately check data on init (AWAIT to ensure loading indicator shows)
+    await this.checkAndProcessData();
     
     // Listen for duplicate info updates from edit dialogs
     this.setupDuplicateInfoEventListener();
@@ -388,10 +391,19 @@ export class ImportDialogComponent implements OnInit, OnDestroy {
       // Enrich user role data if this is a user role import
       if (this.isUserRoleImport()) {
         try {
+          // Show loading indicator while enriching user role data
+          this.isEnrichingData.set(true);
+          
+          // Small delay to allow Angular to update the UI with the loading indicator
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
           processedData = await this.enrichUserRoleData(processedData);
         } catch (error) {
           console.error('Error enriching user role data:', error);
           // Continue with original data if enrichment fails
+        } finally {
+          // Hide loading indicator after enrichment completes
+          this.isEnrichingData.set(false);
         }
       }
       

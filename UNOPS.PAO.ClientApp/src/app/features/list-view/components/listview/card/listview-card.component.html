@@ -41,22 +41,13 @@
         <div class="flex -space-x-1 overflow-hidden">
           @for (contact of getMultipleAvatarItems(item, column); track $index; let i = $index) {
             @if (i < 3) {
-              @if (getAvatarUrl(contact, column.field.split('.').pop()!)) {
-                <p-avatar
-                  [image]="getAvatarUrl(contact, column.field.split('.').pop()!)"
-                  shape="circle"
-                  [style]="{'border': '1px solid #cfdeec', 'z-index': 10 - i, 'background-color': 'white'}"
-                  [title]="getAvatarTitle(contact, column.firstLetterFallbackField)"
-                  imageAlt="Contact Avatar">
-                </p-avatar>
-              } @else {
-                <p-avatar
-                  [label]="getAvatarInitials(contact, column.firstLetterFallbackField)"
-                  shape="circle"
-                  [style]="{'border': '1px solid #cfdeec', 'z-index': 10 - i, 'background-color': 'white', color: '#4b5563'}"
-                  [title]="getAvatarTitle(contact, column.firstLetterFallbackField)">
-                </p-avatar>
-              }
+              <p-avatar
+                [image]="getAvatarUrl(contact, column.field.split('.').pop()!)"
+                shape="circle"
+                [style]="{'border': '1px solid #cfdeec', 'z-index': 10 - i, 'background-color': 'white'}"
+                [title]="getAvatarTitle(contact, column.firstLetterFallbackField)"
+                imageAlt="Contact Avatar">
+              </p-avatar>
             }
           }
           @if (getMultipleAvatarItems(item, column).length > 3) {
@@ -79,20 +70,11 @@
     }
     @case ('avatar') {
       <div class="flex items-center gap-2">
-        @if (getFieldValue(item, column.field)) {
-          <p-avatar [image]="getAvatarUrl(item, column.field)"
-                    shape="circle"
-                    size="normal"
-                    [title]="getFieldTooltip(item, column)">
-          </p-avatar>
-        } @else {
-          <p-avatar [label]="getAvatarInitials(item, column.firstLetterFallbackField || column.field)"
-                    shape="circle"
+        <p-avatar [image]="getAvatarUrl(item, column.field)"
+                  shape="circle"
                   size="normal"
-                    styleClass="bg-primary text-white"
-                    [title]="getFieldTooltip(item, column)">
-          </p-avatar>
-        }
+                  [title]="getFieldTooltip(item, column)">
+        </p-avatar>
         @if (context !== 'avatar-only') {
           <span [class]="getFieldClasses(column, context) + ' truncate'"
                 [title]="getFieldTooltip(item, column)">
@@ -190,22 +172,12 @@
                 <!-- Avatar/Icon section with enhanced styling - conditionally shown based on card size -->
                 @if (shouldShowAvatar() && avatarColumn()) {
                   <div class="flex-shrink-0">
-                    @if (getFieldValue(item, avatarColumn()!.field)) {
-                      <div class="relative">
-                        <p-avatar [image]="getAvatarUrl(item, avatarColumn()!.field)"
-                                  shape="circle"
-                                  [size]="cardSize() === 'medium' ? 'normal' : 'large'"
-                                  ></p-avatar>
-                      </div>
-                    } @else {
-                      <div class="relative">
-                        <p-avatar [label]="getField1Initial(item)"
-                                  shape="circle"
-                                  [size]="cardSize() === 'medium' ? 'normal' : 'large'"
-                                  styleClass="bg-primary text-white"
-                                  ></p-avatar>
-                      </div>
-                    }
+                    <div class="relative">
+                      <p-avatar [image]="getAvatarUrl(item, avatarColumn()!.field)"
+                                shape="circle"
+                                [size]="cardSize() === 'medium' ? 'normal' : 'large'"
+                                ></p-avatar>
+                    </div>
                   </div>
                 } @else if (shouldShowAvatar() && shouldShowInteractionAvatar() && interactionIconColumn()) {
                   <div class="flex-shrink-0">
