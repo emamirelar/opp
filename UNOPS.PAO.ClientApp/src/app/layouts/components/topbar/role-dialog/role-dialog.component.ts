@@ -5,7 +5,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { RoleService, Role, UserRoles } from '@core/services/role.service';
+import { RoleService, Role, UserRoles } from '@core/services/auth';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 @Component({

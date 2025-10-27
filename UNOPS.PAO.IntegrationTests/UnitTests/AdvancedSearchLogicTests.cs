@@ -1,9 +1,9 @@
 using FluentAssertions;
 using UNOPS.PAO.IntegrationTests.TestData;
 using UNOPS.PAO.UNOPSDomain.Entities;
-using UNOPS.PAO.Models;
 using Xunit;
 using System.Text.Json;
+using UNOPS.PAO.Models.Search;
 
 namespace UNOPS.PAO.IntegrationTests.UnitTests;
 

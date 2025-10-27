@@ -30,7 +30,6 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Models;
@@ -40,6 +39,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 using static Google.Cloud.Vision.V1.ProductSearchResults.Types;
+using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Search;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Integrations;
+using UNOPS.PAO.Models.Interactions;
 
 public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 {
@@ -58,7 +62,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     private async Task<ContactModel> MapEntityToModel(UNOPSContact entity, IMapper mapper, ClaimsPrincipal user)
     {
         var result = mapper.Map<UNOPSContact, ContactModel>(entity);
-        result.Partner = entity.Partner != null ? new UNOPS.PAO.Models.PartnerSummaryModel { Id = entity.Partner.Id, Name = entity.Partner.Name } : null;
+        result.Partner = entity.Partner != null ? new UNOPS.PAO.Models.Contacts.PartnerSummaryModel { Id = entity.Partner.Id, Name = entity.Partner.Name } : null;
         
         // Convert ProfilePictureUrl to signed URL if it exists and contains Google Cloud Storage path
         if (!string.IsNullOrEmpty(result.ProfilePictureUrl) && googleCloudStorageService != null)
@@ -96,7 +100,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     private ContactModel MapEntityToModelWithUserInfo(UNOPSContact entity, IMapper mapper, Dictionary<int, UserProfile> userInfoLookup, Dictionary<string, OrganizationHierarchy> orgHierarchyLookup)
     {
         var result = mapper.Map<UNOPSContact, ContactModel>(entity);
-        result.Partner = entity.Partner != null ? new UNOPS.PAO.Models.PartnerSummaryModel { Id = entity.Partner.Id, Name = entity.Partner.Name } : null;
+        result.Partner = entity.Partner != null ? new UNOPS.PAO.Models.Contacts.PartnerSummaryModel { Id = entity.Partner.Id, Name = entity.Partner.Name } : null;
         
         // Convert ProfilePictureUrl to signed URL if it exists and contains Google Cloud Storage path
         if (!string.IsNullOrEmpty(result.ProfilePictureUrl) && googleCloudStorageService != null)
@@ -585,7 +589,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         {
             // Use synchronous mapping for interface compatibility
             var result = mapper.Map<UNOPSContact, ContactModel>(contact);
-            result.Partner = contact.Partner != null ? new UNOPS.PAO.Models.PartnerSummaryModel { Id = contact.Partner.Id, Name = contact.Partner.Name } : null;
+            result.Partner = contact.Partner != null ? new UNOPS.PAO.Models.Contacts.PartnerSummaryModel { Id = contact.Partner.Id, Name = contact.Partner.Name } : null;
             results.Add(result);
         }
         return results;

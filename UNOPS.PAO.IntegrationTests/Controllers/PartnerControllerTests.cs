@@ -13,6 +13,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.IntegrationTests.Controllers;
 

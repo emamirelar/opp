@@ -17,7 +17,6 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Domain.Specifications;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSBusiness.Services;
@@ -33,6 +32,8 @@ using UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
 using UNOPS.PAO.UNOPSBusiness.Specifications;
 using UNOPS.PAO.UNOPSDomain.Specifications;
 using Xunit;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
 {

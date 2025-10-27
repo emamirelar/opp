@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace UNOPS.PAO.Models;
+namespace UNOPS.PAO.Models.EntityConfiguration;
 
 public class CreateEntityConfigurationRequest
 {

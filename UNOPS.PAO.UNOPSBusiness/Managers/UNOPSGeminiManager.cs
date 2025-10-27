@@ -2,7 +2,6 @@ using Google.Apis.Auth.OAuth2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.GoogleServices;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.Business.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -48,6 +47,11 @@ using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Interactions;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.AI;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 

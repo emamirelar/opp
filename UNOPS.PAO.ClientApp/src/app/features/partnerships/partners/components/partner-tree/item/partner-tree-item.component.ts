@@ -6,15 +6,15 @@ import { ButtonModule } from 'primeng/button';
 import { PanelModule } from 'primeng/panel';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
-import { CachedDataService } from '@shared/services/cached-data.service';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { CachedDataService } from '@shared/services/utils';
+import { FeedbackDialogService } from '@shared/services/ui';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
 import { PartnerTree } from '@partnerships/partners/models/partner-tree.model';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
+import { PermissionUtilityService } from '@core/services/auth';
 import { PartnerTreeItemFooterComponent } from './partner-tree-item-footer.component';
 
 interface PartnerTreeFormControls {

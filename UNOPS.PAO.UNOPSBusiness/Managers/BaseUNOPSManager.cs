@@ -22,6 +22,7 @@ using Z.Expressions;
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.Models.Shared;
 
 /// <summary>
 /// Base class for all UNOPS managers that provides common functionality

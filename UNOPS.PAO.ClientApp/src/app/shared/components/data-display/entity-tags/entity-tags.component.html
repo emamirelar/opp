@@ -1,0 +1,6 @@
+@if (tags && tags.length > 0) {
+  @for (tag of tags; track tag.tag) {
+    <span class="px-2 py-1 text-xs rounded-full {{ tag.color }} whitespace-nowrap">{{ tag.tag }}</span>
+  }
+}
+

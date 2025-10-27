@@ -1,4 +1,4 @@
-import { EntityPermissionSet } from '@features/shared/models/shared-types';
+import { EntityPermissionSet } from '@shared/models/shared-types';
 
 export interface PartnerTree {
   id?: number;

@@ -3,9 +3,10 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.UNOPSDomain.Entities;
-using UNOPS.PAO.Models;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services
 {

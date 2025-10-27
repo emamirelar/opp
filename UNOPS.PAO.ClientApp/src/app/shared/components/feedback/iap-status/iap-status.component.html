@@ -1,0 +1,22 @@
+<div class="iap-status">
+  <div class="status-section">
+    <h3>{{ 'iapStatus.authenticationStatus' | translate }}</h3>
+    <div><strong>{{ 'iapStatus.iapAuthenticated' | translate }}:</strong> {{isIapAuthenticated}}</div>
+    <div><strong>{{ 'iapStatus.regularAuth' | translate }}:</strong> {{isLoggedIn}}</div>
+  </div>
+  
+  <div class="status-section">
+    <h3>{{ 'iapStatus.cookieInformation' | translate }}</h3>
+    <div *ngIf="devCookie"><strong>{{ 'iapStatus.devCookie' | translate }}:</strong> {{devCookie}}</div>
+    <div *ngIf="!devCookie"><strong>{{ 'iapStatus.devCookie' | translate }}:</strong> {{ 'iapStatus.notFound' | translate }}</div>
+    <div><strong>{{ 'iapStatus.allCookies' | translate }}:</strong> <span class="cookie-text">{{allCookies}}</span></div>
+  </div>
+  
+  <div class="status-section" *ngIf="authInfo">
+    <h3>{{ 'iapStatus.userInformation' | translate }}</h3>
+    <div *ngFor="let key of getObjectKeys(authInfo)">
+      <strong>{{key}}:</strong> {{authInfo[key]}}
+    </div>
+  </div>
+</div>
+

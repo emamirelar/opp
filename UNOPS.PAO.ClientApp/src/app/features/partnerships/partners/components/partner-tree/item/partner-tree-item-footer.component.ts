@@ -3,8 +3,8 @@ import { ButtonModule } from 'primeng/button';
 import { TranslateModule } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
-import { EntityPermissions } from '@core/services/permission.service';
+import { PermissionUtilityService } from '@core/services/auth';
+import { EntityPermissions } from '@core/services/auth';
 
 @Component({
   selector: 'app-partner-tree-item-footer',
