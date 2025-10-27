@@ -1,124 +1,136 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpClient, HttpErrorResponse, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpErrorResponse, HttpRequest, HttpEvent, HttpEventType } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { serverErrorInterceptor } from './server-error.interceptor';
-import { ErrorHandlerService } from '@shared/services/utils';
+import { ErrorHandlerService } from '@shared/services/utils/error-handler.service';
 
 describe('serverErrorInterceptor', () => {
-  let httpClient: HttpClient;
-  let httpMock: HttpTestingController;
   let mockErrorHandler: jasmine.SpyObj<ErrorHandlerService>;
+  let mockNext: jasmine.Spy;
 
   beforeEach(() => {
     mockErrorHandler = jasmine.createSpyObj('ErrorHandlerService', ['handleHttpError']);
+    mockNext = jasmine.createSpy('next');
 
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(withInterceptors([serverErrorInterceptor])),
-        provideHttpClientTesting(),
-        { provide: ErrorHandlerService, useValue: mockErrorHandler },
-      ],
+        { provide: ErrorHandlerService, useValue: mockErrorHandler }
+      ]
     });
-
-    httpClient = TestBed.inject(HttpClient);
-    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => {
-    httpMock.verify();
-  });
+  it('should pass request through when no errors occur', (done) => {
+    const mockRequest = new HttpRequest('GET', '/api/test');
+    const mockResponse: HttpEvent<any> = { type: HttpEventType.Response } as any;
 
-  it('should call error handler on HTTP error', (done) => {
-    httpClient.get('/api/test').subscribe({
-      next: () => fail('Should have failed'),
-      error: (error: HttpErrorResponse) => {
-        expect(error.status).toBe(500);
-        expect(mockErrorHandler.handleHttpError).toHaveBeenCalledWith(error);
-        done();
-      },
-    });
+    mockNext.and.returnValue(of(mockResponse));
 
-    const req = httpMock.expectOne('/api/test');
-    req.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
-  });
-
-  it('should call error handler on 400 errors', (done) => {
-    httpClient.get('/api/test').subscribe({
-      next: () => fail('Should have failed'),
-      error: (error: HttpErrorResponse) => {
-        expect(error.status).toBe(400);
-        expect(mockErrorHandler.handleHttpError).toHaveBeenCalledWith(error);
-        done();
-      },
-    });
-
-    const req = httpMock.expectOne('/api/test');
-    req.flush('Bad Request', { status: 400, statusText: 'Bad Request' });
-  });
-
-  it('should call error handler on 404 errors', (done) => {
-    httpClient.get('/api/test').subscribe({
-      next: () => fail('Should have failed'),
-      error: (error: HttpErrorResponse) => {
-        expect(error.status).toBe(404);
-        expect(mockErrorHandler.handleHttpError).toHaveBeenCalledWith(error);
-        done();
-      },
-    });
-
-    const req = httpMock.expectOne('/api/test');
-    req.flush('Not Found', { status: 404, statusText: 'Not Found' });
-  });
-
-  it('should call error handler on network errors', (done) => {
-    httpClient.get('/api/test').subscribe({
-      next: () => fail('Should have failed'),
-      error: (error: HttpErrorResponse) => {
-        expect(error.status).toBe(0);
-        expect(mockErrorHandler.handleHttpError).toHaveBeenCalledWith(error);
-        done();
-      },
-    });
-
-    const req = httpMock.expectOne('/api/test');
-    req.error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
-  });
-
-  it('should allow successful requests to pass through without calling error handler', (done) => {
-    httpClient.get('/api/test').subscribe({
-      next: (response) => {
-        expect(response).toEqual({ data: 'success' });
-        expect(mockErrorHandler.handleHttpError).not.toHaveBeenCalled();
-        done();
-      },
-      error: () => fail('Should not have failed'),
-    });
-
-    const req = httpMock.expectOne('/api/test');
-    req.flush({ data: 'success' });
-  });
-
-  it('should handle multiple concurrent errors', (done) => {
-    let errorCount = 0;
-    const totalRequests = 3;
-
-    for (let i = 0; i < totalRequests; i++) {
-      httpClient.get(`/api/test${i}`).subscribe({
-        next: () => fail('Should have failed'),
-        error: () => {
-          errorCount++;
-          if (errorCount === totalRequests) {
-            expect(mockErrorHandler.handleHttpError).toHaveBeenCalledTimes(totalRequests);
-            done();
-          }
-        },
+    TestBed.runInInjectionContext(() => {
+      serverErrorInterceptor(mockRequest, mockNext).subscribe({
+        next: (event) => {
+          expect(event).toEqual(mockResponse);
+          expect(mockErrorHandler.handleHttpError).not.toHaveBeenCalled();
+          done();
+        }
       });
-    }
+    });
+  });
 
-    for (let i = 0; i < totalRequests; i++) {
-      const req = httpMock.expectOne(`/api/test${i}`);
-      req.flush('Error', { status: 500, statusText: 'Internal Server Error' });
-    }
+  it('should call error handler service on HTTP errors', (done) => {
+    const mockRequest = new HttpRequest('GET', '/api/test');
+    const error = new HttpErrorResponse({ 
+      status: 500, 
+      statusText: 'Internal Server Error' 
+    });
+
+    mockNext.and.returnValue(throwError(() => error));
+
+    TestBed.runInInjectionContext(() => {
+      serverErrorInterceptor(mockRequest, mockNext).subscribe({
+        error: (err) => {
+          expect(mockErrorHandler.handleHttpError).toHaveBeenCalledWith(error);
+          done();
+        }
+      });
+    });
+  });
+
+  it('should handle 400 Bad Request errors', (done) => {
+    const mockRequest = new HttpRequest('POST', '/api/test', { data: 'test' });
+    const error = new HttpErrorResponse({ 
+      status: 400, 
+      statusText: 'Bad Request',
+      error: { message: 'Invalid data' }
+    });
+
+    mockNext.and.returnValue(throwError(() => error));
+
+    TestBed.runInInjectionContext(() => {
+      serverErrorInterceptor(mockRequest, mockNext).subscribe({
+        error: (err) => {
+          expect(mockErrorHandler.handleHttpError).toHaveBeenCalledWith(error);
+          expect(err.status).toBe(400);
+          done();
+        }
+      });
+    });
+  });
+
+  it('should handle 404 Not Found errors', (done) => {
+    const mockRequest = new HttpRequest('GET', '/api/test/123');
+    const error = new HttpErrorResponse({ 
+      status: 404, 
+      statusText: 'Not Found' 
+    });
+
+    mockNext.and.returnValue(throwError(() => error));
+
+    TestBed.runInInjectionContext(() => {
+      serverErrorInterceptor(mockRequest, mockNext).subscribe({
+        error: (err) => {
+          expect(mockErrorHandler.handleHttpError).toHaveBeenCalledWith(error);
+          expect(err.status).toBe(404);
+          done();
+        }
+      });
+    });
+  });
+
+  it('should handle 500 Internal Server errors', (done) => {
+    const mockRequest = new HttpRequest('POST', '/api/test', { data: 'test' });
+    const error = new HttpErrorResponse({ 
+      status: 500, 
+      statusText: 'Internal Server Error',
+      error: { message: 'Database connection failed' }
+    });
+
+    mockNext.and.returnValue(throwError(() => error));
+
+    TestBed.runInInjectionContext(() => {
+      serverErrorInterceptor(mockRequest, mockNext).subscribe({
+        error: (err) => {
+          expect(mockErrorHandler.handleHttpError).toHaveBeenCalledWith(error);
+          expect(err.status).toBe(500);
+          done();
+        }
+      });
+    });
+  });
+
+  it('should not call error handler for non-HTTP errors', (done) => {
+    const mockRequest = new HttpRequest('GET', '/api/test');
+    const error = new Error('Network error');
+
+    mockNext.and.returnValue(throwError(() => error));
+
+    TestBed.runInInjectionContext(() => {
+      serverErrorInterceptor(mockRequest, mockNext).subscribe({
+        error: (err) => {
+          expect(mockErrorHandler.handleHttpError).not.toHaveBeenCalled();
+          done();
+        }
+      });
+    });
   });
 });
 

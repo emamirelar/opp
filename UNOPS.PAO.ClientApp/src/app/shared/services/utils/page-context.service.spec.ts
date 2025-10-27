@@ -5,7 +5,10 @@ describe('PageContextService', () => {
   let service: PageContextService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [PageContextService]
+    });
+
     service = TestBed.inject(PageContextService);
   });
 
@@ -13,7 +16,10 @@ describe('PageContextService', () => {
     expect(service).toBeTruthy();
   });
 
-  // TODO: Add tests for page context management
-  // TODO: Add tests for context retrieval
+  // TODO: Add tests for page context initialization
+  // TODO: Add tests for context data storage
+  // TODO: Add tests for context data retrieval
+  // TODO: Add tests for context reset on navigation
+  // TODO: Add tests for context sharing between components
 });
 
