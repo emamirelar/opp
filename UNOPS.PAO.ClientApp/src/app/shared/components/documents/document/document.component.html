@@ -1,8 +1,5 @@
 @if (isReadOnly() !== true && !disabled()) {
 <div class="mb-2 flex gap-2">
-  @if (showUploadButton()) {
-    <p-button icon="pi pi-upload" label="{{ 'button.upload' | translate }}" (onClick)="openUploadDialog()" />
-  }
   <ng-content select="document-toolbar"></ng-content>
 </div>
 }
