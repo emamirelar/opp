@@ -669,7 +669,11 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
     // Handle other notification types that require records
     if (notification.category && notification.records && notification.records.length > 0) {
-      if (notification.category.startsWith('bulk_') && notification.responseType !== 'Error') {
+      // Check if this is a bulk import notification (starts with 'bulk_' or is a known import type)
+      const isImportNotification = notification.category.startsWith('bulk_') || 
+                                    notification.category === 'user_role_import';
+      
+      if (isImportNotification && notification.responseType !== 'Error') {
         try {
           this.importDialogService.data.set([]);
           
@@ -688,9 +692,26 @@ export class TopbarComponent implements OnInit, OnDestroy {
           }
           
           this.importDialogService.setNotificationInfo(notification.id, this.userId, notification.message);
+
+          // Determine import type and title from notification category
+          let title = "Import";
+          let importType = "contact"; // Default fallback
+
+          if (notification.category.startsWith('bulk_')) {
+            // Extract entity type from category like 'bulk_contact_action' -> 'contact'
+            const entityType = notification.category.split('_')[1];
+            importType = entityType;
+            title = "Import " + entityType.charAt(0).toUpperCase() + entityType.slice(1);
+          } else if (notification.category === 'user_role_import') {
+            importType = 'user_role_import';
+            title = "Import User Role";
+          }
+
+          // Set the import type BEFORE opening the dialog
+          this.importDialogService.setImportType(importType);
           
           this.importDialogService.openImportDialog(
-            notification.category === 'bulk_contact_action' ? 'Import Contact' : 'Import'
+            title
           );
         } catch (error) {
           // Error processing notification data

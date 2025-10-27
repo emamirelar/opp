@@ -719,7 +719,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 var notification = new Notification
                 {
                     UserId = userId,
-                    Message = "Batch processed successfully",
+                    Message = "File Analysis Complete",
                     Category = promptData.Type,
                     ResponseType = "Success",
                     RecordData = JsonConvert.SerializeObject(finalResponse),
@@ -882,16 +882,52 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             {
                 // Create a single notification for the entire batch
                 var hasInternalDuplicates = finalResponse.Any(r => r is JObject obj && obj["internalDuplicateWarning"] != null);
+                
+                // Check if any database duplicates were found
+                var hasDatabaseDuplicates = finalResponse.Any(r => 
+                    r is JObject obj && 
+                    obj["duplicateDetection"] is JObject dupDetection &&
+                    dupDetection["hasDuplicates"]?.Value<bool>() == true &&
+                    dupDetection["totalDuplicates"]?.Value<int>() > 0
+                );
+                
+                // Determine appropriate message based on duplicate detection results
+                string successMessage;
+                if (!string.IsNullOrEmpty(fileId))
+                {
+                    if (hasInternalDuplicates)
+                    {
+                        successMessage = $"File Analysis Complete with warnings - Internal duplicates found in file (Sheet ID: {fileId}). Please review and fix duplicates.";
+                    }
+                    else if (hasDatabaseDuplicates)
+                    {
+                        successMessage = $"File Analysis Complete with duplicate detection (Sheet ID: {fileId})";
+                    }
+                    else
+                    {
+                        successMessage = $"File Analysis Complete (Sheet ID: {fileId})";
+                    }
+                }
+                else
+                {
+                    if (hasInternalDuplicates)
+                    {
+                        successMessage = "File Analysis Complete with warnings - Internal duplicates found in file. Please review and fix duplicates.";
+                    }
+                    else if (hasDatabaseDuplicates)
+                    {
+                        successMessage = "File Analysis Complete with duplicate detection";
+                    }
+                    else
+                    {
+                        successMessage = "File Analysis Complete";
+                    }
+                }
+                
                 var notification = new Notification
                 {
                     UserId = userId,
-                    Message = !string.IsNullOrEmpty(fileId) 
-                        ? (hasInternalDuplicates 
-                            ? $"Batch processed successfully with warnings - Internal duplicates found in file (Sheet ID: {fileId}). Please review and fix duplicates."
-                            : $"Batch processed successfully with duplicate detection (Sheet ID: {fileId})")
-                        : (hasInternalDuplicates 
-                            ? "Batch processed successfully with warnings - Internal duplicates found in file. Please review and fix duplicates."
-                            : "Batch processed successfully with duplicate detection"),
+                    Message = successMessage,
                     Category = promptData.Type,
                     ResponseType = hasInternalDuplicates ? "SuccessWithWarnings" : "Success",
                     RecordData = JsonConvert.SerializeObject(finalResponse),

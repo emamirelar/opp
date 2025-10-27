@@ -359,7 +359,7 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
 
   getContactProfilePicture(contactId: number): string | null {
     const contact = this.interaction()?.contacts?.find(c => Number(c.id) === contactId);
-    return contact?.profilePictureUrl || null;
+    return contact?.profilePictureUrl || 'assets/images/Contact.png';
   }
 
   getContactInitials(contactId: number): string {
@@ -383,7 +383,7 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
 
   getPartnerLogo(partnerId: number): string | null {
     const partner = this.interaction()?.partners?.find(p => Number(p.id) === partnerId);
-    return partner?.logoUrl || null;
+    return partner?.logoUrl || 'assets/images/Partner.png';
   }
 
   getPartnerInitials(partnerId: number): string {
