@@ -27,7 +27,7 @@ node("app-build") {
         }
         
         stage('Load Configuration') {
-            def configYaml = readFile('jenkins-config.yaml')
+            def configYaml = readFile('deployments/CI-CD/jenkins-config.yaml')
             def yaml = new org.yaml.snakeyaml.Yaml()
             def config = yaml.load(configYaml)
 
@@ -129,7 +129,7 @@ node("app-build") {
                         gcloud config set project ${PROJECT_ID}
                         
                         # Copy the appropriate Dockerfile
-                        cp ${DOCKERFILE_MAIN} Dockerfile
+                        cp deployments/Docker/${DOCKERFILE_MAIN} Dockerfile
                         
                         # Build and push main application image
                         gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_MAIN}:${IMAGE_TAG} .
@@ -211,8 +211,8 @@ node("app-build") {
                         gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
                         gcloud config set project ${PROJECT_ID}
                         
-                        # Copy AIService directory into the build directory
-                        cp -r AIService UNOPS.PAO.AIService/
+                        # Copy AIService configuration files into the AI service directory
+                        cp -r ../../AIService UNOPS.PAO.AIService/
                         
                         # Navigate to AI service directory
                         cd UNOPS.PAO.AIService

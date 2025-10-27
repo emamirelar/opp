@@ -56,7 +56,7 @@ node("app-build") {
         }
         
         stage('Load Configuration') {
-            def configYaml = readFile('jenkins-config-eds.yaml')
+            def configYaml = readFile('deployments/CI-CD/jenkins-config-eds.yaml')
             def yaml = new org.yaml.snakeyaml.Yaml()
             def config = yaml.load(configYaml)
 
@@ -162,12 +162,11 @@ node("app-build") {
                 gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
                 gcloud config set project ${PROJECT_ID}
                 
-                # Copy the entire ExternalDataService directory to build context
-                echo "Copying ExternalDataService directory to build context..."
-                if [ -d "ExternalDataService" ]; then
-                    cp -r ExternalDataService UNOPS.PAO.ExternalDataService/
-                    echo "✓ ExternalDataService directory copied to build context"
-                    ls -la UNOPS.PAO.ExternalDataService/ExternalDataService/
+                # Copy ExternalDataService configuration files into the service directory
+                echo "Copying ExternalDataService configuration files to build context..."
+                if [ -d "../../ExternalDataService" ]; then
+                    cp -r ../../ExternalDataService UNOPS.PAO.ExternalDataService/
+                    echo "✓ ExternalDataService configuration files copied to build context"
                     echo "Config files:"
                     ls -la UNOPS.PAO.ExternalDataService/ExternalDataService/config/
                 else
