@@ -10,6 +10,8 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.IntegrationTests.Infrastructure;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Interactions;
+using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Server;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;

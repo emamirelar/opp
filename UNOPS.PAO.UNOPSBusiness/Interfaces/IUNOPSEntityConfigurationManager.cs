@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.EntityConfiguration;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.UNOPSBusiness.Interfaces;

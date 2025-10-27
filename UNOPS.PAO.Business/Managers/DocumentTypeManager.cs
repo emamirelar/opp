@@ -3,8 +3,8 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Models;
-using UNOPS.PAO.Models.Document;
+using UNOPS.PAO.Models.Documents;
+using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Utilities.Helpers;
 
 namespace UNOPS.PAO.Business.Managers;

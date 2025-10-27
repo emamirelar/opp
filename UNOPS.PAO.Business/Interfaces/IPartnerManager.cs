@@ -9,9 +9,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.Domain.Specifications;
 using System.Security.Claims;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Integrations;
 
 public interface IPartnerManager
 {

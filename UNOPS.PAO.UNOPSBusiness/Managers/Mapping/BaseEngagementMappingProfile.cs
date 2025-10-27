@@ -1,5 +1,6 @@
 using AutoMapper;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers.Mapping;

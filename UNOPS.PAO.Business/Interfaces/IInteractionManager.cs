@@ -4,8 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UNOPS.PAO.Domain.Specifications;
-using UNOPS.PAO.Models;
 using System.Security.Claims;
+using UNOPS.PAO.Models.Integrations;
+using UNOPS.PAO.Models.Interactions;
+using UNOPS.PAO.Models.Search;
+using UNOPS.PAO.Models.Shared;
 
 public interface IInteractionManager
 {

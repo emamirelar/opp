@@ -22,4 +22,12 @@ export class PartnerViewContactsItemComponent {
   onContactClick(): void {
     this.itemClick.emit(this.contact);
   }
+
+  /**
+   * Handle image load error by replacing with default Contact placeholder
+   */
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = 'assets/images/Contact.png';
+  }
 } 

@@ -10,6 +10,7 @@ using UNOPS.PAO.Utilities.Interfaces;
 using UNOPS.PAO.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Models.Notifications;
 
 public class NotificationManager : IApplicationService
 {

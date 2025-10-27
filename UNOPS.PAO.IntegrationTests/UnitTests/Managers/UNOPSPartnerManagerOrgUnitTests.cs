@@ -16,7 +16,6 @@ using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSBusiness.Services;
@@ -25,6 +24,8 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using Xunit;
 using Microsoft.Extensions.Caching.Memory;
 using UNOPS.PAO.Business.Repositories.Generic;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
 {

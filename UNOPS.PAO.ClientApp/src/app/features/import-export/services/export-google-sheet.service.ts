@@ -162,6 +162,88 @@ export class ExportGoogleSheetService {
     return of(undefined);
   }
 
+  /**
+   * Splits a large cell value into multiple parts if it exceeds Google Sheets' 50,000 character limit
+   * @param value The cell value to split
+   * @returns Array of split values (single item if no split needed)
+   */
+  private splitLargeCellValue(value: any): string[] {
+    const MAX_CELL_LENGTH = 49000; // Use 49,000 to have a safety margin
+    
+    if (typeof value !== 'string' || value.length <= MAX_CELL_LENGTH) {
+      return [value ?? ''];
+    }
+    
+    // Split the large string into chunks
+    const parts: string[] = [];
+    let remainingText = value;
+    
+    while (remainingText.length > 0) {
+      parts.push(remainingText.substring(0, MAX_CELL_LENGTH));
+      remainingText = remainingText.substring(MAX_CELL_LENGTH);
+    }
+    
+    console.warn(`Large cell split into ${parts.length} parts (original length: ${value.length} characters)`);
+    return parts;
+  }
+
+  /**
+   * Processes data to handle large cells by splitting them across multiple columns
+   * @param data Original data array
+   * @returns Processed data with expanded headers and split cell values
+   */
+  private processDataWithLargeCells<T extends object>(data: T[]): { headers: string[], values: any[][] } {
+    if (data.length === 0) {
+      return { headers: [], values: [] };
+    }
+
+    const originalHeaders = Object.keys(data[0]);
+    const expandedHeaders: string[] = [];
+    const headerSplitMap = new Map<string, number>(); // Track how many parts each header needs
+
+    // First pass: determine which headers need splitting and how many parts
+    data.forEach(item => {
+      originalHeaders.forEach(header => {
+        const cellValue = item[header as keyof T];
+        const parts = this.splitLargeCellValue(cellValue);
+        const currentMax = headerSplitMap.get(header) || 1;
+        headerSplitMap.set(header, Math.max(currentMax, parts.length));
+      });
+    });
+
+    // Build expanded headers
+    originalHeaders.forEach(header => {
+      const partCount = headerSplitMap.get(header) || 1;
+      if (partCount === 1) {
+        expandedHeaders.push(header);
+      } else {
+        for (let i = 1; i <= partCount; i++) {
+          expandedHeaders.push(`${header}_Part${i}`);
+        }
+      }
+    });
+
+    // Second pass: build the data rows with split values
+    const processedValues: any[][] = data.map(item => {
+      const row: any[] = [];
+      
+      originalHeaders.forEach(header => {
+        const cellValue = item[header as keyof T];
+        const parts = this.splitLargeCellValue(cellValue);
+        const partCount = headerSplitMap.get(header) || 1;
+        
+        // Add all parts, padding with empty strings if needed
+        for (let i = 0; i < partCount; i++) {
+          row.push(parts[i] || '');
+        }
+      });
+      
+      return row;
+    });
+
+    return { headers: expandedHeaders, values: processedValues };
+  }
+
   private createAndPopulateSheet<T extends object>(data: T[], fileName: string): Observable<{ id: string, url: string }> {
     if (!this.sheetsApiReady || !this.driveApiReady) {
       return throwError(() => new Error('Google APIs not loaded. Please try again.'));
@@ -206,19 +288,27 @@ export class ExportGoogleSheetService {
 
         console.log('Spreadsheet created successfully:', spreadsheetId);
 
-        // Extract headers from the first object
-        let headers: string[] = [];
-        if (data.length > 0) {
-          headers = Object.keys(data[0]);
-        }
+        // Process data to handle large cells
+        const { headers, values: dataRows } = this.processDataWithLargeCells(data);
+        
+        // Track if any cells were split
+        const originalHeaders = data.length > 0 ? Object.keys(data[0]) : [];
+        const hasSplitCells = headers.length > originalHeaders.length;
 
         // Prepare values array with headers and data
-        const values = [
-          headers,
-          ...data.map(item => headers.map(header => item[header as keyof T] ?? ''))
-        ];
+        const values = [headers, ...dataRows];
+
+        // Show info if any cells were split
+        if (hasSplitCells) {
+          this.feedbackDialogService.showInfoToast({
+            summary: 'Large Content Split',
+            detail: 'Some cells exceeded 49,000 characters and were split across multiple columns to preserve all data.',
+            life: 8000
+          });
+        }
 
         console.log('Updating spreadsheet with data, headers:', headers);
+        console.log('Total columns (including split):', headers.length);
 
         // Update the spreadsheet with data
         return from(gapi.client.sheets.spreadsheets.values.update({

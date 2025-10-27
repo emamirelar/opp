@@ -3,7 +3,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Context;
-using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Users;
 
 namespace UNOPS.PAO.Business.Managers;
 

@@ -1,6 +1,7 @@
 using AutoMapper;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Filters;
 
 namespace UNOPS.PAO.Business.Mapping
 {

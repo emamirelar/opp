@@ -3,7 +3,7 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
-using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.OrganizationUnits;
 
 namespace UNOPS.PAO.Business.Managers;
 

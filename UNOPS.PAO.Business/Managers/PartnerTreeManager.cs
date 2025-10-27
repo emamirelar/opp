@@ -11,8 +11,8 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Models;
 using System.Security.Claims;
+using UNOPS.PAO.Models.PartnerTrees;
 
 public class PartnerTreeManager : IPartnerTreeManager
 {
