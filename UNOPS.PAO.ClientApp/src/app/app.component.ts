@@ -1,9 +1,9 @@
 import { Component, ViewChild, ViewContainerRef, AfterViewInit, inject } from '@angular/core';
 import { RouterModule, RouterOutlet, Router } from '@angular/router';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/services/auth';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { FeedbackDialogComponent } from '@shared/reusables/widgets/feedback-dialog/feedback-dialog.component';
+import { FeedbackDialogComponent } from '@shared/components/feedback/feedback-dialog/feedback-dialog.component';
 
 @Component({
   selector: 'app-root',

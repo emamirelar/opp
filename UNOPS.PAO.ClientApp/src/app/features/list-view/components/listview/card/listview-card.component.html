@@ -1,0 +1,392 @@
+<!-- Universal field formatting template -->
+<ng-template #fieldTemplate let-item="item" let-column="column" let-context="context">
+  @switch (column.type) {
+    @case ('email') {
+      @if (hasFieldValue(item, column)) {
+        <a href="mailto:{{ getFieldValue(item, column.field) }}"
+           (click)="$event.stopPropagation()"
+           [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')"
+           [title]="getFieldTooltip(item, column)">
+          {{ getFieldValue(item, column.field) }}
+        </a>
+      } @else {
+        @if (context !== 'field5') {
+          <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">--</span>
+        }
+      }
+    }
+    @case ('link') {
+      @if (hasFieldValue(item, column)) {
+        <a [routerLink]="getRouterLink(item, column)"
+           (click)="$event.stopPropagation()"
+           [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')"
+           [title]="getFieldTooltip(item, column)">
+          {{ formatValue(item, column) }}
+        </a>
+      } @else {
+        @if (context !== 'field5') {
+          <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">--</span>
+        }
+      }
+    }
+    @case ('conditionalIcon') {
+      <div class="flex items-center gap-1">
+        <span>{{ column.label | translate }}</span>
+        <i [ngClass]="(column.conditionFn ? column.conditionFn(item) : getFieldValue(item, column.field)) ? 'pi pi-verified text-green-500' : 'pi pi-times-circle text-red-300'"></i>
+      </div>
+    }
+    @case ('multiple-avatars') {
+      <div>
+        <div class="text-sm text-gray-600 mb-1">{{ column.label | translate }}</div>
+        <div class="flex -space-x-1 overflow-hidden">
+          @for (contact of getMultipleAvatarItems(item, column); track $index; let i = $index) {
+            @if (i < 3) {
+              <p-avatar
+                [image]="getAvatarUrl(contact, column.field.split('.').pop()!)"
+                shape="circle"
+                [style]="{'border': '1px solid #cfdeec', 'z-index': 10 - i, 'background-color': 'white'}"
+                [title]="getAvatarTitle(contact, column.firstLetterFallbackField)"
+                imageAlt="Contact Avatar">
+              </p-avatar>
+            }
+          }
+          @if (getMultipleAvatarItems(item, column).length > 3) {
+            <div class="flex items-center justify-center w-8 h-8 bg-surface-300 text-gray-600 rounded-full border-2 border-white text-xs font-medium"
+                 [title]="'And ' + (getMultipleAvatarItems(item, column).length - 3) + ' more'">
+              +
+            </div>
+          }
+        </div>
+      </div>
+    }
+    @case ('template') {
+      @if (hasFieldValue(item, column)) {
+        <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')" [innerHTML]="getTemplateValue(item, column)"></span>
+      } @else {
+        @if (context !== 'field5') {
+          <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">--</span>
+        }
+      }
+    }
+    @case ('avatar') {
+      <div class="flex items-center gap-2">
+        <p-avatar [image]="getAvatarUrl(item, column.field)"
+                  shape="circle"
+                  size="normal"
+                  [title]="getFieldTooltip(item, column)">
+        </p-avatar>
+        @if (context !== 'avatar-only') {
+          <span [class]="getFieldClasses(column, context) + ' truncate'"
+                [title]="getFieldTooltip(item, column)">
+            {{ getAvatarTitle(item, column.firstLetterFallbackField || column.field) }}
+          </span>
+        }
+      </div>
+    }
+    @default {
+      @if (hasFieldValue(item, column)) {
+        <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">{{ formatValue(item, column) }}</span>
+      } @else {
+        @if (context !== 'field5') {
+          <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">--</span>
+        }
+      }
+    }
+  }
+</ng-template>
+
+<div class="flex flex-col gap-4 ">
+  <!-- Width tracker - measures the exact component width -->
+  <div #widthTracker class="w-full h-px opacity-0 pointer-events-none relative"></div>
+
+  @if (loading()) {
+    <div [class]="responsiveGridClasses()">
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          <div [class]="'bg-white border border-gray-100 rounded-xl animate-pulse ' + cardPaddingClasses()">
+            <div class="flex gap-4">
+              <!-- Avatar skeleton -->
+              <div class="flex-shrink-0">
+                <div class="w-14 h-14 bg-gray-200 rounded-xl"></div>
+              </div>
+
+              <!-- Content skeleton -->
+              <div class="flex flex-col flex-1 space-y-3">
+                <!-- Title and badge skeleton -->
+                <div class="flex items-start justify-between">
+                  <div class="h-5 bg-gray-200 rounded-md w-3/4"></div>
+                  <div class="h-5 bg-gray-100 rounded-md w-16"></div>
+                </div>
+
+                <!-- Subtitle skeleton -->
+                <div class="flex items-center gap-2">
+                  <div class="h-4 bg-gray-200 rounded w-20"></div>
+                  <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
+                  <div class="h-4 bg-gray-200 rounded w-24"></div>
+                </div>
+
+                <!-- Description skeleton -->
+                <div class="space-y-2">
+                  <div class="h-3 bg-gray-200 rounded w-full"></div>
+                  <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+      }
+    </div>
+  }
+
+  <!-- Error message -->
+  @if (error() && !loading()) {
+    <div class="p-4 rounded-lg">
+      <div class="flex items-center justify-center p-4">
+        <i class="pi pi-exclamation-triangle text-3xl text-yellow-500 mr-3"></i>
+        <span class="text-xl">{{ 'errors.errorLoadingData' | translate }}</span>
+      </div>
+    </div>
+  }
+
+  <!-- No data message -->
+  @if (!loading() && !error() && (!data() || data().length === 0)) {
+    <div class="p-4 rounded-lg">
+      <div class="flex items-center justify-center p-4">
+        <i class="pi pi-info-circle text-3xl text-primary mr-3"></i>
+        <span class="text-xl">{{ 'errors.noDataAvailable' | translate }}</span>
+      </div>
+    </div>
+  }
+
+  <!-- Card grid -->
+  @if (!loading() && !error() && data() && data().length > 0 && canRenderContent()) {
+      <div [class]="responsiveGridClasses()">
+        @for (item of data(); track trackByFn($index, item)) {
+            <div [class]="'group relative bg-white cursor-pointer shadow-sm border border-gray-100 hover:shadow-lg rounded-xl transition-all duration-200 ease-out hover:-translate-y-1 overflow-hidden ' + cardPaddingClasses()"
+                 (click)="onCardClick(item)"
+                 style="will-change: transform; transform: translateZ(0); contain: layout style paint;">
+
+          <!-- Subtle gradient background on hover -->
+          <div class="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-purple-50/0 transition-all duration-300 rounded-xl"></div>
+
+              <!-- Card content -->
+              <div [class]="'relative z-10 flex ' + contentGapClasses()">
+                <!-- Avatar/Icon section with enhanced styling - conditionally shown based on card size -->
+                @if (shouldShowAvatar() && avatarColumn()) {
+                  <div class="flex-shrink-0">
+                    <div class="relative">
+                      <p-avatar [image]="getAvatarUrl(item, avatarColumn()!.field)"
+                                shape="circle"
+                                [size]="cardSize() === 'medium' ? 'normal' : 'large'"
+                                ></p-avatar>
+                    </div>
+                  </div>
+                } @else if (shouldShowAvatar() && shouldShowInteractionAvatar() && interactionIconColumn()) {
+                  <div class="flex-shrink-0">
+                    <div
+                      [class]="'w-10 h-10'"
+                      class="rounded-full flex items-center justify-center border border-solid"
+                      [style]="{
+                        'background': 'linear-gradient(135deg, ' + getInteractionColor(item, interactionIconColumn()!) + '15 0%, ' + getInteractionColor(item, interactionIconColumn()!) + '25 100%)',
+                        'color': getInteractionColor(item, interactionIconColumn()!),
+                        'border-color': getInteractionColor(item, interactionIconColumn()!) + '30'
+                      }">
+                      <span [class]="'material-symbols-outlined font-medium ' + (cardSize() === 'medium' ? 'text-xl' : 'text-xl')">
+                        {{ getInteractionMaterialIconFilled(item, interactionIconColumn()!) }}
+                      </span>
+                    </div>
+                  </div>
+                }
+
+                <!-- Content section -->
+                <div class="flex flex-col flex-1 min-w-0 card-content-transition">
+                  <!-- Tags Section - conditionally shown based on card size -->
+                  @if (shouldShowTags() && getItemTags(item)) {
+                    <div class="flex flex-wrap gap-1 mb-2">
+                      @for (tag of getItemTags(item)!; track tag.tag) {
+                        <span [class]="'px-2 py-1 text-xs rounded-full whitespace-nowrap ' + tag.color">{{ tag.tag }}</span>
+                      }
+                    </div>
+                  }
+                  <!-- Header with title and metadata -->
+                  <div class="flex items-start justify-between mb-1">
+                    @if (cardFields().field1) {
+                      <div [class]="titleFontClasses() + ' flex-1 min-w-0 truncate'">
+                        @if (cardFields().field1!.type === 'avatar') {
+                          <!-- For avatar fields, show the text content as title, not the avatar -->
+                          <span [title]="getFieldTooltip(item, cardFields().field1!)">{{ getEntityNameFromAvatarField(item, cardFields().field1!) }}</span>
+                        } @else {
+                          <!-- For non-avatar fields, use the normal template -->
+                          <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                        [ngTemplateOutletContext]="{ item: item, column: cardFields().field1!, context: 'field1' }">
+                          </ng-container>
+                        }
+                      </div>
+                    }
+                    @if (shouldShowMetadataFieldWithoutDuplication(cardFields().field5, item)) {
+                      <div class="text-gray-500 text-xs ml-3 max-w-[25%] font-medium bg-gray-50 px-2 py-1 rounded-md truncate flex-shrink-0">
+                        <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                      [ngTemplateOutletContext]="{ item: item, column: cardFields().field5!, context: 'field5' }">
+                        </ng-container>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Subtitle/metadata row - conditionally shown based on card size -->
+                  @if (shouldShowSecondaryFields() && (shouldShowSecondaryFieldWithoutDuplication(cardFields().field2, item) || shouldShowSecondaryFieldWithoutDuplication(cardFields().field3, item))) {
+                    <div [class]="'flex items-center gap-2 whitespace-nowrap overflow-hidden ' + subtitleFontClasses()">
+                      @if (shouldShowSecondaryFieldWithoutDuplication(cardFields().field2, item)) {
+                        <div class="flex items-center gap-1 min-w-0">
+                          <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                        [ngTemplateOutletContext]="{ item: item, column: cardFields().field2!, context: 'field2' }">
+                          </ng-container>
+                        </div>
+                      }
+                      @if (shouldShowSecondaryFieldWithoutDuplication(cardFields().field2, item) && shouldShowSecondaryFieldWithoutDuplication(cardFields().field3, item)) {
+                        <span class="w-1 h-1 bg-gray-400 rounded-full flex-shrink-0"></span>
+                      }
+                      @if (shouldShowSecondaryFieldWithoutDuplication(cardFields().field3, item)) {
+                        <div class="flex items-center gap-1 min-w-0">
+                          <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                        [ngTemplateOutletContext]="{ item: item, column: cardFields().field3!, context: 'field3' }">
+                          </ng-container>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <!-- Description/content area - only shown on large cards -->
+                  @if (shouldShowDescriptionFieldWithoutDuplication(cardFields().field4, item)) {
+                    <div class="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                      <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                    [ngTemplateOutletContext]="{ item: item, column: cardFields().field4!, context: 'field4' }">
+                      </ng-container>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Actions overlay (appears on hover) -->
+              @if (hasActionsTemplate()) {
+                <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 p-1">
+                    <ng-container
+                        [ngTemplateOutlet]="actionsTemplate || null"
+                        [ngTemplateOutletContext]="{ $implicit: item }">
+                      </ng-container>
+                  </div>
+                </div>
+              }
+
+          <!-- Search Metadata Section -->
+          @if (searchMetadataEnabled() && hasSearchMetadata(item)) {
+            <div class="relative z-10 mt-4 pt-3 border-t border-gray-100">
+              <!-- Metadata Content -->
+              @if (showSearchMetadata()) {
+                <span class="font-medium">Search Match Details</span>
+                <div class="mt-3 space-y-3 text-sm animate-fadeIn">
+                  <!-- Search Type and Matched Field -->
+                  <div class="flex flex-wrap items-center gap-2">
+                    @if (getSearchType(getSearchMetadata(item))) {
+                      <span [class]="getSearchTypeBadgeClasses(getSearchMetadata(item))">
+                        <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-60"></span>
+                        {{ getSearchTypeLabel(getSearchMetadata(item)) }}
+                      </span>
+                    }
+                    @if (getMatchField(getSearchMetadata(item))) {
+                      <span class="text-gray-600">
+                        <span class="font-medium">Field:</span>
+                        <span class="ml-1 text-gray-800">{{ getMatchField(getSearchMetadata(item)) }}</span>
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Relevance Score -->
+                  @if (getRelevanceScore(getSearchMetadata(item)) > 0) {
+                    <div class="flex items-center space-x-2">
+                      <span class="text-gray-500">Relevance:</span>
+                      <div class="flex items-center space-x-1">
+                        <div class="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
+                            [style.width.%]="getRelevanceScore(getSearchMetadata(item))">
+                          </div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">{{ getRelevanceScore(getSearchMetadata(item)) }}%</span>
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Search Snippet -->
+                  @if (getSearchSnippet(getSearchMetadata(item))) {
+                    <div class="pt-2 border-t border-gray-100">
+                      <div class="text-gray-600">
+                        <span class="font-medium text-gray-700">Excerpt:</span>
+                        <p class="mt-1 text-gray-600 italic leading-relaxed break-words bg-gray-50 px-3 py-2 rounded border"
+                           [innerHTML]="highlightSearchTerms(getSearchSnippet(getSearchMetadata(item)), searchQuery())">
+                        </p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+            </div>
+        }
+      </div>
+
+    <!-- Intersection Observer Sentinel - Invisible element for infinite scroll detection -->
+    @if (hasMoreData() && !isLoadingMore() && data().length > 0) {
+      <div #loadMoreSentinel class="h-1 w-full"></div>
+    }
+
+    <!-- Load more skeletons - match the grid layout -->
+    @if (isLoadingMore()) {
+      <div [class]="responsiveGridClasses()">
+        @for (i of Array(loadMoreSkeletonsCount()).fill(0); track $index) {
+          <div [class]="'bg-white border border-gray-100 rounded-xl animate-pulse shadow-sm ' + cardPaddingClasses()">
+            <div class="flex gap-4">
+              <!-- Avatar skeleton -->
+              <div class="flex-shrink-0">
+                <div class="w-14 h-14 bg-gray-200 rounded-xl"></div>
+              </div>
+
+              <!-- Content skeleton -->
+              <div class="flex flex-col flex-1 space-y-3">
+                <!-- Title and badge skeleton -->
+                <div class="flex items-start justify-between">
+                  <div class="h-5 bg-gray-200 rounded-md w-3/4"></div>
+                  <div class="h-5 bg-gray-100 rounded-md w-16"></div>
+                </div>
+
+                <!-- Subtitle skeleton -->
+                <div class="flex items-center gap-2">
+                  <div class="h-4 bg-gray-200 rounded w-20"></div>
+                  <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
+                  <div class="h-4 bg-gray-200 rounded w-24"></div>
+                </div>
+
+                <!-- Description skeleton -->
+                <div class="space-y-2">
+                  <div class="h-3 bg-gray-200 rounded w-full"></div>
+                  <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Load more button (if needed as fallback) -->
+    @if (hasMoreData() && !isLoadingMore() && data().length > 0) {
+      <div class="flex justify-center p-4">
+        <button
+          type="button"
+          class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors"
+          (click)="onLoadMore()">
+          {{ 'actions.loadMore' | translate }}
+        </button>
+      </div>
+    }
+  }
+</div>

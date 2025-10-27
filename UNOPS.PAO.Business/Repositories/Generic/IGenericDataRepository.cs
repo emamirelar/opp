@@ -4,6 +4,8 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Query;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Filters;
+using UNOPS.PAO.Models.Shared;
 
 public interface IGenericDataRepository<TEntity>
 {

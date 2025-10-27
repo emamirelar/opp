@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Domain.Infrastructure;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
@@ -19,6 +18,10 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Extensions;
 using Microsoft.AspNetCore.Http;
+using UNOPS.PAO.Models.Integrations;
+using UNOPS.PAO.Models.Interactions;
+using UNOPS.PAO.Models.Search;
+using UNOPS.PAO.Models.Shared;
 
 public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 {

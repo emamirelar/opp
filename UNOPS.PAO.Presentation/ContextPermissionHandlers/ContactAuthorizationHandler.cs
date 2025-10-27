@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Presentation.Security;
 
 public class ContactAuthorizationHandler :

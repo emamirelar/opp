@@ -29,7 +29,9 @@
       "@admin/*": ["src/app/features/admin/*"],
       "@ai/*": ["src/app/features/ai/*"],
       "@search/*": ["src/app/features/search/*"],
-      "@features/shared/*": ["src/app/features/shared/*"]
+      "@features/shared/*": ["src/app/features/shared/*"],
+      "@assets/*": ["src/assets/*"],
+      "@styles/*": ["src/styles/*"]
     }
   },
   "angularCompilerOptions": {

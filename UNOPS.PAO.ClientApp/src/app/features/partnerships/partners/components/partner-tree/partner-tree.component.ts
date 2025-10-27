@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, effect, ChangeDetectorRef, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, inject, effect, ChangeDetectorRef, signal, ViewChild } from '@angular/core';
 import { TreeTableModule } from 'primeng/treetable';
 import { TreeNode } from "primeng/api";
 import { ButtonModule } from 'primeng/button';
@@ -6,22 +6,22 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ColumnDefinition, FeatureBaseComponent } from '@shared/reusables/feature-base/feature-base.component';
 import { PartnerTreeService } from '../../services/partner-tree.service';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { CachedDataService } from '@shared/services/cached-data.service';
-import { Router, RouterModule } from '@angular/router';
+import { CachedDataService } from '@shared/services/utils';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { PartnerTree } from '../../models/partner-tree.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from './item/partner-tree-item.component';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
-import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
-import { ListViewColumn } from '@shared/pages/components/listview/listview.model';
+import { PermissionUtilityService } from '@core/services/auth';
+import { FeedbackDialogService } from '@shared/services/ui';
+import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
+import { ListViewColumn } from '@features/list-view/components/listview/listview.model';
+import { Subscription } from 'rxjs';
 
 /**
  * @uiEntity PartnerTree
@@ -46,19 +46,29 @@ import { ListViewColumn } from '@shared/pages/components/listview/listview.model
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './partner-tree.component.scss'
 })
-export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit {
+export class PartnerTreeComponent implements OnInit, OnDestroy {
   @ViewChild('partnerTreeTable') partnerTreeTable: any;
+
+  // Injected services
+  protected cdr = inject(ChangeDetectorRef);
+  protected activatedRoute = inject(ActivatedRoute);
+  public router = inject(Router);
+  service = inject(PartnerTreeService);
+  cachedDataService = inject(CachedDataService);
+  entityConfigurationService = inject(EntityConfigurationService);
+  translateService = inject(TranslateService);
+  feedbackDialogService = inject(FeedbackDialogService);
+  
+  // Subscriptions
+  protected langChangeSubscription?: Subscription;
 
   // State management
   expandedNodes: Map<string, boolean> = new Map();
-  override data: TreeNode<PartnerTree>[] = [];
+  data: TreeNode<PartnerTree>[] = [];
   updatedRecords: any[] = [];
   parentOptions: any[] = [];
-  override service = inject(PartnerTreeService);
-  cachedDataService = inject(CachedDataService);
-  entityConfigurationService = inject(EntityConfigurationService);
   originalData: any[] = [];
-  override isDataLoading = this.service.isLoading();
+  isDataLoading = this.service.isLoading();
 
   // Dynamic partner tree columns loaded from API  
   treeColumns = signal<ListViewColumn[]>([]);
@@ -79,18 +89,11 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
 
   // RBAC permissions
   permissionUtilityService = inject(PermissionUtilityService);
-  override feedbackDialogService = inject(FeedbackDialogService);
   entityPermissionsData = this.permissionUtilityService.createEntityPermissions('PartnerTree');
   entityPermissions = this.entityPermissionsData.entityPermissions;
   permissionsLoading = this.entityPermissionsData.permissionsLoading;
-  override translateService = inject(TranslateService);
 
-  constructor(public override router: Router) {
-    super();
-  }
-
-  override ngOnInit() {
-    super.ngOnInit();
+  ngOnInit() {
     // Load entity permissions
     this.entityPermissionsData.loadPermissions(this.router, this.cdr);
     
@@ -104,12 +107,19 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       }
     });
 
-    this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
+    this.langChangeSubscription = this.translateService.onLangChange.subscribe(() => {
       this.cdr.detectChanges();
     });
 
     // Initialize expandedNodes map
     this.expandedNodes = new Map();
+  }
+
+  ngOnDestroy() {
+    // Clean up subscriptions
+    if (this.langChangeSubscription) {
+      this.langChangeSubscription.unsubscribe();
+    }
   }
 
   // Get filtered partner group options based on parent

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.UNOPSBusiness.Interfaces;
 

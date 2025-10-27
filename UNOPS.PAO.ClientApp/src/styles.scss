@@ -5,7 +5,7 @@
 @use 'primeicons/primeicons.css';
 @use './styles/primeng-unops-theme.scss'; /* UNOPS PrimeNG theme overrides - must come after layout */
 @use './styles/unops-utilities.scss'; /* UNOPS utility classes - must come after theme overrides */
-@use './app/shared/themes/styles/recordPage.scss';
+@use './styles/themes/styles/recordPage.scss';
 
 /* CSS @import statements */
 @import './styles/unops-design-tokens.css';

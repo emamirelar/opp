@@ -1,8 +1,17 @@
 namespace UNOPS.PAO.Business.Managers.Mapping;
 using AutoMapper;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Models;
-using UNOPS.PAO.Models.Document;
+using UNOPS.PAO.Models.AI;
+using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Documents;
+using UNOPS.PAO.Models.Interactions;
+using UNOPS.PAO.Models.Links;
+using UNOPS.PAO.Models.Locations;
+using UNOPS.PAO.Models.OrganizationUnits;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.PartnerTrees;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Users;
 
 public class MappingProfile : Profile
 {

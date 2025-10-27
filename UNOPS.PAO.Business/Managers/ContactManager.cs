@@ -15,9 +15,12 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Helpers;
 using System.Security.Claims;
+using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Search;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Integrations;
 
 public class ContactManager : IContactManager
 {

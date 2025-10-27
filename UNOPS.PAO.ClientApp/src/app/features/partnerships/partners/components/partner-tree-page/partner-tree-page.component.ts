@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { Accordion, AccordionModule, AccordionTab } from 'primeng/accordion';
-import { CachedDataService } from '@shared/services/cached-data.service';
+import { CachedDataService } from '@shared/services/utils';
 import { PartnerCategoryGroup, PartnerGroup } from '../../models/partner-category-group.model';
 
 @Component({

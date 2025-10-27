@@ -1,0 +1,44 @@
+<!-- Mobile dropdown -->
+<div class="block md:hidden p-4 bg-white shadow-sm rounded-lg">
+  <p-dropdown
+    [options]="tabs"
+    [ngModel]="getActiveTab()"
+    (onChange)="onTabChange($event)"
+    optionLabel="translatedLabel"
+    [placeholder]="dropdownPlaceholder"
+    class="w-full"
+    [disabled]="disabled">
+    <ng-template pTemplate="selectedItem" let-selectedOption>
+      <div class="flex items-center gap-2" *ngIf="selectedOption">
+        <span *ngIf="selectedOption.icon" class="material-symbols-outlined text-xl">{{ selectedOption.icon }}</span>
+        <span>{{ selectedOption.translatedLabel }}</span>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="item" let-option>
+      <div class="flex items-center gap-2" [class.opacity-50]="option.disabled">
+        <span *ngIf="option.icon" class="material-symbols-outlined text-xl">{{ option.icon }}</span>
+        <span>{{ option.translatedLabel }}</span>
+      </div>
+    </ng-template>
+  </p-dropdown>
+</div>
+
+<!-- Desktop tabs -->
+<div class="hidden md:block">
+  <p-tabs [value]="activeRoute" [class]="tabsClass">
+    <p-tablist [class]="tabListClass">
+      <p-tab 
+        *ngFor="let tab of tabs"
+        [value]="tab.route"
+        [routerLink]="tab.route"
+        [disabled]="tab.disabled"
+        [class]="getTabClass(tab)"
+        class="flex items-center !gap-2 text-inherit">
+        <span *ngIf="tab.icon" class="material-symbols-outlined text-xl">{{ tab.icon }}</span>
+        <span>{{ tab.label | translate }}</span>
+      </p-tab>
+    </p-tablist>
+  </p-tabs>
+</div>
+
+

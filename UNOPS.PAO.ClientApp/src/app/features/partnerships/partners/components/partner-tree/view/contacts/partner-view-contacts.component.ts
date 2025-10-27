@@ -7,7 +7,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { PartnerViewContactsItemComponent } from './item/partner-view-contacts-item.component';
 import { Router } from '@angular/router';
 import { map } from 'rxjs/operators';
-import { ContactViewModel, GroupedContact } from '@features/shared/models/contact-view.model';
+import { ContactViewModel, GroupedContact } from '@partnerships/contacts/models/contact-view.model';
 import { ContactService } from '@partnerships/contacts/services/contact.service';
 import { PartnerViewContactsDialogComponent } from './dialog/partner-view-contacts-dialog.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';

@@ -1,6 +1,8 @@
 using AutoMapper;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.AI;
+using UNOPS.PAO.Models.OrganizationUnits;
+using UNOPS.PAO.Models.PartnerTrees;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.UNOPSBusiness.Mapping

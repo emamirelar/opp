@@ -1,0 +1,144 @@
+.ai-content-wrapper {
+  position: relative;
+  background: var(--unops-surface-secondary);
+  height: 100%;
+  gap: var(--unops-spacing-lg);
+}
+
+.ai-main-area {
+  transition: margin-right var(--unops-duration-medium) var(--unops-easing-smooth);
+}
+
+.ai-right-panel {
+  position: relative;
+  flex-direction: column;
+  background: var(--unops-surface-elevated);
+  border-left: 1px solid var(--unops-neutral-200);
+  border-top-right-radius: var(--unops-radius-lg);
+  border-bottom-right-radius: var(--unops-radius-lg);
+  transition: all var(--unops-duration-medium) var(--unops-easing-smooth);
+  overflow: hidden;
+  will-change: flex-basis;
+}
+
+.ai-right-panel.resizing {
+  transition: none;
+}
+
+.ai-right-panel.resizing .right-panel-content {
+  pointer-events: none;
+}
+
+:host ::ng-deep body.resizing {
+  user-select: none;
+  cursor: ew-resize !important;
+}
+
+.right-panel-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.entity-content-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--unops-spacing-lg);
+  width: 100%;
+}
+
+.right-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--unops-spacing-lg);
+  border-bottom: 1px solid var(--unops-neutral-200);
+  background: var(--unops-surface-secondary);
+}
+
+.panel-title h4 {
+  margin: 0;
+  font-size: var(--unops-font-size-headline-medium);
+  font-weight: var(--unops-font-weight-semibold);
+  color: var(--unops-neutral-900);
+  font-family: var(--unops-font-body);
+}
+
+.panel-subtitle {
+  font-size: var(--unops-font-size-body-medium);
+  color: var(--unops-neutral-600);
+  margin-top: var(--unops-spacing-xs);
+  font-family: var(--unops-font-body);
+}
+
+.resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  transition: all var(--unops-duration-fast) var(--unops-easing-smooth);
+}
+
+.resize-handle::after {
+  content: '';
+  width: 2px;
+  height: 50px;
+  background-color: var(--unops-neutral-300);
+  border-radius: 1px;
+  transition: background-color var(--unops-duration-fast) var(--unops-easing-smooth);
+}
+
+.resize-handle:hover::after,
+.ai-right-panel.resizing .resize-handle::after {
+  background-color: var(--unops-primary);
+}
+
+.coming-soon-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--unops-spacing-2xl);
+  text-align: center;
+}
+
+.coming-soon-icon {
+  font-size: var(--unops-font-size-display-medium);
+  color: var(--unops-primary);
+  margin-bottom: var(--unops-spacing-lg);
+}
+
+.entity-info {
+  margin-top: var(--unops-spacing-lg);
+  text-align: left;
+}
+
+.info-item {
+  margin-bottom: var(--unops-spacing-sm);
+  padding: var(--unops-spacing-md);
+  background: var(--unops-surface-cool);
+  border-radius: var(--unops-radius-md);
+  border: 1px solid var(--unops-neutral-200);
+}
+
+:host ::ng-deep .ai-main-area app-ai-assistant-panel {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure the parent container uses full height */
+:host {
+  display: block;
+  height: 100%;
+  font-family: var(--unops-font-body);
+}
+

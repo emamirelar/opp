@@ -1,0 +1,43 @@
+<div class="gdrive-document-container">
+  <button
+    *ngIf="showUploadButton()"
+    pButton
+    type="button"
+    [label]="'button.uploadDocument' | translate"
+    icon="pi pi-google"
+    class="p-button-outlined p-button-sm"
+    [disabled]="disabled()"
+    (click)="handleOnSelectDriveBtnClick()">
+  </button>
+
+  <p-dialog
+    [(visible)]="showAddLinkDialog"
+    [header]="'document.addGoogleDriveLink' | translate"
+    [modal]="true"
+    [style]="{width: '50vw'}"
+    [draggable]="false"
+    [resizable]="false">
+    <app-document-gdrive-addlink
+      #addLinkComponent
+      [entityName]="entityName()"
+      [entityId]="entityId()"
+      (onAddLinkSuccess)="handleOnAddLinkSuccess()">
+    </app-document-gdrive-addlink>
+    
+    <ng-template pTemplate="footer">
+      <button
+        pButton
+        type="button"
+        [label]="'common.cancel' | translate"
+        class="p-button-text"
+        (click)="handleOnAddLinkDialogClose(addLinkComponent)">
+      </button>
+      <button
+        pButton
+        type="button"
+        [label]="'common.add' | translate"
+        (click)="handleOnAddLinkBtnClick(addLinkComponent)">
+      </button>
+    </ng-template>
+  </p-dialog>
+</div>

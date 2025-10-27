@@ -1,10 +1,10 @@
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.Models.OrganizationUnits;
 
 namespace UNOPS.PAO.Business.Repositories;
 public class ValuesRepository

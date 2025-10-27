@@ -6,8 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Models;
 using System.Security.Claims;
+using UNOPS.PAO.Models.PartnerTrees;
 
 public interface IPartnerTreeManager
 {
