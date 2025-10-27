@@ -1290,6 +1290,7 @@
 	"message.proposalRequirements": "The proposal cannot be submitted until all required fields are completed.",
 	"message.recordDeletedSuccessfully": "Record deleted successfully!",
 	"message.recordUpdatedSuccessfully": "Record updated successfully!",
+	"message.opportunityCreatedSuccessfully": "Opportunity created successfully!",
 	"message.selectDocumentType": "Please select a document type.",
 	"message.selectDocumentTypeBeforeSaving": "Please select a document type before saving.",
 	"message.selectDocumentTypeRequired": "Please select a document type before saving.",
