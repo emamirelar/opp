@@ -1,0 +1,22 @@
+:host ::ng-deep .tour-button {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+:host ::ng-deep .tour-button:hover {
+  background: var(--unops-neutral-50) !important;
+  transform: translateY(-1px);
+}
+
+:host ::ng-deep .tour-button:focus {
+  box-shadow: 0 0 0 2px var(--unops-primary-lighter) !important;
+}
+
+:host ::ng-deep .tour-button i {
+  color: var(--unops-primary);
+}
+
+:host ::ng-deep .tour-button:hover i {
+  color: var(--unops-primary-dark);
+}
+

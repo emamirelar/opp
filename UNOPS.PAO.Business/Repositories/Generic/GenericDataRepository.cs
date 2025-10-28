@@ -10,6 +10,8 @@ using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Filters;
+using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Utilities.Helpers;
 using Z.EntityFramework.Plus;
 

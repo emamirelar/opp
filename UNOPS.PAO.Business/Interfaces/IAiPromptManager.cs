@@ -3,7 +3,8 @@ namespace UNOPS.PAO.Business.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Security.Claims;
-using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.AI;
+using UNOPS.PAO.Models.Shared;
 
 public interface IAiPromptManager
 {

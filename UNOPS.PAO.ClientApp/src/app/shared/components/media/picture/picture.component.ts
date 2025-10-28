@@ -1,0 +1,103 @@
+import { Component, Input, Output, EventEmitter, inject, ChangeDetectionStrategy, ChangeDetectorRef, signal, effect } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { ButtonModule } from 'primeng/button';
+import { PictureEditorComponent } from './picture-editor/picture-editor.component';
+import { TranslateService } from '@ngx-translate/core';
+
+@Component({
+  selector: 'app-picture',
+  standalone: true,
+  imports: [CommonModule, ButtonModule],
+  templateUrl: './picture.component.html',
+  styleUrls: ['./picture.component.scss'],
+  providers: [DialogService],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class PictureComponent {
+  @Input() imageUrl: string | null = null;
+  @Input() altText: string = 'Profile picture';
+  @Input() size: 'extra-small' | 'small' | 'medium' | 'large' = 'medium';
+  @Input() uploadUrl: string | null = null;
+  @Input() disabled: boolean = false;
+  @Input() entityType: 'Contact' | 'Partner' = 'Contact'; // Added to determine which default image to use
+  @Output() imageChanged = new EventEmitter<string>();
+
+  private dialogRef: DynamicDialogRef | null = null;
+  private translateService = inject(TranslateService);
+  private cdr = inject(ChangeDetectorRef);
+  private imageUrlSignal = signal<string | null>(null);
+
+  constructor(private dialogService: DialogService) {
+    effect(() => {
+      const url = this.imageUrlSignal();
+      if (url) {
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * Get the effective image URL with fallback to default placeholder
+   */
+  getEffectiveImageUrl(): string {
+    if (this.imageUrl && this.imageUrl.trim() !== '') {
+      return this.imageUrl;
+    }
+    // Return default image based on entity type
+    return this.entityType === 'Partner' 
+      ? 'assets/images/Partner.png' 
+      : 'assets/images/Contact.png';
+  }
+
+  /**
+   * Handle image load error by replacing with default placeholder
+   * Includes guard to prevent infinite loop if default image also fails to load
+   */
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    const defaultImagePath = this.entityType === 'Partner' 
+      ? 'assets/images/Partner.png' 
+      : 'assets/images/Contact.png';
+    
+    // Guard: Only set default image if current src is not already the default
+    // This prevents infinite loop if the default image itself fails to load
+    if (!img.src.endsWith(defaultImagePath)) {
+      img.src = defaultImagePath;
+    } else {
+      // Default image failed to load - hide the image and show nothing
+      // The gray background circle from the parent div will remain visible
+      img.style.display = 'none';
+    }
+  }
+
+  getSizeClass(): string {
+    switch(this.size) {
+      case 'extra-small': return 'w-10 h-10';
+      case 'small': return 'w-16 h-16';
+      case 'medium': return 'w-24 h-24';
+      case 'large': return 'w-32 h-32';
+      default: return 'w-24 h-24';
+    }
+  }
+
+  openPictureEditor(): void {
+    this.dialogRef = this.dialogService.open(PictureEditorComponent, {
+      header: this.translateService.instant('title.editPicture'),
+      width: '40vw',
+      breakpoints: { '960px': '95vw' },
+      closable: true,
+      data: {
+        uploadUrl: this.uploadUrl
+      }
+    });
+
+    this.dialogRef.onClose.subscribe((result: string | undefined) => {
+      if (result) {
+        this.imageUrl = result;
+        this.imageUrlSignal.set(result);
+      }
+      this.imageChanged.emit(result);
+    });
+  }
+}

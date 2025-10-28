@@ -8,8 +8,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
 import { filter, Subscription } from 'rxjs';
 import { Contact } from '@partnerships/contacts/models/contact.model';
-import { PictureComponent } from '@shared/reusables/components/picture/picture.component';
-import { GoBackComponent } from '@shared/reusables/components/go-back/go-back.component';
+import { PictureComponent } from '@shared/components/media/picture/picture.component';
+import { GoBackComponent } from '@shared/components/navigation/go-back/go-back.component';
 import { ContactService } from '@partnerships/contacts/services/contact.service';
 
 /**
@@ -62,6 +62,7 @@ interface TabItem {
         [uploadUrl]="getUploadProfilePictureUrl()"
         [altText]="'Contact profile picture'"
         [size]="isMobile() ? 'extra-small' : 'small'"
+        [entityType]="'Contact'"
         [disabled]="!recordData.permissions?.canUpdate"
         (imageChanged)="_loadRecordDetails()"
       />

@@ -10,9 +10,9 @@ import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
 import { Skeleton } from 'primeng/skeleton';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { OrganizationHierarchyService } from '@core/services/organization-hierarchy.service';
-import { UserPreferenceService } from '@core/services/user-preference.service';
-import { GlobalFilterService } from '@core/services/global-filter.service';
+import { OrganizationHierarchyService } from '@core/services/organization';
+import { UserPreferenceService } from '@core/services/user';
+import { GlobalFilterService } from '@core/services/filters';
 import { Subject, takeUntil, forkJoin } from 'rxjs';
 
 interface OrgUnitOption {

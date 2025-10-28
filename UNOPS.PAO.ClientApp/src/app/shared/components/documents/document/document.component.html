@@ -1,0 +1,115 @@
+@if (isReadOnly() !== true && !disabled()) {
+<div class="mb-2 flex gap-2">
+  <ng-content select="document-toolbar"></ng-content>
+</div>
+}
+
+<div class="table-container">
+  <p-table [value]="allDocuments" [scrollable]="true" [scrollHeight]="scrollHeightValue" [loading]="isLoading()">
+    <ng-template #header>
+      <tr>
+        <th class="w-[70%]">{{ 'label.document.name' | translate }}</th>
+        <th class="w-[30%]">{{ 'label.document.type' | translate }}</th>
+        <th class="w-3"></th>
+      </tr>
+    </ng-template>
+    @if (documents().length > 0 || pendingFiles().length > 0) {
+    <ng-template #body let-document>
+      <tr [class]="document.isPending ? 'pending-file-row' : ''">
+        <td class="w-[70%]">
+          <div class="flex items-center gap-1">
+            <i [class]="getDocumentIconCls(document)"></i>
+            @if (!document.isPending && document.link && canPreview()) {
+              <span 
+                class="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
+                (click)="previewDocument(document)"
+                [title]="'button.preview' | translate">
+                {{ document.name }}
+              </span>
+            } @else {
+              <span>{{ document.name }}</span>
+            }
+          </div>
+        </td>
+        <td class="w-[30%]">
+          @if (document.isPending) {
+            <p-select
+              [(ngModel)]="document.selectedDocumentType"
+              [options]="documentTypes()"
+              optionLabel="name"
+              placeholder="{{ 'label.selectDocumentType' | translate }}"
+              [style]="{ width: '100%' }"
+              [disabled]="document.isSaving"
+              appendTo="body"
+            />
+          } @else {
+            {{ document.documentType?.name }}
+          }
+        </td>
+        <td>
+          @if (document.isPending) {
+            <div class="flex gap-1">
+              <p-button 
+                icon="pi pi-check" 
+                size="small"
+                severity="success"
+                rounded
+                class="save-button"
+                [disabled]="!document.selectedDocumentType || document.isSaving"
+                [loading]="document.isSaving"
+                (click)="savePendingFile(document)"
+                pTooltip="{{ 'button.save' | translate }}"
+              />
+              <p-button 
+                icon="pi pi-times" 
+                size="small"
+                severity="danger"
+                rounded
+                [disabled]="document.isSaving"
+                (click)="removePendingFile(document)"
+                pTooltip="{{ 'button.cancel' | translate }}"
+              />
+            </div>
+          } @else {
+            <p-menu #menu [model]="items" [popup]="true" appendTo="body" />
+            <p-button size="small"
+                      class="unops-icon-button"
+                      (click)="handleOnMenuButtonClick($event, document, menu)"
+                      icon="pi pi-ellipsis-v"
+                      severity="secondary"
+                      text
+                      rounded />
+          }
+        </td>
+      </tr>
+    </ng-template>
+    }
+  </p-table>
+  @if (isLoading() == false && documents().length <= 0 && pendingFiles().length <= 0) {
+  <div class="no-data py-8">
+    <div>{{ 'message.noRecordsFound' | translate }}</div>
+  </div>
+  }
+</div>
+
+@defer (when showUploadFile) {
+<p-dialog header="{{ 'title.docUpload' | translate }}"
+          [modal]="true"
+          [(visible)]="showUploadFile"
+          [styleClass]="'upload-file-dialog'"
+          [maximizable]="true"
+          (onHide)="handleOnUploadDocumentDialogClose(uploadDocument)">
+  <app-upload-document #uploadDocument
+                      [entityId]="entityId()"
+                      [entityName]="entityName()"
+                      [acceptedFormat]="acceptedFormat()"
+                      (onUploadSuccess)="handleOnUploadDocumentSuccess()"></app-upload-document>
+
+  <ng-template #footer>
+    <p-button label="{{ 'button.cancel' | translate }}" severity="secondary" (click)="showUploadFile = false" />
+    <p-button icon="pi pi-upload"
+              label="{{ 'button.upload' | translate }}"
+              (click)="handleOnClickUploadDocumentDialogUploadBtn(uploadDocument)" />
+  </ng-template>
+</p-dialog>
+}

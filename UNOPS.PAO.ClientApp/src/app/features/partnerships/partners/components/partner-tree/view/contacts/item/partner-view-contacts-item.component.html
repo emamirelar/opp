@@ -1,13 +1,15 @@
 <div class="px-3 py-2 hover:bg-gray-50 cursor-pointer" (click)="onContactClick()">
   <div class="flex items-center gap-3">
     <div class="flex-shrink-0">
-      <img *ngIf="contact.profilePictureUrl" [src]="contact.profilePictureUrl" 
+      <img *ngIf="contact.profilePictureUrl" 
+           [src]="contact.profilePictureUrl" 
+           (error)="onImageError($event)"
            class="h-10 w-10 rounded-full object-cover" 
            alt="Profile picture">
-      <div *ngIf="!contact.profilePictureUrl" 
-           class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-medium">
-        {{getInitials()}}
-      </div>
+      <img *ngIf="!contact.profilePictureUrl" 
+           src="assets/images/Contact.png"
+           class="h-10 w-10 rounded-full object-cover" 
+           alt="Default profile picture">
     </div>
     <div class="flex-grow min-w-0">
       <div class="font-medium text-gray-900">{{contact.firstName}} {{contact.lastName}}</div>

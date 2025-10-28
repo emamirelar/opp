@@ -9,8 +9,11 @@ using System.Text;
 using System.Threading.Tasks;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Specifications;
-using UNOPS.PAO.Models;
 using System.Security.Claims;
+using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Search;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Integrations;
 
 public interface IContactManager
 {

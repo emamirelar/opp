@@ -1,0 +1,305 @@
+---
+description: UNOPS Opportunity+ System - .NET Implementation Guidelines and Patterns
+globs: *.cs
+alwaysApply: true
+---
+
+# UNOPS Opportunity+ System - .NET Implementation Guidelines
+
+Comprehensive implementation guidelines for .NET development in the UNOPS Opportunity+ System. This rule defines the architectural patterns, conventions, and best practices used throughout the codebase.
+
+Based on analysis of the existing codebase patterns and established architectural decisions.
+
+## Entity Framework & Data Access
+
+### Entity Configuration
+- **Use inline configuration** in `OnModelCreating()` method rather than separate `IEntityTypeConfiguration<T>` files
+- Configure entities directly in the DbContext using fluent API
+- Example pattern:
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    base.OnModelCreating(modelBuilder);
+    
+    modelBuilder.Entity<EntityName>(entity =>
+    {
+        entity.HasOne(x => x.RelatedEntity)
+            .WithMany()
+            .HasForeignKey(x => x.RelatedEntityId);
+    });
+}
+```
+
+### Entity Base Classes
+- **Inherit from `ModifiableDeletableEntity<int, int>`** for new entities
+- Provides: `Id`, `Name`, `Status`, audit fields (`CreatedBy`, `CreatedDate`, `LastModifiedBy`, `LastModifiedDate`), soft delete (`IsDeleted`, `DeletedBy`, `DeletedDate`), `WorkflowStatus`
+- Use `EntityStatus` enum for entity status management
+- Implement audit trails automatically via `AuditableDbContext`
+
+### Database Context
+- Use PostgreSQL as the primary database
+- Inherit from `AuditableDbContext<int, int>` for audit functionality
+- Set default schema to "public": `modelBuilder.HasDefaultSchema("public")`
+- Configure warning suppression: `optionsBuilder.ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.PendingModelChangesWarning))`
+
+## Repository Pattern
+
+### Generic Repositories
+- Use `DataRepository<TEntity>` for basic CRUD operations
+- Use `GenericDataRepository<TEntity>` for advanced operations with filtering and pagination
+- Repository pattern with `ApplyIncludes()` method for eager loading
+- Example:
+```csharp
+private readonly DataRepository<EntityName> repository;
+
+public Manager(AppDbContext context)
+{
+    repository = new DataRepository<EntityName>(context);
+}
+```
+
+### Repository Methods
+- Async methods: `GetByIdAsync()`, `AddAsync()`, `UpdateAsync()`
+- Include support: `GetByIdAsync(int id, string[] includes)`
+- Pagination support via `GetAllWithPagination<TFilter, TResponse>()`
+- Specification pattern for complex queries
+
+## Business Layer (Managers)
+
+### Manager Pattern
+- Business logic encapsulated in managers (e.g., `ContactManager`, `PartnerManager`, `InteractionManager`, `DocumentManager`)
+- Naming convention: Classes in `UNOPS.PAO.Business/Managers` use the `*Manager` suffix (not `Service`).
+- Managers injected via `IManagerWrapper` facade pattern
+- Constructor injection: `IMapper mapper, AppDbContext context, IManagerWrapper managerWrapper`
+- Example structure:
+```csharp
+public class EntityManager : IEntityManager
+{
+    private readonly IMapper mapper;
+    private readonly AppDbContext context;
+    private readonly DataRepository<Entity> repository;
+    private readonly IManagerWrapper managerWrapper;
+    
+    private int currentUserId => managerWrapper.CurrentUser?.Id ?? 0;
+    
+    public EntityManager(IMapper mapper, AppDbContext context, IManagerWrapper managerWrapper)
+    {
+        this.mapper = mapper;
+        this.context = context;
+        this.repository = new DataRepository<Entity>(context);
+        this.managerWrapper = managerWrapper;
+    }
+}
+```
+
+### Manager Wrapper
+- Central facade: `ManagerWrapper` implements `IManagerWrapper`
+- Provides access to all managers, AutoMapper, DbContext, current user
+- Register new managers in constructor and interface
+- Conditional logic for UNOPS override scenarios
+
+## Presentation Layer (Controllers)
+
+### Controller Structure
+- Inherit from `ControllerBase`
+- Use constructor injection for dependencies
+- Standard decorators: `[Route("/")]`, `[ApiController]`, `[Authorize]`
+- Permission-based authorization: `[PermissionAuthorize(PermissionNames.CanAction)]`
+
+### Response Models and Data Transfer
+- **NEVER return database entities directly from controllers**
+- **ALWAYS use DTOs/Models for API responses**
+- Controllers must transform entity data through mapping before returning to clients
+- This ensures separation of concerns, API stability, and prevents exposure of internal data structures
+- Example:
+```csharp
+// BAD - Never do this
+public async Task<IActionResult> GetEntity(int id)
+{
+    var entity = await manager.EntityManager.GetByIdAsync(id);
+    return Ok(entity); // Direct entity exposure
+}
+
+// GOOD - Always use DTOs/Models
+public async Task<IActionResult> GetEntity(int id)
+{
+    var entity = await manager.EntityManager.GetByIdAsync(id);
+    var model = mapper.Map<EntityModel>(entity);
+    return Ok(model); // Mapped DTO/Model
+}
+```
+
+### API Routing
+- Use `APIDictionary` constants for route definitions
+- Pattern: `[HttpGet(APIDictionary.EntityName)]`
+- RESTful conventions: GET, POST, PUT, DELETE
+- Route parameters: `APIDictionary.EntityName + "/{id}"`
+
+### Controller Dependencies
+- Standard injections: `IManagerWrapper`, `IAuthorizationService`, `IMapper`, `UserResolverService<int>`
+- Current user access: `private int _currentUserId => userResolverService.GetCurrentUserId();`
+- Example:
+```csharp
+public class EntityController : ControllerBase
+{
+    private readonly IManagerWrapper manager;
+    private readonly IAuthorizationService authorizationService;
+    private readonly IMapper mapper;
+    
+    public EntityController(IManagerWrapper manager, IAuthorizationService authorizationService, IMapper mapper)
+    {
+        this.manager = manager;
+        this.authorizationService = authorizationService;
+        this.mapper = mapper;
+    }
+}
+```
+
+### External vs Internal Controllers
+- **Internal controllers**: `Controllers/` folder for authenticated internal users
+- **External controllers**: `Controllers/External/` folder for external users (applicants)
+- Same controller names allowed due to namespace separation
+
+## Models & DTOs
+
+### Model Conventions
+- Separate Internal/External DTOs: `EntityInternalDTO`, `EntityExternalDTO`
+- Naming convention: Classes in `UNOPS.PAO.Models` end with `Model` (for read models) or `DTO` (for transport objects). Avoid `Service` in names.
+- Request models: `EntityRequest`, `EntityCreateRequest`, `EntityUpdateRequest`
+- Response models: `EntityModel`, `EntityResponse`
+- Filter models: `EntityFilterRequest` inheriting from `PaginationRequest`
+
+### Model Structure
+- Use nullable reference types appropriately
+- Required properties: `required` keyword or constructor parameters
+- Extend `ExtensibleModel` for entities with dynamic properties
+- Use `TypeaheadInput` for dropdown/typeahead data
+
+## Authorization & Security
+
+### Authorization Handlers
+- Custom handlers inherit from `AuthorizationHandler<OperationAuthorizationRequirement, TResource>`
+- Permission-based system using `OperationAuthorizationRequirement`
+- User ID extraction: `int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0")`
+- Entity-level permissions via `EntityRoleFilter`
+
+### Permission System
+- Define permissions in `PermissionNames` enum
+- Use `[PermissionAuthorize(PermissionNames.Permission)]` attribute
+- Implement authorization requirements as static classes (e.g., `EntityActions.View`)
+
+## Error Handling & Validation
+
+### Exception Handling
+- `GlobalExceptionHandler` implements `IExceptionHandler`
+- `BusinessException` for business rule violations (400 status)
+- `UnauthorizedAccessException` for forbidden access (403 status)
+- `KeyNotFoundException` for not found scenarios (404 status)
+- Return `ProblemDetails` with appropriate HTTP status codes
+
+### Validation
+- Business rule validation in managers
+- Throw `BusinessException` with descriptive messages
+- Use `ErrorDetails` for structured error information
+- Model validation via data annotations where appropriate
+
+## Dependency Injection
+
+### Service Registration
+- Use Lamar container
+- Manager registration: `services.AddScoped<IManagerWrapper, ManagerWrapper>()`
+- AutoMapper: `services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies())`
+- Conditional services based on `IsUNOPSOverride` configuration
+- Service discovery: `services.Scan()` for auto-registration patterns
+
+### Service Lifetime
+- **Scoped**: Controllers, Managers, DbContext, Authorization services
+- **Singleton**: Configuration, immutable services
+- **Transient**: Rarely used, for lightweight services
+
+## AutoMapper Integration
+
+### Mapping Configuration
+- Register all assemblies: `AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies())`
+- Create mapping profiles: inherit from `Profile`
+- Inject `IMapper` into managers and controllers
+- Standard mapping: `mapper.Map<DestinationType>(source)`
+
+### Mapping Patterns
+- Entity to Model: `mapper.Map<EntityModel>(entity)`
+- Request to Entity: `mapper.Map<Entity>(request)`
+- Collection mapping: `mapper.Map<IEnumerable<ModelType>>(entities)`
+
+## Async/Await Patterns
+
+### Async Guidelines
+- Use async/await throughout the stack
+- Repository methods: `async Task<T>` return types
+- Manager methods: `async Task<T>` for operations
+- Controller actions: `async Task<IActionResult>`
+- No blocking calls (avoid `.Result` or `.Wait()`)
+
+## Database Migrations
+
+### Migration Patterns
+- Use Entity Framework migrations
+- Descriptive migration names
+- Include both `Up()` and `Down()` methods
+- Test migrations on development data
+- Coordinate migration deployment with releases
+
+## Logging
+
+### Logging Implementation
+- Inject `ILogger<T>` into classes that need logging
+- Use structured logging with message templates
+- Log levels: Error for exceptions, Warning for business rule violations, Information for operations
+- Log context information (user ID, entity ID, operation)
+
+## Configuration Management
+
+### Configuration Patterns
+- Use `IConfiguration` for app settings
+- Environment-specific configurations: `appsettings.{Environment}.json`
+- Secure secret management for production
+- Feature flags: `IsUNOPSOverride` pattern for conditional behavior
+
+## Data Validation & Business Rules
+
+### Validation Strategy
+- Domain validation in entity models
+- Business rule validation in managers
+- Input validation via model binding and data annotations
+- Use `BusinessException` for business rule violations
+- Consistent error message format
+
+## Testing Considerations
+
+### Testable Design
+- Dependency injection enables testing
+- Interface-based abstractions
+- Separate business logic from data access
+- Manager pattern isolates business rules
+- Repository pattern enables data mocking
+
+---
+
+## Implementation Checklist
+
+When implementing new features:
+
+- [ ] Create entity inheriting from `ModifiableDeletableEntity<int, int>`
+- [ ] Add inline EF configuration in `OnModelCreating()`
+- [ ] Create manager with `IManagerInterface` and implementation
+- [ ] Add manager to `ManagerWrapper` and `IManagerWrapper`
+- [ ] Create appropriate DTOs (Internal/External, Request/Response)
+- [ ] Implement controller with proper authorization
+- [ ] Add API routes to `APIDictionary`
+- [ ] Create authorization handler if needed
+- [ ] Add AutoMapper profiles for entity-model mapping
+- [ ] Implement error handling with `BusinessException`
+- [ ] Add comprehensive logging
+- [ ] Write unit tests for business logic
+- [ ] **Ensure controllers never return entities directly - always use DTOs/Models**
+
+This implementation guide ensures consistency with the established codebase patterns and architectural decisions.

@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, EventEmitter, inject, Input, OnInit, Output, signal } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { CachedDataService } from '@shared/services/cached-data.service';
+import { CachedDataService } from '@shared/services/utils';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { FeedbackDialogService } from '@shared/services/ui';
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { LanguageService } from '@shared/services/language.service';
+import { LanguageService } from '@shared/services/utils';
 import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { DividerModule } from 'primeng/divider';
@@ -28,7 +28,7 @@ import { Contact } from '@partnerships/contacts/models/contact.model';
 import { CheckboxModule } from 'primeng/checkbox';
 import { FormsModule } from '@angular/forms';
 import { ContactEditDialogFooterComponent } from './footer/contact-edit-dialog-footer.component';
-import { AiTranscribeComponent } from '@shared/reusables/components/ai-transcribe/ai-transcribe.component';
+import { AiTranscribeComponent } from '@features/ai/components/ai-transcribe/ai-transcribe.component';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogService } from 'primeng/dynamicdialog';
 import { DuplicateConfirmationDialogComponent, DuplicateDetectionResponse } from '../duplicate-confirmation-dialog/duplicate-confirmation-dialog.component';
@@ -162,6 +162,17 @@ export class ContactEditDialogComponent implements OnInit {
 
     // Set up partner ID change listener to update partner name
     this.setupPartnerIdChangeListener();
+
+    // Set up conditional validation for assistant email
+    effect(() => {
+      const assistantEmailControl = this.formGroup.get('assistantEmail');
+      if (this.showAssistantFields()) {
+        assistantEmailControl?.setValidators([Validators.required, Validators.email]);
+      } else {
+        assistantEmailControl?.clearValidators();
+      }
+      assistantEmailControl?.updateValueAndValidity();
+    });
   }
 
   ngOnInit() {

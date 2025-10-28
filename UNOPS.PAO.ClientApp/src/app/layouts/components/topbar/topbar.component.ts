@@ -3,7 +3,6 @@ import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../../services/layout.service';
 import { LanguageSelectorComponent } from './language-selector/language-selector.component';
 import { StyleClassModule } from 'primeng/styleclass';
-import { PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { PopoverModule } from 'primeng/popover';
 import { ToastModule } from 'primeng/toast';
@@ -11,16 +10,16 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { TooltipModule } from 'primeng/tooltip';
 import { TabViewModule } from 'primeng/tabview';
 import { DialogModule } from 'primeng/dialog';
-import { NotificationService, Notification } from '@shared/services/notification.service';
+import { NotificationService, Notification } from '@shared/services/ui';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
-import { ComponentResolverService } from '@features/shared/services/component-resolver.service';
+import { ComponentResolverService } from '@shared/services/utils/component-resolver.service';
 import { interval, Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService } from '@core/services/auth';
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
-import { ImportService } from '@shared/reusables/components/import/import.service';
+import { ImportDialogService } from '@features/import-export/components/import/dialog/import-dialog.service';
+import { ImportService } from '@features/import-export/components/import/import.service';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MenuModule } from 'primeng/menu';
@@ -28,17 +27,17 @@ import { RippleModule } from 'primeng/ripple';
 import { InputTextModule } from 'primeng/inputtext';
 import { AvatarModule } from 'primeng/avatar';
 import { GlobalSearchBarComponent } from './global-search-bar/global-search-bar.component';
-import { RoleService } from '@core/services/role.service';
+import { RoleService } from '@core/services/auth';
 import { RoleDialogComponent } from './role-dialog/role-dialog.component';
 import { ProfileDialogComponent } from '../profile-dialog/profile-dialog.component';
 
 import { GlobalFiltersDialogComponent } from './global-filters-dialog/global-filters-dialog.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { GlobalFilterService } from '@core/services/global-filter.service';
-import { UserPreferenceService } from '@core/services/user-preference.service';
-import { GlobalFiltersDialogService } from '@core/services/global-filters-dialog.service';
-import { TourControlComponent } from '@shared/components/tour-control/tour-control.component';
-import { ConfigurationService } from '@core/services/configuration.service';
+import { GlobalFilterService } from '@core/services/filters';
+import { UserPreferenceService } from '@core/services/user';
+import { GlobalFiltersDialogService } from '@core/services/filters';
+import { TourControlComponent } from '@shared/components/tours/tour-control/tour-control.component';
+import { ConfigurationService } from '@core/services/configuration';
 import { AiAssistantService } from '@ai/services/ai-assistant.service';
 import { FormsModule } from '@angular/forms';
 
@@ -670,7 +669,11 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
     // Handle other notification types that require records
     if (notification.category && notification.records && notification.records.length > 0) {
-      if (notification.category.startsWith('bulk_') && notification.responseType !== 'Error') {
+      // Check if this is a bulk import notification (starts with 'bulk_' or is a known import type)
+      const isImportNotification = notification.category.startsWith('bulk_') || 
+                                    notification.category === 'user_role_import';
+      
+      if (isImportNotification && notification.responseType !== 'Error') {
         try {
           this.importDialogService.data.set([]);
           
@@ -689,9 +692,26 @@ export class TopbarComponent implements OnInit, OnDestroy {
           }
           
           this.importDialogService.setNotificationInfo(notification.id, this.userId, notification.message);
+
+          // Determine import type and title from notification category
+          let title = "Import";
+          let importType = "contact"; // Default fallback
+
+          if (notification.category.startsWith('bulk_')) {
+            // Extract entity type from category like 'bulk_contact_action' -> 'contact'
+            const entityType = notification.category.split('_')[1];
+            importType = entityType;
+            title = "Import " + entityType.charAt(0).toUpperCase() + entityType.slice(1);
+          } else if (notification.category === 'user_role_import') {
+            importType = 'user_role_import';
+            title = "Import User Role";
+          }
+
+          // Set the import type BEFORE opening the dialog
+          this.importDialogService.setImportType(importType);
           
           this.importDialogService.openImportDialog(
-            notification.category === 'bulk_contact_action' ? 'Import Contact' : 'Import'
+            title
           );
         } catch (error) {
           // Error processing notification data
@@ -1172,19 +1192,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
   onImageError(event: any): void {
     console.error('AI assistant image failed to load:', event);
     console.error('Image src:', event.target?.src);
-    // Try alternative paths first
-    const img = event.target;
-    if (img.src.includes('./images/')) {
-      console.log('Trying alternative path: images/AI_visual_64.svg');
-      img.src = 'images/AI_visual_64.svg';
-    } else if (img.src.includes('images/AI_visual_64.svg') && !img.src.includes('assets/')) {
-      console.log('Trying alternative path: assets/images/AI_visual_64.svg');
-      img.src = 'assets/images/AI_visual_64.svg';
-    } else {
-      // All paths failed, show fallback icon
-      console.log('All image paths failed, showing fallback icon');
-      this.showFallbackIcon = true;
-      this.cdr.markForCheck();
-    }
+    // Images are now in assets/images/ - show fallback icon if path fails
+    console.log('Image path failed, showing fallback icon');
+    this.showFallbackIcon = true;
+    this.cdr.markForCheck();
   }
 }

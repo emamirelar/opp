@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.AI;
 using Newtonsoft.Json.Linq;
 using System.Security.Claims;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Business.Interfaces;
 

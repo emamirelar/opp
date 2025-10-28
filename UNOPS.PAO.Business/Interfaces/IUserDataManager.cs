@@ -1,4 +1,4 @@
-﻿ using UNOPS.PAO.Models;
+﻿using UNOPS.PAO.Models.Users;
 
 namespace UNOPS.PAO.Business.Interfaces;
 public interface IUserDataManager

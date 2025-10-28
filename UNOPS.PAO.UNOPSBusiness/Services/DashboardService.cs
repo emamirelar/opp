@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Domain.Entities;
@@ -13,6 +12,11 @@ using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDomain.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using UNOPS.PAO.Models.OrganizationUnits;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Interactions;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services;
 

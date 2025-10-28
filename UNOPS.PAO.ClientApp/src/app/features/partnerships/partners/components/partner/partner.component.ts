@@ -2,26 +2,26 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestro
 import { ButtonModule } from 'primeng/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { LanguageService } from '@shared/services/language.service';
+import { LanguageService } from '@shared/services/utils';
 import { Subscription } from 'rxjs';
 import { PartnerService } from '../../services/partner.service';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
+import { FeedbackDialogService } from '@shared/services/ui';
 import { PartnerNewComponent } from './new/partner-new.component';
 import { Partner } from '../../models/partner.model';
-import { ListviewComponent } from '@shared/pages/components/listview/listview.component';
-import { ListViewColumn, ListViewConfig, SearchParams } from '@shared/pages/components/listview/listview.model';
+import { ListviewComponent } from '@features/list-view/components/listview/listview.component';
+import { ListViewColumn, ListViewConfig, SearchParams } from '@features/list-view/components/listview/listview.model';
 import { PartnerEditDialogFooterComponent } from './edit-dialog/footer/partner-edit-dialog-footer.component';
 import { PartnerEditDialogComponent } from './edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
-import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
-import { SearchField } from '@shared/services/search-parser.service';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
-import { EntityPermissions } from '@core/services/permission.service';
-import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
-import { CachedDataService } from '@shared/services/cached-data.service';
+import { ImportDialogService } from '@features/import-export/components/import/dialog/import-dialog.service';
+import { SearchField } from '@shared/services/utils';
+import { PermissionUtilityService } from '@core/services/auth';
+import { EntityPermissions } from '@core/services/auth';
+import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
+import { CachedDataService } from '@shared/services/utils';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { PageContextService } from '@shared/services/page-context.service';
+import { PageContextService } from '@shared/services/utils';
 
 
 /**

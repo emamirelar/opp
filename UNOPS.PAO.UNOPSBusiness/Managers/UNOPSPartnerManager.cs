@@ -24,7 +24,6 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Infrastructure;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -37,6 +36,11 @@ using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using static Google.Cloud.Vision.V1.ProductSearchResults.Types;
 using UNOPS.PAO.UNOPSBusiness.Extensions;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Integrations;
+using UNOPS.PAO.Models.Interactions;
+using UNOPS.PAO.Models.Contacts;
 
 public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 {

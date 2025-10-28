@@ -4,17 +4,17 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Button } from 'primeng/button';
 import { HttpClient } from '@angular/common/http';
-import { ListviewComponent } from '@shared/pages/components/listview/listview.component';
-import { ListViewColumn, ListViewConfig, SearchParams } from '@shared/pages/components/listview/listview.model';
-import { PermissionUtilityService } from '@core/services/permission-utility.service';
-import { FeedbackDialogService } from '@shared/services/feedback-dialog.service';
-import { EntityConfigurationService } from '@features/shared/services/entity-configuration.service';
+import { ListviewComponent } from '@features/list-view/components/listview/listview.component';
+import { ListViewColumn, ListViewConfig, SearchParams } from '@features/list-view/components/listview/listview.model';
+import { PermissionUtilityService } from '@core/services/auth';
+import { FeedbackDialogService } from '@shared/services/ui';
+import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { InteractionModalComponent } from '@partnerships/interactions/components/interaction/modal/interaction-modal.component';
 import { Router } from '@angular/router';
-import { SearchField } from '@shared/services/search-parser.service';
-import { InteractionIconService } from '@shared/services/interaction-icon.service';
-import { TimelineComponent, TimelineConfig } from '@shared/reusables/components/timeline/timeline.component';
+import { SearchField } from '@shared/services/utils';
+import { InteractionIconService } from '@shared/services/domain';
+import { TimelineComponent, TimelineConfig } from '@shared/components/data-display/timeline/timeline.component';
 import { TabViewModule } from 'primeng/tabview';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
@@ -440,55 +440,17 @@ export class PartnerViewInteractionsComponent implements OnInit {
   }
 
   /**
-   * @uiButton edit_interaction
-   * @description Opens the interaction editing modal with existing interaction data for modification
-   * @label Edit Interaction
-   * @icon pi pi-pencil
-   * @when_to_use When you need to update details of an existing interaction, add notes, or modify interaction information
-   * @permissions INTERACTION_UPDATE
+   * @uiButton view_interaction
+   * @description Opens the interaction detail page in a new tab for viewing or editing
+   * @label View Interaction
+   * @icon pi pi-external-link
+   * @when_to_use When you want to view full details of an interaction record
+   * @permissions INTERACTION_READ
    */
   openEditInteractionModal(item: any): void {
-    // Check if user has update permission
-    if (!this.permissionUtilityService.canUpdate(this.entityPermissions())) {
-      this.feedbackDialogService.showErrorToast({
-        detail: this.translateService.instant('partner.interactions.error.editPermissionDenied'),
-        summary: this.translateService.instant('common.error.permissionDenied')
-      });
-      return;
-    }
-
-    const ref = this.dialogService.open(InteractionModalComponent, {
-      header: this.translateService.instant('partner.interactions.modal.editHeader'),
-      width: '90%',
-      height: '90%',
-      modal: true,
-      data: {
-        id: item.id,
-        initialData: item
-      }
-    });
-
-    ref.onClose.subscribe((result) => {
-      if (result) {
-        // Refresh the listview and timeline
-        window.dispatchEvent(new CustomEvent('refresh-listview'));
-
-        const timelineElement = document.querySelector('app-timeline') as any;
-        if (timelineElement) {
-          if (result.date && timelineElement.invalidateCache) {
-            const interactionDate = new Date(result.date);
-            const bufferDays = 7;
-            const start = new Date(interactionDate.getTime() - (bufferDays * 24 * 60 * 60 * 1000));
-            const end = new Date(interactionDate.getTime() + (bufferDays * 24 * 60 * 60 * 1000));
-            timelineElement.invalidateCache(start, end);
-          }
-
-          if (timelineElement.refreshTimeline) {
-            timelineElement.refreshTimeline();
-          }
-        }
-      }
-    });
+    // Navigate to interaction detail page in new tab
+    const interactionUrl = `#/partnerships/interactions/${item.id}`;
+    window.open(interactionUrl, '_blank');
   }
 
   onSearchChange(searchParams: SearchParams) {

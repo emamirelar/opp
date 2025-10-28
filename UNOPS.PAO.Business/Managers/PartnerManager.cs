@@ -13,7 +13,6 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
-using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
@@ -23,6 +22,9 @@ using UNOPS.PAO.Domain.Specifications;
 using System.Security.Claims;
 using UNOPS.PAO.Business.Extensions;
 using Microsoft.EntityFrameworkCore;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Integrations;
 
 public class PartnerManager : IPartnerManager
 {

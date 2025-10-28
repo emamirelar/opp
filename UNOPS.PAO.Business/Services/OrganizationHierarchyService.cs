@@ -2,9 +2,10 @@ using Microsoft.Extensions.Caching.Memory;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
-using UNOPS.PAO.Models;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.Models.OrganizationUnits;
+using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Business.Services
 {

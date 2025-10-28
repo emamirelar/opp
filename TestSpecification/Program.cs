@@ -1,5 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 using System.Diagnostics;
 using System.Text.Json;

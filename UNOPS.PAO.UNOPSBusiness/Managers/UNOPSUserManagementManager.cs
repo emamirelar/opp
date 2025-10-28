@@ -14,6 +14,9 @@ using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
 using NpgsqlTypes;
+using UNOPS.PAO.Models.Users;
+using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.AI;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 

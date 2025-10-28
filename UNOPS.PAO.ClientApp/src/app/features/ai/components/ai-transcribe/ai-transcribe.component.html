@@ -1,0 +1,93 @@
+<div class="flex flex-col">
+  <div *ngIf="!uploadedFile()" class="flex justify-end">
+    <!-- Hidden file inputs -->
+    <input #fileInput type="file" class="hidden" accept="image/*" (change)="onFileSelect($event)">
+    <input #audioInput type="file" class="hidden" accept="audio/*" (change)="onFileSelect($event)">
+
+    <!-- Dropdown menu button -->
+    <div class="inline-flex">
+      <p-button
+        icon="pi pi-bolt"
+        [label]="'button.preFillOptions' | translate"
+        (onClick)="toggleMenu($event)"
+        [outlined]="true"
+        class="w-full">
+      </p-button>
+      <p-menu #menu [model]="transcribeMenuItems" [popup]="true" [appendTo]="'body'"></p-menu>
+    </div>
+  </div>
+
+  <!-- Preview area if file selected -->
+  <div *ngIf="uploadedFile()" class="mt-3 flex flex-col items-center">
+    <!-- Image preview -->
+    <div *ngIf="uploadedFile()?.preview" class="mb-2 max-w-full max-h-32 overflow-hidden">
+      <img [src]="uploadedFile()?.preview" alt="Preview" class="max-w-full max-h-32 object-contain">
+    </div>
+
+    <!-- Audio preview -->
+    <div *ngIf="!uploadedFile()?.preview && uploadedFile()?.file && uploadedFile()?.file?.type?.startsWith('audio/')" class="w-full mb-2">
+      <audio controls class="w-full h-8">
+        <source [src]="getAudioUrl(uploadedFile()?.file)" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="flex gap-2 mt-2">
+      <p-button
+        icon="pi pi-times"
+        [label]="'button.remove' | translate"
+        (onClick)="uploadedFile.set(null)"
+        [outlined]="true"
+        severity="danger"
+        size="small">
+      </p-button>
+
+      <p-button
+        icon="pi pi-check"
+        [label]="'button.preFillFrom' | translate"
+        (onClick)="transcribeFile()"
+        [loading]="isUploading()"
+        size="small">
+      </p-button>
+    </div>
+  </div>
+</div>
+
+<!-- Camera capture dialog -->
+<p-dialog
+  [visible]="showCamera()"
+  (visibleChange)="showCamera.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{width: '90vw', maxWidth: '640px'}"
+  (onHide)="stopCamera()"
+  [header]="'title.takePhoto' | translate">
+
+  <div class="flex flex-col gap-4">
+    <div class="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
+      <video #video class="w-full h-full object-cover" autoplay playsinline></video>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="w-4/5 h-3/5 border-2 border-white/50 rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"></div>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2">
+      <p-button
+        icon="pi pi-times"
+        (onClick)="stopCamera()"
+        [label]="'button.cancel' | translate"
+        class="p-button-secondary">
+      </p-button>
+      <p-button
+        icon="pi pi-camera"
+        (onClick)="captureImage()"
+        [label]="'button.capture' | translate">
+      </p-button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- Hidden canvas for image processing -->
+<canvas #canvas class="hidden"></canvas>
+
+

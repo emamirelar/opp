@@ -3,9 +3,9 @@ import { RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { Partner } from '@partnerships/partners/models/partner.model';
-import { PictureComponent } from '@shared/reusables/components/picture/picture.component';
-import { GoBackComponent } from '@shared/reusables/components/go-back/go-back.component';
-import { ResponsiveTabsComponent, ResponsiveTabItem } from '@shared/reusables/components/responsive-tabs';
+import { PictureComponent } from '@shared/components/media/picture/picture.component';
+import { GoBackComponent } from '@shared/components/navigation/go-back/go-back.component';
+import { ResponsiveTabsComponent, ResponsiveTabItem } from '@shared/components/navigation/responsive-tabs';
 import { PartnerService } from '@partnerships/partners/services/partner.service';
 
 /**
@@ -46,6 +46,7 @@ import { PartnerService } from '@partnerships/partners/services/partner.service'
             [uploadUrl]="getUploadLogoUrl()"
             [altText]="'partner.tabs.logoAltText' | translate"
             [size]="isMobile() ? 'extra-small' : 'small'"
+            [entityType]="'Partner'"
             [disabled]="!recordData.permissions?.canUpdate"
             (imageChanged)="_loadRecordDetails()"
           />

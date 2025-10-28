@@ -1,6 +1,6 @@
 using AutoMapper;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.PartnerTrees;
 
 namespace UNOPS.PAO.Business.Mapping;
 

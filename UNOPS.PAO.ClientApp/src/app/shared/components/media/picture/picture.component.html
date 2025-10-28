@@ -1,0 +1,16 @@
+<div class="relative group ">
+  <!-- Profile picture -->
+  <div [ngClass]="getSizeClass()" class="rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+    <img [src]="getEffectiveImageUrl()" 
+         [alt]="altText" 
+         (error)="onImageError($event)"
+         class="w-full h-full object-cover">
+  </div>
+
+  <!-- Edit button overlay -->
+  @if (!disabled) {
+    <div class="absolute inset-0 flex items-end justify-end opacity-0 group-hover:opacity-90 transition-opacity">
+      <p-button icon="pi pi-pencil" styleClass="p-button-rounded p-button-sm" (onClick)="openPictureEditor()"></p-button>
+    </div>
+  }
+</div>

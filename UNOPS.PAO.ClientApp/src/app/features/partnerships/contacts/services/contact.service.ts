@@ -2,7 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap, map } from 'rxjs';
 import { Contact } from '../models/contact.model';
-import { ImportDialogService } from '@shared/reusables/components/import/dialog/import-dialog.service';
+import { ImportDialogService } from '@features/import-export/components/import/dialog/import-dialog.service';
 import { PaginationResponse } from '@shared/models/pagination-response.model';
 import { DuplicateDetectionResponse, ContactQueryParams } from '@shared/models/api-responses.model';
 
