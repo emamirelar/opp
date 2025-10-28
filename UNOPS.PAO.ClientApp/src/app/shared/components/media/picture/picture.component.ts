@@ -20,6 +20,7 @@ export class PictureComponent {
   @Input() size: 'extra-small' | 'small' | 'medium' | 'large' = 'medium';
   @Input() uploadUrl: string | null = null;
   @Input() disabled: boolean = false;
+  @Input() entityType: 'Contact' | 'Partner' = 'Contact'; // Added to determine which default image to use
   @Output() imageChanged = new EventEmitter<string>();
 
   private dialogRef: DynamicDialogRef | null = null;
@@ -34,6 +35,29 @@ export class PictureComponent {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /**
+   * Get the effective image URL with fallback to default placeholder
+   */
+  getEffectiveImageUrl(): string {
+    if (this.imageUrl && this.imageUrl.trim() !== '') {
+      return this.imageUrl;
+    }
+    // Return default image based on entity type
+    return this.entityType === 'Partner' 
+      ? 'assets/images/Partner.png' 
+      : 'assets/images/Contact.png';
+  }
+
+  /**
+   * Handle image load error by replacing with default placeholder
+   */
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = this.entityType === 'Partner' 
+      ? 'assets/images/Partner.png' 
+      : 'assets/images/Contact.png';
   }
 
   getSizeClass(): string {
