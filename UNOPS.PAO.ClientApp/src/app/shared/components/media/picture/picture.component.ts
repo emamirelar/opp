@@ -52,12 +52,23 @@ export class PictureComponent {
 
   /**
    * Handle image load error by replacing with default placeholder
+   * Includes guard to prevent infinite loop if default image also fails to load
    */
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    img.src = this.entityType === 'Partner' 
+    const defaultImagePath = this.entityType === 'Partner' 
       ? 'assets/images/Partner.png' 
       : 'assets/images/Contact.png';
+    
+    // Guard: Only set default image if current src is not already the default
+    // This prevents infinite loop if the default image itself fails to load
+    if (!img.src.endsWith(defaultImagePath)) {
+      img.src = defaultImagePath;
+    } else {
+      // Default image failed to load - hide the image and show nothing
+      // The gray background circle from the parent div will remain visible
+      img.style.display = 'none';
+    }
   }
 
   getSizeClass(): string {
