@@ -19,7 +19,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { InputTextareaModule } from 'primeng/inputtextarea';
+import { InputTextarea } from 'primeng/inputtextarea';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
 import { FormsModule } from '@angular/forms';
@@ -71,7 +71,7 @@ import { PageContextService } from '@shared/services/utils';
     RouterModule,
     DialogModule,
     InputTextModule,
-    InputTextareaModule,
+    InputTextarea,
     FloatLabelModule,
     MessageModule,
     FormsModule,
