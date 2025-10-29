@@ -1,20 +1,15 @@
-using UNOPS.PAO.Domain.Infrastructure;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UNOPS.PAO.Domain.Entities;
 
-public class OpportunityClientPartner : ModifiableDeletableEntity
+public class OpportunityClientPartner
 {
-    public new int Id { get; set; }
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
     
-    /// <summary>
-    /// Parent opportunity
-    /// </summary>
     public int OpportunityId { get; set; }
     public virtual Opportunity? Opportunity { get; set; }
     
-    /// <summary>
-    /// Client partner from Partner Tree
-    /// </summary>
     public int PartnerId { get; set; }
     public virtual Partner? Partner { get; set; }
 }

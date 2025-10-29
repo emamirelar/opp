@@ -1,33 +1,34 @@
-using UNOPS.PAO.Domain.Infrastructure;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UNOPS.PAO.Domain.Entities;
 
-public class OpportunityStakeholder : ModifiableDeletableEntity
+public class OpportunityStakeholder
 {
-    public new int Id { get; set; }
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
     
-    /// <summary>
-    /// Parent opportunity
-    /// </summary>
     public int OpportunityId { get; set; }
     public virtual Opportunity? Opportunity { get; set; }
     
-    /// <summary>
-    /// Type of stakeholder (Internal or External)
-    /// </summary>
-    public required string StakeholderType { get; set; } // "Internal" or "External"
+    public int EntityRoleId { get; set; }
+    public virtual EntityRole? EntityRole { get; set; }
     
-    /// <summary>
-    /// User ID for internal stakeholders (UNOPS personnel)
-    /// </summary>
+    public bool IsInternal { get; set; } = true;
+    
+    [MaxLength(50)]
+    public string? StakeholderType { get; set; } // "Internal" or "External"
+    
     public int? UserId { get; set; }
     public virtual PAOUser? User { get; set; }
     
-    /// <summary>
-    /// Stakeholder's role - FK to EntityRole
-    /// </summary>
-    public int? EntityRoleId { get; set; }
-    public virtual EntityRole? EntityRole { get; set; }
+    public int? ContactId { get; set; }
+    public virtual Contact? Contact { get; set; }
+    
+    [MaxLength(500)]
+    public string? Organization { get; set; }
+    
+    [MaxLength(1000)]
+    public string? Notes { get; set; }
 }
 

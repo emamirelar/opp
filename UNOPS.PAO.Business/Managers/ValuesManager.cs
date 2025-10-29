@@ -78,4 +78,10 @@ public class ValuesManager : IApplicationService
 
     public IEnumerable<LiaisonOfficeModel> GetLiaisonOffices()
          => repository.GetLiaisonOffices().Select(mapper.Map<LiaisonOfficeModel>);
+
+    public IEnumerable<SimpleValueModel> GetProposedInitiativeTypes()
+         => repository.GetProposedInitiativeTypes().Select(mapper.Map<SimpleValueModel>);
+
+    public IEnumerable<OutputModel> GetOutputs()
+         => repository.GetOutputs().Select(mapper.Map<OutputModel>);
 }

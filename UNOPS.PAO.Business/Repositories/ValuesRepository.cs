@@ -293,4 +293,13 @@ public class ValuesRepository
 
         return result;
     }   
+
+    public IEnumerable<ProposedInitiativeType> GetProposedInitiativeTypes()
+        => context.ProposedInitiativeTypes.Where(x => x.Status == EntityStatus.Active);
+
+    public IEnumerable<Output> GetOutputs()
+        => context.Outputs
+            .Include(x => x.Unit)
+            .Include(x => x.ProjectCategory)
+            .Where(x => x.Status == EntityStatus.Active);
 }

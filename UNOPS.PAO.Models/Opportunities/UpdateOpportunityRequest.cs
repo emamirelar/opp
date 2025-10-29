@@ -14,11 +14,11 @@ public class UpdateOpportunityRequest
     public DateTime? TargetDeliveryDate { get; set; }
     public int? ProposedInitiativeTypeId { get; set; }
     
-    // Child collections (full replacement approach)
     public List<OpportunityFundingPartnerRequest>? FundingPartners { get; set; }
     public List<OpportunityClientPartnerRequest>? ClientPartners { get; set; }
     public List<OpportunityStakeholderRequest>? Stakeholders { get; set; }
     public List<OpportunityDeliverableRequest>? Deliverables { get; set; }
     public List<OpportunityCountryRequest>? Countries { get; set; }
+    public List<OpportunitySDGRequest>? SDGs { get; set; }
 }
 

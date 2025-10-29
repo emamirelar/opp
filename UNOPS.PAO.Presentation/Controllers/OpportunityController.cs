@@ -5,6 +5,7 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.Presentation.Controllers.Shared;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
@@ -152,6 +153,29 @@ public class OpportunityController : BaseController
         }
 
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Updates the WHAT section of an opportunity (description, org unit, initiative type, deliverables)
+    /// </summary>
+    [HttpPatch(APIDictionary.OpportunityWhat)]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> UpdateWhatSection(int id, [FromBody] WhatSectionRequest req)
+    {
+        try
+        {
+            var result = await _manager.UpdateWhatSectionAsync(id, req);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating WHAT section for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while updating WHAT section", details = ex.Message });
+        }
     }
 
     /// <summary>

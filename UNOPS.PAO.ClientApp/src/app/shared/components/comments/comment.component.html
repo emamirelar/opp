@@ -1,0 +1,241 @@
+<p-panel [header]="panelHeader()" [toggleable]="true">
+  <div class="space-y-4">
+    @if (loading()) {
+      <div class="flex items-center justify-center py-8">
+        <i class="pi pi-spin pi-spinner text-2xl text-unops-primary"></i>
+      </div>
+    } @else {
+      <!-- Comment List -->
+      @if (comments().length === 0) {
+        <div class="text-center py-8 text-gray-400">
+          <i class="pi pi-comments text-4xl mb-3"></i>
+          <p>{{ 'message.noCommentsYet' | translate }}</p>
+          <p class="text-sm">{{ 'message.beTheFirstToComment' | translate }}</p>
+        </div>
+      } @else {
+        @for (comment of comments(); track comment.id) {
+          <div class="flex gap-3" [class.border-l-2]="comment.isPinned" [class.border-blue-500]="comment.isPinned" [class.pl-3]="comment.isPinned">
+            <!-- Avatar -->
+            <p-avatar 
+              [label]="comment.createdByName?.charAt(0) || '?'" 
+              shape="circle" 
+              styleClass="flex-shrink-0"
+            />
+            
+            <!-- Comment Content -->
+            <div class="flex-1 bg-gray-50 rounded-lg p-4">
+              <!-- Comment Header -->
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-gray-900">{{ comment.createdByName }}</span>
+                  <span class="text-xs text-gray-500">{{ getRelativeTime(comment.createdDate) }}</span>
+                  @if (comment.isEdited) {
+                    <span class="text-xs text-gray-400 italic">({{ 'label.edited' | translate }})</span>
+                  }
+                  @if (comment.isPinned) {
+                    <i class="pi pi-thumbtack text-blue-600 text-xs"></i>
+                  }
+                </div>
+                
+                <!-- Comment Actions -->
+                <div class="flex gap-1">
+                  <p-button
+                    icon="pi pi-reply"
+                    [rounded]="true"
+                    [text]="true"
+                    size="small"
+                    (onClick)="startReply(comment.id)"
+                    [pTooltip]="'button.reply' | translate"
+                  />
+                  <p-button
+                    icon="pi pi-pencil"
+                    [rounded]="true"
+                    [text]="true"
+                    size="small"
+                    (onClick)="startEdit(comment)"
+                    [pTooltip]="'button.edit' | translate"
+                  />
+                  <p-button
+                    [icon]="comment.isPinned ? 'pi pi-thumbtack' : 'pi pi-thumbtack-fill'"
+                    [rounded]="true"
+                    [text]="true"
+                    size="small"
+                    (onClick)="togglePin(comment.id)"
+                    [pTooltip]="'button.togglePin' | translate"
+                  />
+                  <p-button
+                    icon="pi pi-trash"
+                    [rounded]="true"
+                    [text]="true"
+                    size="small"
+                    severity="danger"
+                    (onClick)="deleteComment(comment.id)"
+                    [pTooltip]="'button.delete' | translate"
+                  />
+                </div>
+              </div>
+              
+              <!-- Comment Content or Edit Form -->
+              @if (editingCommentId() === comment.id) {
+                <div class="space-y-2">
+                  <textarea
+                    [(ngModel)]="editingContent"
+                    class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows="3"
+                  ></textarea>
+                  <div class="flex justify-end gap-2">
+                    <p-button
+                      [label]="'button.cancel' | translate"
+                      severity="secondary"
+                      [text]="true"
+                      size="small"
+                      (onClick)="cancelEdit()"
+                    />
+                    <p-button
+                      [label]="'button.save' | translate"
+                      size="small"
+                      (onClick)="saveEdit(comment.id)"
+                    />
+                  </div>
+                </div>
+              } @else {
+                <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ comment.content }}</p>
+              }
+              
+              <!-- Mentions -->
+              @if (comment.mentionedUserNames && comment.mentionedUserNames.length > 0) {
+                <div class="flex gap-1 mt-2">
+                  @for (mention of comment.mentionedUserNames; track mention) {
+                    <p-chip [label]="'@' + mention" styleClass="text-xs" />
+                  }
+                </div>
+              }
+              
+              <!-- Replies -->
+              @if (comment.replies && comment.replies.length > 0) {
+                <div class="mt-4 space-y-3 border-t border-gray-200 pt-3">
+                  @for (reply of comment.replies; track reply.id) {
+                    <div class="flex gap-2">
+                      <p-avatar 
+                        [label]="reply.createdByName?.charAt(0) || '?'" 
+                        shape="circle"
+                        styleClass="flex-shrink-0"
+                        [style]="{'width': '2rem', 'height': '2rem', 'font-size': '0.875rem'}"
+                      />
+                      <div class="flex-1 bg-white rounded-lg p-3 border border-gray-200">
+                        <div class="flex items-center justify-between mb-1">
+                          <div class="flex items-center gap-2">
+                            <span class="font-semibold text-sm text-gray-900">{{ reply.createdByName }}</span>
+                            <span class="text-xs text-gray-500">{{ getRelativeTime(reply.createdDate) }}</span>
+                          </div>
+                          <div class="flex gap-1">
+                            <p-button
+                              icon="pi pi-pencil"
+                              [rounded]="true"
+                              [text]="true"
+                              size="small"
+                              (onClick)="startEdit(reply)"
+                            />
+                            <p-button
+                              icon="pi pi-trash"
+                              [rounded]="true"
+                              [text]="true"
+                              size="small"
+                              severity="danger"
+                              (onClick)="deleteComment(reply.id)"
+                            />
+                          </div>
+                        </div>
+                        @if (editingCommentId() === reply.id) {
+                          <div class="space-y-2">
+                            <textarea
+                              [(ngModel)]="editingContent"
+                              class="w-full p-2 border border-gray-300 rounded resize-none text-sm"
+                              rows="2"
+                            ></textarea>
+                            <div class="flex justify-end gap-2">
+                              <p-button
+                                [label]="'button.cancel' | translate"
+                                severity="secondary"
+                                [text]="true"
+                                size="small"
+                                (onClick)="cancelEdit()"
+                              />
+                              <p-button
+                                [label]="'button.save' | translate"
+                                size="small"
+                                (onClick)="saveEdit(reply.id)"
+                              />
+                            </div>
+                          </div>
+                        } @else {
+                          <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ reply.content }}</p>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+              
+              <!-- Reply Form -->
+              @if (replyingToId() === comment.id) {
+                <div class="mt-3 border-t border-gray-200 pt-3">
+                  <textarea
+                    [(ngModel)]="newCommentContent"
+                    class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows="2"
+                    [placeholder]="'placeholder.addReply' | translate"
+                  ></textarea>
+                  <div class="flex justify-end gap-2 mt-2">
+                    <p-button
+                      [label]="'button.cancel' | translate"
+                      severity="secondary"
+                      [text]="true"
+                      size="small"
+                      (onClick)="cancelReply()"
+                    />
+                    <p-button
+                      [label]="'button.reply' | translate"
+                      size="small"
+                      icon="pi pi-send"
+                      (onClick)="addComment()"
+                    />
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+
+      <!-- New Comment Form -->
+      @if (!replyingToId()) {
+        <div class="border-t border-gray-200 pt-4 mt-4">
+          <textarea
+            [(ngModel)]="newCommentContent"
+            class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            rows="3"
+            [placeholder]="'placeholder.addComment' | translate"
+          ></textarea>
+          <div class="flex justify-end gap-2 mt-2">
+            <p-button
+              [label]="'button.attachFile' | translate"
+              icon="pi pi-paperclip"
+              [outlined]="true"
+              size="small"
+              [disabled]="true"
+            />
+            <p-button 
+              [label]="'button.addComment' | translate" 
+              icon="pi pi-send" 
+              size="small" 
+              (onClick)="addComment()"
+              [disabled]="!newCommentContent().trim()"
+            />
+          </div>
+        </div>
+      }
+    }
+  </div>
+</p-panel>
+

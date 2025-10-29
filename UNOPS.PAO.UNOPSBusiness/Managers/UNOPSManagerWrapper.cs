@@ -39,6 +39,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSEntityConfigurationManager entityConfigurationManager;
     private readonly UNOPSGmailAddonManager gmailAddonManager;
     private readonly BaseEngagementManager baseEngagementManager;
+    private readonly UNOPSOpportunityManager opportunityManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
                                UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) : base(mapper, context, userManager, httpContextAccessor, configuration, serviceProvider)
@@ -87,6 +88,9 @@ public class UNOPSManagerWrapper : ManagerWrapper
         
         // Create BaseEngagementManager
         baseEngagementManager = new BaseEngagementManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
+        
+        // Create OpportunityManager
+        opportunityManager = new UNOPSOpportunityManager(mapper, opsContext);
     }
 
     public override ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -99,6 +103,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     public override IUserManagementManager UserManagementManager => userManagementManager;
     public override IAiPromptManager AiPromptManager => aiPromptManager;
     public override IGmailAddonManager GmailAddonManager => gmailAddonManager;
+    public override IOpportunityManager OpportunityManager => opportunityManager;
     
     // UNOPS-specific managers
     public IUNOPSEntityConfigurationManager EntityConfigurationManager => entityConfigurationManager;

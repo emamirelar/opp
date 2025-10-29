@@ -19,16 +19,17 @@ import { CardModule } from 'primeng/card';
 import { BadgeModule } from 'primeng/badge';
 import { TagModule } from 'primeng/tag';
 import { ChipModule } from 'primeng/chip';
+import { AvatarModule } from 'primeng/avatar';
 
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
 import { PermissionUtilityService } from '@core/services/auth';
 import { PageContextService } from '@shared/services/utils';
 import { OpportunityService } from '../../../services/opportunity.service';
-import { Opportunity } from '../../../models/opportunity.model';
-
-// Components
-import { GoBackComponent } from '@shared/components/navigation/go-back/go-back.component';
+import { Opportunity } from '@shared/models/opportunity.model';
+import { CommentComponent } from '@shared/components/comments/comment.component';
+import { OpportunityWhatSectionComponent } from './sections/opportunity-what-section.component';
+import { ValuesService } from '@app/shared/services/api/values.service';
 
 /**
  * @class OpportunityViewComponent
@@ -54,11 +55,13 @@ import { GoBackComponent } from '@shared/components/navigation/go-back/go-back.c
     MessageModule,
     RouterModule,
     ConfirmDialogModule,
-    GoBackComponent,
     CardModule,
     BadgeModule,
     TagModule,
     ChipModule,
+    AvatarModule,
+    CommentComponent,
+    OpportunityWhatSectionComponent,
   ],
   templateUrl: './opportunity-view.component.html',
   styleUrls: ['./opportunity-view.component.scss'],
@@ -69,6 +72,7 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
   opportunityService = inject(OpportunityService);
+  valuesService = inject(ValuesService);
   permissionUtilityService = inject(PermissionUtilityService);
   translateService = inject(TranslateService);
   cdr = inject(ChangeDetectorRef);
@@ -80,6 +84,7 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
   loading = signal<boolean>(true);
   recordId: string = '';
   opportunity = signal<Opportunity | null>(null);
+  showAIPanel = signal<boolean>(true); // AI Assistant panel toggle state
 
   // Permission management using utility service
   private permissionUtils = this.permissionUtilityService.createInstancePermissions('Opportunity');
@@ -95,6 +100,22 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
            data.proposedInitiativeTypeName;
   });
 
+  // Get opportunity manager from stakeholders (internal stakeholder with "Opportunity Manager" role)
+  opportunityManager = computed(() => {
+    const opp = this.opportunity();
+    if (!opp || !opp.stakeholders || opp.stakeholders.length === 0) return null;
+    
+    // Find the first internal stakeholder with "Opportunity Manager" role
+    const manager = opp.stakeholders.find(s => 
+      s.isInternal && 
+      s.entityRoleName && 
+      s.entityRoleName.toLowerCase().includes('opportunity') &&
+      s.entityRoleName.toLowerCase().includes('manager')
+    );
+    
+    return manager ? (manager.userName || manager.userEmail || '-') : '-';
+  });
+
   showFullContent = signal<boolean>(false);
 
   shouldShowSeeMoreButton = computed(() => {
@@ -103,6 +124,88 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
 
   shouldShowSeeLessButton = computed(() => {
     return this.showAdditionalInfo() && this.showFullContent();
+  });
+
+  // Computed stats from backend or calculated from child entities
+  totalFunding = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return 0;
+    return opp.stats?.totalFundingUSD || 0;
+  });
+
+  totalFees = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return 0;
+    return opp.stats?.totalFeeAmountUSD || 0;
+  });
+
+  fundingPartnerCount = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return 0;
+    return opp.stats?.fundingPartnerCount || opp.fundingPartners?.length || 0;
+  });
+
+  clientPartnerCount = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return 0;
+    return opp.stats?.clientPartnerCount || opp.clientPartners?.length || 0;
+  });
+
+  stakeholderCount = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return 0;
+    return opp.stats?.stakeholderCount || opp.stakeholders?.length || 0;
+  });
+
+  internalStakeholderCount = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return 0;
+    return opp.stats?.internalStakeholderCount || 
+           opp.stakeholders?.filter(s => s.isInternal).length || 0;
+  });
+
+  externalStakeholderCount = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return 0;
+    return opp.stats?.externalStakeholderCount || 
+           opp.stakeholders?.filter(s => !s.isInternal).length || 0;
+  });
+
+  deliverableCount = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return 0;
+    return opp.stats?.deliverableCount || opp.deliverables?.length || 0;
+  });
+
+  countryCount = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return 0;
+    return opp.stats?.countryCount || opp.countries?.length || 0;
+  });
+
+  sdgCount = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return 0;
+    return opp.stats?.sdgCount || opp.sdGs?.length || 0;
+  });
+
+  // Filtered stakeholder lists
+  internalStakeholders = computed(() => {
+    const opp = this.opportunity();
+    if (!opp || !opp.stakeholders) return [];
+    return opp.stakeholders.filter(s => s.isInternal);
+  });
+
+  externalStakeholders = computed(() => {
+    const opp = this.opportunity();
+    if (!opp || !opp.stakeholders) return [];
+    return opp.stakeholders.filter(s => !s.isInternal);
+  });
+
+  primarySDG = computed(() => {
+    const opp = this.opportunity();
+    if (!opp) return null;
+    return opp.sdGs?.find(s => s.isPrimary) || null;
   });
 
   ngOnInit() {
@@ -206,6 +309,20 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Handle opportunity update from child section components
+   * This method receives the full updated opportunity from child components
+   * and refreshes the master opportunity signal, triggering updates across all sections
+   */
+  handleOpportunityUpdate(updatedOpportunity: Opportunity): void {
+    // Replace entire opportunity signal with fresh data from backend
+    this.opportunity.set(updatedOpportunity);
+    
+    // Angular signals automatically notify ALL child components
+    // All sections will re-render with latest data
+    this.cdr.detectChanges();
+  }
+
+  /**
    * Toggle full content display
    */
   toggleFullContent() {
@@ -216,7 +333,7 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
    * Format currency value
    */
   formatCurrency(value: number | undefined | null): string {
-    if (value === undefined || value === null) return 'N/A';
+    if (value === undefined || value === null) return '-';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
@@ -228,13 +345,21 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
   /**
    * Format date value
    */
-  formatDate(date: Date | undefined | null): string {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
+  formatDate(date: Date | string | undefined | null): string {
+    if (!date) return '-';
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
+  }
+
+  /**
+   * Toggle AI Assistant panel visibility
+   */
+  toggleAIPanel(): void {
+    this.showAIPanel.set(!this.showAIPanel());
   }
 
   /**
@@ -254,6 +379,16 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
       default:
         return 'info';
     }
+  }
+
+  /**
+   * Get risk score severity for country risk badges
+   */
+  getRiskScoreSeverity(riskScore: number): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' {
+    if (riskScore >= 8) return 'danger';
+    if (riskScore >= 6) return 'warn';
+    if (riskScore >= 4) return 'info';
+    return 'success';
   }
 }
 

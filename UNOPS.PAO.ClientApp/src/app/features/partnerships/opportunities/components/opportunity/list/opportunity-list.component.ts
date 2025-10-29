@@ -34,7 +34,7 @@ import {
   ListViewConfig,
   SearchParams,
 } from '@features/list-view/components/listview/listview.model';
-import { Opportunity } from '../../../models/opportunity.model';
+import { Opportunity } from '@shared/models/opportunity.model';
 import { SearchField } from '@shared/services/utils';
 import { PermissionUtilityService } from '@core/services/auth';
 import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
