@@ -47,6 +47,11 @@ export interface DemoOpportunity {
   // Documents
   documents: DemoDocument[];
 
+  // Related Items
+  relatedContacts: DemoRelatedContact[];
+  relatedPartners: DemoRelatedPartner[];
+  relatedInteractions: DemoRelatedInteraction[];
+
   // DST Analysis
   dstAnalysis: DemoDSTAnalysis;
 
@@ -125,6 +130,34 @@ export interface DemoDocument {
   type: 'user-uploaded' | 'system-generated';
   category: string;
   uploadDate: string;
+  size?: string;
+  aiProcessed?: boolean;
+  fileType?: string;
+}
+
+export interface DemoRelatedContact {
+  id: number;
+  name: string;
+  email: string;
+  organization: string;
+  role: string;
+  lastContact: string;
+}
+
+export interface DemoRelatedPartner {
+  id: number;
+  name: string;
+  type: string;
+  relationship: string;
+  engagementLevel: string;
+}
+
+export interface DemoRelatedInteraction {
+  id: number;
+  type: 'meeting' | 'call' | 'email' | 'visit';
+  title: string;
+  date: string;
+  participants: string;
 }
 
 export interface DemoDSTAnalysis {
@@ -368,6 +401,9 @@ export class OpportunityDemoService {
         type: 'user-uploaded',
         category: 'Planning',
         uploadDate: '2025-01-10',
+        size: '2.3 MB',
+        aiProcessed: true,
+        fileType: 'pdf',
       },
       {
         id: 2,
@@ -375,6 +411,9 @@ export class OpportunityDemoService {
         type: 'user-uploaded',
         category: 'Communication',
         uploadDate: '2025-01-12',
+        size: '145 KB',
+        aiProcessed: true,
+        fileType: 'docx',
       },
       {
         id: 3,
@@ -382,6 +421,9 @@ export class OpportunityDemoService {
         type: 'user-uploaded',
         category: 'Financial',
         uploadDate: '2025-01-15',
+        size: '892 KB',
+        aiProcessed: false,
+        fileType: 'xlsx',
       },
       {
         id: 4,
@@ -389,6 +431,9 @@ export class OpportunityDemoService {
         type: 'user-uploaded',
         category: 'Risk Management',
         uploadDate: '2025-01-18',
+        size: '1.7 MB',
+        aiProcessed: true,
+        fileType: 'pdf',
       },
       {
         id: 5,
@@ -396,27 +441,182 @@ export class OpportunityDemoService {
         type: 'user-uploaded',
         category: 'Strategic',
         uploadDate: '2025-01-20',
+        size: '5.2 MB',
+        aiProcessed: false,
+        fileType: 'pdf',
       },
       {
         id: 6,
-        name: 'DST Profile Report',
+        name: 'DST Profile Report.pdf',
         type: 'system-generated',
         category: 'Analysis',
         uploadDate: '2025-01-22',
+        size: '423 KB',
+        aiProcessed: false,
+        fileType: 'pdf',
       },
       {
         id: 7,
-        name: 'Draft Budget v1.0',
+        name: 'Draft Budget v1.0.xlsx',
         type: 'system-generated',
         category: 'Financial',
         uploadDate: '2025-01-22',
+        size: '1.1 MB',
+        aiProcessed: false,
+        fileType: 'xlsx',
       },
       {
         id: 8,
-        name: 'Draft Risk Register',
+        name: 'Draft Risk Register.xlsx',
         type: 'system-generated',
         category: 'Risk Management',
         uploadDate: '2025-01-22',
+        size: '678 KB',
+        aiProcessed: false,
+        fileType: 'xlsx',
+      },
+    ],
+
+    relatedContacts: [
+      {
+        id: 1,
+        name: 'Dr. Ahmed Hassan',
+        email: 'ahmed.hassan@gov.bd',
+        organization: 'Ministry of Water Resources - Bangladesh',
+        role: 'Director of Planning',
+        lastContact: '2025-01-20',
+      },
+      {
+        id: 2,
+        name: 'Lisa Park',
+        email: 'lisa.park@wateraid.org',
+        organization: 'WaterAid International',
+        role: 'Program Director',
+        lastContact: '2025-01-18',
+      },
+      {
+        id: 3,
+        name: 'Michael Chen',
+        email: 'mchen@worldbank.org',
+        organization: 'World Bank',
+        role: 'Senior Water Specialist',
+        lastContact: '2025-01-15',
+      },
+      {
+        id: 4,
+        name: 'Priya Sharma',
+        email: 'priya.sharma@nepalwater.gov.np',
+        organization: 'Department of Water Supply - Nepal',
+        role: 'Technical Advisor',
+        lastContact: '2025-01-10',
+      },
+      {
+        id: 5,
+        name: 'Thomas Mueller',
+        email: 'thomas.mueller@ec.europa.eu',
+        organization: 'European Commission',
+        role: 'Development Cooperation Officer',
+        lastContact: '2025-01-08',
+      },
+      {
+        id: 6,
+        name: 'Fatima Al-Rashid',
+        email: 'fatima@unicef.org',
+        organization: 'UNICEF Regional Office',
+        role: 'WASH Specialist',
+        lastContact: '2025-01-05',
+      },
+      {
+        id: 7,
+        name: 'Kofi Mensah',
+        email: 'k.mensah@africandevbank.org',
+        organization: 'African Development Bank',
+        role: 'Infrastructure Lead',
+        lastContact: '2024-12-20',
+      },
+      {
+        id: 8,
+        name: 'Maria Rodriguez',
+        email: 'maria.rodriguez@iadb.org',
+        organization: 'Inter-American Development Bank',
+        role: 'Water Sector Specialist',
+        lastContact: '2024-12-15',
+      },
+    ],
+
+    relatedPartners: [
+      {
+        id: 1,
+        name: 'World Bank',
+        type: 'Funding Partner',
+        relationship: 'Active Partnership',
+        engagementLevel: 'High',
+      },
+      {
+        id: 2,
+        name: 'European Commission',
+        type: 'Funding Partner',
+        relationship: 'Active Partnership',
+        engagementLevel: 'Medium',
+      },
+      {
+        id: 3,
+        name: 'Ministry of Water Resources - Bangladesh',
+        type: 'Client Partner',
+        relationship: 'Government Partner',
+        engagementLevel: 'High',
+      },
+      {
+        id: 4,
+        name: 'WaterAid International',
+        type: 'Implementing Partner',
+        relationship: 'NGO Partnership',
+        engagementLevel: 'High',
+      },
+      {
+        id: 5,
+        name: 'Department of Water Supply - Nepal',
+        type: 'Client Partner',
+        relationship: 'Government Partner',
+        engagementLevel: 'Medium',
+      },
+    ],
+
+    relatedInteractions: [
+      {
+        id: 1,
+        type: 'meeting',
+        title: 'Partnership Discussion with World Bank',
+        date: '2025-01-15',
+        participants: 'Michael Chen, Sarah Chen, James Wilson',
+      },
+      {
+        id: 2,
+        type: 'call',
+        title: 'Technical Review Call - Nepal Implementation',
+        date: '2025-01-10',
+        participants: 'Priya Sharma, James Wilson',
+      },
+      {
+        id: 3,
+        type: 'email',
+        title: 'Budget Clarification Request',
+        date: '2025-01-08',
+        participants: 'Thomas Mueller, Maria Garcia',
+      },
+      {
+        id: 4,
+        type: 'meeting',
+        title: 'Stakeholder Coordination Meeting',
+        date: '2025-01-05',
+        participants: 'Multiple stakeholders (8 participants)',
+      },
+      {
+        id: 5,
+        type: 'visit',
+        title: 'Field Visit - Bangladesh Sites',
+        date: '2024-12-20',
+        participants: 'Dr. Ahmed Hassan, Sarah Chen, site team',
       },
     ],
 
