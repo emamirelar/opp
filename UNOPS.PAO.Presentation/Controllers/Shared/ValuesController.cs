@@ -124,6 +124,18 @@ public class ValuesController : BaseController
         return await HandleOperationAsync(async () => await _manager.SearchUsersAsync(searchTerm, maxResults, selectedUserIds));
     }
 
+    [HttpGet(APIDictionary.ProposedInitiativeTypes)]
+    public async Task<ActionResult> GetProposedInitiativeTypes()
+    {
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetProposedInitiativeTypes()));
+    }
+
+    [HttpGet(APIDictionary.Outputs)]
+    public async Task<ActionResult> GetOutputs()
+    {
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetOutputs()));
+    }
+
     [HttpGet(APIDictionary.GeminiModels)]
     public async Task<ActionResult> GetGeminiModels()
     {

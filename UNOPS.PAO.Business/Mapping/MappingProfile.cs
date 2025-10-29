@@ -43,6 +43,14 @@ public class MappingProfile : Profile
         CreateMap<PAOUser, UserValueModel>();
         CreateMap<LiaisonOffice, LiaisonOfficeModel>();
 
+        // Proposed Initiative Type and Output mappings
+        CreateMap<ProposedInitiativeType, SimpleValueModel>()
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
+        CreateMap<Output, OutputModel>()
+            .ForMember(dest => dest.OutputName, opt => opt.MapFrom(src => src.OutputName))
+            .ForMember(dest => dest.UnitName, opt => opt.MapFrom(src => src.Unit != null ? src.Unit.Name : null))
+            .ForMember(dest => dest.ProjectCategoryName, opt => opt.MapFrom(src => src.ProjectCategory != null ? src.ProjectCategory.Name : null));
+
         // OrganizationHierarchy mappings
         CreateMap<OrganizationHierarchy, OrganizationHierarchyModel>().ReverseMap();
         CreateMap<OrganizationHierarchy, OrganizationHierarchyTreeModel>()

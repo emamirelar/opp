@@ -113,6 +113,33 @@
         },
         {
             "order": 13,
+            "name": "Units",
+            "type": "seeder",
+            "className": "UnitSeeder",
+            "methodName": "SeedUnitsAsync",
+            "filePath": "Seeders/UnitSeeder.cs",
+            "description": "Units of measurement (Days, Number, Litres, etc.)"
+        },
+        {
+            "order": 14,
+            "name": "ProjectCategories",
+            "type": "seeder",
+            "className": "ProjectCategorySeeder",
+            "methodName": "SeedProjectCategoriesAsync",
+            "filePath": "Seeders/ProjectCategorySeeder.cs",
+            "description": "Project categories (Category 1, 2, 3)"
+        },
+        {
+            "order": 15,
+            "name": "Outputs",
+            "type": "seeder",
+            "className": "OutputSeeder",
+            "methodName": "SeedOutputsAsync",
+            "filePath": "Seeders/OutputSeeder.cs",
+            "description": "UNOPS Output catalog"
+        },
+        {
+            "order": 16,
             "name": "Partners",
             "type": "seeder",
             "className": "PartnerSeeder_v2",
@@ -121,7 +148,7 @@
             "description": "Partners data seeding"
         },
         {
-            "order": 14,
+            "order": 17,
             "name": "Prospects",
             "type": "seeder",
             "className": "ProspectAccountsSeeder",
@@ -130,7 +157,7 @@
             "description": "Partners data seeding"
         },
         {
-            "order": 15,
+            "order": 18,
             "name": "Contacts",
             "type": "seeder",
             "className": "ContactSeeder",
@@ -139,7 +166,7 @@
             "description": "Contacts data seeding"
         },
         {
-            "order": 16,
+            "order": 19,
             "name": "InteractionFromTasks",
             "type": "seeder",
             "className": "InteractionFromTaskSeeder",
@@ -148,7 +175,7 @@
             "description": "Interactions from tasks data seeding"
         },
         {
-            "order": 17,
+            "order": 20,
             "name": "InteractionFromEvents",
             "type": "seeder",
             "className": "InteractionFromEventSeeder",
@@ -157,7 +184,7 @@
             "description": "Interactions from events data seeding"
         },
         {
-            "order": 18,
+            "order": 21,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",

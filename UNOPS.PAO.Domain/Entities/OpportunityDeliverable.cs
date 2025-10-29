@@ -1,32 +1,25 @@
-using UNOPS.PAO.Domain.Infrastructure;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UNOPS.PAO.Domain.Entities;
 
-public class OpportunityDeliverable : ModifiableDeletableEntity
+public class OpportunityDeliverable
 {
-    public new int Id { get; set; }
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
     
-    /// <summary>
-    /// Parent opportunity
-    /// </summary>
     public int OpportunityId { get; set; }
     public virtual Opportunity? Opportunity { get; set; }
     
-    /// <summary>
-    /// Name/title of the deliverable
-    /// </summary>
-    public new required string Name { get; set; }
+    public int? OutputId { get; set; }
     
-    /// <summary>
-    /// Detailed description of what will be delivered
-    /// </summary>
-    public string? Description { get; set; }
+    [ForeignKey(nameof(OutputId))]
+    public virtual Output? Output { get; set; }
     
-    /// <summary>
-    /// UNOPS Service Line / Output Subgroup / Output structure reference
-    /// </summary>
-    [MaxLength(500)]
-    public string? ServiceLineReference { get; set; }
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? Quantity { get; set; }
+    
+    [MaxLength(2000)]
+    public string? Notes { get; set; }
 }
 

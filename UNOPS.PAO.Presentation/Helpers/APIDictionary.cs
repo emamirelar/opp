@@ -33,6 +33,8 @@ public class APIDictionary
     public const string Contacts = APIPrefix + "values/contacts";
     public const string Users = APIPrefix + "values/users";
     public const string GeminiModels = APIPrefix + "values/gemini-models";
+    public const string ProposedInitiativeTypes = APIPrefix + "values/proposed-initiative-types";
+    public const string Outputs = APIPrefix + "values/outputs";
 
     // Workflow
     public const string Workflow = APIPrefix + "workflow";
@@ -164,4 +166,9 @@ public class APIDictionary
 
     // Opportunity
     public const string Opportunity = APIPrefix + "opportunity";
+    public const string OpportunityWhat = Opportunity + "/{id}/what";
+    public const string OpportunityWho = Opportunity + "/{id}/who";
+    public const string OpportunityWhy = Opportunity + "/{id}/why";
+    public const string OpportunityWhen = Opportunity + "/{id}/when";
+    public const string OpportunityWhere = Opportunity + "/{id}/where";
 }

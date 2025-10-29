@@ -68,6 +68,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<EntityRolePerson> EntityRolePersons { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<ProposedInitiativeType> ProposedInitiativeTypes { get; set; }
+    public DbSet<Comment> Comments { get; set; }
 
     // Artifacts system entities
     public DbSet<ArtifactDataType> ArtifactDataTypes { get; set; }
@@ -80,6 +81,11 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<SDGTarget> SDGTargets { get; set; }
     public DbSet<UNCFOutcome> UNCFOutcomes { get; set; }
     public DbSet<ExchangeRate> ExchangeRates { get; set; }
+    
+    // Output catalog entities
+    public DbSet<Unit> Units { get; set; }
+    public DbSet<ProjectCategory> ProjectCategories { get; set; }
+    public DbSet<Output> Outputs { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -470,7 +476,6 @@ public class AppDbContext : AuditableDbContext<int, int>
                 
             entity.HasIndex(x => x.OpportunityId);
             entity.HasIndex(x => x.SDGId);
-            entity.HasIndex(x => x.AlignmentType);
         });
 
         // WorkflowStage configuration
@@ -625,6 +630,21 @@ public class AppDbContext : AuditableDbContext<int, int>
         {
             entity.HasIndex(x => new { x.Currency, x.Effective_Date });
             entity.HasIndex(x => x.Status);
+        });
+
+        // Comment configuration
+        modelBuilder.Entity<Comment>(entity =>
+        {
+            entity.HasOne(x => x.ParentComment)
+                .WithMany(x => x.Replies)
+                .HasForeignKey(x => x.ParentCommentId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => new { x.EntityType, x.EntityId });
+            entity.HasIndex(x => x.ParentCommentId);
+            entity.HasIndex(x => x.CreatedDate);
+            entity.HasIndex(x => x.IsPinned);
         });
     }
 }

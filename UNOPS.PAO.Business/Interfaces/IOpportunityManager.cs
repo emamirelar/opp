@@ -1,4 +1,5 @@
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Opportunities;
 
 namespace UNOPS.PAO.Business.Interfaces;
 
@@ -8,6 +9,7 @@ public interface IOpportunityManager
     Task<OpportunityModel?> GetOpportunityAsync(int id);
     Task<IEnumerable<OpportunityModel>> GetAllOpportunitiesAsync();
     Task<OpportunityModel?> UpdateOpportunityAsync(UpdateOpportunityRequest model);
+    Task<OpportunityModel> UpdateWhatSectionAsync(int id, WhatSectionRequest request);
     Task<bool> DeleteOpportunityAsync(int id);
 }
 

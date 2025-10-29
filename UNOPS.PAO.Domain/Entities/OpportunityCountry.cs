@@ -1,26 +1,26 @@
-using UNOPS.PAO.Domain.Infrastructure;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UNOPS.PAO.Domain.Entities;
 
-public class OpportunityCountry : ModifiableDeletableEntity
+public class OpportunityCountry
 {
-    public new int Id { get; set; }
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int Id { get; set; }
     
-    /// <summary>
-    /// Parent opportunity
-    /// </summary>
     public int OpportunityId { get; set; }
     public virtual Opportunity? Opportunity { get; set; }
     
-    /// <summary>
-    /// Country of implementation
-    /// </summary>
     public int CountryId { get; set; }
     public virtual Country? Country { get; set; }
     
-    /// <summary>
-    /// Specific districts/municipalities/areas within the country (comma-separated or JSON)
-    /// </summary>
+    [MaxLength(1000)]
     public string? SpecificAreas { get; set; }
+
+    [MaxLength(500)]
+    public string? ContextWarning { get; set; }
+    
+    [Column(TypeName = "decimal(3, 1)")]
+    public decimal? RiskScore { get; set; }
 }
 

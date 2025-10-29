@@ -5,9 +5,13 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Opportunities;
 
 namespace UNOPS.PAO.Business.Managers;
 
+/// <summary>
+/// Base OpportunityManager - Use UNOPSOpportunityManager for UNOPS-specific implementation
+/// </summary>
 public class OpportunityManager : IOpportunityManager
 {
     private readonly IMapper mapper;
@@ -61,6 +65,13 @@ public class OpportunityManager : IOpportunityManager
                 .ToList();
         }
 
+        if (model.SDGs != null && model.SDGs.Any())
+        {
+            entity.SDGs = model.SDGs
+                .Select(s => mapper.Map<OpportunitySDG>(s))
+                .ToList();
+        }
+
         await opportunityRepository.AddAsync(entity);
 
         return mapper.Map<OpportunityModel>(entity);
@@ -77,10 +88,12 @@ public class OpportunityManager : IOpportunityManager
             "FundingPartners.Currency",
             "ClientPartners.Partner",
             "Stakeholders.User",
+            "Stakeholders.Contact",
             "Stakeholders.EntityRole",
-            "Deliverables",
+            "Deliverables.Output.Unit",
+            "Deliverables.Output.ProjectCategory",
             "Countries.Country",
-            "Documents"
+            "SDGs.SDG"
         };
 
         var entity = await opportunityRepository.GetByIdAsync(id, includes);
@@ -112,7 +125,8 @@ public class OpportunityManager : IOpportunityManager
             "ClientPartners",
             "Stakeholders",
             "Deliverables",
-            "Countries"
+            "Countries",
+            "SDGs"
         };
 
         var entity = await opportunityRepository.GetByIdAsync(model.Id, includes);
@@ -128,10 +142,8 @@ public class OpportunityManager : IOpportunityManager
         // Update child collections (full replacement approach)
         if (model.FundingPartners != null)
         {
-            // Remove existing
-            context.OpportunityFundingPartners.RemoveRange(entity.FundingPartners);
+            context.Set<OpportunityFundingPartner>().RemoveRange(entity.FundingPartners);
             
-            // Add new
             entity.FundingPartners = model.FundingPartners
                 .Select(fp =>
                 {
@@ -144,7 +156,7 @@ public class OpportunityManager : IOpportunityManager
 
         if (model.ClientPartners != null)
         {
-            context.OpportunityClientPartners.RemoveRange(entity.ClientPartners);
+            context.Set<OpportunityClientPartner>().RemoveRange(entity.ClientPartners);
             entity.ClientPartners = model.ClientPartners
                 .Select(cp =>
                 {
@@ -157,7 +169,7 @@ public class OpportunityManager : IOpportunityManager
 
         if (model.Stakeholders != null)
         {
-            context.OpportunityStakeholders.RemoveRange(entity.Stakeholders);
+            context.Set<OpportunityStakeholder>().RemoveRange(entity.Stakeholders);
             entity.Stakeholders = model.Stakeholders
                 .Select(s =>
                 {
@@ -170,7 +182,7 @@ public class OpportunityManager : IOpportunityManager
 
         if (model.Deliverables != null)
         {
-            context.OpportunityDeliverables.RemoveRange(entity.Deliverables);
+            context.Set<OpportunityDeliverable>().RemoveRange(entity.Deliverables);
             entity.Deliverables = model.Deliverables
                 .Select(d =>
                 {
@@ -183,7 +195,7 @@ public class OpportunityManager : IOpportunityManager
 
         if (model.Countries != null)
         {
-            context.OpportunityCountries.RemoveRange(entity.Countries);
+            context.Set<OpportunityCountry>().RemoveRange(entity.Countries);
             entity.Countries = model.Countries
                 .Select(c =>
                 {
@@ -194,9 +206,77 @@ public class OpportunityManager : IOpportunityManager
                 .ToList();
         }
 
+        if (model.SDGs != null)
+        {
+            context.Set<OpportunitySDG>().RemoveRange(entity.SDGs);
+            entity.SDGs = model.SDGs
+                .Select(s =>
+                {
+                    var mapped = mapper.Map<OpportunitySDG>(s);
+                    mapped.OpportunityId = entity.Id;
+                    return mapped;
+                })
+                .ToList();
+        }
+
         await opportunityRepository.UpdateAsync(entity);
 
         return mapper.Map<OpportunityModel>(entity);
+    }
+
+    public async Task<OpportunityModel> UpdateWhatSectionAsync(int id, WhatSectionRequest request)
+    {
+        var entity = await opportunityRepository.GetByIdAsync(id, new[]
+        {
+            nameof(Opportunity.Deliverables)
+        });
+
+        if (entity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // Update WHAT section fields
+        if (request.Description != null)
+        {
+            entity.Description = request.Description;
+        }
+
+        if (request.ResponsibleOrgUnitId.HasValue)
+        {
+            entity.ResponsibleOrgUnitId = request.ResponsibleOrgUnitId.Value;
+        }
+
+        if (request.ProposedInitiativeTypeId.HasValue)
+        {
+            entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
+        }
+
+        // Update deliverables
+        if (request.Deliverables != null)
+        {
+            // Remove existing deliverables
+            if (entity.Deliverables != null && entity.Deliverables.Any())
+            {
+                context.Set<OpportunityDeliverable>().RemoveRange(entity.Deliverables);
+            }
+
+            // Add new deliverables
+            entity.Deliverables = request.Deliverables
+                .Select(d => new OpportunityDeliverable
+                {
+                    OpportunityId = id,
+                    OutputId = d.OutputId,
+                    Quantity = d.Quantity,
+                    Notes = d.Notes
+                })
+                .ToList();
+        }
+
+        await opportunityRepository.UpdateAsync(entity);
+
+        // Reload with all includes for complete response
+        return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
     }
 
     public async Task<bool> DeleteOpportunityAsync(int id)
