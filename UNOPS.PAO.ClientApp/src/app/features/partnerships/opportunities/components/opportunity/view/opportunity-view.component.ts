@@ -240,13 +240,13 @@ export class OpportunityViewComponent implements OnInit, OnDestroy {
   /**
    * Get status severity class for badges
    */
-  getStatusSeverity(status: string | undefined): string {
+  getStatusSeverity(status: string | undefined): 'success' | 'secondary' | 'info' | 'warn' | 'danger' | 'contrast' {
     if (!status) return 'secondary';
     switch (status.toLowerCase()) {
       case 'active':
         return 'success';
       case 'pending':
-        return 'warning';
+        return 'warn';
       case 'onhold':
         return 'danger';
       case 'inactive':
