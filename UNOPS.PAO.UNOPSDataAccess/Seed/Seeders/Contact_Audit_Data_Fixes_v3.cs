@@ -29,6 +29,21 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 .GroupBy(u => u.Email.ToLower())
                 .ToDictionary(g => g.Key, g => g.First().Id);
 
+            // Find the user ID for larsj@unops.org
+            var larsjUser = await context.PAOUsers
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == "larsj@unops.org");
+
+            if (larsjUser == null)
+            {
+                Console.WriteLine("Warning: User with email 'larsj@unops.org' not found in database. Will proceed without checking for this user.");
+            }
+
+            int? larsjUserId = larsjUser?.Id;
+            if (larsjUserId.HasValue)
+            {
+                Console.WriteLine($"Found user 'larsj@unops.org' with ID: {larsjUserId.Value}");
+            }
+
             // Define contact audit updates
             var contactAuditUpdates = new List<ContactAuditUpdate>
             {
@@ -6799,25 +6814,31 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         continue;
                     }
 
-                    bool updated = false;
+                    // Prepare update values
+                    int? createdByUserId = null;
+                    DateTime? createdDate = null;
+                    int? lastModifiedByUserId = null;
+                    DateTime? lastModifiedDate = null;
+                    bool shouldUpdateLastModified = larsjUserId.HasValue && contact.LastModifiedBy == larsjUserId.Value;
 
-                    // Update CreatedBy
+                    // Parse CreatedBy
                     if (!string.IsNullOrEmpty(updateData.CreatedByEmail))
                     {
                         var createdByEmail = updateData.CreatedByEmail.ToLower();
-                        contact.CreatedBy = paoUserEmailMapping.ContainsKey(createdByEmail) 
+                        createdByUserId = paoUserEmailMapping.ContainsKey(createdByEmail) 
                             ? paoUserEmailMapping[createdByEmail] 
                             : -1; // Opportunity+ system user if not found
-                        updated = true;
                     }
 
-                    // Update CreatedDate
+                    // Parse CreatedDate
                     if (!string.IsNullOrEmpty(updateData.CreatedDate))
                     {
                         if (DateTime.TryParse(updateData.CreatedDate, out DateTime parsedCreatedDate))
                         {
-                            contact.CreatedDate = parsedCreatedDate;
-                            updated = true;
+                            // Ensure DateTime is in UTC for PostgreSQL
+                            createdDate = parsedCreatedDate.Kind == DateTimeKind.Utc 
+                                ? parsedCreatedDate 
+                                : DateTime.SpecifyKind(parsedCreatedDate, DateTimeKind.Utc);
                         }
                         else
                         {
@@ -6825,26 +6846,27 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         }
                     }
 
-                    // Only update LastModifiedBy and LastModifiedDate if LastModifiedBy is currently 0
-                    if (contact.LastModifiedBy == 0)
+                    // Only prepare LastModified updates if LastModifiedBy matches larsj user ID
+                    if (shouldUpdateLastModified)
                     {
-                        // Update LastModifiedBy
+                        // Parse LastModifiedBy
                         if (!string.IsNullOrEmpty(updateData.LastModifiedByEmail))
                         {
                             var lastModifiedByEmail = updateData.LastModifiedByEmail.ToLower();
-                            contact.LastModifiedBy = paoUserEmailMapping.ContainsKey(lastModifiedByEmail) 
+                            lastModifiedByUserId = paoUserEmailMapping.ContainsKey(lastModifiedByEmail) 
                                 ? paoUserEmailMapping[lastModifiedByEmail] 
                                 : -1; // Opportunity+ system user if not found
-                            updated = true;
                         }
 
-                        // Update LastModifiedDate
+                        // Parse LastModifiedDate
                         if (!string.IsNullOrEmpty(updateData.LastModifiedDate))
                         {
                             if (DateTime.TryParse(updateData.LastModifiedDate, out DateTime parsedLastModifiedDate))
                             {
-                                contact.LastModifiedDate = parsedLastModifiedDate;
-                                updated = true;
+                                // Ensure DateTime is in UTC for PostgreSQL
+                                lastModifiedDate = parsedLastModifiedDate.Kind == DateTimeKind.Utc 
+                                    ? parsedLastModifiedDate 
+                                    : DateTime.SpecifyKind(parsedLastModifiedDate, DateTimeKind.Utc);
                             }
                             else
                             {
@@ -6852,20 +6874,45 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                             }
                         }
                     }
+
+                    // Use ExecuteUpdateAsync to bypass audit interceptor
+                    var updateQuery = context.Contacts.Where(c => c.ContactNumber == updateData.ContactId);
+                    
+                    if (createdByUserId.HasValue && createdDate.HasValue && shouldUpdateLastModified && lastModifiedByUserId.HasValue && lastModifiedDate.HasValue)
+                    {
+                        // Update all four fields
+                        await updateQuery.ExecuteUpdateAsync(setters => setters
+                            .SetProperty(c => c.CreatedBy, createdByUserId.Value)
+                            .SetProperty(c => c.CreatedDate, createdDate.Value)
+                            .SetProperty(c => c.LastModifiedBy, lastModifiedByUserId.Value)
+                            .SetProperty(c => c.LastModifiedDate, lastModifiedDate.Value));
+                        Console.WriteLine($"Updated all audit fields for Contact {updateData.ContactId} - '{contact.Name}'");
+                        updatedCount++;
+                    }
+                    else if (createdByUserId.HasValue && createdDate.HasValue)
+                    {
+                        // Update only CreatedBy and CreatedDate
+                        await updateQuery.ExecuteUpdateAsync(setters => setters
+                            .SetProperty(c => c.CreatedBy, createdByUserId.Value)
+                            .SetProperty(c => c.CreatedDate, createdDate.Value));
+                        Console.WriteLine($"Updated Created fields for Contact {updateData.ContactId} - '{contact.Name}'");
+                        updatedCount++;
+                    }
+                    else if (shouldUpdateLastModified && lastModifiedByUserId.HasValue && lastModifiedDate.HasValue)
+                    {
+                        // Update only LastModifiedBy and LastModifiedDate
+                        await updateQuery.ExecuteUpdateAsync(setters => setters
+                            .SetProperty(c => c.LastModifiedBy, lastModifiedByUserId.Value)
+                            .SetProperty(c => c.LastModifiedDate, lastModifiedDate.Value));
+                        Console.WriteLine($"Updated LastModified fields for Contact {updateData.ContactId} - '{contact.Name}'");
+                        updatedCount++;
+                    }
                     else
                     {
-                        Console.WriteLine($"Skipped LastModified updates for Contact {updateData.ContactId} - LastModifiedBy already set ({contact.LastModifiedBy})");
-                    }
-
-                    if (updated)
-                    {
-                        updatedCount++;
-                        Console.WriteLine($"Updated audit data for Contact {updateData.ContactId} - '{contact.Name}'");
+                        Console.WriteLine($"Skipped Contact {updateData.ContactId} - no valid updates or LastModifiedBy is {contact.LastModifiedBy} (not matching larsj@unops.org)");
+                        skippedCount++;
                     }
                 }
-
-                // Save all changes at once
-                await context.SaveChangesAsync();
 
                 // Commit transaction if everything succeeded
                 await transaction.CommitAsync();

@@ -19,18 +19,18 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
             // Define ErpDimValue to LiaisonOffice name mapping
             var erpDimValueToLiaisonOffice = new Dictionary<int, string>
             {
-                { 1142, "Other PLG Partners" },
-                { 1109, "Other PLG Partners" },
-                { 1445, "Other PLG Partners" },
-                { 1448, "Other PLG Partners" },
-                { 1680, "Other PLG Partners" },
-                { 1681, "Other PLG Partners" },
-                { 1679, "Other PLG Partners" },
-                { 1193, "Other PLG Partners" },
-                { 1192, "Other PLG Partners" },
-                { 1222, "Other PLG Partners" },
-                { 1183, "Other PLG Partners" },
-                { 1261, "Other PLG Partners" }
+                { 1142, "Other PLG Managed Partners" },
+                { 1109, "Other PLG Managed Partners" },
+                { 1445, "Other PLG Managed Partners" },
+                { 1448, "Other PLG Managed Partners" },
+                { 1680, "Other PLG Managed Partners" },
+                { 1681, "Other PLG Managed Partners" },
+                { 1679, "Other PLG Managed Partners" },
+                { 1193, "Other PLG Managed Partners" },
+                { 1192, "Other PLG Managed Partners" },
+                { 1222, "Other PLG Managed Partners" },
+                { 1183, "Other PLG Managed Partners" },
+                { 1261, "Other PLG Managed Partners" }
             };
 
             // Begin transaction to ensure atomicity

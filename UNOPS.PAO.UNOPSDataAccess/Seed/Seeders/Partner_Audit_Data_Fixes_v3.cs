@@ -9,70 +9,59 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
     {
         public static async Task UpdatePartnerAuditDataAsync(UNOPSAppDbContext context)
         {
+            // Find the user ID for larsj@unops.org
+            var larsjUser = await context.PAOUsers
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == "larsj@unops.org");
+
+            if (larsjUser == null)
+            {
+                Console.WriteLine("Warning: User with email 'larsj@unops.org' not found in database. No updates will be performed.");
+                return;
+            }
+
+            int larsjUserId = larsjUser.Id;
+            Console.WriteLine($"Found user 'larsj@unops.org' with ID: {larsjUserId}");
+
             // Begin transaction to ensure atomicity
             await using var transaction = await context.Database.BeginTransactionAsync();
 
             try
             {
-                // Find all partners where CreatedBy or LastModifiedBy is 0
-                var partnersToUpdate = await context.Partners
-                    .Where(p => p.CreatedBy == 0 || p.LastModifiedBy == 0)
-                    .ToListAsync();
+                // Use ExecuteUpdateAsync to bypass audit interceptor
+                // Update CreatedBy for partners where it matches larsj user ID
+                int createdByUpdates = await context.Partners
+                    .Where(p => p.CreatedBy == larsjUserId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(p => p.CreatedBy, -1));
 
-                if (partnersToUpdate.Count == 0)
+                Console.WriteLine($"Updated CreatedBy for {createdByUpdates} partners from user ID {larsjUserId} to -1 (system user)");
+
+                // Update LastModifiedBy for partners where it matches larsj user ID
+                int lastModifiedByUpdates = await context.Partners
+                    .Where(p => p.LastModifiedBy == larsjUserId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(p => p.LastModifiedBy, -1));
+
+                Console.WriteLine($"Updated LastModifiedBy for {lastModifiedByUpdates} partners from user ID {larsjUserId} to -1 (system user)");
+
+                if (createdByUpdates == 0 && lastModifiedByUpdates == 0)
                 {
-                    Console.WriteLine("No partners found with CreatedBy or LastModifiedBy set to 0.");
-                    await transaction.CommitAsync();
-                    return;
+                    Console.WriteLine($"No partners found with CreatedBy or LastModifiedBy set to user ID {larsjUserId} (larsj@unops.org).");
                 }
-
-                Console.WriteLine($"Found {partnersToUpdate.Count} partners to update.");
-
-                int createdByUpdates = 0;
-                int lastModifiedByUpdates = 0;
-
-                foreach (var partner in partnersToUpdate)
-                {
-                    bool updated = false;
-
-                    // Update CreatedBy if it's 0
-                    if (partner.CreatedBy == 0)
-                    {
-                        partner.CreatedBy = -1; // Opportunity+ system user
-                        createdByUpdates++;
-                        updated = true;
-                    }
-
-                    // Update LastModifiedBy if it's 0
-                    if (partner.LastModifiedBy == 0)
-                    {
-                        partner.LastModifiedBy = -1; // Opportunity+ system user
-                        partner.LastModifiedDate = DateTime.UtcNow;
-                        lastModifiedByUpdates++;
-                        updated = true;
-                    }
-
-                    if (updated)
-                    {
-                        Console.WriteLine($"Updated Partner ErpDimValue {partner.ErpDimValue} - '{partner.Name}'");
-                    }
-                }
-
-                // Save all changes at once
-                await context.SaveChangesAsync();
 
                 // Commit transaction if everything succeeded
                 await transaction.CommitAsync();
 
-                Console.WriteLine($"Partner system user updates completed successfully.");
-                Console.WriteLine($"Total CreatedBy updates: {createdByUpdates}");
-                Console.WriteLine($"Total LastModifiedBy updates: {lastModifiedByUpdates}");
+                Console.WriteLine($"\nPartner audit data updates completed successfully.");
+                Console.WriteLine($"Updated partners previously attributed to user 'larsj@unops.org' (ID: {larsjUserId})");
+                Console.WriteLine($"Total partners with CreatedBy updated: {createdByUpdates}");
+                Console.WriteLine($"Total partners with LastModifiedBy updated: {lastModifiedByUpdates}");
             }
             catch (Exception ex)
             {
                 // Rollback transaction if any error occurred
                 await transaction.RollbackAsync();
-                Console.WriteLine($"Error updating Partner system users: {ex.Message}");
+                Console.WriteLine($"Error updating Partner audit data: {ex.Message}");
                 throw;
             }
         }

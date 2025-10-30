@@ -16,15 +16,6 @@
         },
         {
             "order": 2,
-            "name": "LiaisonOffices",
-            "type": "seeder",
-            "className": "LiaisonOfficeSeeder_v3",
-            "methodName": "SeedLiaisonOfficesAsync",
-            "filePath": "Seeders/LiaisonOfficeSeeder_v3.cs",
-            "description": "Liaison offices data v3"
-        },
-        {
-            "order": 3,
             "description": "Partner Liaison Office Fixes",
             "name": "Partner_LiaisonOffice_Fixes_v3",
             "type": "seeder",
@@ -33,23 +24,24 @@
             "filePath": "Seeders/Partner_LiaisonOffice_Fixes_v3.cs"
         },
         {
-            "order": 4,
-            "name": "Partner_Audit_Data_Fixes_v3",
+            "order": 3,
+            "description": "Unapproved Partner Liaison Office Fixes",
+            "name": "Unapproved_Partners_LiaisonOffice_Fixes_v3",
             "type": "seeder",
-            "className": "Partner_Audit_Data_Fixes_v3",
-            "methodName": "UpdatePartnerAuditDataAsync",
-            "filePath": "Seeders/Partner_Audit_Data_Fixes_v3.cs"
+            "className": "Unapproved_Partners_LiaisonOffice_Fixes_v3",
+            "methodName": "UpdateUnapprovedPartnersLiaisonOfficeAsync",
+            "filePath": "Seeders/Unapproved_Partners_LiaisonOffice_Fixes_v3.cs"
+        },
+        {
+            "order": 4,
+            "name": "Partner_FocalPoint_OrgUnit_Fixes_v3",
+            "type": "seeder",
+            "className": "Partner_FocalPoint_OrgUnit_Fixes_v3",
+            "methodName": "UpdatePartnerFocalPointAndOrgUnitAsync",
+            "filePath": "Seeders/Partner_FocalPoint_OrgUnit_Fixes_v3.cs"
         },
         {
             "order": 5,
-            "name": "Contact_Audit_Data_Fixes_v3",
-            "type": "seeder",
-            "className": "Contact_Audit_Data_Fixes_v3",
-            "methodName": "UpdateContactAuditDataAsync",
-            "filePath": "Seeders/Contact_Audit_Data_Fixes_v3.cs"
-        },
-        {
-            "order": 6,
             "name": "Partner_FocalPoint_Fixes_v3",
             "type": "seeder",
             "className": "Partner_FocalPoint_Fixes_v3",
@@ -57,14 +49,20 @@
             "filePath": "Seeders/Partner_FocalPoint_Fixes_v3.cs"
         },
         {
-            "order": 7,
-            "name": "SequenceResync",
+            "order": 6,
+            "name": "Partner_Audit_Data_Fixes_v3",
             "type": "seeder",
-            "className": "SequenceResyncSeeder",
-            "methodName": "ResyncAllSequencesAsync",
-            "filePath": "Seeders/SequenceResyncSeeder.cs",
-            "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
-            "forceExecuteIfAnyChanged": true
+            "className": "Partner_Audit_Data_Fixes_v3",
+            "methodName": "UpdatePartnerAuditDataAsync",
+            "filePath": "Seeders/Partner_Audit_Data_Fixes_v3.cs"
+        },
+        {
+            "order": 7,
+            "name": "Contact_Audit_Data_Fixes_v3",
+            "type": "seeder",
+            "className": "Contact_Audit_Data_Fixes_v3",
+            "methodName": "UpdateContactAuditDataAsync",
+            "filePath": "Seeders/Contact_Audit_Data_Fixes_v3.cs"
         }
     ]
 }
