@@ -179,6 +179,75 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
+    /// Updates the WHY section of an opportunity (strategic alignment, beneficiaries, outcomes, SDGs)
+    /// </summary>
+    [HttpPatch(APIDictionary.OpportunityWhy)]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> UpdateWhySection(int id, [FromBody] WhySectionRequest req)
+    {
+        try
+        {
+            var result = await _manager.UpdateWhySectionAsync(id, req);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating WHY section for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while updating WHY section", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Updates the WHO section of an opportunity (funding partners, client partners)
+    /// </summary>
+    [HttpPatch(APIDictionary.OpportunityWho)]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> UpdateWhoSection(int id, [FromBody] WhoSectionRequest req)
+    {
+        try
+        {
+            var result = await _manager.UpdateWhoSectionAsync(id, req);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating WHO section for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while updating WHO section", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Updates the WHERE section of an opportunity (implementation countries)
+    /// </summary>
+    [HttpPatch(APIDictionary.OpportunityWhere)]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> UpdateWhereSection(int id, [FromBody] WhereSectionRequest req)
+    {
+        try
+        {
+            var result = await _manager.UpdateWhereSectionAsync(id, req);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating WHERE section for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while updating WHERE section", details = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Deletes an opportunity
     /// </summary>
     [HttpDelete(APIDictionary.Opportunity + "/{id}")]

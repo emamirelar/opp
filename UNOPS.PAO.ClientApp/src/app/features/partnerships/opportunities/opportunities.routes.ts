@@ -15,18 +15,40 @@ export const OPPORTUNITIES_ROUTES: Routes = [
     path: 'demo/option1',
     component: OpportunityOption1Component,
     canActivate: [authGuard],
+    runGuardsAndResolvers: 'paramsChange'
+  },
+  {
+    path: 'demo/option1/:section',
+    component: OpportunityOption1Component,
+    canActivate: [authGuard],
+    runGuardsAndResolvers: 'paramsChange'
   },
   // View existing opportunity with Option 1
   {
     path: ':recordId/view-option1',
     component: OpportunityOption1Component,
     canActivate: [authGuard],
-    title: 'Opportunity Dashboard'
+    title: 'Opportunity Dashboard',
+    runGuardsAndResolvers: 'paramsChange'
+  },
+  {
+    path: ':recordId/view-option1/:section',
+    component: OpportunityOption1Component,
+    canActivate: [authGuard],
+    title: 'Opportunity Dashboard',
+    runGuardsAndResolvers: 'paramsChange'
   },
   // Regular view
   {
     path: ':recordId',
     component: OpportunityViewComponent,
     canActivate: [authGuard, routePermissionGuard],
+    runGuardsAndResolvers: 'paramsChange'
+  },
+  {
+    path: ':recordId/:section',
+    component: OpportunityViewComponent,
+    canActivate: [authGuard, routePermissionGuard],
+    runGuardsAndResolvers: 'paramsChange'
   },
 ];

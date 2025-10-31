@@ -12,6 +12,7 @@ using UNOPS.PAO.Models.Locations;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Models.Notifications;
+using UNOPS.PAO.Models.Values;
 
 public class MappingProfile : Profile
 {
@@ -50,6 +51,9 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.OutputName, opt => opt.MapFrom(src => src.OutputName))
             .ForMember(dest => dest.UnitName, opt => opt.MapFrom(src => src.Unit != null ? src.Unit.Name : null))
             .ForMember(dest => dest.ProjectCategoryName, opt => opt.MapFrom(src => src.ProjectCategory != null ? src.ProjectCategory.Name : null));
+
+        // SDG mappings
+        CreateMap<SDG, SDGModel>();
 
         // OrganizationHierarchy mappings
         CreateMap<OrganizationHierarchy, OrganizationHierarchyModel>().ReverseMap();

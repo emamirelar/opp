@@ -22,12 +22,6 @@ public class OpportunityStakeholder
     public int? UserId { get; set; }
     public virtual PAOUser? User { get; set; }
     
-    public int? ContactId { get; set; }
-    public virtual Contact? Contact { get; set; }
-    
-    [MaxLength(500)]
-    public string? Organization { get; set; }
-    
     [MaxLength(1000)]
     public string? Notes { get; set; }
 }

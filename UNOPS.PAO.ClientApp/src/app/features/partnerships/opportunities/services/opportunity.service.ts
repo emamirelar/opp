@@ -62,14 +62,21 @@ export class OpportunityService {
   /**
    * Update WHO section of opportunity (partners, stakeholders)
    */
-  updateOpportunityWho(id: number, data: Partial<Opportunity>): Observable<Opportunity> {
+  updateOpportunityWho(id: number, data: any): Observable<Opportunity> {
     return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/who`, data);
+  }
+
+  /**
+   * Update WHERE section of opportunity (implementation countries)
+   */
+  updateOpportunityWhere(id: number, data: any): Observable<Opportunity> {
+    return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/where`, data);
   }
 
   /**
    * Update WHY section of opportunity (SDGs, alignment, outcomes)
    */
-  updateOpportunityWhy(id: number, data: Partial<Opportunity>): Observable<Opportunity> {
+  updateOpportunityWhy(id: number, data: any): Observable<Opportunity> {
     return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/why`, data);
   }
 
@@ -78,13 +85,6 @@ export class OpportunityService {
    */
   updateOpportunityWhen(id: number, data: Partial<Opportunity>): Observable<Opportunity> {
     return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/when`, data);
-  }
-
-  /**
-   * Update WHERE section of opportunity (countries, locations)
-   */
-  updateOpportunityWhere(id: number, data: Partial<Opportunity>): Observable<Opportunity> {
-    return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/where`, data);
   }
 
   /**

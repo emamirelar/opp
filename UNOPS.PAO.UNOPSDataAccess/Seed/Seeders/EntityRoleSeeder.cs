@@ -26,9 +26,31 @@ public class EntityRoleSeeder
             {
                 EntityType = "Opportunity",
                 Name = "Opportunity Manager",
-                Description = "Primary manager responsible for the opportunity",
+                Description = "Primary manager responsible for overall opportunity strategy, stakeholder engagement, and successful delivery",
                 IsInternal = true,
                 AllowsMultiple = false,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "Opportunity",
+                Name = "Partnership Lead",
+                Description = "Lead responsible for partnership development, relationship management, and collaboration with partners",
+                IsInternal = true,
+                AllowsMultiple = true,
+                Status = EntityStatus.Active,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy = 1 // System user
+            },
+            new EntityRole
+            {
+                EntityType = "Opportunity",
+                Name = "Reviewer",
+                Description = "Reviewer responsible for quality assurance, compliance checks, and approval workflows",
+                IsInternal = true,
+                AllowsMultiple = true,
                 Status = EntityStatus.Active,
                 CreatedDate = DateTime.UtcNow,
                 CreatedBy = 1 // System user

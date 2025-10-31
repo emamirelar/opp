@@ -6,5 +6,6 @@ public class OpportunityClientPartnerModel
     public int OpportunityId { get; set; }
     public int PartnerId { get; set; }
     public string? PartnerName { get; set; }
+    public string? PartnerLogoUrl { get; set; }
 }
 

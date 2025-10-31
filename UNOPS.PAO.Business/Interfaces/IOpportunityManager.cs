@@ -10,6 +10,9 @@ public interface IOpportunityManager
     Task<IEnumerable<OpportunityModel>> GetAllOpportunitiesAsync();
     Task<OpportunityModel?> UpdateOpportunityAsync(UpdateOpportunityRequest model);
     Task<OpportunityModel> UpdateWhatSectionAsync(int id, WhatSectionRequest request);
+    Task<OpportunityModel> UpdateWhySectionAsync(int id, WhySectionRequest request);
+    Task<OpportunityModel> UpdateWhoSectionAsync(int id, WhoSectionRequest request);
+    Task<OpportunityModel> UpdateWhereSectionAsync(int id, WhereSectionRequest request);
     Task<bool> DeleteOpportunityAsync(int id);
 }
 

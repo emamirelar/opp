@@ -17,7 +17,7 @@ import {
   untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 
@@ -85,6 +85,8 @@ export class OpportunityOption1Component
   implements OnInit, AfterViewInit, OnDestroy
 {
   private demoService = inject(OpportunityDemoService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   @ViewChild('navigationSizer', { read: ElementRef })
   navigationSizer?: ElementRef;
@@ -104,6 +106,7 @@ export class OpportunityOption1Component
   private resizeObserver?: ResizeObserver;
   private chipsRequiredWidth: number = 0; // Store required width for chips
   private hasInitialized = false;
+  private navigationInProgress = false; // Prevent race conditions during URL navigation
 
   // Section navigation configuration
   sections = [
@@ -145,7 +148,26 @@ export class OpportunityOption1Component
   });
 
   ngOnInit(): void {
-    this.updateSelectedSection();
+    // Subscribe to route parameter changes to handle section navigation via URL
+    this.route.params.subscribe((params) => {
+      const section = params['section'];
+      if (section && this.isValidSection(section)) {
+        this.activeSection.set(section);
+        this.updateSelectedSection();
+        // Scroll to section after data is loaded
+        if (!this.loading()) {
+          setTimeout(() => this.scrollToSectionInternal(section), 100);
+        }
+      } else if (!section) {
+        // Default to analysis if no section in URL - update URL to include it
+        this.activeSection.set('analysis');
+        this.updateSelectedSection();
+        // Update URL to include /analysis
+        const currentUrl = this.router.url.split('?')[0]; // Remove query params if any
+        this.router.navigate([currentUrl, 'analysis'], { replaceUrl: true });
+      }
+    });
+
     this.loadOpportunity();
     this.loadAISuggestions();
   }
@@ -345,8 +367,38 @@ export class OpportunityOption1Component
   }
 
   scrollToSection(sectionId: string): void {
+    if (this.navigationInProgress) {
+      return;
+    }
+
+    this.navigationInProgress = true;
     this.activeSection.set(sectionId);
 
+    // Update URL with the section parameter
+    const currentUrl = this.router.url;
+    const urlSegments = currentUrl.split('/');
+    
+    // Check if we already have a section in the URL
+    const lastSegment = urlSegments[urlSegments.length - 1];
+    const isSection = this.isValidSection(lastSegment);
+    
+    if (isSection) {
+      // Replace existing section
+      this.router.navigate([...urlSegments.slice(0, -1), sectionId], { replaceUrl: true });
+    } else {
+      // Add section to URL
+      this.router.navigate([...urlSegments, sectionId], { replaceUrl: true });
+    }
+
+    // Scroll to the section
+    this.scrollToSectionInternal(sectionId);
+    
+    setTimeout(() => {
+      this.navigationInProgress = false;
+    }, 100);
+  }
+
+  private scrollToSectionInternal(sectionId: string): void {
     // For the first section (analysis), scroll to the opportunity header
     if (sectionId === 'analysis') {
       const headerElement = document.getElementById('opportunity-header');
@@ -361,5 +413,9 @@ export class OpportunityOption1Component
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  }
+
+  private isValidSection(section: string): boolean {
+    return this.sections.some(s => s.id === section);
   }
 }

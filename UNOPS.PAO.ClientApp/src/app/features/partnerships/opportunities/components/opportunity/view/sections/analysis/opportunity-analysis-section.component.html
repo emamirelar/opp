@@ -1,0 +1,83 @@
+<p-panel [toggleable]="true">
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-chart-bar text-unops-secondary"></i>
+      <span class="font-semibold">{{ 'label.opportunity.analysisInsights' | translate }}</span>
+    </div>
+  </ng-template>
+  <div class="space-y-4">
+    <!-- Quick Stats -->
+    <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+      <h3 class="text-sm font-semibold text-gray-900 mb-3">
+        {{ 'label.opportunity.quickStats' | translate }}
+      </h3>
+      <div class="space-y-3">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-dollar text-unops-success"></i>
+          <div>
+            <div class="text-lg font-bold text-gray-900">
+              {{ formatCurrency(opportunity().initiativeBudgetUSD) }}
+            </div>
+            <div class="text-xs text-gray-500">{{ 'label.opportunity.totalBudget' | translate }}</div>
+          </div>
+        </div>
+        <p-divider styleClass="my-2" />
+        <div class="flex items-center gap-2">
+          <i class="pi pi-calendar text-blue-600"></i>
+          <div>
+            <div class="text-sm font-semibold text-gray-900">
+              {{ formatDate(opportunity().targetSigningDate) }}
+            </div>
+            <div class="text-xs text-gray-500">{{ 'label.opportunity.targetSigning' | translate }}</div>
+          </div>
+        </div>
+        <p-divider styleClass="my-2" />
+        <div class="flex items-center gap-2">
+          <i class="pi pi-map-marker text-red-600"></i>
+          <div>
+            <div class="text-sm font-semibold text-gray-900">
+              {{ opportunity().stats?.countryCount || 0 }} {{ 'label.opportunity.countries' | translate }}
+            </div>
+            <div class="text-xs text-gray-500">{{ 'label.opportunity.implementation' | translate }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insights & Suggestions -->
+    <div>
+      <h3 class="text-sm font-semibold text-gray-900 mb-2">
+        {{ 'label.opportunity.insightsSuggestions' | translate }}
+      </h3>
+      <div class="space-y-2">
+        @for (suggestion of aiSuggestions(); track $index) {
+          <div class="bg-white rounded-lg p-3 border border-blue-100">
+            <div class="flex items-start gap-2">
+              <i class="pi pi-info-circle text-blue-600 text-sm mt-0.5"></i>
+              <p class="text-xs text-gray-700">{{ suggestion }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="flex gap-3">
+      <p-button
+        [label]="'button.viewDSTAnalysis' | translate"
+        icon="pi pi-chart-line"
+        size="small"
+        [outlined]="true"
+        (onClick)="onViewDSTAnalysis()"
+      />
+      <p-button
+        [label]="'button.generateBudgetDraft' | translate"
+        icon="pi pi-calculator"
+        size="small"
+        [outlined]="true"
+        (onClick)="onGenerateBudgetDraft()"
+      />
+    </div>
+  </div>
+</p-panel>
+

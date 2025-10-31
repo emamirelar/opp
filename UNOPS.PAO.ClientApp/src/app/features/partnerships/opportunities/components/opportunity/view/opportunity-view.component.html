@@ -1,454 +1,325 @@
 <p-confirmDialog></p-confirmDialog>
 
-<div class="flex flex-col gap-6 p-6 bg-gray-50 min-h-screen">
-  <!-- Header -->
-  <div class="flex flex-col gap-4 bg-white rounded-lg shadow-sm p-6">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <a
-          routerLink="/partnerships/opportunities"
-          class="text-gray-600 hover:text-gray-900"
-        >
-          <i class="pi pi-arrow-left text-xl"></i>
-        </a>
-        <div>
-          <div class="text-sm text-gray-500 mb-1">
-            {{ 'title.opportunity' | translate }}
-          </div>
-          <h1 class="text-3xl font-bold text-gray-900">
-            {{ opportunity()?.name || "Loading..." }}
-          </h1>
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <p-badge [value]="opportunity()?.status || ''" [severity]="getStatusSeverity(opportunity()?.status)" />
-        @if (opportunity()?.workflowStageName) {
-          <p-badge [value]="opportunity()?.workflowStageName || ''" severity="warn" />
-        }
+<!-- Header - Full Width (outside main layout) -->
+<div id="opportunity-header" class="flex flex-col gap-4 shadow-sm p-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <a
+        routerLink="/partnerships/opportunities"
+        class="text-gray-600 hover:text-gray-900"
+      >
+        <i class="pi pi-arrow-left text-xl"></i>
+      </a>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">
+          {{ opportunity()?.name || "Loading..." }}
+        </h1>
       </div>
     </div>
+    <div class="flex items-center gap-3">
+      <p-badge [value]="opportunity()?.status || ''" [severity]="getStatusSeverity(opportunity()?.status)" />
+      @if (opportunity()?.workflowStageName) {
+        <p-badge [value]="opportunity()?.workflowStageName || ''" severity="warn" />
+      }
+    </div>
+  </div>
 
-    @if (opportunity()) {
-      <div class="flex items-center gap-2 text-sm text-gray-600">
-        <span><strong>{{ 'label.opportunity.partnerRef' | translate }}:</strong> {{ opportunity()!.partnerReference || '-' }}</span>
-        <span class="text-gray-300">|</span>
-        <span><strong>{{ 'label.opportunity.manager' | translate }}:</strong> {{ opportunityManager() || '-' }}</span>
-        <span class="text-gray-300">|</span>
-        <span><strong>{{ 'label.opportunity.orgUnit' | translate }}:</strong> {{ opportunity()!.responsibleOrgUnitName || '-' }}</span>
+  @if (opportunity()) {
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+      <span><strong>{{ 'label.opportunity.partnerRef' | translate }}:</strong> {{ opportunity()!.partnerReference || '-' }}</span>
+      <span class="text-gray-300">|</span>
+      <span><strong>{{ 'label.opportunity.manager' | translate }}:</strong> {{ opportunityManager() || '-' }}</span>
+      <span class="text-gray-300">|</span>
+      <span><strong>{{ 'label.opportunity.orgUnit' | translate }}:</strong> {{ opportunity()!.responsibleOrgUnitName || '-' }}</span>
+    </div>
+  }
+</div>
+
+@if (loading()) {
+  <div class="flex items-center justify-center py-12">
+    <i class="pi pi-spin pi-spinner text-4xl text-unops-primary"></i>
+  </div>
+}
+
+<!-- Three-Column Layout -->
+<div class="flex gap-0 bg-gray-50 min-h-screen">
+  <!-- LEFT SIDEBAR: Documents Panel (Placeholder for future implementation) -->
+  <div
+    [class]="
+      documentsCollapsed()
+        ? 'w-12 bg-white border-r border-gray-200 flex-shrink-0 sticky self-start transition-all duration-300'
+        : 'w-80 bg-white border-r border-gray-200 flex-shrink-0 sticky self-start transition-all duration-300'
+    "
+    style="top: 0; max-height: calc(100vh - 160px); overflow: visible"
+  >
+    @if (!documentsCollapsed()) {
+      <!-- Expanded View -->
+      <div
+        class="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 z-[90] cursor-pointer hover:bg-blue-50 transition-colors"
+        style="background: var(--p-content-background)"
+        (click)="toggleDocumentsPanel()"
+      >
+        <div class="flex items-center gap-2">
+          <i class="pi pi-file text-blue-600"></i>
+          <span class="font-medium text-gray-900">{{ 'title.docs' | translate }}</span>
+          <p-badge value="0" severity="info" />
+        </div>
+        <button
+          type="button"
+          [class]="
+            'p-button p-button-text p-button-rounded p-button-sm flex items-center justify-center w-8 h-8'
+          "
+          (click)="toggleDocumentsPanel(); $event.stopPropagation()"
+        >
+          <i [class]="'pi ' + documentsChevronIcon()"></i>
+        </button>
+      </div>
+
+      <!-- Placeholder Content -->
+      <div class="p-4">
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 text-center">
+          <i class="pi pi-cloud-upload text-4xl text-gray-400 mb-2"></i>
+          <p class="text-sm text-gray-600">{{ 'message.documentsPlaceholder' | translate }}</p>
+        </div>
+      </div>
+    } @else {
+      <!-- Collapsed View -->
+      <div
+        class="h-full flex flex-col items-center cursor-pointer hover:bg-blue-50 transition-colors"
+        style="background: var(--p-content-background)"
+        (click)="toggleDocumentsPanel()"
+      >
+        <div class="p-2 border-b border-gray-200 w-full flex justify-center flex-shrink-0">
+          <button
+            type="button"
+            [class]="
+              'p-button p-button-text p-button-rounded p-button-sm flex items-center justify-center w-8 h-8'
+            "
+            (click)="toggleDocumentsPanel(); $event.stopPropagation()"
+          >
+            <i [class]="'pi ' + documentsChevronIcon()"></i>
+          </button>
+        </div>
+
+        <div class="flex-1 flex items-center justify-center py-12" style="min-height: 40px">
+          <div
+            class="flex flex-row items-center gap-2"
+            style="
+              transform: rotate(-90deg);
+              transform-origin: center;
+              white-space: nowrap;
+            "
+          >
+            <i class="pi pi-file text-blue-600"></i>
+            <span class="font-medium text-gray-900 text-sm">{{ 'title.docs' | translate }}</span>
+            <p-badge value="0" severity="info" />
+          </div>
+        </div>
       </div>
     }
   </div>
 
-  @if (loading()) {
-    <div class="flex items-center justify-center py-12">
-      <i class="pi pi-spin pi-spinner text-4xl text-unops-primary"></i>
-    </div>
-  }
+  <!-- MIDDLE: Main Content -->
+  <div class="flex-1 flex flex-col min-w-0">
+    @if (!loading() && opportunity()) {
+      <!-- Section Navigator -->
+      <div
+        class="sticky top-0 z-50 bg-gray-50 border-b border-gray-200 px-6 py-3 shadow-sm relative"
+        style="box-shadow: 0 -20px 0 0px #f9fafb"
+      >
+        <!-- Hidden 1px sizer div to track navigation bar width -->
+        <div
+          #navigationSizer
+          class="absolute top-0 left-0 right-0"
+          style="height: 1px; visibility: hidden; pointer-events: none"
+        ></div>
 
-  @if (!loading() && opportunity()) {
-    <!-- AI Assistant & Quick Stats -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- AI Assistant Panel -->
-      <div class="lg:col-span-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm p-6 border border-blue-100">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-              <i class="pi pi-sparkles text-white text-lg"></i>
-            </div>
-            <h2 class="text-xl font-semibold text-gray-900">{{ 'label.opportunity.aiAssistant' | translate }}</h2>
-          </div>
-          <p-button
-            icon="pi pi-minus"
-            [rounded]="true"
-            [text]="true"
-            size="small"
-            (onClick)="toggleAIPanel()"
-          />
+        <!-- Chips Navigation -->
+        <div
+          #chipsContainer
+          [class]="
+            showDropdown()
+              ? 'flex items-center gap-2 pb-1 absolute opacity-0 pointer-events-none'
+              : 'flex items-center gap-2 pb-1'
+          "
+          style="overflow: hidden"
+        >
+          @for (section of sections; track section.id) {
+            <button
+              (click)="scrollToSection(section.id)"
+              [class]="
+                activeSection() === section.id
+                  ? 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-white font-medium text-sm transition-all duration-200 whitespace-nowrap'
+                  : 'flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium text-sm transition-all duration-200 whitespace-nowrap'
+              "
+            >
+              <i [class]="'pi ' + section.icon + ' text-sm'"></i>
+              <span>{{ section.label }}</span>
+            </button>
+          }
         </div>
 
-        @if (showAIPanel()) {
-          <div class="space-y-3">
-            <div class="bg-white rounded-lg p-4 border border-blue-200">
-              <div class="flex items-start gap-3">
-                <i class="pi pi-info-circle text-blue-600 mt-1"></i>
-                <div class="flex-1">
-                  <p class="text-sm text-gray-700">{{ 'message.aiAssistant.placeholder' | translate }}</p>
-                  <p class="text-xs text-gray-500 mt-2 italic">{{ 'message.toBeImplemented' | translate }}</p>
-                </div>
+        <!-- Dropdown Navigation (shown when chips don't fit) -->
+        <div [class]="showDropdown() ? 'flex items-center gap-3' : 'hidden'">
+          <label class="text-sm font-medium text-gray-700">{{ 'label.section' | translate }}:</label>
+          <p-dropdown
+            [options]="sections"
+            [(ngModel)]="selectedSection"
+            (onChange)="onSectionDropdownChange($event)"
+            optionLabel="label"
+            [placeholder]="'label.selectSection' | translate"
+            styleClass="w-full"
+          >
+            <ng-template pTemplate="selectedItem">
+              <div class="flex items-center gap-2" *ngIf="selectedSection">
+                <i [class]="'pi ' + selectedSection.icon + ' text-unops-primary'"></i>
+                <span>{{ selectedSection.label }}</span>
               </div>
-            </div>
-            <div class="flex gap-2 pt-2">
-              <p-button
-                [label]="'button.viewFullAnalysis' | translate"
-                icon="pi pi-chart-line"
-                size="small"
-                [outlined]="true"
-                [disabled]="true"
-              />
-              <p-button
-                [label]="'button.generateDraftBudget' | translate"
-                icon="pi pi-calculator"
-                size="small"
-                [outlined]="true"
-                [disabled]="true"
-              />
-            </div>
-          </div>
-        }
-      </div>
-
-      <!-- Quick Stats -->
-      <div class="bg-white rounded-lg shadow-sm p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ 'label.opportunity.quickStats' | translate }}</h3>
-        <div class="space-y-3">
-          <div class="flex items-center gap-3">
-            <i class="pi pi-dollar text-green-600 text-xl"></i>
-            <div>
-              <div class="text-2xl font-bold text-gray-900">
-                {{ formatCurrency(opportunity()!.initiativeBudgetUSD) }}
+            </ng-template>
+            <ng-template let-section pTemplate="item">
+              <div class="flex items-center gap-2">
+                <i [class]="'pi ' + section.icon"></i>
+                <span>{{ section.label }}</span>
               </div>
-              <div class="text-xs text-gray-500">{{ 'label.opportunity.totalBudget' | translate }}</div>
-            </div>
-          </div>
-          <p-divider />
-          <div class="flex items-center gap-3">
-            <i class="pi pi-calendar text-blue-600 text-xl"></i>
-            <div>
-              <div class="text-lg font-semibold text-gray-900">
-                {{ formatDate(opportunity()!.targetSigningDate) }}
-              </div>
-              <div class="text-xs text-gray-500">{{ 'label.opportunity.targetSigning' | translate }}</div>
-            </div>
-          </div>
-          <p-divider />
-          <div class="flex items-center gap-3">
-            <i class="pi pi-map-marker text-red-600 text-xl"></i>
-            <div>
-              <div class="text-lg font-semibold text-gray-900">
-                {{ countryCount() }} {{ 'label.opportunity.countries' | translate }}
-              </div>
-              <div class="text-xs text-gray-500">{{ 'label.opportunity.implementationAreas' | translate }}</div>
-            </div>
-          </div>
+            </ng-template>
+          </p-dropdown>
         </div>
       </div>
-    </div>
 
-    <!-- WHAT - Opportunity Overview (Section Component) -->
-    <app-opportunity-what-section
-      [opportunity]="opportunity()!"
-      (opportunityUpdated)="handleOpportunityUpdate($event)"
-    />
-
-    <!-- WHO & WHY - Side by side -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- WHO - Partners & People -->
-      <p-panel header="👥 WHO - Partners & People" [toggleable]="true">
-        <div class="space-y-6">
-          <div>
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="text-sm font-semibold text-gray-900">
-                💰 Funding Partners ({{ fundingPartnerCount() }})
-              </h3>
-              <p-button
-                [label]="'button.add' | translate"
-                icon="pi pi-plus"
-                size="small"
-                [text]="true"
-                [disabled]="true"
-              />
-            </div>
-            @if (fundingPartnerCount() > 0) {
-              @for (partner of opportunity()!.fundingPartners; track partner.id) {
-                <div class="bg-blue-50 rounded-lg p-4 mb-3 border border-blue-100">
-                  <div class="flex items-center justify-between mb-2">
-                    <h4 class="font-semibold text-gray-900">
-                      {{ partner.partnerName }}
-                    </h4>
-                    @if (partner.percentage) {
-                      <p-badge [value]="partner.percentage + '%'" severity="info" />
-                    }
-                  </div>
-                  <div class="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span class="text-gray-600">Amount:</span>
-                      <span class="font-semibold ml-2">{{ formatCurrency(partner.amount) }}</span>
-                    </div>
-                    @if (partner.feePercentage) {
-                      <div>
-                        <span class="text-gray-600">Fee:</span>
-                        <span class="font-semibold ml-2">{{ partner.feePercentage }}%</span>
-                      </div>
-                    }
-                  </div>
-                  @if (partner.partnershipAgreementReference) {
-                    <div class="text-xs text-blue-700 mt-2">
-                      <i class="pi pi-file"></i>
-                      {{ partner.partnershipAgreementReference }}
-                    </div>
-                  }
-                </div>
-              }
-            } @else {
-              <div class="text-center py-8 text-gray-400">
-                <i class="pi pi-dollar text-4xl mb-3"></i>
-                <p>No funding partners yet</p>
-              </div>
-            }
-          </div>
-
-          <p-divider />
-
-          <div>
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="text-sm font-semibold text-gray-900">
-                🏢 Client Partners ({{ clientPartnerCount() }})
-              </h3>
-              <p-button
-                [label]="'button.add' | translate"
-                icon="pi pi-plus"
-                size="small"
-                [text]="true"
-                [disabled]="true"
-              />
-            </div>
-            @if (clientPartnerCount() > 0) {
-              @for (client of opportunity()!.clientPartners; track client.id) {
-                <div class="bg-gray-50 rounded-lg p-3 mb-2 border border-gray-200">
-                  <div class="font-semibold text-gray-900">{{ client.partnerName }}</div>
-                </div>
-              }
-            } @else {
-              <div class="text-center py-8 text-gray-400">
-                <i class="pi pi-users text-4xl mb-3"></i>
-                <p>No client partners yet</p>
-              </div>
-            }
-          </div>
-
-          <p-divider />
-
-          <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">
-              👤 Team & Stakeholders ({{ stakeholderCount() }})
-            </h3>
-            @if (stakeholderCount() > 0) {
-              <div class="space-y-2 text-sm">
-                @for (stakeholder of opportunity()!.stakeholders; track stakeholder.id) {
-                  <div class="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                    <p-avatar [label]="stakeholder.userName?.charAt(0) || stakeholder.contactName?.charAt(0) || '?'" shape="circle" />
-                    <div>
-                      <div class="font-semibold">
-                        {{ stakeholder.userName || stakeholder.contactName || 'Unknown' }}
-                      </div>
-                      <div class="text-xs text-gray-500">
-                        {{ stakeholder.entityRoleName || 'No role' }}
-                      </div>
-                    </div>
-                  </div>
-                }
-              </div>
-            } @else {
-              <div class="text-center py-8 text-gray-400">
-                <i class="pi pi-user text-4xl mb-3"></i>
-                <p>No stakeholders yet</p>
-              </div>
-            }
-          </div>
-        </div>
-      </p-panel>
-
-      <!-- WHY - Impact & Alignment -->
-      <p-panel header="💡 WHY - Impact & Alignment" [toggleable]="true">
-        <div class="space-y-6">
-          <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-3">
-              🎯 Strategic Alignment
-            </h3>
-            <p class="text-sm text-gray-700">
-              {{ opportunity()!.strategicAlignment || 'No strategic alignment specified' }}
-            </p>
-          </div>
-
-          <p-divider />
-
-          <div>
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="text-sm font-semibold text-gray-900">
-                🌱 SDG Alignment ({{ sdgCount() }})
-              </h3>
-              <p-button
-                [label]="'button.addSDG' | translate"
-                icon="pi pi-plus"
-                size="small"
-                [text]="true"
-                [disabled]="true"
-              />
-            </div>
-            @if (sdgCount() > 0) {
-              @for (sdg of opportunity()!.sdGs; track sdg.id) {
-                <div class="bg-green-50 rounded-lg p-3 mb-2 border border-green-200">
-                  <div class="flex items-start justify-between">
-                    <div>
-                      <div class="font-semibold text-gray-900">
-                        SDG {{ sdg.sdgNumber }}: {{ sdg.sdgName }}
-                      </div>
-                      @if (sdg.contributionLevel) {
-                        <div class="text-sm text-gray-600 mt-1">
-                          {{ sdg.contributionLevel }}
-                        </div>
-                      }
-                    </div>
-                    @if (sdg.isPrimary) {
-                      <p-badge value="Primary" severity="success" />
-                    }
-                  </div>
-                </div>
-              }
-            } @else {
-              <div class="text-center py-8 text-gray-400">
-                <i class="pi pi-globe text-4xl mb-3"></i>
-                <p>No SDGs aligned yet</p>
-              </div>
-            }
-          </div>
-
-          <p-divider />
-
-          <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">
-              👨‍👩‍👧‍👦 Expected Beneficiaries
-            </h3>
-            <p class="text-sm text-gray-700">
-              {{ opportunity()!.expectedBeneficiaries || 'No beneficiaries specified' }}
-            </p>
-          </div>
-
-          <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">
-              📈 Expected Outcomes
-            </h3>
-            <p class="text-sm text-gray-700">
-              {{ opportunity()!.intendedImpactOutcomes || 'No outcomes specified' }}
-            </p>
-          </div>
-        </div>
-      </p-panel>
-    </div>
-
-    <!-- WHEN & WHERE -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- WHEN - Timeline -->
-      <p-panel header="📅 WHEN - Timeline & Milestones" [toggleable]="true">
-        <div class="space-y-4">
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <h4 class="text-sm font-semibold text-gray-600 mb-1">
-                Target Signing Date
-              </h4>
-              <p class="text-lg font-semibold text-gray-900">
-                {{ formatDate(opportunity()!.targetSigningDate) }}
-              </p>
-            </div>
-            <div>
-              <h4 class="text-sm font-semibold text-gray-600 mb-1">
-                Target Delivery Date
-              </h4>
-              <p class="text-lg font-semibold text-gray-900">
-                {{ formatDate(opportunity()!.targetDeliveryDate) }}
-              </p>
-            </div>
-          </div>
-        </div>
-      </p-panel>
-
-      <!-- WHERE - Geography -->
-      <p-panel header="🌍 WHERE - Geographic Implementation" [toggleable]="true">
-        <div class="space-y-4">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-semibold text-gray-900">
-              Implementation Countries ({{ countryCount() }})
-            </h3>
-            <p-button
-              [label]="'button.addCountry' | translate"
-              icon="pi pi-plus"
-              size="small"
-              [text]="true"
-              [disabled]="true"
+      <!-- Scrollable Content Area -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <div class="flex flex-col gap-6">
+          
+          <!-- ANALYSIS - Quick Stats & Insights -->
+          <div id="section-analysis" style="scroll-margin-top: 72px">
+            <app-opportunity-analysis-section
+              [opportunity]="opportunity()!"
             />
           </div>
 
-          @if (countryCount() > 0) {
-            @for (country of opportunity()!.countries; track country.id) {
-              <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div class="flex items-start justify-between mb-2">
-                  <div>
-                    <h4 class="font-semibold text-gray-900">
-                      {{ country.countryName }}
-                    </h4>
-                    @if (country.specificAreas) {
-                      <p class="text-sm text-gray-600">
-                        {{ country.specificAreas }}
-                      </p>
-                    }
-                  </div>
-                  @if (country.riskScore) {
-                    <p-badge [value]="'Risk: ' + country.riskScore.toFixed(1)" [severity]="getRiskScoreSeverity(country.riskScore)" />
-                  }
+          <!-- WHAT Section -->
+          <div id="section-what" style="scroll-margin-top: 72px">
+            <app-opportunity-what-section
+              [opportunity]="opportunity()!"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
+          </div>
+
+          <!-- WHY Section -->
+          <div id="section-why" style="scroll-margin-top: 72px">
+            <app-opportunity-why-section
+              [opportunity]="opportunity()!"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
+          </div>
+
+          <!-- WHO Section - Partners & People -->
+          <div id="section-who" style="scroll-margin-top: 72px">
+            <app-opportunity-who-section
+              [opportunity]="opportunity()!"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
+          </div>
+
+          <!-- WHERE Section - Geography -->
+          <div id="section-where" style="scroll-margin-top: 72px">
+            <app-opportunity-where-section
+              [opportunity]="opportunity()!"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
+          </div>
+
+          <!-- WHEN Section - Timeline -->
+          <div id="section-when" style="scroll-margin-top: 72px">
+            <p-panel [toggleable]="true">
+              <ng-template pTemplate="header">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-calendar text-unops-primary"></i>
+                  <span class="font-semibold">{{ 'label.opportunity.whenTimeline' | translate }}</span>
                 </div>
-                @if (country.contextWarning) {
-                  <p-message severity="warn" [text]="country.contextWarning" styleClass="mt-2" />
-                }
+              </ng-template>
+              <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 class="text-sm font-semibold text-gray-600 mb-1">
+                      {{ 'label.opportunity.targetSigningDate' | translate }}
+                    </h4>
+                    <p class="text-lg font-semibold text-gray-900">
+                      {{ formatDate(opportunity()!.targetSigningDate) }}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-semibold text-gray-600 mb-1">
+                      {{ 'label.opportunity.targetDeliveryDate' | translate }}
+                    </h4>
+                    <p class="text-lg font-semibold text-gray-900">
+                      {{ formatDate(opportunity()!.targetDeliveryDate) }}
+                    </p>
+                  </div>
+                </div>
               </div>
-            }
-          } @else {
-            <div class="text-center py-8 text-gray-400">
-              <i class="pi pi-map-marker text-4xl mb-3"></i>
-              <p>No countries specified yet</p>
+            </p-panel>
+          </div>
+
+          <!-- RELATED Section (Placeholder for future implementation) -->
+          <div id="section-related" style="scroll-margin-top: 72px">
+            <p-panel [toggleable]="true">
+              <ng-template pTemplate="header">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-link text-unops-info"></i>
+                  <span class="font-semibold">{{ 'label.opportunity.relatedItems' | translate }}</span>
+                </div>
+              </ng-template>
+              <div class="text-center py-8 text-gray-400">
+                <i class="pi pi-link text-4xl mb-3"></i>
+                <p>{{ 'message.relatedItemsPlaceholder' | translate }}</p>
+              </div>
+            </p-panel>
+          </div>
+
+          <!-- COLLABORATION Section - Comments -->
+          <div id="section-collaboration" style="scroll-margin-top: 72px">
+            <app-comment 
+              entityType="Opportunity" 
+              [entityId]="opportunity()!.id"
+              [panelHeader]="'label.opportunity.collaborationComments' | translate">
+            </app-comment>
+          </div>
+
+          <!-- Action Bar -->
+          <div class="bg-white rounded-lg shadow-lg p-4 sticky bottom-4 border border-gray-200">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-info-circle text-blue-600"></i>
+                <span class="text-sm text-gray-600">
+                  {{ 'label.opportunity.lastModified' | translate }}: {{ formatDate(opportunity()!.lastModifiedDate) }}
+                </span>
+              </div>
+              <div class="flex gap-2">
+                <p-button
+                  [label]="'button.saveDraft' | translate"
+                  icon="pi pi-save"
+                  severity="secondary"
+                  [outlined]="true"
+                  [disabled]="true"
+                />
+                <p-button
+                  [label]="'button.exportPDF' | translate"
+                  icon="pi pi-file-pdf"
+                  severity="secondary"
+                  [outlined]="true"
+                  [disabled]="true"
+                />
+                <p-button 
+                  [label]="'button.submitForReview' | translate" 
+                  icon="pi pi-send" 
+                  [disabled]="true"
+                />
+              </div>
             </div>
-          }
-        </div>
-      </p-panel>
-    </div>
-
-    <!-- COLLABORATION & COMMENTS -->
-    <app-comment 
-      entityType="Opportunity" 
-      [entityId]="opportunity()!.id"
-      [panelHeader]="'label.opportunity.collaborationComments' | translate">
-    </app-comment>
-
-    <!-- Action Bar -->
-    <div class="bg-white rounded-lg shadow-lg p-4 sticky bottom-4 border border-gray-200">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <i class="pi pi-info-circle text-blue-600"></i>
-          <span class="text-sm text-gray-600">
-            {{ 'label.opportunity.lastModified' | translate }}: {{ formatDate(opportunity()!.lastModifiedDate) }}
-          </span>
-        </div>
-        <div class="flex gap-2">
-          <p-button
-            [label]="'button.saveDraft' | translate"
-            icon="pi pi-save"
-            severity="secondary"
-            [outlined]="true"
-            [disabled]="true"
-          />
-          <p-button
-            [label]="'button.exportPDF' | translate"
-            icon="pi pi-file-pdf"
-            severity="secondary"
-            [outlined]="true"
-            [disabled]="true"
-          />
-          <p-button 
-            [label]="'button.submitForReview' | translate" 
-            icon="pi pi-send" 
-            [disabled]="true"
-          />
+          </div>
         </div>
       </div>
-    </div>
-  }
+    }
+  </div>
 </div>

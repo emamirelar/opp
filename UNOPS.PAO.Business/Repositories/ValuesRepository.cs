@@ -20,7 +20,20 @@ public class ValuesRepository
 
     public IEnumerable<EligibleEntity> GetEligibleEntities() => context.EligibleEntities.Where(x => x.Status == EntityStatus.Active);
 
-    public IEnumerable<Country> GetCountries() => context.Countries.Where(x => x.Status == EntityStatus.Active);
+    public IEnumerable<Models.Shared.SimpleValueModel> GetCountries() 
+        => context.Countries
+            .Where(x => x.Status == EntityStatus.Active)
+            .OrderBy(x => x.Name)
+            .Select(x => new Models.Shared.SimpleValueModel
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Code = x.Iso2Code,
+                Description = x.Name,
+                Continent = x.ContinentDescription,
+                Region = x.RegionDescription
+            })
+            .ToList();
 
     public IQueryable<Partner> GetPartners()
         => context.Partners
@@ -302,4 +315,38 @@ public class ValuesRepository
             .Include(x => x.Unit)
             .Include(x => x.ProjectCategory)
             .Where(x => x.Status == EntityStatus.Active);
+
+    public IEnumerable<SDG> GetSDGs()
+        => context.SDGs.Where(x => x.Status == EntityStatus.Active);
+
+    public async Task<IEnumerable<Models.Shared.SimpleValueModel>> GetEntityRolesAsync(string entityType)
+    {
+        return await context.EntityRoles
+            .Where(x => x.EntityType == entityType && x.Status == EntityStatus.Active)
+            .OrderBy(x => x.Name)
+            .Select(x => new Models.Shared.SimpleValueModel
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Code = x.Name,
+                Description = x.Description
+            })
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Models.Shared.SimpleValueModel>> GetInternalUsersAsync()
+    {
+        return await context.PAOUsers
+            .Include(x => x.UserProfile)
+            .Where(x => x.IsInternal)
+            .OrderBy(x => x.Email)
+            .Select(x => new Models.Shared.SimpleValueModel
+            {
+                Id = x.Id,
+                Name = x.UserProfile != null ? x.UserProfile.Name : x.Email,
+                Code = x.Email,
+                Description = x.Email
+            })
+            .ToListAsync();
+    }
 }

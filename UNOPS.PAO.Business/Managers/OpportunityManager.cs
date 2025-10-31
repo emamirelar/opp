@@ -4,6 +4,7 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
 
@@ -276,6 +277,224 @@ public class OpportunityManager : IOpportunityManager
         await opportunityRepository.UpdateAsync(entity);
 
         // Reload with all includes for complete response
+        return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
+    }
+
+    public async Task<OpportunityModel> UpdateWhySectionAsync(int id, WhySectionRequest request)
+    {
+        var entity = await opportunityRepository.GetByIdAsync(id, new[]
+        {
+            nameof(Opportunity.SDGs)
+        });
+
+        if (entity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // Update WHY section fields
+        if (request.StrategicAlignment != null)
+        {
+            entity.StrategicAlignment = request.StrategicAlignment;
+        }
+
+        if (request.ExpectedBeneficiaries != null)
+        {
+            entity.ExpectedBeneficiaries = request.ExpectedBeneficiaries;
+        }
+
+        if (request.IntendedImpactOutcomes != null)
+        {
+            entity.IntendedImpactOutcomes = request.IntendedImpactOutcomes;
+        }
+
+        // Update SDG alignments
+        if (request.SdGs != null)
+        {
+            // Remove existing SDGs
+            if (entity.SDGs != null && entity.SDGs.Any())
+            {
+                context.Set<OpportunitySDG>().RemoveRange(entity.SDGs);
+            }
+
+            // Add new SDGs
+            entity.SDGs = request.SdGs
+                .Select(s => new OpportunitySDG
+                {
+                    OpportunityId = id,
+                    SDGId = s.SDGId,
+                    IsPrimary = s.IsPrimary,
+                    Notes = s.Notes
+                })
+                .ToList();
+        }
+
+        await opportunityRepository.UpdateAsync(entity);
+
+        // Reload with all includes for complete response
+        return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
+    }
+
+    public async Task<OpportunityModel> UpdateWhoSectionAsync(int id, WhoSectionRequest request)
+    {
+        var entity = await opportunityRepository.GetByIdAsync(id, new[]
+        {
+            nameof(Opportunity.FundingPartners),
+            nameof(Opportunity.ClientPartners),
+            nameof(Opportunity.Stakeholders)
+        });
+
+        if (entity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // Update Funding Partners
+        if (request.FundingPartners != null)
+        {
+            // Remove existing funding partners
+            if (entity.FundingPartners != null && entity.FundingPartners.Any())
+            {
+                context.Set<OpportunityFundingPartner>().RemoveRange(entity.FundingPartners);
+            }
+
+            // Get a valid currency ID (preferably USD, or the first available)
+            var defaultCurrencyId = context.Set<Currency>()
+                .Where(c => c.Code == "USD")
+                .Select(c => c.Id)
+                .FirstOrDefault();
+            
+            if (defaultCurrencyId == 0)
+            {
+                // Fallback to first available currency
+                defaultCurrencyId = context.Set<Currency>()
+                    .Select(c => c.Id)
+                    .FirstOrDefault();
+            }
+
+            // Add new funding partners
+            entity.FundingPartners = request.FundingPartners
+                .Select(fp => new OpportunityFundingPartner
+                {
+                    OpportunityId = id,
+                    PartnerId = fp.PartnerId,
+                    Amount = fp.Amount,
+                    CurrencyId = fp.CurrencyId ?? defaultCurrencyId, // Use provided or default currency
+                    Percentage = fp.Percentage,
+                    FeePercentage = fp.FeePercentage,
+                    FeeAmount = fp.FeeAmount,
+                    FeeAmountUSD = fp.FeeAmountUSD,
+                    IsAmountBasedFee = fp.IsAmountBasedFee,
+                    PartnershipAgreementReference = fp.PartnershipAgreementReference
+                })
+                .ToList();
+        }
+
+        // Update Client Partners
+        if (request.ClientPartners != null)
+        {
+            // Remove existing client partners
+            if (entity.ClientPartners != null && entity.ClientPartners.Any())
+            {
+                context.Set<OpportunityClientPartner>().RemoveRange(entity.ClientPartners);
+            }
+
+            // Add new client partners
+            entity.ClientPartners = request.ClientPartners
+                .Select(cp => new OpportunityClientPartner
+                {
+                    OpportunityId = id,
+                    PartnerId = cp.PartnerId
+                })
+                .ToList();
+        }
+
+        // Update Stakeholders
+        if (request.Stakeholders != null)
+        {
+            // Get entity roles to check AllowsMultiple property
+            var entityRoleIds = request.Stakeholders.Select(s => s.EntityRoleId).Distinct().ToList();
+            var entityRoles = await context.Set<EntityRole>()
+                .Where(er => entityRoleIds.Contains(er.Id))
+                .ToDictionaryAsync(er => er.Id);
+
+            // Validate that single-assignment roles don't have duplicates
+            var roleGroups = request.Stakeholders
+                .GroupBy(s => s.EntityRoleId)
+                .ToList();
+
+            foreach (var roleGroup in roleGroups)
+            {
+                if (entityRoles.TryGetValue(roleGroup.Key, out var entityRole))
+                {
+                    if (!entityRole.AllowsMultiple && roleGroup.Count() > 1)
+                    {
+                        throw new BusinessException($"The role '{entityRole.Name}' does not allow multiple assignments. Only one person can be assigned to this role.");
+                    }
+                }
+            }
+
+            // Remove existing stakeholders
+            if (entity.Stakeholders != null && entity.Stakeholders.Any())
+            {
+                context.Set<OpportunityStakeholder>().RemoveRange(entity.Stakeholders);
+            }
+
+            // Add new stakeholders
+            entity.Stakeholders = request.Stakeholders
+                .Select(s => new OpportunityStakeholder
+                {
+                    OpportunityId = id,
+                    UserId = s.UserId,
+                    EntityRoleId = s.EntityRoleId,
+                    IsInternal = true, // Internal stakeholders only for now
+                    StakeholderType = "Internal",
+                    Notes = s.Notes
+                })
+                .ToList();
+        }
+
+        await opportunityRepository.UpdateAsync(entity);
+
+        // Reload with all includes for complete response
+        return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
+    }
+
+    public async Task<OpportunityModel> UpdateWhereSectionAsync(int id, WhereSectionRequest request)
+    {
+        var entity = await opportunityRepository.GetByIdAsync(id, new[]
+        {
+            nameof(Opportunity.Countries)
+        });
+
+        if (entity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // Update Countries
+        if (request.Countries != null)
+        {
+            // Remove existing countries
+            if (entity.Countries != null && entity.Countries.Any())
+            {
+                context.Set<OpportunityCountry>().RemoveRange(entity.Countries);
+            }
+
+            // Add new countries
+            entity.Countries = request.Countries
+                .Select(c => new OpportunityCountry
+                {
+                    OpportunityId = id,
+                    CountryId = c.CountryId,
+                    SpecificAreas = c.SpecificAreas
+                })
+                .ToList();
+        }
+
+        await context.SaveChangesAsync();
+
+        // Reload with all includes
         return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
     }
 

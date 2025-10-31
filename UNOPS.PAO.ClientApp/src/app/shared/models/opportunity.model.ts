@@ -49,8 +49,9 @@ export interface OpportunityFundingPartner {
   opportunityId: number;
   partnerId: number;
   partnerName: string;
+  partnerLogoUrl?: string;
   amount: number | null;
-  currencyId: number;
+  currencyId: number | null; // Nullable - backend will use default if not provided
   currencyCode: string;
   percentage: number | null;
   feePercentage: number | null;
@@ -69,10 +70,11 @@ export interface OpportunityClientPartner {
   opportunityId: number;
   partnerId: number;
   partnerName: string;
+  partnerLogoUrl?: string;
 }
 
 /**
- * Stakeholder model
+ * Stakeholder model (Internal UNOPS users only)
  */
 export interface OpportunityStakeholder {
   id: number;
@@ -84,10 +86,6 @@ export interface OpportunityStakeholder {
   userId: number | null;
   userName: string | null;
   userEmail: string | null;
-  contactId: number | null;
-  contactName: string | null;
-  contactEmail: string | null;
-  organization: string | null;
   notes: string | null;
 }
 
@@ -118,6 +116,8 @@ export interface OpportunityCountry {
   countryId: number;
   countryName: string;
   countryCode: string;
+  continent: string | null;
+  region: string | null;
   specificAreas: string | null;
   contextWarning: string | null;
   riskScore: number | null;
@@ -129,11 +129,11 @@ export interface OpportunityCountry {
 export interface OpportunitySDG {
   id: number;
   opportunityId: number;
-  sdgId: number;
-  sdgNumber: number;
+  sdgId: string;
+  sdgDatabaseId?: number;  // Database FK - used for saving
+  sdgNumber: string;
   sdgName: string;
   isPrimary: boolean;
-  contributionLevel: string | null;
   notes: string | null;
 }
 

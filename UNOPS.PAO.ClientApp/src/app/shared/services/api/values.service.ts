@@ -16,6 +16,8 @@ export interface SimpleValue {
   name: string;
   code?: string;
   description?: string;
+  continent?: string;  // For countries
+  region?: string;  // For countries
 }
 
 /**
@@ -47,6 +49,21 @@ export interface Output {
   projectCategoryId?: number;
   projectCategoryName?: string;
   outputServiceLine?: string;
+}
+
+/**
+ * @interface SDG
+ * @description Sustainable Development Goal model
+ */
+export interface SDG {
+  id: number;
+  name: string;
+  sdgId?: string;
+  sdgNumber?: string;
+  sdgDescription?: string;
+  sdgLogo?: string;
+  sdgLongDescription?: string;
+  status: string;
 }
 
 /**
@@ -98,6 +115,15 @@ export class ValuesService {
    */
   getOutputs(): Observable<Output[]> {
     return this.http.get<Output[]>(`${this.baseUrl}/outputs`);
+  }
+
+  /**
+   * @description Get all SDGs
+   * @returns {Observable<SDG[]>}
+   * @since 1.0.0
+   */
+  getSDGs(): Observable<SDG[]> {
+    return this.http.get<SDG[]>(`${this.baseUrl}/sdgs`);
   }
 
   /**
@@ -160,6 +186,34 @@ export class ValuesService {
    */
   getCurrencies(): Observable<SimpleValue[]> {
     return this.http.get<SimpleValue[]>(`${this.baseUrl}/currency`);
+  }
+
+  /**
+   * @description Get all partners
+   * @returns {Observable<SimpleValue[]>}
+   * @since 1.0.0
+   */
+  getPartners(): Observable<SimpleValue[]> {
+    return this.http.get<SimpleValue[]>(`${this.baseUrl}/partners`);
+  }
+
+  /**
+   * @description Get entity roles for a specific entity type
+   * @param {string} entityType - Entity type (e.g., "Opportunity")
+   * @returns {Observable<SimpleValue[]>}
+   * @since 1.0.0
+   */
+  getEntityRoles(entityType: string): Observable<SimpleValue[]> {
+    return this.http.get<SimpleValue[]>(`${this.baseUrl}/entity-roles/${entityType}`);
+  }
+
+  /**
+   * @description Get all internal users (UNOPS users)
+   * @returns {Observable<SimpleValue[]>}
+   * @since 1.0.0
+   */
+  getInternalUsers(): Observable<SimpleValue[]> {
+    return this.http.get<SimpleValue[]>(`${this.baseUrl}/internal-users`);
   }
 }
 

@@ -6,6 +6,7 @@ public class OpportunityFundingPartnerModel
     public int OpportunityId { get; set; }
     public int PartnerId { get; set; }
     public string? PartnerName { get; set; }
+    public string? PartnerLogoUrl { get; set; }
     public decimal? Amount { get; set; }
     public decimal? FundedAmount { get; set; }
     public decimal? Percentage { get; set; }

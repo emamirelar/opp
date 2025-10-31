@@ -25,8 +25,11 @@ public class APIDictionary
     public const string EligibleEntity = APIPrefix + "values/eligible-entity";
     public const string ApplicationType = APIPrefix + "values/application-type";
     public const string SDG = APIPrefix + "values/sdg";
+    public const string SDGs = APIPrefix + "values/sdgs";
     public const string Country = APIPrefix + "values/country";
     public const string Partners = APIPrefix + "values/partners";
+    public const string EntityRoles = APIPrefix + "values/entity-roles";
+    public const string InternalUsers = APIPrefix + "values/internal-users";
     public const string OrganizationUnits = APIPrefix + "values/organization-units";
     public const string PartnerCategories = APIPrefix + "values/partner-categories";
     public const string LiaisonOffices = APIPrefix + "values/liaison-offices";
@@ -167,8 +170,8 @@ public class APIDictionary
     // Opportunity
     public const string Opportunity = APIPrefix + "opportunity";
     public const string OpportunityWhat = Opportunity + "/{id}/what";
-    public const string OpportunityWho = Opportunity + "/{id}/who";
     public const string OpportunityWhy = Opportunity + "/{id}/why";
-    public const string OpportunityWhen = Opportunity + "/{id}/when";
+    public const string OpportunityWho = Opportunity + "/{id}/who";
     public const string OpportunityWhere = Opportunity + "/{id}/where";
+    public const string OpportunityWhen = Opportunity + "/{id}/when";
 }

@@ -42,6 +42,7 @@ public class OpportunityMappingProfile : Profile
         // =================================================================
         CreateMap<OpportunityFundingPartner, OpportunityFundingPartnerModel>()
             .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null))
+            .ForMember(dest => dest.PartnerLogoUrl, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.LogoUrl : null))
             .ForMember(dest => dest.CurrencyCode, opt => opt.MapFrom(src => src.Currency != null ? src.Currency.Code : "USD"))
             // Map both Amount and FundedAmount for backwards compatibility
             .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount))
@@ -55,7 +56,8 @@ public class OpportunityMappingProfile : Profile
         // OpportunityClientPartner mappings
         // =================================================================
         CreateMap<OpportunityClientPartner, OpportunityClientPartnerModel>()
-            .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null));
+            .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null))
+            .ForMember(dest => dest.PartnerLogoUrl, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.LogoUrl : null));
             
         CreateMap<OpportunityClientPartnerRequest, OpportunityClientPartner>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -67,12 +69,8 @@ public class OpportunityMappingProfile : Profile
         CreateMap<OpportunityStakeholder, OpportunityStakeholderModel>()
             .ForMember(dest => dest.EntityRoleName, opt => opt.MapFrom(src => src.EntityRole != null ? src.EntityRole.Name : null))
             .ForMember(dest => dest.StakeholderType, opt => opt.MapFrom(src => src.IsInternal ? "Internal" : "External"))
-            // Internal stakeholder mappings
-            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.IsInternal && src.User != null ? src.User.Name : null))
-            .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.IsInternal && src.User != null ? src.User.Email : null))
-            // External stakeholder mappings
-            .ForMember(dest => dest.ContactName, opt => opt.MapFrom(src => !src.IsInternal && src.Contact != null ? src.Contact.Name : null))
-            .ForMember(dest => dest.ContactEmail, opt => opt.MapFrom(src => !src.IsInternal && src.Contact != null ? src.Contact.Email : null));
+            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null && src.User.UserProfile != null ? src.User.UserProfile.Name : (src.User != null ? src.User.Email : null)))
+            .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User != null ? src.User.Email : null));
             
         CreateMap<OpportunityStakeholderRequest, OpportunityStakeholder>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -99,18 +97,27 @@ public class OpportunityMappingProfile : Profile
         // =================================================================
         CreateMap<OpportunityCountry, OpportunityCountryModel>()
             .ForMember(dest => dest.CountryName, opt => opt.MapFrom(src => src.Country != null ? src.Country.Name : null))
-            .ForMember(dest => dest.CountryCode, opt => opt.MapFrom(src => src.Country != null ? src.Country.Iso2Code : null));
+            .ForMember(dest => dest.CountryCode, opt => opt.MapFrom(src => src.Country != null ? src.Country.Iso2Code : null))
+            .ForMember(dest => dest.Continent, opt => opt.MapFrom(src => src.Country != null ? src.Country.ContinentDescription : null))
+            .ForMember(dest => dest.Region, opt => opt.MapFrom(src => src.Country != null ? src.Country.RegionDescription : null));
             
         CreateMap<OpportunityCountryRequest, OpportunityCountry>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
-            .ForMember(dest => dest.OpportunityId, opt => opt.Ignore());
+            .ForMember(dest => dest.OpportunityId, opt => opt.Ignore())
+            .ForMember(dest => dest.Opportunity, opt => opt.Ignore())
+            .ForMember(dest => dest.Country, opt => opt.Ignore())
+            .ForMember(dest => dest.ContextWarning, opt => opt.Ignore())
+            .ForMember(dest => dest.RiskScore, opt => opt.Ignore());
         
         // =================================================================
         // OpportunitySDG mappings
         // =================================================================
         CreateMap<OpportunitySDG, OpportunitySDGModel>()
+            .ForMember(dest => dest.SDGDatabaseId, opt => opt.MapFrom(src => src.SDGId))
+            .ForMember(dest => dest.SDGId, opt => opt.MapFrom(src => 
+                src.SDG != null ? src.SDG.SDGId : null))
             .ForMember(dest => dest.SDGNumber, opt => opt.MapFrom(src => 
-                src.SDG != null && !string.IsNullOrEmpty(src.SDG.SDGNumber) ? int.Parse(src.SDG.SDGNumber) : 0))
+                src.SDG != null ? src.SDG.SDGNumber : null))
             .ForMember(dest => dest.SDGName, opt => opt.MapFrom(src => src.SDG != null ? src.SDG.SDGDescription : null));
             
         CreateMap<OpportunitySDGRequest, OpportunitySDG>()

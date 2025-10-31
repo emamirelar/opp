@@ -19,9 +19,6 @@ public class OpportunitySDG
     public virtual SDG? SDG { get; set; }
     
     public bool IsPrimary { get; set; } = false;
-    
-    [MaxLength(50)]
-    public string? ContributionLevel { get; set; }
 
     [MaxLength(2000)]
     public string? Notes { get; set; }
