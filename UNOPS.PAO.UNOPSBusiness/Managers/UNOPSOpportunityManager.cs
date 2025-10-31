@@ -489,6 +489,7 @@ public class UNOPSOpportunityManager : IOpportunityManager
     {
         var opportunity = await context.Opportunities
             .Include(o => o.Countries)
+                .ThenInclude(c => c.Country)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)

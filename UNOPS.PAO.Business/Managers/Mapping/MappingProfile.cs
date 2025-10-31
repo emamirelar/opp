@@ -20,7 +20,7 @@ public class MappingProfile : Profile
         CreateMap<PAOUser, ApplicantModel>();
         CreateMap<Currency, CurrencyModel>();
         CreateMap<EligibleEntity, EligibleEntityModel>();
-        CreateMap<Country, CountryModel>();
+        // Country mapping moved to CountryMappingProfile
         CreateMap<Interaction, InteractionModel>();
         CreateMap<InteractionRequest, Interaction>()
             .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager

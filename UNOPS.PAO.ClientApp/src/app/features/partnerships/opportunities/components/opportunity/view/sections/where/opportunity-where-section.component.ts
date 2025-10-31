@@ -233,6 +233,27 @@ export class OpportunityWhereSectionComponent implements OnInit {
       return;
     }
 
+    // Check for duplicate country (both when adding and editing)
+    const opp = this.opportunity();
+    const currentEditingIndex = this.editingCountryIndex();
+    
+    // Check if country already exists (excluding current editing index)
+    const isDuplicate = opp.countries?.some((c, index) => {
+      // Skip the country we're currently editing
+      if (this.isEditingCountry() && index === currentEditingIndex) {
+        return false;
+      }
+      return c.countryId === country.id;
+    });
+    
+    if (isDuplicate) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.validation.countryAlreadyAdded')
+      });
+      return;
+    }
+
     if (this.isEditingCountry()) {
       this.updateCountry(country);
     } else {
@@ -251,13 +272,16 @@ export class OpportunityWhereSectionComponent implements OnInit {
       id: 0,
       opportunityId: opp.id!,
       countryId: country.id,
-      countryName: country.name,
-      countryCode: country.code || '',
-      continent: country.continent || null,
-      region: country.region || null,
       specificAreas: null,
       contextWarning: null,
-      riskScore: null
+      riskScore: null,
+      country: {
+        id: country.id,
+        name: country.name,
+        iso2Code: country.code || '',
+        continent: country.continent || null,
+        region: country.region || null
+      }
     };
 
     currentCountries.push(newCountry);
@@ -286,10 +310,13 @@ export class OpportunityWhereSectionComponent implements OnInit {
     currentCountries[index] = {
       ...currentCountries[index],
       countryId: country.id,
-      countryName: country.name,
-      countryCode: country.code || '',
-      continent: country.continent || null,
-      region: country.region || null
+      country: {
+        id: country.id,
+        name: country.name,
+        iso2Code: country.code || '',
+        continent: country.continent || null,
+        region: country.region || null
+      }
     };
 
     const updatedOpportunity = {

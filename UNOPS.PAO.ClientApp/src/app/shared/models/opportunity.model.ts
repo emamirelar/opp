@@ -114,13 +114,25 @@ export interface OpportunityCountry {
   id: number;
   opportunityId: number;
   countryId: number;
-  countryName: string;
-  countryCode: string;
-  continent: string | null;
-  region: string | null;
   specificAreas: string | null;
   contextWarning: string | null;
   riskScore: number | null;
+  country: {
+    id: number;
+    name: string;
+    iso2Code: string;
+    continent: string | null;
+    region: string | null;
+    artifacts?: Array<{
+      artifactTypeCode: string;
+      artifactTypeName: string;
+      category: string;
+      dataType: string;
+      value: string;
+      effectiveDate: string;
+      expiryDate: string | null;
+    }>;
+  } | null;
 }
 
 /**

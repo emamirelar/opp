@@ -312,6 +312,25 @@ export class OpportunityWhoSectionComponent implements OnInit {
       return;
     }
 
+    // Check for duplicate funding partner (both when adding and editing)
+    const opp = this.opportunity();
+    const currentEditingIndex = this.editingFundingPartnerIndex();
+    const isDuplicate = opp.fundingPartners?.some((fp, index) => {
+      // Skip the partner we're currently editing
+      if (this.isEditingFundingPartner() && index === currentEditingIndex) {
+        return false;
+      }
+      return fp.partnerId === partner.id;
+    });
+
+    if (isDuplicate) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.validation.fundingPartnerAlreadyAdded')
+      });
+      return;
+    }
+
     if (this.isEditingFundingPartner()) {
       this.updateFundingPartner(partner, amount);
     } else {
@@ -469,6 +488,25 @@ export class OpportunityWhoSectionComponent implements OnInit {
 
     if (!partner) {
       this.showClientValidationError.set(true);
+      return;
+    }
+
+    // Check for duplicate client partner (both when adding and editing)
+    const opp = this.opportunity();
+    const currentEditingIndex = this.editingClientPartnerIndex();
+    const isDuplicate = opp.clientPartners?.some((cp, index) => {
+      // Skip the partner we're currently editing
+      if (this.isEditingClientPartner() && index === currentEditingIndex) {
+        return false;
+      }
+      return cp.partnerId === partner.id;
+    });
+
+    if (isDuplicate) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.validation.clientPartnerAlreadyAdded')
+      });
       return;
     }
 
@@ -648,6 +686,26 @@ export class OpportunityWhoSectionComponent implements OnInit {
     if (!user || !role) {
       this.showStakeholderValidationError.set(true);
       this.cdr.detectChanges();
+      return;
+    }
+
+    // Check for duplicate stakeholder (both when adding and editing)
+    // A stakeholder is considered duplicate if the same user-role combination exists
+    const opp = this.opportunity();
+    const currentEditingIndex = this.editingStakeholderIndex();
+    const isDuplicate = opp.stakeholders?.some((s, index) => {
+      // Skip the stakeholder we're currently editing
+      if (this.isEditingStakeholder() && index === currentEditingIndex) {
+        return false;
+      }
+      return s.userId === user.id && s.entityRoleId === role.id;
+    });
+
+    if (isDuplicate) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.validation.stakeholderAlreadyAdded')
+      });
       return;
     }
 

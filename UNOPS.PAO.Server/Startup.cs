@@ -194,11 +194,15 @@ public class Startup
         // Register dev middleware
         services.AddScoped<DevelopmentIAPAuthHandler>();
 
+        // Register the EntityArtifactValueResolver for automatic artifact loading
+        services.AddScoped<UNOPS.PAO.Business.Mapping.EntityArtifactValueResolver>();
+
+
         services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
         // Register the mapping profile
         services.AddAutoMapper(cfg => cfg.AddProfile<UNOPS.PAO.UNOPSBusiness.Mapping.MappingProfile>());
-
+        
         services.AddScoped<IPAOExecutionContext, PAOExecutionContext>();
         services.AddScoped<SystemConfigurationManager>();
         

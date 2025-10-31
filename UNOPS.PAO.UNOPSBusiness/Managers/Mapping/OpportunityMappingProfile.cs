@@ -90,16 +90,15 @@ public class OpportunityMappingProfile : Profile
         CreateMap<OpportunityDeliverableRequest, OpportunityDeliverable>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.OpportunityId, opt => opt.Ignore());
-        
+
         // =================================================================
         // OpportunityCountry mappings
         // =================================================================
+
+        // Map OpportunityCountry to OpportunityCountryModel
         CreateMap<OpportunityCountry, OpportunityCountryModel>()
-            .ForMember(dest => dest.CountryName, opt => opt.MapFrom(src => src.Country != null ? src.Country.Name : null))
-            .ForMember(dest => dest.CountryCode, opt => opt.MapFrom(src => src.Country != null ? src.Country.Iso2Code : null))
-            .ForMember(dest => dest.Continent, opt => opt.MapFrom(src => src.Country != null ? src.Country.ContinentDescription : null))
-            .ForMember(dest => dest.Region, opt => opt.MapFrom(src => src.Country != null ? src.Country.RegionDescription : null));
-            
+            .ForMember(dest => dest.Country, opt => opt.MapFrom(src => src.Country));
+
         CreateMap<OpportunityCountryRequest, OpportunityCountry>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.OpportunityId, opt => opt.Ignore())

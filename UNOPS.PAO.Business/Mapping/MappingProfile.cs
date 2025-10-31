@@ -39,7 +39,7 @@ public class MappingProfile : Profile
         // Value entity mappings
         CreateMap<Currency, CurrencyModel>();
         CreateMap<EligibleEntity, EligibleEntityModel>();
-        CreateMap<Country, CountryModel>();
+        // Country mapping moved to CountryMappingProfile
         CreateMap<Contact, ContactValueModel>();
         CreateMap<PAOUser, UserValueModel>();
         CreateMap<LiaisonOffice, LiaisonOfficeModel>();

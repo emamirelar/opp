@@ -419,6 +419,24 @@ export class OpportunityWhatSectionComponent implements OnInit {
     const opp = this.opportunity();
     if (!output || !opp) return;
 
+    // Check for duplicate output (both when adding and editing)
+    const currentEditingIndex = this.editingDeliverableIndex();
+    const isDuplicate = opp.deliverables?.some((d, index) => {
+      // Skip the deliverable we're currently editing
+      if (this.isEditingDeliverable() && index === currentEditingIndex) {
+        return false;
+      }
+      return d.outputId === output.id;
+    });
+
+    if (isDuplicate) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.validation.outputAlreadyAdded')
+      });
+      return;
+    }
+
     // Create deliverable object
     const deliverableData: OpportunityDeliverable = {
       id: 0,

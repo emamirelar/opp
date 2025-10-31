@@ -66,31 +66,26 @@
       </div>
       @if (countryCount() > 0) {
         @for (country of opportunity().countries; track country.id; let i = $index) {
-          <div class="bg-gray-50 rounded-lg p-3 mb-2 border border-gray-200">
-            <div class="flex items-start justify-between">
-              <div class="flex items-center gap-3 flex-1">
-                <!-- Country Flag/ISO Code -->
-                <div class="flex-shrink-0">
-                  <div class="w-12 h-12 rounded-md bg-unops-primary flex items-center justify-center text-white font-bold">
-                    {{ country.countryCode }}
-                  </div>
-                </div>
-                
-                <!-- Country Details -->
-                <div class="flex-1">
-                  <div class="font-semibold text-gray-900">{{ country.countryName }}</div>
-                  @if (country.continent || country.region) {
-                    <div class="text-sm text-gray-600 mt-1">
-                      @if (country.continent) {
-                        <span>{{ country.continent }}</span>
+          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-2">
+            <div class="flex items-start justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl font-bold text-gray-700">{{ country.country?.iso2Code || 'XX' }}</span>
+                <div>
+                  <h4 class="font-semibold text-gray-900">
+                    {{ country.country?.name || 'Unknown Country' }}
+                  </h4>
+                  @if (country.country && (country.country.continent || country.country.region)) {
+                    <p class="text-sm text-gray-600">
+                      @if (country.country.continent) {
+                        <span>{{ country.country.continent }}</span>
                       }
-                      @if (country.continent && country.region) {
-                        <span> • </span>
+                      @if (country.country.continent && country.country.region) {
+                        <span>, </span>
                       }
-                      @if (country.region) {
-                        <span>{{ country.region }}</span>
+                      @if (country.country.region) {
+                        <span>{{ country.country.region }}</span>
                       }
-                    </div>
+                    </p>
                   }
                 </div>
               </div>
@@ -115,6 +110,17 @@
                 </div>
               }
             </div>
+            @if (country.country && country.country.artifacts && country.country.artifacts.length > 0) {
+              <div class="mt-2">
+                @for (artifact of country.country.artifacts; track $index) {
+                  <p-message
+                        severity="warn"
+                        styleClass="mt-2">
+                        {{ artifact.artifactTypeName }}: {{ artifact.value }}
+                  </p-message>
+                }
+              </div>
+            }
           </div>
         }
       } @else {
