@@ -37,6 +37,8 @@ import { OpportunityWhatSectionComponent } from './sections/opportunity-what-sec
 import { OpportunityWhySectionComponent } from './sections/opportunity-why-section.component';
 import { OpportunityWhoSectionComponent } from './sections/who/opportunity-who-section.component';
 import { OpportunityWhereSectionComponent } from './sections/where/opportunity-where-section.component';
+import { OpportunityWhenSectionComponent } from './sections/when/opportunity-when-section.component';
+import { OpportunityRelatedItemsComponent } from './related/opportunity-related-items.component';
 import { ValuesService } from '@app/shared/services/api/values.service';
 
 /**
@@ -78,6 +80,8 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     OpportunityWhySectionComponent,
     OpportunityWhoSectionComponent,
     OpportunityWhereSectionComponent,
+    OpportunityWhenSectionComponent,
+    OpportunityRelatedItemsComponent,
   ],
   templateUrl: './opportunity-view.component.html',
   styleUrls: ['./opportunity-view.component.scss'],

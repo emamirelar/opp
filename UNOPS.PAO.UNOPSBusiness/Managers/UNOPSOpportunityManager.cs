@@ -524,6 +524,124 @@ public class UNOPSOpportunityManager : IOpportunityManager
         return result ?? throw new KeyNotFoundException($"Failed to reload opportunity {id}");
     }
 
+    public async Task<RelatedItemsModel> GetRelatedItemsAsync(int id)
+    {
+        var opportunity = await context.Opportunities
+            .Include(o => o.FundingPartners)
+                .ThenInclude(fp => fp.Partner)
+            .Include(o => o.ClientPartners)
+                .ThenInclude(cp => cp.Partner)
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (opportunity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        var result = new RelatedItemsModel();
+
+        // Get all partner IDs from funding and client partners
+        var partnerIds = new List<int>();
+        if (opportunity.FundingPartners != null)
+        {
+            partnerIds.AddRange(opportunity.FundingPartners.Select(fp => fp.PartnerId));
+        }
+        if (opportunity.ClientPartners != null)
+        {
+            partnerIds.AddRange(opportunity.ClientPartners.Select(cp => cp.PartnerId));
+        }
+
+        partnerIds = partnerIds.Distinct().ToList();
+
+        if (partnerIds.Any())
+        {
+            // Get contacts for these partners
+            var contacts = await context.Contacts
+                .Where(c => partnerIds.Contains(c.PartnerId) && !c.IsDeleted)
+                .Include(c => c.Partner)
+                .OrderBy(c => c.Name)
+                .Select(c => new RelatedContactModel
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Email = c.Email,
+                    JobTitle = c.Title, // Title is the property name in Contact entity
+                    LogoUrl = c.ProfilePictureUrl,
+                    OrganizationId = c.PartnerId,
+                    OrganizationName = c.Partner != null ? c.Partner.Name : null
+                })
+                .ToListAsync();
+
+            result.Contacts = contacts;
+
+            // Get partners (distinct from funding and client)
+            var partners = await context.Partners
+                .Where(p => partnerIds.Contains(p.Id) && !p.IsDeleted)
+                .OrderBy(p => p.Name)
+                .Select(p => new RelatedPartnerModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    LogoUrl = p.LogoUrl,
+                    PartnerType = null, // Can add PartnerCategory if needed
+                    Country = null // Can add country if available
+                })
+                .ToListAsync();
+
+            result.Partners = partners;
+
+            // Get interactions involving these partners
+            var interactions = await context.Interactions
+                .Where(i => i.InteractionPartners != null && 
+                           i.InteractionPartners.Any(ip => partnerIds.Contains(ip.PartnerId)) && 
+                           !i.IsDeleted)
+                .Include(i => i.InteractionPartners)
+                    .ThenInclude(ip => ip.Partner)
+                .OrderByDescending(i => i.Date)
+                .Take(50) // Limit to recent 50 interactions
+                .Select(i => new RelatedInteractionModel
+                {
+                    Id = i.Id,
+                    Subject = i.Name,
+                    InteractionType = i.Type.ToString(), // Type is an enum
+                    InteractionDate = i.Date,
+                    Description = i.Description,
+                    PartnerId = i.InteractionPartners != null && i.InteractionPartners.Any() 
+                        ? i.InteractionPartners.First().PartnerId 
+                        : null,
+                    PartnerName = i.InteractionPartners != null && i.InteractionPartners.Any() 
+                        ? i.InteractionPartners.First().Partner.Name 
+                        : null
+                })
+                .ToListAsync();
+
+            result.Interactions = interactions;
+        }
+
+        return result;
+    }
+
+    public async Task<OpportunityModel> UpdateWhenSectionAsync(int id, WhenSectionRequest request)
+    {
+        var opportunity = await context.Opportunities
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (opportunity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // Update dates
+        opportunity.TargetSigningDate = request.TargetSigningDate;
+        opportunity.TargetDeliveryDate = request.TargetDeliveryDate;
+
+        await context.SaveChangesAsync();
+
+        // Reload with all includes
+        var result = await GetOpportunityAsync(id);
+        return result ?? throw new KeyNotFoundException($"Failed to reload opportunity {id}");
+    }
+
     public async Task<bool> DeleteOpportunityAsync(int id)
     {
         var entity = await opportunityRepository.GetByIdAsync(id);

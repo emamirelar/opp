@@ -229,52 +229,19 @@
             />
           </div>
 
-          <!-- WHEN Section - Timeline -->
-          <div id="section-when" style="scroll-margin-top: 72px">
-            <p-panel [toggleable]="true">
-              <ng-template pTemplate="header">
-                <div class="flex items-center gap-2">
-                  <i class="pi pi-calendar text-unops-primary"></i>
-                  <span class="font-semibold">{{ 'label.opportunity.whenTimeline' | translate }}</span>
-                </div>
-              </ng-template>
-              <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 class="text-sm font-semibold text-gray-600 mb-1">
-                      {{ 'label.opportunity.targetSigningDate' | translate }}
-                    </h4>
-                    <p class="text-lg font-semibold text-gray-900">
-                      {{ formatDate(opportunity()!.targetSigningDate) }}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 class="text-sm font-semibold text-gray-600 mb-1">
-                      {{ 'label.opportunity.targetDeliveryDate' | translate }}
-                    </h4>
-                    <p class="text-lg font-semibold text-gray-900">
-                      {{ formatDate(opportunity()!.targetDeliveryDate) }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </p-panel>
+          <!-- Related Items Section -->
+          <div id="section-related" style="scroll-margin-top: 72px">
+            <app-opportunity-related-items
+              [opportunityId]="opportunity()!.id!"
+            />
           </div>
 
-          <!-- RELATED Section (Placeholder for future implementation) -->
-          <div id="section-related" style="scroll-margin-top: 72px">
-            <p-panel [toggleable]="true">
-              <ng-template pTemplate="header">
-                <div class="flex items-center gap-2">
-                  <i class="pi pi-link text-unops-info"></i>
-                  <span class="font-semibold">{{ 'label.opportunity.relatedItems' | translate }}</span>
-                </div>
-              </ng-template>
-              <div class="text-center py-8 text-gray-400">
-                <i class="pi pi-link text-4xl mb-3"></i>
-                <p>{{ 'message.relatedItemsPlaceholder' | translate }}</p>
-              </div>
-            </p-panel>
+          <!-- WHEN Section - Timeline -->
+          <div id="section-when" style="scroll-margin-top: 72px">
+            <app-opportunity-when-section
+              [opportunity]="opportunity()!"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
           </div>
 
           <!-- COLLABORATION Section - Comments -->
@@ -296,13 +263,6 @@
                 </span>
               </div>
               <div class="flex gap-2">
-                <p-button
-                  [label]="'button.saveDraft' | translate"
-                  icon="pi pi-save"
-                  severity="secondary"
-                  [outlined]="true"
-                  [disabled]="true"
-                />
                 <p-button
                   [label]="'button.exportPDF' | translate"
                   icon="pi pi-file-pdf"

@@ -236,3 +236,38 @@ export interface OpportunitySDGRequest {
   notes?: string;
 }
 
+// Related Items Models
+export interface RelatedItems {
+  contacts: RelatedContact[];
+  partners: RelatedPartner[];
+  interactions: RelatedInteraction[];
+}
+
+export interface RelatedContact {
+  id: number;
+  name: string;
+  email?: string;
+  jobTitle?: string;
+  logoUrl?: string;
+  organizationId?: number;
+  organizationName?: string;
+}
+
+export interface RelatedPartner {
+  id: number;
+  name: string;
+  logoUrl?: string;
+  partnerType?: string;
+  country?: string;
+}
+
+export interface RelatedInteraction {
+  id: number;
+  subject: string;
+  interactionType?: string;
+  interactionDate?: string;
+  description?: string;
+  partnerId?: number;
+  partnerName?: string;
+}
+

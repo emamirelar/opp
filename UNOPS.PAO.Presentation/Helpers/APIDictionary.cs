@@ -174,4 +174,5 @@ public class APIDictionary
     public const string OpportunityWho = Opportunity + "/{id}/who";
     public const string OpportunityWhere = Opportunity + "/{id}/where";
     public const string OpportunityWhen = Opportunity + "/{id}/when";
+    public const string OpportunityRelated = Opportunity + "/{id}/related";
 }

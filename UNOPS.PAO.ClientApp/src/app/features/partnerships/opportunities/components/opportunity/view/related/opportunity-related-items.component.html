@@ -1,0 +1,158 @@
+<p-panel [toggleable]="true" [(collapsed)]="isCollapsed">
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-link text-xl"></i>
+      <span class="font-semibold">{{ 'label.opportunity.relatedItems' | translate }}</span>
+    </div>
+  </ng-template>
+
+  @if (isLoading()) {
+    <div class="text-center py-8">
+      <i class="pi pi-spin pi-spinner text-3xl text-primary"></i>
+      <p class="text-gray-500 mt-2">{{ 'message.loading' | translate }}</p>
+    </div>
+  } @else {
+    <div class="space-y-6">
+      <!-- Contacts Section -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+            <i class="pi pi-users text-unops-primary text-base"></i>
+            <span>{{ 'label.opportunity.relatedContacts' | translate }} ({{ relatedItems().contacts.length }})</span>
+          </h3>
+        </div>
+
+        @if (relatedItems().contacts.length > 0) {
+          <div class="max-h-80 overflow-y-auto space-y-2">
+            @for (contact of relatedItems().contacts; track contact.id) {
+              <div
+                class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                (click)="navigateToContact(contact.id)"
+              >
+                @if (contact.logoUrl) {
+                  <img
+                    [src]="contact.logoUrl"
+                    [alt]="contact.name"
+                    class="w-10 h-10 rounded-full object-cover"
+                  />
+                } @else {
+                  <p-avatar
+                    [label]="getInitials(contact.name)"
+                    shape="circle"
+                    styleClass="bg-blue-100 text-blue-600"
+                  />
+                }
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold text-gray-900 truncate">{{ contact.name }}</div>
+                  <div class="text-sm text-gray-600 truncate">{{ contact.organizationName }}</div>
+                  @if (contact.jobTitle) {
+                    <div class="text-xs text-gray-500 truncate">{{ contact.jobTitle }}</div>
+                  }
+                </div>
+                <i class="pi pi-external-link text-gray-400"></i>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="text-center py-6 text-gray-400">
+            <i class="pi pi-users text-3xl mb-2"></i>
+            <p class="text-sm">{{ 'message.noRelatedContacts' | translate }}</p>
+          </div>
+        }
+      </div>
+
+      <p-divider />
+
+      <!-- Partners Section -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+            <i class="pi pi-building text-unops-primary text-base"></i>
+            <span>{{ 'label.opportunity.relatedPartners' | translate }} ({{ relatedItems().partners.length }})</span>
+          </h3>
+        </div>
+
+        @if (relatedItems().partners.length > 0) {
+          <div class="max-h-80 overflow-y-auto space-y-2">
+            @for (partner of relatedItems().partners; track partner.id) {
+              <div
+                class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                (click)="navigateToPartner(partner.id)"
+              >
+                @if (partner.logoUrl) {
+                  <img
+                    [src]="partner.logoUrl"
+                    [alt]="partner.name"
+                    class="w-10 h-10 rounded object-contain"
+                  />
+                } @else {
+                  <div class="w-10 h-10 bg-blue-100 rounded flex items-center justify-center">
+                    <i class="pi pi-building text-blue-600"></i>
+                  </div>
+                }
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold text-gray-900 truncate">{{ partner.name }}</div>
+                  @if (partner.country) {
+                    <div class="text-sm text-gray-600 truncate">{{ partner.country }}</div>
+                  }
+                </div>
+                <i class="pi pi-external-link text-gray-400"></i>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="text-center py-6 text-gray-400">
+            <i class="pi pi-building text-3xl mb-2"></i>
+            <p class="text-sm">{{ 'message.noRelatedPartners' | translate }}</p>
+          </div>
+        }
+      </div>
+
+      <p-divider />
+
+      <!-- Interactions Section -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+            <i class="pi pi-comments text-unops-primary text-base"></i>
+            <span>{{ 'label.opportunity.relatedInteractions' | translate }} ({{ relatedItems().interactions.length }})</span>
+          </h3>
+        </div>
+
+        @if (relatedItems().interactions.length > 0) {
+          <div class="max-h-80 overflow-y-auto space-y-2">
+            @for (interaction of relatedItems().interactions; track interaction.id) {
+              <div
+                class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                (click)="navigateToInteraction(interaction.id)"
+              >
+                <div class="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <i class="pi pi-comments text-green-600"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold text-gray-900 truncate">{{ interaction.subject }}</div>
+                  <div class="text-sm text-gray-600">{{ interaction.partnerName }}</div>
+                  <div class="flex items-center gap-2 mt-1">
+                    @if (interaction.interactionType) {
+                      <p-badge [value]="interaction.interactionType" severity="info" />
+                    }
+                    @if (interaction.interactionDate) {
+                      <span class="text-xs text-gray-500">{{ formatDate(interaction.interactionDate) }}</span>
+                    }
+                  </div>
+                </div>
+                <i class="pi pi-external-link text-gray-400"></i>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="text-center py-6 text-gray-400">
+            <i class="pi pi-comments text-3xl mb-2"></i>
+            <p class="text-sm">{{ 'message.noRelatedInteractions' | translate }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</p-panel>
+
