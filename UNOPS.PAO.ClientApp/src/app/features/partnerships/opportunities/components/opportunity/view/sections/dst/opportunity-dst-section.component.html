@@ -1,0 +1,183 @@
+<!-- DST Insights & Recommendations Section -->
+<p-panel [toggleable]="true" [collapsed]="false">
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-chart-line text-unops-secondary"></i>
+      <span class="font-semibold">{{ 'title.dst.insightsRecommendations' | translate }}</span>
+    </div>
+  </ng-template>
+
+  @if (!hasDSTAnalysis()) {
+    <!-- Empty State -->
+    <div class="text-center py-12">
+      <i class="pi pi-chart-line text-6xl text-gray-300 mb-4"></i>
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">
+        {{ 'message.dst.notAvailable' | translate }}
+      </h3>
+      <p class="text-sm text-gray-500 mb-4">
+        {{ 'message.dst.notAvailableDescription' | translate }}
+      </p>
+      <p-button
+        [label]="'button.dst.generateAnalysis' | translate"
+        icon="pi pi-refresh"
+        (onClick)="refreshAnalysis()"
+      />
+    </div>
+  } @else {
+    <!-- DST Analysis Content -->
+    <div class="space-y-6">
+      <!-- Risks and Recommendations Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Risks -->
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <i class="pi pi-exclamation-triangle text-unops-warning"></i>
+              <span>
+                {{ 'title.dst.risksIdentified' | translate }}
+                ({{ opportunity().dstAnalysis!.risks.length }})
+              </span>
+            </h3>
+            <p-button
+              [label]="'button.dst.addToRegister' | translate"
+              icon="pi pi-plus"
+              size="small"
+              [outlined]="true"
+              (onClick)="addToRiskRegister()"
+            />
+          </div>
+
+          @if (opportunity().dstAnalysis!.risks.length === 0) {
+            <div class="bg-white rounded-lg p-4 border border-gray-200 text-center text-gray-500">
+              {{ 'message.dst.noRisksIdentified' | translate }}
+            </div>
+          } @else {
+            @for (risk of opportunity().dstAnalysis!.risks; track risk.id) {
+              <div class="bg-white rounded-lg p-4 mb-3 border border-gray-200">
+                <div class="flex items-start justify-between mb-2">
+                  <h4 class="font-semibold text-gray-900">
+                    {{ risk.title }}
+                  </h4>
+                  <p-tag
+                    [value]="risk.severity"
+                    [severity]="getSeverityClass(risk.severity)"
+                  />
+                </div>
+                <p class="text-sm text-gray-600 mb-2">
+                  {{ risk.description }}
+                </p>
+                <div class="text-xs text-gray-500">
+                  <strong>{{ 'label.dst.recommendation' | translate }}:</strong>
+                  {{ risk.recommendation }}
+                </div>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Recommendations -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="pi pi-lightbulb text-unops-info"></i>
+            <span>
+              {{ 'title.dst.recommendations' | translate }}
+              ({{ opportunity().dstAnalysis!.recommendations.length }})
+            </span>
+          </h3>
+
+          @if (opportunity().dstAnalysis!.recommendations.length === 0) {
+            <div class="bg-blue-50 rounded-lg p-4 border border-blue-100 text-center text-gray-600">
+              {{ 'message.dst.noRecommendations' | translate }}
+            </div>
+          } @else {
+            @for (rec of opportunity().dstAnalysis!.recommendations; track rec.id) {
+              <div class="bg-blue-50 rounded-lg p-4 mb-3 border border-blue-100">
+                <h4 class="font-semibold text-gray-900 mb-2">
+                  {{ rec.title }}
+                </h4>
+                <p class="text-sm text-gray-600 mb-3">
+                  {{ rec.rationale }}
+                </p>
+                <div class="flex gap-2">
+                  <p-button
+                    [label]="'button.dst.accept' | translate"
+                    icon="pi pi-check"
+                    size="small"
+                    severity="success"
+                    [outlined]="true"
+                    (onClick)="acceptRecommendation(rec.id)"
+                  />
+                  <p-button
+                    [label]="'button.dst.dismiss' | translate"
+                    icon="pi pi-times"
+                    size="small"
+                    severity="secondary"
+                    [outlined]="true"
+                    (onClick)="dismissRecommendation(rec.id)"
+                  />
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+
+      <p-divider />
+
+      <!-- Similar Opportunities -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <i class="pi pi-search text-unops-secondary"></i>
+          <span>
+            {{ 'title.dst.similarOpportunities' | translate }}
+            ({{ opportunity().dstAnalysis!.similarOpportunities.length }})
+          </span>
+        </h3>
+
+        @if (opportunity().dstAnalysis!.similarOpportunities.length === 0) {
+          <div class="bg-white rounded-lg p-4 border border-gray-200 text-center text-gray-500">
+            {{ 'message.dst.noSimilarOpportunities' | translate }}
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            @for (similar of opportunity().dstAnalysis!.similarOpportunities; track similar.id) {
+              <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="flex items-center justify-between mb-2">
+                  <p-badge
+                    [value]="similar.relevance + '%'"
+                    severity="success"
+                  />
+                  <p-chip
+                    [label]="similar.status"
+                    styleClass="text-xs"
+                  />
+                </div>
+                <h4 class="font-semibold text-gray-900 mb-2 text-sm">
+                  {{ similar.name }}
+                </h4>
+                <div class="text-xs text-gray-600 space-y-1">
+                  <div>
+                    {{ 'label.dst.budget' | translate }}: {{ formatCurrency(similar.budget) }}
+                  </div>
+                  <div>{{ 'label.dst.duration' | translate }}: {{ similar.duration }}</div>
+                  <div class="mt-2 pt-2 border-t border-gray-200">
+                    <strong>{{ 'label.dst.keyLessons' | translate }}:</strong>
+                    {{ similar.keyLessons }}
+                  </div>
+                </div>
+                <p-button
+                  [label]="'button.dst.viewDetails' | translate"
+                  size="small"
+                  [text]="true"
+                  styleClass="mt-2 w-full"
+                  (onClick)="viewSimilarOpportunity(similar.id)"
+                />
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</p-panel>
+

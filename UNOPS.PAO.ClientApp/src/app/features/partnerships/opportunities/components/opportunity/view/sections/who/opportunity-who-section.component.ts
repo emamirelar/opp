@@ -350,7 +350,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
       opportunityId: opp.id!,
       partnerId: partner.id,
       partnerName: partner.name || '',
-      partnerLogoUrl: undefined,
+      partnerLogoUrl: partner.logoUrl || undefined,
       amount: amount,
       currencyId: null, // Backend will use default USD currency
       currencyCode: 'USD',
@@ -390,7 +390,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
       ...currentPartners[index],
       partnerId: partner.id,
       partnerName: partner.name || '',
-      partnerLogoUrl: undefined,
+      partnerLogoUrl: partner.logoUrl || undefined,
       amount: amount,
       percentage: null,
       feePercentage: null,
@@ -529,7 +529,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
       opportunityId: opp.id!,
       partnerId: partner.id,
       partnerName: partner.name || '',
-      partnerLogoUrl: undefined
+      partnerLogoUrl: partner.logoUrl || undefined
     };
 
     currentClients.push(newClient);
@@ -559,7 +559,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
       ...currentClients[index],
       partnerId: partner.id,
       partnerName: partner.name || '',
-      partnerLogoUrl: undefined
+      partnerLogoUrl: partner.logoUrl || undefined
     };
 
     const updatedOpportunity = {

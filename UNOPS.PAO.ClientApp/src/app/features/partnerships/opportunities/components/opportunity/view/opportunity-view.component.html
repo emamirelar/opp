@@ -229,13 +229,6 @@
             />
           </div>
 
-          <!-- Related Items Section -->
-          <div id="section-related" style="scroll-margin-top: 72px">
-            <app-opportunity-related-items
-              [opportunityId]="opportunity()!.id!"
-            />
-          </div>
-
           <!-- WHEN Section - Timeline -->
           <div id="section-when" style="scroll-margin-top: 72px">
             <app-opportunity-when-section
@@ -244,13 +237,28 @@
             />
           </div>
 
+          <!-- DST Section - Insights & Recommendations -->
+          <div id="section-dst" style="scroll-margin-top: 72px">
+            <app-opportunity-dst-section
+              [opportunity]="opportunity()!"
+            />
+          </div>
+
+          <!-- Related Items Section -->
+          <div id="section-related" style="scroll-margin-top: 72px">
+            <app-opportunity-related-items
+              #relatedItemsComponent
+              [opportunityId]="opportunity()!.id!"
+            />
+          </div>
+
+          
+
           <!-- COLLABORATION Section - Comments -->
           <div id="section-collaboration" style="scroll-margin-top: 72px">
-            <app-comment 
-              entityType="Opportunity" 
-              [entityId]="opportunity()!.id"
-              [panelHeader]="'label.opportunity.collaborationComments' | translate">
-            </app-comment>
+            <app-opportunity-collaboration
+              [opportunityId]="opportunity()!.id!"
+            />
           </div>
 
           <!-- Action Bar -->

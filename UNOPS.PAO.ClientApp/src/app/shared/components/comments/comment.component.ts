@@ -3,10 +3,10 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
-import { Component, input, OnInit, signal, inject } from '@angular/core';
+import { Component, input, OnInit, signal, inject, computed, effect, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 // PrimeNG imports
 import { PanelModule } from 'primeng/panel';
@@ -14,10 +14,13 @@ import { ButtonModule } from 'primeng/button';
 import { AvatarModule } from 'primeng/avatar';
 import { ChipModule } from 'primeng/chip';
 import { TooltipModule } from 'primeng/tooltip';
+import { AutoCompleteModule } from 'primeng/autocomplete';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
 
 // Services
 import { CommentService } from '@shared/services/api/comment.service';
 import { FeedbackDialogService } from '@shared/services/ui';
+import { ValuesService, SimpleValue } from '@shared/services/api/values.service';
 import { Comment, CommentRequest } from '@shared/models/comment.model';
 
 /**
@@ -46,7 +49,9 @@ import { Comment, CommentRequest } from '@shared/models/comment.model';
     ButtonModule,
     AvatarModule,
     ChipModule,
-    TooltipModule
+    TooltipModule,
+    AutoCompleteModule,
+    OverlayPanelModule
   ],
   templateUrl: './comment.component.html',
   styleUrls: ['./comment.component.scss']
@@ -60,6 +65,8 @@ export class CommentComponent implements OnInit {
   // Services
   private readonly commentService = inject(CommentService);
   private readonly feedbackService = inject(FeedbackDialogService);
+  private readonly valuesService = inject(ValuesService);
+  private readonly translateService = inject(TranslateService);
 
   // State
   loading = signal<boolean>(true);
@@ -68,9 +75,18 @@ export class CommentComponent implements OnInit {
   replyingToId = signal<number | null>(null);
   editingCommentId = signal<number | null>(null);
   editingContent = signal<string>('');
+  
+  // Mention functionality
+  allUsers = signal<SimpleValue[]>([]);
+  filteredUsers = signal<SimpleValue[]>([]);
+  mentionedUserIds = signal<number[]>([]);
+  showMentionSuggestions = signal<boolean>(false);
+  mentionSearchTerm = signal<string>('');
+  cursorPosition = signal<number>(0);
 
   ngOnInit(): void {
     this.loadComments();
+    this.loadUsers();
   }
 
   /**
@@ -90,6 +106,113 @@ export class CommentComponent implements OnInit {
   }
 
   /**
+   * Load all internal users for mentions
+   */
+  loadUsers(): void {
+    this.valuesService.getInternalUsers().subscribe({
+      next: (users) => {
+        this.allUsers.set(users);
+      },
+      error: (error) => {
+        console.error('Error loading users for mentions:', error);
+      }
+    });
+  }
+
+  /**
+   * Handle input in comment textarea for @ mentions
+   */
+  onCommentInput(event: Event, isReply: boolean = false): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    const content = textarea.value;
+    const cursorPos = textarea.selectionStart;
+    
+    this.cursorPosition.set(cursorPos);
+    
+    // Check if user just typed @
+    const textBeforeCursor = content.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      
+      // Check if there's a space after @ (means they finished the mention)
+      if (textAfterAt.includes(' ')) {
+        this.showMentionSuggestions.set(false);
+        return;
+      }
+      
+      // Show suggestions and filter
+      this.mentionSearchTerm.set(textAfterAt.toLowerCase());
+      this.filterUsers(textAfterAt);
+      this.showMentionSuggestions.set(true);
+    } else {
+      this.showMentionSuggestions.set(false);
+    }
+    
+    // Update content based on context
+    if (isReply) {
+      // For reply context, we'd need to track which reply is being edited
+      // This is a simplified version
+    } else {
+      this.newCommentContent.set(content);
+    }
+  }
+
+  /**
+   * Filter users based on search term
+   */
+  filterUsers(searchTerm: string): void {
+    if (!searchTerm) {
+      this.filteredUsers.set(this.allUsers().slice(0, 10)); // Show first 10
+      return;
+    }
+    
+    const filtered = this.allUsers().filter(user => 
+      user.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ).slice(0, 10);
+    
+    this.filteredUsers.set(filtered);
+  }
+
+  /**
+   * Select a user from mention suggestions
+   */
+  selectMentionUser(user: SimpleValue, textarea: HTMLTextAreaElement): void {
+    const content = textarea.value;
+    const cursorPos = this.cursorPosition();
+    const textBeforeCursor = content.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIndex !== -1) {
+      const beforeAt = content.substring(0, lastAtIndex);
+      const afterCursor = content.substring(cursorPos);
+      // Use email (from code field) instead of name
+      const userEmail = user.code || user.email || user.name;
+      const newContent = `${beforeAt}@${userEmail} ${afterCursor}`;
+      
+      this.newCommentContent.set(newContent);
+      textarea.value = newContent;
+      
+      // Add to mentioned users
+      const currentMentions = this.mentionedUserIds();
+      if (!currentMentions.includes(user.id)) {
+        this.mentionedUserIds.set([...currentMentions, user.id]);
+      }
+      
+      // Hide suggestions
+      this.showMentionSuggestions.set(false);
+      
+      // Set cursor position after the mention
+      const newCursorPos = beforeAt.length + userEmail.length + 2; // +2 for @ and space
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      }, 0);
+    }
+  }
+
+  /**
    * Add a new comment
    */
   addComment(): void {
@@ -100,17 +223,19 @@ export class CommentComponent implements OnInit {
       entityType: this.entityType(),
       entityId: this.entityId(),
       content: content,
-      parentCommentId: this.replyingToId() || undefined
+      parentCommentId: this.replyingToId() || undefined,
+      mentionedUserIds: this.mentionedUserIds().length > 0 ? this.mentionedUserIds() : undefined
     };
 
     this.commentService.createComment(request).subscribe({
       next: () => {
         this.newCommentContent.set('');
         this.replyingToId.set(null);
+        this.mentionedUserIds.set([]);
         this.loadComments();
         this.feedbackService.showSuccessToast({
-          summary: 'Success',
-          detail: 'Comment added successfully'
+          summary: this.translateService.instant('message.success'),
+          detail: this.translateService.instant('message.commentAdded')
         });
       }
     });
@@ -237,6 +362,60 @@ export class CommentComponent implements OnInit {
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
     if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
     return this.formatDate(dateString);
+  }
+
+  /**
+   * Get user by ID from the list
+   */
+  getUserById(userId: number): SimpleValue | undefined {
+    return this.allUsers().find(u => u.id === userId);
+  }
+
+  /**
+   * Remove a mentioned user
+   */
+  removeMentionedUser(userId: number): void {
+    this.mentionedUserIds.set(this.mentionedUserIds().filter(id => id !== userId));
+  }
+
+  /**
+   * Parse comment content and convert @mentions to chips
+   * Returns array of text segments and mention objects
+   */
+  parseCommentContent(content: string): Array<{ type: 'text' | 'mention', value: string }> {
+    const segments: Array<{ type: 'text' | 'mention', value: string }> = [];
+    // Updated pattern to match email addresses: @email@domain.com or @FirstName.LastName@domain.com
+    const mentionPattern = /@([\w\.\-]+@[\w\.\-]+)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = mentionPattern.exec(content)) !== null) {
+      // Add text before the mention
+      if (match.index > lastIndex) {
+        segments.push({
+          type: 'text',
+          value: content.substring(lastIndex, match.index)
+        });
+      }
+
+      // Add the mention (email without the leading @)
+      segments.push({
+        type: 'mention',
+        value: match[1] // The email without leading @
+      });
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < content.length) {
+      segments.push({
+        type: 'text',
+        value: content.substring(lastIndex)
+      });
+    }
+
+    return segments;
   }
 }
 

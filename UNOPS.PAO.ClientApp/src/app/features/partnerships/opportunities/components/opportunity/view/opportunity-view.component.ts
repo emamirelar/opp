@@ -31,14 +31,15 @@ import { PermissionUtilityService } from '@core/services/auth';
 import { PageContextService } from '@shared/services/utils';
 import { OpportunityService } from '../../../services/opportunity.service';
 import { Opportunity } from '@shared/models/opportunity.model';
-import { CommentComponent } from '@shared/components/comments/comment.component';
+import { OpportunityCollaborationComponent } from './sections/collaboration/opportunity-collaboration.component';
 import { OpportunityAnalysisSectionComponent } from './sections/analysis/opportunity-analysis-section.component';
-import { OpportunityWhatSectionComponent } from './sections/opportunity-what-section.component';
-import { OpportunityWhySectionComponent } from './sections/opportunity-why-section.component';
+import { OpportunityWhatSectionComponent } from './sections/what/opportunity-what-section.component';
+import { OpportunityWhySectionComponent } from './sections/why/opportunity-why-section.component';
 import { OpportunityWhoSectionComponent } from './sections/who/opportunity-who-section.component';
 import { OpportunityWhereSectionComponent } from './sections/where/opportunity-where-section.component';
 import { OpportunityWhenSectionComponent } from './sections/when/opportunity-when-section.component';
-import { OpportunityRelatedItemsComponent } from './related/opportunity-related-items.component';
+import { OpportunityDstSectionComponent } from './sections/dst/opportunity-dst-section.component';
+import { OpportunityRelatedItemsComponent } from './sections/related/opportunity-related-items.component';
 import { ValuesService } from '@app/shared/services/api/values.service';
 
 /**
@@ -74,13 +75,14 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     FileUploadModule,
     TooltipModule,
     DropdownModule,
-    CommentComponent,
+    OpportunityCollaborationComponent,
     OpportunityAnalysisSectionComponent,
     OpportunityWhatSectionComponent,
     OpportunityWhySectionComponent,
     OpportunityWhoSectionComponent,
     OpportunityWhereSectionComponent,
     OpportunityWhenSectionComponent,
+    OpportunityDstSectionComponent,
     OpportunityRelatedItemsComponent,
   ],
   templateUrl: './opportunity-view.component.html',
@@ -106,7 +108,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   opportunity = signal<Opportunity | null>(null);
   showAIPanel = signal<boolean>(true); // AI Assistant panel toggle state
   documentsCollapsed = signal(true); // Document panel state
-  activeSection = signal<string>('analysis'); // Active section for navigation
+  activeSection = signal<string>(''); // Active section for navigation - will be set from route params
   showDropdown = signal(false); // Navigation dropdown vs chips
   selectedSection: { id: string; label: string; icon: string } | null = null;
 
@@ -114,6 +116,8 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   navigationSizer?: ElementRef;
   @ViewChild('chipsContainer', { read: ElementRef })
   chipsContainer?: ElementRef;
+  @ViewChild('relatedItemsComponent')
+  relatedItemsComponent?: OpportunityRelatedItemsComponent;
 
   private checkTimeout?: number;
   private resizeObserver?: ResizeObserver;
@@ -123,6 +127,8 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   private hasScrollSpyInitialized = false; // Track scroll spy initialization separately
   private navigationInProgress = false;
   private isScrolling = false; // Flag to prevent URL updates during programmatic scrolling
+  private scrollTimeout?: number; // Debounce timeout for scroll spy
+  private lastManualNavigationTime: number = 0; // Track last manual navigation
 
   // Section navigation configuration
   sections = [
@@ -132,6 +138,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     { id: 'who', label: 'Who', icon: 'pi-users' },
     { id: 'where', label: 'Where', icon: 'pi-globe' },
     { id: 'when', label: 'When', icon: 'pi-calendar' },
+    { id: 'dst', label: 'DST', icon: 'pi-chart-line' },
     { id: 'related', label: 'Related', icon: 'pi-link' },
     { id: 'collaboration', label: 'Comments', icon: 'pi-comments' },
   ];
@@ -293,29 +300,43 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
         const newRecordId = paramMap.get("recordId") || '';
         const section = paramMap.get("section");
         
-        // Only reload data if recordId actually changed
-        if (newRecordId && newRecordId !== this.recordId) {
-          this.recordId = newRecordId;
-          this._loadRecordDetails();
-        } else if (newRecordId && !this.recordId) {
-          // Initial load
-          this.recordId = newRecordId;
-          this._loadRecordDetails();
-        }
-
-        // Handle section parameter (without reloading data)
+        // Set the section FIRST before any other logic
+        // This prevents the "analysis" default from triggering navigation
         if (section && this.isValidSection(section)) {
           this.activeSection.set(section);
           this.updateSelectedSection();
+          // Set manual navigation time to prevent scroll spy interference
+          this.lastManualNavigationTime = Date.now();
+          this.isScrolling = true;
+        } else if (!section && !this.activeSection()) {
+          // Only default to analysis if no section provided AND no section already set
+          this.activeSection.set('analysis');
+          this.updateSelectedSection();
+        }
+        
+        // Only reload data if recordId actually changed
+        if (newRecordId && newRecordId !== this.recordId) {
+          this.recordId = newRecordId;
+          this._loadRecordDetails(section || 'analysis');
+        } else if (newRecordId && !this.recordId) {
+          // Initial load
+          this.recordId = newRecordId;
+          this._loadRecordDetails(section || 'analysis');
+        }
+
+        // Handle section scrolling (without reloading data)
+        if (section && this.isValidSection(section)) {
+          // If data is already loaded, scroll immediately
           if (!this.loading()) {
             setTimeout(() => this.scrollToSectionInternal(section), 100);
           }
-        } else if (!section) {
-          // Default to analysis if no section in URL - update URL to include it
-          this.activeSection.set('analysis');
-          this.updateSelectedSection();
+        } else if (!section && !this.activeSection()) {
+          // Default to analysis if no section in URL and no section already set
           const currentUrl = this.router.url.split('?')[0];
-          this.router.navigate([currentUrl, 'analysis'], { replaceUrl: true });
+          // Only navigate if we're not already at analysis
+          if (!currentUrl.endsWith('/analysis')) {
+            this.router.navigate([currentUrl, 'analysis'], { replaceUrl: true });
+          }
         }
       }
     });
@@ -340,18 +361,29 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
     }
+    // Cleanup scroll timeout
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
+    }
   }
 
   /**
    * Load opportunity record details
    */
-  private _loadRecordDetails() {
+  private _loadRecordDetails(targetSection?: string) {
     this.loading.set(true);
     this.opportunityService.getOpportunityById(+this.recordId).subscribe({
       next: (data: Opportunity) => {
         this.opportunity.set(data);
         this.loading.set(false);
         this.cdr.detectChanges();
+        
+        // If a target section was specified, scroll to it after data loads
+        if (targetSection && this.isValidSection(targetSection)) {
+          setTimeout(() => {
+            this.scrollToSectionInternal(targetSection);
+          }, 500); // Longer delay to ensure DOM is fully rendered
+        }
       },
       error: (error) => {
         console.error('Error loading opportunity details:', error);
@@ -429,6 +461,11 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   handleOpportunityUpdate(updatedOpportunity: Opportunity): void {
     // Replace entire opportunity signal with fresh data from backend
     this.opportunity.set(updatedOpportunity);
+    
+    // Refresh related items to reflect any changes in partners/stakeholders
+    if (this.relatedItemsComponent) {
+      this.relatedItemsComponent.loadRelatedItems();
+    }
     
     // Angular signals automatically notify ALL child components
     // All sections will re-render with latest data
@@ -595,6 +632,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
 
   /**
    * Scroll to section and update URL
+   * Called when user clicks navigation chips/dropdown
    */
   scrollToSection(sectionId: string): void {
     if (this.navigationInProgress) {
@@ -603,6 +641,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
 
     this.navigationInProgress = true;
     this.isScrolling = true; // Set flag to prevent scroll spy from updating URL
+    this.lastManualNavigationTime = Date.now(); // Track when manual navigation occurred
     this.activeSection.set(sectionId);
 
     // Update URL with the section parameter
@@ -626,23 +665,33 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     
     setTimeout(() => {
       this.navigationInProgress = false;
-      // Clear scrolling flag after animation completes
+      // Clear scrolling flag after animation completes - shorter delay
       setTimeout(() => {
         this.isScrolling = false;
-      }, 800); // Wait for smooth scroll to complete
+      }, 800); // Reduced from 1500ms to 800ms
     }, 100);
   }
 
   /**
    * Internal scroll to section logic
+   * Called for both programmatic navigation and URL-based navigation
    */
   private scrollToSectionInternal(sectionId: string): void {
+    // Track manual navigation time to prevent scroll spy interference
+    this.lastManualNavigationTime = Date.now();
+    this.isScrolling = true;
+
     // For the first section (analysis), scroll to the opportunity header
     if (sectionId === 'analysis') {
       const headerElement = document.getElementById('opportunity-header');
       if (headerElement) {
         headerElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
+      
+      // Reset scrolling flag after animation - shorter delay
+      setTimeout(() => {
+        this.isScrolling = false;
+      }, 800); // Reduced from 1500ms to 800ms
       return;
     }
 
@@ -651,6 +700,11 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+
+    // Reset scrolling flag after animation - shorter delay
+    setTimeout(() => {
+      this.isScrolling = false;
+    }, 800); // Reduced from 1500ms to 800ms
   }
 
   /**
@@ -663,6 +717,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   /**
    * Setup scroll spy using IntersectionObserver
    * Automatically updates active section and URL as user scrolls
+   * Only blocks during programmatic scrolling, works immediately for manual scrolling
    */
   private setupScrollSpy(): void {
     if (this.hasScrollSpyInitialized) {
@@ -677,48 +732,56 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     };
 
     this.intersectionObserver = new IntersectionObserver((entries) => {
-      // Don't update during programmatic scrolling
+      // ONLY block during active programmatic scrolling (not for manual scrolling)
       if (this.isScrolling) {
         return;
       }
 
-      // Find the section that's most visible
-      let mostVisibleEntry: IntersectionObserverEntry | undefined;
-      let maxVisibility = 0;
-
-      entries.forEach((entry) => {
-        if (entry.isIntersecting && entry.intersectionRatio > maxVisibility) {
-          maxVisibility = entry.intersectionRatio;
-          mostVisibleEntry = entry;
-        }
-      });
-
-      if (mostVisibleEntry && mostVisibleEntry.target instanceof HTMLElement) {
-        const sectionId = mostVisibleEntry.target.id.replace('section-', '');
-        
-        // Only update if it's a different section
-        if (sectionId && this.isValidSection(sectionId) && sectionId !== this.activeSection()) {
-          this.activeSection.set(sectionId);
-          this.updateSelectedSection();
-
-          // Update URL without causing a scroll
-          const currentUrl = this.router.url.split('?')[0];
-          const urlSegments = currentUrl.split('/');
-          const lastSegment = urlSegments[urlSegments.length - 1];
-          const isSection = this.isValidSection(lastSegment);
-
-          if (isSection) {
-            // Replace existing section in URL
-            this.router.navigate([...urlSegments.slice(0, -1), sectionId], { replaceUrl: true });
-          } else {
-            // Add section to URL
-            this.router.navigate([...urlSegments, sectionId], { replaceUrl: true });
-          }
-
-          // Trigger change detection
-          this.cdr.detectChanges();
-        }
+      // Clear any existing timeout
+      if (this.scrollTimeout) {
+        clearTimeout(this.scrollTimeout);
       }
+
+      // Small debounce to group rapid events
+      this.scrollTimeout = window.setTimeout(() => {
+        // Find the section that's most visible
+        let mostVisibleEntry: IntersectionObserverEntry | undefined;
+        let maxVisibility = 0;
+
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > maxVisibility) {
+            maxVisibility = entry.intersectionRatio;
+            mostVisibleEntry = entry;
+          }
+        });
+
+        if (mostVisibleEntry && mostVisibleEntry.target instanceof HTMLElement) {
+          const sectionId = mostVisibleEntry.target.id.replace('section-', '');
+          
+          // Only update if it's a different section
+          if (sectionId && this.isValidSection(sectionId) && sectionId !== this.activeSection()) {
+            this.activeSection.set(sectionId);
+            this.updateSelectedSection();
+
+            // Update URL without causing a scroll
+            const currentUrl = this.router.url.split('?')[0];
+            const urlSegments = currentUrl.split('/');
+            const lastSegment = urlSegments[urlSegments.length - 1];
+            const isSection = this.isValidSection(lastSegment);
+
+            if (isSection) {
+              // Replace existing section in URL
+              this.router.navigate([...urlSegments.slice(0, -1), sectionId], { replaceUrl: true });
+            } else {
+              // Add section to URL
+              this.router.navigate([...urlSegments, sectionId], { replaceUrl: true });
+            }
+
+            // Trigger change detection
+            this.cdr.detectChanges();
+          }
+        }
+      }, 150); // Reduced to 150ms for more responsive updates
     }, observerOptions);
 
     // Observe all section elements

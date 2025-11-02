@@ -20,7 +20,7 @@ import { MessageModule } from 'primeng/message';
 
 // Services and Models
 import { ValuesService, SDG } from '@shared/services/api/values.service';
-import { OpportunityService } from '../../../../services/opportunity.service';
+import { OpportunityService } from '../../../../../services/opportunity.service';
 import { Opportunity, OpportunitySDG } from '@shared/models/opportunity.model';
 import { FeedbackDialogService } from '@shared/services/ui';
 

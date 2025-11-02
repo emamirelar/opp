@@ -175,4 +175,10 @@ public class APIDictionary
     public const string OpportunityWhere = Opportunity + "/{id}/where";
     public const string OpportunityWhen = Opportunity + "/{id}/when";
     public const string OpportunityRelated = Opportunity + "/{id}/related";
+
+    // Comment
+    public const string Comment = APIPrefix + "comment";
+    public const string CommentsByEntity = Comment + "/{entityType}/{entityId}";
+    public const string CommentTogglePin = Comment + "/{id}/toggle-pin";
+    public const string CommentCount = Comment + "/{entityType}/{entityId}/count";
 }

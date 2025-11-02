@@ -40,6 +40,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSGmailAddonManager gmailAddonManager;
     private readonly BaseEngagementManager baseEngagementManager;
     private readonly UNOPSOpportunityManager opportunityManager;
+    private readonly CommentManager commentManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
                                UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) : base(mapper, context, userManager, httpContextAccessor, configuration, serviceProvider)
@@ -91,6 +92,9 @@ public class UNOPSManagerWrapper : ManagerWrapper
         
         // Create OpportunityManager
         opportunityManager = new UNOPSOpportunityManager(mapper, opsContext);
+        
+        // Create CommentManager
+        commentManager = new CommentManager(mapper, opsContext, this);
     }
 
     public override ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -104,6 +108,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     public override IAiPromptManager AiPromptManager => aiPromptManager;
     public override IGmailAddonManager GmailAddonManager => gmailAddonManager;
     public override IOpportunityManager OpportunityManager => opportunityManager;
+    public override ICommentManager CommentManager => commentManager;
     
     // UNOPS-specific managers
     public IUNOPSEntityConfigurationManager EntityConfigurationManager => entityConfigurationManager;

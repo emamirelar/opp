@@ -13,12 +13,12 @@ import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 
 // Models
-import { Opportunity } from '@shared/models/opportunity.model';
+import { Opportunity, InsightType } from '@shared/models/opportunity.model';
 
 /**
  * @class OpportunityAnalysisSectionComponent
  * @description Displays analysis section with quick stats from backend, AI insights, and quick actions.
- * This component is read-only and displays statistics provided by the backend stats object.
+ * This component is read-only and displays statistics and insights provided by the backend.
  * 
  * @example
  * ```html
@@ -53,14 +53,22 @@ export class OpportunityAnalysisSectionComponent {
   readonly opportunity = input.required<Opportunity>();
 
   /**
-   * @description AI-generated suggestions and insights
-   * TODO: Replace with real AI service integration
+   * @description Get icon class based on insight type
+   * @param {InsightType} type - The insight type
+   * @returns {string} Icon class string
    */
-  readonly aiSuggestions = signal<string[]>([
-    'Target Signing Date is missing - this is required for Go/No-Go decision',
-    'Based on deliverables, consider adding SDG 13 (Climate Action)',
-    'Found 3 similar opportunities with relevant lessons learned',
-  ]);
+  getInsightIcon(type: InsightType): string {
+    switch (type) {
+      case 'info':
+        return 'pi pi-info-circle text-blue-600';
+      case 'warning':
+        return 'pi pi-exclamation-triangle text-yellow-600';
+      case 'success':
+        return 'pi pi-check-circle text-green-600';
+      default:
+        return 'pi pi-info-circle text-blue-600';
+    }
+  }
 
   /**
    * @description Format currency value
@@ -98,17 +106,21 @@ export class OpportunityAnalysisSectionComponent {
 
   /**
    * @description Handle View DST Analysis action
+   * Scrolls to the DST section on the page
    */
   onViewDSTAnalysis(): void {
-    // TODO: Implement DST Analysis view
-    console.log('View DST Analysis clicked');
+    // Scroll to DST section
+    const dstSection = document.getElementById('section-dst');
+    if (dstSection) {
+      dstSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   /**
    * @description Handle Generate Budget Draft action
    */
   onGenerateBudgetDraft(): void {
-    // TODO: Implement Budget Draft generation
+    // TODO: Implement Budget Draft generation when backend is ready
     console.log('Generate Budget Draft clicked');
   }
 }
