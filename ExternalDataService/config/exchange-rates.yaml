@@ -1,0 +1,98 @@
+metadata:
+  name: "Exchange Rates Sync"
+  description: "Exchange rates data sync from ERP"
+  version: "1.0"
+  enabled: true
+  max_retry_attempts: 1
+  timeout_minutes: 5
+
+source:
+  type: "bigquery"
+  
+  query: |
+    SELECT
+      Currency
+      , Effective_Date
+      , Exchange_Rate_Sequence_No
+      , Exchange_Rate
+      , CONCAT(Currency, ' - Rate: ', CAST(Exchange_Rate AS STRING), ' (Effective: ', CAST(Effective_Date AS STRING), ')') AS Name
+      , 1 AS Status
+      , CURRENT_TIMESTAMP() as last_modified
+    FROM
+      `unopsreporting.General_Ledger.Exchange_Rates`
+    WHERE
+      Currency_Type = 'UNORE'
+      AND Effective_Date <= CURRENT_DATE()
+      QUALIFY ROW_NUMBER() OVER (
+              PARTITION BY Currency, Exchange_Rate
+              ORDER BY Effective_Date, Exchange_Rate_Sequence_No
+            ) = 1
+  
+  primary_key_field: "Currency"
+  batch_size: 1000
+
+destination:
+  table_name: "ExchangeRates"
+  schema: "public"
+  manage_table_structure: true
+  add_standard_fields: true
+  
+  # Note: ExchangeRate doesn't have a true unique key since we can have multiple rates per currency
+  # Using composite unique key on Currency + Effective_Date + Exchange_Rate_Sequence_No
+  composite_unique_keys:
+    - fields:
+        - "Currency"
+        - "Effective_Date"
+        - "Exchange_Rate_Sequence_No"
+      index_name: "IX_ExchangeRates_Currency_EffectiveDate_SeqNo"
+  
+  field_mappings:
+    - source_field: "Name"
+      destination_field: "Name"  # Needed to implement IBaseBusinessEntity
+      data_type: "varchar(500)"
+      is_required: true
+
+    - source_field: "Status"
+      destination_field: "Status"  # Needed to implement IBaseBusinessEntity
+      data_type: "integer"         # Must be integer (IBaseBusinessEntity requirement)
+      is_required: false
+
+    - source_field: "Currency"
+      destination_field: "Currency"
+      data_type: "varchar(10)"
+      is_required: true
+    
+    - source_field: "Effective_Date"
+      destination_field: "Effective_Date"
+      data_type: "date"
+      is_required: true
+    
+    - source_field: "Exchange_Rate_Sequence_No"
+      destination_field: "Exchange_Rate_Sequence_No"
+      data_type: "integer"
+      is_required: true
+    
+    - source_field: "Exchange_Rate"
+      destination_field: "Exchange_Rate"
+      data_type: "decimal(18,8)"
+      is_required: false
+
+sync_options:
+  sync_mode: Upsert
+  batch_processing: true
+
+validation:
+  required_source_fields:
+    - "Currency"
+    - "Effective_Date"
+    - "Exchange_Rate_Sequence_No"
+  
+error_handling:
+  on_connection_error: RetryWithBackoff
+  on_mapping_error: SkipRecord
+
+logging:
+  log_level: "Debug"
+  log_sql_queries: true
+  log_record_details: true
+

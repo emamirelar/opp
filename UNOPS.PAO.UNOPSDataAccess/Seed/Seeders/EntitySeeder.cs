@@ -21,7 +21,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 ("Partner", "Partner", EntityStatus.Draft, true, true),
                 ("Interaction", "Interaction", EntityStatus.Draft, true, true),
                 ("PartnerTree", "PartnerTree", EntityStatus.Draft, true, true),
-                ("OrganizationHierarchy", "OrganizationHierarchy", EntityStatus.Draft, true, false)
+                ("OrganizationHierarchy", "OrganizationHierarchy", EntityStatus.Draft, true, false),
+                ("Opportunity", "Opportunity", EntityStatus.Draft, true, false),
             };
 
             // Get existing entities from database

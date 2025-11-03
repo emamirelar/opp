@@ -31,6 +31,17 @@ export class FeedbackDialogComponent {
     this.feedbackService.hideErrorDialog();
   }
 
+  onConfirm() {
+    if (this.dialogConfig?.onConfirm) {
+      this.dialogConfig.onConfirm();
+    }
+    this.feedbackService.hideErrorDialog();
+  }
+
+  onCancel() {
+    this.feedbackService.hideErrorDialog();
+  }
+
   refreshPage() {
     window.location.reload();
   }

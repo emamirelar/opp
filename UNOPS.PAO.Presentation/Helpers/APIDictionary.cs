@@ -25,14 +25,19 @@ public class APIDictionary
     public const string EligibleEntity = APIPrefix + "values/eligible-entity";
     public const string ApplicationType = APIPrefix + "values/application-type";
     public const string SDG = APIPrefix + "values/sdg";
+    public const string SDGs = APIPrefix + "values/sdgs";
     public const string Country = APIPrefix + "values/country";
     public const string Partners = APIPrefix + "values/partners";
+    public const string EntityRoles = APIPrefix + "values/entity-roles";
+    public const string InternalUsers = APIPrefix + "values/internal-users";
     public const string OrganizationUnits = APIPrefix + "values/organization-units";
     public const string PartnerCategories = APIPrefix + "values/partner-categories";
     public const string LiaisonOffices = APIPrefix + "values/liaison-offices";
     public const string Contacts = APIPrefix + "values/contacts";
     public const string Users = APIPrefix + "values/users";
     public const string GeminiModels = APIPrefix + "values/gemini-models";
+    public const string ProposedInitiativeTypes = APIPrefix + "values/proposed-initiative-types";
+    public const string Outputs = APIPrefix + "values/outputs";
 
     // Workflow
     public const string Workflow = APIPrefix + "workflow";
@@ -161,4 +166,19 @@ public class APIDictionary
     public const string DashboardMyDraftContacts = Dashboard + "/my-draft-contacts";
     public const string DashboardMyDraftInteractions = Dashboard + "/my-draft-interactions";
     public const string DashboardOrgUnitRecentUpdates = Dashboard + "/org-unit-recent-updates";
+
+    // Opportunity
+    public const string Opportunity = APIPrefix + "opportunity";
+    public const string OpportunityWhat = Opportunity + "/{id}/what";
+    public const string OpportunityWhy = Opportunity + "/{id}/why";
+    public const string OpportunityWho = Opportunity + "/{id}/who";
+    public const string OpportunityWhere = Opportunity + "/{id}/where";
+    public const string OpportunityWhen = Opportunity + "/{id}/when";
+    public const string OpportunityRelated = Opportunity + "/{id}/related";
+
+    // Comment
+    public const string Comment = APIPrefix + "comment";
+    public const string CommentsByEntity = Comment + "/{entityType}/{entityId}";
+    public const string CommentTogglePin = Comment + "/{id}/toggle-pin";
+    public const string CommentCount = Comment + "/{entityType}/{entityId}/count";
 }

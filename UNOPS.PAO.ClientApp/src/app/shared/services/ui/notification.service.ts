@@ -9,6 +9,8 @@ export interface Notification {
   records?: any[];
   category: string;
   responseType: string;
+  entity?: string; // Entity type for navigation (e.g., "Opportunity", "Partner")
+  entityId?: number; // Entity ID for navigation
   status?: 'Pending' | 'Progress' | 'Done';
   isRead?: boolean;
   createdAt?: string;

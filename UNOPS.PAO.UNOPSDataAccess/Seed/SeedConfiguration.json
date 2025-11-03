@@ -2,6 +2,24 @@
     "seedSteps": [
         {
             "order": 0,
+            "name": "ArtifactDataTypes",
+            "type": "seeder",
+            "className": "ArtifactDataTypeSeeder",
+            "methodName": "SeedArtifactDataTypesAsync",
+            "filePath": "Seeders/ArtifactDataTypeSeeder.cs",
+            "description": "Artifact data types (string, number, date, datetime, document, json, array, map)"
+        },
+        {
+            "order": 1,
+            "name": "ArtifactTypes",
+            "type": "seeder",
+            "className": "ArtifactTypeSeeder",
+            "methodName": "SeedArtifactTypesAsync",
+            "filePath": "Seeders/ArtifactTypeSeeder.cs",
+            "description": "Artifact types for Opportunity entity"
+        },
+        {
+            "order": 2,
             "name": "Roles",
             "type": "seeder",
             "className": "RoleSeeder",
@@ -10,7 +28,7 @@
             "description": "Roles configuration"
         },
         {
-            "order": 1,
+            "order": 3,
             "name": "Entities",
             "type": "seeder",
             "className": "EntitySeeder",
@@ -19,14 +37,14 @@
             "description": "Base entity types configuration"
         },
         {
-            "order": 2,
+            "order": 4,
             "name": "EntityManagers",
             "type": "sql",
             "path": "EntityManager.sql",
             "description": "Entity managers and field managers complete configuration"
         },
         {
-            "order": 3,
+            "order": 5,
             "name": "DocumentTypes",
             "type": "seeder",
             "className": "DocumentTypeSeeder",
@@ -35,7 +53,7 @@
             "description": "Document types configuration"
         },
         {
-            "order": 4,
+            "order": 6,
             "name": "LiaisonOffices",
             "type": "seeder",
             "className": "LiaisonOfficeSeeder",
@@ -44,39 +62,93 @@
             "description": "Liaison offices data"
         },
         {
-            "order": 5,
-            "description": "Partner tree structure",
-            "name": "PartnerTree",
-            "type": "seeder",
-            "className": "PartnerTreeSeeder_v2",
-            "methodName": "SeedPartnerTreesAsync",
-            "filePath": "Seeders/PartnerTreeSeeder_v2.cs"
-        },
-        {
-            "order": 6,
+            "order": 7,
             "name": "AiPrompts",
             "type": "sql",
             "path": "AiPrompts.sql",
             "description": "AiPrompts data"
         },
         {
-            "order": 7,
+            "order": 8,
             "name": "EntityPermissions",
             "type": "sql",
             "path": "EntityPermissions.sql",
             "description": "Entity permissions configuration"
         },
         {
-            "order": 8,
-            "name": "Partners",
+            "order": 9,
+            "name": "WorkflowStages",
             "type": "seeder",
-            "className": "PartnerSeeder_v2",
-            "methodName": "SeedPartnersV2Async",
-            "filePath": "Seeders/PartnerSeeder_v2.cs",
-            "description": "Partners data seeding"
+            "className": "WorkflowStageSeeder",
+            "methodName": "SeedWorkflowStagesAsync",
+            "filePath": "Seeders/WorkflowStageSeeder.cs",
+            "description": "Workflow stages for entities"
         },
         {
-            "order": 9,
+            "order": 10,
+            "name": "EntityRoles",
+            "type": "seeder",
+            "className": "EntityRoleSeeder",
+            "methodName": "SeedEntityRolesAsync",
+            "filePath": "Seeders/EntityRoleSeeder.cs",
+            "description": "Entity roles for entities"
+        },
+        {
+            "order": 11,
+            "name": "ProposedInitiativeTypes",
+            "type": "seeder",
+            "className": "ProposedInitiativeTypeSeeder",
+            "methodName": "SeedProposedInitiativeTypesAsync",
+            "filePath": "Seeders/ProposedInitiativeTypeSeeder.cs",
+            "description": "Proposed initiative types (Project, Programme, Portfolio)"
+        },
+        {
+            "order": 12,
+            "name": "SDGs",
+            "type": "seeder",
+            "className": "SDGSeeder",
+            "methodName": "SeedSDGsAsync",
+            "filePath": "Seeders/SDGSeeder.cs",
+            "description": "UN Sustainable Development Goals (SDGs)"
+        },
+        {
+            "order": 13,
+            "name": "SDGTargets",
+            "type": "seeder",
+            "className": "SDGTargetSeeder",
+            "methodName": "SeedSDGTargetsAsync",
+            "filePath": "Seeders/SDGTargetSeeder.cs",
+            "description": "UN SDG Targets (169 targets under the 17 SDGs)"
+        },
+        {
+            "order": 14,
+            "name": "Units",
+            "type": "seeder",
+            "className": "UnitSeeder",
+            "methodName": "SeedUnitsAsync",
+            "filePath": "Seeders/UnitSeeder.cs",
+            "description": "Units of measurement (Days, Number, Litres, etc.)"
+        },
+        {
+            "order": 15,
+            "name": "ProjectCategories",
+            "type": "seeder",
+            "className": "ProjectCategorySeeder",
+            "methodName": "SeedProjectCategoriesAsync",
+            "filePath": "Seeders/ProjectCategorySeeder.cs",
+            "description": "Project categories (Category 1, 2, 3)"
+        },
+        {
+            "order": 16,
+            "name": "Outputs",
+            "type": "seeder",
+            "className": "OutputSeeder",
+            "methodName": "SeedOutputsAsync",
+            "filePath": "Seeders/OutputSeeder.cs",
+            "description": "UNOPS Output catalog"
+        },
+        {
+            "order": 17,
             "name": "Prospects",
             "type": "seeder",
             "className": "ProspectAccountsSeeder",
@@ -85,34 +157,7 @@
             "description": "Partners data seeding"
         },
         {
-            "order": 10,
-            "name": "Contacts",
-            "type": "seeder",
-            "className": "ContactSeeder",
-            "methodName": "SeedContactsAsync",
-            "filePath": "Seeders/ContactSeeder.cs",
-            "description": "Contacts data seeding"
-        },
-        {
-            "order": 11,
-            "name": "InteractionFromTasks",
-            "type": "seeder",
-            "className": "InteractionFromTaskSeeder",
-            "methodName": "SeedInteractionsFromTasksAsync",
-            "filePath": "Seeders/InteractionFromTaskSeeder.cs",
-            "description": "Interactions from tasks data seeding"
-        },
-        {
-            "order": 12,
-            "name": "InteractionFromEvents",
-            "type": "seeder",
-            "className": "InteractionFromEventSeeder",
-            "methodName": "SeedInteractionsFromEventsAsync",
-            "filePath": "Seeders/InteractionFromEventSeeder.cs",
-            "description": "Interactions from events data seeding"
-        },
-        {
-            "order": 13,
+            "order": 18,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",

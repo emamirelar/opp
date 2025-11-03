@@ -15,7 +15,8 @@ VALUES
     (2, 'Partner', 'Partners', 'Organizations and entities that work with UNOPS', true, false, 'Partner', 0, 1, NOW(), 0, NULL, false, 0, NULL),
     (3, 'Interaction', 'Interactions', 'Communication and interaction records between UNOPS and partners/contacts', true, false, 'Interaction', 0, 1, NOW(), 0, NULL, false, 0, NULL),
     (4, 'PartnerTree', 'PartnerTrees', 'Hierarchical structure and classification of partners', true, false, 'PartnerTree', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (5, 'OrganizationHierarchy', 'OrganizationHierarchies', 'UNOPS organizational hierarchy and office structure', true, false, 'OrganizationHierarchy', 0, 1, NOW(), 0, NULL, false, 0, NULL);
+    (5, 'OrganizationHierarchy', 'OrganizationHierarchies', 'UNOPS organizational hierarchy and office structure', true, false, 'OrganizationHierarchy', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (6, 'Opportunity', 'Opportunities', 'Funding and partnership opportunities for UNOPS initiatives', true, false, 'Opportunity', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
 -- EntityFieldManagers configuration seeding
 -- This section seeds the UI field configuration for all entities
@@ -200,7 +201,31 @@ BEGIN
         (5, 'Name', 'string', 'Organization unit name', true, true, NULL, 200, 2, true, 2, NULL, 'name', NULL, 'Name', 'text', '25%', false, true, NULL, NULL, 'Name', 0, 1, NOW(), 0, NULL, false, 0, NULL),
         (5, 'Type', 'string', 'Type of organizational unit', true, true, NULL, 100, 3, true, 3, NULL, 'type', NULL, 'Type', 'text', '15%', false, true, NULL, NULL, 'Type', 0, 1, NOW(), 0, NULL, false, 0, NULL),
         (5, 'Description', 'string', 'Description of the organizational unit', false, true, NULL, 500, 4, true, 4, NULL, 'description', NULL, 'Description', 'text', '25%', true, true, NULL, NULL, 'Description', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-        (5, 'ParentId', 'int', 'Parent organization hierarchy ID', false, true, NULL, NULL, 5, true, 5, NULL, 'parentId', NULL, 'Parent ID', 'text', '15%', false, true, NULL, NULL, 'ParentId', 0, 1, NOW(), 0, NULL, false, 0, NULL);
+        (5, 'ParentId', 'int', 'Parent organization hierarchy ID', false, true, NULL, NULL, 5, true, 5, NULL, 'parentId', NULL, 'Parent ID', 'text', '15%', false, true, NULL, NULL, 'ParentId', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+
+    -- ================================================================
+    -- OPPORTUNITY ENTITY FIELDS (14 fields)
+    -- ================================================================
+        -- Primary List View Fields
+        (6, 'Name', 'string', 'Opportunity name', true, true, NULL, 500, 1, true, 1, NULL, 'name', NULL, 'Name', 'text', '25%', true, true, NULL, 'Opportunity name', 'Name', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'Description', 'string', 'Opportunity description', true, true, NULL, 2000, 2, true, 2, NULL, 'description', NULL, 'Description', 'text', '30%', true, false, NULL, 'Brief description of the opportunity', 'Description', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'Status', 'enum', 'Opportunity status', true, true, 'Draft', 50, 3, true, 3, NULL, 'status', NULL, 'Status', 'badge', '10%', false, true, NULL, 'Current status of the opportunity', 'Status', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'WorkflowStage', 'WorkflowStage', 'Current workflow stage', false, true, NULL, NULL, 4, true, 4, 'name', 'workflowStage.name', NULL, 'Workflow Stage', 'text', '15%', false, true, NULL, 'Current stage in the workflow', 'WorkflowStage', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'InitiativeBudgetUSD', 'decimal', 'Initiative budget in USD', false, true, NULL, NULL, 5, true, 5, NULL, 'initiativeBudgetUSD', NULL, 'Budget (USD)', 'currency', '12%', false, true, NULL, 'Total initiative budget in USD', 'InitiativeBudgetUSD', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+
+        -- Core Opportunity Fields (Non-List View)
+        (6, 'Id', 'int', 'Unique identifier for the opportunity', true, true, NULL, NULL, 6, false, NULL, NULL, 'id', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Id', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'PartnerReference', 'string', 'Partner reference number', false, true, NULL, 255, 7, false, NULL, NULL, 'partnerReference', NULL, NULL, 'text', NULL, false, true, NULL, 'Partner reference identifier', 'PartnerReference', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'ResponsibleOrgUnit', 'OrganizationHierarchy', 'Responsible organization unit', false, true, NULL, NULL, 8, false, NULL, 'name', 'responsibleOrgUnit.name', NULL, NULL, 'text', NULL, false, false, NULL, 'Responsible organizational unit', 'ResponsibleOrgUnit', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'PartnershipAgreementReference', 'string', 'Partnership agreement reference', false, true, NULL, 255, 9, false, NULL, NULL, 'partnershipAgreementReference', NULL, NULL, 'text', NULL, false, true, NULL, 'Reference to partnership agreement', 'PartnershipAgreementReference', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'TargetSigningDate', 'datetime', 'Target signing date', false, true, NULL, NULL, 10, false, NULL, NULL, 'targetSigningDate', NULL, NULL, 'date', NULL, false, true, NULL, 'Expected date for agreement signing', 'TargetSigningDate', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'TargetDeliveryDate', 'datetime', 'Target delivery date', false, true, NULL, NULL, 11, false, NULL, NULL, 'targetDeliveryDate', NULL, NULL, 'date', NULL, false, true, NULL, 'Expected delivery date', 'TargetDeliveryDate', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'ProposedInitiativeType', 'ProposedInitiativeType', 'Type of proposed initiative', false, true, NULL, NULL, 12, false, NULL, 'name', 'proposedInitiativeType.name', NULL, NULL, 'text', NULL, false, false, NULL, 'Type of initiative (Project, Programme, Portfolio)', 'ProposedInitiativeType', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        
+        -- Foreign Keys
+        (6, 'WorkflowStageId', 'int', 'FK to WorkflowStage', false, true, NULL, NULL, 13, false, NULL, NULL, 'workflowStageId', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'WorkflowStageId', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'ResponsibleOrgUnitId', 'int', 'FK to OrganizationHierarchy', false, true, NULL, NULL, 14, false, NULL, NULL, 'responsibleOrgUnitId', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'ResponsibleOrgUnitId', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+        (6, 'ProposedInitiativeTypeId', 'int', 'FK to ProposedInitiativeType', false, true, NULL, NULL, 15, false, NULL, NULL, 'proposedInitiativeTypeId', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'ProposedInitiativeTypeId', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
     SELECT COUNT(*) INTO field_managers_count FROM public."EntityFieldManagers";
     RAISE NOTICE 'EntityFieldManagers setup complete with % total records', field_managers_count;

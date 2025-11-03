@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UNOPS.PAO.Models.Artifacts;
 using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Models.Locations;
@@ -10,6 +11,9 @@ public class CountryModel
     public string Name { get; set; }
     public string Status { get; set; }
     public string Iso2Code { get; set; }
+
+    public string? Continent { get; set; }
+    public string? Region { get; set; }
     
     // Computed properties
     public int PartnerCount { get; set; }
@@ -17,6 +21,12 @@ public class CountryModel
     
     // RBAC permissions
     public EntityPermissionsModel? Permissions { get; set; }
+
+    /// <summary>
+    /// Collection of artifacts associated with this country
+    /// Automatically loaded via AutoMapper when Country entity is mapped
+    /// </summary>
+    public List<EntityArtifactModel> Artifacts { get; set; } = new List<EntityArtifactModel>();
 }
 
 public class CountryFilterRequest : PaginationRequest
