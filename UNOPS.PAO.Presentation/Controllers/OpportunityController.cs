@@ -248,6 +248,52 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
+    /// Gets related items (contacts, partners, interactions) for an opportunity
+    /// </summary>
+    [HttpGet(APIDictionary.OpportunityRelated)]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> GetRelatedItems(int id)
+    {
+        try
+        {
+            var result = await _manager.GetRelatedItemsAsync(id);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting related items for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while getting related items", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Updates the WHEN section of an opportunity (timeline dates)
+    /// </summary>
+    [HttpPatch(APIDictionary.OpportunityWhen)]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> UpdateWhenSection(int id, [FromBody] WhenSectionRequest req)
+    {
+        try
+        {
+            var result = await _manager.UpdateWhenSectionAsync(id, req);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating WHEN section for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while updating WHEN section", details = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Deletes an opportunity
     /// </summary>
     [HttpDelete(APIDictionary.Opportunity + "/{id}")]

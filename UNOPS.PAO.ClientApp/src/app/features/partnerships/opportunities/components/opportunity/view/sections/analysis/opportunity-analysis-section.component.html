@@ -49,16 +49,48 @@
       <h3 class="text-sm font-semibold text-gray-900 mb-2">
         {{ 'label.opportunity.insightsSuggestions' | translate }}
       </h3>
-      <div class="space-y-2">
-        @for (suggestion of aiSuggestions(); track $index) {
-          <div class="bg-white rounded-lg p-3 border border-blue-100">
-            <div class="flex items-start gap-2">
-              <i class="pi pi-info-circle text-blue-600 text-sm mt-0.5"></i>
-              <p class="text-xs text-gray-700">{{ suggestion }}</p>
+      
+      @if (opportunity().insights && opportunity().insights.length > 0) {
+        <div class="space-y-2 mb-3">
+          @for (insight of opportunity().insights; track insight.id) {
+            <div class="bg-white rounded-lg p-3 border border-blue-100">
+              <div class="flex items-start gap-2">
+                <i 
+                  [class]="getInsightIcon(insight.type) + ' text-sm mt-0.5'"
+                ></i>
+                <div class="flex-1">
+                  <div class="font-semibold text-xs text-gray-900">{{ insight.title }}</div>
+                  <p class="text-xs text-gray-700">{{ insight.description }}</p>
+                </div>
+              </div>
             </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
+      
+      @if (opportunity().suggestions && opportunity().suggestions.length > 0) {
+        <div class="space-y-2">
+          @for (suggestion of opportunity().suggestions; track suggestion.id) {
+            <div class="bg-white rounded-lg p-3 border border-blue-100">
+              <div class="flex items-start gap-2">
+                <i class="pi pi-lightbulb text-yellow-600 text-sm mt-0.5"></i>
+                <div class="flex-1">
+                  <div class="font-semibold text-xs text-gray-900">{{ suggestion.title }}</div>
+                  <p class="text-xs text-gray-700">{{ suggestion.description }}</p>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+      
+      @if ((!opportunity().insights || opportunity().insights.length === 0) && 
+           (!opportunity().suggestions || opportunity().suggestions.length === 0)) {
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
+          <i class="pi pi-lightbulb text-2xl text-gray-400 mb-2"></i>
+          <p class="text-xs text-gray-500">{{ 'message.opportunity.noInsights' | translate }}</p>
+        </div>
+      }
     </div>
 
     <!-- Quick Actions -->

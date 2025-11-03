@@ -655,6 +655,29 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   handleNotificationClick(notification: Notification) {
+    // Handle collaboration/comment mentions
+    if (notification.category === 'collaboration' && notification.entity && notification.entityId) {
+      const entityType = notification.entity.toLowerCase();
+      // Proper pluralization for entity types
+      let pluralEntity: string;
+      if (entityType === 'opportunity') {
+        pluralEntity = 'opportunities';
+      } else if (entityType === 'partner') {
+        pluralEntity = 'partners';
+      } else if (entityType === 'contact') {
+        pluralEntity = 'contacts';
+      } else if (entityType === 'interaction') {
+        pluralEntity = 'interactions';
+      } else {
+        // Default: add 's' for other entity types
+        pluralEntity = `${entityType}s`;
+      }
+      const route = `/partnerships/${pluralEntity}/${notification.entityId}/collaboration`;
+      this.router.navigate([route]);
+      this.markNotificationAsRead(notification.id);
+      return;
+    }
+
     // Handle AI data modification notifications (category format: ENTITYTYPE_ID)
     if (notification.responseType.startsWith("data_")) {
       this.handleDataModificationNotification(notification);

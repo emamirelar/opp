@@ -33,6 +33,9 @@ export interface Opportunity {
   countries: OpportunityCountry[];
   sdGs: OpportunitySDG[];
   stats: OpportunityStats | null;
+  dstAnalysis: DSTAnalysis | null; // DST Insights & Recommendations
+  insights: OpportunityInsight[]; // Analysis insights
+  suggestions: OpportunitySuggestion[]; // Analysis suggestions
   createdDate: string;
   lastModifiedDate: string;
   createdBy: number;
@@ -234,5 +237,102 @@ export interface OpportunitySDGRequest {
   isPrimary: boolean;
   contributionLevel?: string;
   notes?: string;
+}
+
+// Related Items Models
+export interface RelatedItems {
+  contacts: RelatedContact[];
+  partners: RelatedPartner[];
+  interactions: RelatedInteraction[];
+}
+
+export interface RelatedContact {
+  id: number;
+  name: string;
+  email?: string;
+  jobTitle?: string;
+  logoUrl?: string;
+  organizationId?: number;
+  organizationName?: string;
+}
+
+export interface RelatedPartner {
+  id: number;
+  name: string;
+  logoUrl?: string;
+  partnerType?: string;
+  country?: string;
+}
+
+export interface RelatedInteraction {
+  id: number;
+  subject: string;
+  interactionType?: string;
+  interactionDate?: string;
+  description?: string;
+  partnerId?: number;
+  partnerName?: string;
+}
+
+/**
+ * DST (Digital Strategy & Transformation) Analysis Models
+ * For AI-powered insights, recommendations, risks, and similar opportunities
+ */
+export interface DSTAnalysis {
+  lastUpdated: string; // ISO date string
+  risks: DSTRisk[];
+  recommendations: DSTRecommendation[];
+  similarOpportunities: SimilarOpportunity[];
+}
+
+export interface DSTRisk {
+  id: number;
+  title: string;
+  description: string;
+  severity: DSTSeverity; // 'High', 'Medium', 'Low'
+  recommendation: string;
+}
+
+export type DSTSeverity = 'High' | 'Medium' | 'Low';
+
+export interface DSTRecommendation {
+  id: number;
+  title: string;
+  rationale: string;
+  status?: 'pending' | 'accepted' | 'dismissed';
+}
+
+export interface SimilarOpportunity {
+  id: number;
+  name: string;
+  relevance: number; // Percentage (0-100)
+  status: string;
+  budget: number;
+  duration: string;
+  keyLessons: string;
+}
+
+/**
+ * Analysis Section Models
+ * For insights and suggestions in the Analysis section
+ */
+export interface OpportunityInsight {
+  id: number;
+  title: string;
+  description: string;
+  type: InsightType; // 'info', 'warning', 'success'
+  priority: InsightPriority; // 'high', 'medium', 'low'
+  createdDate: string;
+}
+
+export type InsightType = 'info' | 'warning' | 'success';
+export type InsightPriority = 'high' | 'medium' | 'low';
+
+export interface OpportunitySuggestion {
+  id: number;
+  title: string;
+  description: string;
+  actionLabel?: string;
+  createdDate: string;
 }
 

@@ -13,6 +13,8 @@ public interface IOpportunityManager
     Task<OpportunityModel> UpdateWhySectionAsync(int id, WhySectionRequest request);
     Task<OpportunityModel> UpdateWhoSectionAsync(int id, WhoSectionRequest request);
     Task<OpportunityModel> UpdateWhereSectionAsync(int id, WhereSectionRequest request);
+    Task<OpportunityModel> UpdateWhenSectionAsync(int id, WhenSectionRequest request);
+    Task<RelatedItemsModel> GetRelatedItemsAsync(int id);
     Task<bool> DeleteOpportunityAsync(int id);
 }
 

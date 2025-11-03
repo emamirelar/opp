@@ -18,6 +18,8 @@ export interface SimpleValue {
   description?: string;
   continent?: string;  // For countries
   region?: string;  // For countries
+  logoUrl?: string;  // For partners
+  email?: string;  // For users
 }
 
 /**

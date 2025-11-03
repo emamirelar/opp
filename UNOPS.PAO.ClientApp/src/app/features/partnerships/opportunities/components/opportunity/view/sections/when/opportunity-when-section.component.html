@@ -1,0 +1,103 @@
+<p-panel [toggleable]="true" [collapsed]="false" class="{{isSaving() ? 'opacity-50 pointer-events-none' : ''}}">
+  <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full pr-4">
+      <span class="font-semibold">📅 {{ 'label.opportunity.whenTimeline' | translate }}</span>
+      <div class="flex items-center gap-2">
+        @if (isSaving()) {
+          <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
+        }
+        @if (!isEditing()) {
+          <p-button
+            icon="pi pi-pencil"
+            [text]="true"
+            [rounded]="true"
+            severity="secondary"
+            size="small"
+            (onClick)="startEditing()"
+            pTooltip="{{ 'button.edit' | translate }}"
+          />
+        } @else {
+          <p-button
+            icon="pi pi-check"
+            [text]="true"
+            [rounded]="true"
+            severity="success"
+            size="small"
+            (onClick)="saveSection()"
+            [disabled]="isSaving()"
+            pTooltip="{{ 'button.save' | translate }}"
+          />
+          <p-button
+            icon="pi pi-times"
+            [text]="true"
+            [rounded]="true"
+            severity="danger"
+            size="small"
+            (onClick)="cancelEditing()"
+            [disabled]="isSaving()"
+            pTooltip="{{ 'button.cancel' | translate }}"
+          />
+        }
+      </div>
+    </div>
+  </ng-template>
+
+  @if (isEditing()) {
+    <!-- Edit Mode -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Target Signing Date -->
+      <div>
+        <p-floatlabel variant="on">
+          <p-datepicker
+            id="targetSigningDate"
+            [formControl]="targetSigningDateControl"
+            dateFormat="yy-mm-dd"
+            [showIcon]="true"
+            class="w-full"
+          />
+          <label for="targetSigningDate">{{ 'label.opportunity.targetSigningDate' | translate }}</label>
+        </p-floatlabel>
+      </div>
+
+      <!-- Target Delivery Date -->
+      <div>
+        <p-floatlabel variant="on">
+          <p-datepicker
+            id="targetDeliveryDate"
+            [formControl]="targetDeliveryDateControl"
+            dateFormat="yy-mm-dd"
+            [showIcon]="true"
+            class="w-full"
+          />
+          <label for="targetDeliveryDate">{{ 'label.opportunity.targetDeliveryDate' | translate }}</label>
+        </p-floatlabel>
+      </div>
+    </div>
+  } @else {
+    <!-- View Mode -->
+    <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Target Signing Date -->
+        <div>
+          <h4 class="text-sm font-semibold text-gray-600 mb-1">
+            {{ 'label.opportunity.targetSigningDate' | translate }}
+          </h4>
+          <p class="text-lg font-semibold text-gray-900">
+            {{ formatDate(opportunity()!.targetSigningDate) }}
+          </p>
+        </div>
+
+        <!-- Target Delivery Date -->
+        <div>
+          <h4 class="text-sm font-semibold text-gray-600 mb-1">
+            {{ 'label.opportunity.targetDeliveryDate' | translate }}
+          </h4>
+          <p class="text-lg font-semibold text-gray-900">
+            {{ formatDate(opportunity()!.targetDeliveryDate) }}
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+</p-panel>
+

@@ -99,7 +99,18 @@
                   </div>
                 </div>
               } @else {
-                <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ comment.content }}</p>
+                <div class="text-sm text-gray-700">
+                  @for (segment of parseCommentContent(comment.content); track $index) {
+                    @if (segment.type === 'text') {
+                      <span class="whitespace-pre-wrap">{{ segment.value }}</span>
+                    } @else {
+                      <p-chip 
+                        [label]="'@' + segment.value"
+                        styleClass="inline-flex bg-blue-50 text-blue-700 text-xs mx-1">
+                      </p-chip>
+                    }
+                  }
+                </div>
               }
               
               <!-- Mentions -->
@@ -169,7 +180,18 @@
                             </div>
                           </div>
                         } @else {
-                          <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ reply.content }}</p>
+                          <div class="text-sm text-gray-700">
+                            @for (segment of parseCommentContent(reply.content); track $index) {
+                              @if (segment.type === 'text') {
+                                <span class="whitespace-pre-wrap">{{ segment.value }}</span>
+                              } @else {
+                                <p-chip 
+                                  [label]="'@' + segment.value"
+                                  styleClass="inline-flex bg-blue-50 text-blue-700 text-xs mx-1">
+                                </p-chip>
+                              }
+                            }
+                          </div>
                         }
                       </div>
                     </div>
@@ -210,13 +232,47 @@
 
       <!-- New Comment Form -->
       @if (!replyingToId()) {
-        <div class="border-t border-gray-200 pt-4 mt-4">
+        <div class="border-t border-gray-200 pt-4 mt-4 relative">
           <textarea
+            #commentTextarea
             [(ngModel)]="newCommentContent"
+            (input)="onCommentInput($event, false)"
             class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows="3"
             [placeholder]="'placeholder.addComment' | translate"
           ></textarea>
+          
+          <!-- Mention Suggestions Dropdown -->
+          @if (showMentionSuggestions() && filteredUsers().length > 0) {
+            <div class="absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto mt-1"
+                 style="width: calc(100% - 2rem);">
+              @for (user of filteredUsers(); track user.id) {
+                <div 
+                  class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                  (click)="selectMentionUser(user, commentTextarea)">
+                  <i class="pi pi-user text-gray-400"></i>
+                  <span class="font-medium">{{ user.name }}</span>
+                </div>
+              }
+            </div>
+          }
+          
+          <!-- Mentioned Users Tags -->
+          @if (mentionedUserIds().length > 0) {
+            <div class="flex flex-wrap gap-2 mt-2">
+              @for (userId of mentionedUserIds(); track userId) {
+                @if (getUserById(userId); as user) {
+                  <p-chip 
+                    [label]="'@' + (user.code || user.email || user.name)"
+                    [removable]="true"
+                    (onRemove)="removeMentionedUser(userId)"
+                    styleClass="bg-blue-50 text-blue-700">
+                  </p-chip>
+                }
+              }
+            </div>
+          }
+          
           <div class="flex justify-end gap-2 mt-2">
             <p-button
               [label]="'button.attachFile' | translate"

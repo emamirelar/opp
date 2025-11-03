@@ -10,6 +10,7 @@ import {
   Opportunity,
   OpportunityRequest,
   UpdateOpportunityRequest,
+  RelatedItems
 } from '@shared/models/opportunity.model';
 
 /**
@@ -74,6 +75,13 @@ export class OpportunityService {
   }
 
   /**
+   * Get related items for opportunity (contacts, partners, interactions)
+   */
+  getRelatedItems(id: number): Observable<RelatedItems> {
+    return this.http.get<RelatedItems>(`${this.apiUrl}/${id}/related`);
+  }
+
+  /**
    * Update WHY section of opportunity (SDGs, alignment, outcomes)
    */
   updateOpportunityWhy(id: number, data: any): Observable<Opportunity> {
@@ -81,9 +89,9 @@ export class OpportunityService {
   }
 
   /**
-   * Update WHEN section of opportunity (dates, milestones)
+   * Update WHEN section of opportunity (timeline dates)
    */
-  updateOpportunityWhen(id: number, data: Partial<Opportunity>): Observable<Opportunity> {
+  updateOpportunityWhen(id: number, data: any): Observable<Opportunity> {
     return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/when`, data);
   }
 

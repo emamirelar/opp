@@ -21,7 +21,7 @@ import { DialogModule } from 'primeng/dialog';
 
 // Services and Models
 import { ValuesService, SimpleValue, OrganizationUnit, Output } from '@shared/services/api/values.service';
-import { OpportunityService } from '../../../../services/opportunity.service';
+import { OpportunityService } from '../../../../../services/opportunity.service';
 import { Opportunity, OpportunityDeliverable } from '@shared/models/opportunity.model';
 import { FeedbackDialogService } from '@shared/services/ui';
 
