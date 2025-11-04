@@ -157,7 +157,8 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
       'Manage User Permissions': 'title.userManagement',
       'Manage my Office': 'title.manageOffice',
       'Manage Entities': 'title.managerEntities',
-      'Translation Workbench': 'title.translationWorkbench'
+      'Translation Workbench': 'title.translationWorkbench',
+      'Manage Entity Artifacts': 'title.entityArtifactManager'
     };
 
     const translationKey = labelMap[label];
