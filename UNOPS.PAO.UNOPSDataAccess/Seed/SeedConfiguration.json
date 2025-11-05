@@ -16,6 +16,22 @@
         },
         {
             "order": 2,
+            "name": "PartnerTreeSeeder_v3",
+            "type": "seeder",
+            "className": "PartnerTreeSeeder_v3",
+            "methodName": "SeedPartnerTreeAsync",
+            "filePath": "Seeders/PartnerTreeSeeder_v3.cs"
+        },
+        {
+            "order": 3,
+            "name": "Partner_Update_With_CategoryGroup_Seeder_v3",
+            "type": "seeder",
+            "className": "Partner_Update_With_CategoryGroup_Seeder_v3",
+            "methodName": "UpdatePartnersWithCategoryGroupAsync",
+            "filePath": "Seeders/Partner_Update_With_CategoryGroup_Seeder_v3.cs"
+        },
+        {
+            "order": 4,
             "description": "Partner Liaison Office Fixes",
             "name": "Partner_LiaisonOffice_Fixes_v3",
             "type": "seeder",
@@ -24,7 +40,7 @@
             "filePath": "Seeders/Partner_LiaisonOffice_Fixes_v3.cs"
         },
         {
-            "order": 3,
+            "order": 5,
             "description": "Unapproved Partner Liaison Office Fixes",
             "name": "Unapproved_Partners_LiaisonOffice_Fixes_v3",
             "type": "seeder",
@@ -33,7 +49,7 @@
             "filePath": "Seeders/Unapproved_Partners_LiaisonOffice_Fixes_v3.cs"
         },
         {
-            "order": 4,
+            "order": 6,
             "name": "Partner_FocalPoint_OrgUnit_Fixes_v3",
             "type": "seeder",
             "className": "Partner_FocalPoint_OrgUnit_Fixes_v3",
@@ -41,7 +57,7 @@
             "filePath": "Seeders/Partner_FocalPoint_OrgUnit_Fixes_v3.cs"
         },
         {
-            "order": 5,
+            "order": 7,
             "name": "Partner_FocalPoint_Fixes_v3",
             "type": "seeder",
             "className": "Partner_FocalPoint_Fixes_v3",
@@ -49,7 +65,23 @@
             "filePath": "Seeders/Partner_FocalPoint_Fixes_v3.cs"
         },
         {
-            "order": 6,
+            "order": 8,
+            "name": "InteractionFromEventSeeder_v3",
+            "type": "seeder",
+            "className": "InteractionFromEventSeeder_v3",
+            "methodName": "SeedInteractionsFromEventsAsync",
+            "filePath": "Seeders/InteractionFromEventSeeder_v3.cs"
+        },
+        {
+            "order": 9,
+            "name": "InteractionFromTaskSeeder_v3",
+            "type": "seeder",
+            "className": "InteractionFromTaskSeeder_v3",
+            "methodName": "SeedInteractionsFromTasksAsync",
+            "filePath": "Seeders/InteractionFromTaskSeeder_v3.cs"
+        },
+        {
+            "order": 10,
             "name": "Partner_Audit_Data_Fixes_v3",
             "type": "seeder",
             "className": "Partner_Audit_Data_Fixes_v3",
@@ -57,12 +89,20 @@
             "filePath": "Seeders/Partner_Audit_Data_Fixes_v3.cs"
         },
         {
-            "order": 7,
+            "order": 11,
             "name": "Contact_Audit_Data_Fixes_v3",
             "type": "seeder",
             "className": "Contact_Audit_Data_Fixes_v3",
             "methodName": "UpdateContactAuditDataAsync",
             "filePath": "Seeders/Contact_Audit_Data_Fixes_v3.cs"
+        },
+        {
+            "order": 12,
+            "name": "Interaction_Audit_Data_Fixes_v3",
+            "type": "seeder",
+            "className": "Interaction_Audit_Data_Fixes_v3",
+            "methodName": "UpdateInteractionAuditDataAsync",
+            "filePath": "Seeders/Interaction_Audit_Data_Fixes_v3.cs"
         }
     ]
 }
