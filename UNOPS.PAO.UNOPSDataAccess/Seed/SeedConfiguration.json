@@ -103,6 +103,16 @@
             "className": "Interaction_Audit_Data_Fixes_v3",
             "methodName": "UpdateInteractionAuditDataAsync",
             "filePath": "Seeders/Interaction_Audit_Data_Fixes_v3.cs"
+        },
+        {
+            "order": 13,
+            "name": "SequenceResyncSeeder_v3",
+            "type": "seeder",
+            "className": "SequenceResyncSeeder_v3",
+            "methodName": "ResyncAllSequencesAsync",
+            "filePath": "Seeders/SequenceResyncSeeder_v3.cs",
+            "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
+            "forceExecuteIfAnyChanged": true
         }
     ]
 }
