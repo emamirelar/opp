@@ -1945,11 +1945,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     /// <summary>
     /// Gets the next available ErpDimValue based on the highest existing value
+    /// Excludes values in the range 8000-9999 from the calculation
+    /// Considers all partners regardless of deletion status to ensure unique values
     /// </summary>
     private async Task<int> GetNextErpDimValueAsync()
     {
         var highestErpDimValue = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue && !p.IsDeleted)
+            .Where(p => p.ErpDimValue.HasValue 
+                && (p.ErpDimValue.Value < 8000 || p.ErpDimValue.Value > 9999))
             .MaxAsync(p => (int?)p.ErpDimValue) ?? 0;
         
         return highestErpDimValue + 1;
