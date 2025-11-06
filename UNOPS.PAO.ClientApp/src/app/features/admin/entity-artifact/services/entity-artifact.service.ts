@@ -73,6 +73,64 @@ export interface EntityArtifactRequest {
   metadata?: string | null;
 }
 
+// Bulk Entity Artifact Interfaces
+export interface EntityUniqueIdExampleResponse {
+  entityType: string;
+  uniqueIdFieldName: string;
+  uniqueIdFieldLabel: string;
+  description: string;
+  exampleValue: string;
+  exampleEntityName: string;
+  fullExplanation: string;
+}
+
+export interface BulkTemplateDownloadRequest {
+  entityType: string;
+  artifactTypeIds: number[];
+}
+
+export interface BulkEntityArtifactRowRequest {
+  rowNumber: number;
+  uniqueId: string;
+  cellValues: { [columnIndex: number]: string };
+}
+
+export interface BulkEntityArtifactRequest {
+  entityType: string;
+  rows: BulkEntityArtifactRowRequest[];
+  columnToArtifactTypeMapping: { [columnIndex: number]: number };
+}
+
+export interface BulkEntityArtifactCellResult {
+  columnIndex: number;
+  artifactTypeId: number;
+  artifactTypeName: string | null;
+  success: boolean;
+  errorMessage: string | null;
+  previousValue: string | null;
+  currentValue: string | null;
+  isNew: boolean;
+  skipped: boolean;
+}
+
+export interface BulkEntityArtifactRowResult {
+  rowNumber: number;
+  uniqueId: string;
+  entityId: number | null;
+  entityName: string | null;
+  success: boolean;
+  errorMessage: string | null;
+  cellResults: BulkEntityArtifactCellResult[];
+}
+
+export interface BulkEntityArtifactResponse {
+  entityType: string;
+  totalRows: number;
+  successfulRows: number;
+  failedRows: number;
+  rowResults: BulkEntityArtifactRowResult[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -132,6 +190,32 @@ export class EntityArtifactService {
       .set('entityType', entityType)
       .set('entityId', entityId.toString());
     return this.http.get<EntityArtifactResponse[]>(`${this.baseUrl}/list`, { params });
+  }
+
+  // Bulk Entity Artifact Operations
+
+  /**
+   * Get unique identifier example for bulk import template
+   */
+  getBulkUniqueIdExample(entityType: string): Observable<EntityUniqueIdExampleResponse> {
+    const params = new HttpParams().set('entityType', entityType);
+    return this.http.get<EntityUniqueIdExampleResponse>(`${this.baseUrl}/bulk/unique-id-example`, { params });
+  }
+
+  /**
+   * Download CSV template for bulk import
+   */
+  downloadBulkTemplate(request: BulkTemplateDownloadRequest): Observable<Blob> {
+    return this.http.post(`${this.baseUrl}/bulk/template-download`, request, {
+      responseType: 'blob'
+    });
+  }
+
+  /**
+   * Bulk upsert entity artifacts from CSV data
+   */
+  bulkUpsertEntityArtifacts(request: BulkEntityArtifactRequest): Observable<BulkEntityArtifactResponse> {
+    return this.http.post<BulkEntityArtifactResponse>(`${this.baseUrl}/bulk/upsert`, request);
   }
 }
 

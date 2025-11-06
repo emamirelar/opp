@@ -1,0 +1,356 @@
+<!-- Loading spinner for permissions -->
+<div *ngIf="permissionsLoading()" class="flex justify-center items-center min-h-[400px]">
+  <p-progressSpinner styleClass="w-20 h-20"></p-progressSpinner>
+</div>
+
+<!-- Main content when permissions are loaded -->
+<div *ngIf="!permissionsLoading()" class="flex flex-col gap-8">
+
+  <!-- Header Section -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-3xl">upload_file</span>
+      <div class="text-3xl font-bold">{{ 'bulkEntityArtifact.title' | translate }}</div>
+    </div>
+  </div>
+
+  <!-- Instructions Card -->
+  <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+    <div class="flex items-start gap-3">
+      <span class="material-symbols-outlined text-blue-600 text-2xl">info</span>
+      <div class="flex-1">
+        <h3 class="text-lg font-semibold text-blue-900 mb-2">
+          {{ 'bulkEntityArtifact.instructions.title' | translate }}
+        </h3>
+        <ol class="list-decimal list-inside space-y-2 text-sm text-blue-800">
+          <li>{{ 'bulkEntityArtifact.instructions.step1' | translate }}</li>
+          <li>{{ 'bulkEntityArtifact.instructions.step2' | translate }}</li>
+          <li>{{ 'bulkEntityArtifact.instructions.step3' | translate }}</li>
+          <li>{{ 'bulkEntityArtifact.instructions.step4' | translate }}</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Configuration Form Card -->
+  <div class="bg-white rounded-lg shadow-md p-8">
+    
+    <!-- Validation Error Message -->
+    @if (showValidationError()) {
+      <p-message 
+        severity="error" 
+        icon="pi pi-info-circle" 
+        styleClass="mb-6 w-full">
+        {{ 'bulkEntityArtifact.validation.allFieldsRequired' | translate }}
+      </p-message>
+    }
+
+    <div class="grid grid-cols-1 gap-6">
+      
+      <!-- Step 1: Entity Type Selection -->
+      <div class="mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary">category</span>
+          <h3 class="text-lg font-semibold text-gray-900">
+            {{ 'bulkEntityArtifact.step1.title' | translate }}
+          </h3>
+        </div>
+        
+        <p-floatlabel variant="on">
+          <p-select
+            id="entityType"
+            [(ngModel)]="selectedEntityType"
+            [options]="entityTypes()"
+            optionLabel="displayName"
+            optionValue="entityType"
+            [filter]="true"
+            filterBy="displayName"
+            [showClear]="true"
+            [disabled]="loadingEntityTypes()"
+            (onChange)="onEntityTypeChange()"
+            class="w-full"
+          />
+          <label for="entityType">{{ 'bulkEntityArtifact.fields.entityType' | translate }} *</label>
+        </p-floatlabel>
+
+        @if (!selectedEntityType() && showValidationError()) {
+          <p-message severity="error" variant="simple" styleClass="mt-2">
+            {{ 'bulkEntityArtifact.validation.entityTypeRequired' | translate }}
+          </p-message>
+        }
+
+        <!-- Unique ID Example -->
+        @if (uniqueIdExample() && !loadingUniqueIdExample()) {
+          <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-yellow-600 text-xl">lightbulb</span>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-yellow-900 mb-1">
+                  {{ 'bulkEntityArtifact.uniqueId.title' | translate }}: {{ uniqueIdExample()!.uniqueIdFieldLabel }}
+                </p>
+                <p class="text-sm text-yellow-800">
+                  {{ uniqueIdExample()!.fullExplanation }}
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Step 2: Artifact Type Selection -->
+      <div class="mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary">checklist</span>
+          <h3 class="text-lg font-semibold text-gray-900">
+            {{ 'bulkEntityArtifact.step2.title' | translate }}
+          </h3>
+        </div>
+        
+        <p-floatlabel variant="on">
+          <p-multiselect
+            id="artifactTypes"
+            [(ngModel)]="selectedArtifactTypeIds"
+            [options]="availableArtifactTypes()"
+            optionLabel="name"
+            optionValue="id"
+            [filter]="true"
+            filterBy="name,description"
+            [showClear]="true"
+            [disabled]="!selectedEntityType() || loadingArtifactTypes()"
+            (onChange)="onArtifactTypeSelectionChange()"
+            class="w-full"
+            [display]="'chip'"
+          />
+          <label for="artifactTypes">{{ 'bulkEntityArtifact.fields.artifactTypes' | translate }} *</label>
+        </p-floatlabel>
+
+        @if (selectedArtifactTypeIds().length === 0 && showValidationError() && selectedEntityType()) {
+          <p-message severity="error" variant="simple" styleClass="mt-2">
+            {{ 'bulkEntityArtifact.validation.artifactTypesRequired' | translate }}
+          </p-message>
+        }
+
+        @if (selectedArtifactTypeIds().length > 0) {
+          <p class="text-sm text-gray-600 mt-2">
+            {{ 'bulkEntityArtifact.messages.selectedCount' | translate }}: {{ selectedArtifactTypeIds().length }}
+          </p>
+        }
+      </div>
+
+      <!-- Step 3: Download Template -->
+      <div class="mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary">download</span>
+          <h3 class="text-lg font-semibold text-gray-900">
+            {{ 'bulkEntityArtifact.step3.title' | translate }}
+          </h3>
+        </div>
+
+        <p-button
+          [label]="'bulkEntityArtifact.button.downloadTemplate' | translate"
+          icon="pi pi-download"
+          severity="secondary"
+          (onClick)="onDownloadTemplate()"
+          [disabled]="!canDownloadTemplate()"
+          [loading]="downloadingTemplate()"
+        />
+
+        <p class="text-sm text-gray-600 mt-2">
+          {{ 'bulkEntityArtifact.messages.downloadHelp' | translate }}
+        </p>
+      </div>
+
+      <!-- Step 4: Upload CSV -->
+      <div class="mb-6">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary">cloud_upload</span>
+          <h3 class="text-lg font-semibold text-gray-900">
+            {{ 'bulkEntityArtifact.step4.title' | translate }}
+          </h3>
+        </div>
+
+        <p-fileUpload
+          #fileUpload
+          name="csvFile"
+          accept=".csv"
+          [maxFileSize]="10000000"
+          [auto]="false"
+          [showUploadButton]="false"
+          [showCancelButton]="false"
+          [multiple]="false"
+          (onSelect)="onFileUpload($event)"
+          (onClear)="onFileClear()"
+          [chooseLabel]="'bulkEntityArtifact.button.chooseFile' | translate"
+        >
+          <ng-template pTemplate="content" let-files>
+            <div *ngIf="files?.length > 0" class="flex flex-col gap-2">
+              <div *ngFor="let file of files" class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-blue-600">description</span>
+                  <div>
+                    <p class="font-medium text-gray-900">{{ file.name }}</p>
+                    <p class="text-sm text-gray-600">{{ (file.size / 1024).toFixed(2) }} KB</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-template>
+        </p-fileUpload>
+
+        <div class="flex gap-3 mt-4">
+          <p-button
+            [label]="'bulkEntityArtifact.button.processUpload' | translate"
+            icon="pi pi-check"
+            severity="primary"
+            (onClick)="onProcessUpload()"
+            [disabled]="!canUploadFile()"
+            [loading]="processingUpload()"
+          />
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
+      <p-button
+        [label]="'button.clear' | translate"
+        severity="secondary"
+        icon="pi pi-times"
+        (onClick)="onClear()"
+        [disabled]="processingUpload()"
+      />
+    </div>
+
+  </div>
+
+  <!-- Results Section -->
+  @if (uploadResults()) {
+    <div class="bg-white rounded-lg shadow-md p-8">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="material-symbols-outlined text-3xl">summarize</span>
+        <h2 class="text-2xl font-bold">{{ 'bulkEntityArtifact.results.title' | translate }}</h2>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div class="text-sm text-blue-600 font-medium mb-1">
+            {{ 'bulkEntityArtifact.results.totalRows' | translate }}
+          </div>
+          <div class="text-2xl font-bold text-blue-900">
+            {{ uploadResults()!.totalRows }}
+          </div>
+        </div>
+        
+        <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div class="text-sm text-green-600 font-medium mb-1">
+            {{ 'bulkEntityArtifact.results.successful' | translate }}
+          </div>
+          <div class="text-2xl font-bold text-green-900">
+            {{ uploadResults()!.successfulRows }}
+          </div>
+        </div>
+        
+        <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div class="text-sm text-red-600 font-medium mb-1">
+            {{ 'bulkEntityArtifact.results.failed' | translate }}
+          </div>
+          <div class="text-2xl font-bold text-red-900">
+            {{ uploadResults()!.failedRows }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Results Table -->
+      <div class="overflow-x-auto">
+        <p-table 
+          [value]="uploadResults()!.rowResults" 
+          [paginator]="true" 
+          [rows]="10"
+          [rowsPerPageOptions]="[10, 25, 50]"
+          styleClass="p-datatable-sm">
+          
+          <ng-template pTemplate="header">
+            <tr>
+              <th>{{ 'bulkEntityArtifact.table.row' | translate }}</th>
+              <th>{{ 'bulkEntityArtifact.table.uniqueId' | translate }}</th>
+              <th>{{ 'bulkEntityArtifact.table.entityName' | translate }}</th>
+              <th>{{ 'bulkEntityArtifact.table.status' | translate }}</th>
+              <th>{{ 'bulkEntityArtifact.table.details' | translate }}</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-rowResult>
+            <tr>
+              <td>{{ rowResult.rowNumber }}</td>
+              <td>{{ rowResult.uniqueId }}</td>
+              <td>{{ rowResult.entityName || 'N/A' }}</td>
+              <td>
+                <p-tag 
+                  [value]="rowResult.success ? ('bulkEntityArtifact.status.success' | translate) : ('bulkEntityArtifact.status.failed' | translate)" 
+                  [severity]="getResultSeverity(rowResult.success)"
+                />
+              </td>
+              <td>
+                @if (!rowResult.success && rowResult.errorMessage && (!rowResult.cellResults || rowResult.cellResults.length === 0)) {
+                  <span class="text-red-600 text-sm">{{ rowResult.errorMessage }}</span>
+                }
+                @if (rowResult.cellResults && rowResult.cellResults.length > 0) {
+                  <div class="space-y-2">
+                    @for (cellResult of rowResult.cellResults; track cellResult.columnIndex) {
+                      <div class="flex items-start gap-2 text-sm">
+                        <p-chip 
+                          [label]="getCellStatusLabel(cellResult.success, cellResult.skipped)" 
+                          [styleClass]="'text-xs ' + (cellResult.skipped ? 'bg-gray-200 text-gray-700' : (cellResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'))"
+                        />
+                        <div class="flex-1">
+                          <div class="font-medium text-gray-900">{{ cellResult.artifactTypeName }}</div>
+                          @if (cellResult.skipped) {
+                            <div class="text-gray-600">
+                              @if (cellResult.errorMessage) {
+                                {{ cellResult.errorMessage }}
+                              } @else {
+                                {{ 'bulkEntityArtifact.messages.skipped' | translate }}
+                              }
+                            </div>
+                          }
+                          @if (!cellResult.skipped && cellResult.success) {
+                            <div class="text-gray-600">
+                              @if (cellResult.isNew) {
+                                <span class="text-green-600 font-medium">{{ 'bulkEntityArtifact.messages.created' | translate }}</span>: {{ cellResult.currentValue }}
+                              }
+                              @if (!cellResult.isNew) {
+                                <span>{{ 'bulkEntityArtifact.messages.updated' | translate }}</span>: {{ cellResult.previousValue }} → {{ cellResult.currentValue }}
+                              }
+                            </div>
+                          }
+                          @if (!cellResult.success && cellResult.errorMessage) {
+                            <div class="text-red-600">{{ cellResult.errorMessage }}</div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="5" class="text-center text-gray-500 py-4">
+                {{ 'bulkEntityArtifact.messages.noResults' | translate }}
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- Toast for notifications -->
+<p-toast position="top-right"></p-toast>
+

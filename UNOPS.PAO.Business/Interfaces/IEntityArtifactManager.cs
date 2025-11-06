@@ -33,5 +33,20 @@ public interface IEntityArtifactManager
     /// Get all artifacts for a specific entity
     /// </summary>
     Task<IEnumerable<EntityArtifactResponse>> GetEntityArtifactsAsync(string entityType, int entityId);
+
+    /// <summary>
+    /// Get unique identifier example for bulk import template
+    /// </summary>
+    Task<EntityUniqueIdExampleResponse> GetUniqueIdExampleAsync(string entityType);
+
+    /// <summary>
+    /// Generate CSV template for bulk import
+    /// </summary>
+    Task<byte[]> GenerateBulkTemplateAsync(BulkTemplateDownloadRequest request);
+
+    /// <summary>
+    /// Process bulk upsert of entity artifacts
+    /// </summary>
+    Task<BulkEntityArtifactResponse> BulkUpsertEntityArtifactsAsync(BulkEntityArtifactRequest request);
 }
 

@@ -236,5 +236,112 @@ public class EntityArtifactController : BaseController
             return StatusCode(500, new { error = "Failed to retrieve artifacts" });
         }
     }
+
+    /// <summary>
+    /// Get unique identifier example for bulk import template
+    /// </summary>
+    [HttpGet(APIDictionary.EntityArtifactBulkUniqueIdExample)]
+    public async Task<ActionResult<EntityUniqueIdExampleResponse>> GetBulkUniqueIdExample([FromQuery] string entityType)
+    {
+        // Check role authorization
+        var authResult = await CheckRoleAuthorizationAsync(BaseRole.PARTNER_GLOB_ADMIN);
+        if (authResult != null)
+        {
+            return authResult;
+        }
+
+        if (string.IsNullOrEmpty(entityType))
+        {
+            return BadRequest(new { error = "Entity type is required" });
+        }
+
+        try
+        {
+            var example = await _manager.GetUniqueIdExampleAsync(entityType);
+            return Ok(example);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving unique ID example for {EntityType}", entityType);
+            return StatusCode(500, new { error = "Failed to retrieve unique ID example" });
+        }
+    }
+
+    /// <summary>
+    /// Download CSV template for bulk import
+    /// </summary>
+    [HttpPost(APIDictionary.EntityArtifactBulkTemplateDownload)]
+    public async Task<IActionResult> DownloadBulkTemplate([FromBody] BulkTemplateDownloadRequest request)
+    {
+        // Check role authorization
+        var authResult = await CheckRoleAuthorizationAsync(BaseRole.PARTNER_GLOB_ADMIN);
+        if (authResult != null)
+        {
+            return authResult;
+        }
+
+        if (string.IsNullOrEmpty(request.EntityType))
+        {
+            return BadRequest(new { error = "Entity type is required" });
+        }
+
+        if (request.ArtifactTypeIds == null || !request.ArtifactTypeIds.Any())
+        {
+            return BadRequest(new { error = "At least one artifact type is required" });
+        }
+
+        try
+        {
+            var csvBytes = await _manager.GenerateBulkTemplateAsync(request);
+            var fileName = $"EntityArtifact_BulkImport_{request.EntityType}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
+            
+            return File(csvBytes, "text/csv", fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating bulk template for {EntityType}", request.EntityType);
+            return StatusCode(500, new { error = "Failed to generate bulk template" });
+        }
+    }
+
+    /// <summary>
+    /// Bulk upsert entity artifacts from CSV data
+    /// </summary>
+    [HttpPost(APIDictionary.EntityArtifactBulkUpsert)]
+    public async Task<ActionResult<BulkEntityArtifactResponse>> BulkUpsertEntityArtifacts([FromBody] BulkEntityArtifactRequest request)
+    {
+        // Check role authorization
+        var authResult = await CheckRoleAuthorizationAsync(BaseRole.PARTNER_GLOB_ADMIN);
+        if (authResult != null)
+        {
+            return authResult;
+        }
+
+        if (string.IsNullOrEmpty(request.EntityType))
+        {
+            return BadRequest(new { error = "Entity type is required" });
+        }
+
+        if (request.Rows == null || !request.Rows.Any())
+        {
+            return BadRequest(new { error = "No rows provided for import" });
+        }
+
+        if (request.ColumnToArtifactTypeMapping == null || !request.ColumnToArtifactTypeMapping.Any())
+        {
+            return BadRequest(new { error = "Column to artifact type mapping is required" });
+        }
+
+        try
+        {
+            var result = await _manager.BulkUpsertEntityArtifactsAsync(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing bulk upsert for {EntityType}", request.EntityType);
+            return StatusCode(500, new { error = "Failed to process bulk upsert" });
+        }
+    }
 }
 
