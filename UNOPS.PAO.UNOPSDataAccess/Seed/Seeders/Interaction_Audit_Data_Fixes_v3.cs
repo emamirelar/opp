@@ -30,7 +30,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 // Use ExecuteUpdateAsync to bypass audit interceptor
                 // Update CreatedBy for interactions where it matches larsj user ID
                 int createdByUpdates = await context.Interactions
-                    .Where(i => i.CreatedBy == larsjUserId)
+                    .Where(i => i.CreatedBy == larsjUserId || i.CreatedBy == 0)
                     .ExecuteUpdateAsync(setters => setters
                         .SetProperty(i => i.CreatedBy, -1));
 
@@ -38,7 +38,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
 
                 // Update LastModifiedBy for interactions where it matches larsj user ID
                 int lastModifiedByUpdates = await context.Interactions
-                    .Where(i => i.LastModifiedBy == larsjUserId)
+                    .Where(i => i.LastModifiedBy == larsjUserId || i.LastModifiedBy == 0)
                     .ExecuteUpdateAsync(setters => setters
                         .SetProperty(i => i.LastModifiedBy, -1));
 

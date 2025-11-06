@@ -38,15 +38,16 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     private InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
     {
         var result = mapper.Map<UNOPSInteraction, InteractionModel>(entity);
-        
+
         // For sync version, provide default user identifiers to avoid N+1 queries
         // User names will be resolved by batch methods when possible
-        if (entity.CreatedBy > 0)
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        if (entity.CreatedBy != 0)
         {
             result.CreatedByName = $"User #{entity.CreatedBy}";
         }
-        
-        if (entity.LastModifiedBy > 0)
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        if (entity.LastModifiedBy != 0)
         {
             result.LastModifiedByName = $"User #{entity.LastModifiedBy}";
         }
@@ -84,12 +85,13 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         }
 
         // Resolve user names for audit fields
-        if (entity.CreatedBy > 0)
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        if (entity.CreatedBy != 0)
         {
             result.CreatedByName = await GetUserNameByIdAsync(entity.CreatedBy);
         }
-        
-        if (entity.LastModifiedBy > 0)
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        if (entity.LastModifiedBy != 0)
         {
             result.LastModifiedByName = await GetUserNameByIdAsync(entity.LastModifiedBy);
         }
@@ -130,20 +132,23 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         }
 
         // Resolve user names from pre-loaded dictionary
-        if (entity.CreatedBy > 0 && userNames.TryGetValue(entity.CreatedBy, out var createdByName))
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        if (entity.CreatedBy != 0 && userNames.TryGetValue(entity.CreatedBy, out var createdByName))
         {
             result.CreatedByName = createdByName;
         }
-        else if (entity.CreatedBy > 0)
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        else if (entity.CreatedBy != 0)
         {
             result.CreatedByName = $"User #{entity.CreatedBy}";
         }
-        
-        if (entity.LastModifiedBy > 0 && userNames.TryGetValue(entity.LastModifiedBy, out var lastModifiedByName))
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        if (entity.LastModifiedBy != 0 && userNames.TryGetValue(entity.LastModifiedBy, out var lastModifiedByName))
         {
             result.LastModifiedByName = lastModifiedByName;
         }
-        else if (entity.LastModifiedBy > 0)
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        else if (entity.LastModifiedBy != 0)
         {
             result.LastModifiedByName = $"User #{entity.LastModifiedBy}";
         }

@@ -68,12 +68,13 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var result = mapper.Map<UNOPSPartner, PartnerModel>(entity);
 
         // Resolve user names for audit fields
-        if (entity.CreatedBy > 0)
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        if (entity.CreatedBy != 0)
         {
             result.CreatedByName = await GetUserNameByIdAsync(entity.CreatedBy);
         }
-        
-        if (entity.LastModifiedBy > 0)
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        if (entity.LastModifiedBy != 0)
         {
             result.LastModifiedByName = await GetUserNameByIdAsync(entity.LastModifiedBy);
         }
