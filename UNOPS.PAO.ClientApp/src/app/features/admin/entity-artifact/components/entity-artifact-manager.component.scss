@@ -1,0 +1,30 @@
+// Minimal SCSS for Entity Artifact Manager Component
+// Most styling is handled via Tailwind classes
+
+:host {
+  display: block;
+}
+
+// Custom styles for specific needs only
+
+.existing-document-card {
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 95, 136, 0.15);
+  }
+  
+  button {
+    transition: all 0.2s ease-in-out;
+    
+    &:hover:not(:disabled) {
+      transform: scale(1.1);
+    }
+    
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+

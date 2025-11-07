@@ -1,0 +1,66 @@
+<div class="base64-file-upload">
+  @if (!selectedFile()) {
+    <!-- File Upload Area -->
+    <p-fileupload
+      mode="basic"
+      [chooseLabel]="'button.chooseFile' | translate"
+      [accept]="acceptedFileTypes()"
+      [maxFileSize]="maxFileSize()"
+      [disabled]="disabled() || uploading()"
+      [auto]="true"
+      [customUpload]="true"
+      (onSelect)="onFileSelect($event)"
+      chooseIcon="pi pi-upload"
+      styleClass="w-full"
+    />
+    
+    <!-- File type and size info -->
+    <div class="mt-2 text-sm text-gray-600">
+      <p>{{ 'fileUpload.acceptedTypes' | translate }}: {{ acceptedFileTypes() }}</p>
+      <p>{{ 'fileUpload.maxSize' | translate }}: {{ formatFileSize(maxFileSize()) }}</p>
+    </div>
+  } @else {
+    <!-- Selected File Display -->
+    <div class="selected-file-card p-4 border border-gray-300 rounded-lg bg-white">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-start gap-3 flex-1">
+          <span class="material-symbols-outlined text-4xl text-blue-600">description</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-base font-medium text-gray-900 truncate">
+              {{ selectedFile()!.fileName }}
+            </p>
+            <p class="text-sm text-gray-600 mt-1">
+              {{ formatFileSize(selectedFile()!.fileSize) }}
+            </p>
+          </div>
+        </div>
+        
+        <button
+          type="button"
+          class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-colors"
+          (click)="onClear()"
+          [disabled]="disabled()"
+          [title]="'button.remove' | translate"
+        >
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Error Message -->
+  @if (error()) {
+    <p-message severity="error" variant="simple" styleClass="mt-2 w-full">
+      {{ error() }}
+    </p-message>
+  }
+
+  <!-- Uploading State -->
+  @if (uploading()) {
+    <div class="mt-2 flex items-center gap-2 text-blue-600">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span class="text-sm">{{ 'fileUpload.processing' | translate }}</span>
+    </div>
+  }
+</div>
+

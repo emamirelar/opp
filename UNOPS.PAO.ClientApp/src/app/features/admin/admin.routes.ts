@@ -9,6 +9,8 @@ import { UserManagementComponent } from '@admin/user-management/components/user-
 import { EntityManagerComponent } from '@admin/entity-manager/components/entity-manager.component';
 import { TranslationWorkbenchComponent } from '@admin/translation-workbench/components/translation-workbench.component';
 import { ComingSoonComponent } from '@features/static-pages/components/coming-soon/coming-soon.component';
+import { EntityArtifactManagerComponent } from '@admin/entity-artifact/components/entity-artifact-manager.component';
+import { BulkEntityArtifactUpdateComponent } from '@admin/entity-artifact/components/bulk-entity-artifact-update.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -71,6 +73,20 @@ export const ADMIN_ROUTES: Routes = [
     component: TranslationWorkbenchComponent,
     data: {
       breadcrumb: 'Translation Workbench'
+    }
+  },
+  {
+    path: 'entity-artifacts',
+    component: EntityArtifactManagerComponent,
+    data: {
+      breadcrumb: 'Manage Entity Artifacts'
+    }
+  },
+  {
+    path: 'bulk-entity-artifacts',
+    component: BulkEntityArtifactUpdateComponent,
+    data: {
+      breadcrumb: 'Bulk Entity Artifact Update'
     }
   }
 ];
