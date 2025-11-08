@@ -46,6 +46,7 @@ import { PartnerService } from '@partnerships/partners/services/partner.service'
             [uploadUrl]="getUploadLogoUrl()"
             [altText]="'partner.tabs.logoAltText' | translate"
             [size]="isMobile() ? 'extra-small' : 'small'"
+            [entityType]="'Partner'"
             [disabled]="!recordData.permissions?.canUpdate"
             (imageChanged)="_loadRecordDetails()"
           />

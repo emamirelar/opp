@@ -62,6 +62,7 @@ interface TabItem {
         [uploadUrl]="getUploadProfilePictureUrl()"
         [altText]="'Contact profile picture'"
         [size]="isMobile() ? 'extra-small' : 'small'"
+        [entityType]="'Contact'"
         [disabled]="!recordData.permissions?.canUpdate"
         (imageChanged)="_loadRecordDetails()"
       />
