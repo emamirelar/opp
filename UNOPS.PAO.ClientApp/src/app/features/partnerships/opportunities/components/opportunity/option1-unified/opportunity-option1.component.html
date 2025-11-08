@@ -117,7 +117,7 @@
             <div class="space-y-2">
               @for (doc of opportunity()!.documents; track doc.id) {
                 <div
-                  class="flex items-center gap-2 p-2 bg-gray-50 rounded hover:bg-gray-100 cursor-pointer transition-colors group"
+                  class="flex items-center gap-2 p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors group"
                   [pTooltip]="doc.category"
                   tooltipPosition="right"
                 >
@@ -144,6 +144,18 @@
                       }
                     </div>
                   </div>
+                  <!-- AI Transcribe Button -->
+                  <button
+                    type="button"
+                    class="p-button p-button-rounded p-button-sm p-button-text p-button-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                    [class.pi-spin]="transcribingDocId() === doc.id"
+                    (click)="aiTranscribeDemo(doc.id); $event.stopPropagation()"
+                    [disabled]="transcribingDocId() === doc.id"
+                    pTooltip="AI Transcribe Document"
+                    tooltipPosition="top"
+                  >
+                    <i [class]="transcribingDocId() === doc.id ? 'pi pi-spinner pi-spin' : 'pi pi-sparkles'"></i>
+                  </button>
                   <i
                     class="pi pi-ellipsis-v text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
                   ></i>
@@ -1318,3 +1330,10 @@
     }
   </div>
 </div>
+
+<!-- AI Comparison Demo Dialog -->
+<app-ai-comparison-demo
+  *ngIf="showComparisonDemo()"
+  [showDialog]="showComparisonDemo()"
+  (closeDialog)="closeComparisonDemo()"
+></app-ai-comparison-demo>

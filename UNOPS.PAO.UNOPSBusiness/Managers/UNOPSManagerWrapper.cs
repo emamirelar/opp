@@ -41,6 +41,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly BaseEngagementManager baseEngagementManager;
     private readonly UNOPSOpportunityManager opportunityManager;
     private readonly CommentManager commentManager;
+    private readonly UNOPSAuditLogManager auditLogManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
                                UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) : base(mapper, context, userManager, httpContextAccessor, configuration, serviceProvider)
@@ -95,6 +96,9 @@ public class UNOPSManagerWrapper : ManagerWrapper
         
         // Create CommentManager
         commentManager = new CommentManager(mapper, opsContext, this);
+        
+        // Create AuditLogManager
+        auditLogManager = new UNOPSAuditLogManager(mapper, opsContext, configuration, userManager, permissionService, httpContextAccessor);
     }
 
     public override ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -109,6 +113,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     public override IGmailAddonManager GmailAddonManager => gmailAddonManager;
     public override IOpportunityManager OpportunityManager => opportunityManager;
     public override ICommentManager CommentManager => commentManager;
+    public override IAuditLogManager AuditLogManager => auditLogManager;
     
     // UNOPS-specific managers
     public IUNOPSEntityConfigurationManager EntityConfigurationManager => entityConfigurationManager;

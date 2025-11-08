@@ -731,6 +731,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<byte[]>("Blob")
+                        .HasColumnType("bytea");
+
                     b.Property<int?>("ContactId")
                         .HasColumnType("integer");
 
@@ -754,6 +757,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int?>("DocumentTypeId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("GoogleId")
+                        .HasColumnType("text");
+
                     b.Property<int?>("InteractionId")
                         .HasColumnType("integer");
 
@@ -767,7 +773,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Link")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
@@ -782,6 +787,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<string>("StoragePath")
+                        .HasColumnType("text");
 
                     b.Property<string>("Type")
                         .HasColumnType("text");
@@ -3488,10 +3496,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
             modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSDocument", b =>
                 {
                     b.HasBaseType("UNOPS.PAO.Domain.Entities.Document");
-
-                    b.Property<string>("GoogleId")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<bool>("LinkedFile")
                         .HasColumnType("boolean");

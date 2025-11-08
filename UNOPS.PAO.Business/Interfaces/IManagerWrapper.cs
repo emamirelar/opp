@@ -28,4 +28,5 @@ public interface IManagerWrapper
     IGmailAddonManager GmailAddonManager { get; }
     IOpportunityManager OpportunityManager { get; }
     ICommentManager CommentManager { get; }
+    IAuditLogManager AuditLogManager { get; }
 }

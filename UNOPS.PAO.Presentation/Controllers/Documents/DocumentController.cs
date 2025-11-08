@@ -3,9 +3,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Managers;
+using UNOPS.PAO.Business.Repositories.Generic;
 //using UNOPS.PAO.ContextPermissions.Handlers;
+using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Infrastructure;
@@ -23,6 +26,9 @@ using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using static Google.Cloud.SecretManager.V1.Replication.Types;
 using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Presentation.Controllers.Shared;
+using UNOPS.PAO.UNOPSBusiness.Managers;
+using UNOPS.PAO.UNOPSDataAccess.Context;
+using AutoMapper;
 
 namespace UNOPS.PAO.Presentation.Controllers.Documents;
 [Route("/")]
@@ -33,19 +39,27 @@ public class DocumentController : BaseController
     private readonly IConfiguration _configuration;
     private new readonly ILogger<DocumentController> _logger;
     private readonly CloudRunHelper _cloudRunHelper;
+    private readonly GoogleCloudStorageService _gcsService;
+    private readonly IMapper _mapper;
+    private readonly UNOPSAppDbContext _context;
 
     public DocumentController(
         IManagerWrapper managerWrapper, 
         IAuthorizationService authorizationService,
         ILogger<DocumentController> logger,
         IConfiguration configuration,
-        UserResolverService<int> userResolverService)
+        UserResolverService<int> userResolverService,
+        IMapper mapper,
+        UNOPSAppDbContext context)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = managerWrapper.DocumentManager;
         _managerWrapper = managerWrapper;
         _configuration = configuration;
         _logger = logger;
+        _mapper = mapper;
+        _context = context;
+        _gcsService = new GoogleCloudStorageService(configuration);
         
         // Initialize CloudRunHelper with credentials (same pattern as UNOPSGeminiManager)
         var cloudRunHelperLogger = new LoggerFactory().CreateLogger<CloudRunHelper>();
@@ -298,6 +312,80 @@ public class DocumentController : BaseController
                 details = ex.Message
             };
         }
+    }
+
+    /// <summary>
+    /// Gets a viewable URL for a document (signed URL for GCS documents)
+    /// </summary>
+    /// <param name="id">Document ID</param>
+    /// <example_uses>
+    /// Get viewable URL for document 123
+    /// Generate signed URL for PDF viewing
+    /// Get temporary access link for document
+    /// </example_uses>
+    /// <when_to_use>Use this to get a temporary URL for viewing documents stored in Google Cloud Storage</when_to_use>
+    /// <returns>Viewable URL and type information</returns>
+    [HttpGet(APIDictionary.DocumentViewUrl + "/{id}")]
+    public async Task<ActionResult> GetDocumentViewUrl(int id)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var document = await _manager.GetDocumentByIdAsync(id);
+            
+            if (document == null)
+            {
+                throw new BusinessException("Document not found");
+            }
+
+            // If stored in GCS, generate signed URL
+            if (!string.IsNullOrEmpty(document.StoragePath) && document.StoragePath.StartsWith("gs://"))
+            {
+                var signedUrl = await _gcsService.GetSignedUrlFromGsUri(document.StoragePath, 60); // 60 minutes expiration
+                
+                return new { url = signedUrl, type = "gcs", mimeType = document.Type };
+            }
+
+            // If Google Drive link
+            if (!string.IsNullOrEmpty(document.Link))
+            {
+                return new { url = document.Link, type = "link", mimeType = document.Type };
+            }
+
+            // If blob (deprecated but supported for backward compatibility)
+            if (document.Blob != null && document.Blob.Length > 0)
+            {
+                return new { url = $"/api/document/{id}/download", type = "blob", mimeType = document.Type };
+            }
+
+            throw new BusinessException("No viewable content found for this document");
+        });
+    }
+
+    /// <summary>
+    /// Downloads document blob content (for backward compatibility with blob storage)
+    /// </summary>
+    /// <param name="id">Document ID</param>
+    /// <example_uses>
+    /// Download document 123 content
+    /// Get document blob data
+    /// </example_uses>
+    /// <when_to_use>Use this for downloading documents stored as blobs (deprecated)</when_to_use>
+    /// <returns>File content</returns>
+    [HttpGet(APIDictionary.DocumentDownload + "/{id}")]
+    public async Task<ActionResult> DownloadDocument(int id)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var fileContent = await _manager.GetFileContentByIdAsync(id);
+            var document = await _manager.GetDocumentByIdAsync(id);
+            
+            if (document == null)
+            {
+                throw new BusinessException("Document not found");
+            }
+
+            return File(fileContent, document.Type ?? "application/octet-stream", document.Name);
+        });
     }
 
 }

@@ -96,10 +96,35 @@ export class OpportunityService {
   }
 
   /**
+   * Apply AI-extracted changes to an opportunity across multiple sections
+   * @param id - Opportunity ID
+   * @param changes - Object containing the fields to update
+   * @returns Observable with updated opportunity
+   */
+  applyAiChanges(id: number, changes: any): Observable<Opportunity> {
+    return this.http.patch<Opportunity>(`${this.apiUrl}/${id}/apply-ai-changes`, changes);
+  }
+
+  /**
    * Delete an opportunity by ID
    */
   deleteOpportunityById(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  /**
+   * Get the latest audit log for an opportunity
+   * @param entityType - Type of entity (e.g., 'Opportunity')
+   * @param entityId - ID of the entity
+   * @returns Observable with audit log containing JSON data
+   */
+  getLatestAuditLog(entityType: string, entityId: number): Observable<any> {
+    return this.http.get<any>(`/api/auditlog/latest`, {
+      params: {
+        entityType: entityType,
+        entityId: entityId.toString()
+      }
+    });
   }
 
   /**

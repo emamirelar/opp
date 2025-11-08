@@ -17,6 +17,7 @@ public class DocumentBaseCreateModel : DocumentBaseModel
                 EntityNames.Partner => DocumentParentEntityType.Partner,
                 EntityNames.Interaction => DocumentParentEntityType.Interaction,
                 EntityNames.PartnerTree => DocumentParentEntityType.PartnerTree,
+                EntityNames.Opportunity => DocumentParentEntityType.Opportunity,
                 _ => DocumentParentEntityType.Drive
             };
         }

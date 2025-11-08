@@ -9,6 +9,8 @@ using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.Presentation.Controllers.Shared;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
+using System.Text.Json;
+using UNOPS.PAO.Models.AuditLogs;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -17,6 +19,8 @@ namespace UNOPS.PAO.Presentation.Controllers;
 public class OpportunityController : BaseController
 {
     private readonly IOpportunityManager _manager;
+    private readonly IAuditLogManager _auditLogManager;
+    private readonly int _currentUserId;
 
     public OpportunityController(
         IManagerWrapper manager,
@@ -26,6 +30,8 @@ public class OpportunityController : BaseController
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.OpportunityManager;
+        _auditLogManager = manager.AuditLogManager;
+        _currentUserId = userResolverService.GetCurrentUserId();
     }
 
     /// <summary>
@@ -152,7 +158,49 @@ public class OpportunityController : BaseController
             return NotFound(new { error = $"Opportunity with ID {id} not found" });
         }
 
+        // Create audit log
+        await CreateAuditLogAsync(id, "update", result);
+
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Helper method to create audit log entry with complete opportunity data
+    /// </summary>
+    private async Task CreateAuditLogAsync(int opportunityId, string action, OpportunityModel? opportunityData = null)
+    {
+        try
+        {
+            // Get the current opportunity data if not provided
+            if (opportunityData == null)
+            {
+                opportunityData = await _manager.GetOpportunityAsync(opportunityId);
+            }
+
+            if (opportunityData != null)
+            {
+                var jsonData = JsonSerializer.Serialize(opportunityData, new JsonSerializerOptions
+                {
+                    WriteIndented = false,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+
+                await _auditLogManager.CreateAuditLogAsync(new AuditLogCreateRequest
+                {
+                    EntityType = "Opportunity",
+                    EntityId = opportunityId,
+                    Action = action,
+                    UserId = _currentUserId,
+                    JsonData = jsonData,
+                    Description = $"Opportunity {action} - {opportunityData.Name}"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail the request
+            _logger.LogError(ex, "Error creating audit log for opportunity {OpportunityId}", opportunityId);
+        }
     }
 
     /// <summary>
@@ -165,6 +213,10 @@ public class OpportunityController : BaseController
         try
         {
             var result = await _manager.UpdateWhatSectionAsync(id, req);
+            
+            // Create audit log
+            await CreateAuditLogAsync(id, "update_what_section", result);
+            
             return Ok(result);
         }
         catch (KeyNotFoundException ex)
@@ -188,6 +240,10 @@ public class OpportunityController : BaseController
         try
         {
             var result = await _manager.UpdateWhySectionAsync(id, req);
+            
+            // Create audit log
+            await CreateAuditLogAsync(id, "update_why_section", result);
+            
             return Ok(result);
         }
         catch (KeyNotFoundException ex)
@@ -211,6 +267,10 @@ public class OpportunityController : BaseController
         try
         {
             var result = await _manager.UpdateWhoSectionAsync(id, req);
+            
+            // Create audit log
+            await CreateAuditLogAsync(id, "update_who_section", result);
+            
             return Ok(result);
         }
         catch (KeyNotFoundException ex)
@@ -234,6 +294,10 @@ public class OpportunityController : BaseController
         try
         {
             var result = await _manager.UpdateWhereSectionAsync(id, req);
+            
+            // Create audit log
+            await CreateAuditLogAsync(id, "update_where_section", result);
+            
             return Ok(result);
         }
         catch (KeyNotFoundException ex)
@@ -280,6 +344,10 @@ public class OpportunityController : BaseController
         try
         {
             var result = await _manager.UpdateWhenSectionAsync(id, req);
+            
+            // Create audit log
+            await CreateAuditLogAsync(id, "update_when_section", result);
+            
             return Ok(result);
         }
         catch (KeyNotFoundException ex)
@@ -290,6 +358,33 @@ public class OpportunityController : BaseController
         {
             _logger.LogError(ex, "Error updating WHEN section for opportunity {OpportunityId}", id);
             return StatusCode(500, new { error = "Internal server error while updating WHEN section", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Applies AI-extracted changes to an opportunity across multiple sections
+    /// </summary>
+    [HttpPatch(APIDictionary.OpportunityApplyAiChanges)]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> ApplyAiChanges(int id, [FromBody] ApplyOpportunityAiChangesRequest req)
+    {
+        try
+        {
+            var result = await _manager.ApplyAiChangesAsync(id, req);
+            
+            // Create audit log
+            await CreateAuditLogAsync(id, "apply_ai_changes", result);
+            
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying AI changes to opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while applying AI changes", details = ex.Message });
         }
     }
 

@@ -31,6 +31,7 @@ public class ManagerWrapper : IManagerWrapper
     private IGmailAddonManager gmailAddonManager;
     private IOpportunityManager opportunityManager;
     private ICommentManager commentManager;
+    private IAuditLogManager auditLogManager;
     
     public ManagerWrapper(IMapper mapper, AppDbContext context,
                           UserManager<PAOIdentityUser> userManager, 
@@ -61,6 +62,9 @@ public class ManagerWrapper : IManagerWrapper
         
         commentManager = new CommentManager(mapper, context, this);
         
+        // Create AuditLogManager
+        auditLogManager = new AuditLogManager(mapper, context);
+        
         // Default implementation - will be overridden in UNOPSManagerWrapper
         userManagementManager = null;
         aiPromptManager = null; // Will be overridden in UNOPSManagerWrapper
@@ -89,4 +93,5 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IGmailAddonManager GmailAddonManager => gmailAddonManager;
     public virtual IOpportunityManager OpportunityManager => opportunityManager;
     public virtual ICommentManager CommentManager => commentManager;
+    public virtual IAuditLogManager AuditLogManager => auditLogManager;
 }

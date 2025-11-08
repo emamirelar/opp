@@ -8,7 +8,5 @@ public class DocumentModel: DocumentBaseModel, IModifiableEntityModel<int, int>
     public DateTime CreatedDate { get; set; }
     public int LastModifiedBy { get; set; }
     public DateTime? LastModifiedDate { get; set; }
-    public string Link { get; set; }
-    public string GoogleId { get; set; }
     public DocumentTypeModel DocumentType { get; set; }
 }

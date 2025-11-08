@@ -40,6 +40,7 @@ import { OpportunityWhereSectionComponent } from './sections/where/opportunity-w
 import { OpportunityWhenSectionComponent } from './sections/when/opportunity-when-section.component';
 import { OpportunityDstSectionComponent } from './sections/dst/opportunity-dst-section.component';
 import { OpportunityRelatedItemsComponent } from './sections/related/opportunity-related-items.component';
+import { OpportunityDocumentsComponent } from './sections/document/opportunity-documents.component';
 import { ValuesService } from '@app/shared/services/api/values.service';
 
 /**
@@ -84,6 +85,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     OpportunityWhenSectionComponent,
     OpportunityDstSectionComponent,
     OpportunityRelatedItemsComponent,
+    OpportunityDocumentsComponent,
   ],
   templateUrl: './opportunity-view.component.html',
   styleUrls: ['./opportunity-view.component.scss'],
@@ -470,6 +472,19 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     // Angular signals automatically notify ALL child components
     // All sections will re-render with latest data
     this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Reload opportunity data from API (e.g., after AI changes)
+   * @returns {void}
+   */
+  reloadOpportunity(): void {
+    console.log('🔄 Reloading opportunity data...');
+    if (this.recordId) {
+      // Get the current active section to maintain scroll position
+      const currentSection = this.activeSection();
+      this._loadRecordDetails(currentSection);
+    }
   }
 
   /**
