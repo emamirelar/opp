@@ -1,0 +1,384 @@
+<!-- Loading spinner for permissions -->
+<div *ngIf="permissionsLoading()" class="flex justify-center items-center min-h-[400px]">
+  <p-progressSpinner styleClass="w-20 h-20"></p-progressSpinner>
+</div>
+
+<!-- Main content when permissions are loaded -->
+<div *ngIf="!permissionsLoading()" class="flex flex-col gap-8">
+
+  <!-- Header Section -->
+  <div class="flex flex-wrap items-center gap-4">
+    <div class="flex items-center gap-3 w-full">
+      <span class="material-symbols-outlined text-3xl">database</span>
+      <div class="text-3xl font-bold">{{ 'title.entityArtifactManager' | translate }}</div>
+    </div>
+  </div>
+
+  <!-- Main Form Card -->
+  <div class="bg-white rounded-lg shadow-md p-8">
+    
+    <!-- Validation Error Message -->
+    @if (showValidationError()) {
+      <p-message 
+        severity="error" 
+        icon="pi pi-info-circle" 
+        styleClass="mb-6 w-full">
+        {{ 'entityArtifact.validation.allFieldsRequired' | translate }}
+      </p-message>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- Step 1: Entity Type Selection -->
+      <div class="mb-6 col-span-full">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary">category</span>
+          <h3 class="text-lg font-semibold text-gray-900">
+            {{ 'entityArtifact.step1.title' | translate }}
+          </h3>
+        </div>
+        
+        <p-floatlabel variant="on">
+          <p-select
+            id="entityType"
+            [(ngModel)]="selectedEntityType"
+            [options]="entityTypes()"
+            optionLabel="displayName"
+            optionValue="entityType"
+            [filter]="true"
+            filterBy="displayName"
+            [showClear]="true"
+            [disabled]="loadingEntityTypes()"
+            (onChange)="onEntityTypeChange()"
+            class="w-full"
+          />
+          <label for="entityType">{{ 'entityArtifact.fields.entityType' | translate }} *</label>
+        </p-floatlabel>
+        @if (!selectedEntityType() && showValidationError()) {
+          <p-message severity="error" variant="simple" styleClass="mt-2">
+            {{ 'entityArtifact.validation.entityTypeRequired' | translate }}
+          </p-message>
+        }
+      </div>
+
+      <!-- Step 2: Artifact Type Selection -->
+      <div class="mb-6 col-span-full">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary">description</span>
+          <h3 class="text-lg font-semibold text-gray-900">
+            {{ 'entityArtifact.step2.title' | translate }}
+          </h3>
+        </div>
+        
+        <p-floatlabel variant="on">
+          <p-select
+            id="artifactType"
+            [(ngModel)]="selectedArtifactType"
+            [options]="artifactTypes()"
+            optionLabel="name"
+            [filter]="true"
+            filterBy="name,description"
+            [showClear]="true"
+            [disabled]="!selectedEntityType() || loadingArtifactTypes()"
+            (onChange)="onArtifactTypeChange()"
+            class="w-full"
+          />
+          <label for="artifactType">{{ 'entityArtifact.fields.artifactType' | translate }} *</label>
+        </p-floatlabel>
+        
+        <!-- Display data type info -->
+        @if (selectedArtifactType()) {
+          <div class="mt-2 flex items-center gap-2">
+            <span class="text-sm text-gray-600">{{ 'entityArtifact.fields.dataType' | translate }}:</span>
+            <span class="text-sm font-semibold text-primary">{{ selectedArtifactType()!.artifactDataTypeName || 'N/A' }}</span>
+          </div>
+          @if (selectedArtifactType()!.description) {
+            <p class="text-sm text-gray-600 mt-2">{{ selectedArtifactType()!.description }}</p>
+          }
+        }
+        
+        @if (!selectedArtifactType() && showValidationError() && selectedEntityType()) {
+          <p-message severity="error" variant="simple" styleClass="mt-2">
+            {{ 'entityArtifact.validation.artifactTypeRequired' | translate }}
+          </p-message>
+        }
+      </div>
+
+      <!-- Step 3: Entity Record Selection -->
+      <div class="mb-6 col-span-full">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary">list</span>
+          <h3 class="text-lg font-semibold text-gray-900">
+            {{ 'entityArtifact.step3.title' | translate }}
+          </h3>
+        </div>
+        
+        <p-floatlabel variant="on">
+          <p-select
+            id="entityRecord"
+            [(ngModel)]="selectedEntityRecord"
+            [options]="entityRecords()"
+            optionLabel="name"
+            [filter]="true"
+            filterBy="name,description"
+            [showClear]="true"
+            [disabled]="!selectedArtifactType() || loadingEntityRecords()"
+            (onChange)="onEntityRecordChange()"
+            class="w-full"
+            [virtualScroll]="true"
+            [virtualScrollItemSize]="40"
+          />
+          <label for="entityRecord">
+            {{ 'entityArtifact.fields.entityRecord' | translate }} 
+            ({{ selectedEntityType() || 'entity' }}) *
+          </label>
+        </p-floatlabel>
+        
+        @if (selectedEntityRecord() && selectedEntityRecord()!.description) {
+          <p class="text-sm text-gray-600 mt-2">{{ selectedEntityRecord()!.description }}</p>
+        }
+        
+        @if (!selectedEntityRecord() && showValidationError() && selectedArtifactType()) {
+          <p-message severity="error" variant="simple" styleClass="mt-2">
+            {{ 'entityArtifact.validation.entityRecordRequired' | translate }}
+          </p-message>
+        }
+      </div>
+
+      <!-- Step 4: Value Input (Dynamic based on data type) -->
+      @if (selectedEntityRecord() && selectedArtifactType()) {
+        <div class="mb-6 col-span-full">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-primary">edit</span>
+            <h3 class="text-lg font-semibold text-gray-900">
+              {{ 'entityArtifact.step4.title' | translate }}
+            </h3>
+          </div>
+
+          <!-- Loading existing artifact -->
+          @if (loadingArtifact()) {
+            <div class="flex items-center justify-center py-8">
+              <p-progressSpinner styleClass="w-12 h-12"></p-progressSpinner>
+            </div>
+          }
+
+          <!-- Value input based on data type -->
+          @if (!loadingArtifact()) {
+            <div class="space-y-4">
+              
+              <!-- String/Text input -->
+              @if (selectedDataType() === 'string' || selectedDataType() === 'text') {
+                <p-floatlabel variant="on">
+                  <textarea
+                    pInputTextarea
+                    id="valueText"
+                    [(ngModel)]="valueText"
+                    rows="5"
+                    class="w-full"
+                    [disabled]="canViewOnly()"
+                  ></textarea>
+                  <label for="valueText">{{ 'entityArtifact.fields.value' | translate }} *</label>
+                </p-floatlabel>
+                @if (!valueText() && showValidationError()) {
+                  <p-message severity="error" variant="simple" styleClass="mt-2">
+                    {{ 'entityArtifact.validation.valueRequired' | translate }}
+                  </p-message>
+                }
+              }
+
+              <!-- Numeric input -->
+              @if (selectedDataType() === 'number' || selectedDataType() === 'numeric' || selectedDataType() === 'decimal') {
+                <p-floatlabel variant="on">
+                  <p-inputNumber
+                    id="valueNumber"
+                    [(ngModel)]="valueNumber"
+                    [minFractionDigits]="2"
+                    [maxFractionDigits]="4"
+                    [disabled]="canViewOnly()"
+                    class="w-full"
+                  />
+                  <label for="valueNumber">{{ 'entityArtifact.fields.value' | translate }} *</label>
+                </p-floatlabel>
+                @if (valueNumber() === null && showValidationError()) {
+                  <p-message severity="error" variant="simple" styleClass="mt-2">
+                    {{ 'entityArtifact.validation.valueRequired' | translate }}
+                  </p-message>
+                }
+              }
+
+              <!-- Date input -->
+              @if (selectedDataType() === 'date' || selectedDataType() === 'datetime') {
+                <p-floatlabel variant="on">
+                  <p-datepicker
+                    id="valueDate"
+                    [(ngModel)]="valueDate"
+                    dateFormat="yy-mm-dd"
+                    [showIcon]="true"
+                    [disabled]="canViewOnly()"
+                    class="w-full"
+                  />
+                  <label for="valueDate">{{ 'entityArtifact.fields.value' | translate }} *</label>
+                </p-floatlabel>
+                @if (!valueDate() && showValidationError()) {
+                  <p-message severity="error" variant="simple" styleClass="mt-2">
+                    {{ 'entityArtifact.validation.valueRequired' | translate }}
+                  </p-message>
+                }
+              }
+
+      <!-- Document upload via Base64 File Upload -->
+      @if (selectedDataType() === 'document') {
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            {{ 'entityArtifact.fields.documentUpload' | translate }} *
+          </label>
+          
+          <!-- Show existing document if available and not in replace mode -->
+          @if (existingDocumentData() && !showDocumentUploadPanel()) {
+            <div class="existing-document-card p-4 border border-blue-300 rounded-lg bg-blue-50">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex items-start gap-3 flex-1">
+                  <span class="material-symbols-outlined text-4xl text-blue-600">description</span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-base font-medium text-gray-900 truncate">
+                      {{ existingDocumentData()!.fileName }}
+                    </p>
+                    <p class="text-sm text-gray-600 mt-1">
+                      {{ formatFileSize(existingDocumentData()!.fileSize) }}
+                    </p>
+                    <p class="text-xs text-blue-700 mt-1">
+                      {{ 'entityArtifact.messages.existingDocument' | translate }}
+                    </p>
+                  </div>
+                </div>
+                
+                <div class="flex gap-2">
+                  <!-- Preview button -->
+                  <button
+                    type="button"
+                    class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-100 transition-colors"
+                    (click)="onPreviewDocument()"
+                    [disabled]="canViewOnly()"
+                    [title]="'button.preview' | translate"
+                  >
+                    <span class="material-symbols-outlined">visibility</span>
+                  </button>
+                  
+                  <!-- Download button -->
+                  <button
+                    type="button"
+                    class="text-green-600 hover:text-green-800 p-2 rounded-lg hover:bg-green-100 transition-colors"
+                    (click)="onDownloadDocument()"
+                    [disabled]="canViewOnly()"
+                    [title]="'button.download' | translate"
+                  >
+                    <span class="material-symbols-outlined">download</span>
+                  </button>
+                  
+                  <!-- Replace button -->
+                  <button
+                    type="button"
+                    class="text-orange-600 hover:text-orange-800 p-2 rounded-lg hover:bg-orange-100 transition-colors"
+                    (click)="onReplaceDocument()"
+                    [disabled]="canViewOnly()"
+                    [title]="'button.replace' | translate"
+                  >
+                    <span class="material-symbols-outlined">swap_horiz</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+          
+          <!-- Show upload panel for new documents or when replacing -->
+          @if (!existingDocumentData() || showDocumentUploadPanel()) {
+            <div>
+              <!-- Cancel replace button if replacing existing document -->
+              @if (existingDocumentData() && showDocumentUploadPanel()) {
+                <div class="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-orange-600">info</span>
+                      <span class="text-sm text-orange-800">
+                        {{ 'entityArtifact.messages.replacingDocument' | translate }}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      class="text-sm text-orange-600 hover:text-orange-800 font-medium"
+                      (click)="onCancelReplaceDocument()"
+                    >
+                      {{ 'button.cancel' | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
+              
+              <app-base64-file-upload
+                [acceptedFileTypes]="'.pdf,.doc,.docx,.xlsx,.xls,.ppt,.pptx,.png,.jpg,.jpeg'"
+                [maxFileSize]="10485760"
+                [disabled]="canViewOnly()"
+                (fileSelected)="onFileSelected($event)"
+                (fileCleared)="onFileCleared()"
+              />
+            </div>
+          }
+          
+          @if (!uploadedFile() && !existingDocumentData() && showValidationError()) {
+            <p-message severity="error" variant="simple" styleClass="mt-2">
+              {{ 'entityArtifact.validation.valueRequired' | translate }}
+            </p-message>
+          }
+        </div>
+      }
+
+              <!-- Info about existing artifact -->
+              @if (currentArtifact()) {
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                  <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-blue-600">info</span>
+                    <div>
+                      <p class="text-sm font-semibold text-blue-900">
+                        {{ 'entityArtifact.messages.existingArtifactFound' | translate }}
+                      </p>
+                      <p class="text-sm text-blue-700 mt-1">
+                        {{ 'entityArtifact.messages.lastModified' | translate }}: 
+                        {{ currentArtifact()!.lastModifiedDate || currentArtifact()!.createdDate | date: 'medium' }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
+      <p-button
+        [label]="'button.clear' | translate"
+        severity="secondary"
+        icon="pi pi-times"
+        (onClick)="onClear()"
+        [disabled]="saving()"
+      />
+      <p-button
+        [label]="'button.save' | translate"
+        severity="primary"
+        icon="pi pi-check"
+        (onClick)="onSave()"
+        [disabled]="!isFormValid() || canViewOnly() || saving()"
+        [loading]="saving()"
+      />
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Toast for notifications -->
+<p-toast position="top-right"></p-toast>
+

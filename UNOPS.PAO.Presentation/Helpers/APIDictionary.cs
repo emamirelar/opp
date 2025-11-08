@@ -189,4 +189,18 @@ public class APIDictionary
     public const string CommentsByEntity = Comment + "/{entityType}/{entityId}";
     public const string CommentTogglePin = Comment + "/{id}/toggle-pin";
     public const string CommentCount = Comment + "/{entityType}/{entityId}/count";
+
+    // Entity Artifacts
+    public const string EntityArtifacts = APIPrefix + "entity-artifacts";
+    public const string EntityArtifactEntityTypes = EntityArtifacts + "/entity-types";
+    public const string EntityArtifactTypes = EntityArtifacts + "/artifact-types";
+    public const string EntityArtifactRecords = EntityArtifacts + "/entity-records";
+    public const string EntityArtifactGet = EntityArtifacts + "/get";
+    public const string EntityArtifactUpsert = EntityArtifacts + "/upsert";
+    public const string EntityArtifactList = EntityArtifacts + "/list";
+    
+    // Bulk Entity Artifacts
+    public const string EntityArtifactBulkUniqueIdExample = EntityArtifacts + "/bulk/unique-id-example";
+    public const string EntityArtifactBulkTemplateDownload = EntityArtifacts + "/bulk/template-download";
+    public const string EntityArtifactBulkUpsert = EntityArtifacts + "/bulk/upsert";
 }

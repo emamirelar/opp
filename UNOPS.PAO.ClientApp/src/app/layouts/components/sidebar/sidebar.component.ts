@@ -148,6 +148,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
           label: 'title.translationWorkbench',
           icon: 'translate',
           routerLink: ['/admin/translations']
+        },
+        {
+          label: 'title.entityArtifactManager',
+          icon: 'database',
+          routerLink: ['/admin/entity-artifacts']
+        },
+        {
+          label: 'title.bulkEntityArtifactUpdate',
+          icon: 'upload_file',
+          routerLink: ['/admin/bulk-entity-artifacts']
         }
       ];
     }

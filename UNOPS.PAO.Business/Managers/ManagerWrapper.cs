@@ -32,6 +32,7 @@ public class ManagerWrapper : IManagerWrapper
     private IOpportunityManager opportunityManager;
     private ICommentManager commentManager;
     private IAuditLogManager auditLogManager;
+    private IEntityArtifactManager entityArtifactManager;
     
     public ManagerWrapper(IMapper mapper, AppDbContext context,
                           UserManager<PAOIdentityUser> userManager, 
@@ -65,6 +66,8 @@ public class ManagerWrapper : IManagerWrapper
         // Create AuditLogManager
         auditLogManager = new AuditLogManager(mapper, context);
         
+        entityArtifactManager = new EntityArtifactManager(mapper, context);
+        
         // Default implementation - will be overridden in UNOPSManagerWrapper
         userManagementManager = null;
         aiPromptManager = null; // Will be overridden in UNOPSManagerWrapper
@@ -94,4 +97,5 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IOpportunityManager OpportunityManager => opportunityManager;
     public virtual ICommentManager CommentManager => commentManager;
     public virtual IAuditLogManager AuditLogManager => auditLogManager;
+    public virtual IEntityArtifactManager EntityArtifactManager => entityArtifactManager;
 }
