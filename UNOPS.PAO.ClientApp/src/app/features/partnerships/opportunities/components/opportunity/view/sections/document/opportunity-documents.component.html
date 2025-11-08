@@ -3,7 +3,7 @@
   [class]="
     collapsed()
       ? 'w-12 bg-white border-r border-gray-200 flex-shrink-0 sticky self-start transition-all duration-300'
-      : 'w-80 bg-white border-r border-gray-200 flex-shrink-0 sticky self-start transition-all duration-300'
+      : 'w-96 bg-white border-r border-gray-200 flex-shrink-0 sticky self-start transition-all duration-300'
   "
   style="top: 0; max-height: calc(100vh - 160px); overflow: visible"
 >
@@ -70,9 +70,8 @@
           <div class="space-y-2">
             @for (doc of documents(); track doc.id) {
               <div
-                class="flex items-center gap-2 p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors group"
-                [pTooltip]="doc.documentTypeName || 'Document'"
-                tooltipPosition="right"
+                class="flex items-center gap-2 p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+                (click)="viewDocument(doc)"
               >
                 <i
                   [class]="
@@ -86,18 +85,23 @@
                   <p class="text-sm font-medium text-gray-900 truncate">
                     {{ doc.name }}
                   </p>
-                  <div class="flex items-center gap-2 text-xs text-gray-500">
-                    <span>{{ doc.size || '-' }}</span>
-                    @if (doc.extensions && doc.extensions['Origin']) {
-                      <p-badge
-                        [value]="doc.extensions['Origin']"
-                        severity="success"
-                        [style]="{ 'font-size': '0.65rem' }"
-                      />
+                  <div class="flex flex-col gap-0.5">
+                    <div class="flex items-center gap-2 text-xs text-gray-500">
+                      <span>{{ doc.size || '-' }}</span>
+                      @if (doc.extensions && doc.extensions['Origin']) {
+                        <p-badge
+                          [value]="doc.extensions['Origin']"
+                          severity="success"
+                          [style]="{ 'font-size': '0.65rem' }"
+                        />
+                      }
+                    </div>
+                    @if (doc.documentTypeName) {
+                      <span class="text-xs text-gray-600">{{ doc.documentTypeName }}</span>
                     }
                   </div>
                 </div>
-                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div class="flex gap-1" (click)="$event.stopPropagation()">
                   <p-button
                     icon="pi pi-sparkles"
                     [rounded]="true"

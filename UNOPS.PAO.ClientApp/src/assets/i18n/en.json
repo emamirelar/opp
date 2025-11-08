@@ -2314,5 +2314,6 @@
 	"label.aiExtractedValue": "AI Extracted Value",
 	"message.selectFieldsToApply": "Select the fields you want to update",
 	"button.applySelected": "Apply Selected Changes",
-	"message.opportunity.updateFailed": "Failed to update opportunity. Please try again."
+	"message.opportunity.updateFailed": "Failed to update opportunity. Please try again.",
+	"button.view": "View"
 }
