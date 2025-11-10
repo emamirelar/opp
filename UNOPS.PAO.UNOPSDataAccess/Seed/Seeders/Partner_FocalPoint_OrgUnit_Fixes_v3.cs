@@ -1689,8 +1689,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
 
                     // ========== FOCAL POINT LOGIC ==========
                     
-                    // If LegacyFocalPointUser is not null and SuggestedFocalPoint is null, set FocalPointUserId to null
-                    if (!string.IsNullOrEmpty(data.LegacyFocalPointUser) && string.IsNullOrEmpty(data.SuggestedFocalPoint))
+                    // If SuggestedFocalPoint is null, set FocalPointUserId to null
+                    if (string.IsNullOrEmpty(data.SuggestedFocalPoint))
                     {
                         if (partner.PartnerFocalPointUserId != null)
                         {
@@ -1702,17 +1702,15 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                             Console.WriteLine($"Cleared FocalPoint for Partner: {partnerIdentifier}");
                         }
                     }
-                    // If LegacyFocalPointUser matches current and SuggestedFocalPoint is different, update
-                    else if (!string.IsNullOrEmpty(data.LegacyFocalPointUser) && 
-                             !string.IsNullOrEmpty(data.SuggestedFocalPoint) &&
-                             data.LegacyFocalPointUser != data.SuggestedFocalPoint)
+                    // If SuggestedFocalPoint is not null, update only if the FocalPoint in database is null OR matches LegacyFocalPoint
+                    else
                     {
                         // Check if current focal point matches legacy
                         int? legacyUserId = paoUserMapping.ContainsKey(data.LegacyFocalPointUser) 
                             ? paoUserMapping[data.LegacyFocalPointUser] 
                             : (int?)null;
 
-                        if (partner.PartnerFocalPointUserId == legacyUserId)
+                        if (partner.PartnerFocalPointUserId == null || partner.PartnerFocalPointUserId == legacyUserId)
                         {
                             // Get the suggested focal point user ID
                             if (paoUserMapping.ContainsKey(data.SuggestedFocalPoint))
@@ -1734,10 +1732,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
 
                     // ========== ORGANIZATION UNIT LOGIC ==========
                     
-                    // If LegacyOrgUnit is not null and SuggestedOrgUnit is null, delete the relationship
-                    if (!string.IsNullOrEmpty(data.LegacyOrgUnit) && string.IsNullOrEmpty(data.SuggestedOrgUnit))
+                    // If SuggestedOrgUnit is null, delete the relationship
+                    if (string.IsNullOrEmpty(data.SuggestedOrgUnit))
                     {
-                        if (orgUnitMapping.ContainsKey(data.LegacyOrgUnit))
+                        if (!string.IsNullOrEmpty(data.LegacyOrgUnit) && orgUnitMapping.ContainsKey(data.LegacyOrgUnit))
                         {
                             int legacyOrgUnitId = orgUnitMapping[data.LegacyOrgUnit];
                             var relationshipsToRemove = partner.OrganizationUnitRelationships
@@ -1759,9 +1757,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                             }
                         }
                     }
-                    // If SuggestedOrgUnit is not null and different from LegacyOrgUnit, update or create
-                    else if (!string.IsNullOrEmpty(data.SuggestedOrgUnit) && 
-                             data.SuggestedOrgUnit != data.LegacyOrgUnit)
+                    // If SuggestedOrgUnit is not null update or create OrganizationUnitRelationship
+                    else
+                       // && data.SuggestedOrgUnit != data.LegacyOrgUnit)
                     {
                         if (!orgUnitMapping.ContainsKey(data.SuggestedOrgUnit))
                         {
