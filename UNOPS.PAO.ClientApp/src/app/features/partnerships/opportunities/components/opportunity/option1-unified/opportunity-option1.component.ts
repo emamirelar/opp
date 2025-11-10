@@ -43,6 +43,9 @@ import {
   DemoOpportunity,
 } from '@shared/services/api/opportunity-demo.service';
 
+// Components
+import { AiComparisonDemoComponent } from './ai-comparison-demo.component';
+
 /**
  * @class OpportunityOption1Component
  * @description Unified Dashboard View - displays all opportunity information in a single scrolling page
@@ -77,6 +80,7 @@ import {
     FileUploadModule,
     TooltipModule,
     DropdownModule,
+    AiComparisonDemoComponent,
   ],
   templateUrl: './opportunity-option1.component.html',
   styleUrls: ['./opportunity-option1.component.scss'],
@@ -101,6 +105,10 @@ export class OpportunityOption1Component
   activeSection = signal<string>('analysis'); // Track active section for navigation
   showDropdown = signal(false); // Track if navigation should be dropdown based on component width
   selectedSection: { id: string; label: string; icon: string } | null = null; // For dropdown binding
+  
+  // AI Comparison Demo signals
+  transcribingDocId = signal<number | null>(null);
+  showComparisonDemo = signal<boolean>(false);
 
   private checkTimeout?: number;
   private resizeObserver?: ResizeObserver;
@@ -417,5 +425,25 @@ export class OpportunityOption1Component
 
   private isValidSection(section: string): boolean {
     return this.sections.some(s => s.id === section);
+  }
+
+  /**
+   * Simulate AI transcribe action for demo
+   */
+  aiTranscribeDemo(docId: number): void {
+    // Simulate processing delay
+    this.transcribingDocId.set(docId);
+    
+    setTimeout(() => {
+      this.transcribingDocId.set(null);
+      this.showComparisonDemo.set(true);
+    }, 1500);
+  }
+
+  /**
+   * Close comparison demo dialog
+   */
+  closeComparisonDemo(): void {
+    this.showComparisonDemo.set(false);
   }
 }

@@ -115,7 +115,9 @@ public class OpportunityMappingProfile : Profile
                 src.SDG != null ? src.SDG.SDGId : null))
             .ForMember(dest => dest.SDGNumber, opt => opt.MapFrom(src => 
                 src.SDG != null ? src.SDG.SDGNumber : null))
-            .ForMember(dest => dest.SDGName, opt => opt.MapFrom(src => src.SDG != null ? src.SDG.SDGDescription : null));
+            .ForMember(dest => dest.SDGName, opt => opt.MapFrom(src => src.SDG != null ? src.SDG.SDGDescription : null))
+            .ForMember(dest => dest.SDGLogoUrl, opt => opt.MapFrom(src => 
+                src.SDG != null ? $"https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-{src.SDG.SDGNumber.ToString().PadLeft(2, '0')}.jpg" : null));
             
         CreateMap<OpportunitySDGRequest, OpportunitySDG>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())

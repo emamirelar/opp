@@ -10,7 +10,8 @@ public static class DocumentExtensions
         { DocumentParentEntityType.Contact, typeof(Contact) },
         { DocumentParentEntityType.Partner, typeof(Partner) },
         { DocumentParentEntityType.Interaction, typeof(Interaction) },
-        { DocumentParentEntityType.PartnerTree, typeof(PartnerTree) }
+        { DocumentParentEntityType.PartnerTree, typeof(PartnerTree) },
+        { DocumentParentEntityType.Opportunity, typeof(Opportunity) }
     };
 
     public static string GetEntityTypeName(this DocumentParentEntityType parentEntityType)

@@ -642,6 +642,248 @@ public class UNOPSOpportunityManager : IOpportunityManager
         return result ?? throw new KeyNotFoundException($"Failed to reload opportunity {id}");
     }
 
+    /// <summary>
+    /// Apply AI-extracted changes to an opportunity across multiple sections
+    /// </summary>
+    /// <param name="id">Opportunity ID</param>
+    /// <param name="request">AI changes request containing fields to update</param>
+    /// <returns>Updated opportunity model</returns>
+    public async Task<OpportunityModel> ApplyAiChangesAsync(int id, ApplyOpportunityAiChangesRequest request)
+    {
+        // Load entity with all relevant navigation properties
+        var entity = await opportunityRepository.GetByIdAsync(id, new[]
+        {
+            nameof(Opportunity.Deliverables),
+            nameof(Opportunity.SDGs),
+            nameof(Opportunity.FundingPartners),
+            nameof(Opportunity.ClientPartners),
+            nameof(Opportunity.Stakeholders),
+            nameof(Opportunity.Countries)
+        });
+
+        if (entity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        // WHAT Section - Update basic properties
+        if (request.Name != null)
+        {
+            entity.Name = request.Name;
+        }
+
+        if (request.Description != null)
+        {
+            entity.Description = request.Description;
+        }
+
+        if (request.ResponsibleOrgUnitId.HasValue)
+        {
+            entity.ResponsibleOrgUnitId = request.ResponsibleOrgUnitId.Value;
+        }
+
+        if (request.ProposedInitiativeTypeId.HasValue)
+        {
+            entity.ProposedInitiativeTypeId = request.ProposedInitiativeTypeId.Value;
+        }
+
+        // Update deliverables
+        if (request.Deliverables != null)
+        {
+            // Remove existing deliverables
+            if (entity.Deliverables != null && entity.Deliverables.Any())
+            {
+                context.Set<OpportunityDeliverable>().RemoveRange(entity.Deliverables);
+            }
+
+            // Add new deliverables
+            entity.Deliverables = request.Deliverables
+                .Select(d => new OpportunityDeliverable
+                {
+                    OpportunityId = id,
+                    OutputId = d.OutputId,
+                    Quantity = d.Quantity,
+                    Notes = d.Notes
+                })
+                .ToList();
+        }
+
+        // WHY Section - Update strategic properties
+        if (request.StrategicAlignment != null)
+        {
+            entity.StrategicAlignment = request.StrategicAlignment;
+        }
+
+        if (request.ResultsFocus != null)
+        {
+            entity.ResultsFocus = request.ResultsFocus;
+        }
+
+        if (request.IntendedImpactOutcomes != null)
+        {
+            entity.IntendedImpactOutcomes = request.IntendedImpactOutcomes;
+        }
+
+        if (request.ExpectedBeneficiaries != null)
+        {
+            entity.ExpectedBeneficiaries = request.ExpectedBeneficiaries;
+        }
+
+        // Update SDGs
+        if (request.SdGs != null)
+        {
+            // Remove existing SDGs
+            if (entity.SDGs != null && entity.SDGs.Any())
+            {
+                context.Set<OpportunitySDG>().RemoveRange(entity.SDGs);
+            }
+
+            // Add new SDGs
+            entity.SDGs = request.SdGs
+                .Select(sdgId => new OpportunitySDG
+                {
+                    OpportunityId = id,
+                    SDGId = sdgId
+                })
+                .ToList();
+        }
+
+        // WHO Section - Update partnerships
+        if (request.FundingPartners != null)
+        {
+            // Remove existing funding partners
+            if (entity.FundingPartners != null && entity.FundingPartners.Any())
+            {
+                context.Set<OpportunityFundingPartner>().RemoveRange(entity.FundingPartners);
+            }
+
+            // Get a valid currency ID (preferably USD, or the first available)
+            var defaultCurrencyId = context.Currencies
+                .Where(c => c.Code == "USD")
+                .Select(c => c.Id)
+                .FirstOrDefault();
+            
+            if (defaultCurrencyId == 0)
+            {
+                // Fallback to first available currency
+                defaultCurrencyId = context.Currencies
+                    .Select(c => c.Id)
+                    .FirstOrDefault();
+            }
+
+            // Add new funding partners
+            entity.FundingPartners = request.FundingPartners
+                .Select(partnerId => new OpportunityFundingPartner
+                {
+                    OpportunityId = id,
+                    PartnerId = partnerId,
+                    CurrencyId = defaultCurrencyId // Set default USD currency
+                })
+                .ToList();
+        }
+
+        if (request.ClientPartners != null)
+        {
+            // Remove existing client partners
+            if (entity.ClientPartners != null && entity.ClientPartners.Any())
+            {
+                context.Set<OpportunityClientPartner>().RemoveRange(entity.ClientPartners);
+            }
+
+            // Add new client partners
+            entity.ClientPartners = request.ClientPartners
+                .Select(partnerId => new OpportunityClientPartner
+                {
+                    OpportunityId = id,
+                    PartnerId = partnerId
+                })
+                .ToList();
+        }
+
+        if (request.Stakeholders != null)
+        {
+            // Remove existing stakeholders
+            if (entity.Stakeholders != null && entity.Stakeholders.Any())
+            {
+                context.Set<OpportunityStakeholder>().RemoveRange(entity.Stakeholders);
+            }
+
+            // Add new stakeholders
+            entity.Stakeholders = request.Stakeholders
+                .Select(entityRoleId => new OpportunityStakeholder
+                {
+                    OpportunityId = id,
+                    EntityRoleId = entityRoleId
+                })
+                .ToList();
+        }
+
+        // WHERE Section - Update countries
+        if (request.Countries != null)
+        {
+            // Remove existing countries
+            if (entity.Countries != null && entity.Countries.Any())
+            {
+                context.Set<OpportunityCountry>().RemoveRange(entity.Countries);
+            }
+
+            // Add new countries
+            entity.Countries = request.Countries
+                .Select(countryId => new OpportunityCountry
+                {
+                    OpportunityId = id,
+                    CountryId = countryId
+                })
+                .ToList();
+        }
+
+        // WHEN Section - Update dates
+        if (request.TargetSigningDate.HasValue)
+        {
+            entity.TargetSigningDate = request.TargetSigningDate.Value;
+        }
+
+        if (request.TargetDeliveryDate.HasValue)
+        {
+            entity.TargetDeliveryDate = request.TargetDeliveryDate.Value;
+        }
+
+        // Other properties
+        if (request.PartnerReference != null)
+        {
+            entity.PartnerReference = request.PartnerReference;
+        }
+
+        if (request.Status != null)
+        {
+            if (Enum.TryParse<EntityStatus>(request.Status, true, out var status))
+            {
+                entity.Status = status;
+            }
+        }
+
+        if (request.WorkflowStageId.HasValue)
+        {
+            entity.WorkflowStageId = request.WorkflowStageId.Value;
+        }
+
+        if (request.InitiativeBudgetUSD.HasValue)
+        {
+            entity.InitiativeBudgetUSD = request.InitiativeBudgetUSD.Value;
+        }
+
+        if (request.PartnershipAgreementReference != null)
+        {
+            entity.PartnershipAgreementReference = request.PartnershipAgreementReference;
+        }
+
+        // Save changes
+        await opportunityRepository.UpdateAsync(entity);
+
+        // Reload with all includes for complete response
+        return await GetOpportunityAsync(entity.Id);
+    }
+
     public async Task<bool> DeleteOpportunityAsync(int id)
     {
         var entity = await opportunityRepository.GetByIdAsync(id);

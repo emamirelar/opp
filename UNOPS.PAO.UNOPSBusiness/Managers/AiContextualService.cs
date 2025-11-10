@@ -534,6 +534,86 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         }
     }
 
+    /// <summary>
+    /// Fetch result from Gemini with document file (using gs:// URI)
+    /// </summary>
+    public async Task<string> FetchResultFromGeminiWithDocument(
+        AiPrompt promptData, 
+        string relatedJsonData, 
+        string documentStoragePath, 
+        string documentMimeType,
+        string entityId = null, 
+        bool bypassCache = false)
+    {
+        try
+        {
+            // Step 1: Process placeholders to create fully formed instructions/prompts
+            var systemInstructionsTemplate = promptData.SystemInstructions ?? string.Empty;
+            var fullyFormedSystemInstructions = ProcessPlaceholders(systemInstructionsTemplate, relatedJsonData);
+            
+            var fullyFormedUserPrompt = !string.IsNullOrEmpty(promptData.UserPrompt) 
+                ? ProcessPlaceholders(promptData.UserPrompt, relatedJsonData)
+                : "Please analyze this document and extract the requested information.";
+            
+            // Step 2: Check cache if enabled and not bypassed
+            if (!bypassCache && promptData.UseCache && !string.IsNullOrEmpty(entityId) && !string.IsNullOrEmpty(promptData.Type) && _aiPromptCacheService != null)
+            {
+                var cachedEntry = await _aiPromptCacheService.GetCachedEntryAsync(promptData.Type, entityId);
+                if (cachedEntry != null)
+                {
+                    Console.WriteLine($"[CACHE HIT] Returning cached result for document prompt {promptData.Type}, entity {entityId}");
+                    return cachedEntry.Result;
+                }
+            }
+            
+            // Step 3: Call Gemini API with document URI
+            // Build parts array with both text and fileData
+            var parts = new List<object>
+            {
+                new { text = fullyFormedUserPrompt }
+            };
+
+            // Add document URI if provided (using Gemini REST API format)
+            if (!string.IsNullOrEmpty(documentStoragePath) && documentStoragePath.StartsWith("gs://"))
+            {
+                parts.Add(new 
+                { 
+                    fileData = new
+                    {
+                        fileUri = documentStoragePath,
+                        mimeType = documentMimeType
+                    }
+                });
+            }
+
+            var userContent = new
+            {
+                role = "user",
+                parts = parts.ToArray()
+            };
+            
+            var result = await CallGeminiApi(userContent, promptData, fullyFormedSystemInstructions);
+            
+            // Step 4: Cache the result if caching is enabled and not bypassed
+            if (!bypassCache && promptData.UseCache && !string.IsNullOrEmpty(entityId) && !string.IsNullOrEmpty(promptData.Type) && _aiPromptCacheService != null)
+            {
+                await _aiPromptCacheService.SetCachedResultAsync(
+                    promptData.Type, 
+                    entityId, 
+                    fullyFormedSystemInstructions,
+                    fullyFormedUserPrompt + " [with document: " + documentStoragePath + "]", 
+                    result, 
+                    promptData.CacheInvalidationMinutes);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error in FetchResultFromGeminiWithDocument: {ex.Message}", ex);
+        }
+    }
+
     // Common function to handle Gemini API calls
     public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData, string systemInstructions = null)
     {
@@ -958,6 +1038,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             {
                 partnerType = true;
             }
+            bool opportunityType = false;
+            if (promptData?.Type?.Contains("opportunity_document_transcribe", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                opportunityType = true;
+            }
             // Ensure date is set for interactions if missing or empty
             if (interactionType)
             {
@@ -994,6 +1079,14 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                             // Check if the dependent field is already an array of text values
                             if (text is JArray textArray)
                             {
+                                // Handle opportunity-specific arrays that need full object structures
+                                if (opportunityType && IsOpportunityCollectionField(dependent))
+                                {
+                                    var objectsArray = await BuildOpportunityCollectionObjects(textArray, dependent);
+                                    responseObject[dependent] = objectsArray;
+                                    continue;
+                                }
+                                
                                 // Handle array of text values - convert each to ID
                                 var idsArray = new JArray();
                                 
@@ -1152,6 +1245,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 }
             }
 
+            // Remove _confidence and dependents objects from response for opportunity documents
+            if (opportunityType && responseObject is JObject jobject)
+            {
+                jobject.Remove("_confidence");
+                jobject.Remove("dependents");
+            }
+
             return responseObject;
         }
         
@@ -1239,6 +1339,51 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             {
                 entityName = "OrganizationHierarchies";
                 whereCondition = "\"Type\" = 'OrgUnit'";
+            }
+            // Special case for responsibleOrgUnitId (Opportunity specific) - should look at OrganizationHierarchies table
+            else if (dependent.Equals("responsibleOrgUnitId", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "OrganizationHierarchies";
+                whereCondition = "\"Type\" = 'OrgUnit'";
+            }
+            // Special case for proposedInitiativeTypeId (Opportunity specific) - should look at ProposedInitiativeTypes table
+            else if (dependent.Equals("proposedInitiativeTypeId", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "ProposedInitiativeTypes";
+                whereCondition = "1=1";
+            }
+            // Special case for fundingPartners and clientPartners (Opportunity specific) - should look at Partners table
+            else if (dependent.Equals("fundingPartners", StringComparison.OrdinalIgnoreCase) 
+                     || dependent.Equals("clientPartners", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "Partners";
+                whereCondition = "1=1";
+            }
+            // Special case for stakeholders (Opportunity specific) - TODO: Implement stakeholder mapping
+            else if (dependent.Equals("stakeholders", StringComparison.OrdinalIgnoreCase))
+            {
+                // TODO: Implement stakeholder entity mapping for Opportunity
+                // This requires determining the correct entity type for stakeholders in the Opportunity context
+                Console.WriteLine($"[TODO] Stakeholder mapping for Opportunity not yet implemented. Skipping '{text}'");
+                return null;
+            }
+            // Special case for countries (Opportunity specific) - should look at Countries table
+            else if (dependent.Equals("countries", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "Countries";
+                whereCondition = "1=1";
+            }
+            // Special case for sdGs (Opportunity specific) - should look at SDGs table
+            else if (dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "SDGs";
+                whereCondition = "1=1";
+            }
+            // Special case for deliverables (Opportunity specific) - should look at Outputs table
+            else if (dependent.Equals("deliverables", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "Outputs";
+                whereCondition = "1=1";
             }
             // Special case for User/UserIds - should look at UserProfile table (which has searchable Name field)
             else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase)
@@ -2623,6 +2768,256 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             }
 
             return matrix[str1.Length, str2.Length];
+        }
+        
+        /// <summary>
+        /// Checks if a field is an opportunity collection field that needs object structure
+        /// </summary>
+        private bool IsOpportunityCollectionField(string dependent)
+        {
+            return dependent.Equals("fundingPartners", StringComparison.OrdinalIgnoreCase) ||
+                   dependent.Equals("clientPartners", StringComparison.OrdinalIgnoreCase) ||
+                   dependent.Equals("stakeholders", StringComparison.OrdinalIgnoreCase) ||
+                   dependent.Equals("deliverables", StringComparison.OrdinalIgnoreCase) ||
+                   dependent.Equals("countries", StringComparison.OrdinalIgnoreCase) ||
+                   dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase);
+        }
+        
+        /// <summary>
+        /// Builds opportunity collection objects from text arrays
+        /// </summary>
+        private async Task<JArray> BuildOpportunityCollectionObjects(JArray textArray, string dependent)
+        {
+            var objectsArray = new JArray();
+            
+            foreach (var textItem in textArray)
+            {
+                var textValue = textItem?.ToString();
+                if (string.IsNullOrEmpty(textValue)) continue;
+                
+                try
+                {
+                    if (dependent.Equals("countries", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var countryObj = await BuildCountryObject(textValue);
+                        if (countryObj != null) objectsArray.Add(countryObj);
+                    }
+                    else if (dependent.Equals("sdGs", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var sdgObj = await BuildSDGObject(textValue);
+                        if (sdgObj != null) objectsArray.Add(sdgObj);
+                    }
+                    else if (dependent.Equals("fundingPartners", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var partnerObj = await BuildPartnerObject(textValue, "Funding");
+                        if (partnerObj != null) objectsArray.Add(partnerObj);
+                    }
+                    else if (dependent.Equals("clientPartners", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var partnerObj = await BuildPartnerObject(textValue, "Client");
+                        if (partnerObj != null) objectsArray.Add(partnerObj);
+                    }
+                    else if (dependent.Equals("stakeholders", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // TODO: Implement stakeholder object building
+                        Console.WriteLine($"[TODO] Stakeholder object building not yet implemented for '{textValue}'");
+                    }
+                    else if (dependent.Equals("deliverables", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var deliverableObj = await BuildDeliverableObject(textValue);
+                        if (deliverableObj != null) objectsArray.Add(deliverableObj);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] Failed to build object for {dependent} with value '{textValue}': {ex.Message}");
+                }
+            }
+            
+            return objectsArray;
+        }
+        
+        /// <summary>
+        /// Builds a country object from text value
+        /// </summary>
+        private async Task<JObject> BuildCountryObject(string countryText)
+        {
+            try
+            {
+                var countryId = await GetEntityIdFromText(countryText, "countries");
+                if (countryId == null || countryId is DBNull)
+                {
+                    Console.WriteLine($"[WARNING] Country not found: '{countryText}'");
+                    return null;
+                }
+                
+                // Cast to int for database query
+                int countryIdInt = Convert.ToInt32(countryId);
+                
+                // Get full country details from database
+                var country = await _context.Countries
+                    .Where(c => c.Id == countryIdInt)
+                    .Select(c => new { c.Id, c.Name, c.Iso2Code })
+                    .FirstOrDefaultAsync();
+                
+                if (country == null) return null;
+                
+                // Return nested country object to match OpportunityCountryModel structure
+                return new JObject
+                {
+                    ["country"] = new JObject
+                    {
+                        ["id"] = country.Id,
+                        ["name"] = country.Name,
+                        ["iso2Code"] = country.Iso2Code
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error building country object for '{countryText}': {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Builds an SDG object from text value
+        /// </summary>
+        private async Task<JObject> BuildSDGObject(string sdgText)
+        {
+            try
+            {
+                var sdgId = await GetEntityIdFromText(sdgText, "sdGs");
+                if (sdgId == null || sdgId is DBNull)
+                {
+                    Console.WriteLine($"[WARNING] SDG not found: '{sdgText}'");
+                    return null;
+                }
+                
+                // Cast to int for database query
+                int sdgIdInt = Convert.ToInt32(sdgId);
+                
+                // Get full SDG details from database
+                var sdg = await _context.SDGs
+                    .Where(s => s.Id == sdgIdInt)
+                    .Select(s => new { s.Id, s.SDGNumber, s.Name })
+                    .FirstOrDefaultAsync();
+                
+                if (sdg == null) return null;
+                
+                // Generate SDG logo URL
+                string sdgLogoUrl = $"https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-{sdg.SDGNumber.ToString().PadLeft(2, '0')}.jpg";
+                
+                return new JObject
+                {
+                    ["sdgId"] = sdg.Id,
+                    ["sdgNumber"] = sdg.SDGNumber,
+                    ["sdgName"] = sdg.Name,
+                    ["sdgLogoUrl"] = sdgLogoUrl,
+                    ["isPrimary"] = false // Default to false, can be updated later
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error building SDG object for '{sdgText}': {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Builds a partner object from text value
+        /// </summary>
+        private async Task<JObject> BuildPartnerObject(string partnerText, string partnerType)
+        {
+            try
+            {
+                var partnerId = await GetEntityIdFromText(partnerText, partnerType == "Funding" ? "fundingPartners" : "clientPartners");
+                if (partnerId == null || partnerId is DBNull)
+                {
+                    Console.WriteLine($"[WARNING] Partner not found: '{partnerText}'");
+                    return null;
+                }
+                
+                // Cast to int for database query
+                int partnerIdInt = Convert.ToInt32(partnerId);
+                
+                // Get full partner details from database including logo
+                var partner = await _context.Partners
+                    .Where(p => p.Id == partnerIdInt)
+                    .Select(p => new { p.Id, p.Name, p.LogoUrl })
+                    .FirstOrDefaultAsync();
+                
+                if (partner == null) return null;
+                
+                var partnerObj = new JObject
+                {
+                    ["partnerId"] = partner.Id,
+                    ["partnerName"] = partner.Name,
+                    ["partnerLogoUrl"] = !string.IsNullOrEmpty(partner.LogoUrl) ? partner.LogoUrl : "assets/images/Partner.png"
+                };
+                
+                // Add amount field for funding partners (can be updated later)
+                if (partnerType == "Funding")
+                {
+                    partnerObj["amount"] = null;
+                    partnerObj["currencyCode"] = "USD";
+                }
+                
+                return partnerObj;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error building partner object for '{partnerText}': {ex.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Builds a deliverable object from text value
+        /// </summary>
+        private async Task<JObject> BuildDeliverableObject(string deliverableText)
+        {
+            try
+            {
+                // Try to find the deliverable/output in the database
+                var outputId = await GetEntityIdFromText(deliverableText, "deliverables");
+                
+                // Only include deliverable if outputId was found
+                if (outputId == null || outputId is DBNull)
+                {
+                    Console.WriteLine($"[WARNING] Deliverable/Output not found in database: '{deliverableText}'. Skipping.");
+                    return null;
+                }
+                
+                // Cast to int for database query
+                int outputIdInt = Convert.ToInt32(outputId);
+                
+                // Get full output details from database
+                var output = await _context.Outputs
+                    .Where(o => o.Id == outputIdInt)
+                    .Select(o => new { o.Id, o.Name, o.Description })
+                    .FirstOrDefaultAsync();
+                
+                if (output == null)
+                {
+                    Console.WriteLine($"[WARNING] Output with ID {outputIdInt} not found in database");
+                    return null;
+                }
+                
+                return new JObject
+                {
+                    ["outputId"] = output.Id,
+                    ["outputName"] = output.Name,
+                    ["outputDescription"] = output.Description,
+                    ["quantity"] = null,
+                    ["unitCode"] = null
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error building deliverable object for '{deliverableText}': {ex.Message}");
+                return null;
+            }
         }
     }
 

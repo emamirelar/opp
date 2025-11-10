@@ -531,7 +531,53 @@ public class UNOPSGeminiManager : IGeminiManager
         // Fetch result from Gemini with caching support
         // Pass entity ID for caching if available
         var entityIdForCache = req.Id > 0 ? req.Id.ToString() : null;
-        return await FetchResultFromGemini(promptData, relatedMessage, entityIdForCache);
+        
+        // Pass document storage path if available (for document transcription)
+        string geminiResponse;
+        if (!string.IsNullOrEmpty(req.DocumentStoragePath) && req.DocumentStoragePath.StartsWith("gs://"))
+        {
+            // Document transcription: pass gs:// URI and MIME type
+            geminiResponse = await _aiService.FetchResultFromGeminiWithDocument(
+                promptData, 
+                relatedMessage, 
+                req.DocumentStoragePath, 
+                req.DocumentMimeType ?? "application/pdf",
+                entityIdForCache
+            );
+        }
+        else
+        {
+            // Regular processing without document
+            geminiResponse = await FetchResultFromGemini(promptData, relatedMessage, entityIdForCache);
+        }
+        
+        // Process dependent dropdowns for opportunity document transcription
+        if (promptData.Type == "opportunity_document_transcribe")
+        {
+            try
+            {
+                // Parse the Gemini response to extract the JSON content
+                var parsedResponse = _aiService.GetDetailsFromGeminiResponse(geminiResponse);
+                
+                // Check if there are dependents to process
+                var dependents = parsedResponse["dependents"]?.ToString();
+                if (!string.IsNullOrEmpty(dependents))
+                {
+                    // Process dependents to convert names to IDs
+                    var processedResponse = await _aiService.GetDependentDropdownValues(dependents, parsedResponse, promptData);
+                    
+                    // Return the processed response as JSON string
+                    return JsonConvert.SerializeObject(processedResponse);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue with unprocessed response
+                _logger.LogWarning(ex, "Error processing dependent dropdowns for opportunity transcription. Returning unprocessed response.");
+            }
+        }
+        
+        return geminiResponse;
     }
 
     public async Task<string> ScanFileForGeminiProcessing(GeminiFileRequest req)

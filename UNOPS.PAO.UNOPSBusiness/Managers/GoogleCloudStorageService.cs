@@ -88,6 +88,71 @@ public class GoogleCloudStorageService
         return await UploadToGCS(memoryStream, fileName, file.ContentType);
     }
 
+    /// <summary>
+    /// Uploads a PDF file to Google Cloud Storage with organized folder structure
+    /// </summary>
+    /// <param name="file">PDF file to upload</param>
+    /// <param name="folder">Folder name (e.g., "opportunities", "partners")</param>
+    /// <param name="entityId">Entity ID for organizing files</param>
+    /// <returns>Google Cloud Storage URI (gs://bucket/path)</returns>
+    public async Task<string> UploadPdfAsync(IFormFile file, string folder, int entityId)
+    {
+        if (file == null || file.Length == 0)
+        {
+            throw new ArgumentException("File cannot be null or empty", nameof(file));
+        }
+
+        // Generate unique filename to avoid collisions
+        var fileExtension = Path.GetExtension(file.FileName);
+        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.FileName);
+        var uniqueId = Guid.NewGuid().ToString();
+        var fileName = $"{fileNameWithoutExtension}_{uniqueId}{fileExtension}";
+        
+        // Construct object path: folder/entityId/filename
+        var objectName = $"{folder.ToLower()}/{entityId}/{fileName}";
+
+        // Upload to GCS
+        using var stream = file.OpenReadStream();
+        await _storageClient.UploadObjectAsync(
+            _bucketName, 
+            objectName, 
+            file.ContentType ?? "application/pdf", 
+            stream
+        );
+
+        // Return gs:// URI
+        return $"gs://{_bucketName}/{objectName}";
+    }
+
+    /// <summary>
+    /// Generates a signed URL from a gs:// URI
+    /// </summary>
+    /// <param name="gsUri">Google Cloud Storage URI (gs://bucket/path)</param>
+    /// <param name="expirationMinutes">Number of minutes before the URL expires (default: 60)</param>
+    /// <returns>Signed URL that can be used to access the file</returns>
+    public async Task<string> GetSignedUrlFromGsUri(string gsUri, int expirationMinutes = 60)
+    {
+        if (string.IsNullOrEmpty(gsUri) || !gsUri.StartsWith("gs://"))
+        {
+            throw new ArgumentException("Invalid Google Cloud Storage URI. Must start with gs://", nameof(gsUri));
+        }
+
+        // Parse gs:// URI to extract bucket and object name
+        // Format: gs://bucket-name/path/to/object
+        var uriWithoutPrefix = gsUri.Replace("gs://", "");
+        var parts = uriWithoutPrefix.Split('/', 2);
+        
+        if (parts.Length != 2)
+        {
+            throw new ArgumentException("Invalid Google Cloud Storage URI format", nameof(gsUri));
+        }
+
+        var objectName = parts[1]; // Extract object path (skip bucket name)
+
+        // Generate signed URL using existing method
+        return await GenerateSignedUrlAsync(objectName, TimeSpan.FromMinutes(expirationMinutes));
+    }
+
     // Generate a signed URL for secure access to a private object
     public async Task<string> GenerateSignedUrlAsync(string objectName, TimeSpan expiration, HttpMethod httpMethod = null)
     {

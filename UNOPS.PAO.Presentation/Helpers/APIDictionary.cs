@@ -11,6 +11,10 @@ public class APIDictionary
     public const string Document = APIPrefix + "document";
     public const string DocumentType = APIPrefix + "document-type";
     public const string DocumentGenerate = Document + "/generate-document";
+    public const string DocumentUpload = Document + "/upload";
+    public const string DocumentLink = Document + "/link";
+    public const string DocumentViewUrl = Document + "/view-url";
+    public const string DocumentDownload = Document + "/download";
 
     // Profile
     public const string Profile = APIPrefix + "profile";
@@ -89,6 +93,9 @@ public class APIDictionary
     public const string OrganizationHierarchy = APIPrefix + "organization-hierarchy";
 
     public const string GeminiProcessDataSummary = APIPrefix + "process-data";
+    public const string GeminiDocumentTranscribe = APIPrefix + "document-transcribe";
+    public const string AuditLog = APIPrefix + "auditlog";
+    public const string AuditLogLatest = APIPrefix + "auditlog/latest";
     public const string AiAssistantCreateSession = APIPrefix + "ai-assistant/create-session";
     public const string AiAssistantGetSession = APIPrefix + "ai-assistant/get-session";
     public const string AiAssistantGetUserSessions = APIPrefix + "ai-assistant/get-user-sessions";
@@ -175,6 +182,7 @@ public class APIDictionary
     public const string OpportunityWhere = Opportunity + "/{id}/where";
     public const string OpportunityWhen = Opportunity + "/{id}/when";
     public const string OpportunityRelated = Opportunity + "/{id}/related";
+    public const string OpportunityApplyAiChanges = Opportunity + "/{id}/apply-ai-changes";
 
     // Comment
     public const string Comment = APIPrefix + "comment";

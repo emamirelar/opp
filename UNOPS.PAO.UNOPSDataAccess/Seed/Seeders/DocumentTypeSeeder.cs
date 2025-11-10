@@ -39,7 +39,12 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 ("Interaction", "Other"),
                 
                 // PartnerTree document types
-                ("PartnerTree", "Other")
+                ("PartnerTree", "Other"),
+                
+                // Opportunity document types
+                ("Opportunity", "Concept Note"),
+                ("Opportunity", "Proposal"),
+                ("Opportunity", "Other")
             };
 
             // Get existing document types from database

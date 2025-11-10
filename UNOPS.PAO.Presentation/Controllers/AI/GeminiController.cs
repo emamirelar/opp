@@ -141,6 +141,7 @@ public class GeminiController : BaseController
     private readonly IConfiguration _configuration;
     private readonly string? _agenticAiServiceUrl;
     private readonly CloudRunHelper _cloudRunHelper;
+    private readonly UNOPSAppDbContext _context;
 
     public GeminiController(
         IManagerWrapper manager, 
@@ -158,6 +159,7 @@ public class GeminiController : BaseController
         _managerWrapper = manager;
         _httpClient = httpClient;
         _configuration = configuration;
+        _context = context;
         _agenticAiServiceUrl = _configuration.GetValue<string?>("AgenticAi:ServiceURL");
         
         // Initialize CloudRunHelper
@@ -590,6 +592,48 @@ public class GeminiController : BaseController
             if (string.IsNullOrEmpty(response))
             {
                 throw new BusinessException("Prompt configuration for the screen is not found.");
+            }
+
+            return response.Trim();
+        });
+    }
+
+    /// <summary>
+    /// Transcribes opportunity document using Gemini AI to extract structured opportunity data.
+    /// Receives documentId, retrieves document content and type, sends to Gemini for analysis.
+    /// </summary>
+    /// <param name="req">Request containing document ID</param>
+    /// <returns>JSON string with extracted opportunity information matching OpportunityModel structure</returns>
+    [HttpPost(APIDictionary.GeminiDocumentTranscribe)]
+    public async Task<ActionResult> TranscribeOpportunityDocument([FromBody] GeminiProcessDataRequest req)
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            if (req == null || req.Id <= 0)
+            {
+                throw new BusinessException("Invalid document ID");
+            }
+
+            // Get document from database to retrieve storage path
+            var document = await _context.Documents.FindAsync(req.Id);
+            if (document == null)
+            {
+                throw new BusinessException("Document not found");
+            }
+
+            // Set the type to trigger the correct AI prompt
+            req.Type = "opportunity_document_transcribe";
+            
+            // Pass document storage path and MIME type for AI processing
+            req.DocumentStoragePath = document.StoragePath; // gs:// URI
+            req.DocumentMimeType = document.Type ?? "application/pdf";
+
+            // Pass User context for authorization
+            var response = await _manager.ProcessDataRelatedSummaryDetails(req, User);
+            
+            if (string.IsNullOrEmpty(response))
+            {
+                throw new BusinessException("Failed to transcribe document. AI analysis returned no results.");
             }
 
             return response.Trim();

@@ -15,21 +15,18 @@ using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 using UNOPS.PAO.Models.Documents;
+using System.Security.Claims;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
-public class UNOPSDocumentManager : IDocumentManager
+public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
 {
-    private IMapper _mapper;
     private BaseRepository<UNOPSDocument> _documentRepository;
-    private UNOPSAppDbContext _unopsAppDbContext;
     private readonly IGoogleDriveDocumentManager _driveManager;
     private readonly IConfigurationSection _driveConfig;
-    private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly BaseRepository<UNOPSContact> _contactRepository;
     private readonly BaseRepository<UNOPSPartner> _partnerRepository;
     private readonly BaseRepository<UNOPSPartnerTree> _partnerTreeRepository;
-    //private readonly DataRepository<Project> _projectManager;
 
     public UNOPSDocumentManager(
         IGoogleDriveDocumentManager driveManager,
@@ -37,19 +34,28 @@ public class UNOPSDocumentManager : IDocumentManager
         IMapper mapper,
         UNOPSAppDbContext context,
         UserManager<PAOIdentityUser> userManager,
-        IServiceProvider serviceProvider = null
-        )
+        IServiceProvider serviceProvider = null,
+        IPermissionService permissionService = null,
+        IHttpContextAccessor httpContextAccessor = null
+        ) : base(mapper, context, configuration, userManager, "Document", permissionService, httpContextAccessor)
     {
-        _mapper = mapper;
-        _unopsAppDbContext = context;
         _documentRepository = new BaseRepository<UNOPSDocument>(context, configuration, serviceProvider);
         _driveManager = driveManager;
         _driveConfig = configuration.GetSection($"GoogleDriveSettings:DefaultGoogleDriveFolderIds");
-        _userManager = userManager;
-        //_projectManager = new DataRepository<Project>(context); ;
         _contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         _partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
         _partnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration, serviceProvider);
+    }
+
+    /// <summary>
+    /// Implementation of required BaseUNOPSManager method
+    /// </summary>
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    {
+        var document = await _documentRepository.GetByIdAsync(entityId);
+        if (document == null) return null;
+        
+        return MapDocumentModel(document);
     }
 
     private DocumentModel MapDocumentModel(UNOPSDocument entity)
@@ -95,8 +101,8 @@ public class UNOPSDocumentManager : IDocumentManager
             EntityType = entityType
         };
 
-        await _unopsAppDbContext.DocumentRelationships.AddAsync(docRelationship);
-        await _unopsAppDbContext.SaveChangesAsync();
+        await _context.DocumentRelationships.AddAsync(docRelationship);
+        await _context.SaveChangesAsync();
     }
 
     private async Task<Dictionary<string, string>> EnsureFolderStructure(string entityType, int entityId)
@@ -224,13 +230,33 @@ public class UNOPSDocumentManager : IDocumentManager
 
     public async Task<DocumentModel> CreateDocumentAsync(DocumentUploadModel model)
     {
-        var parentFolder = await EnsureFolderStructure(model.ParentEntityType.ToString(), model.ParentEntityId);
+        byte[] fileBytes = null;
+        
+        // If StoragePath is provided (GCS upload), don't store blob
+        // Otherwise, store file as blob in database
+        if (string.IsNullOrEmpty(model.StoragePath))
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                await model.File.CopyToAsync(memoryStream);
+                fileBytes = memoryStream.ToArray();
+            }
+        }
 
-        var documentModel = await UploadDocumentAsync(model, parentFolder["id"]);
+        var fileType = model.File.GetFileType();
+        var fileName = string.IsNullOrWhiteSpace(model.Name) ? model.File.FileName : model.Name;
 
-        var documentEntity = _mapper.Map<UNOPSDocument>(documentModel);
-        documentEntity.LinkedFile = false;
-        documentEntity.DocumentTypeId = model.DocumentTypeId;
+        var documentEntity = new UNOPSDocument
+        {
+            Name = fileName,
+            Type = fileType,
+            Blob = fileBytes, // Will be null if using GCS storage
+            Link = model.Link, // Will be populated if sourced from Google Drive
+            GoogleId = model.GoogleId, // Will be populated if sourced from Google Drive
+            StoragePath = model.StoragePath, // Use the GCS path if provided
+            LinkedFile = !string.IsNullOrEmpty(model.Link), // True if it's a Drive-sourced file
+            DocumentTypeId = model.DocumentTypeId
+        };
 
         await _documentRepository.AddAsync(documentEntity);
         await HandleDocumentRelationships(documentEntity, model);
@@ -291,8 +317,8 @@ public class UNOPSDocumentManager : IDocumentManager
             EntityType = model.ParentEntityType.GetEntityTypeName()
         };
 
-        await _unopsAppDbContext.DocumentRelationships.AddAsync(docRelationship);
-        await _unopsAppDbContext.SaveChangesAsync();
+        await _context.DocumentRelationships.AddAsync(docRelationship);
+        await _context.SaveChangesAsync();
     }
 
     public IEnumerable<DocumentModel> ListDocumentsAsync(string entityName, int entityId)
@@ -343,7 +369,8 @@ public class UNOPSDocumentManager : IDocumentManager
 
         if (entity != null)
         {
-            if (entity.LinkedFile == false)
+            // Only try to archive if it's a Google Drive file (has GoogleId and is not a linked file)
+            if (entity.LinkedFile == false && !string.IsNullOrEmpty(entity.GoogleId))
             {
                 var archiveFolderRoot = _driveConfig.GetSection(DocumentParentEntityType.Archive.ToString()).Value;
 
@@ -354,6 +381,8 @@ public class UNOPSDocumentManager : IDocumentManager
 
                 await _driveManager.ArchiveFileAsync(entity.GoogleId, archiveFolderRoot);
             }
+            // If it's a blob document (no GoogleId), just delete it from database
+            // No archiving needed for blob documents
 
             await _documentRepository.Delete(entity);
         }
@@ -384,6 +413,19 @@ public class UNOPSDocumentManager : IDocumentManager
                 x.Type == "folder" &&
                 x.DocumentRelationships.Any(y => y.EntityType == entityName && y.EntityId == entityId))
             .FirstOrDefault();
+    }
+
+    public async Task<IEnumerable<DocumentModel>> GetDocumentsByEntityAsync(string entityName, int entityId)
+    {
+        var documents = _documentRepository
+            .GetAll(["DocumentRelationships", "DocumentType"])
+            .Where(x =>
+                !x.IsDeleted &&
+                x.Type != "folder" &&
+                x.DocumentRelationships.Any(y => y.EntityType == entityName && y.EntityId == entityId))
+            .ToList();
+
+        return documents.Select(doc => MapDocumentModel(doc));
     }
 
     public async Task SetImmutableDocuments(string entityName, int entityId)
@@ -434,20 +476,20 @@ public class UNOPSDocumentManager : IDocumentManager
             {
                 entity.LinkedFile = false;
 
-                await _documentRepository.AddAsync(entity);
+            await _documentRepository.AddAsync(entity);
 
-                var docRelationship = new DocumentRelationship
-                {
-                    Document = entity,
-                    EntityId = entityId,
-                    Name = doc.Name,
-                    EntityType = entityName
-                };
+            var docRelationship = new DocumentRelationship
+            {
+                Document = entity,
+                EntityId = entityId,
+                Name = doc.Name,
+                EntityType = entityName
+            };
 
-                await _unopsAppDbContext.DocumentRelationships.AddAsync(docRelationship);
+            await _context.DocumentRelationships.AddAsync(docRelationship);
 
-                // delete copied document
-                await DeleteDocumentAsync(doc.Id);
+            // delete copied document
+            await DeleteDocumentAsync(doc.Id);
                 //break;
             }
         }
@@ -515,8 +557,109 @@ public class UNOPSDocumentManager : IDocumentManager
 
     public async Task<byte[]> GetFileContentAsync(string docGoogleId, string userToImpersonate)
     {
-        var contents = await _driveManager.GetFileStream(docGoogleId, userToImpersonate);
+        // First check if document has blob data (local storage)
+        var document = _documentRepository
+            .GetAll()
+            .FirstOrDefault(d => d.GoogleId == docGoogleId);
 
+        if (document?.Blob != null && document.Blob.Length > 0)
+        {
+            return document.Blob;
+        }
+
+        // Fallback to Google Drive if no blob data
+        var contents = await _driveManager.GetFileStream(docGoogleId, userToImpersonate);
         return contents.ToArray();
+    }
+
+    public async Task<byte[]> GetFileContentByIdAsync(int documentId)
+    {
+        var document = await _documentRepository.GetByIdAsync(documentId);
+        
+        if (document == null)
+        {
+            throw new Exception("Document not found.");
+        }
+
+        // If blob exists, return it
+        if (document.Blob != null && document.Blob.Length > 0)
+        {
+            return document.Blob;
+        }
+
+        // If GoogleId exists, fetch from Google Drive
+        if (!string.IsNullOrWhiteSpace(document.GoogleId))
+        {
+            var userEmail = await GetCreatorEmailAsync(documentId);
+            var contents = await _driveManager.GetFileStream(document.GoogleId, userEmail);
+            return contents.ToArray();
+        }
+
+        throw new Exception("Document has no content available.");
+    }
+
+    /// <summary>
+    /// Retrieves document details including type and content for AI processing.
+    /// This method is called dynamically by the Gemini service as a DataRetrievalMethod.
+    /// For GCS documents, returns metadata only without blob content.
+    /// </summary>
+    /// <param name="id">Document ID</param>
+    /// <returns>Object containing document type and blob data (or metadata only for GCS documents)</returns>
+    public async Task<object> GetDocumentDetailsForAiAsync(int id)
+    {
+        var document = await _documentRepository.GetByIdAsync(id, new[] { "DocumentType" });
+        
+        if (document == null)
+        {
+            throw new Exception("Document not found.");
+        }
+
+        // Check if document is stored in Google Cloud Storage
+        var isGcsDocument = !string.IsNullOrWhiteSpace(document.StoragePath) && document.StoragePath.StartsWith("gs://");
+        
+        if (isGcsDocument)
+        {
+            // For GCS documents, return metadata only (blob is in cloud storage)
+            return new
+            {
+                Id = document.Id,
+                Name = document.Name,
+                Type = document.Type,
+                DocumentType = document.DocumentType?.Name ?? "Unknown",
+                StoragePath = document.StoragePath,
+                Link = document.Link,
+                GoogleId = document.GoogleId,
+                Size = 0 // Size not available for GCS documents without fetching from storage
+            };
+        }
+
+        byte[]? contentBytes = null;
+
+        // Get document content (blob or from Google Drive)
+        if (document.Blob != null && document.Blob.Length > 0)
+        {
+            contentBytes = document.Blob;
+        }
+        else if (!string.IsNullOrWhiteSpace(document.GoogleId))
+        {
+            var userEmail = await GetCreatorEmailAsync(id);
+            var contents = await _driveManager.GetFileStream(document.GoogleId, userEmail);
+            contentBytes = contents.ToArray();
+        }
+
+        if (contentBytes == null || contentBytes.Length == 0)
+        {
+            throw new Exception("Document has no content available.");
+        }
+
+        return new
+        {
+            Id = document.Id,
+            Name = document.Name,
+            Type = document.Type,
+            DocumentType = document.DocumentType?.Name ?? "Unknown",
+            Blob = contentBytes,
+            Size = contentBytes.Length
+        };
     }
 }

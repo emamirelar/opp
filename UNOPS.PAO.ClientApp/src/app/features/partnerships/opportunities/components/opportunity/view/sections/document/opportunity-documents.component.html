@@ -1,0 +1,317 @@
+<!-- Documents Panel -->
+<div
+  [class]="
+    collapsed()
+      ? 'w-12 bg-white border-r border-gray-200 flex-shrink-0 sticky self-start transition-all duration-300'
+      : 'w-96 bg-white border-r border-gray-200 flex-shrink-0 sticky self-start transition-all duration-300'
+  "
+  style="top: 0; max-height: calc(100vh - 160px); overflow: visible"
+>
+  @if (!collapsed()) {
+    <!-- Expanded View -->
+    <div
+      class="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 z-[90]"
+      style="background: var(--p-content-background)"
+    >
+      <div class="flex items-center gap-2">
+        <i class="pi pi-file text-blue-600"></i>
+        <span class="font-medium text-gray-900">{{ 'title.docs' | translate }}</span>
+        <p-badge [value]="documentCount().toString()" severity="info" />
+      </div>
+      <button
+        type="button"
+        class="p-button p-button-text p-button-rounded p-button-sm flex items-center justify-center w-8 h-8 hover:bg-blue-50"
+        (click)="onTogglePanel()"
+      >
+        <i [class]="'pi ' + chevronIcon()"></i>
+      </button>
+    </div>
+
+    <!-- Scrollable Content Area -->
+    <div class="overflow-y-auto" style="max-height: calc(100vh - 280px)">
+      <!-- Upload Actions -->
+      <div class="p-4">
+        <div class="flex gap-2">
+          <p-button
+            [label]="'button.upload' | translate"
+            icon="pi pi-upload"
+            size="small"
+            styleClass="flex-1"
+            (onClick)="openUploadDialog()"
+          />
+          <p-button
+            [label]="'button.link' | translate"
+            icon="pi pi-link"
+            size="small"
+            severity="secondary"
+            [outlined]="true"
+            styleClass="flex-1"
+            (onClick)="openLinkDialog()"
+          />
+        </div>
+      </div>
+
+      @if (loading()) {
+        <!-- Loading State -->
+        <div class="flex items-center justify-center py-8">
+          <i class="pi pi-spin pi-spinner text-2xl text-blue-600"></i>
+        </div>
+      } @else if (documents().length === 0) {
+        <!-- Empty State -->
+        <div class="p-4">
+          <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 text-center">
+            <i class="pi pi-file text-4xl text-gray-400 mb-2"></i>
+            <p class="text-sm text-gray-600">{{ 'message.noDocuments' | translate }}</p>
+          </div>
+        </div>
+      } @else {
+        <!-- Document List -->
+        <div class="px-4 pb-4">
+          <div class="space-y-2">
+            @for (doc of documents(); track doc.id) {
+              <div
+                class="flex items-center gap-2 p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+                (click)="viewDocument(doc)"
+              >
+                <i
+                  [class]="
+                    'pi text-lg ' +
+                    getFileIcon(doc.type || '') +
+                    ' ' +
+                    getFileIconColor(doc.type || '')
+                  "
+                ></i>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900 truncate">
+                    {{ doc.name }}
+                  </p>
+                  <div class="flex flex-col gap-0.5">
+                    <div class="flex items-center gap-2 text-xs text-gray-500">
+                      <span>{{ doc.size || '-' }}</span>
+                      @if (doc.extensions && doc.extensions['Origin']) {
+                        <p-badge
+                          [value]="doc.extensions['Origin']"
+                          severity="success"
+                          [style]="{ 'font-size': '0.65rem' }"
+                        />
+                      }
+                    </div>
+                    @if (doc.documentTypeName) {
+                      <span class="text-xs text-gray-600">{{ doc.documentTypeName }}</span>
+                    }
+                  </div>
+                </div>
+                <div class="flex gap-1" (click)="$event.stopPropagation()">
+                  <p-button
+                    icon="pi pi-sparkles"
+                    [rounded]="true"
+                    [text]="true"
+                    size="small"
+                    severity="help"
+                    [pTooltip]="'button.aiTranscribe' | translate"
+                    tooltipPosition="top"
+                    (onClick)="aiTranscribe(doc)"
+                    [loading]="transcribingDocId() === doc.id"
+                  />
+                  <p-button
+                    icon="pi pi-eye"
+                    [rounded]="true"
+                    [text]="true"
+                    size="small"
+                    severity="secondary"
+                    (onClick)="viewDocument(doc)"
+                    [pTooltip]="'button.view' | translate"
+                    tooltipPosition="top"
+                  />
+                  <p-button
+                    icon="pi pi-trash"
+                    [rounded]="true"
+                    [text]="true"
+                    size="small"
+                    severity="danger"
+                    (onClick)="deleteDocument(doc)"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- Collapsed View -->
+    <div
+      class="h-full flex flex-col items-center"
+      style="background: var(--p-content-background)"
+    >
+      <div class="p-2 border-b border-gray-200 w-full flex justify-center flex-shrink-0">
+        <button
+          type="button"
+          class="p-button p-button-text p-button-rounded p-button-sm flex items-center justify-center w-8 h-8 hover:bg-blue-50"
+          (click)="onTogglePanel()"
+        >
+          <i [class]="'pi ' + chevronIcon()"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 flex items-center justify-center py-12" style="min-height: 40px">
+        <div
+          class="flex flex-row items-center gap-2"
+          style="
+            transform: rotate(-90deg);
+            transform-origin: center;
+            white-space: nowrap;
+          "
+        >
+          <i class="pi pi-file text-blue-600"></i>
+          <span class="font-medium text-gray-900 text-sm">{{ 'title.docs' | translate }}</span>
+          <p-badge [value]="documentCount().toString()" severity="info" />
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Upload Dialog -->
+<p-dialog
+  [header]="'title.uploadDocument' | translate"
+  [(visible)]="showUploadDialog"
+  [modal]="true"
+  [style]="{ width: '35rem' }"
+>
+  <!-- Validation Error Message -->
+  @if (showUploadValidationError()) {
+    <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
+      {{ 'message.validation.fileAndTypeRequired' | translate }}
+    </p-message>
+  }
+
+  <!-- Document Type Selection -->
+  <div class="mb-6">
+    <label for="uploadDocumentType" class="block text-sm font-medium text-gray-700 mb-2">
+      {{ 'label.documentType' | translate }} *
+    </label>
+    <p-select
+      id="uploadDocumentType"
+      [(ngModel)]="selectedDocumentType"
+      [options]="documentTypes()"
+      optionLabel="name"
+      optionValue="id"
+      placeholder="{{ 'label.selectDocumentType' | translate }}"
+      appendTo="body"
+      styleClass="w-full"
+      [style]="{ width: '100%' }"
+    />
+  </div>
+
+  <!-- File Input -->
+  <div class="mb-6">
+    <label class="block text-sm font-medium text-gray-700 mb-2">
+      {{ 'label.selectFile' | translate }} (.pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx) *
+    </label>
+    <input
+      type="file"
+      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+      (change)="onFileSelected($event)"
+      class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none p-2"
+    />
+    @if (selectedFile) {
+      <p class="mt-2 text-sm text-gray-600">
+        {{ 'label.selected' | translate }}: {{ selectedFile.name }}
+      </p>
+    }
+  </div>
+
+  <!-- Dialog Footer -->
+  <ng-template pTemplate="footer">
+    <p-button
+      [label]="'button.cancel' | translate"
+      severity="secondary"
+      (onClick)="cancelUpload()"
+      [disabled]="uploading()"
+    />
+    <p-button
+      [label]="'button.upload' | translate"
+      severity="primary"
+      (onClick)="confirmUpload()"
+      [loading]="uploading()"
+    />
+  </ng-template>
+</p-dialog>
+
+<!-- Link Dialog -->
+<p-dialog
+  [header]="'title.linkGoogleDriveDocument' | translate"
+  [(visible)]="showLinkDialog"
+  [modal]="true"
+  [style]="{ width: '35rem' }"
+>
+  <!-- Validation Error Message -->
+  @if (showLinkValidationError()) {
+    <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
+      {{ 'message.validation.documentTypeRequired' | translate }}
+    </p-message>
+  }
+
+  <!-- Google Drive File Info -->
+  @if (selectedGoogleDriveFile) {
+    <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+      <div class="flex items-center gap-3">
+        <i class="pi pi-google text-blue-600 text-2xl"></i>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-900 mb-1">{{ selectedGoogleDriveFile.name }}</p>
+          <p class="text-xs text-gray-600 mb-2">{{ 'label.selectedFromGoogleDrive' | translate }}</p>
+          <a [href]="googleDriveLink" target="_blank" class="text-xs text-blue-600 hover:underline truncate block">
+            {{ 'label.viewInGoogleDrive' | translate }}
+          </a>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Document Type Selection -->
+  <div class="mb-6">
+    <label for="linkDocumentType" class="block text-sm font-medium text-gray-700 mb-2">
+      {{ 'label.documentType' | translate }} *
+    </label>
+    <p-select
+      id="linkDocumentType"
+      [(ngModel)]="selectedDocumentType"
+      [options]="documentTypes()"
+      optionLabel="name"
+      optionValue="id"
+      placeholder="{{ 'label.selectDocumentType' | translate }}"
+      appendTo="body"
+      styleClass="w-full"
+      [style]="{ width: '100%' }"
+    />
+  </div>
+
+  <!-- Dialog Footer -->
+  <ng-template pTemplate="footer">
+    <p-button
+      [label]="'button.cancel' | translate"
+      severity="secondary"
+      (onClick)="cancelLink()"
+      [disabled]="uploading()"
+    />
+    <p-button
+      [label]="'button.link' | translate"
+      severity="primary"
+      (onClick)="confirmLink()"
+      [loading]="uploading()"
+    />
+  </ng-template>
+</p-dialog>
+
+<!-- AI Comparison Dialog -->
+<app-ai-comparison
+  entityType="Opportunity"
+  [entityId]="opportunityId()"
+  [aiExtractedData]="aiExtractedData()"
+  [fieldMappings]="opportunityFieldMappings"
+  [visible]="showComparisonDialog()"
+  (visibleChange)="showComparisonDialog.set($event)"
+  (applyChanges)="handleApplyChanges($event)"
+></app-ai-comparison>
+
