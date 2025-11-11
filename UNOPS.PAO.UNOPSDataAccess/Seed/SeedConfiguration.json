@@ -11,12 +11,12 @@
         },
         {
             "order": 1,
-            "name": "ArtifactTypes",
+            "name": "ArtifactTypeSeeder_Country",
             "type": "seeder",
-            "className": "ArtifactTypeSeeder",
-            "methodName": "SeedArtifactTypesAsync",
-            "filePath": "Seeders/ArtifactTypeSeeder.cs",
-            "description": "Artifact types for Opportunity entity"
+            "className": "ArtifactTypeSeeder_Country",
+            "methodName": "SeedCountryArtifactTypesAsync",
+            "filePath": "Seeders/ArtifactTypeSeeder_Country.cs",
+            "description": "Artifact types for Country entity"
         },
         {
             "order": 2,

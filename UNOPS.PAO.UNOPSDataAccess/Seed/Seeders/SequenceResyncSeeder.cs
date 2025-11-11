@@ -15,6 +15,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
 
             var sequences = new List<(string TableName, string SequenceName)>
             {
+                ("ArtifactTypes", "ArtifactTypes_Id_seq"),
                 ("PartnerTrees", "PartnerTrees_Id_seq"),
                 ("Partners", "Partners_Id_seq"),
                 ("Contacts", "Contacts_Id_seq"),
@@ -59,6 +60,17 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
         private static async Task<List<SequenceVerification>> VerifySequencesAsync(UNOPSAppDbContext context)
         {
             var results = new List<SequenceVerification>();
+
+            // ArtifactTypes
+            var artifactTypeSeq = await GetSequenceValueAsync(context, "ArtifactTypes_Id_seq");
+            var artifactTypeMax = await context.Set<UNOPS.PAO.Domain.Entities.ArtifactType>().MaxAsync(x => (int?)x.Id) ?? 0;
+            results.Add(new SequenceVerification
+            {
+                TableName = "ArtifactTypes",
+                SequenceValue = artifactTypeSeq,
+                MaxId = artifactTypeMax,
+                Difference = artifactTypeSeq - artifactTypeMax
+            });
 
             // PartnerTrees
             var partnerTreeSeq = await GetSequenceValueAsync(context, "PartnerTrees_Id_seq");

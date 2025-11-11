@@ -1,0 +1,46 @@
+Name,ArtifactTypeCode,ArtifactDataType,Description,Category,ApplicableEntityTypes
+UN_Region,UN_Region,String,UN-defined regional classification based on the M49 standard,,Country
+UN_Sub_Region,UN_Sub_Region,String,UN-defined regional classification based on the M49 standard,,Country
+UNOPS_Region,UNOPS_Region,String,Global business units and entities within UNOPS,,Country
+LDC,LDC,Number,,,Country
+LDC_Source,LDC_Source,String,,,Country
+LDC_Updated_Date,LDC_Updated_Date,Date,,,Country
+LLDC,LLDC,Number,,,Country
+LLDC_Source,LLDC_Source,String,,,Country
+LLDC_Updated_Date,LLDC_Updated_Date,Date,,,Country
+SIDS,SIDS,Number,,,Country
+SIDS_Source,SIDS_Source,String,,,Country
+SIDS_Updated_Date,SIDS_Updated_Date,Date,,,Country
+MVI_Score,MVI_Score,Number,"Structural vulnerability and lack of resilience of countries to external shocks across three dimensions: Environmental vulnerability, Economic vulnerability, Social vulnerability",,Country
+Structural_Vulnerability_Index,Structural_Vulnerability_Index,Number,,,Country
+Lack_of_Structural_Resilience_Index,Lack_of_Structural_Resilience_Index,Number,,,Country
+MVI_Effective_Date,MVI_Effective_Date,Date,,,Country
+World_Bank_Fragile_Situation,World_Bank_Fragile_Situation,Number,Countries and territories identified as experiencing conflict and institutional and social fragility,,Country
+UN_Programme_Country,UN_Programme_Country,Number,,,Country
+OECD_Member,OECD_Member,Number,,,Country
+DAC_Member,DAC_Member,Number,,,Country
+UNOPS_Country_Typology,UNOPS_Country_Typology,String,,,Country
+OECD_List_High_Extreme_Fragility,OECD_List_High_Extreme_Fragility,Number,"Evidence-based assessment of fragility trends across countries, to understand where, how, and why fragility is evolving",,Country
+States_of_Fragility_OECD,States_of_Fragility_OECD,String,"Evidence-based assessment of fragility trends across countries, to understand where, how, and why fragility is evolving",,Country
+Fragility_Score_OECD,Fragility_Score_OECD,Number,,,Country
+SDG_Index,SDG_Index,Number,"Progress towards each of the 17 SDGs, per country",,Country
+SDG_Index_Rank,SDG_Index_Rank,Number,,,Country
+SDGI_Year,SDGI_Year,Number,,,Country
+HDI_Index,HDI_Index,Number,Achievements in human development,,Country
+HDI_Fiscal_Year,HDI_Fiscal_Year,Number,,,Country
+HDI_Group,HDI_Group,String,,,Country
+HDI_Download_Date,HDI_Download_Date,Date,,,Country
+Inform_Risk_Index,Inform_Risk_Index,Number,Risk from humanitarian crisis and disasters that could overwhelm national response capacity,,Country
+Inform_Risk_Class,Inform_Risk_Class,String,,,Country
+Inform_Rank,Inform_Rank,Number,,,Country
+Inform_Version,Inform_Version,String,,,Country
+Inform_Download_Date,Inform_Download_Date,Date,,,Country
+GNI_Per_Capita_USD_2024,GNI_Per_Capita_USD_2024,Number,,,Country
+GNI_Download_At,GNI_Download_At,Date,,,Country
+Population_2024,Population_2024,Number,,,Country
+Population_Download_At,Population_Download_At,Date,,,Country
+Urban_Population_2024,Urban_Population_2024,Number,,,Country
+Urban_Population_Download_At,Urban_Population_Download_At,Date,,,Country
+Gini_Index_2024,Gini_Index_2024,Number,,,Country
+Gini_Index_Download_At,Gini_Index_Download_At,Date,,,Country
+Special_Situation_Countries,Special_Situation_Countries,Number,"QCPR (combines LDC, LLDC, SIDS). Report focuses on tracking demographic trends in LDCs, LLDCs, and SIDS",,Country
