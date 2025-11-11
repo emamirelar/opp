@@ -24,5 +24,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\UNOPS.PAO.Domain\UNOPS.PAO.Domain.csproj" />
+    <ProjectReference Include="..\UNOPS.PAO.Identity\UNOPS.PAO.Identity.csproj" />
   </ItemGroup>
 </Project>

@@ -29,4 +29,5 @@ public interface IManagerWrapper
     IOpportunityManager OpportunityManager { get; }
     ICommentManager CommentManager { get; }
     IEntityArtifactManager EntityArtifactManager { get; }
+    IAuditLogManager AuditLogManager { get; }
 }

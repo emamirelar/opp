@@ -8,6 +8,7 @@ public class OpportunitySDGModel
     public string SDGId { get; set; }  // The string identifier for display (e.g., "SDG-01")
     public string? SDGNumber { get; set; }
     public string? SDGName { get; set; }
+    public string? SDGLogoUrl { get; set; }  // URL to the SDG logo image
     public bool IsPrimary { get; set; }
     public string? Notes { get; set; }
 }

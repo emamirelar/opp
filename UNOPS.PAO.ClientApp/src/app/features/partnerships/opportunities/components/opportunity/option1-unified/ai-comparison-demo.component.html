@@ -1,0 +1,412 @@
+<!-- Comparison Dialog - uses showDialog input and emit closeDialog output when closed -->
+<p-dialog
+  header="AI Document Analysis - Comparison Demo"
+  [(visible)]="dialogVisible"
+  (onHide)="closeDialog.emit()"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '95vw', height: '90vh' }"
+  [maximizable]="true"
+  styleClass="ai-comparison-dialog"
+>
+  <div class="h-full flex flex-col">
+    <!-- Info Banner -->
+    <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div class="flex items-start gap-3">
+        <i class="pi pi-info-circle text-blue-600 text-xl mt-1"></i>
+        <div>
+          <h3 class="font-semibold text-blue-900 mb-1">AI Document Analysis Complete</h3>
+          <p class="text-sm text-blue-800">
+            The AI has analyzed the document and extracted opportunity information. Review the differences below 
+            and select which changes you want to apply to your opportunity record.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Bar -->
+    <div class="flex items-center justify-between mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-file text-gray-600"></i>
+          <span class="text-sm text-gray-700">
+            <strong class="text-gray-900">8 Differences Found</strong>
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-check-square text-blue-600"></i>
+          <span class="text-sm text-gray-700">
+            <strong class="text-gray-900">{{ getSelectedCount() }} Selected</strong>
+          </span>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <p-checkbox
+          [binary]="true"
+          [ngModel]="isAllSelected()"
+          (ngModelChange)="toggleAll()"
+          inputId="select-all"
+        />
+        <label for="select-all" class="text-sm font-medium text-gray-900 cursor-pointer">
+          Select All
+        </label>
+      </div>
+    </div>
+
+    <!-- Differences List -->
+    <div class="flex-1 overflow-auto pr-2">
+      <div class="space-y-4">
+        @for (diff of differences; track diff.field) {
+          <div 
+            class="border rounded-lg transition-all duration-200 p-4"
+            [class.border-blue-300]="selectedFields.get(diff.field)"
+            [class.border-gray-200]="!selectedFields.get(diff.field)"
+            [class.bg-blue-50]="selectedFields.get(diff.field)"
+            [class.bg-white]="!selectedFields.get(diff.field)"
+          >
+            <!-- Field Header -->
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-start gap-3 flex-1">
+                <p-checkbox
+                  [binary]="true"
+                  [ngModel]="selectedFields.get(diff.field) || false"
+                  (ngModelChange)="toggleField(diff.field)"
+                  (click)="$event.stopPropagation()"
+                  [inputId]="'field-' + diff.field"
+                />
+                <div>
+                  <h4 class="font-semibold text-gray-900 text-base mb-1">{{ diff.label }}</h4>
+                  <p class="text-xs text-gray-500">{{ diff.field }}</p>
+                </div>
+              </div>
+              <p-badge value="Changed" severity="warn" />
+            </div>
+
+            <!-- Value Comparison -->
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Current Value -->
+              <div class="p-3 bg-white border border-gray-200 rounded-lg">
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="pi pi-database text-gray-500 text-sm"></i>
+                  <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    Current Value
+                  </span>
+                </div>
+                
+                <!-- Render based on field type -->
+                @if (isDeliverableField(diff.field)) {
+                  <!-- Deliverables Complex View -->
+                  <div class="space-y-2">
+                    @for (item of diff.currentValue; track $index) {
+                      @let deliverable = asAny(item);
+                      <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                        <div class="font-medium text-sm text-gray-900 mb-1">{{ deliverable.outputName }}</div>
+                        @if (deliverable.outputDescription) {
+                          <p class="text-xs text-gray-600 mb-2 line-clamp-2">{{ deliverable.outputDescription }}</p>
+                        }
+                        <div class="flex items-center gap-2 flex-wrap">
+                          @if (deliverable.outputGroup) {
+                            <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">{{ deliverable.outputGroup }}</span>
+                          }
+                          @if (deliverable.quantity && deliverable.unitCode) {
+                            <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-semibold">{{ deliverable.quantity }} {{ deliverable.unitCode }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else if (isFundingPartnerField(diff.field)) {
+                  <!-- Funding Partners Complex View -->
+                  <div class="space-y-2">
+                    @for (item of diff.currentValue; track $index) {
+                      @let partner = asAny(item);
+                      <div class="bg-blue-50 rounded-lg p-3 border border-blue-100 flex items-start gap-3">
+                        <img
+                          [src]="partner.partnerLogoUrl || 'assets/images/Partner.png'"
+                          alt="Partner Logo"
+                          class="w-10 h-10 object-contain rounded"
+                        />
+                        <div class="flex-1">
+                          <div class="font-medium text-sm text-gray-900">{{ partner.partnerName }}</div>
+                          <div class="text-xs text-gray-600 mt-1">
+                            @if (partner.amount) {
+                              <span class="font-semibold">{{ formatCurrency(partner.amount) }}</span>
+                            }
+                            @if (partner.feeAmount) {
+                              <span class="text-gray-500 ml-2">+ Fee: {{ formatCurrency(partner.feeAmount) }}</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else if (isClientPartnerField(diff.field)) {
+                  <!-- Client Partners Complex View -->
+                  <div class="space-y-2">
+                    @for (item of diff.currentValue; track $index) {
+                      @let client = asAny(item);
+                      <div class="bg-gray-50 rounded-lg p-2 border border-gray-200 flex items-center gap-2">
+                        <img
+                          [src]="client.partnerLogoUrl || 'assets/images/Partner.png'"
+                          alt="Partner Logo"
+                          class="w-8 h-8 object-contain rounded"
+                        />
+                        <span class="text-sm text-gray-900 font-medium">{{ client.partnerName }}</span>
+                      </div>
+                    }
+                  </div>
+                } @else if (isSDGField(diff.field)) {
+                  <!-- SDGs Complex View -->
+                  <div class="space-y-2">
+                    @for (item of diff.currentValue; track $index) {
+                      @let sdg = asAny(item);
+                      <div class="bg-white border border-gray-200 rounded-lg p-3 flex items-center gap-3">
+                        <img
+                          [src]="getSDGLogo(sdg.sdgId)"
+                          alt="SDG Logo"
+                          class="w-12 h-12 object-contain rounded"
+                        />
+                        <div class="flex-1">
+                          <div class="font-medium text-sm text-gray-900">{{ sdg.sdgName }}</div>
+                          <div class="flex items-center gap-2 mt-1">
+                            <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-semibold">{{ sdg.sdgNumber }}</span>
+                            @if (sdg.isPrimary) {
+                              <span class="text-xs bg-green-600 text-white px-2 py-1 rounded font-bold">Primary</span>
+                            } @else {
+                              <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded">Secondary</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else if (isCountryField(diff.field)) {
+                  <!-- Countries Complex View -->
+                  <div class="flex flex-wrap gap-2">
+                    @for (item of diff.currentValue; track $index) {
+                      @let country = asAny(item);
+                      <div class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                        <span class="text-2xl">{{ getCountryFlag(country.countryCode) }}</span>
+                        <span class="text-sm font-medium text-gray-900">{{ country.countryName }}</span>
+                      </div>
+                    }
+                  </div>
+                } @else if (isStakeholderField(diff.field)) {
+                  <!-- Stakeholders Complex View -->
+                  <div class="space-y-2">
+                    @for (item of diff.currentValue; track $index) {
+                      @let stakeholder = asAny(item);
+                      <div class="bg-gray-50 rounded-lg p-2 border border-gray-200 flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
+                          {{ getInitials(stakeholder.userName) }}
+                        </div>
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-gray-900">{{ stakeholder.userName }}</div>
+                          <div class="text-xs text-gray-500">{{ stakeholder.entityRoleName }}</div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else if (diff.isArray) {
+                  <div class="space-y-2">
+                    @for (item of diff.currentValue; track item) {
+                      <div class="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 px-3 py-2 rounded">
+                        <i class="pi pi-circle-fill text-xs text-gray-400"></i>
+                        <span>{{ formatArrayValue([item]) }}</span>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="text-sm text-gray-900 leading-relaxed">
+                    {{ diff.currentValue || '-' }}
+                  </p>
+                }
+              </div>
+
+              <!-- AI Extracted Value -->
+              <div class="p-3 bg-blue-50 border-2 border-blue-300 rounded-lg">
+                <div class="flex items-center gap-2 mb-3">
+                  <i class="pi pi-sparkles text-blue-600 text-sm"></i>
+                  <span class="text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                    AI Extracted Value
+                  </span>
+                </div>
+                
+                <!-- Render based on field type -->
+                @if (isDeliverableField(diff.field)) {
+                  <!-- Deliverables Complex View -->
+                  <div class="space-y-2">
+                    @for (item of diff.aiValue; track $index) {
+                      @let deliverable = asAny(item);
+                      <div class="bg-white rounded-lg p-3 border-2 border-blue-300">
+                        <div class="font-medium text-sm text-blue-900 mb-1">{{ deliverable.outputName }}</div>
+                        @if (deliverable.outputDescription) {
+                          <p class="text-xs text-blue-700 mb-2 line-clamp-2">{{ deliverable.outputDescription }}</p>
+                        }
+                        <div class="flex items-center gap-2 flex-wrap">
+                          @if (deliverable.outputGroup) {
+                            <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">{{ deliverable.outputGroup }}</span>
+                          }
+                          @if (deliverable.quantity && deliverable.unitCode) {
+                            <span class="text-xs bg-yellow-200 text-yellow-900 px-2 py-1 rounded font-bold">{{ deliverable.quantity }} {{ deliverable.unitCode }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else if (isFundingPartnerField(diff.field)) {
+                  <!-- Funding Partners Complex View -->
+                  <div class="space-y-2">
+                    @for (item of diff.aiValue; track $index) {
+                      @let partner = asAny(item);
+                      <div class="bg-white rounded-lg p-3 border-2 border-blue-300 flex items-start gap-3">
+                        <img
+                          [src]="partner.partnerLogoUrl || 'assets/images/Partner.png'"
+                          alt="Partner Logo"
+                          class="w-10 h-10 object-contain rounded"
+                        />
+                        <div class="flex-1">
+                          <div class="font-medium text-sm text-blue-900">{{ partner.partnerName }}</div>
+                          <div class="text-xs text-blue-700 mt-1">
+                            @if (partner.amount) {
+                              <span class="font-bold">{{ formatCurrency(partner.amount) }}</span>
+                            }
+                            @if (partner.feeAmount) {
+                              <span class="text-blue-600 ml-2">+ Fee: {{ formatCurrency(partner.feeAmount) }}</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else if (isClientPartnerField(diff.field)) {
+                  <!-- Client Partners Complex View -->
+                  <div class="space-y-2">
+                    @for (item of diff.aiValue; track $index) {
+                      @let client = asAny(item);
+                      <div class="bg-white rounded-lg p-2 border-2 border-blue-300 flex items-center gap-2">
+                        <img
+                          [src]="client.partnerLogoUrl || 'assets/images/Partner.png'"
+                          alt="Partner Logo"
+                          class="w-8 h-8 object-contain rounded"
+                        />
+                        <span class="text-sm text-blue-900 font-semibold">{{ client.partnerName }}</span>
+                      </div>
+                    }
+                  </div>
+                } @else if (isSDGField(diff.field)) {
+                  <!-- SDGs Complex View -->
+                  <div class="space-y-2">
+                    @for (item of diff.aiValue; track $index) {
+                      @let sdg = asAny(item);
+                      <div class="bg-white border-2 border-blue-300 rounded-lg p-3 flex items-center gap-3">
+                        <img
+                          [src]="getSDGLogo(sdg.sdgId)"
+                          alt="SDG Logo"
+                          class="w-12 h-12 object-contain rounded"
+                        />
+                        <div class="flex-1">
+                          <div class="font-semibold text-sm text-blue-900">{{ sdg.sdgName }}</div>
+                          <div class="flex items-center gap-2 mt-1">
+                            <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded font-bold">{{ sdg.sdgNumber }}</span>
+                            @if (sdg.isPrimary) {
+                              <span class="text-xs bg-green-700 text-white px-2 py-1 rounded font-bold">Primary</span>
+                            } @else {
+                              <span class="text-xs bg-blue-600 text-white px-2 py-1 rounded">Secondary</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else if (isCountryField(diff.field)) {
+                  <!-- Countries Complex View -->
+                  <div class="flex flex-wrap gap-2">
+                    @for (item of diff.aiValue; track $index) {
+                      @let country = asAny(item);
+                      <div class="bg-white border-2 border-blue-300 rounded-lg px-3 py-2 flex items-center gap-2">
+                        <span class="text-2xl">{{ getCountryFlag(country.countryCode) }}</span>
+                        <span class="text-sm font-bold text-blue-900">{{ country.countryName }}</span>
+                      </div>
+                    }
+                  </div>
+                } @else if (isStakeholderField(diff.field)) {
+                  <!-- Stakeholders Complex View -->
+                  <div class="space-y-2">
+                    @for (item of diff.aiValue; track $index) {
+                      @let stakeholder = asAny(item);
+                      <div class="bg-white rounded-lg p-2 border-2 border-blue-300 flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-blue-700 text-white flex items-center justify-center text-xs font-bold">
+                          {{ getInitials(stakeholder.userName) }}
+                        </div>
+                        <div class="flex-1">
+                          <div class="text-sm font-semibold text-blue-900">{{ stakeholder.userName }}</div>
+                          <div class="text-xs text-blue-700">{{ stakeholder.entityRoleName }}</div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                } @else if (diff.isArray) {
+                  <div class="space-y-2">
+                    @for (item of diff.aiValue; track item) {
+                      <div class="flex items-center gap-2 text-sm bg-white px-3 py-2 rounded text-blue-700 font-medium">
+                        <i class="pi pi-circle-fill text-xs text-blue-500"></i>
+                        <span>{{ formatArrayValue([item]) }}</span>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="text-sm text-blue-900 leading-relaxed font-medium">
+                    {{ diff.aiValue || '-' }}
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+      <div class="flex items-center gap-6 text-xs">
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-white border border-gray-200 rounded"></div>
+          <span class="text-gray-600">Current Data</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-blue-50 border-2 border-blue-300 rounded"></div>
+          <span class="text-gray-600">AI Extracted</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-between w-full">
+      <div class="text-sm text-gray-600">
+        <i class="pi pi-info-circle mr-2"></i>
+        Select the fields you want to update, then click "Apply Selected Changes"
+      </div>
+      <div class="flex gap-2">
+        <p-button
+          label="Cancel"
+          severity="secondary"
+          (onClick)="closeDialogInternal()"
+          icon="pi pi-times"
+        />
+        <p-button
+          label="Apply Selected Changes"
+          severity="primary"
+          (onClick)="applyChanges()"
+          [disabled]="getSelectedCount() === 0"
+          icon="pi pi-check"
+          [badge]="getSelectedCount().toString()"
+          badgeSeverity="info"
+        />
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>

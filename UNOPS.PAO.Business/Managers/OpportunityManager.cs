@@ -626,5 +626,14 @@ public class OpportunityManager : IOpportunityManager
         await opportunityRepository.Delete(entity);
         return true;
     }
+
+    /// <summary>
+    /// Apply AI-extracted changes to an opportunity across multiple sections
+    /// NOTE: This is a stub implementation. Use UNOPSOpportunityManager for full functionality.
+    /// </summary>
+    public virtual async Task<OpportunityModel> ApplyAiChangesAsync(int id, ApplyOpportunityAiChangesRequest request)
+    {
+        throw new NotImplementedException("ApplyAiChangesAsync is only implemented in UNOPSOpportunityManager");
+    }
 }
 

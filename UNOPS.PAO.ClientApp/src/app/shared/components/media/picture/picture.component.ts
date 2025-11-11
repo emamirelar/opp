@@ -20,6 +20,7 @@ export class PictureComponent {
   @Input() size: 'extra-small' | 'small' | 'medium' | 'large' = 'medium';
   @Input() uploadUrl: string | null = null;
   @Input() disabled: boolean = false;
+  @Input() entityType: 'Contact' | 'Partner' = 'Contact'; // Added to determine which default image to use
   @Output() imageChanged = new EventEmitter<string>();
 
   private dialogRef: DynamicDialogRef | null = null;
@@ -34,6 +35,40 @@ export class PictureComponent {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /**
+   * Get the effective image URL with fallback to default placeholder
+   */
+  getEffectiveImageUrl(): string {
+    if (this.imageUrl && this.imageUrl.trim() !== '') {
+      return this.imageUrl;
+    }
+    // Return default image based on entity type
+    return this.entityType === 'Partner' 
+      ? 'assets/images/Partner.png' 
+      : 'assets/images/Contact.png';
+  }
+
+  /**
+   * Handle image load error by replacing with default placeholder
+   * Includes guard to prevent infinite loop if default image also fails to load
+   */
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    const defaultImagePath = this.entityType === 'Partner' 
+      ? 'assets/images/Partner.png' 
+      : 'assets/images/Contact.png';
+    
+    // Guard: Only set default image if current src is not already the default
+    // This prevents infinite loop if the default image itself fails to load
+    if (!img.src.endsWith(defaultImagePath)) {
+      img.src = defaultImagePath;
+    } else {
+      // Default image failed to load - hide the image and show nothing
+      // The gray background circle from the parent div will remain visible
+      img.style.display = 'none';
+    }
   }
 
   getSizeClass(): string {
