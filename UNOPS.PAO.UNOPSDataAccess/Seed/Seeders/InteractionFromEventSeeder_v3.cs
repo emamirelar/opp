@@ -10700,10 +10700,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     var existingInteraction = await context.Interactions
                         .FirstOrDefaultAsync(i => i.GmailMessageId == gmailMessageId);
 
+                    // Check if interaction already exists based on Subject and Description
+                    var existingInteractionBySubDesc = await context.Interactions
+                        .FirstOrDefaultAsync(i => i.Subject == interactionData.Subject && i.Description == interactionData.Description);
+
                     if (existingInteraction != null)
                     {
-                        // Update existing interaction - only update CreatedDate field
+                        // Update existing interaction - only update CreatedDate & Type fields
                         existingInteraction.CreatedDate = interactionData.CreatedDate;
+                        existingInteraction.Type = interactionData.Type;
+                    }
+                    else if (existingInteractionBySubDesc != null)
+                    {
+                        //Update existing interaction
+                        existingInteractionBySubDesc.CreatedDate = interactionData.CreatedDate;
+                        existingInteractionBySubDesc.Type = interactionData.Type;
+                        existingInteractionBySubDesc.GmailMessageId = gmailMessageId;
                     }
                     else
                     {
