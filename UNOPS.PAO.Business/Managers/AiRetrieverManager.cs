@@ -355,6 +355,20 @@ public class AiRetrieverManager : IAiRetrieverManager
         var effectiveUserEmail = userEmail ?? (isDevelopment ? devEmail : null);
         if (!string.IsNullOrEmpty(effectiveUserEmail))
         {
+            // Extract email if it contains a colon (e.g., "securetoken.google.com/project/uid:email@domain.com")
+            // Split by colon and take the last part if it looks like an email
+            var emailParts = effectiveUserEmail.Split(':');
+            if (emailParts.Length > 1)
+            {
+                var lastPart = emailParts[emailParts.Length - 1].Trim();
+                // Check if the last part contains @ (basic email validation)
+                if (lastPart.Contains("@"))
+                {
+                    effectiveUserEmail = lastPart;
+                    _logger.LogInformation("🔍 [AUTH-HEADERS] Extracted email from claim: {Email}", effectiveUserEmail);
+                }
+            }
+            
             headers["x-unops-impersonated-user"] = effectiveUserEmail;
             _logger.LogInformation("✅ [AUTH-HEADERS] Added impersonation header for: {Email}", effectiveUserEmail);
         }
