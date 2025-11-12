@@ -69,7 +69,7 @@
           <i class="pi pi-lightbulb text-unops-info"></i>
           <span>
             {{ 'title.dst.recommendations' | translate }}
-            ({{ recommendations().length }})
+            ({{ visibleRecommendations().length }})
           </span>
         </h3>
 
@@ -77,13 +77,13 @@
           <div class="text-center py-4">
             <i class="pi pi-spin pi-spinner text-2xl text-gray-400"></i>
           </div>
-        } @else if (recommendations().length === 0) {
+        } @else if (visibleRecommendations().length === 0) {
           <div class="bg-blue-50 rounded-lg p-4 border border-blue-100 text-center text-gray-600">
             {{ 'message.dst.noRecommendations' | translate }}
           </div>
         } @else {
           <div class="max-h-[600px] overflow-y-auto pr-2">
-            @for (rec of recommendations(); track $index) {
+            @for (rec of visibleRecommendations(); track $index) {
               <div class="bg-blue-50 rounded-lg p-4 mb-3 border border-blue-100">
                 <h4 class="font-semibold text-gray-900 mb-2">
                   {{ rec.title }}
@@ -97,12 +97,20 @@
                 </div>
                 <div class="flex gap-2">
                   <p-button
-                    [label]="'button.dst.addToRegister' | translate"
-                    icon="pi pi-plus"
+                    [label]="'button.dst.accept' | translate"
+                    icon="pi pi-check"
                     size="small"
-                    severity="primary"
+                    severity="success"
                     [outlined]="true"
-                    (onClick)="addRecommendationToRegister(rec)"
+                    (onClick)="acceptRecommendation(rec, $index)"
+                  />
+                  <p-button
+                    [label]="'button.dst.dismiss' | translate"
+                    icon="pi pi-times"
+                    size="small"
+                    severity="secondary"
+                    [outlined]="true"
+                    (onClick)="dismissRecommendation($index)"
                   />
                 </div>
               </div>

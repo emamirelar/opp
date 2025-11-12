@@ -212,6 +212,27 @@ export class OpportunityDstSectionComponent {
   ];
 
   /**
+   * @description Signal for tracking dismissed recommendation indexes
+   * @type {WritableSignal<Set<number>>}
+   * @since 1.0.0
+   */
+  readonly dismissedRecommendations = signal<Set<number>>(new Set());
+
+  /**
+   * @description Filtered recommendations (excluding dismissed ones)
+   * @type {Signal<AIRiskRecommendation[]>}
+   * @since 1.0.0
+   */
+  readonly visibleRecommendations = computed(() => {
+    const recommendations = this.recommendations();
+    const dismissed = this.dismissedRecommendations();
+    
+    if (!recommendations) return [];
+    
+    return recommendations.filter((_: AIRiskRecommendation, index: number) => !dismissed.has(index));
+  });
+
+  /**
    * @description Check if DST analysis data is available
    * @type {Signal<boolean>}
    * @since 1.0.0
@@ -450,23 +471,36 @@ export class OpportunityDstSectionComponent {
   }
 
   /**
-   * @description Handle accept recommendation action
-   * @param {number} recommendationId - The recommendation ID to accept
+   * @description Accept a recommendation and add it to the risk register
+   * @param {AIRiskRecommendation} recommendation - The recommendation to accept
+   * @param {number} index - The index of the recommendation in the list
    * @since 1.0.0
    */
-  acceptRecommendation(recommendationId: number): void {
-    // TODO: Implement recommendation acceptance when backend is ready
-    console.log('Accept recommendation:', recommendationId);
+  acceptRecommendation(recommendation: AIRiskRecommendation, index: number): void {
+    // Pre-fill the dialog with recommendation data
+    this.newRisk = {
+      title: recommendation.title,
+      description: recommendation.description,
+      recommendation: recommendation.recommendation,
+      impact: 2 // Default to Medium, user can change
+    };
+    this.showDialogValidationError.set(false);
+    this.showAddRiskDialog = true;
+    
+    // Also dismiss this recommendation from the list after opening the dialog
+    this.dismissRecommendation(index);
   }
 
   /**
-   * @description Handle dismiss recommendation action
-   * @param {number} recommendationId - The recommendation ID to dismiss
+   * @description Dismiss a recommendation from the view
+   * @param {number} index - The index of the recommendation to dismiss
    * @since 1.0.0
    */
-  dismissRecommendation(recommendationId: number): void {
-    // TODO: Implement recommendation dismissal when backend is ready
-    console.log('Dismiss recommendation:', recommendationId);
+  dismissRecommendation(index: number): void {
+    const dismissed = this.dismissedRecommendations();
+    const newDismissed = new Set(dismissed);
+    newDismissed.add(index);
+    this.dismissedRecommendations.set(newDismissed);
   }
 
   /**
