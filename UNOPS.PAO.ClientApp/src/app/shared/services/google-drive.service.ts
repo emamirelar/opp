@@ -41,25 +41,40 @@ export class GoogleDriveService {
   constructor() {
     // Load Google API scripts immediately (they take time to load)
     this.loadGoogleAPIs();
-    
-    // Configuration will be loaded on-demand when needed
-    console.log('🔧 Google Drive Service initialized. Configuration will be loaded when authentication is requested.');
   }
   
   /**
-   * @description Load Google API configuration from backend
-   * @returns {void}
+   * @description Load Google API configuration from backend (async version that actually calls the API)
+   * @returns {Promise<boolean>} True if config loaded successfully
    * @private
    */
-  private loadConfiguration(): void {
-    const config = this.configService.getConfig();
-    if (config && config.GoogleClientId && config.GoogleApiKey) {
-      this.CLIENT_ID = config.GoogleClientId;
-      this.API_KEY = config.GoogleApiKey;
-      this.configLoaded = true;
-      console.log('✅ Google API credentials loaded from configuration');
-    } else {
-      console.log('⏳ Configuration not yet available, will retry...');
+  private async loadConfigurationAsync(): Promise<boolean> {
+    try {
+      // Actually reload config from backend
+      await this.configService.loadConfig();
+      
+      const config = this.configService.getConfig();
+      
+      // Debug logging
+      if (!config) {
+        return false;
+      }
+      
+      // Backend returns lowercase properties (googleClientId, googleApiKey)
+      const clientId = config.googleClientId || config.GoogleClientId;
+      const apiKey = config.googleApiKey || config.GoogleApiKey;
+
+      if (clientId && apiKey) {
+        this.CLIENT_ID = clientId;
+        this.API_KEY = apiKey;
+        this.configLoaded = true;
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ [GoogleDrive] Error loading configuration:', error);
+      return false;
     }
   }
 
@@ -103,41 +118,38 @@ export class GoogleDriveService {
    */
   private async initializeAuthAsync(): Promise<boolean> {
     // Wait for configuration to be available (with retries)
-    const maxRetries = 10; // 10 retries
-    const retryDelay = 300; // 300ms between retries
+    const maxRetries = 3; // 3 retries should be enough now that we're actually calling the API
+    const retryDelay = 1000; // 1 second between retries
     
     for (let attempt = 0; attempt < maxRetries; attempt++) {
-      this.loadConfiguration();
+      const loaded = await this.loadConfigurationAsync();
       
-      if (this.configLoaded && this.CLIENT_ID && this.API_KEY) {
-        console.log(`✅ Google Drive API configuration loaded successfully (attempt ${attempt + 1})`);
+      if (loaded && this.configLoaded && this.CLIENT_ID && this.API_KEY) {
         break;
       }
       
       if (attempt < maxRetries - 1) {
-        console.log(`⏳ Waiting for configuration to load... (attempt ${attempt + 1}/${maxRetries})`);
         await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
     }
     
     // Final check after retries
     if (!this.configLoaded) {
-      console.error('❌ Google API configuration not available after retries');
-      console.error('CLIENT_ID:', this.CLIENT_ID ? 'Present' : 'Missing');
-      console.error('API_KEY:', this.API_KEY ? 'Present' : 'Missing');
-      console.error('Make sure the backend configuration endpoint is working and returning Google API credentials');
+      console.error('❌ [GoogleDrive] Configuration not available after retries');
+      console.error('❌ [GoogleDrive] CLIENT_ID present:', this.CLIENT_ID ? 'Yes' : 'No');
+      console.error('❌ [GoogleDrive] API_KEY present:', this.API_KEY ? 'Yes' : 'No');
+      console.error('❌ [GoogleDrive] Make sure /api/configuration endpoint is returning Google API credentials');
+      console.error('❌ [GoogleDrive] Check that GoogleClientId and GoogleApiKey are in the configuration');
       return false;
     }
     
     // Validate configuration
     if (!this.CLIENT_ID || !this.API_KEY) {
-      console.error('❌ Google API credentials are missing or empty after retries');
+      console.error('❌ [GoogleDrive] Credentials are missing or empty after retries');
       console.error('CLIENT_ID:', this.CLIENT_ID || '(empty)');
       console.error('API_KEY:', this.API_KEY ? '(present but check if valid)' : '(empty)');
       return false;
     }
-
-    console.log('✅ Proceeding with Google Drive authentication initialization');
 
     // Wait for APIs to load
     await this.waitForAPIs();
@@ -149,7 +161,6 @@ export class GoogleDriveService {
       // Initialize GIS token client
       this.initializeGisClient();
       
-      console.log('✅ Google Drive auth initialized successfully');
       return true;
     } catch (error) {
       console.error('❌ Failed to initialize Google Drive auth:', error);
