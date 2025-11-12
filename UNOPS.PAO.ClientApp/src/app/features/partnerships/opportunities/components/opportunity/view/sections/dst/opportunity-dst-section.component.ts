@@ -14,6 +14,7 @@ import { DividerModule } from 'primeng/divider';
 import { TagModule } from 'primeng/tag';
 import { ChipModule } from 'primeng/chip';
 import { BadgeModule } from 'primeng/badge';
+import { AvatarModule } from 'primeng/avatar';
 import { DialogModule } from 'primeng/dialog';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
@@ -54,6 +55,7 @@ import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.servi
     TagModule,
     ChipModule,
     BadgeModule,
+    AvatarModule,
     DialogModule,
     FloatLabelModule,
     InputTextModule,
@@ -628,6 +630,22 @@ export class OpportunityDstSectionComponent {
         });
       }
     });
+  }
+
+  /**
+   * @description Get initials from person's name for avatar
+   * @param {string | null} name - Person's full name
+   * @returns {string} Initials (max 2 characters) or '?' if no name
+   * @since 1.0.0
+   */
+  getInitials(name: string | null): string {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
   }
 
   /**

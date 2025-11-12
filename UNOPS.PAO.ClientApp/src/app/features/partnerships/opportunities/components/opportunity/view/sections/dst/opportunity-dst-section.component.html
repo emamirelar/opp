@@ -370,22 +370,33 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             @for (person of relevantPeople(); track person.personId) {
               <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
-                <!-- Name -->
-                @if (person.name) {
-                  <h3 class="text-sm font-semibold text-gray-900 mb-2">
-                    {{ person.name }}
-                  </h3>
-                }
+                <!-- Profile Photo and Name -->
+                <div class="flex items-start gap-3 mb-3">
+                  <!-- Initials Avatar -->
+                  <p-avatar 
+                    [label]="getInitials(person.name)" 
+                    size="large" 
+                    shape="circle"
+                    styleClass="flex-shrink-0 bg-unops-primary text-white"
+                  />
+
+                  <!-- Name -->
+                  @if (person.name) {
+                    <div class="flex-1 min-w-0">
+                      <h3 class="text-sm font-semibold text-gray-900 mb-1">
+                        {{ person.name }}
+                      </h3>
+                      @if (person.title) {
+                        <p class="text-xs text-gray-600 line-clamp-1">
+                          {{ person.title }}
+                        </p>
+                      }
+                    </div>
+                  }
+                </div>
 
                 <!-- Person Details -->
                 <div class="text-xs text-gray-600 space-y-2">
-                  <!-- Title -->
-                  @if (person.title) {
-                    <div class="flex items-start gap-2">
-                      <i class="pi pi-briefcase text-gray-400 mt-0.5 flex-shrink-0"></i>
-                      <span class="line-clamp-2">{{ person.title }}</span>
-                    </div>
-                  }
 
                   <!-- Department -->
                   @if (person.department) {
