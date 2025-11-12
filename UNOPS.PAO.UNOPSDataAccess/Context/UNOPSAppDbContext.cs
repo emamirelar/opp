@@ -6,6 +6,7 @@ using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using Microsoft.Extensions.Hosting;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.UNOPSDomain.Authorization;
 
 namespace UNOPS.PAO.UNOPSDataAccess.Context;
@@ -253,6 +254,38 @@ public class UNOPSAppDbContext : AppDbContext
                   .OnDelete(DeleteBehavior.NoAction) // No cascade, no constraints
                   .HasConstraintName(null); // Explicitly remove FK constraint
         });
+
+        // Configure Risk entity
+        modelBuilder.Entity<Risk>(entity =>
+        {
+            entity.ToTable("Risks");
+
+            entity.HasIndex(e => new { e.EntityType, e.EntityId })
+                  .HasDatabaseName("IX_Risks_EntityType_EntityId");
+
+            entity.Property(e => e.EntityType)
+                  .IsRequired()
+                  .HasMaxLength(50);
+
+            entity.Property(e => e.Title)
+                  .IsRequired()
+                  .HasMaxLength(255);
+
+            entity.Property(e => e.Description)
+                  .IsRequired();
+
+            entity.Property(e => e.Recommendation)
+                  .IsRequired();
+
+            entity.Property(e => e.Impact)
+                  .IsRequired()
+                  .HasConversion<int>();
+
+            entity.Property(e => e.RiskStatus)
+                  .IsRequired()
+                  .HasConversion<int>()
+                  .HasDefaultValue(RiskStatus.Open);
+        });
     }
 
     public new DbSet<UNOPSContact> Contacts { get; set; }
@@ -289,6 +322,9 @@ public class UNOPSAppDbContext : AppDbContext
     
     // Seed script tracking
     public DbSet<SeedScript> SeedScripts { get; set; }
+
+    // Risk register
+    public DbSet<Risk> Risks { get; set; }
     
     // Base Engagement entities (externally managed, read-only)
     public DbSet<BaseEngagement> BaseEngagements { get; set; }

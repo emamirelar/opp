@@ -449,6 +449,16 @@ public class Startup
         // Register Global Filter Service for centralized global filter logic
         services.AddScoped<GlobalFilterService>();
         
+        // Register External API configuration for AI retriever services
+        services.Configure<UNOPS.PAO.Models.Configuration.ExternalApiSettings>(
+            Configuration.GetSection("ExternalApiSettings"));
+        
+        // Register IAP authentication helper for service account impersonation (singleton for token caching)
+        services.AddSingleton<IAPAuthHelper>();
+        
+        // Register AI Retriever Manager for external API calls with shared authentication
+        services.AddScoped<IAiRetrieverManager, AiRetrieverManager>();
+        
         // Data seeding is now triggered manually via API endpoint: POST /api/system-admin/seeding/run
         // services.AddDataSeeding(); // REMOVED - no longer runs on startup
 

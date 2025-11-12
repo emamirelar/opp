@@ -42,6 +42,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSOpportunityManager opportunityManager;
     private readonly CommentManager commentManager;
     private readonly UNOPSAuditLogManager auditLogManager;
+    private readonly UNOPSRiskManager riskManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
                                UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, GlobalFilterService globalFilterService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService, IAiPromptCacheService aiPromptCacheService) : base(mapper, context, userManager, httpContextAccessor, configuration, serviceProvider)
@@ -92,13 +93,16 @@ public class UNOPSManagerWrapper : ManagerWrapper
         baseEngagementManager = new BaseEngagementManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
         
         // Create OpportunityManager
-        opportunityManager = new UNOPSOpportunityManager(mapper, opsContext);
+        opportunityManager = new UNOPSOpportunityManager(mapper, opsContext, configuration, permissionService, httpContextAccessor, serviceProvider);
         
         // Create CommentManager
         commentManager = new CommentManager(mapper, opsContext, this);
         
         // Create AuditLogManager
         auditLogManager = new UNOPSAuditLogManager(mapper, opsContext, configuration, userManager, permissionService, httpContextAccessor);
+        
+        // Create RiskManager
+        riskManager = new UNOPSRiskManager(mapper, opsContext, configuration, permissionService, httpContextAccessor, serviceProvider);
     }
 
     public override ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -114,6 +118,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     public override IOpportunityManager OpportunityManager => opportunityManager;
     public override ICommentManager CommentManager => commentManager;
     public override IAuditLogManager AuditLogManager => auditLogManager;
+    public override IRiskManager RiskManager => riskManager;
     
     // UNOPS-specific managers
     public IUNOPSEntityConfigurationManager EntityConfigurationManager => entityConfigurationManager;

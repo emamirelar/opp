@@ -39,17 +39,11 @@ export class GoogleDriveService {
   private configLoaded = false;
 
   constructor() {
-    // TEMPORARY: Hardcoded credentials for testing
-    this.CLIENT_ID = '1069310298210-dprrg7ts1lk8td81t4oj9q8sje28sh0f.apps.googleusercontent.com';
-    this.API_KEY = 'AIzaSyCgblVxknwJuc8FB9o4J_Bg5oQpMSFxnMI';
-    this.configLoaded = true;
-    console.log('🔧 TEMPORARY: Using hardcoded Google API credentials for testing');
-    
-    // Load configuration from backend (will override if available)
-    this.loadConfiguration();
-    
-    // Load Google API scripts
+    // Load Google API scripts immediately (they take time to load)
     this.loadGoogleAPIs();
+    
+    // Configuration will be loaded on-demand when needed
+    console.log('🔧 Google Drive Service initialized. Configuration will be loaded when authentication is requested.');
   }
   
   /**
@@ -63,6 +57,9 @@ export class GoogleDriveService {
       this.CLIENT_ID = config.GoogleClientId;
       this.API_KEY = config.GoogleApiKey;
       this.configLoaded = true;
+      console.log('✅ Google API credentials loaded from configuration');
+    } else {
+      console.log('⏳ Configuration not yet available, will retry...');
     }
   }
 

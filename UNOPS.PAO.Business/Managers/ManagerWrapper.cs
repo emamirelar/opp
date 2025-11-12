@@ -5,6 +5,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
@@ -33,6 +34,8 @@ public class ManagerWrapper : IManagerWrapper
     private ICommentManager commentManager;
     private IAuditLogManager auditLogManager;
     private IEntityArtifactManager entityArtifactManager;
+    private IAiRetrieverManager aiRetrieverManager;
+    private IRiskManager riskManager;
     
     public ManagerWrapper(IMapper mapper, AppDbContext context,
                           UserManager<PAOIdentityUser> userManager, 
@@ -68,6 +71,9 @@ public class ManagerWrapper : IManagerWrapper
         
         entityArtifactManager = new EntityArtifactManager(mapper, context);
         
+        // Get AiRetrieverManager from service provider
+        aiRetrieverManager = serviceProvider.GetService<IAiRetrieverManager>();
+        
         // Default implementation - will be overridden in UNOPSManagerWrapper
         userManagementManager = null;
         aiPromptManager = null; // Will be overridden in UNOPSManagerWrapper
@@ -98,4 +104,6 @@ public class ManagerWrapper : IManagerWrapper
     public virtual ICommentManager CommentManager => commentManager;
     public virtual IAuditLogManager AuditLogManager => auditLogManager;
     public virtual IEntityArtifactManager EntityArtifactManager => entityArtifactManager;
+    public virtual IAiRetrieverManager AiRetrieverManager => aiRetrieverManager;
+    public virtual IRiskManager RiskManager => riskManager;
 }

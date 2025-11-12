@@ -30,4 +30,6 @@ public interface IManagerWrapper
     ICommentManager CommentManager { get; }
     IEntityArtifactManager EntityArtifactManager { get; }
     IAuditLogManager AuditLogManager { get; }
+    IAiRetrieverManager AiRetrieverManager { get; }
+    IRiskManager RiskManager { get; }
 }

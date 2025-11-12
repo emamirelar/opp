@@ -23,4 +23,8 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\UNOPS.PAO.Models\UNOPS.PAO.Models.csproj" />
+  </ItemGroup>
+
 </Project>

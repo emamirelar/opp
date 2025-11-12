@@ -7,60 +7,47 @@
     </div>
   </ng-template>
 
-  @if (!hasDSTAnalysis()) {
-    <!-- Empty State -->
-    <div class="text-center py-12">
-      <i class="pi pi-chart-line text-6xl text-gray-300 mb-4"></i>
-      <h3 class="text-lg font-semibold text-gray-700 mb-2">
-        {{ 'message.dst.notAvailable' | translate }}
-      </h3>
-      <p class="text-sm text-gray-500 mb-4">
-        {{ 'message.dst.notAvailableDescription' | translate }}
-      </p>
-      <p-button
-        [label]="'button.dst.generateAnalysis' | translate"
-        icon="pi pi-refresh"
-        (onClick)="refreshAnalysis()"
-      />
-    </div>
-  } @else {
-    <!-- DST Analysis Content -->
-    <div class="space-y-6">
-      <!-- Risks and Recommendations Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Risks -->
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <i class="pi pi-exclamation-triangle text-unops-warning"></i>
-              <span>
-                {{ 'title.dst.risksIdentified' | translate }}
-                ({{ opportunity().dstAnalysis!.risks.length }})
-              </span>
-            </h3>
-            <p-button
-              [label]="'button.dst.addToRegister' | translate"
-              icon="pi pi-plus"
-              size="small"
-              [outlined]="true"
-              (onClick)="addToRiskRegister()"
-            />
-          </div>
+  <div class="space-y-6">
+    <!-- Risks and Recommendations Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Risks from Register (Left Panel) -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <i class="pi pi-exclamation-triangle text-unops-warning"></i>
+            <span>
+              {{ 'title.dst.risksIdentified' | translate }}
+              ({{ risks().length }})
+            </span>
+          </h3>
+          <p-button
+            [label]="'button.dst.addToRegister' | translate"
+            icon="pi pi-plus"
+            size="small"
+            [outlined]="true"
+            (onClick)="addToRiskRegister()"
+          />
+        </div>
 
-          @if (opportunity().dstAnalysis!.risks.length === 0) {
-            <div class="bg-white rounded-lg p-4 border border-gray-200 text-center text-gray-500">
-              {{ 'message.dst.noRisksIdentified' | translate }}
-            </div>
-          } @else {
-            @for (risk of opportunity().dstAnalysis!.risks; track risk.id) {
+        @if (loadingRisks()) {
+          <div class="text-center py-4">
+            <i class="pi pi-spin pi-spinner text-2xl text-gray-400"></i>
+          </div>
+        } @else if (risks().length === 0) {
+          <div class="bg-white rounded-lg p-4 border border-gray-200 text-center text-gray-500">
+            {{ 'message.dst.noRisksInRegister' | translate }}
+          </div>
+        } @else {
+          <div class="max-h-[600px] overflow-y-auto pr-2">
+            @for (risk of risks(); track risk.id) {
               <div class="bg-white rounded-lg p-4 mb-3 border border-gray-200">
                 <div class="flex items-start justify-between mb-2">
                   <h4 class="font-semibold text-gray-900">
                     {{ risk.title }}
                   </h4>
                   <p-tag
-                    [value]="risk.severity"
-                    [severity]="getSeverityClass(risk.severity)"
+                    [value]="getImpactLabel(risk.impact)"
+                    [severity]="getImpactSeverity(risk.impact)"
                   />
                 </div>
                 <p class="text-sm text-gray-600 mb-2">
@@ -72,112 +59,388 @@
                 </div>
               </div>
             }
-          }
-        </div>
+          </div>
+        }
+      </div>
 
-        <!-- Recommendations -->
-        <div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <i class="pi pi-lightbulb text-unops-info"></i>
-            <span>
-              {{ 'title.dst.recommendations' | translate }}
-              ({{ opportunity().dstAnalysis!.recommendations.length }})
-            </span>
-          </h3>
+      <!-- AI Recommendations (Right Panel) -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <i class="pi pi-lightbulb text-unops-info"></i>
+          <span>
+            {{ 'title.dst.recommendations' | translate }}
+            ({{ recommendations().length }})
+          </span>
+        </h3>
 
-          @if (opportunity().dstAnalysis!.recommendations.length === 0) {
-            <div class="bg-blue-50 rounded-lg p-4 border border-blue-100 text-center text-gray-600">
-              {{ 'message.dst.noRecommendations' | translate }}
-            </div>
-          } @else {
-            @for (rec of opportunity().dstAnalysis!.recommendations; track rec.id) {
+        @if (loadingRecommendations()) {
+          <div class="text-center py-4">
+            <i class="pi pi-spin pi-spinner text-2xl text-gray-400"></i>
+          </div>
+        } @else if (recommendations().length === 0) {
+          <div class="bg-blue-50 rounded-lg p-4 border border-blue-100 text-center text-gray-600">
+            {{ 'message.dst.noRecommendations' | translate }}
+          </div>
+        } @else {
+          <div class="max-h-[600px] overflow-y-auto pr-2">
+            @for (rec of recommendations(); track $index) {
               <div class="bg-blue-50 rounded-lg p-4 mb-3 border border-blue-100">
                 <h4 class="font-semibold text-gray-900 mb-2">
                   {{ rec.title }}
                 </h4>
-                <p class="text-sm text-gray-600 mb-3">
-                  {{ rec.rationale }}
+                <p class="text-sm text-gray-600 mb-2">
+                  {{ rec.description }}
                 </p>
+                <div class="text-xs text-gray-500 mb-3">
+                  <strong>{{ 'label.dst.recommendation' | translate }}:</strong>
+                  {{ rec.recommendation }}
+                </div>
                 <div class="flex gap-2">
                   <p-button
-                    [label]="'button.dst.accept' | translate"
-                    icon="pi pi-check"
+                    [label]="'button.dst.addToRegister' | translate"
+                    icon="pi pi-plus"
                     size="small"
-                    severity="success"
+                    severity="primary"
                     [outlined]="true"
-                    (onClick)="acceptRecommendation(rec.id)"
-                  />
-                  <p-button
-                    [label]="'button.dst.dismiss' | translate"
-                    icon="pi pi-times"
-                    size="small"
-                    severity="secondary"
-                    [outlined]="true"
-                    (onClick)="dismissRecommendation(rec.id)"
+                    (onClick)="addRecommendationToRegister(rec)"
                   />
                 </div>
-              </div>
-            }
-          }
-        </div>
-      </div>
-
-      <p-divider />
-
-      <!-- Similar Opportunities -->
-      <div>
-        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <i class="pi pi-search text-unops-secondary"></i>
-          <span>
-            {{ 'title.dst.similarOpportunities' | translate }}
-            ({{ opportunity().dstAnalysis!.similarOpportunities.length }})
-          </span>
-        </h3>
-
-        @if (opportunity().dstAnalysis!.similarOpportunities.length === 0) {
-          <div class="bg-white rounded-lg p-4 border border-gray-200 text-center text-gray-500">
-            {{ 'message.dst.noSimilarOpportunities' | translate }}
-          </div>
-        } @else {
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            @for (similar of opportunity().dstAnalysis!.similarOpportunities; track similar.id) {
-              <div class="bg-white rounded-lg p-4 border border-gray-200">
-                <div class="flex items-center justify-between mb-2">
-                  <p-badge
-                    [value]="similar.relevance + '%'"
-                    severity="success"
-                  />
-                  <p-chip
-                    [label]="similar.status"
-                    styleClass="text-xs"
-                  />
-                </div>
-                <h4 class="font-semibold text-gray-900 mb-2 text-sm">
-                  {{ similar.name }}
-                </h4>
-                <div class="text-xs text-gray-600 space-y-1">
-                  <div>
-                    {{ 'label.dst.budget' | translate }}: {{ formatCurrency(similar.budget) }}
-                  </div>
-                  <div>{{ 'label.dst.duration' | translate }}: {{ similar.duration }}</div>
-                  <div class="mt-2 pt-2 border-t border-gray-200">
-                    <strong>{{ 'label.dst.keyLessons' | translate }}:</strong>
-                    {{ similar.keyLessons }}
-                  </div>
-                </div>
-                <p-button
-                  [label]="'button.dst.viewDetails' | translate"
-                  size="small"
-                  [text]="true"
-                  styleClass="mt-2 w-full"
-                  (onClick)="viewSimilarOpportunity(similar.id)"
-                />
               </div>
             }
           </div>
         }
       </div>
     </div>
-  }
+
+    <p-divider />
+    
+    <!-- Similar Opportunities Section -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="pi pi-search text-unops-primary"></i>
+          <span>
+            {{ 'title.dst.similarOpportunities' | translate }}
+            @if (similarOpportunities(); as opportunities) {
+              ({{ opportunities.length }})
+            }
+          </span>
+        </h3>
+        <p-button
+          [label]="'button.dst.refreshSimilarOpportunities' | translate"
+          icon="pi pi-refresh"
+          size="small"
+          [outlined]="true"
+          [loading]="loadingSimilarOpportunities()"
+          (onClick)="loadSimilarOpportunities()"
+        />
+      </div>
+
+        @if (loadingSimilarOpportunities()) {
+          <div class="text-center py-8">
+            <i class="pi pi-spin pi-spinner text-3xl text-gray-400"></i>
+            <p class="text-sm text-gray-500 mt-2">{{ 'message.dst.loadingSimilarOpportunities' | translate }}</p>
+          </div>
+        } @else if (similarOpportunitiesError()) {
+          <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+            <div class="flex items-start gap-2">
+              <i class="pi pi-exclamation-circle text-red-500 mt-1"></i>
+              <div>
+                <h4 class="font-semibold text-red-900 mb-1">{{ 'message.dst.errorLoadingSimilarOpportunities' | translate }}</h4>
+                <p class="text-sm text-red-700">{{ similarOpportunitiesError() }}</p>
+              </div>
+            </div>
+          </div>
+        } @else if (!similarOpportunities() || similarOpportunities()!.length === 0) {
+          <div class="bg-white rounded-lg p-6 border border-gray-200 text-center">
+            <i class="pi pi-inbox text-4xl text-gray-300 mb-3"></i>
+            <p class="text-gray-500">{{ 'message.dst.noSimilarOpportunities' | translate }}</p>
+            <p-button
+              [label]="'button.dst.findSimilarOpportunities' | translate"
+              icon="pi pi-search"
+              size="small"
+              styleClass="mt-3"
+              (onClick)="loadSimilarOpportunities()"
+            />
+          </div>
+        } @else {
+
+          <!-- Similar Opportunities Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            @for (opp of similarOpportunities(); track opp.opportunityId) {
+              <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                   (click)="navigateToOpportunity(opp.opportunityId)">
+                <!-- Relevance Badge -->
+                <div class="flex items-center justify-between mb-3">
+                  <p-badge
+                    [value]="opp.relevanceScore.toFixed(0) + '%'"
+                    [severity]="getRelevanceSeverity(opp.relevanceScore)"
+                    styleClass="text-xs"
+                  />
+                  @if (opp.workflowStage) {
+                    <p-tag
+                      [value]="opp.workflowStage"
+                      severity="info"
+                      [rounded]="true"
+                      styleClass="text-xs"
+                    />
+                  }
+                </div>
+
+                <!-- Opportunity Name -->
+                <h4 class="text-sm font-semibold text-gray-900 mb-2 line-clamp-2">
+                  {{ opp.name }}
+                </h4>
+
+                <!-- Description -->
+                @if (opp.description) {
+                  <p class="text-xs text-gray-600 mb-3 line-clamp-2">
+                    {{ opp.description }}
+                  </p>
+                }
+
+                <!-- Opportunity Details -->
+                <div class="text-xs text-gray-600 space-y-1.5">
+                  <!-- Budget -->
+                  @if (opp.budget) {
+                    <div class="flex items-center gap-2">
+                      <i class="pi pi-dollar text-gray-400 flex-shrink-0"></i>
+                      <span class="font-medium">{{ formatBudget(opp.budget) }}</span>
+                    </div>
+                  }
+
+                  <!-- Duration -->
+                  @if (opp.durationMonths) {
+                    <div class="flex items-center gap-2">
+                      <i class="pi pi-clock text-gray-400 flex-shrink-0"></i>
+                      <span>{{ opp.durationMonths }} {{ opp.durationMonths === 1 ? 'month' : 'months' }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+    </div>
+
+    <p-divider />
+    
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="pi pi-box text-unops-primary"></i>
+          <span>
+            {{ 'title.dst.similarProjects' | translate }}
+            @if (similarProjects(); as projects) {
+              ({{ projects.length }})
+            }
+          </span>
+        </h3>
+        <p-button
+          [label]="'button.dst.refreshSimilarProjects' | translate"
+          icon="pi pi-refresh"
+          size="small"
+          [outlined]="true"
+          [loading]="loadingSimilarProjects()"
+          (onClick)="loadSimilarProjects()"
+        />
+      </div>
+
+        @if (loadingSimilarProjects()) {
+          <div class="text-center py-8">
+            <i class="pi pi-spin pi-spinner text-3xl text-gray-400"></i>
+            <p class="text-sm text-gray-500 mt-2">{{ 'message.dst.loadingSimilarProjects' | translate }}</p>
+          </div>
+        } @else if (similarProjectsError()) {
+          <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+            <div class="flex items-start gap-2">
+              <i class="pi pi-exclamation-circle text-red-500 mt-1"></i>
+              <div>
+                <h4 class="font-semibold text-red-900 mb-1">{{ 'message.dst.errorLoadingSimilarProjects' | translate }}</h4>
+                <p class="text-sm text-red-700">{{ similarProjectsError() }}</p>
+              </div>
+            </div>
+          </div>
+        } @else if (!similarProjects() || similarProjects()!.length === 0) {
+          <div class="bg-white rounded-lg p-6 border border-gray-200 text-center">
+            <i class="pi pi-inbox text-4xl text-gray-300 mb-3"></i>
+            <p class="text-gray-500">{{ 'message.dst.noSimilarProjects' | translate }}</p>
+            <p-button
+              [label]="'button.dst.findSimilarProjects' | translate"
+              icon="pi pi-search"
+              size="small"
+              styleClass="mt-3"
+              (onClick)="loadSimilarProjects()"
+            />
+          </div>
+        } @else {
+
+          <!-- Similar Projects Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            @for (project of similarProjects(); track project.projectId) {
+              <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                   (click)="openProjectUrl(project.projectUrl)">
+                <!-- Relevance Badge and Project ID -->
+                <div class="flex items-center justify-between mb-3">
+                  <p-badge
+                    [value]="project.relevanceScore.toFixed(0) + '%'"
+                    [severity]="getRelevanceSeverity(project.relevanceScore)"
+                    styleClass="text-xs"
+                  />
+                </div>
+
+                <!-- Description -->
+                @if (project.description) {
+                  <p class="text-sm text-gray-700 mb-3 line-clamp-2 font-medium">
+                    {{ project.description }}
+                  </p>
+                }
+
+                <!-- Project Details -->
+                <div class="text-xs text-gray-600 space-y-2 mb-3">
+                  <!-- Dates -->
+                  @if (project.startDate && project.endDate) {
+                    <div class="flex items-start gap-2">
+                      <i class="pi pi-calendar text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <span>{{ project.startDate }} to {{ project.endDate }}</span>
+                    </div>
+                  }
+
+                  <!-- Partners -->
+                  @if (project.partners) {
+                    <div class="flex items-start gap-2">
+                      <i class="pi pi-building text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <span class="line-clamp-1">{{ formatPartners(project.partners) }}</span>
+                    </div>
+                  }
+
+                  <!-- Countries -->
+                  @if (project.countries) {
+                    <div class="flex items-start gap-2">
+                      <i class="pi pi-map-marker text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <span class="line-clamp-1">{{ formatCountries(project.countries) }}</span>
+                    </div>
+                  }
+
+                  <!-- Project Manager -->
+                  @if (project.projectManagerName && project.projectManagerEmail) {
+                    <div class="flex items-start gap-2">
+                      <i class="pi pi-user text-gray-400 mt-0.5 flex-shrink-0"></i>
+                      <a [href]="'mailto:' + project.projectManagerEmail" 
+                         class="text-blue-600 hover:text-blue-800 hover:underline"
+                         (click)="$event.stopPropagation()">
+                        {{ project.projectManagerName }}
+                      </a>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+  </div>
 </p-panel>
+
+<!-- Add Risk Dialog -->
+<p-dialog
+  [header]="'title.dst.addRisk' | translate"
+  [(visible)]="showAddRiskDialog"
+  [modal]="true"
+  [style]="{ width: '35rem' }"
+>
+  <!-- Validation error message -->
+  @if (showDialogValidationError()) {
+    <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
+      {{ 'message.validation.allFieldsRequired' | translate }}
+    </p-message>
+  }
+
+  <!-- Risk Title -->
+  <div class="mb-6">
+    <p-floatlabel variant="on">
+      <input
+        pInputText
+        id="riskTitle"
+        [(ngModel)]="newRisk.title"
+        class="w-full"
+      />
+      <label for="riskTitle">{{ 'label.dst.riskTitle' | translate }} *</label>
+    </p-floatlabel>
+    @if (!newRisk.title && showDialogValidationError()) {
+      <p-message severity="error" variant="simple" styleClass="mt-2">
+        {{ 'message.validation.titleRequired' | translate }}
+      </p-message>
+    }
+  </div>
+
+  <!-- Risk Description -->
+  <div class="mb-6">
+    <p-floatlabel variant="on">
+      <textarea
+        pTextarea
+        id="riskDescription"
+        [(ngModel)]="newRisk.description"
+        rows="4"
+        class="w-full"
+      ></textarea>
+      <label for="riskDescription">{{ 'label.dst.riskDescription' | translate }} *</label>
+    </p-floatlabel>
+    @if (!newRisk.description && showDialogValidationError()) {
+      <p-message severity="error" variant="simple" styleClass="mt-2">
+        {{ 'message.validation.descriptionRequired' | translate }}
+      </p-message>
+    }
+  </div>
+
+  <!-- Risk Recommendation -->
+  <div class="mb-6">
+    <p-floatlabel variant="on">
+      <textarea
+        pTextarea
+        id="riskRecommendation"
+        [(ngModel)]="newRisk.recommendation"
+        rows="3"
+        class="w-full"
+      ></textarea>
+      <label for="riskRecommendation">{{ 'label.dst.riskRecommendation' | translate }} *</label>
+    </p-floatlabel>
+    @if (!newRisk.recommendation && showDialogValidationError()) {
+      <p-message severity="error" variant="simple" styleClass="mt-2">
+        {{ 'message.validation.recommendationRequired' | translate }}
+      </p-message>
+    }
+  </div>
+
+  <!-- Impact Level -->
+  <div class="mb-6">
+    <p-floatlabel variant="on">
+      <p-select
+        id="riskImpact"
+        [(ngModel)]="newRisk.impact"
+        [options]="impactOptions"
+        optionLabel="label"
+        optionValue="value"
+        class="w-full"
+      />
+      <label for="riskImpact">{{ 'label.dst.impact' | translate}} *</label>
+    </p-floatlabel>
+  </div>
+
+  <!-- Dialog footer -->
+  <ng-template pTemplate="footer">
+    <p-button
+      [label]="'button.cancel' | translate"
+      severity="secondary"
+      (onClick)="cancelAddRisk()"
+      [disabled]="isProcessingRisk()"
+    />
+    <p-button
+      [label]="'button.confirm' | translate"
+      severity="primary"
+      (onClick)="confirmAddRisk()"
+      [loading]="isProcessingRisk()"
+    />
+  </ng-template>
+</p-dialog>
 

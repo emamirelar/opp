@@ -20,6 +20,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 DROP FUNCTION IF EXISTS public.search_partners_with_nested(TEXT, REAL, INTEGER);
 DROP FUNCTION IF EXISTS public.search_contacts_with_nested(TEXT, REAL, INTEGER);
 DROP FUNCTION IF EXISTS public.search_interactions_with_nested(TEXT, REAL, INTEGER);
+DROP FUNCTION IF EXISTS public.search_opportunities_with_nested(TEXT, REAL, INTEGER);
 DROP FUNCTION IF EXISTS public.search_entity_records(TEXT);
 DROP FUNCTION IF EXISTS public.search_entity_records(TEXT, vector);
 DROP FUNCTION IF EXISTS public.search_entity_records(TEXT, vector, REAL, REAL, INTEGER);
@@ -372,6 +373,150 @@ END
 $$;
 
 -- ============================================================================
+-- OPPORTUNITIES SEARCH FUNCTION WITH NESTED PROPERTIES
+-- ============================================================================
+CREATE OR REPLACE FUNCTION public.search_opportunities_with_nested(
+    search_query TEXT,
+    text_boost REAL DEFAULT 1.0,
+    snippet_length INTEGER DEFAULT 150
+)
+RETURNS TABLE (
+    entity_type TEXT,
+    entity_id TEXT,
+    matched_field TEXT,
+    field_value TEXT,
+    score DOUBLE PRECISION,
+    search_type TEXT,
+    match_criteria TEXT,
+    snippet TEXT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    exact_pattern TEXT;
+    word_pattern TEXT;
+BEGIN
+    -- Prepare search patterns
+    exact_pattern := '%' || search_query || '%';
+    word_pattern := '% ' || search_query || ' %';
+    
+    RETURN QUERY
+    WITH all_matches AS (
+        SELECT 
+            'Opportunities'::TEXT as entity_type,
+            o."Id"::TEXT as entity_id,
+            fields.matched_field,
+            fields.field_value,
+            fields.score,
+            'field-search'::TEXT as search_type,
+            CASE 
+                WHEN fields.field_value ILIKE exact_pattern THEN 'Exact Match'
+                WHEN fields.field_value ILIKE word_pattern THEN 'Word Match'
+                ELSE 'Similarity Match'
+            END::TEXT as match_criteria,
+            left(fields.field_value, snippet_length)::TEXT as snippet
+        FROM public."Opportunities" o
+        LEFT JOIN public."WorkflowStages" ws ON o."WorkflowStageId" = ws."Id"
+        LEFT JOIN public."OrganizationHierarchies" org ON o."ResponsibleOrgUnitId" = org."Id"
+        LEFT JOIN public."ProposedInitiativeTypes" pit ON o."ProposedInitiativeTypeId" = pit."Id"
+        LEFT JOIN public."OpportunityCountries" oc ON o."Id" = oc."OpportunityId"
+        LEFT JOIN public."Countries" c ON oc."CountryId" = c."Id"
+        LEFT JOIN public."OpportunitySDGs" osdg ON o."Id" = osdg."OpportunityId"
+        LEFT JOIN public."SDGs" sdg ON osdg."SDGId" = sdg."Id"
+        LEFT JOIN public."OpportunityDeliverables" od ON o."Id" = od."OpportunityId"
+        CROSS JOIN LATERAL (
+            VALUES
+                -- TIER 1 - CORE OPPORTUNITY IDENTITY (Score: 1.0-0.9)
+                ('Name', COALESCE(o."Name", ''), 
+                 CASE WHEN o."Name" ILIKE exact_pattern THEN 1.0 * text_boost
+                      WHEN o."Name" ILIKE word_pattern THEN 0.9 * text_boost
+                      WHEN similarity(COALESCE(o."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(o."Name", ''), search_query) * 0.8 * text_boost
+                      ELSE 0 END),
+                ('Description', COALESCE(o."Description", ''),
+                 CASE WHEN o."Description" ILIKE exact_pattern THEN 0.9 * text_boost
+                      WHEN o."Description" ILIKE word_pattern THEN 0.8 * text_boost
+                      WHEN similarity(COALESCE(o."Description", ''), search_query) > 0.2 THEN similarity(COALESCE(o."Description", ''), search_query) * 0.7 * text_boost
+                      ELSE 0 END),
+                
+                -- TIER 2 - STRATEGIC INFORMATION (Score: 0.8-0.7)
+                ('StrategicAlignment', COALESCE(o."StrategicAlignment", ''),
+                 CASE WHEN o."StrategicAlignment" ILIKE exact_pattern THEN 0.8 * text_boost
+                      WHEN o."StrategicAlignment" ILIKE word_pattern THEN 0.7 * text_boost
+                      WHEN similarity(COALESCE(o."StrategicAlignment", ''), search_query) > 0.2 THEN similarity(COALESCE(o."StrategicAlignment", ''), search_query) * 0.6 * text_boost
+                      ELSE 0 END),
+                ('ResultsFocus', COALESCE(o."ResultsFocus", ''),
+                 CASE WHEN o."ResultsFocus" ILIKE exact_pattern THEN 0.7 * text_boost
+                      WHEN o."ResultsFocus" ILIKE word_pattern THEN 0.6 * text_boost
+                      WHEN similarity(COALESCE(o."ResultsFocus", ''), search_query) > 0.2 THEN similarity(COALESCE(o."ResultsFocus", ''), search_query) * 0.5 * text_boost
+                      ELSE 0 END),
+                ('IntendedImpactOutcomes', COALESCE(o."IntendedImpactOutcomes", ''),
+                 CASE WHEN o."IntendedImpactOutcomes" ILIKE exact_pattern THEN 0.7 * text_boost
+                      WHEN o."IntendedImpactOutcomes" ILIKE word_pattern THEN 0.6 * text_boost
+                      WHEN similarity(COALESCE(o."IntendedImpactOutcomes", ''), search_query) > 0.2 THEN similarity(COALESCE(o."IntendedImpactOutcomes", ''), search_query) * 0.5 * text_boost
+                      ELSE 0 END),
+                
+                -- TIER 3 - ORGANIZATIONAL CONTEXT (Score: 0.6-0.5)
+                ('PartnerReference', COALESCE(o."PartnerReference", ''),
+                 CASE WHEN o."PartnerReference" ILIKE exact_pattern THEN 0.6 * text_boost
+                      WHEN o."PartnerReference" ILIKE word_pattern THEN 0.5 * text_boost
+                      WHEN similarity(COALESCE(o."PartnerReference", ''), search_query) > 0.3 THEN similarity(COALESCE(o."PartnerReference", ''), search_query) * 0.4 * text_boost
+                      ELSE 0 END),
+                ('ExpectedBeneficiaries', COALESCE(o."ExpectedBeneficiaries", ''),
+                 CASE WHEN o."ExpectedBeneficiaries" ILIKE exact_pattern THEN 0.6 * text_boost
+                      WHEN o."ExpectedBeneficiaries" ILIKE word_pattern THEN 0.5 * text_boost
+                      WHEN similarity(COALESCE(o."ExpectedBeneficiaries", ''), search_query) > 0.3 THEN similarity(COALESCE(o."ExpectedBeneficiaries", ''), search_query) * 0.4 * text_boost
+                      ELSE 0 END),
+                ('ResponsibleOrgUnit.Name', COALESCE(org."Name", ''),
+                 CASE WHEN org."Name" ILIKE exact_pattern THEN 0.5 * text_boost
+                      WHEN org."Name" ILIKE word_pattern THEN 0.4 * text_boost
+                      WHEN similarity(COALESCE(org."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(org."Name", ''), search_query) * 0.3 * text_boost
+                      ELSE 0 END),
+                
+                -- TIER 4 - RELATED ENTITIES (Score: 0.4-0.3)
+                ('ProposedInitiativeType.Name', COALESCE(pit."Name", ''),
+                 CASE WHEN pit."Name" ILIKE exact_pattern THEN 0.4 * text_boost
+                      WHEN pit."Name" ILIKE word_pattern THEN 0.3 * text_boost
+                      WHEN similarity(COALESCE(pit."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(pit."Name", ''), search_query) * 0.2 * text_boost
+                      ELSE 0 END),
+                ('WorkflowStage.Name', COALESCE(ws."Name", ''),
+                 CASE WHEN ws."Name" ILIKE exact_pattern THEN 0.4 * text_boost
+                      WHEN ws."Name" ILIKE word_pattern THEN 0.3 * text_boost
+                      WHEN similarity(COALESCE(ws."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(ws."Name", ''), search_query) * 0.2 * text_boost
+                      ELSE 0 END),
+                ('Country.Name', COALESCE(c."Name", ''),
+                 CASE WHEN c."Name" ILIKE exact_pattern THEN 0.3 * text_boost
+                      WHEN c."Name" ILIKE word_pattern THEN 0.2 * text_boost
+                      WHEN similarity(COALESCE(c."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(c."Name", ''), search_query) * 0.1 * text_boost
+                      ELSE 0 END),
+                ('SDG.Name', COALESCE(sdg."Name", ''),
+                 CASE WHEN sdg."Name" ILIKE exact_pattern THEN 0.3 * text_boost
+                      WHEN sdg."Name" ILIKE word_pattern THEN 0.2 * text_boost
+                      WHEN similarity(COALESCE(sdg."Name", ''), search_query) > 0.3 THEN similarity(COALESCE(sdg."Name", ''), search_query) * 0.1 * text_boost
+                      ELSE 0 END)
+        ) AS fields(matched_field, field_value, score)
+        WHERE fields.score > 0.1
+        AND fields.field_value IS NOT NULL 
+        AND fields.field_value != ''
+    ),
+    best_matches AS (
+        SELECT DISTINCT ON (all_matches.entity_id)
+            all_matches.entity_type,
+            all_matches.entity_id,
+            all_matches.matched_field,
+            all_matches.field_value,
+            all_matches.score,
+            all_matches.search_type,
+            all_matches.match_criteria,
+            all_matches.snippet
+        FROM all_matches
+        ORDER BY all_matches.entity_id, all_matches.score DESC
+    )
+    SELECT * FROM best_matches
+    ORDER BY score DESC;
+END
+$$;
+
+-- ============================================================================
 -- MAIN ORCHESTRATOR FUNCTION
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.search_entity_records(
@@ -401,8 +546,8 @@ BEGIN
     IF entity_filter IS NOT NULL AND array_length(entity_filter, 1) > 0 THEN
         available_entities := entity_filter;
     ELSE
-        -- Default to core entity types
-    available_entities := ARRAY['Partners', 'Contacts', 'Interactions'];
+        -- Default to core entity types including Opportunities
+    available_entities := ARRAY['Partners', 'Contacts', 'Interactions', 'Opportunities'];
     END IF;
     
     -- Initialize empty results
@@ -426,6 +571,12 @@ BEGIN
         -- Interactions search
         SELECT * FROM public.search_interactions_with_nested(search_query, text_boost, snippet_length)
         WHERE 'Interactions' = ANY(available_entities)
+        
+        UNION ALL
+        
+        -- Opportunities search
+        SELECT * FROM public.search_opportunities_with_nested(search_query, text_boost, snippet_length)
+        WHERE 'Opportunities' = ANY(available_entities)
     ),
     -- Aggregate by entity_id to get the best match per entity
     entity_best_matches AS (
@@ -643,6 +794,7 @@ $$;
 -- SELECT * FROM public.search_partners_with_nested('UNICEF');
 -- SELECT * FROM public.search_contacts_with_nested('john smith');
 -- SELECT * FROM public.search_interactions_with_nested('meeting');
+-- SELECT * FROM public.search_opportunities_with_nested('infrastructure');
 
 -- Debug mode to see search capabilities:
 -- SELECT public.search_entity_records('experienced project manager', NULL, 2.0, 1.0, 200, TRUE);

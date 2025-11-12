@@ -3,7 +3,7 @@
  * @author UNOPS Opportunity+ System Development Team
  */
 
-import { Component, input, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, signal, inject, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -11,14 +11,18 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
+import { TooltipModule } from 'primeng/tooltip';
 
 // Models
-import { Opportunity, InsightType } from '@shared/models/opportunity.model';
+import { Opportunity, InsightType, OpportunityInsight, OpportunitySuggestion, OpportunityInsightsResponse } from '@shared/models/opportunity.model';
+
+// Services
+import { OpportunityService } from '../../../../../services/opportunity.service';
 
 /**
  * @class OpportunityAnalysisSectionComponent
- * @description Displays analysis section with quick stats from backend, AI insights, and quick actions.
- * This component is read-only and displays statistics and insights provided by the backend.
+ * @description Displays analysis section with quick stats from backend, AI-generated insights, and suggestions.
+ * This component loads AI insights on-demand and displays them with appropriate styling.
  * 
  * @example
  * ```html
@@ -38,6 +42,7 @@ import { Opportunity, InsightType } from '@shared/models/opportunity.model';
     PanelModule,
     ButtonModule,
     DividerModule,
+    TooltipModule,
   ],
   templateUrl: './opportunity-analysis-section.component.html',
   styleUrls: ['./opportunity-analysis-section.component.scss'],
@@ -46,11 +51,89 @@ import { Opportunity, InsightType } from '@shared/models/opportunity.model';
 export class OpportunityAnalysisSectionComponent {
   // Services
   private readonly translateService = inject(TranslateService);
+  private readonly opportunityService = inject(OpportunityService);
 
   /**
    * @description Input signal for opportunity data from parent
    */
   readonly opportunity = input.required<Opportunity>();
+
+  /**
+   * @description Loading state for insights
+   */
+  readonly loadingInsights = signal<boolean>(false);
+
+  /**
+   * @description AI-generated insights
+   */
+  readonly insights = signal<OpportunityInsight[]>([]);
+
+  /**
+   * @description AI-generated suggestions
+   */
+  readonly suggestions = signal<OpportunitySuggestion[]>([]);
+
+  /**
+   * @description Error message for insights loading
+   */
+  readonly insightsError = signal<string | null>(null);
+
+  /**
+   * @description Track last loaded opportunity ID to prevent duplicate calls
+   */
+  private lastLoadedOpportunityId: number | null = null;
+
+  constructor() {
+    // Use effect to reactively load insights when opportunity changes
+    effect(() => {
+      const opp = this.opportunity();
+      if (opp?.id && opp.id !== this.lastLoadedOpportunityId) {
+        this.lastLoadedOpportunityId = opp.id;
+        this.loadInsights();
+      }
+    });
+  }
+
+  /**
+   * @description Load AI insights and suggestions for the opportunity
+   */
+  private loadInsights(): void {
+    const opportunityId = this.opportunity()?.id;
+    if (!opportunityId) return;
+
+    this.loadingInsights.set(true);
+    this.insightsError.set(null);
+
+    this.opportunityService.getInsights(opportunityId).subscribe({
+      next: (response: OpportunityInsightsResponse) => {
+        // Add unique IDs for tracking
+        const insightsWithIds = response.insights.map((insight, idx: number) => ({
+          ...insight,
+          id: idx
+        }));
+        const suggestionsWithIds = response.suggestions.map((suggestion, idx: number) => ({
+          ...suggestion,
+          id: idx
+        }));
+
+        this.insights.set(insightsWithIds as any);
+        this.suggestions.set(suggestionsWithIds as any);
+        this.loadingInsights.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading insights:', error);
+        this.insightsError.set('Failed to load AI insights');
+        this.loadingInsights.set(false);
+      }
+    });
+  }
+
+  /**
+   * @description Manually refresh insights
+   */
+  refreshInsights(): void {
+    this.loadInsights();
+  }
 
   /**
    * @description Get icon class based on insight type
@@ -122,6 +205,50 @@ export class OpportunityAnalysisSectionComponent {
   onGenerateBudgetDraft(): void {
     // TODO: Implement Budget Draft generation when backend is ready
     console.log('Generate Budget Draft clicked');
+  }
+
+  /**
+   * @description Handle suggestion action click - clicks the appropriate section button
+   * @param {OpportunitySuggestion} suggestion - The suggestion with action target
+   */
+  onSuggestionAction(suggestion: OpportunitySuggestion): void {
+    if (!suggestion.actionTarget) {
+      console.warn('No action target specified for suggestion:', suggestion);
+      return;
+    }
+
+    // Map AI target (WHAT) to section label (What)
+    const targetLabel = suggestion.actionTarget.charAt(0) + suggestion.actionTarget.slice(1).toLowerCase();
+
+    // Find the section button by its text content (What, Where, Why, Who, When)
+    const buttons = document.querySelectorAll('button');
+    const targetButton = Array.from(buttons).find(btn => {
+      const buttonText = btn.textContent?.trim();
+      return buttonText === targetLabel;
+    });
+
+    if (targetButton) {
+      targetButton.click();
+      console.log(`Clicked section button: ${targetLabel}`);
+    } else {
+      console.warn(`Section button not found for: ${suggestion.actionTarget} (looking for: ${targetLabel})`);
+    }
+  }
+
+  /**
+   * @description Get button label based on action target
+   * @param {string} actionTarget - The section identifier (WHAT, WHERE, WHY, WHO, WHEN)
+   * @returns {string} Localized button label
+   */
+  getActionLabel(actionTarget: string): string {
+    const labelMap: Record<string, string> = {
+      'WHAT': this.translateService.instant('button.goToWhatSection'),
+      'WHERE': this.translateService.instant('button.goToWhereSection'),
+      'WHY': this.translateService.instant('button.goToWhySection'),
+      'WHO': this.translateService.instant('button.goToWhoSection'),
+      'WHEN': this.translateService.instant('button.goToWhenSection')
+    };
+    return labelMap[actionTarget] || this.translateService.instant('button.viewDetails');
   }
 }
 

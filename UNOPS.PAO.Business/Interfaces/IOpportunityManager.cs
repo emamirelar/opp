@@ -1,5 +1,6 @@
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
+using System.Security.Claims;
 
 namespace UNOPS.PAO.Business.Interfaces;
 
@@ -17,5 +18,6 @@ public interface IOpportunityManager
     Task<OpportunityModel> ApplyAiChangesAsync(int id, ApplyOpportunityAiChangesRequest request);
     Task<RelatedItemsModel> GetRelatedItemsAsync(int id);
     Task<bool> DeleteOpportunityAsync(int id);
+    Task<SimilarOpportunitiesResponse> GetSimilarOpportunitiesAsync(int id, int maxResults = 6, ClaimsPrincipal? user = null);
 }
 
