@@ -635,5 +635,13 @@ public class OpportunityManager : IOpportunityManager
     {
         throw new NotImplementedException("ApplyAiChangesAsync is only implemented in UNOPSOpportunityManager");
     }
+
+    /// <summary>
+    /// Gets similar opportunities - UNOPS-specific implementation required
+    /// </summary>
+    public virtual async Task<SimilarOpportunitiesResponse> GetSimilarOpportunitiesAsync(int id, int maxResults = 6, System.Security.Claims.ClaimsPrincipal? user = null)
+    {
+        throw new NotImplementedException("GetSimilarOpportunitiesAsync is only implemented in UNOPSOpportunityManager");
+    }
 }
 

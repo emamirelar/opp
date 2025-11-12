@@ -2771,6 +2771,49 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         }
         
         /// <summary>
+        /// Extracts semantic search keywords from opportunity context using Gemini AI
+        /// </summary>
+        /// <param name="opportunityContext">Complete opportunity context JSON</param>
+        /// <param name="promptData">AI prompt configuration for keyword extraction</param>
+        /// <returns>List of extracted keywords for semantic search</returns>
+        public async Task<List<string>> ExtractKeywordsForSemanticSearchAsync(string opportunityContext, AiPrompt promptData)
+        {
+            try
+            {
+                Console.WriteLine($"[DEBUG] ExtractKeywordsForSemanticSearchAsync: Extracting keywords from opportunity context");
+                
+                // Call Gemini API to extract keywords
+                var geminiResponse = await FetchResultFromGemini(promptData, opportunityContext);
+                
+                // Parse the response to extract keywords
+                var responseJson = GetDetailsFromGeminiResponse(geminiResponse);
+                
+                var keywords = new List<string>();
+                
+                if (responseJson["keywords"] != null && responseJson["keywords"] is JArray keywordsArray)
+                {
+                    keywords = keywordsArray.Select(k => k.ToString()).ToList();
+                }
+                else if (responseJson["query"] != null)
+                {
+                    // Fallback: if the response contains a single query string, split it
+                    keywords = responseJson["query"].ToString().Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(k => k.Trim())
+                        .ToList();
+                }
+                
+                Console.WriteLine($"[DEBUG] Extracted {keywords.Count} keywords: {string.Join(", ", keywords)}");
+                
+                return keywords;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error extracting keywords: {ex.Message}");
+                throw new Exception($"Failed to extract keywords for semantic search: {ex.Message}", ex);
+            }
+        }
+        
+        /// <summary>
         /// Checks if a field is an opportunity collection field that needs object structure
         /// </summary>
         private bool IsOpportunityCollectionField(string dependent)

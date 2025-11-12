@@ -313,6 +313,54 @@ export interface SimilarOpportunity {
 }
 
 /**
+ * Similar Project model - from AI-powered semantic search
+ */
+export interface SimilarProject {
+  projectId: string;
+  description: string | null;
+  relevanceScore: number; // 0-100 similarity score
+  startDate: string | null;
+  endDate: string | null;
+  partners: string | null;
+  countries: string | null;
+  projectManagerName: string | null;
+  projectManagerEmail: string | null;
+  projectUrl: string | null;
+}
+
+/**
+ * Response from Similar Projects API
+ */
+export interface SimilarProjectsResponse {
+  similarProjects: SimilarProject[];
+  extractedKeywords: string[];
+  totalFound: number;
+  executionTimeMs: number;
+}
+
+/**
+ * Similar Opportunity Model - for semantic search results
+ */
+export interface SimilarOpportunity {
+  opportunityId: number;
+  name: string;
+  description: string | null;
+  budget: number; // Budget in USD
+  durationMonths: number | null; // Duration in months
+  relevanceScore: number; // 0-100 similarity score
+  workflowStage: string | null;
+}
+
+/**
+ * Response model for similar opportunities search
+ */
+export interface SimilarOpportunitiesResponse {
+  similarOpportunities: SimilarOpportunity[];
+  totalFound: number;
+  executionTimeMs: number;
+}
+
+/**
  * Analysis Section Models
  * For insights and suggestions in the Analysis section
  */
@@ -332,7 +380,77 @@ export interface OpportunitySuggestion {
   id: number;
   title: string;
   description: string;
-  actionLabel?: string;
+  actionTarget?: 'WHAT' | 'WHERE' | 'WHY' | 'WHO' | 'WHEN';
   createdDate: string;
+}
+
+/**
+ * Response model for AI-generated insights and suggestions
+ */
+export interface OpportunityInsightsResponse {
+  insights: OpportunityInsight[];
+  suggestions: OpportunitySuggestion[];
+}
+
+/**
+ * Risk Register Models - for DST Risks & Recommendations section
+ */
+
+/**
+ * Risk model matching backend RiskModel.cs
+ */
+export interface Risk {
+  id: number;
+  entityType: string;
+  entityId: number;
+  title: string;
+  description: string;
+  recommendation: string;
+  impact: number; // 1=Low, 2=Medium, 3=High
+  status: string;
+  identifiedDate: string | null;
+  identifiedBy: string | null;
+  createdDate: string;
+  createdBy: string | null;
+}
+
+/**
+ * Request model for creating/updating a risk
+ */
+export interface RiskCreateRequest {
+  entityId: number;
+  title: string;
+  description: string;
+  recommendation: string;
+  impact: number; // 1=Low, 2=Medium, 3=High
+}
+
+/**
+ * Response from GET dst-risks endpoint
+ */
+export interface DSTRisksResponse {
+  risks: Risk[];
+  totalCount: number;
+}
+
+/**
+ * AI-generated recommendation model matching backend DSTRecommendation
+ */
+export interface AIRiskRecommendation {
+  title: string;
+  description: string;
+  recommendation: string;
+  relevanceScore: number;
+  sourceRiskId: string | null;
+}
+
+/**
+ * Response from GET dst-recommendations endpoint
+ */
+export interface DSTRecommendationsResponse {
+  recommendations: AIRiskRecommendation[];
+  extractedKeywords: string[];
+  totalFound: number;
+  executionTimeMs: number;
 }
 

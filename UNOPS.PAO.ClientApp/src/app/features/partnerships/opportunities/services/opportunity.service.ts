@@ -10,7 +10,14 @@ import {
   Opportunity,
   OpportunityRequest,
   UpdateOpportunityRequest,
-  RelatedItems
+  RelatedItems,
+  SimilarProjectsResponse,
+  SimilarOpportunitiesResponse,
+  DSTRisksResponse,
+  DSTRecommendationsResponse,
+  RiskCreateRequest,
+  Risk,
+  OpportunityInsightsResponse
 } from '@shared/models/opportunity.model';
 
 /**
@@ -184,6 +191,79 @@ export class OpportunityService {
       }, 0);
     }
     return opportunity.stats.totalFeeAmountUSD;
+  }
+
+  /**
+   * Get similar projects for an opportunity using AI-powered semantic search
+   * @param id - Opportunity ID
+   * @param maxResults - Maximum number of similar projects to return (default: 10)
+   * @returns Observable with similar projects response
+   */
+  getSimilarProjects(id: number, maxResults: number = 10): Observable<SimilarProjectsResponse> {
+    return this.http.get<SimilarProjectsResponse>(`${this.apiUrl}/${id}/similar-projects`, {
+      params: {
+        maxResults: maxResults.toString()
+      }
+    });
+  }
+
+  /**
+   * Get similar opportunities using semantic search
+   */
+  getSimilarOpportunities(id: number, maxResults: number = 6): Observable<SimilarOpportunitiesResponse> {
+    return this.http.get<SimilarOpportunitiesResponse>(`${this.apiUrl}/${id}/similar-opportunities`, {
+      params: {
+        maxResults: maxResults.toString()
+      }
+    });
+  }
+
+  /**
+   * Get existing risks from the risk register for an opportunity
+   * @param id - Opportunity ID
+   * @returns Observable with risks response
+   */
+  getDSTRisks(id: number): Observable<DSTRisksResponse> {
+    return this.http.get<DSTRisksResponse>(`${this.apiUrl}/${id}/dst-risks`);
+  }
+
+  /**
+   * Get AI-generated risk recommendations for an opportunity
+   * @param id - Opportunity ID
+   * @returns Observable with recommendations response
+   */
+  getDSTRecommendations(id: number): Observable<DSTRecommendationsResponse> {
+    return this.http.get<DSTRecommendationsResponse>(`${this.apiUrl}/${id}/dst-recommendations`);
+  }
+
+  /**
+   * Get AI-generated insights and suggestions for an opportunity
+   * @param id - Opportunity ID
+   * @returns Observable with insights and suggestions
+   */
+  getInsights(id: number): Observable<OpportunityInsightsResponse> {
+    return this.http.get<OpportunityInsightsResponse>(`${this.apiUrl}/${id}/insights`);
+  }
+
+  /**
+   * Add a new risk to the risk register
+   * @param id - Opportunity ID
+   * @param request - Risk creation request
+   * @returns Observable with created risk
+   */
+  addDSTRisk(id: number, request: RiskCreateRequest): Observable<Risk> {
+    return this.http.post<Risk>(`${this.apiUrl}/${id}/dst-risks`, request);
+  }
+
+  /**
+   * Update an existing risk in the risk register
+   * @param id - Opportunity ID
+   * @param riskId - Risk ID to update
+   * @param request - Risk update request
+   * @returns Observable with updated risk
+   */
+  updateDSTRisk(id: number, riskId: number, request: RiskCreateRequest): Observable<Risk> {
+    return this.http.put<Risk>(`${this.apiUrl}/${id}/dst-risks/${riskId}`, request);
   }
 }
 

@@ -1,5 +1,8 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using System.Security.Claims;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
@@ -7,20 +10,34 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.UNOPSBusiness.Repositories;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
-public class UNOPSOpportunityManager : IOpportunityManager
+public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 {
     private readonly IMapper mapper;
     private readonly AppDbContext context;
-    private readonly DataRepository<Opportunity> opportunityRepository;
+    private readonly UNOPSAppDbContext uNOPSAppDbContext;
+    private readonly BaseRepository<Opportunity> opportunityRepository;
+    private readonly IServiceProvider _serviceProvider;
 
-    public UNOPSOpportunityManager(IMapper mapper, AppDbContext context)
+    public UNOPSOpportunityManager(
+        IMapper mapper,
+        AppDbContext context,
+        IConfiguration configuration,
+        IPermissionService permissionService = null,
+        IHttpContextAccessor httpContextAccessor = null,
+        IServiceProvider serviceProvider = null)
+        : base(mapper, context as UNOPSAppDbContext, configuration, null, "Opportunity", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
         this.context = context;
-        this.opportunityRepository = new DataRepository<Opportunity>(context);
+        this.uNOPSAppDbContext = context as UNOPSAppDbContext;
+        this._serviceProvider = serviceProvider;
+        this.opportunityRepository = new BaseRepository<Opportunity>(this.uNOPSAppDbContext, configuration, serviceProvider);
     }
 
     public async Task<OpportunityModel> CreateOpportunityAsync(OpportunityRequest model)
@@ -924,6 +941,272 @@ public class UNOPSOpportunityManager : IOpportunityManager
         stats.PrimarySDGId = opportunity.SDGs?.FirstOrDefault(s => s.IsPrimary)?.SDGId;
 
         return stats;
+    }
+
+    /// <summary>
+    /// Data retrieval method for AI prompts - Gets comprehensive opportunity details for keyword extraction
+    /// This method is called via reflection by the BaseUNOPSManager
+    /// </summary>
+    /// <param name="id">Opportunity ID</param>
+    /// <returns>Dictionary containing all opportunity details formatted for AI prompt placeholders</returns>
+    public async Task<Dictionary<string, object>> GetOpportunityDetailsForAIAsync(int id)
+    {
+        var opportunity = await context.Set<Opportunity>()
+            .Include(o => o.ResponsibleOrgUnit)
+            .Include(o => o.ProposedInitiativeType)
+            .Include(o => o.FundingPartners).ThenInclude(fp => fp.Partner)
+            .Include(o => o.ClientPartners).ThenInclude(cp => cp.Partner)
+            .Include(o => o.Stakeholders).ThenInclude(s => s.User).ThenInclude(u => u.UserProfile)
+            .Include(o => o.Deliverables).ThenInclude(d => d.Output)
+            .Include(o => o.Countries).ThenInclude(c => c.Country)
+            .Include(o => o.SDGs).ThenInclude(s => s.SDG)
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (opportunity == null)
+        {
+            throw new KeyNotFoundException($"Opportunity with ID {id} not found");
+        }
+
+        var stats = ComputeOpportunityStats(opportunity);
+
+        // Format arrays as comma-separated strings for the AI prompt
+        var fundingPartners = opportunity.FundingPartners?
+            .Select(fp => fp.Partner?.Name ?? "Unknown")
+            .Where(name => !string.IsNullOrEmpty(name))
+            .ToList() ?? new List<string>();
+
+        var clientPartners = opportunity.ClientPartners?
+            .Select(cp => cp.Partner?.Name ?? "Unknown")
+            .Where(name => !string.IsNullOrEmpty(name))
+            .ToList() ?? new List<string>();
+
+        var stakeholders = opportunity.Stakeholders?
+            .Select(s => s.User?.Name ?? "Unknown")
+            .Where(name => !string.IsNullOrEmpty(name))
+            .ToList() ?? new List<string>();
+
+        var deliverables = opportunity.Deliverables?
+            .Select(d => d.Output?.Name ?? d.Notes ?? "")
+            .Where(desc => !string.IsNullOrEmpty(desc))
+            .ToList() ?? new List<string>();
+
+        var countries = opportunity.Countries?
+            .Select(c => c.Country?.Name ?? "Unknown")
+            .Where(name => !string.IsNullOrEmpty(name))
+            .ToList() ?? new List<string>();
+
+        var sdgs = opportunity.SDGs?
+            .Select(s => s.SDG?.Name ?? "Unknown")
+            .Where(name => !string.IsNullOrEmpty(name))
+            .ToList() ?? new List<string>();
+
+        // Return dictionary with all placeholders the AI prompt expects
+        return new Dictionary<string, object>
+        {
+            ["id"] = opportunity.Id.ToString(),
+            ["name"] = opportunity.Name ?? "",
+            ["description"] = opportunity.Description ?? "",
+            ["partnerReference"] = opportunity.PartnerReference ?? "",
+            ["status"] = opportunity.Status.ToString(),
+            ["responsibleOrgUnitName"] = opportunity.ResponsibleOrgUnit?.Name ?? "",
+            ["proposedInitiativeTypeName"] = opportunity.ProposedInitiativeType?.Name ?? "",
+            ["initiativeBudgetUSD"] = opportunity.InitiativeBudgetUSD?.ToString("N2") ?? "",
+            ["targetSigningDate"] = opportunity.TargetSigningDate?.ToString("yyyy-MM-dd") ?? "",
+            ["targetDeliveryDate"] = opportunity.TargetDeliveryDate?.ToString("yyyy-MM-dd") ?? "",
+            ["strategicAlignment"] = opportunity.StrategicAlignment ?? "",
+            ["resultsFocus"] = opportunity.ResultsFocus ?? "",
+            ["intendedImpactOutcomes"] = opportunity.IntendedImpactOutcomes ?? "",
+            ["expectedBeneficiaries"] = opportunity.ExpectedBeneficiaries ?? "",
+            ["fundingPartners"] = string.Join(", ", fundingPartners),
+            ["clientPartners"] = string.Join(", ", clientPartners),
+            ["stakeholders"] = string.Join(", ", stakeholders),
+            ["deliverables"] = string.Join(", ", deliverables),
+            ["countries"] = string.Join(", ", countries),
+            ["sdGs"] = string.Join(", ", sdgs),
+            ["stats.totalFundingPartners"] = stats.FundingPartnerCount.ToString(),
+            ["stats.totalClientPartners"] = stats.ClientPartnerCount.ToString(),
+            ["stats.totalStakeholders"] = stats.StakeholderCount.ToString(),
+            ["stats.totalDeliverables"] = stats.DeliverableCount.ToString(),
+            ["stats.totalCountries"] = stats.CountryCount.ToString(),
+            ["stats.totalSDGs"] = stats.SDGCount.ToString(),
+            ["createdDate"] = opportunity.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss"),
+            ["lastModifiedDate"] = opportunity.LastModifiedDate?.ToString("yyyy-MM-dd HH:mm:ss") ?? ""
+        };
+    }
+
+    /// <summary>
+    /// Gets basic entity information for authorization and permission checks
+    /// Required by BaseUNOPSManager abstract method
+    /// </summary>
+    /// <param name="entityId">Opportunity ID</param>
+    /// <param name="user">Current user context</param>
+    /// <returns>Basic entity information as object</returns>
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    {
+        var opportunity = await opportunityRepository.GetByIdAsync(entityId);
+        return opportunity != null ? new { Id = opportunity.Id, Name = opportunity.Name } : null;
+    }
+
+    /// <summary>
+    /// Gets comprehensive opportunity data for embedding generation and semantic search
+    /// Includes all essential fields that define the opportunity's purpose, scope, and context
+    /// </summary>
+    /// <param name="id">Opportunity ID</param>
+    /// <returns>OpportunityModel with all semantic search-relevant data</returns>
+    public override async Task<object> GetBasicEntityDataAsync(int id)
+    {
+        var opportunity = await context.Opportunities
+            .Include(o => o.WorkflowStage)
+            .Include(o => o.ResponsibleOrgUnit)
+            .Include(o => o.ProposedInitiativeType)
+            .Include(o => o.FundingPartners)
+                .ThenInclude(fp => fp.Partner)
+            .Include(o => o.FundingPartners)
+                .ThenInclude(fp => fp.Currency)
+            .Include(o => o.ClientPartners)
+                .ThenInclude(cp => cp.Partner)
+            .Include(o => o.Stakeholders)
+                .ThenInclude(s => s.EntityRole)
+            .Include(o => o.Stakeholders)
+                .ThenInclude(s => s.User)
+                    .ThenInclude(u => u!.UserProfile)
+            .Include(o => o.Deliverables)
+                .ThenInclude(d => d.Output)
+                    .ThenInclude(o => o.Unit)
+            .Include(o => o.Deliverables)
+                .ThenInclude(d => d.Output)
+                    .ThenInclude(o => o.ProjectCategory)
+            .Include(o => o.Countries)
+                .ThenInclude(c => c.Country)
+            .Include(o => o.SDGs)
+                .ThenInclude(s => s.SDG)
+            .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
+
+        if (opportunity != null)
+        {
+            var model = mapper.Map<OpportunityModel>(opportunity);
+            
+            // Compute statistics for completeness
+            model.Stats = ComputeOpportunityStats(opportunity);
+            
+            return model;
+        }
+        
+        return null;
+    }
+
+    /// <summary>
+    /// Gets similar opportunities using semantic search based on embeddings
+    /// </summary>
+    public async Task<SimilarOpportunitiesResponse> GetSimilarOpportunitiesAsync(int id, int maxResults = 6, ClaimsPrincipal? user = null)
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        
+        try
+        {
+            // Call the semantic_search_entity PostgreSQL function
+            using var connection = new Npgsql.NpgsqlConnection(uNOPSAppDbContext.Database.GetConnectionString());
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            
+            // Use the semantic_search_entity function
+            // Parameters: entity_name, current_entity_id, max_results, similarity_threshold
+            command.CommandText = "SELECT public.semantic_search_entity($1, $2, $3, $4)";
+            command.Parameters.Add(new Npgsql.NpgsqlParameter { Value = "Opportunities" });
+            command.Parameters.Add(new Npgsql.NpgsqlParameter { Value = id });
+            command.Parameters.Add(new Npgsql.NpgsqlParameter { Value = maxResults });
+            command.Parameters.Add(new Npgsql.NpgsqlParameter { Value = 0.15f }); // similarity_threshold
+
+            var result = await command.ExecuteScalarAsync();
+            var jsonResult = result?.ToString() ?? "{}";
+            
+            // Parse the JSON result
+            var jsonDoc = System.Text.Json.JsonDocument.Parse(jsonResult);
+            var root = jsonDoc.RootElement;
+            
+            var similarOpportunities = new List<SimilarOpportunityModel>();
+            
+            // Check if embeddings exist
+            if (root.TryGetProperty("hasEmbedding", out var hasEmbedding) && hasEmbedding.GetBoolean())
+            {
+                if (root.TryGetProperty("similarEntities", out var entities) && entities.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    // Get the entity IDs
+                    var entityIds = new List<int>();
+                    var relevanceScores = new Dictionary<int, double>();
+                    
+                    foreach (var entity in entities.EnumerateArray())
+                    {
+                        if (entity.TryGetProperty("entityId", out var entityId) && 
+                            entity.TryGetProperty("relevancePercentage", out var relevance))
+                        {
+                            var oppId = entityId.GetInt32();
+                            entityIds.Add(oppId);
+                            relevanceScores[oppId] = relevance.GetDouble();
+                        }
+                    }
+                    
+                    // Fetch the full opportunity details from the database
+                    if (entityIds.Any())
+                    {
+                        var opportunities = await context.Opportunities
+                            .Include(o => o.WorkflowStage)
+                            .Where(o => entityIds.Contains(o.Id) && !o.IsDeleted)
+                            .ToListAsync();
+                        
+                        foreach (var opp in opportunities)
+                        {
+                            // Calculate duration in months if dates are available
+                            int? durationMonths = null;
+                            if (opp.TargetSigningDate.HasValue && opp.TargetDeliveryDate.HasValue)
+                            {
+                                var duration = opp.TargetDeliveryDate.Value - opp.TargetSigningDate.Value;
+                                durationMonths = (int)Math.Round(duration.TotalDays / 30.0);
+                            }
+                            
+                            similarOpportunities.Add(new SimilarOpportunityModel
+                            {
+                                OpportunityId = opp.Id,
+                                Name = opp.Name,
+                                Description = opp.Description,
+                                Budget = opp.InitiativeBudgetUSD,
+                                DurationMonths = durationMonths,
+                                RelevanceScore = relevanceScores.GetValueOrDefault(opp.Id, 0),
+                                WorkflowStage = opp.WorkflowStage?.Name
+                            });
+                        }
+                        
+                        // Sort by relevance score descending
+                        similarOpportunities = similarOpportunities
+                            .OrderByDescending(o => o.RelevanceScore)
+                            .ToList();
+                    }
+                }
+            }
+            
+            stopwatch.Stop();
+            
+            return new SimilarOpportunitiesResponse
+            {
+                SimilarOpportunities = similarOpportunities,
+                TotalFound = similarOpportunities.Count,
+                ExecutionTimeMs = stopwatch.ElapsedMilliseconds
+            };
+        }
+        catch (Exception ex)
+        {
+            // Log the error and return empty result
+            Console.WriteLine($"Error getting similar opportunities: {ex.Message}");
+            stopwatch.Stop();
+            
+            return new SimilarOpportunitiesResponse
+            {
+                SimilarOpportunities = new List<SimilarOpportunityModel>(),
+                TotalFound = 0,
+                ExecutionTimeMs = stopwatch.ElapsedMilliseconds
+            };
+        }
     }
 }
 

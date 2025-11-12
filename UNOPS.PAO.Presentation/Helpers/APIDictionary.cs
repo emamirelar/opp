@@ -203,4 +203,20 @@ public class APIDictionary
     public const string EntityArtifactBulkUniqueIdExample = EntityArtifacts + "/bulk/unique-id-example";
     public const string EntityArtifactBulkTemplateDownload = EntityArtifacts + "/bulk/template-download";
     public const string EntityArtifactBulkUpsert = EntityArtifacts + "/bulk/upsert";
+
+    // AI Retriever Service (External API)
+    public static class AIRetriever
+    {
+        private const string BaseRoute = APIPrefix + "ai-retriever";
+        
+        // Vector Store
+        public const string VectorStoreSearch = BaseRoute + "/vector-store/search";
+        
+        // Document Conversion
+        public const string ConvertUrl = BaseRoute + "/convert/url";
+        public const string ConvertMarkdownToGoogleDoc = BaseRoute + "/convert/markdown-to-google-doc";
+        
+        // Health Check
+        public const string Health = BaseRoute + "/health";
+    }
 }
