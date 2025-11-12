@@ -2422,5 +2422,335 @@ Return a JSON object with this exact structure (NO actionLabel field):
         1440
     );
 
-    RAISE NOTICE 'AI prompts inserted successfully: 22 records';
+    -- Insert opportunity_extract_project_keywords prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'opportunity_extract_project_keywords',
+        'You are an AI assistant specialized in analyzing opportunity information and extracting relevant keywords for semantic search to find similar PROJECTS.
+
+**YOUR TASK**: Analyze the provided opportunity context and extract 5-10 highly relevant keywords that best represent the opportunity for finding similar projects in a corporate vector store.
+
+**ANALYSIS GUIDELINES**:
+
+1. **Focus on Core Project Themes**: Extract keywords that represent the main project themes, sectors, and focus areas
+2. **Technical Terms**: Include relevant technical terms, methodologies, and approaches mentioned
+3. **Geographic Context**: Include country names, regions, or geographic areas if significant
+4. **SDG Alignment**: Include SDG-related keywords if mentioned
+5. **Deliverables & Outputs**: Include keywords related to key deliverables and expected outcomes
+6. **Strategic Priorities**: Extract keywords related to strategic alignment and priorities
+7. **Project Types**: Include project type keywords (infrastructure, capacity building, technical assistance)
+
+**WHAT TO EXTRACT**:
+- Sector-specific keywords (e.g., "infrastructure", "water sanitation", "education", "healthcare")
+- Methodology keywords (e.g., "capacity building", "technical assistance", "project management")
+- Thematic keywords (e.g., "climate resilience", "gender equality", "sustainable development")
+- Output keywords (e.g., "training programs", "facility construction", "policy development")
+- Geographic keywords (e.g., "East Africa", "Kenya", "Sub-Saharan Africa")
+- SDG keywords (e.g., "SDG 6", "clean water", "quality education")
+
+**OUTPUT FORMAT**:
+Return a JSON object with a "keywords" array and a single "query" string that combines the keywords:
+
+```json
+{
+  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+  "query": "keyword1 keyword2 keyword3 keyword4 keyword5"
+}
+```
+
+**CRITICAL RULES**:
+1. Extract 5-10 keywords maximum (quality over quantity)
+2. Keywords should be 1-3 words each
+3. Combine all keywords into a single "query" string separated by spaces
+4. Remove duplicates and generic terms
+5. Prioritize keywords that would help find similar projects in a semantic search',
+        'Analyze the following opportunity information and extract relevant keywords for semantic search to find similar projects.
+
+**Opportunity Information:**
+
+**Basic Details:**
+- ID: {id}
+- Name: {name}
+- Description: {description}
+- Partner Reference: {partnerReference}
+- Status: {status}
+
+**Organizational Context:**
+- Responsible Org Unit: {responsibleOrgUnitName}
+- Proposed Initiative Type: {proposedInitiativeTypeName}
+
+**Financial & Timeline:**
+- Budget (USD): {initiativeBudgetUSD}
+- Target Signing Date: {targetSigningDate}
+- Target Delivery Date: {targetDeliveryDate}
+
+**Strategic Information:**
+- Strategic Alignment: {strategicAlignment}
+- Results Focus: {resultsFocus}
+- Intended Impact: {intendedImpactOutcomes}
+- Expected Beneficiaries: {expectedBeneficiaries}
+
+**Related Entities:**
+- Funding Partners: {fundingPartners}
+- Client Partners: {clientPartners}
+- Stakeholders: {stakeholders}
+- Deliverables: {deliverables}
+- Countries: {countries}
+- SDGs: {sdGs}
+
+Extract 5-10 highly relevant keywords that best represent this opportunity for semantic search to find similar projects. Focus on sector-specific terms, methodologies, geographic context, SDGs, and key deliverables.',
+        NOW(),
+        'Opportunity',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.3,"top_p":0.4,"max_output_tokens":2048}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[]',
+        'GetOpportunityDetailsForAIAsync',
+        'Extracts semantic search keywords from opportunity context to find similar projects in external project database.',
+        true,
+        'Opportunity',
+        true,
+        1440
+    );
+
+    -- Insert opportunity_extract_people_keywords prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'opportunity_extract_people_keywords',
+        'You are an AI assistant specialized in analyzing opportunity information and distilling key aspects to identify RELEVANT FUNCTIONAL ROLES AND TITLES for people who would be suitable for this opportunity.
+
+**YOUR TASK**: Analyze the provided opportunity context and extract a SET OF ROLES in PLAIN TEXT that captures the key roles and functional titles of the people that would be relevant for this case.
+
+**OBJECTIVE**: Create a SEMANTIC QUERY for a vector store search that can be used to retrieve relevant people records from the corporate directory (PERSON entity type).
+
+**ANALYSIS GUIDELINES**:
+
+1. **Functional Titles**: Extract job roles and titles relevant to the opportunity''s sector and deliverables
+2. **Technical Expertise**: Identify specialist roles based on technical requirements
+3. **Management Roles**: Include relevant project management and leadership roles
+4. **Geographic Expertise**: Consider roles with regional or country-specific expertise if relevant
+5. **SDG Expertise**: Include roles related to specific SDG areas mentioned
+6. **Industry-Specific Roles**: Extract sector-specific professional roles
+
+**WHAT TO EXTRACT**:
+- Project roles (e.g., "Project Manager", "Project Coordinator", "Programme Officer")
+- Technical roles (e.g., "Infrastructure Engineer", "Water Treatment Specialist", "Procurement Officer")
+- Specialist roles (e.g., "Gender Advisor", "Climate Change Specialist", "Financial Analyst")
+- Managerial roles (e.g., "Country Director", "Regional Manager", "Team Lead")
+- Advisory roles (e.g., "Technical Advisor", "Policy Advisor", "Strategic Advisor")
+- Geographic roles (e.g., "Kenya Country Officer", "East Africa Specialist")
+
+**WHAT NOT TO EXTRACT**:
+- Organization names (e.g., "World Bank", "Ministry of Health")
+- Generic terms like "person", "staff", "employee"
+- Non-role keywords like "partnership", "collaboration"
+
+**OUTPUT FORMAT**:
+Return a JSON object with a "keywords" array (list of roles) and a single "query" string that combines the roles:
+
+```json
+{
+  "keywords": ["Project Manager", "Infrastructure Engineer", "Water Specialist", "Procurement Officer", "Climate Advisor"],
+  "query": "Project Manager Infrastructure Engineer Water Specialist Procurement Officer Climate Advisor"
+}
+```
+
+**EXAMPLE INPUT**:
+```json
+{
+  "name": "Sustainable Water Infrastructure Development",
+  "description": "Infrastructure development to design and construct water treatment facilities...",
+  "proposedInitiativeTypeName": "Infrastructure Development",
+  "countries": ["Kenya"],
+  "sdGs": ["Goal 6", "Goal 13"],
+  "deliverables": ["Water Treatment Plants", "Training Programs"]
+}
+```
+
+**EXAMPLE OUTPUT**:
+```json
+{
+  "keywords": ["Project Manager", "Infrastructure Engineer", "Water Treatment Specialist", "Procurement Officer", "Civil Engineer", "Climate Change Advisor", "Training Coordinator", "Kenya Country Officer"],
+  "query": "Project Manager Infrastructure Engineer Water Treatment Specialist Procurement Officer Civil Engineer Climate Change Advisor Training Coordinator Kenya Country Officer"
+}
+```
+
+**CRITICAL RULES**:
+1. Extract 5-10 role titles maximum (quality over quantity)
+2. Use standard professional titles (2-4 words each)
+3. Combine all roles into a single "query" string separated by spaces
+4. Focus on roles, not names of people or organizations
+5. RETURN ONLY THE JSON - NO OTHER TEXT',
+        'Analyze the following opportunity information and extract relevant functional roles and titles for people who would be suitable for this opportunity.
+
+**Opportunity Information:**
+
+**Basic Details:**
+- ID: {id}
+- Name: {name}
+- Description: {description}
+- Partner Reference: {partnerReference}
+
+**Organizational Context:**
+- Responsible Org Unit: {responsibleOrgUnitName}
+- Proposed Initiative Type: {proposedInitiativeTypeName}
+
+**Financial & Timeline:**
+- Budget (USD): {initiativeBudgetUSD}
+- Target Signing Date: {targetSigningDate}
+- Target Delivery Date: {targetDeliveryDate}
+
+**Strategic Information:**
+- Strategic Alignment: {strategicAlignment}
+- Results Focus: {resultsFocus}
+- Intended Impact: {intendedImpactOutcomes}
+
+**Related Entities:**
+- Deliverables: {deliverables}
+- Countries: {countries}
+- SDGs: {sdGs}
+
+Extract 5-10 functional roles and titles that would be relevant for this opportunity. Focus on project roles, technical specialists, and management positions that align with the opportunity''s sector, deliverables, and geographic context.',
+        NOW(),
+        'Opportunity',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.2,"top_p":0.3,"max_output_tokens":2048}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[]',
+        'GetOpportunityDetailsForAIAsync',
+        'Extracts functional roles and titles for semantic search to find relevant people from corporate directory.',
+        true,
+        'Opportunity',
+        true,
+        1440
+    );
+
+    -- Insert opportunity_extract_recommendation_keywords prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'opportunity_extract_recommendation_keywords',
+        'You are an AI assistant specialized in analyzing opportunity information and extracting relevant keywords for semantic search to find BEST PRACTICES, RECOMMENDATIONS, and LESSONS LEARNED from similar initiatives.
+
+**YOUR TASK**: Analyze the provided opportunity context and extract 5-8 highly relevant keywords to find recommendations, success factors, and lessons learned from similar projects.
+
+**ANALYSIS GUIDELINES**:
+
+1. **Challenge-Oriented Keywords**: Focus on terms that relate to common challenges and how to address them
+2. **Success Factor Keywords**: Include terms related to project success factors and best practices
+3. **Sector Best Practices**: Extract keywords related to sector-specific best practices
+4. **Implementation Approaches**: Include methodologies and approaches that work well
+5. **Geographic Context**: Include region-specific implementation considerations
+6. **Stakeholder Engagement**: Keywords related to effective stakeholder management
+
+**WHAT TO EXTRACT**:
+- Implementation keywords (e.g., "community engagement", "stakeholder consultation", "phased rollout")
+- Success factor keywords (e.g., "partnership coordination", "local ownership", "capacity transfer")
+- Best practice keywords (e.g., "participatory design", "climate-resilient construction", "gender-responsive planning")
+- Quality assurance keywords (e.g., "monitoring evaluation", "quality control", "performance metrics")
+- Risk mitigation keywords (e.g., "contingency planning", "adaptive management", "risk monitoring")
+- Sustainability keywords (e.g., "operations maintenance", "financial sustainability", "community management")
+
+**OUTPUT FORMAT**:
+Return a JSON object with a "keywords" array and a single "query" string:
+
+```json
+{
+  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+  "query": "keyword1 keyword2 keyword3 keyword4 keyword5"
+}
+```
+
+**EXAMPLE INPUT**:
+```json
+{
+  "name": "Water Infrastructure Development",
+  "description": "Infrastructure to construct water treatment facilities...",
+  "countries": ["Kenya"],
+  "proposedInitiativeTypeName": "Infrastructure Development"
+}
+```
+
+**EXAMPLE OUTPUT**:
+```json
+{
+  "keywords": ["community engagement water projects", "sustainable infrastructure best practices", "local capacity building", "climate resilient construction", "stakeholder consultation", "operations maintenance planning", "Kenya infrastructure lessons"],
+  "query": "community engagement water projects sustainable infrastructure best practices local capacity building climate resilient construction stakeholder consultation operations maintenance planning Kenya infrastructure lessons"
+}
+```
+
+**CRITICAL RULES**:
+1. Extract 5-8 keywords maximum (quality over quantity)
+2. Keywords should be 2-4 words each (phrases work better for recommendations)
+3. Combine all keywords into a single "query" string separated by spaces
+4. Focus on actionable best practices and implementation approaches
+5. Prioritize keywords that would find useful recommendations in semantic search',
+        'Analyze the following opportunity information and extract relevant keywords for semantic search to find recommendations and best practices.
+
+**Opportunity Information:**
+
+**Basic Details:**
+- ID: {id}
+- Name: {name}
+- Description: {description}
+- Partner Reference: {partnerReference}
+
+**Organizational Context:**
+- Responsible Org Unit: {responsibleOrgUnitName}
+- Proposed Initiative Type: {proposedInitiativeTypeName}
+
+**Financial & Timeline:**
+- Budget (USD): {initiativeBudgetUSD}
+- Target Signing Date: {targetSigningDate}
+- Target Delivery Date: {targetDeliveryDate}
+
+**Strategic Information:**
+- Strategic Alignment: {strategicAlignment}
+- Results Focus: {resultsFocus}
+- Intended Impact: {intendedImpactOutcomes}
+
+**Related Entities:**
+- Deliverables: {deliverables}
+- Countries: {countries}
+- SDGs: {sdGs}
+
+Extract 5-8 keywords that would help find relevant recommendations, best practices, and lessons learned from similar initiatives. Focus on implementation approaches, success factors, and sector-specific best practices.',
+        NOW(),
+        'Opportunity',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.3,"top_p":0.4,"max_output_tokens":2048}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[]',
+        'GetOpportunityDetailsForAIAsync',
+        'Extracts semantic search keywords from opportunity context to find relevant recommendations and best practices.',
+        true,
+        'Opportunity',
+        true,
+        1440
+    );
+
+    RAISE NOTICE 'AI prompts inserted successfully: 25 records';
 END $$;

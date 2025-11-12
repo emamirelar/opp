@@ -643,5 +643,10 @@ public class OpportunityManager : IOpportunityManager
     {
         throw new NotImplementedException("GetSimilarOpportunitiesAsync is only implemented in UNOPSOpportunityManager");
     }
+
+    public Task AssignCreatorAsOpportunityManagerAsync(int opportunityId, int userId)
+    {
+        throw new NotImplementedException("AssignCreatorAsOpportunityManagerAsync is only implemented in UNOPSOpportunityManager");
+    }
 }
 

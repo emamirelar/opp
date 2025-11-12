@@ -181,6 +181,11 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
     
+    public Task<RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null)
+    {
+        throw new NotImplementedException();
+    }
+    
     public Task<DSTRecommendationsResponse> GetDSTRecommendationsAsync(int opportunityId, ClaimsPrincipal user = null, int maxResults = 10)
     {
         throw new NotImplementedException();

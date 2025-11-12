@@ -1208,5 +1208,57 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             };
         }
     }
+
+    /// <summary>
+    /// Assigns the creator as the Opportunity Manager role for the opportunity
+    /// </summary>
+    /// <param name="opportunityId">The ID of the opportunity</param>
+    /// <param name="userId">The ID of the user to assign as Opportunity Manager</param>
+    public async Task AssignCreatorAsOpportunityManagerAsync(int opportunityId, int userId)
+    {
+        try
+        {
+            // Get the "Opportunity Manager" entity role
+            var opportunityManagerRole = await uNOPSAppDbContext.EntityRoles
+                .FirstOrDefaultAsync(er => er.EntityType == "Opportunity" && er.Name == "Opportunity Manager");
+
+            if (opportunityManagerRole == null)
+            {
+                throw new InvalidOperationException("Opportunity Manager role not found in the system");
+            }
+
+            // Check if this user is already assigned as Opportunity Manager
+            var existingAssignment = await uNOPSAppDbContext.Set<OpportunityStakeholder>()
+                .AnyAsync(os => os.OpportunityId == opportunityId 
+                    && os.UserId == userId 
+                    && os.EntityRoleId == opportunityManagerRole.Id);
+
+            if (existingAssignment)
+            {
+                // User is already assigned as Opportunity Manager
+                return;
+            }
+
+            // Create the stakeholder assignment
+            var stakeholder = new OpportunityStakeholder
+            {
+                OpportunityId = opportunityId,
+                UserId = userId,
+                EntityRoleId = opportunityManagerRole.Id,
+                IsInternal = true,
+                StakeholderType = "Internal",
+                Notes = "Auto-assigned as Opportunity Manager (creator)"
+            };
+
+            await uNOPSAppDbContext.Set<OpportunityStakeholder>().AddAsync(stakeholder);
+            await uNOPSAppDbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            // Log and rethrow so the controller can handle gracefully
+            Console.WriteLine($"Error assigning creator as Opportunity Manager: {ex.Message}");
+            throw;
+        }
+    }
 }
 

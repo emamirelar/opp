@@ -23,7 +23,7 @@ import { MessageModule } from 'primeng/message';
 import { FormsModule } from '@angular/forms';
 
 // Models
-import { Opportunity, DSTSeverity, SimilarProject, SimilarProjectsResponse, SimilarOpportunity, SimilarOpportunitiesResponse, Risk, AIRiskRecommendation, RiskCreateRequest } from '@shared/models/opportunity.model';
+import { Opportunity, DSTSeverity, SimilarProject, SimilarProjectsResponse, SimilarOpportunity, SimilarOpportunitiesResponse, RelevantPerson, RelevantPeopleResponse, Risk, AIRiskRecommendation, RiskCreateRequest } from '@shared/models/opportunity.model';
 import { OpportunityService } from '../../../../../services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 
@@ -140,6 +140,34 @@ export class OpportunityDstSectionComponent {
    * @since 1.0.0
    */
   readonly similarOpportunitiesError = signal<string | null>(null);
+
+  /**
+   * @description Signal for relevant people data
+   * @type {WritableSignal<RelevantPerson[] | null>}
+   * @since 1.0.0
+   */
+  readonly relevantPeople = signal<RelevantPerson[] | null>(null);
+
+  /**
+   * @description Full relevant people response
+   * @type {WritableSignal<RelevantPeopleResponse | null>}
+   * @since 1.0.0
+   */
+  readonly relevantPeopleResponse = signal<RelevantPeopleResponse | null>(null);
+
+  /**
+   * @description Loading state for relevant people
+   * @type {WritableSignal<boolean>}
+   * @since 1.0.0
+   */
+  readonly loadingRelevantPeople = signal<boolean>(false);
+
+  /**
+   * @description Error message for relevant people loading
+   * @type {WritableSignal<string | null>}
+   * @since 1.0.0
+   */
+  readonly relevantPeopleError = signal<string | null>(null);
 
   /**
    * @description Signal for risks from the register
@@ -261,6 +289,7 @@ export class OpportunityDstSectionComponent {
         this.loadDSTRecommendations();
         this.loadSimilarOpportunities();
         this.loadSimilarProjects();
+        this.loadRelevantPeople();
       }
     });
   }
@@ -564,6 +593,35 @@ export class OpportunityDstSectionComponent {
         this.loadingSimilarProjects.set(false);
         const errorMessage = error.error?.error || error.message || 'Failed to load similar projects';
         this.similarProjectsError.set(errorMessage);
+        this.feedbackService.showErrorToast({
+          summary: 'Error',
+          detail: errorMessage
+        });
+      }
+    });
+  }
+
+  /**
+   * @description Load relevant people from corporate directory using AI-powered semantic search
+   * Extracts role keywords from opportunity context and searches vector store for relevant people
+   * @since 1.0.0
+   */
+  loadRelevantPeople(): void {
+    const opportunityId = this.opportunity().id;
+
+    this.loadingRelevantPeople.set(true);
+    this.relevantPeopleError.set(null);
+
+    this.opportunityService.getRelevantPeople(opportunityId, 6).subscribe({
+      next: (response: RelevantPeopleResponse) => {
+        this.loadingRelevantPeople.set(false);
+        this.relevantPeopleResponse.set(response);
+        this.relevantPeople.set(response.relevantPeople);
+      },
+      error: (error: any) => {
+        this.loadingRelevantPeople.set(false);
+        const errorMessage = error.error?.error || error.message || 'Failed to load relevant people';
+        this.relevantPeopleError.set(errorMessage);
         this.feedbackService.showErrorToast({
           summary: 'Error',
           detail: errorMessage

@@ -91,7 +91,7 @@
             <div class="flex items-center justify-between mb-2">
               <h4 class="text-sm font-semibold text-gray-900">{{ 'label.insights' | translate }}</h4>
             </div>
-            <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+            <div class="space-y-2 pr-2">
               @for (insight of insights(); track insight.id) {
                 <div class="bg-white rounded-lg p-3 border border-blue-100">
                   <div class="flex items-start gap-2">
@@ -129,7 +129,7 @@
             <div class="flex items-center justify-between mb-2">
               <h4 class="text-sm font-semibold text-gray-900">{{ 'label.suggestions' | translate }}</h4>
             </div>
-            <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+            <div class="space-y-2 pr-2">
               @for (suggestion of suggestions(); track suggestion.id) {
                 <div class="bg-white rounded-lg p-3 border border-blue-100">
                   <div class="flex items-start gap-2">

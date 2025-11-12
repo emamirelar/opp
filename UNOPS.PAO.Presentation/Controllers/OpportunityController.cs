@@ -69,6 +69,18 @@ public class OpportunityController : BaseController
 
         var result = await _manager.CreateOpportunityAsync(req);
         
+        // Assign the current user as Opportunity Manager
+        try
+        {
+            await _manager.AssignCreatorAsOpportunityManagerAsync(result.Id, _currentUserId);
+            _logger.LogInformation("✅ Assigned user {UserId} as Opportunity Manager for opportunity {OpportunityId}", _currentUserId, result.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "⚠️ Failed to assign creator as Opportunity Manager for opportunity {OpportunityId}", result.Id);
+            // Don't fail the request if role assignment fails
+        }
+        
         // Create audit log for the new opportunity
         await CreateAuditLogAsync(result.Id, "create", result);
         
@@ -491,6 +503,55 @@ public class OpportunityController : BaseController
         {
             _logger.LogError(ex, "Error getting similar projects for opportunity {OpportunityId}", id);
             return StatusCode(500, new { error = "Internal server error while getting similar projects", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Gets relevant people from corporate directory for an opportunity using AI-powered semantic search
+    /// </summary>
+    [HttpGet(APIDictionary.Opportunity + "/{id}/relevant-people")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> GetRelevantPeople(int id, [FromQuery] int maxResults = 6)
+    {
+        try
+        {
+            _logger.LogInformation("Getting relevant people for opportunity {OpportunityId} with maxResults={MaxResults}", 
+                id, maxResults);
+
+            // Validate maxResults
+            if (maxResults < 1 || maxResults > 50)
+            {
+                return BadRequest(new { error = "maxResults must be between 1 and 50" });
+            }
+
+            // Get the opportunity to verify it exists
+            var opportunity = await _manager.GetOpportunityAsync(id);
+            if (opportunity == null)
+            {
+                _logger.LogWarning("Opportunity {OpportunityId} not found for relevant people search", id);
+                return NotFound(new { error = $"Opportunity with ID {id} not found" });
+            }
+
+            // Get current user from claims
+            var user = User;
+
+            // Call the GeminiManager to get relevant people
+            var response = await _geminiManager.GetRelevantPeopleAsync(id, maxResults, user);
+
+            _logger.LogInformation("Found {Count} relevant people for opportunity {OpportunityId}", 
+                response.RelevantPeople?.Count ?? 0, id);
+
+            return Ok(response);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Opportunity {OpportunityId} not found", id);
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting relevant people for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while getting relevant people", details = ex.Message });
         }
     }
 

@@ -361,6 +361,31 @@ export interface SimilarOpportunitiesResponse {
 }
 
 /**
+ * Relevant Person Model - for finding relevant people from corporate directory
+ */
+export interface RelevantPerson {
+  personId: string; // Person ID from oneUNOPS
+  name: string | null;
+  title: string | null; // Job title/position
+  department: string | null; // Department or organizational unit
+  email: string | null;
+  location: string | null; // Location/duty station
+  expertise: string[] | null; // Areas of expertise or skills
+  relevanceScore: number; // 0-100 similarity score based on role match
+  metadata: Record<string, any> | null; // Additional metadata
+}
+
+/**
+ * Response from Relevant People API
+ */
+export interface RelevantPeopleResponse {
+  relevantPeople: RelevantPerson[];
+  extractedRoles: string[]; // Role keywords extracted for search
+  totalFound: number;
+  searchTimestamp: string;
+}
+
+/**
  * Analysis Section Models
  * For insights and suggestions in the Analysis section
  */

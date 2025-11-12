@@ -34,6 +34,7 @@ public interface IGeminiManager
     IAsyncEnumerable<string> ChatWithGeminiStreaming(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null);
     Task<SessionConfiguration> GetSessionConfigurationAsync();
     Task<SimilarProjectsResponse> GetSimilarProjectsAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null);
+    Task<RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null);
     Task<DSTRecommendationsResponse> GetDSTRecommendationsAsync(int opportunityId, ClaimsPrincipal user = null, int maxResults = 10);
     
     /// <summary>
