@@ -1308,6 +1308,7 @@
 	"message.documentUploadSuccess": "Documento enviado com sucesso!",
 	"message.document.uploadedSuccessfully": "Documento enviado com sucesso",
 	"message.document.linkedSuccessfully": "Documento vinculado com sucesso",
+	"message.document.linkedAndConvertedSuccessfully": "Documento vinculado e convertido para PDF com sucesso",
 	"message.document.deletedSuccessfully": "Documento excluído com sucesso",
 	"message.document.invalidFileType": "Tipo de arquivo inválido. Selecione um arquivo PDF, DOC ou DOCX.",
 	"message.document.noGoogleDriveFileSelected": "Nenhum arquivo do Google Drive selecionado",

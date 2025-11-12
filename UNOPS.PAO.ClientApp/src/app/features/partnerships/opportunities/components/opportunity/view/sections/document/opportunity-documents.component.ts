@@ -332,7 +332,6 @@ export class OpportunityDocumentsComponent implements OnInit {
       next: (authAvailable) => {
         this.googleDriveAuthAvailable = authAvailable;
         if (authAvailable) {
-          console.log('✅ Google Drive auth is available - Office file conversion enabled');
         } else {
           console.warn('⚠️ Google Drive auth not available - Office file conversion will not be possible');
           console.warn('Check console for detailed error messages from GoogleDriveService');
@@ -360,9 +359,7 @@ export class OpportunityDocumentsComponent implements OnInit {
   loadDocumentTypes(): void {
     this.documentService.getDocumentTypesByEntityName('Opportunity').subscribe({
       next: (types: any) => {
-        console.log('Document types response:', types); // Debug log
         const documentTypesArray = types.records || [];
-        console.log('Document types array:', documentTypesArray); // Debug log
         this.documentTypes.set(documentTypesArray);
       },
       error: (error: any) => {
@@ -539,13 +536,31 @@ export class OpportunityDocumentsComponent implements OnInit {
       // Convert Office files to PDF if needed
       let fileToUpload = this.selectedFile;
       if (isOfficeFile) {
+        // If auth not available, try to initialize it now
         if (!this.googleDriveAuthAvailable) {
-          this.feedbackService.showErrorToast({
-            summary: this.translateService.instant('message.error'),
-            detail: 'Google Drive authorization is required to convert Office files. Please refresh the page and authorize access.'
-          });
-          this.uploading.set(false);
-          return;
+          
+          try {
+            const authAvailable = await firstValueFrom(this.googleDriveService.initializeAuth());
+            this.googleDriveAuthAvailable = authAvailable;
+            
+            if (!authAvailable) {
+              this.feedbackService.showErrorToast({
+                summary: this.translateService.instant('message.error'),
+                detail: 'Google Drive authorization failed. Please check your configuration and try again.'
+              });
+              this.uploading.set(false);
+              return;
+            }
+            
+          } catch (error) {
+            console.error('❌ Failed to initialize Google Drive auth:', error);
+            this.feedbackService.showErrorToast({
+              summary: this.translateService.instant('message.error'),
+              detail: 'Failed to initialize Google Drive authorization. Please refresh the page and try again.'
+            });
+            this.uploading.set(false);
+            return;
+          }
         }
         
         // Show conversion progress
@@ -628,13 +643,31 @@ export class OpportunityDocumentsComponent implements OnInit {
       const needsConversion = this.googleDriveService.needsPdfConversion(this.selectedGoogleDriveFile.mimeType || '');
       
       if (needsConversion) {
+        // If auth not available, try to initialize it now
         if (!this.googleDriveAuthAvailable) {
-          this.feedbackService.showErrorToast({
-            summary: this.translateService.instant('message.error'),
-            detail: 'Google Drive authorization is required to export files. Please refresh the page and authorize access.'
-          });
-          this.uploading.set(false);
-          return;
+          
+          try {
+            const authAvailable = await firstValueFrom(this.googleDriveService.initializeAuth());
+            this.googleDriveAuthAvailable = authAvailable;
+            
+            if (!authAvailable) {
+              this.feedbackService.showErrorToast({
+                summary: this.translateService.instant('message.error'),
+                detail: 'Google Drive authorization failed. Please check your configuration and try again.'
+              });
+              this.uploading.set(false);
+              return;
+            }
+            
+          } catch (error) {
+            console.error('❌ Failed to initialize Google Drive auth:', error);
+            this.feedbackService.showErrorToast({
+              summary: this.translateService.instant('message.error'),
+              detail: 'Failed to initialize Google Drive authorization. Please refresh the page and try again.'
+            });
+            this.uploading.set(false);
+            return;
+          }
         }
         
         // Show conversion progress
@@ -892,7 +925,6 @@ export class OpportunityDocumentsComponent implements OnInit {
       next: (response: any) => {
         this.transcribingDocId.set(null);
         
-        console.log('🔍 Raw AI Response:', response);
         
         // Parse the AI response
         let extractedData;
@@ -908,7 +940,6 @@ export class OpportunityDocumentsComponent implements OnInit {
             const candidate = parsedResponse.candidates[0];
             if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
               jsonText = candidate.content.parts[0].text;
-              console.log('📝 Extracted JSON Text from Gemini:', jsonText);
             }
           }
           
@@ -920,8 +951,6 @@ export class OpportunityDocumentsComponent implements OnInit {
           // Parse the actual opportunity data
           extractedData = typeof jsonText === 'string' ? JSON.parse(jsonText) : jsonText;
           
-          console.log('🤖 AI Transcribed Result:', extractedData);
-          console.log('🤖 AI Transcribed Result (JSON):', JSON.stringify(extractedData, null, 2));
         } catch (e) {
           console.error('❌ Failed to parse AI response:', e);
           console.error('❌ Response that failed:', response);
@@ -957,16 +986,13 @@ export class OpportunityDocumentsComponent implements OnInit {
    * @returns {void}
    */
   handleApplyChanges(changes: any): void {
-    console.log('📝 Applying AI changes (raw):', changes);
     
     // Transform the changes to match the backend API format
     const transformedChanges = this.transformAiChangesToApiFormat(changes);
-    console.log('📝 Applying AI changes (transformed):', transformedChanges);
     
     // Call the API to apply the changes
     this.opportunityService.applyAiChanges(this.opportunityId(), transformedChanges).subscribe({
       next: (updatedOpportunity: any) => {
-        console.log('✅ Changes applied successfully:', updatedOpportunity);
         
         // Show success feedback
         this.feedbackService.showSuccessToast({
