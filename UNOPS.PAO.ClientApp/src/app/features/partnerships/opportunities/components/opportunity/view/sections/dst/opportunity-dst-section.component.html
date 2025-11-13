@@ -7,37 +7,37 @@
     </div>
   </ng-template>
 
-  <div class="space-y-6">
-    <!-- Risks and Recommendations Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="space-y-6">
+      <!-- Risks and Recommendations Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Risks from Register (Left Panel) -->
-      <div>
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <i class="pi pi-exclamation-triangle text-unops-warning"></i>
-            <span>
-              {{ 'title.dst.risksIdentified' | translate }}
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <i class="pi pi-exclamation-triangle text-unops-warning"></i>
+              <span>
+                {{ 'title.dst.risksIdentified' | translate }}
               ({{ risks().length }})
-            </span>
-          </h3>
-          <p-button
-            [label]="'button.dst.addToRegister' | translate"
-            icon="pi pi-plus"
-            size="small"
-            [outlined]="true"
-            (onClick)="addToRiskRegister()"
-          />
-        </div>
+              </span>
+            </h3>
+            <p-button
+              [label]="'button.dst.addToRegister' | translate"
+              icon="pi pi-plus"
+              size="small"
+              [outlined]="true"
+              (onClick)="addToRiskRegister()"
+            />
+          </div>
 
         @if (loadingRisks()) {
           <div class="text-center py-4">
             <i class="pi pi-spin pi-spinner text-2xl text-gray-400"></i>
           </div>
         } @else if (risks().length === 0) {
-          <div class="bg-white rounded-lg p-4 border border-gray-200 text-center text-gray-500">
+            <div class="bg-white rounded-lg p-4 border border-gray-200 text-center text-gray-500">
             {{ 'message.dst.noRisksInRegister' | translate }}
-          </div>
-        } @else {
+            </div>
+          } @else {
           <div class="max-h-[600px] overflow-y-auto pr-2">
             @for (risk of risks(); track risk.id) {
               <div class="bg-white rounded-lg p-4 mb-3 border border-gray-200">
@@ -60,28 +60,28 @@
               </div>
             }
           </div>
-        }
-      </div>
+          }
+        </div>
 
       <!-- AI Recommendations (Right Panel) -->
-      <div>
-        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <i class="pi pi-lightbulb text-unops-info"></i>
-          <span>
-            {{ 'title.dst.recommendations' | translate }}
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="pi pi-lightbulb text-unops-info"></i>
+            <span>
+              {{ 'title.dst.recommendations' | translate }}
             ({{ visibleRecommendations().length }})
-          </span>
-        </h3>
+            </span>
+          </h3>
 
         @if (loadingRecommendations()) {
           <div class="text-center py-4">
             <i class="pi pi-spin pi-spinner text-2xl text-gray-400"></i>
           </div>
         } @else if (visibleRecommendations().length === 0) {
-          <div class="bg-blue-50 rounded-lg p-4 border border-blue-100 text-center text-gray-600">
-            {{ 'message.dst.noRecommendations' | translate }}
-          </div>
-        } @else {
+            <div class="bg-blue-50 rounded-lg p-4 border border-blue-100 text-center text-gray-600">
+              {{ 'message.dst.noRecommendations' | translate }}
+            </div>
+          } @else {
           <div class="max-h-[600px] overflow-y-auto pr-2">
             @for (rec of visibleRecommendations(); track $index) {
               <div class="bg-blue-50 rounded-lg p-4 mb-3 border border-blue-100">
@@ -116,14 +116,14 @@
               </div>
             }
           </div>
-        }
+          }
+        </div>
       </div>
-    </div>
 
-    <p-divider />
-    
+      <p-divider />
+
     <!-- Similar Opportunities Section -->
-    <div>
+      <div>
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <i class="pi pi-search text-unops-primary"></i>
@@ -185,9 +185,9 @@
                       [value]="opp.workflowStage"
                       severity="info"
                       [rounded]="true"
-                      styleClass="text-xs"
-                    />
-                  </div>
+                    styleClass="text-xs"
+                  />
+                </div>
                 }
 
                 <!-- Opportunity Name -->
@@ -258,7 +258,7 @@
           <div class="bg-red-50 rounded-lg p-4 border border-red-200">
             <div class="flex items-start gap-2">
               <i class="pi pi-exclamation-circle text-red-500 mt-1"></i>
-              <div>
+                  <div>
                 <h4 class="font-semibold text-red-900 mb-1">{{ 'message.dst.errorLoadingSimilarProjects' | translate }}</h4>
                 <p class="text-sm text-red-700">{{ similarProjectsError() }}</p>
               </div>
@@ -313,7 +313,7 @@
                     <div class="flex items-start gap-2">
                       <i class="pi pi-map-marker text-gray-400 mt-0.5 flex-shrink-0"></i>
                       <span class="line-clamp-1">{{ formatCountries(project.countries) }}</span>
-                    </div>
+                  </div>
                   }
 
                   <!-- Project Manager -->
@@ -325,7 +325,7 @@
                          (click)="$event.stopPropagation()">
                         {{ project.projectManagerName }}
                       </a>
-                    </div>
+                  </div>
                   }
                 </div>
               </div>
@@ -354,11 +354,11 @@
             <div class="flex items-center gap-3">
               <i class="pi pi-exclamation-triangle text-red-600 text-xl"></i>
               <span class="text-red-800">{{ relevantPeopleError() }}</span>
-            </div>
-            <p-button
+                </div>
+                <p-button
               [label]="'button.retry' | translate"
               severity="danger"
-              [text]="true"
+                  [text]="true"
               icon="pi pi-refresh"
               styleClass="mt-3"
               (onClick)="loadRelevantPeople()"
@@ -372,13 +372,22 @@
               <div class="bg-white rounded-lg p-4 border border-gray-200 hover:shadow-md transition-shadow">
                 <!-- Profile Photo and Name -->
                 <div class="flex items-start gap-3 mb-3">
-                  <!-- Initials Avatar -->
-                  <p-avatar 
-                    [label]="getInitials(person.name)" 
-                    size="large" 
-                    shape="circle"
-                    styleClass="flex-shrink-0 bg-unops-primary text-white"
-                  />
+                  <!-- Profile Photo or Initials Avatar -->
+                  @if (person.photoUrl) {
+                    <p-avatar 
+                      [image]="person.photoUrl" 
+                      size="large" 
+                      shape="circle"
+                      styleClass="flex-shrink-0"
+                    />
+                  } @else {
+                    <p-avatar 
+                      [label]="getInitials(person.name)" 
+                      size="large" 
+                      shape="circle"
+                      styleClass="flex-shrink-0 bg-unops-primary text-white"
+                    />
+                  }
 
                   <!-- Name -->
                   @if (person.name) {
@@ -445,7 +454,7 @@
           </div>
         }
       </div>
-  </div>
+    </div>
 </p-panel>
 
 <!-- Add Risk Dialog -->

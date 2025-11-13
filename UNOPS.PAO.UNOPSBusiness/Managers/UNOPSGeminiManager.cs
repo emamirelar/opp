@@ -3176,6 +3176,9 @@ public class UNOPSGeminiManager : IGeminiManager
                             Location = ExtractFromMetadata(doc.Metadata, "Location") 
                                       ?? ExtractFromMetadata(doc.Metadata, "Duty_Station") 
                                       ?? ExtractFromMetadata(doc.Metadata, "Office"),
+                            PhotoUrl = ExtractFromMetadata(doc.Metadata, "Photo") 
+                                      ?? ExtractFromMetadata(doc.Metadata, "ProfilePicture") 
+                                      ?? ExtractFromMetadata(doc.Metadata, "ProfilePhoto"),
                             Expertise = expertiseList.Any() ? expertiseList : null,
                             RelevanceScore = doc.Score * 100, // Convert to 0-100 scale
                             Metadata = doc.Metadata
