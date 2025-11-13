@@ -185,5 +185,49 @@ export class PartnerService {
     // Use the centralized duplicate detection method from ImportDialogService
     return this.importDialogService.detectDuplicatesForEntity(partnerData, 'partner');
   }
+
+  /**
+   * Creates a new opportunity from a partner with the partner pre-populated
+   * @param partnerId ID of the partner
+   * @param request Request with opportunity name and partner role
+   * @returns Created opportunity
+   */
+  createOpportunityFromPartner(partnerId: number, request: CreateOpportunityFromPartnerRequest): Observable<any> {
+    this.isLoading.set(true);
+    return this.http.post<any>(`${this.apiUrl}/${partnerId}/create-opportunity`, request).pipe(tap({
+      next: () => {
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+      }
+    }));
+  }
+
+  /**
+   * Gets all opportunities related to a partner (funding or client partner)
+   * @param partnerId ID of the partner
+   * @returns List of related opportunities
+   */
+  getPartnerOpportunities(partnerId: number): Observable<any[]> {
+    this.isLoading.set(true);
+    return this.http.get<any[]>(`${this.apiUrl}/${partnerId}/opportunities`).pipe(tap({
+      next: () => {
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+      }
+    }));
+  }
   
+}
+
+/**
+ * Request interface for creating opportunity from partner
+ */
+export interface CreateOpportunityFromPartnerRequest {
+  name: string;
+  partnerRole: 'funding' | 'client' | 'both';
+  description?: string;
 }

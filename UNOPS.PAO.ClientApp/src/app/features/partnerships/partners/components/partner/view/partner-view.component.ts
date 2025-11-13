@@ -33,6 +33,8 @@ import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { CheckboxModule } from 'primeng/checkbox';
 import { CardModule } from 'primeng/card';
+import { TagModule } from 'primeng/tag';
+import { FloatLabelModule } from 'primeng/floatlabel';
 import { PartnerService } from '@partnerships/partners/services/partner.service';
 import { PartnerContactsComponent } from '../contacts/partner-contacts.component';
 import { LinkListComponent } from '@shared/components/links/link/list/link-list.component';
@@ -101,6 +103,7 @@ import { GDriveAddLinkComponent } from '@app/shared/components/documents/gdrive/
     ConfirmDialogModule,
     EntityTagsComponent,
     BaseEngagementListComponent,
+    TagModule,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,

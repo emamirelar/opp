@@ -100,6 +100,11 @@ export class PartnerTabsComponent implements OnInit {
           icon: 'info'
         },
         {
+          label: 'title.opportunities',
+          route: `/partnerships/partners/${this.recordId}/opportunities`,
+          icon: 'work'
+        },
+        {
           label: 'title.contacts',
           route: `/partnerships/partners/${this.recordId}/contacts`,
           icon: 'contacts'
