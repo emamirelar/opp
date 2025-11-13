@@ -36,6 +36,11 @@ public class RelevantPersonModel
     public string? Location { get; set; }
     
     /// <summary>
+    /// Profile photo URL from Google Workspace
+    /// </summary>
+    public string? PhotoUrl { get; set; }
+    
+    /// <summary>
     /// Areas of expertise or skills
     /// </summary>
     public List<string>? Expertise { get; set; }

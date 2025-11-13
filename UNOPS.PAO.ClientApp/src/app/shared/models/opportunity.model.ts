@@ -370,6 +370,7 @@ export interface RelevantPerson {
   department: string | null; // Department or organizational unit
   email: string | null;
   location: string | null; // Location/duty station
+  photoUrl: string | null; // Profile photo URL from Google Workspace
   expertise: string[] | null; // Areas of expertise or skills
   relevanceScore: number; // 0-100 similarity score based on role match
   metadata: Record<string, any> | null; // Additional metadata
