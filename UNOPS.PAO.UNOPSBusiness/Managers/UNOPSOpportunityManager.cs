@@ -53,8 +53,30 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         // Handle child entities
         if (model.FundingPartners != null && model.FundingPartners.Any())
         {
+            // Get a valid currency ID (preferably USD, or the first available)
+            var defaultCurrencyId = uNOPSAppDbContext.Currencies
+                .Where(c => c.Code == "USD")
+                .Select(c => c.Id)
+                .FirstOrDefault();
+            
+            if (defaultCurrencyId == 0)
+            {
+                // Fallback to first available currency
+                defaultCurrencyId = uNOPSAppDbContext.Currencies
+                    .Select(c => c.Id)
+                    .FirstOrDefault();
+            }
+
             entity.FundingPartners = model.FundingPartners
-                .Select(fp => mapper.Map<OpportunityFundingPartner>(fp))
+                .Select(fp => {
+                    var mapped = mapper.Map<OpportunityFundingPartner>(fp);
+                    // Set default currency if not provided
+                    if (mapped.CurrencyId == 0)
+                    {
+                        mapped.CurrencyId = defaultCurrencyId;
+                    }
+                    return mapped;
+                })
                 .ToList();
         }
 
@@ -1257,6 +1279,43 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         {
             // Log and rethrow so the controller can handle gracefully
             Console.WriteLine($"Error assigning creator as Opportunity Manager: {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets all opportunities related to a specific partner (where partner is funding or client partner)
+    /// </summary>
+    /// <param name="partnerId">The ID of the partner</param>
+    /// <returns>List of opportunities associated with the partner</returns>
+    public async Task<IEnumerable<OpportunityModel>> GetOpportunitiesByPartnerIdAsync(int partnerId)
+    {
+        try
+        {
+            // Query opportunities where the partner is either a funding partner or client partner
+            var opportunities = await uNOPSAppDbContext.Opportunities
+                .Include(o => o.WorkflowStage)
+                .Include(o => o.ResponsibleOrgUnit)
+                .Include(o => o.ProposedInitiativeType)
+                .Include(o => o.FundingPartners).ThenInclude(fp => fp.Partner)
+                .Include(o => o.ClientPartners).ThenInclude(cp => cp.Partner)
+                .Include(o => o.Stakeholders).ThenInclude(s => s.EntityRole)
+                .Include(o => o.Deliverables)
+                .Include(o => o.Countries).ThenInclude(c => c.Country)
+                .Include(o => o.SDGs).ThenInclude(s => s.SDG)
+                .Where(o => 
+                    o.FundingPartners.Any(fp => fp.PartnerId == partnerId) ||
+                    o.ClientPartners.Any(cp => cp.PartnerId == partnerId))
+                .OrderByDescending(o => o.CreatedDate)
+                .ToListAsync();
+
+            var models = opportunities.Select(o => mapper.Map<OpportunityModel>(o)).ToList();
+
+            return models;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting opportunities for partner {partnerId}: {ex.Message}");
             throw;
         }
     }

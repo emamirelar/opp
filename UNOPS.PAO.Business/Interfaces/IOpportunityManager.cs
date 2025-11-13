@@ -20,5 +20,6 @@ public interface IOpportunityManager
     Task<bool> DeleteOpportunityAsync(int id);
     Task<SimilarOpportunitiesResponse> GetSimilarOpportunitiesAsync(int id, int maxResults = 6, ClaimsPrincipal? user = null);
     Task AssignCreatorAsOpportunityManagerAsync(int opportunityId, int userId);
+    Task<IEnumerable<OpportunityModel>> GetOpportunitiesByPartnerIdAsync(int partnerId);
 }
 

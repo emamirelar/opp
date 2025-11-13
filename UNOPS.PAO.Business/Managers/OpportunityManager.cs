@@ -648,5 +648,10 @@ public class OpportunityManager : IOpportunityManager
     {
         throw new NotImplementedException("AssignCreatorAsOpportunityManagerAsync is only implemented in UNOPSOpportunityManager");
     }
+
+    public Task<IEnumerable<OpportunityModel>> GetOpportunitiesByPartnerIdAsync(int partnerId)
+    {
+        throw new NotImplementedException("GetOpportunitiesByPartnerIdAsync is only implemented in UNOPSOpportunityManager");
+    }
 }
 
