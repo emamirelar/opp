@@ -63,6 +63,22 @@ public class ArtifactType : ModifiableDeletableEntity
     /// </summary>
     public int Order { get; set; }
 
+    /// <summary>
+    /// Source of the artifact data (e.g., "World Bank", "UN", "Internal")
+    /// </summary>
+    [MaxLength(255)]
+    public string? Source { get; set; }
+
+    /// <summary>
+    /// Can this artifact be used in search operations?
+    /// </summary>
+    public bool IsSearchable { get; set; }
+
+    /// <summary>
+    /// Can this artifact be updated in bulk operations?
+    /// </summary>
+    public bool AllowBulkUpdate { get; set; }
+
     // Navigation properties
     public virtual ICollection<EntityArtifact> EntityArtifacts { get; set; } = new HashSet<EntityArtifact>();
     public virtual ICollection<ArtifactExtractionRule> SourceExtractionRules { get; set; } = new HashSet<ArtifactExtractionRule>();

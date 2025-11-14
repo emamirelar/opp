@@ -15,6 +15,11 @@ public interface IEntityArtifactManager
     Task<IEnumerable<ArtifactTypeResponse>> GetArtifactTypesByEntityTypeAsync(string entityType);
 
     /// <summary>
+    /// Get artifact types filtered by entity type and AllowBulkUpdate flag (for bulk operations)
+    /// </summary>
+    Task<IEnumerable<ArtifactTypeResponse>> GetBulkUpdateArtifactTypesByEntityTypeAsync(string entityType);
+
+    /// <summary>
     /// Get records for a specific entity type (for EntityID dropdown)
     /// </summary>
     Task<IEnumerable<EntityRecordOption>> GetEntityRecordsAsync(string entityType, string? searchTerm = null);

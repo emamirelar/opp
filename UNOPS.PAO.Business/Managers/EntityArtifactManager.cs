@@ -84,10 +84,44 @@ public class EntityArtifactManager : IEntityArtifactManager
             ApplicableEntityTypes = at.ApplicableEntityTypes,
             IsUsedForCalculations = at.IsUsedForCalculations,
             IsUsedForAI = at.IsUsedForAI,
-            Order = at.Order
+            Order = at.Order,
+            Source = at.Source,
+            IsSearchable = at.IsSearchable,
+            AllowBulkUpdate = at.AllowBulkUpdate
         }).ToList();
     }
 
+    public async Task<IEnumerable<ArtifactTypeResponse>> GetBulkUpdateArtifactTypesByEntityTypeAsync(string entityType)
+    {
+        var artifactTypes = await artifactTypeRepository
+            .GetAll()
+            .Include(at => at.ArtifactDataType)
+            .Where(at => at.ApplicableEntityTypes != null && 
+                        at.ApplicableEntityTypes.Contains(entityType) &&
+                        at.AllowBulkUpdate == true)
+            .OrderBy(at => at.Order)
+            .ThenBy(at => at.Name)
+            .ToListAsync();
+
+        return artifactTypes.Select(at => new ArtifactTypeResponse
+        {
+            Id = at.Id,
+            Name = at.Name,
+            ArtifactTypeCode = at.ArtifactTypeCode,
+            ArtifactDataTypeId = at.ArtifactDataTypeId,
+            ArtifactDataTypeName = at.ArtifactDataType?.Name,
+            Description = at.Description,
+            Category = at.Category,
+            ApplicableEntityTypes = at.ApplicableEntityTypes,
+            IsUsedForCalculations = at.IsUsedForCalculations,
+            IsUsedForAI = at.IsUsedForAI,
+            Order = at.Order,
+            Source = at.Source,
+            IsSearchable = at.IsSearchable,
+            AllowBulkUpdate = at.AllowBulkUpdate
+        }).ToList();
+    }
+    
     public async Task<IEnumerable<EntityRecordOption>> GetEntityRecordsAsync(string entityType, string? searchTerm = null)
     {
         // Dynamically query the appropriate table based on entity type

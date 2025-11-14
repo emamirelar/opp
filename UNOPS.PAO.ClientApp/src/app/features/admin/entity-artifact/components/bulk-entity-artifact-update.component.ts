@@ -234,14 +234,14 @@ export class BulkEntityArtifactUpdateComponent implements OnInit {
   }
 
   /**
-   * @description Load artifact types for selected entity type
+   * @description Load artifact types for selected entity type (filtered by AllowBulkUpdate = true)
    * @param {string} entityType - The selected entity type
    * @returns {void}
    * @since 1.0.0
    */
   private loadArtifactTypes(entityType: string) {
     this.loadingArtifactTypes.set(true);
-    this.entityArtifactService.getArtifactTypesByEntityType(entityType).subscribe({
+    this.entityArtifactService.getBulkArtifactTypesByEntityType(entityType).subscribe({
       next: (types) => {
         this.artifactTypes.set(types);
         

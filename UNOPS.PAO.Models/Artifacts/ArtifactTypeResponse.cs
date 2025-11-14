@@ -16,5 +16,8 @@ public class ArtifactTypeResponse
     public bool IsUsedForCalculations { get; set; }
     public bool IsUsedForAI { get; set; }
     public int Order { get; set; }
+    public string? Source { get; set; }
+    public bool IsSearchable { get; set; }
+    public bool AllowBulkUpdate { get; set; }
 }
 

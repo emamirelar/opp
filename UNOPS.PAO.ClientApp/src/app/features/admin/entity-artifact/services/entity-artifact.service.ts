@@ -19,6 +19,9 @@ export interface ArtifactTypeResponse {
   isUsedForCalculations: boolean;
   isUsedForAI: boolean;
   order: number;
+  source: string | null;
+  isSearchable: boolean;
+  allowBulkUpdate: boolean;
 }
 
 export interface EntityRecordOption {
@@ -193,6 +196,14 @@ export class EntityArtifactService {
   }
 
   // Bulk Entity Artifact Operations
+
+  /**
+   * Get artifact types for bulk operations (filtered by AllowBulkUpdate = true)
+   */
+  getBulkArtifactTypesByEntityType(entityType: string): Observable<ArtifactTypeResponse[]> {
+    const params = new HttpParams().set('entityType', entityType);
+    return this.http.get<ArtifactTypeResponse[]>(`${this.baseUrl}/bulk/artifact-types`, { params });
+  }
 
   /**
    * Get unique identifier example for bulk import template

@@ -20,21 +20,23 @@ public static class ArtifactTypeSeeder_Country
         var stringDataType = dataTypes.FirstOrDefault(dt => dt.Name == "string");
         var numberDataType = dataTypes.FirstOrDefault(dt => dt.Name == "number");
         var dateDataType = dataTypes.FirstOrDefault(dt => dt.Name == "date");
+        var booleanDataType = dataTypes.FirstOrDefault(dt => dt.Name == "boolean");
         var documentDataType = dataTypes.FirstOrDefault(dt => dt.Name == "document");
 
-        if (stringDataType == null || numberDataType == null || dateDataType == null || documentDataType == null)
+        if (stringDataType == null || numberDataType == null || dateDataType == null || booleanDataType == null || documentDataType == null)
         {
             Console.WriteLine("  ❌ Error: Required ArtifactDataTypes not found. Please seed ArtifactDataTypes first.");
-            Console.WriteLine($"     Found - string: {stringDataType != null}, number: {numberDataType != null}, date: {dateDataType != null}, document: {documentDataType != null}");
+            Console.WriteLine($"     Found - string: {stringDataType != null}, number: {numberDataType != null}, date: {dateDataType != null}, boolean: {booleanDataType != null}, document: {documentDataType != null}");
             return;
         }
 
         var stringDataTypeId = stringDataType.Id;
         var numberDataTypeId = numberDataType.Id;
         var dateDataTypeId = dateDataType.Id;
+        var booleanDataTypeId = booleanDataType.Id;
         var documentDataTypeId = documentDataType.Id;
 
-        var artifactTypesToSeed = GetCountryArtifactTypesToSeed(stringDataTypeId, numberDataTypeId, dateDataTypeId, documentDataTypeId);
+        var artifactTypesToSeed = GetCountryArtifactTypesToSeed(stringDataTypeId, numberDataTypeId, dateDataTypeId, booleanDataTypeId, documentDataTypeId);
         var existingArtifactTypes = await context.Set<ArtifactType>().ToListAsync();
 
         int insertedCount = 0;
@@ -98,6 +100,24 @@ public static class ArtifactTypeSeeder_Country
                     hasChanges = true;
                 }
 
+                if (existingArtifactType.Source != artifactTypeData.Source)
+                {
+                    existingArtifactType.Source = artifactTypeData.Source;
+                    hasChanges = true;
+                }
+
+                if (existingArtifactType.IsSearchable != artifactTypeData.IsSearchable)
+                {
+                    existingArtifactType.IsSearchable = artifactTypeData.IsSearchable;
+                    hasChanges = true;
+                }
+
+                if (existingArtifactType.AllowBulkUpdate != artifactTypeData.AllowBulkUpdate)
+                {
+                    existingArtifactType.AllowBulkUpdate = artifactTypeData.AllowBulkUpdate;
+                    hasChanges = true;
+                }
+
                 if (existingArtifactType.Status != artifactTypeData.Status)
                 {
                     existingArtifactType.Status = artifactTypeData.Status;
@@ -134,21 +154,42 @@ public static class ArtifactTypeSeeder_Country
         }
     }
 
-    private static List<ArtifactType> GetCountryArtifactTypesToSeed(int stringDataTypeId, int numberDataTypeId, int dateDataTypeId, int documentDataTypeId)
+    private static List<ArtifactType> GetCountryArtifactTypesToSeed(int stringDataTypeId, int numberDataTypeId, int dateDataTypeId, int booleanDataTypeId, int documentDataTypeId)
     {
         return new List<ArtifactType>
         {
+            new ArtifactType
+            {
+                Name = "Country Code",
+                ArtifactTypeCode = "Country_Code",
+                ArtifactDataTypeId = numberDataTypeId,
+                Description = "Standard Country or Area Codes for Statistical Use\" (published by the United Nations Statistics Division)",
+                Category = null,
+                ApplicableEntityTypes = "Country",
+                Source = "UNSD",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
+                IsUsedForCalculations = false,
+                IsUsedForAI = false,
+                Order = 1000,
+                Status = EntityStatus.Active,
+                IsDeleted = false
+            },
+            
             new ArtifactType
             {
                 Name = "UN Region",
                 ArtifactTypeCode = "UN_Region",
                 ArtifactDataTypeId = stringDataTypeId,
                 Description = "UN-defined regional classification based on the M49 standard",
-                Category = "Classification",
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = "UNSD",
+                IsSearchable = true,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = false,
                 IsUsedForAI = true,
-                Order = 1000,
+                Order = 1001,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -159,11 +200,14 @@ public static class ArtifactTypeSeeder_Country
                 ArtifactTypeCode = "UN_Sub_Region",
                 ArtifactDataTypeId = stringDataTypeId,
                 Description = "UN-defined regional classification based on the M49 standard",
-                Category = "Classification",
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = "UNSD",
+                IsSearchable = true,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = false,
                 IsUsedForAI = true,
-                Order = 1001,
+                Order = 1002,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -174,11 +218,14 @@ public static class ArtifactTypeSeeder_Country
                 ArtifactTypeCode = "UNOPS_Region",
                 ArtifactDataTypeId = stringDataTypeId,
                 Description = "Global business units and entities within UNOPS",
-                Category = "Classification",
+                Category = "UNOPS Internal (centrally managed)",
                 ApplicableEntityTypes = "Country",
+                Source = "Annex 2 UNOPS Global Structure",
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = true,
-                Order = 1002,
+                Order = 1003,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -187,25 +234,13 @@ public static class ArtifactTypeSeeder_Country
             {
                 Name = "LDC",
                 ArtifactTypeCode = "LDC",
-                ArtifactDataTypeId = numberDataTypeId,
-                Description = "LDC",
-                Category = "General",
+                ArtifactDataTypeId = booleanDataTypeId,
+                Description = "Least Developed Countries",
+                Category = "External Global Index",
                 ApplicableEntityTypes = "Country",
-                IsUsedForCalculations = false,
-                IsUsedForAI = false,
-                Order = 1003,
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            },
-            
-            new ArtifactType
-            {
-                Name = "LDC Source",
-                ArtifactTypeCode = "LDC_Source",
-                ArtifactDataTypeId = stringDataTypeId,
-                Description = "LDC Source",
-                Category = "Metadata",
-                ApplicableEntityTypes = "Country",
+                Source = "OHRLLS LDCS",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
                 Order = 1004,
@@ -215,12 +250,15 @@ public static class ArtifactTypeSeeder_Country
             
             new ArtifactType
             {
-                Name = "LDC Updated Date",
-                ArtifactTypeCode = "LDC_Updated_Date",
-                ArtifactDataTypeId = dateDataTypeId,
-                Description = "LDC Updated Date",
-                Category = "Metadata",
+                Name = "LLDC",
+                ArtifactTypeCode = "LLDC",
+                ArtifactDataTypeId = booleanDataTypeId,
+                Description = "Land Locked Developing Countries",
+                Category = "External Global Index",
                 ApplicableEntityTypes = "Country",
+                Source = "OHRLLS LLDCs",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
                 Order = 1005,
@@ -230,90 +268,18 @@ public static class ArtifactTypeSeeder_Country
             
             new ArtifactType
             {
-                Name = "LLDC",
-                ArtifactTypeCode = "LLDC",
-                ArtifactDataTypeId = numberDataTypeId,
-                Description = "LLDC",
-                Category = "General",
+                Name = "SIDS",
+                ArtifactTypeCode = "SIDS",
+                ArtifactDataTypeId = booleanDataTypeId,
+                Description = null,
+                Category = "External Global Index",
                 ApplicableEntityTypes = "Country",
+                Source = "OHRLLS SIDS",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
                 Order = 1006,
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            },
-            
-            new ArtifactType
-            {
-                Name = "LLDC Source",
-                ArtifactTypeCode = "LLDC_Source",
-                ArtifactDataTypeId = stringDataTypeId,
-                Description = "LLDC Source",
-                Category = "Metadata",
-                ApplicableEntityTypes = "Country",
-                IsUsedForCalculations = false,
-                IsUsedForAI = false,
-                Order = 1007,
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            },
-            
-            new ArtifactType
-            {
-                Name = "LLDC Updated Date",
-                ArtifactTypeCode = "LLDC_Updated_Date",
-                ArtifactDataTypeId = dateDataTypeId,
-                Description = "LLDC Updated Date",
-                Category = "Metadata",
-                ApplicableEntityTypes = "Country",
-                IsUsedForCalculations = false,
-                IsUsedForAI = false,
-                Order = 1008,
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            },
-            
-            new ArtifactType
-            {
-                Name = "SIDS",
-                ArtifactTypeCode = "SIDS",
-                ArtifactDataTypeId = numberDataTypeId,
-                Description = "SIDS",
-                Category = "General",
-                ApplicableEntityTypes = "Country",
-                IsUsedForCalculations = false,
-                IsUsedForAI = false,
-                Order = 1009,
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            },
-            
-            new ArtifactType
-            {
-                Name = "SIDS Source",
-                ArtifactTypeCode = "SIDS_Source",
-                ArtifactDataTypeId = stringDataTypeId,
-                Description = "SIDS Source",
-                Category = "Metadata",
-                ApplicableEntityTypes = "Country",
-                IsUsedForCalculations = false,
-                IsUsedForAI = false,
-                Order = 1010,
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            },
-            
-            new ArtifactType
-            {
-                Name = "SIDS Updated Date",
-                ArtifactTypeCode = "SIDS_Updated_Date",
-                ArtifactDataTypeId = dateDataTypeId,
-                Description = "SIDS Updated Date",
-                Category = "Metadata",
-                ApplicableEntityTypes = "Country",
-                IsUsedForCalculations = false,
-                IsUsedForAI = false,
-                Order = 1011,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -324,11 +290,14 @@ public static class ArtifactTypeSeeder_Country
                 ArtifactTypeCode = "MVI_Score",
                 ArtifactDataTypeId = numberDataTypeId,
                 Description = "Structural vulnerability and lack of resilience of countries to external shocks across three dimensions: Environmental vulnerability, Economic vulnerability, Social vulnerability",
-                Category = "Assessment",
+                Category = "External Global Index",
                 ApplicableEntityTypes = "Country",
+                Source = "OHRLLS MVI",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = true,
                 IsUsedForAI = true,
-                Order = 1012,
+                Order = 1007,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -338,12 +307,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Structural Vulnerability Index",
                 ArtifactTypeCode = "Structural_Vulnerability_Index",
                 ArtifactDataTypeId = numberDataTypeId,
-                Description = "Structural Vulnerability Index",
-                Category = "Assessment",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = true,
                 IsUsedForAI = true,
-                Order = 1013,
+                Order = 1008,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -353,27 +325,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Lack of Structural Resilience Index",
                 ArtifactTypeCode = "Lack_of_Structural_Resilience_Index",
                 ArtifactDataTypeId = numberDataTypeId,
-                Description = "Lack of Structural Resilience Index",
-                Category = "Assessment",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = true,
                 IsUsedForAI = true,
-                Order = 1014,
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            },
-            
-            new ArtifactType
-            {
-                Name = "MVI Effective Date",
-                ArtifactTypeCode = "MVI_Effective_Date",
-                ArtifactDataTypeId = dateDataTypeId,
-                Description = "MVI Effective Date",
-                Category = "Metadata",
-                ApplicableEntityTypes = "Country",
-                IsUsedForCalculations = false,
-                IsUsedForAI = false,
-                Order = 1015,
+                Order = 1009,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -384,11 +344,14 @@ public static class ArtifactTypeSeeder_Country
                 ArtifactTypeCode = "World_Bank_Fragile_Situation",
                 ArtifactDataTypeId = numberDataTypeId,
                 Description = "Countries and territories identified as experiencing conflict and institutional and social fragility",
-                Category = "Classification",
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = "World Bank List of Fragile and Conflict-affected Situations",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1016,
+                Order = 1010,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -397,13 +360,16 @@ public static class ArtifactTypeSeeder_Country
             {
                 Name = "UN Programme Country",
                 ArtifactTypeCode = "UN_Programme_Country",
-                ArtifactDataTypeId = numberDataTypeId,
-                Description = "UN Programme Country",
-                Category = "Classification",
+                ArtifactDataTypeId = booleanDataTypeId,
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = "UNSDG Countries listing",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1017,
+                Order = 1011,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -412,13 +378,16 @@ public static class ArtifactTypeSeeder_Country
             {
                 Name = "OECD Member",
                 ArtifactTypeCode = "OECD_Member",
-                ArtifactDataTypeId = numberDataTypeId,
-                Description = "OECD Member",
-                Category = "Classification",
+                ArtifactDataTypeId = booleanDataTypeId,
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = "OECD Members",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1018,
+                Order = 1012,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -427,13 +396,16 @@ public static class ArtifactTypeSeeder_Country
             {
                 Name = "DAC Member",
                 ArtifactTypeCode = "DAC_Member",
-                ArtifactDataTypeId = numberDataTypeId,
-                Description = "DAC Member",
-                Category = "Classification",
+                ArtifactDataTypeId = booleanDataTypeId,
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = "DAC ODA recipients",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1019,
+                Order = 1013,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -443,12 +415,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "UNOPS Country Typology",
                 ArtifactTypeCode = "UNOPS_Country_Typology",
                 ArtifactDataTypeId = stringDataTypeId,
-                Description = "UNOPS Country Typology",
-                Category = "Classification",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = true,
-                Order = 1020,
+                Order = 1014,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -457,13 +432,16 @@ public static class ArtifactTypeSeeder_Country
             {
                 Name = "OECD List High Extreme Fragility",
                 ArtifactTypeCode = "OECD_List_High_Extreme_Fragility",
-                ArtifactDataTypeId = numberDataTypeId,
+                ArtifactDataTypeId = booleanDataTypeId,
                 Description = "Evidence-based assessment of fragility trends across countries, to understand where, how, and why fragility is evolving",
-                Category = "General",
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1021,
+                Order = 1015,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -474,11 +452,14 @@ public static class ArtifactTypeSeeder_Country
                 ArtifactTypeCode = "States_of_Fragility_OECD",
                 ArtifactDataTypeId = stringDataTypeId,
                 Description = "Evidence-based assessment of fragility trends across countries, to understand where, how, and why fragility is evolving",
-                Category = "General",
+                Category = "External Global Index",
                 ApplicableEntityTypes = "Country",
+                Source = "OECD States of Fragility",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1022,
+                Order = 1016,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -488,12 +469,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Fragility Score OECD",
                 ArtifactTypeCode = "Fragility_Score_OECD",
                 ArtifactDataTypeId = numberDataTypeId,
-                Description = "Fragility Score OECD",
-                Category = "Assessment",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = true,
                 IsUsedForAI = true,
-                Order = 1023,
+                Order = 1017,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -504,11 +488,14 @@ public static class ArtifactTypeSeeder_Country
                 ArtifactTypeCode = "SDG_Index",
                 ArtifactDataTypeId = numberDataTypeId,
                 Description = "Progress towards each of the 17 SDGs, per country",
-                Category = "Assessment",
+                Category = "External Global Index",
                 ApplicableEntityTypes = "Country",
+                Source = "Sustainable Development Report",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = true,
                 IsUsedForAI = true,
-                Order = 1024,
+                Order = 1018,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -518,12 +505,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "SDG Index Rank",
                 ArtifactTypeCode = "SDG_Index_Rank",
                 ArtifactDataTypeId = numberDataTypeId,
-                Description = "SDG Index Rank",
-                Category = "Assessment",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = true,
                 IsUsedForAI = true,
-                Order = 1025,
+                Order = 1019,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -533,12 +523,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "SDGI Year",
                 ArtifactTypeCode = "SDGI_Year",
                 ArtifactDataTypeId = numberDataTypeId,
-                Description = "SDGI Year",
-                Category = "Metadata",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1026,
+                Order = 1020,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -549,11 +542,14 @@ public static class ArtifactTypeSeeder_Country
                 ArtifactTypeCode = "HDI_Index",
                 ArtifactDataTypeId = numberDataTypeId,
                 Description = "Achievements in human development",
-                Category = "Assessment",
+                Category = "External Global Index",
                 ApplicableEntityTypes = "Country",
+                Source = "UNDP HDR HDI",
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = true,
                 IsUsedForAI = true,
-                Order = 1027,
+                Order = 1021,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -563,12 +559,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "HDI Fiscal Year",
                 ArtifactTypeCode = "HDI_Fiscal_Year",
                 ArtifactDataTypeId = numberDataTypeId,
-                Description = "HDI Fiscal Year",
-                Category = "Metadata",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1028,
+                Order = 1022,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -578,27 +577,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "HDI Group",
                 ArtifactTypeCode = "HDI_Group",
                 ArtifactDataTypeId = stringDataTypeId,
-                Description = "HDI Group",
-                Category = "General",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = true,
-                Order = 1029,
-                Status = EntityStatus.Active,
-                IsDeleted = false
-            },
-            
-            new ArtifactType
-            {
-                Name = "HDI Download Date",
-                ArtifactTypeCode = "HDI_Download_Date",
-                ArtifactDataTypeId = dateDataTypeId,
-                Description = "HDI Download Date",
-                Category = "Metadata",
-                ApplicableEntityTypes = "Country",
-                IsUsedForCalculations = false,
-                IsUsedForAI = false,
-                Order = 1030,
+                Order = 1023,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -609,11 +596,14 @@ public static class ArtifactTypeSeeder_Country
                 ArtifactTypeCode = "Inform_Risk_Index",
                 ArtifactDataTypeId = numberDataTypeId,
                 Description = "Risk from humanitarian crisis and disasters that could overwhelm national response capacity",
-                Category = "Assessment",
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = true,
                 IsUsedForCalculations = true,
                 IsUsedForAI = true,
-                Order = 1031,
+                Order = 1024,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -623,12 +613,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Inform Risk Class",
                 ArtifactTypeCode = "Inform_Risk_Class",
                 ArtifactDataTypeId = stringDataTypeId,
-                Description = "Inform Risk Class",
-                Category = "General",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = true,
-                Order = 1032,
+                Order = 1025,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -638,12 +631,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Inform Rank",
                 ArtifactTypeCode = "Inform_Rank",
                 ArtifactDataTypeId = numberDataTypeId,
-                Description = "Inform Rank",
-                Category = "Assessment",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = true,
                 IsUsedForAI = true,
-                Order = 1033,
+                Order = 1026,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -653,12 +649,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Inform Version",
                 ArtifactTypeCode = "Inform_Version",
                 ArtifactDataTypeId = stringDataTypeId,
-                Description = "Inform Version",
-                Category = "Metadata",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1034,
+                Order = 1027,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -668,12 +667,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Inform Download Date",
                 ArtifactTypeCode = "Inform_Download_Date",
                 ArtifactDataTypeId = dateDataTypeId,
-                Description = "Inform Download Date",
-                Category = "Metadata",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1035,
+                Order = 1028,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -683,12 +685,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "GNI Per Capita USD 2024",
                 ArtifactTypeCode = "GNI_Per_Capita_USD_2024",
                 ArtifactDataTypeId = numberDataTypeId,
-                Description = "GNI Per Capita USD 2024",
-                Category = "Demographics",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = true,
                 IsUsedForAI = false,
-                Order = 1036,
+                Order = 1029,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -698,12 +703,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "GNI Download At",
                 ArtifactTypeCode = "GNI_Download_At",
                 ArtifactDataTypeId = dateDataTypeId,
-                Description = "GNI Download At",
-                Category = "Demographics",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1037,
+                Order = 1030,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -713,12 +721,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Population 2024",
                 ArtifactTypeCode = "Population_2024",
                 ArtifactDataTypeId = numberDataTypeId,
-                Description = "Population 2024",
-                Category = "Demographics",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = true,
                 IsUsedForAI = false,
-                Order = 1038,
+                Order = 1031,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -728,12 +739,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Population Download At",
                 ArtifactTypeCode = "Population_Download_At",
                 ArtifactDataTypeId = dateDataTypeId,
-                Description = "Population Download At",
-                Category = "Demographics",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1039,
+                Order = 1032,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -743,12 +757,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Urban Population 2024",
                 ArtifactTypeCode = "Urban_Population_2024",
                 ArtifactDataTypeId = numberDataTypeId,
-                Description = "Urban Population 2024",
-                Category = "Demographics",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = true,
                 IsUsedForAI = false,
-                Order = 1040,
+                Order = 1033,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -758,12 +775,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Urban Population Download At",
                 ArtifactTypeCode = "Urban_Population_Download_At",
                 ArtifactDataTypeId = dateDataTypeId,
-                Description = "Urban Population Download At",
-                Category = "Demographics",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1041,
+                Order = 1034,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -773,12 +793,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Gini Index 2024",
                 ArtifactTypeCode = "Gini_Index_2024",
                 ArtifactDataTypeId = numberDataTypeId,
-                Description = "Gini Index 2024",
-                Category = "Assessment",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = true,
                 IsUsedForAI = true,
-                Order = 1042,
+                Order = 1035,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -788,12 +811,15 @@ public static class ArtifactTypeSeeder_Country
                 Name = "Gini Index Download At",
                 ArtifactTypeCode = "Gini_Index_Download_At",
                 ArtifactDataTypeId = dateDataTypeId,
-                Description = "Gini Index Download At",
-                Category = "Assessment",
+                Description = null,
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1043,
+                Order = 1036,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             },
@@ -802,13 +828,34 @@ public static class ArtifactTypeSeeder_Country
             {
                 Name = "Special Situation Countries",
                 ArtifactTypeCode = "Special_Situation_Countries",
-                ArtifactDataTypeId = numberDataTypeId,
+                ArtifactDataTypeId = booleanDataTypeId,
                 Description = "QCPR (combines LDC, LLDC, SIDS). Report focuses on tracking demographic trends in LDCs, LLDCs, and SIDS",
-                Category = "Classification",
+                Category = null,
                 ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1044,
+                Order = 1037,
+                Status = EntityStatus.Active,
+                IsDeleted = false
+            },
+            
+            new ArtifactType
+            {
+                Name = "FSI",
+                ArtifactTypeCode = "FSI",
+                ArtifactDataTypeId = numberDataTypeId,
+                Description = "Fragile State Index",
+                Category = null,
+                ApplicableEntityTypes = "Country",
+                Source = "Fragile States Index",
+                IsSearchable = false,
+                AllowBulkUpdate = false,
+                IsUsedForCalculations = false,
+                IsUsedForAI = false,
+                Order = 1038,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             }
