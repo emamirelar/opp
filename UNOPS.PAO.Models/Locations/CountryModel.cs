@@ -48,3 +48,184 @@ public class CountrySearchRequest
     public string? OrderBy { get; set; } = "Name";
     public bool Ascending { get; set; } = true;
 }
+
+/// <summary>
+/// Lightweight country info for search results (only essential fields)
+/// </summary>
+public class CountrySearchInfo
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Iso2Code { get; set; }
+    public string? Continent { get; set; }
+    public string? Region { get; set; }
+}
+
+/// <summary>
+/// Represents a country search result with match context
+/// </summary>
+public class CountrySearchResultModel
+{
+    /// <summary>
+    /// The country details (lightweight - only essential fields)
+    /// </summary>
+    public required CountrySearchInfo Country { get; set; }
+    
+    /// <summary>
+    /// How this country matched the search criteria
+    /// </summary>
+    public required List<SearchMatchReason> MatchReasons { get; set; }
+    
+    /// <summary>
+    /// Overall relevance score (higher = more relevant)
+    /// Used for sorting results
+    /// </summary>
+    public decimal RelevanceScore { get; set; }
+}
+
+/// <summary>
+/// Describes why a country matched the search
+/// </summary>
+public class SearchMatchReason
+{
+    /// <summary>
+    /// Type of match (e.g., "CountryName", "ArtifactValue")
+    /// </summary>
+    public required string MatchType { get; set; }
+    
+    /// <summary>
+    /// The artifact type that matched (if applicable)
+    /// </summary>
+    public string? ArtifactTypeCode { get; set; }
+    
+    /// <summary>
+    /// Display name of the artifact type
+    /// </summary>
+    public string? ArtifactTypeName { get; set; }
+    
+    /// <summary>
+    /// The specific value that matched
+    /// </summary>
+    public required string MatchedValue { get; set; }
+    
+    /// <summary>
+    /// Highlighted version of the matched value (with search term emphasized)
+    /// </summary>
+    public string? HighlightedValue { get; set; }
+    
+    /// <summary>
+    /// Category of the artifact (e.g., "Strategy", "Assessment", "Metric")
+    /// </summary>
+    public string? Category { get; set; }
+}
+
+/// <summary>
+/// Request model for dynamic country search
+/// </summary>
+public class CountryDynamicSearchRequest
+{
+    /// <summary>
+    /// Search term to match against country names and artifact values
+    /// </summary>
+    public required string SearchTerm { get; set; }
+    
+    /// <summary>
+    /// Whether to include artifact-based matches
+    /// </summary>
+    public bool IncludeArtifacts { get; set; } = true;
+    
+    /// <summary>
+    /// Specific artifact type codes to search (null = search all searchable artifacts)
+    /// </summary>
+    public List<string>? ArtifactTypeCodes { get; set; }
+    
+    /// <summary>
+    /// Whether to use case-sensitive search
+    /// </summary>
+    public bool CaseSensitive { get; set; } = false;
+    
+    /// <summary>
+    /// Whether to use exact match or partial match
+    /// </summary>
+    public bool ExactMatch { get; set; } = false;
+    
+    /// <summary>
+    /// Maximum number of results to return
+    /// </summary>
+    public int MaxResults { get; set; } = 50;
+    
+    /// <summary>
+    /// Whether to highlight matched portions in results
+    /// </summary>
+    public bool HighlightMatches { get; set; } = true;
+}
+
+/// <summary>
+/// Response model for dynamic country search with grouping
+/// </summary>
+public class CountryDynamicSearchResponse
+{
+    /// <summary>
+    /// Total number of countries matched
+    /// </summary>
+    public int TotalMatches { get; set; }
+    
+    /// <summary>
+    /// Countries grouped by match type
+    /// </summary>
+    public required CountrySearchGroups Groups { get; set; }
+    
+    /// <summary>
+    /// All results flattened (for ungrouped display)
+    /// </summary>
+    public List<CountrySearchResultModel> AllResults { get; set; } = new List<CountrySearchResultModel>();
+    
+    /// <summary>
+    /// Search metadata
+    /// </summary>
+    public required SearchMetadata Metadata { get; set; }
+}
+
+/// <summary>
+/// Grouped search results by match type
+/// </summary>
+public class CountrySearchGroups
+{
+    /// <summary>
+    /// Countries matched by name
+    /// </summary>
+    public List<CountrySearchResultModel> NameMatches { get; set; } = new List<CountrySearchResultModel>();
+    
+    /// <summary>
+    /// Countries matched by artifact values, grouped by artifact type
+    /// Key: Artifact type name, Value: List of matching countries
+    /// </summary>
+    public Dictionary<string, List<CountrySearchResultModel>> ArtifactMatches { get; set; } 
+        = new Dictionary<string, List<CountrySearchResultModel>>();
+}
+
+/// <summary>
+/// Search operation metadata
+/// </summary>
+public class SearchMetadata
+{
+    /// <summary>
+    /// Search term used
+    /// </summary>
+    public required string SearchTerm { get; set; }
+    
+    /// <summary>
+    /// Number of artifact types searched
+    /// </summary>
+    public int ArtifactTypesSearched { get; set; }
+    
+    /// <summary>
+    /// Search execution time in milliseconds
+    /// </summary>
+    public long ExecutionTimeMs { get; set; }
+    
+    /// <summary>
+    /// Whether results were cached
+    /// </summary>
+    public bool FromCache { get; set; }
+}

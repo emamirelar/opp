@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Locations;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using AutoMapper;
 
 namespace UNOPS.PAO.Business.Services
 {
@@ -14,15 +17,18 @@ namespace UNOPS.PAO.Business.Services
     {
         private readonly AppDbContext _context;
         private readonly IMemoryCache _memoryCache;
+        private readonly IMapper _mapper;
         private const string CACHE_KEY = "COUNTRY_CACHE";
         private const string PARTNER_COUNT_CACHE_KEY = "COUNTRY_PARTNER_COUNTS_CACHE";
 
         public CountryService(
             AppDbContext context,
-            IMemoryCache memoryCache)
+            IMemoryCache memoryCache,
+            IMapper mapper)
         {
             _context = context;
             _memoryCache = memoryCache;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -206,6 +212,396 @@ namespace UNOPS.PAO.Business.Services
                 "partnercount" => ascending ? countries.OrderBy(c => c.PartnerCount) : countries.OrderByDescending(c => c.PartnerCount),
                 _ => ascending ? countries.OrderBy(c => c.Name) : countries.OrderByDescending(c => c.Name)
             };
+        }
+
+        /// <summary>
+        /// Performs dynamic search across country names and artifact values
+        /// Returns grouped results with match context
+        /// Uses IsSearchable property instead of ArtifactDataType filtering
+        /// </summary>
+        public async Task<CountryDynamicSearchResponse> DynamicSearchCountriesAsync(
+            CountryDynamicSearchRequest request)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            
+            // Validate search term
+            if (string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                return new CountryDynamicSearchResponse
+                {
+                    TotalMatches = 0,
+                    Groups = new CountrySearchGroups(),
+                    AllResults = new List<CountrySearchResultModel>(),
+                    Metadata = new SearchMetadata
+                    {
+                        SearchTerm = request.SearchTerm ?? string.Empty,
+                        ArtifactTypesSearched = 0,
+                        ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
+                        FromCache = false
+                    }
+                };
+            }
+            
+            var searchTerm = request.CaseSensitive 
+                ? request.SearchTerm.Trim() 
+                : request.SearchTerm.Trim().ToLowerInvariant();
+            
+            // Get all countries from cache
+            var countries = await GetAllCountriesAsync();
+            await PopulatePartnerCountsAsync(countries);
+            
+            // Step 1: Find countries by name
+            var nameMatches = await SearchByCountryNameAsync(countries, searchTerm, request);
+            
+            // Step 2: Find countries by artifact values (if enabled)
+            var artifactMatches = new Dictionary<string, List<CountrySearchResultModel>>();
+            var artifactTypesSearched = 0;
+            
+            if (request.IncludeArtifacts)
+            {
+                var artifactSearchResult = await SearchByArtifactValuesAsync(
+                    countries, 
+                    searchTerm, 
+                    request);
+                artifactMatches = artifactSearchResult.GroupedMatches;
+                artifactTypesSearched = artifactSearchResult.TypesSearched;
+            }
+            
+            // Step 3: Combine results and remove duplicates
+            var allResults = CombineAndDeduplicateResults(nameMatches, artifactMatches);
+            
+            // Step 4: Apply result limit
+            if (allResults.Count > request.MaxResults)
+            {
+                allResults = allResults
+                    .OrderByDescending(r => r.RelevanceScore)
+                    .Take(request.MaxResults)
+                    .ToList();
+            }
+            
+            stopwatch.Stop();
+            
+            return new CountryDynamicSearchResponse
+            {
+                TotalMatches = allResults.Count,
+                Groups = new CountrySearchGroups
+                {
+                    NameMatches = nameMatches,
+                    ArtifactMatches = artifactMatches
+                },
+                AllResults = allResults,
+                Metadata = new SearchMetadata
+                {
+                    SearchTerm = request.SearchTerm,
+                    ArtifactTypesSearched = artifactTypesSearched,
+                    ExecutionTimeMs = stopwatch.ElapsedMilliseconds,
+                    FromCache = true // Countries are from cache
+                }
+            };
+        }
+
+        /// <summary>
+        /// Search countries by name with relevance scoring
+        /// </summary>
+        private async Task<List<CountrySearchResultModel>> SearchByCountryNameAsync(
+            List<Country> countries,
+            string searchTerm,
+            CountryDynamicSearchRequest request)
+        {
+            var results = new List<CountrySearchResultModel>();
+            var comparison = request.CaseSensitive 
+                ? StringComparison.Ordinal 
+                : StringComparison.OrdinalIgnoreCase;
+            
+            foreach (var country in countries)
+            {
+                var countryName = request.CaseSensitive 
+                    ? country.Name 
+                    : country.Name.ToLowerInvariant();
+                
+                bool matches = request.ExactMatch
+                    ? countryName.Equals(searchTerm, comparison)
+                    : countryName.Contains(searchTerm, comparison);
+                
+                if (matches)
+                {
+                    // Calculate relevance score
+                    decimal relevanceScore = CalculateNameRelevanceScore(
+                        country.Name, 
+                        searchTerm, 
+                        request.ExactMatch);
+                    
+                    var matchReason = new SearchMatchReason
+                    {
+                        MatchType = "CountryName",
+                        MatchedValue = country.Name,
+                        HighlightedValue = request.HighlightMatches 
+                            ? HighlightMatchedText(country.Name, searchTerm) 
+                            : country.Name
+                    };
+                    
+                    results.Add(new CountrySearchResultModel
+                    {
+                        Country = new CountrySearchInfo
+                        {
+                            Id = country.Id,
+                            Name = country.Name,
+                            Iso2Code = country.Iso2Code,
+                            Continent = country.ContinentDescription,
+                            Region = country.RegionDescription
+                        },
+                        MatchReasons = new List<SearchMatchReason> { matchReason },
+                        RelevanceScore = relevanceScore
+                    });
+                }
+            }
+            
+            return results;
+        }
+
+        /// <summary>
+        /// Search countries by artifact values using IsSearchable property
+        /// </summary>
+        private async Task<(Dictionary<string, List<CountrySearchResultModel>> GroupedMatches, int TypesSearched)> 
+            SearchByArtifactValuesAsync(
+                List<Country> countries,
+                string searchTerm,
+                CountryDynamicSearchRequest request)
+        {
+            var groupedMatches = new Dictionary<string, List<CountrySearchResultModel>>();
+            
+            // Get all searchable artifact types for Country entity
+            var searchableArtifactTypes = await _context.ArtifactTypes
+                .Include(at => at.ArtifactDataType)
+                .Where(at => 
+                    !at.IsDeleted &&
+                    at.Status == EntityStatus.Active &&
+                    at.IsSearchable == true &&
+                    (at.ApplicableEntityTypes == null || 
+                     at.ApplicableEntityTypes.Contains("Country")))
+                .ToListAsync();
+            
+            // Filter by specific artifact type codes if provided
+            if (request.ArtifactTypeCodes != null && request.ArtifactTypeCodes.Any())
+            {
+                searchableArtifactTypes = searchableArtifactTypes
+                    .Where(at => request.ArtifactTypeCodes.Contains(at.ArtifactTypeCode))
+                    .ToList();
+            }
+            
+            var artifactTypeIds = searchableArtifactTypes.Select(at => at.Id).ToList();
+            
+            // Get all entity artifacts for countries with searchable artifact types
+            var entityArtifacts = await _context.EntityArtifacts
+                .Include(ea => ea.ArtifactType)
+                .Where(ea =>
+                    !ea.IsDeleted &&
+                    ea.EntityType == "Country" &&
+                    artifactTypeIds.Contains(ea.ArtifactTypeId) &&
+                    !string.IsNullOrEmpty(ea.ValueText))
+                .ToListAsync();
+            
+            var comparison = request.CaseSensitive 
+                ? StringComparison.Ordinal 
+                : StringComparison.OrdinalIgnoreCase;
+            
+            // Group by artifact type
+            foreach (var artifactType in searchableArtifactTypes)
+            {
+                var matchingArtifacts = entityArtifacts
+                    .Where(ea => ea.ArtifactTypeId == artifactType.Id)
+                    .ToList();
+                
+                var matchingCountries = new List<CountrySearchResultModel>();
+                
+                foreach (var artifact in matchingArtifacts)
+                {
+                    var valueText = request.CaseSensitive 
+                        ? artifact.ValueText 
+                        : artifact.ValueText?.ToLowerInvariant();
+                    
+                    bool matches = request.ExactMatch
+                        ? valueText?.Equals(searchTerm, comparison) ?? false
+                        : valueText?.Contains(searchTerm, comparison) ?? false;
+                    
+                    if (matches && artifact.ValueText != null)
+                    {
+                        var country = countries.FirstOrDefault(c => c.Id == artifact.EntityId);
+                        
+                        if (country != null)
+                        {
+                            // Calculate relevance score for artifact match
+                            decimal relevanceScore = CalculateArtifactRelevanceScore(
+                                artifact.ValueText, 
+                                searchTerm, 
+                                request.ExactMatch);
+                            
+                            var matchReason = new SearchMatchReason
+                            {
+                                MatchType = "ArtifactValue",
+                                ArtifactTypeCode = artifactType.ArtifactTypeCode,
+                                ArtifactTypeName = artifactType.Name,
+                                Category = artifactType.Category,
+                                MatchedValue = artifact.ValueText,
+                                HighlightedValue = request.HighlightMatches 
+                                    ? HighlightMatchedText(artifact.ValueText, searchTerm) 
+                                    : artifact.ValueText
+                            };
+                            
+                            // Check if country already in results for this artifact type
+                            var existingMatch = matchingCountries
+                                .FirstOrDefault(m => m.Country.Id == country.Id);
+                            
+                            if (existingMatch != null)
+                            {
+                                // Add additional match reason
+                                existingMatch.MatchReasons.Add(matchReason);
+                                existingMatch.RelevanceScore += relevanceScore;
+                            }
+                            else
+                            {
+                                matchingCountries.Add(new CountrySearchResultModel
+                                {
+                                    Country = new CountrySearchInfo
+                                    {
+                                        Id = country.Id,
+                                        Name = country.Name,
+                                        Iso2Code = country.Iso2Code,
+                                        Continent = country.ContinentDescription,
+                                        Region = country.RegionDescription
+                                    },
+                                    MatchReasons = new List<SearchMatchReason> { matchReason },
+                                    RelevanceScore = relevanceScore
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                if (matchingCountries.Any())
+                {
+                    groupedMatches[artifactType.Name] = matchingCountries
+                        .OrderByDescending(m => m.RelevanceScore)
+                        .ToList();
+                }
+            }
+            
+            return (groupedMatches, searchableArtifactTypes.Count);
+        }
+
+        /// <summary>
+        /// Combine and deduplicate results from name and artifact searches
+        /// </summary>
+        private List<CountrySearchResultModel> CombineAndDeduplicateResults(
+            List<CountrySearchResultModel> nameMatches,
+            Dictionary<string, List<CountrySearchResultModel>> artifactMatches)
+        {
+            var allResults = new Dictionary<int, CountrySearchResultModel>();
+            
+            // Add name matches
+            foreach (var match in nameMatches)
+            {
+                allResults[match.Country.Id] = match;
+            }
+            
+            // Add artifact matches
+            foreach (var artifactGroup in artifactMatches.Values)
+            {
+                foreach (var match in artifactGroup)
+                {
+                    if (allResults.ContainsKey(match.Country.Id))
+                    {
+                        // Merge match reasons and update relevance score
+                        var existing = allResults[match.Country.Id];
+                        existing.MatchReasons.AddRange(match.MatchReasons);
+                        existing.RelevanceScore += match.RelevanceScore;
+                    }
+                    else
+                    {
+                        allResults[match.Country.Id] = match;
+                    }
+                }
+            }
+            
+            return allResults.Values
+                .OrderByDescending(r => r.RelevanceScore)
+                .ThenBy(r => r.Country.Name)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Calculate relevance score for country name matches
+        /// Higher score = more relevant
+        /// </summary>
+        private decimal CalculateNameRelevanceScore(
+            string countryName, 
+            string searchTerm, 
+            bool exactMatch)
+        {
+            if (exactMatch)
+            {
+                return 100m; // Exact match gets highest score
+            }
+            
+            decimal score = 50m; // Base score for partial match
+            
+            // Bonus for match at start of name
+            if (countryName.StartsWith(searchTerm, StringComparison.OrdinalIgnoreCase))
+            {
+                score += 30m;
+            }
+            
+            // Bonus based on match coverage
+            decimal coverage = (decimal)searchTerm.Length / countryName.Length;
+            score += coverage * 20m;
+            
+            return score;
+        }
+
+        /// <summary>
+        /// Calculate relevance score for artifact value matches
+        /// </summary>
+        private decimal CalculateArtifactRelevanceScore(
+            string artifactValue, 
+            string searchTerm, 
+            bool exactMatch)
+        {
+            if (exactMatch)
+            {
+                return 80m; // Exact artifact match (slightly lower than name match)
+            }
+            
+            decimal score = 40m; // Base score for partial match
+            
+            // Bonus for match at start
+            if (artifactValue.StartsWith(searchTerm, StringComparison.OrdinalIgnoreCase))
+            {
+                score += 20m;
+            }
+            
+            // Bonus based on match coverage
+            decimal coverage = (decimal)searchTerm.Length / artifactValue.Length;
+            score += coverage * 15m;
+            
+            return score;
+        }
+
+        /// <summary>
+        /// Highlight matched text within a string
+        /// Returns HTML with matched portions wrapped in &lt;mark&gt; tags
+        /// </summary>
+        private string HighlightMatchedText(string text, string searchTerm)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchTerm))
+            {
+                return text;
+            }
+            
+            // Use regex to find and highlight all occurrences (case-insensitive)
+            var pattern = Regex.Escape(searchTerm);
+            var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+            
+            return regex.Replace(text, match => $"<mark>{match.Value}</mark>");
         }
     }
 }

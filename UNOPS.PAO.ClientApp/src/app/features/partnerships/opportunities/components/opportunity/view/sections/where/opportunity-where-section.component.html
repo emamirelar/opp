@@ -133,12 +133,12 @@
   </div>
 </p-panel>
 
-<!-- Add/Edit Country Dialog -->
+<!-- Add/Edit Countries Dialog -->
 <p-dialog
-  [header]="isEditingCountry() ? ('title.editCountry' | translate) : ('title.addCountry' | translate)"
+  [header]="isEditingCountry() ? ('title.editCountry' | translate) : ('title.addCountries' | translate)"
   [(visible)]="showCountryDialog"
   [modal]="true"
-  [style]="{ width: '35rem' }"
+  [style]="{ width: '50rem', maxHeight: '80vh' }"
 >
   <!-- Validation error message -->
   @if (showValidationError()) {
@@ -147,38 +147,157 @@
     </p-message>
   }
 
-  <!-- Country Selection -->
-  <div class="space-y-4">
-    <div>
-      <p-floatlabel variant="on">
-        <p-select
-          id="country"
-          [formControl]="countryControl"
-          [options]="availableCountries()"
-          optionLabel="name"
-          [filter]="true"
-          filterBy="name,code"
-          [showClear]="true"
-          [appendTo]="'body'"
-          [virtualScroll]="true"
-          [virtualScrollItemSize]="38"
-          class="w-full"
-        >
-          <ng-template let-country #item>
-            <div class="flex items-center justify-between gap-2">
-              <span>{{ country.name }}</span>
-              @if (country.code) {
-                <span class="text-xs text-gray-500 font-mono">{{ country.code }}</span>
-              }
-            </div>
-          </ng-template>
-        </p-select>
-        <label for="country">{{ 'label.country' | translate }} *</label>
-      </p-floatlabel>
-      @if (!countryControl.value && showValidationError()) {
-        <p-message severity="error" variant="simple" styleClass="mt-2">
-          {{ 'message.validation.countryRequired' | translate }}
-        </p-message>
+  <!-- Dynamic Search Mode -->
+  <div>
+    <div class="space-y-4">
+      <!-- Search Input -->
+      <div>
+        <div class="relative flex items-center">
+          <input
+            pInputText
+            [formControl]="searchTerm"
+            [placeholder]="('placeholder.searchCountriesByKeyword' | translate)"
+            class="w-full"
+            style="padding-right: 2.75rem;"
+            (input)="onSearchTermChange(searchTerm.value || '')"
+          />
+          @if (isSearching()) {
+            <i class="pi pi-spin pi-spinner absolute right-4 text-unops-primary pointer-events-none" style="font-size: 1rem;"></i>
+          }
+        </div>
+      </div>
+
+      <!-- Search Results -->
+      @if (searchResults() && (searchResults()!.totalMatches > 0)) {
+        <div class="border rounded-lg overflow-hidden" style="max-height: 400px; overflow-y: auto;">
+          <p-tabs [scrollable]="true">
+            <!-- Name Matches Tab -->
+            <p-tabpanel>
+              <ng-template #header>
+                <div class="flex items-center gap-2">
+                  <span>{{ 'label.nameMatches' | translate }}</span>
+                  <p-badge [value]="searchResults()!.groups.nameMatches.length.toString()" />
+                </div>
+              </ng-template>
+              <div class="space-y-2 p-2">
+                @if (searchResults()!.groups.nameMatches.length === 0) {
+                  <div class="text-center py-4 text-gray-400">
+                    <p>{{ 'message.noNameMatches' | translate }}</p>
+                  </div>
+                } @else {
+                  @for (result of searchResults()!.groups.nameMatches; track result.country.id) {
+                    <div
+                      class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors"
+                      [class.bg-blue-50]="selectedSearchResults().has(result.country.id)"
+                      [class.border-blue-300]="selectedSearchResults().has(result.country.id)"
+                      (click)="toggleCountrySelection(result.country.id)"
+                    >
+                      <input
+                        type="checkbox"
+                        [checked]="selectedSearchResults().has(result.country.id)"
+                        class="w-4 h-4"
+                        (click)="$event.stopPropagation()"
+                        (change)="toggleCountrySelection(result.country.id)"
+                      />
+                      <div class="flex-1">
+                        <div class="font-semibold">{{ result.country.name }}</div>
+                        @if (result.country.continent || result.country.region) {
+                          <div class="text-xs text-gray-600">
+                            {{ result.country.continent }}{{ result.country.continent && result.country.region ? ', ' : '' }}{{ result.country.region }}
+                          </div>
+                        }
+                      </div>
+                      <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        {{ 'label.nameMatch' | translate }}
+                      </span>
+                    </div>
+                  }
+                }
+              </div>
+            </p-tabpanel>
+
+            <!-- Artifact Matches Tab -->
+            @for (group of groupedArtifactMatches(); track group.artifactType) {
+              <p-tabpanel>
+                <ng-template #header>
+                  <div class="flex items-center gap-2">
+                    <span>{{ group.artifactType }}</span>
+                    <p-badge [value]="group.count.toString()" severity="success" />
+                  </div>
+                </ng-template>
+                <div class="space-y-2 p-2">
+                  <!-- Select All Button for this group -->
+                  <div class="flex justify-end mb-2">
+                    <p-button
+                      [label]="'button.selectAllFromGroup' | translate"
+                      icon="pi pi-check-square"
+                      size="small"
+                      severity="info"
+                      [text]="true"
+                      (onClick)="selectArtifactGroup(group.matches)"
+                    />
+                  </div>
+                  @for (result of group.matches; track result.country.id) {
+                    <div
+                      class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors"
+                      [class.bg-blue-50]="selectedSearchResults().has(result.country.id)"
+                      [class.border-blue-300]="selectedSearchResults().has(result.country.id)"
+                      (click)="toggleCountrySelection(result.country.id)"
+                    >
+                      <input
+                        type="checkbox"
+                        [checked]="selectedSearchResults().has(result.country.id)"
+                        class="w-4 h-4"
+                        (click)="$event.stopPropagation()"
+                        (change)="toggleCountrySelection(result.country.id)"
+                      />
+                      <div class="flex-1">
+                        <div class="font-semibold">{{ result.country.name }}</div>
+                        @if (result.country.continent || result.country.region) {
+                          <div class="text-xs text-gray-600">
+                            {{ result.country.continent }}{{ result.country.continent && result.country.region ? ', ' : '' }}{{ result.country.region }}
+                          </div>
+                        }
+                        @for (reason of result.matchReasons; track $index) {
+                          @if (reason.matchType === 'ArtifactValue') {
+                            <div class="text-xs mt-1 text-green-700">
+                              <strong>{{ reason.artifactTypeName }}:</strong> {{ reason.matchedValue }}
+                            </div>
+                          }
+                        }
+                      </div>
+                      <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                        {{ group.artifactType }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              </p-tabpanel>
+            }
+          </p-tabs>
+        </div>
+
+        <!-- Selected count and clear button -->
+        @if (selectedSearchResults().size > 0) {
+          <div class="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
+            <span class="text-sm font-semibold text-blue-900">
+              {{ 'message.countriesSelected' | translate:{ count: selectedSearchResults().size } }}
+            </span>
+            <p-button
+              [label]="'button.clearSelection' | translate"
+              icon="pi pi-times"
+              size="small"
+              severity="secondary"
+              [text]="true"
+              (onClick)="clearSearchSelections()"
+            />
+          </div>
+        }
+      } @else if (searchTerm.value && searchTerm.value.trim().length >= 2 && !isSearching()) {
+        <div class="text-center py-8 text-gray-400">
+          <i class="pi pi-search text-4xl mb-3"></i>
+          <p>{{ 'message.noSearchResults' | translate }}</p>
+        </div>
       }
     </div>
   </div>
@@ -190,9 +309,10 @@
       (onClick)="cancelCountryDialog()"
     />
     <p-button
-      [label]="isEditingCountry() ? ('button.update' | translate) : ('button.add' | translate)"
+      [label]="isEditingCountry() ? ('button.update' | translate) : ('button.confirm' | translate)"
       severity="primary"
       (onClick)="confirmCountryDialog()"
+      [disabled]="selectedSearchResults().size === 0"
     />
   </ng-template>
 </p-dialog>
