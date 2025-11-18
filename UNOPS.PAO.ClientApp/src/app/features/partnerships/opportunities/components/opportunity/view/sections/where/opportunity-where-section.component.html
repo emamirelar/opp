@@ -70,7 +70,7 @@
             <div class="flex items-start justify-between mb-2">
               <div class="flex items-center gap-2">
                 <span class="text-2xl font-bold text-gray-700">{{ country.country?.iso2Code || 'XX' }}</span>
-                <div>
+                <div class="flex-1">
                   <h4 class="font-semibold text-gray-900">
                     {{ country.country?.name || 'Unknown Country' }}
                   </h4>
@@ -86,6 +86,22 @@
                         <span>{{ country.country.region }}</span>
                       }
                     </p>
+                  }
+                  @if (country.country?.organizationUnitHierarchy && country.country!.organizationUnitHierarchy!.length > 0) {
+                    <div class="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                      <i class="pi pi-sitemap text-unops-primary"></i>
+                      <div class="flex items-center gap-1 flex-wrap">
+                        @for (node of country.country!.organizationUnitHierarchy!; track node.id; let isLast = $last) {
+                          <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded font-medium" 
+                                [title]="node.description || node.name">
+                            {{ node.name }}
+                          </span>
+                          @if (!isLast) {
+                            <i class="pi pi-angle-right text-gray-400 text-xs"></i>
+                          }
+                        }
+                      </div>
+                    </div>
                   }
                 </div>
               </div>

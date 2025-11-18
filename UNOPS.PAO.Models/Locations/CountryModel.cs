@@ -27,6 +27,53 @@ public class CountryModel
     /// Automatically loaded via AutoMapper when Country entity is mapped
     /// </summary>
     public List<EntityArtifactModel> Artifacts { get; set; } = new List<EntityArtifactModel>();
+    
+    /// <summary>
+    /// Organization unit hierarchy chain from root to the country's org unit
+    /// Ordered from most general (root, e.g., OPS) to most specific (country's direct org unit, e.g., B5101)
+    /// </summary>
+    public List<OrganizationUnitHierarchyNode>? OrganizationUnitHierarchy { get; set; }
+}
+
+/// <summary>
+/// Represents a single node in the organization unit hierarchy chain
+/// </summary>
+public class OrganizationUnitHierarchyNode
+{
+    /// <summary>
+    /// Organization unit ID
+    /// </summary>
+    public int Id { get; set; }
+    
+    /// <summary>
+    /// Organization unit code
+    /// </summary>
+    public string Code { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Organization unit name
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Organization unit type (e.g., "OrgUnit", "Region", "Global")
+    /// </summary>
+    public string Type { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Organization unit description
+    /// </summary>
+    public string? Description { get; set; }
+    
+    /// <summary>
+    /// Parent organization unit ID (null for root)
+    /// </summary>
+    public int? ParentId { get; set; }
+    
+    /// <summary>
+    /// Level in the hierarchy (0 = root, higher = deeper)
+    /// </summary>
+    public int Level { get; set; }
 }
 
 public class CountryFilterRequest : PaginationRequest
