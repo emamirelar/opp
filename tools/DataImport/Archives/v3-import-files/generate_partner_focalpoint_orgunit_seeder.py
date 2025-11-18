@@ -40,13 +40,14 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
     {
         public static async Task UpdatePartnerFocalPointAndOrgUnitAsync(UNOPSAppDbContext context)
         {
-            // Create mapping from PAOUser Name to Id (handle duplicates by taking first, filter out null names)
+            // Create mapping from PAOUser Email to Id (handle duplicates by taking first, filter out null emails)
+            // Convert emails to lowercase for case-insensitive matching
             var paoUsers = await context.PAOUsers
-                .Select(u => new { u.Id, u.Name })
+                .Select(u => new { u.Id, u.Email })
                 .ToListAsync();
             var paoUserMapping = paoUsers
-                .Where(u => !string.IsNullOrEmpty(u.Name))
-                .GroupBy(u => u.Name)
+                .Where(u => !string.IsNullOrEmpty(u.Email))
+                .GroupBy(u => u.Email!.ToLower())
                 .ToDictionary(g => g.Key, g => g.First().Id);
 
             // Create mapping from OrganizationHierarchy Description to Id (only OrgUnit type)
@@ -68,8 +69,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
     for idx, row in enumerate(csv_data):
         account_number = row.get('AccountNumber', '').strip()
         name = escape_csharp_string(row.get('Name', '').strip())
-        legacy_focal_point = escape_csharp_string(row.get('LegacyFocalPointUser', '').strip())
-        suggested_focal_point = escape_csharp_string(row.get('SuggestedFocalPoint', '').strip())
+        # Convert emails to lowercase for case-insensitive matching
+        legacy_focal_point = escape_csharp_string(row.get('LegacyFocalPointUser', '').strip().lower())
+        suggested_focal_point = escape_csharp_string(row.get('SuggestedFocalPoint', '').strip().lower())
         legacy_org_unit = escape_csharp_string(row.get('LegacyOrgUnit', '').strip())
         suggested_org_unit = escape_csharp_string(row.get('SuggestedOrgUnit', '').strip())
         
@@ -169,9 +171,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     else
                     {
                         // Check if current focal point matches legacy
-                        int? legacyUserId = paoUserMapping.ContainsKey(data.LegacyFocalPointUser) 
+                        int? legacyUserId = data.LegacyFocalPointUser != null ? paoUserMapping.ContainsKey(data.LegacyFocalPointUser) 
                             ? paoUserMapping[data.LegacyFocalPointUser] 
-                            : (int?)null;
+                            : (int?)null : (int?)null;
 
                         if (partner.PartnerFocalPointUserId == null || partner.PartnerFocalPointUserId == legacyUserId)
                         {

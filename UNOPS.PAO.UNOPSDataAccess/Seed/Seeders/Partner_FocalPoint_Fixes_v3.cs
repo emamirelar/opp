@@ -9,129 +9,130 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
     {
         public static async Task UpdatePartnerFocalPointsAsync(UNOPSAppDbContext context)
         {
-            // Create mapping from PAOUser Name to Id (handle duplicates by taking first, filter out null names)
+            // Create mapping from PAOUser Email to Id (handle duplicates by taking first, filter out null emails)
+            // Convert emails to lowercase for case-insensitive matching
             var paoUsers = await context.PAOUsers
-                .Select(u => new { u.Id, u.Name })
+                .Select(u => new { u.Id, u.Email })
                 .ToListAsync();
             var paoUserMapping = paoUsers
-                .Where(u => !string.IsNullOrEmpty(u.Name))
-                .GroupBy(u => u.Name)
+                .Where(u => !string.IsNullOrEmpty(u.Email))
+                .GroupBy(u => u.Email!.ToLower())
                 .ToDictionary(g => g.Key, g => g.First().Id);
 
-            // Define ErpDimValue to Focal Point name mapping
+            // Define ErpDimValue to Focal Point email mapping (all emails in lowercase)
             var erpDimValueToFocalPoint = new Dictionary<int, string>
             {
-                { 1902, "Martin Carlos Eduardo AREVALO DE LEON" },
-                { 1738, "Laetitia Kraus" },
-                { 1864, "Laetitia Kraus" },
-                { 1089, "Laetitia Kraus" },
-                { 1610, "Asbjorn Brink" },
-                { 1613, "Asbjorn Brink" },
-                { 1618, "Asbjorn Brink" },
-                { 1024, "Michael Patrick Ellsworth" },
-                { 1121, "Michael Patrick Ellsworth" },
-                { 1702, "Michael Patrick Ellsworth" },
-                { 1082, "Michael Patrick Ellsworth" },
-                { 1123, "Asbjorn Brink" },
-                { 1910, "Asbjorn Brink" },
-                { 1083, "Michael Patrick Ellsworth" },
-                { 1111, "Asbjorn Brink" },
-                { 1025, "Mariacarmen   COLITTI" },
-                { 1917, "Michael Patrick Ellsworth" },
-                { 1649, "Mariacarmen   COLITTI" },
-                { 1031, "Mariacarmen   COLITTI" },
-                { 1032, "Mariacarmen   COLITTI" },
-                { 1944, "Mariacarmen   COLITTI" },
-                { 1029, "Mariacarmen   COLITTI" },
-                { 1026, "Mariacarmen   COLITTI" },
-                { 1943, "Mariacarmen   COLITTI" },
-                { 1739, "Mariacarmen   COLITTI" },
-                { 1752, "Asbjorn Brink" },
-                { 1124, "Asbjorn Brink" },
-                { 1711, "Asbjorn Brink" },
-                { 1903, "Laetitia Kraus" },
-                { 1622, "Mariacarmen   COLITTI" },
-                { 1445, "Daniel Nicolas Elliott" },
-                { 1126, "Laetitia Kraus" },
-                { 1448, "Daniel Nicolas Elliott" },
-                { 1679, "Daniel Nicolas Elliott" },
-                { 1681, "Daniel Nicolas Elliott" },
-                { 1680, "Daniel Nicolas Elliott" },
-                { 1737, "Laetitia Kraus" },
-                { 1589, "Laetitia Kraus" },
-                { 1443, "Christine Leslie BOWERS" },
-                { 1049, "Asbjorn Brink" },
-                { 1128, "Asbjorn Brink" },
-                { 1628, "Christine Leslie BOWERS" },
-                { 1444, "Christine Leslie BOWERS" },
-                { 1084, "Michael Patrick Ellsworth" },
-                { 1247, "Martin Carlos Eduardo AREVALO DE LEON" },
-                { 1547, "Christine Leslie BOWERS" },
-                { 1788, "Michael Patrick Ellsworth" },
-                { 1571, "Hala R Alsharifi" },
-                { 1266, "Martin Carlos Eduardo AREVALO DE LEON" },
-                { 1905, "Martin Carlos Eduardo AREVALO DE LEON" },
-                { 1131, "Yuko MAEKAWA" },
-                { 1906, "Yuko MAEKAWA" },
-                { 1907, "Yuko MAEKAWA" },
-                { 1096, "Yuko MAEKAWA" },
-                { 1095, "Yuko MAEKAWA" },
-                { 1868, "Yuko MAEKAWA" },
-                { 1915, "Hala R Alsharifi" },
-                { 1669, "Laetitia Kraus" },
-                { 1105, "Arnaud Sgambato" },
-                { 1761, "Hala R Alsharifi" },
-                { 1312, "Hala R Alsharifi" },
-                { 1914, "Hala R Alsharifi" },
-                { 1904, "Martin Carlos Eduardo AREVALO DE LEON" },
-                { 1114, "Michael Patrick Ellsworth" },
-                { 1546, "Christine Leslie BOWERS" },
-                { 1087, "Asbjorn Brink" },
-                { 1959, "Mariacarmen   COLITTI" },
-                { 1086, "Asbjorn Brink" },
-                { 1091, "Asbjorn Brink" },
-                { 1102, "Asbjorn Brink" },
-                { 1753, "Asbjorn Brink" },
-                { 1456, "Hala R Alsharifi" },
-                { 1101, "Asbjorn Brink" },
-                { 1136, "Asbjorn Brink" },
-                { 1837, "Asbjorn Brink" },
-                { 1688, "Asbjorn Brink" },
-                { 1319, "Hala R Alsharifi" },
-                { 1916, "Hala R Alsharifi" },
-                { 1371, "Hala R Alsharifi" },
-                { 1919, "Hala R Alsharifi" },
-                { 1912, "Hala R Alsharifi" },
-                { 1818, "Hala R Alsharifi" },
-                { 1714, "Hala R Alsharifi" },
-                { 1139, "Arnaud Sgambato" },
-                { 1395, "Hala R Alsharifi" },
-                { 1911, "Hala R Alsharifi" },
-                { 1918, "Hala R Alsharifi" },
-                { 1754, "Asbjorn Brink" },
-                { 1723, "Hala R Alsharifi" },
-                { 1108, "Asbjorn Brink" },
-                { 1908, "Arnaud Sgambato" },
-                { 1267, "Asbjorn Brink" },
-                { 1909, "Asbjorn Brink" },
-                { 1646, "Christine Leslie BOWERS" },
-                { 1222, "Mikaela Solfrid Gerkman" },
-                { 1193, "Noriko   Kominami" },
-                { 1192, "Noriko   Kominami" },
-                { 1183, "Laurentiu Mastacan" },
-                { 1425, "Hala R Alsharifi" },
-                { 1913, "Hala R Alsharifi" },
-                { 1144, "Asbjorn Brink" },
-                { 1145, "Michael Patrick Ellsworth" },
-                { 1641, "Michael Patrick Ellsworth" },
-                { 1116, "Michael Patrick Ellsworth" },
-                { 1112, "Michael Patrick Ellsworth" },
-                { 1115, "Michael Patrick Ellsworth" },
-                { 1642, "Michael Patrick Ellsworth" },
-                { 1113, "Michael Patrick Ellsworth" },
-                { 1898, "Michael Patrick Ellsworth" },
-                { 1940, "Mariacarmen   COLITTI" },
-                { 1261, "Noriko   Kominami" }
+                { 1902, "martina@unops.org" },
+                { 1738, "laetitiak@unops.org" },
+                { 1864, "laetitiak@unops.org" },
+                { 1089, "laetitiak@unops.org" },
+                { 1610, "asbjornb@unops.org" },
+                { 1613, "asbjornb@unops.org" },
+                { 1618, "asbjornb@unops.org" },
+                { 1024, "patrickel@unops.org" },
+                { 1121, "patrickel@unops.org" },
+                { 1702, "patrickel@unops.org" },
+                { 1082, "patrickel@unops.org" },
+                { 1123, "asbjornb@unops.org" },
+                { 1910, "asbjornb@unops.org" },
+                { 1083, "patrickel@unops.org" },
+                { 1111, "asbjornb@unops.org" },
+                { 1025, "mariacarmenco@unops.org" },
+                { 1917, "patrickel@unops.org" },
+                { 1649, "mariacarmenco@unops.org" },
+                { 1031, "mariacarmenco@unops.org" },
+                { 1032, "mariacarmenco@unops.org" },
+                { 1944, "mariacarmenco@unops.org" },
+                { 1029, "mariacarmenco@unops.org" },
+                { 1026, "mariacarmenco@unops.org" },
+                { 1943, "mariacarmenco@unops.org" },
+                { 1739, "mariacarmenco@unops.org" },
+                { 1752, "asbjornb@unops.org" },
+                { 1124, "asbjornb@unops.org" },
+                { 1711, "asbjornb@unops.org" },
+                { 1903, "laetitiak@unops.org" },
+                { 1622, "mariacarmenco@unops.org" },
+                { 1445, "daniele@unops.org" },
+                { 1126, "laetitiak@unops.org" },
+                { 1448, "daniele@unops.org" },
+                { 1679, "daniele@unops.org" },
+                { 1681, "daniele@unops.org" },
+                { 1680, "daniele@unops.org" },
+                { 1737, "laetitiak@unops.org" },
+                { 1589, "laetitiak@unops.org" },
+                { 1443, "christinebo@unops.org" },
+                { 1049, "asbjornb@unops.org" },
+                { 1128, "asbjornb@unops.org" },
+                { 1628, "christinebo@unops.org" },
+                { 1444, "christinebo@unops.org" },
+                { 1084, "patrickel@unops.org" },
+                { 1247, "martina@unops.org" },
+                { 1547, "christinebo@unops.org" },
+                { 1788, "patrickel@unops.org" },
+                { 1571, "halas@unops.org" },
+                { 1266, "martina@unops.org" },
+                { 1905, "martina@unops.org" },
+                { 1131, "yukom@unops.org" },
+                { 1906, "yukom@unops.org" },
+                { 1907, "yukom@unops.org" },
+                { 1096, "yukom@unops.org" },
+                { 1095, "yukom@unops.org" },
+                { 1868, "yukom@unops.org" },
+                { 1915, "halas@unops.org" },
+                { 1669, "laetitiak@unops.org" },
+                { 1105, "arnauds@unops.org" },
+                { 1761, "halas@unops.org" },
+                { 1312, "halas@unops.org" },
+                { 1914, "halas@unops.org" },
+                { 1904, "martina@unops.org" },
+                { 1114, "patrickel@unops.org" },
+                { 1546, "christinebo@unops.org" },
+                { 1087, "asbjornb@unops.org" },
+                { 1959, "mariacarmenco@unops.org" },
+                { 1086, "asbjornb@unops.org" },
+                { 1091, "asbjornb@unops.org" },
+                { 1102, "asbjornb@unops.org" },
+                { 1753, "asbjornb@unops.org" },
+                { 1456, "halas@unops.org" },
+                { 1101, "asbjornb@unops.org" },
+                { 1136, "asbjornb@unops.org" },
+                { 1837, "asbjornb@unops.org" },
+                { 1688, "asbjornb@unops.org" },
+                { 1319, "halas@unops.org" },
+                { 1916, "halas@unops.org" },
+                { 1371, "halas@unops.org" },
+                { 1919, "halas@unops.org" },
+                { 1912, "halas@unops.org" },
+                { 1818, "halas@unops.org" },
+                { 1714, "halas@unops.org" },
+                { 1139, "arnauds@unops.org" },
+                { 1395, "halas@unops.org" },
+                { 1911, "halas@unops.org" },
+                { 1918, "halas@unops.org" },
+                { 1754, "asbjornb@unops.org" },
+                { 1723, "halas@unops.org" },
+                { 1108, "asbjornb@unops.org" },
+                { 1908, "arnauds@unops.org" },
+                { 1267, "asbjornb@unops.org" },
+                { 1909, "asbjornb@unops.org" },
+                { 1646, "christinebo@unops.org" },
+                { 1222, "mikaelag@unops.org" },
+                { 1193, "norikok@unops.org" },
+                { 1192, "norikok@unops.org" },
+                { 1183, "laurentium@unops.org" },
+                { 1425, "halas@unops.org" },
+                { 1913, "halas@unops.org" },
+                { 1144, "asbjornb@unops.org" },
+                { 1145, "patrickel@unops.org" },
+                { 1641, "patrickel@unops.org" },
+                { 1116, "patrickel@unops.org" },
+                { 1112, "patrickel@unops.org" },
+                { 1115, "patrickel@unops.org" },
+                { 1642, "patrickel@unops.org" },
+                { 1113, "patrickel@unops.org" },
+                { 1898, "patrickel@unops.org" },
+                { 1940, "mariacarmenco@unops.org" },
+                { 1261, "norikok@unops.org" }
             };
 
             // Begin transaction to ensure atomicity
@@ -140,16 +141,16 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
             try
             {
                 // Process each ErpDimValue
-                foreach (var (erpDimValue, focalPointName) in erpDimValueToFocalPoint)
+                foreach (var (erpDimValue, focalPointEmail) in erpDimValueToFocalPoint)
                 {
                     // Check if the focal point user exists in the mapping
-                    if (!paoUserMapping.ContainsKey(focalPointName))
+                    if (!paoUserMapping.ContainsKey(focalPointEmail))
                     {
-                        Console.WriteLine($"Warning: Focal Point User '{focalPointName}' not found in database for ErpDimValue {erpDimValue}");
+                        Console.WriteLine($"Warning: Focal Point User with email '{focalPointEmail}' not found in database for ErpDimValue {erpDimValue}");
                         continue;
                     }
 
-                    var focalPointUserId = paoUserMapping[focalPointName];
+                    var focalPointUserId = paoUserMapping[focalPointEmail];
 
                     // Find partner by ErpDimValue where PartnerFocalPointUserId is null
                     var partner = await context.Partners
@@ -162,7 +163,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         partner.LastModifiedBy = -1; // Opportunity+ system user
                         partner.LastModifiedDate = DateTime.UtcNow;
 
-                        Console.WriteLine($"Updated Partner ErpDimValue {erpDimValue} - '{partner.Name}' with PartnerFocalPointUserId: {focalPointUserId} ({focalPointName})");
+                        Console.WriteLine($"Updated Partner ErpDimValue {erpDimValue} - '{partner.Name}' with PartnerFocalPointUserId: {focalPointUserId} ({focalPointEmail})");
                     }
                     else
                     {
