@@ -879,7 +879,25 @@ public static class ArtifactTypeSeeder_Country
                 AllowBulkUpdate = false,
                 IsUsedForCalculations = false,
                 IsUsedForAI = false,
-                Order = 1038,
+                Order = 1039,
+                Status = EntityStatus.Active,
+                IsDeleted = false
+            },
+
+            new ArtifactType
+            {
+                Name = "Host Agreement",
+                ArtifactTypeCode = "Host_Agreement",
+                ArtifactDataTypeId = documentDataTypeId,
+                Description = "Host Agreement Document",
+                Category = null,
+                ApplicableEntityTypes = "Country",
+                Source = null,
+                IsSearchable = false,
+                AllowBulkUpdate = false,
+                IsUsedForCalculations = false,
+                IsUsedForAI = false,
+                Order = 1040,
                 Status = EntityStatus.Active,
                 IsDeleted = false
             }

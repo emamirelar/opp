@@ -44,10 +44,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 // Opportunity document types
                 ("Opportunity", "Concept Note"),
                 ("Opportunity", "Proposal"),
-                ("Opportunity", "Other"),
-
-                // Country document types
-                ("Country", "Host Country Agreement")
+                ("Opportunity", "Other")
             };
 
             // Get existing document types from database

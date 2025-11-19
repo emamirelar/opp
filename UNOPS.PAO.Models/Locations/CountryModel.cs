@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UNOPS.PAO.Models.Artifacts;
-using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Models.Locations;
@@ -29,12 +28,6 @@ public class CountryModel
     /// Automatically loaded via AutoMapper when Country entity is mapped
     /// </summary>
     public List<EntityArtifactModel> Artifacts { get; set; } = new List<EntityArtifactModel>();
-    
-    /// <summary>
-    /// Collection of documents associated with this country
-    /// Automatically loaded via AutoMapper when Country entity is mapped
-    /// </summary>
-    public List<DocumentModel> Documents { get; set; } = new List<DocumentModel>();
     
     /// <summary>
     /// Organization unit hierarchy chain from root to the country's org unit
@@ -85,11 +78,11 @@ public class CountryModel
             });
         }
         
-        // 3. Check for "Host Country Agreement" document
-        var hasHcaDocument = Documents?.Any(d => 
-            d.DocumentType?.Name == "Host Country Agreement") ?? false;
+        // 3. Check for "Host_Agreement" artifact (document type artifact)
+        var hostAgreementArtifact = Artifacts?.FirstOrDefault(a => 
+            a.ArtifactTypeCode == "Host_Agreement");
         
-        if (hasHcaDocument)
+        if (hostAgreementArtifact != null)
         {
             tags.Add(new EntityTagModel 
             { 
