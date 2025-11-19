@@ -347,6 +347,16 @@ public class CountrySearchGroups
     public List<CountrySearchResultModel> NameMatches { get; set; } = new List<CountrySearchResultModel>();
     
     /// <summary>
+    /// Countries matched by region description
+    /// </summary>
+    public List<CountrySearchResultModel> RegionMatches { get; set; } = new List<CountrySearchResultModel>();
+    
+    /// <summary>
+    /// Countries matched by continent description
+    /// </summary>
+    public List<CountrySearchResultModel> ContinentMatches { get; set; } = new List<CountrySearchResultModel>();
+    
+    /// <summary>
     /// Countries matched by artifact values, grouped by artifact type
     /// Key: Artifact type name, Value: List of matching countries
     /// </summary>

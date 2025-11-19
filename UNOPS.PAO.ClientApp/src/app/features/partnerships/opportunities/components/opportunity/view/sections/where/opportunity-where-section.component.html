@@ -251,6 +251,118 @@
               </div>
             </p-tabpanel>
 
+            <!-- Region Matches Tab -->
+            <p-tabpanel>
+              <ng-template #header>
+                <div class="flex items-center gap-2">
+                  <span>{{ 'label.region' | translate }}</span>
+                  <p-badge [value]="searchResults()!.groups.regionMatches.length.toString()" />
+                </div>
+              </ng-template>
+              <div class="space-y-2 p-2">
+                @if (searchResults()!.groups.regionMatches.length === 0) {
+                  <div class="text-center py-4 text-gray-400">
+                    <p>{{ 'message.noRegionMatches' | translate }}</p>
+                  </div>
+                } @else {
+                  <!-- Select All Button for this group -->
+                  <div class="flex justify-end mb-2">
+                    <p-button
+                      [label]="'button.selectAllFromGroup' | translate"
+                      icon="pi pi-check-square"
+                      size="small"
+                      severity="info"
+                      [text]="true"
+                      (onClick)="selectArtifactGroup(searchResults()!.groups.regionMatches)"
+                    />
+                  </div>
+                  @for (result of searchResults()!.groups.regionMatches; track result.country.id) {
+                    <div
+                      class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors"
+                      [class.bg-blue-50]="selectedSearchResults().has(result.country.id)"
+                      [class.border-blue-300]="selectedSearchResults().has(result.country.id)"
+                      (click)="toggleCountrySelection(result.country.id)"
+                    >
+                      <input
+                        type="checkbox"
+                        [checked]="selectedSearchResults().has(result.country.id)"
+                        class="w-4 h-4"
+                        (click)="$event.stopPropagation()"
+                        (change)="toggleCountrySelection(result.country.id)"
+                      />
+                      <div class="flex-1">
+                        <div class="font-semibold">{{ result.country.name }}</div>
+                        @if (result.country.continent || result.country.region) {
+                          <div class="text-xs text-gray-600">
+                            {{ result.country.continent }}{{ result.country.continent && result.country.region ? ', ' : '' }}{{ result.country.region }}
+                          </div>
+                        }
+                      </div>
+                      <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                        {{ 'label.region' | translate }}
+                      </span>
+                    </div>
+                  }
+                }
+              </div>
+            </p-tabpanel>
+
+            <!-- Continent Matches Tab -->
+            <p-tabpanel>
+              <ng-template #header>
+                <div class="flex items-center gap-2">
+                  <span>{{ 'label.continent' | translate }}</span>
+                  <p-badge [value]="searchResults()!.groups.continentMatches.length.toString()" />
+                </div>
+              </ng-template>
+              <div class="space-y-2 p-2">
+                @if (searchResults()!.groups.continentMatches.length === 0) {
+                  <div class="text-center py-4 text-gray-400">
+                    <p>{{ 'message.noContinentMatches' | translate }}</p>
+                  </div>
+                } @else {
+                  <!-- Select All Button for this group -->
+                  <div class="flex justify-end mb-2">
+                    <p-button
+                      [label]="'button.selectAllFromGroup' | translate"
+                      icon="pi pi-check-square"
+                      size="small"
+                      severity="info"
+                      [text]="true"
+                      (onClick)="selectArtifactGroup(searchResults()!.groups.continentMatches)"
+                    />
+                  </div>
+                  @for (result of searchResults()!.groups.continentMatches; track result.country.id) {
+                    <div
+                      class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors"
+                      [class.bg-blue-50]="selectedSearchResults().has(result.country.id)"
+                      [class.border-blue-300]="selectedSearchResults().has(result.country.id)"
+                      (click)="toggleCountrySelection(result.country.id)"
+                    >
+                      <input
+                        type="checkbox"
+                        [checked]="selectedSearchResults().has(result.country.id)"
+                        class="w-4 h-4"
+                        (click)="$event.stopPropagation()"
+                        (change)="toggleCountrySelection(result.country.id)"
+                      />
+                      <div class="flex-1">
+                        <div class="font-semibold">{{ result.country.name }}</div>
+                        @if (result.country.continent || result.country.region) {
+                          <div class="text-xs text-gray-600">
+                            {{ result.country.continent }}{{ result.country.continent && result.country.region ? ', ' : '' }}{{ result.country.region }}
+                          </div>
+                        }
+                      </div>
+                      <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                        {{ 'label.continent' | translate }}
+                      </span>
+                    </div>
+                  }
+                }
+              </div>
+            </p-tabpanel>
+
             <!-- Artifact Matches Tab -->
             @for (group of groupedArtifactMatches(); track group.artifactType) {
               <p-tabpanel>

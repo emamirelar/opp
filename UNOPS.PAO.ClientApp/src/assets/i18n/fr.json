@@ -1198,6 +1198,8 @@
 	"message.countriesSelected": "{{count}} pays sélectionnés",
 	"message.countriesAdded": "{{count}} pays ajoutés avec succès",
 	"message.noNameMatches": "Aucun pays ne correspond par nom",
+	"message.noRegionMatches": "Aucun pays ne correspond par région",
+	"message.noContinentMatches": "Aucun pays ne correspond par continent",
 	"message.noSearchResults": "Aucun pays trouvé correspondant à votre recherche",
 	"message.country.activeUNSDCF": "Un UNSDCF actif existe pour ce pays. Vous serez tenu de compléter la section Alignement Stratégique.",
 	"message.country.noActiveUNSDCF": "Aucun UNSDCF actif n'existe pour ce pays.",

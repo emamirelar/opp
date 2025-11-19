@@ -103,6 +103,8 @@ export interface SearchMatchReason {
  */
 export interface CountrySearchGroups {
   nameMatches: CountrySearchResult[];
+  regionMatches: CountrySearchResult[];
+  continentMatches: CountrySearchResult[];
   artifactMatches: { [artifactType: string]: CountrySearchResult[] };
 }
 
