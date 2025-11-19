@@ -96,6 +96,7 @@ public class EntityArtifactValueResolver : IValueResolver<object, object, List<E
         {
             "string" or "text" => artifact.ValueText,
             "number" or "decimal" or "integer" => artifact.ValueNumber,
+            "boolean" or "bool" => artifact.ValueBoolean,
             "date" or "datetime" => artifact.ValueDate,
             "json" or "array" or "object" => artifact.ValueJson,
             "document" => artifact.DocumentId,

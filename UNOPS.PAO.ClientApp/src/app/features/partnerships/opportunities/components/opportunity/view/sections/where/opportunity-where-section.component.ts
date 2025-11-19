@@ -33,6 +33,7 @@ import { Opportunity, OpportunityCountry } from '@shared/models/opportunity.mode
 import { OpportunityService } from '@features/partnerships/opportunities/services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 import { Router } from '@angular/router';
+import { EntityTagsComponent } from '@shared/components/data-display/entity-tags/entity-tags.component';
 import {
   ValuesService,
   SimpleValue,
@@ -75,7 +76,8 @@ import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs
     TooltipModule,
     InputTextModule,
     TabsModule,
-    AccordionModule
+    AccordionModule,
+    EntityTagsComponent
   ],
   templateUrl: './opportunity-where-section.component.html',
   styleUrls: ['./opportunity-where-section.component.scss'],

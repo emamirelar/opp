@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UNOPS.PAO.Models.Artifacts;
+using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Models.Shared;
 
 namespace UNOPS.PAO.Models.Locations;
@@ -29,10 +31,111 @@ public class CountryModel
     public List<EntityArtifactModel> Artifacts { get; set; } = new List<EntityArtifactModel>();
     
     /// <summary>
+    /// Collection of documents associated with this country
+    /// Automatically loaded via AutoMapper when Country entity is mapped
+    /// </summary>
+    public List<DocumentModel> Documents { get; set; } = new List<DocumentModel>();
+    
+    /// <summary>
     /// Organization unit hierarchy chain from root to the country's org unit
     /// Ordered from most general (root, e.g., OPS) to most specific (country's direct org unit, e.g., B5101)
     /// </summary>
     public List<OrganizationUnitHierarchyNode>? OrganizationUnitHierarchy { get; set; }
+    
+    /// <summary>
+    /// Conditional tags based on country's current state for frontend display
+    /// </summary>
+    public List<EntityTagModel>? Tags => CalculateConditionalTags();
+    
+    /// <summary>
+    /// Indicates whether the country has an active UNSDCF requiring Strategic Alignment completion
+    /// </summary>
+    public bool HasActiveUNSDCF => CheckForActiveUNSDCF();
+    
+    /// <summary>
+    /// Calculate conditional tags based on country's artifacts and documents for frontend display
+    /// </summary>
+    public List<EntityTagModel> CalculateConditionalTags()
+    {
+        var tags = new List<EntityTagModel>();
+        
+        // 1. Check for "World_Bank_Fragile_Situation" artifact
+        var fragileSituationArtifact = Artifacts?.FirstOrDefault(a => 
+            a.ArtifactTypeCode == "World_Bank_Fragile_Situation");
+        
+        if (IsBooleanArtifactTrue(fragileSituationArtifact))
+        {
+            tags.Add(new EntityTagModel 
+            { 
+                Tag = "Fragile State", 
+                Color = "bg-red-100 text-red-800" 
+            });
+        }
+        
+        // 2. Check for "SIDS" artifact
+        var sidsArtifact = Artifacts?.FirstOrDefault(a => 
+            a.ArtifactTypeCode == "SIDS");
+        
+        if (IsBooleanArtifactTrue(sidsArtifact))
+        {
+            tags.Add(new EntityTagModel 
+            { 
+                Tag = "SIDS", 
+                Color = "bg-yellow-100 text-yellow-800" 
+            });
+        }
+        
+        // 3. Check for "Host Country Agreement" document
+        var hasHcaDocument = Documents?.Any(d => 
+            d.DocumentType?.Name == "Host Country Agreement") ?? false;
+        
+        if (hasHcaDocument)
+        {
+            tags.Add(new EntityTagModel 
+            { 
+                Tag = "HCA Present", 
+                Color = "bg-green-100 text-green-800" 
+            });
+        }
+        else
+        {
+            tags.Add(new EntityTagModel 
+            { 
+                Tag = "HCA Not Present", 
+                Color = "bg-yellow-100 text-yellow-800" 
+            });
+        }
+        
+        return tags;
+    }
+    
+    /// <summary>
+    /// Helper method to check if an artifact's value is boolean true
+    /// Handles both boolean objects and string representations
+    /// </summary>
+    private bool IsBooleanArtifactTrue(EntityArtifactModel? artifact)
+    {
+        if (artifact?.Value == null)
+            return false;
+        
+        // Handle direct boolean value
+        if (artifact.Value is bool boolValue)
+            return boolValue;
+        
+        // Handle string representation (for backward compatibility)
+        return artifact.Value.ToString()?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false;
+    }
+    
+    /// <summary>
+    /// Check if the country has an active UNSDCF (UN Sustainable Development Cooperation Framework)
+    /// </summary>
+    private bool CheckForActiveUNSDCF()
+    {
+        var unsdcfArtifact = Artifacts?.FirstOrDefault(a => 
+            a.ArtifactTypeCode == "Has_Active_UNSDCF");
+        
+        return IsBooleanArtifactTrue(unsdcfArtifact);
+    }
 }
 
 /// <summary>

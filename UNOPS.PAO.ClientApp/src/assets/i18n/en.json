@@ -1181,6 +1181,8 @@
 	"message.countriesAdded": "Successfully added {{count}} countries",
 	"message.noNameMatches": "No countries match by name",
 	"message.noSearchResults": "No countries found matching your search",
+	"message.country.activeUNSDCF": "An active UNSDCF exists for this country. You will be required to complete the Strategic Alignment section.",
+	"message.country.noActiveUNSDCF": "No active UNSDCF exists for this country.",
 	"message.validation.outputAlreadyAdded": "This output has already been added to the deliverables list",
 	"message.validation.fundingPartnerAlreadyAdded": "This funding partner has already been added",
 	"message.validation.clientPartnerAlreadyAdded": "This client partner has already been added",

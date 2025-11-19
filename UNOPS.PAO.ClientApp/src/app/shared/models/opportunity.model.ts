@@ -135,6 +135,11 @@ export interface OpportunityCountry {
       effectiveDate: string;
       expiryDate: string | null;
     }>;
+    tags?: Array<{
+      tag: string;
+      color: string;
+    }>;
+    hasActiveUNSDCF?: boolean;
     organizationUnitHierarchy?: OrganizationUnitHierarchyNode[];
   } | null;
 }

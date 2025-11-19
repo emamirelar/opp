@@ -1199,6 +1199,8 @@
 	"message.countriesAdded": "{{count}} países agregados exitosamente",
 	"message.noNameMatches": "No hay países que coincidan por nombre",
 	"message.noSearchResults": "No se encontraron países que coincidan con su búsqueda",
+	"message.country.activeUNSDCF": "Existe un UNSDCF activo para este país. Se le requerirá completar la sección de Alineación Estratégica.",
+	"message.country.noActiveUNSDCF": "No existe un UNSDCF activo para este país.",
 	"message.validation.outputAlreadyAdded": "Este producto ya ha sido agregado a la lista de entregables",
 	"message.validation.fundingPartnerAlreadyAdded": "Este socio financiero ya ha sido agregado",
 	"message.validation.clientPartnerAlreadyAdded": "Este socio cliente ya ha sido agregado",
