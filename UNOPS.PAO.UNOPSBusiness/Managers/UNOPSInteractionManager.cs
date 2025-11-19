@@ -644,22 +644,42 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             .Where(x => x.InteractionContacts.Any(ic => ic.ContactId == contactId) && !x.IsDeleted)
             .AsQueryable();
 
-        // Load organization unit relationships
-        await query.LoadOrganizationUnitRelationshipsAsync(context);
-
         // Apply access control filters
         var filteredData = await ApplyAccessControlFilters(query, GetCurrentUserOrSystemContext(), "read");
         
-        // Filter to ensure we only have UNOPSInteraction instances and handle pagination manually
-        var interactionArray = filteredData.OfType<UNOPSInteraction>().OrderByDescending(x => x.Date).ToArray();
-        var totalCount = interactionArray.Length;
-        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
-        var excludedRows = (pageIndex - 1) * request.PageSize;
+        // ⚡ PERFORMANCE OPTIMIZATION: Handle both IQueryable (optimized path) and IEnumerable (column filtering path)
+        IEnumerable<UNOPSInteraction> interactionCollection;
+        int totalCount;
+        int pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        int excludedRows = (pageIndex - 1) * request.PageSize;
         
-        var pagedItems = interactionArray
-            .Skip(excludedRows)
-            .Take(request.PageSize)
-            .ToArray();
+        if (filteredData is IQueryable<UNOPSInteraction> queryableData)
+        {
+            // Optimized path: No column filtering, can paginate at database level
+            var orderedQuery = queryableData.OrderByDescending(x => x.Date);
+            totalCount = await orderedQuery.CountAsync();
+            
+            // Execute pagination at database level
+            interactionCollection = await orderedQuery
+                .Skip(excludedRows)
+                .Take(request.PageSize)
+                .ToListAsync();
+        }
+        else
+        {
+            // Column filtering path: Data is already materialized
+            var interactionArray = filteredData.OfType<UNOPSInteraction>().OrderByDescending(x => x.Date).ToArray();
+            totalCount = interactionArray.Length;
+            
+            interactionCollection = interactionArray
+                .Skip(excludedRows)
+                .Take(request.PageSize);
+        }
+        
+        var pagedItems = interactionCollection.ToArray();
+
+        // ⚡ PERFORMANCE FIX: Load organization unit relationships ONLY for paginated items
+        await pagedItems.LoadOrganizationUnitRelationshipsAsync(context);
 
         // Collect all user IDs from paginated items to bulk load user names
         var allUserIds = pagedItems
@@ -692,9 +712,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         // Apply the specification to the query
         var query = interactionRepository.GetAll().AsQueryable()
             .Where(x => !x.IsDeleted);
-
-        // Load organization unit relationships
-        await query.LoadOrganizationUnitRelationshipsAsync(context);
         
         // Cast to base type to apply specification, then cast back to derived type
         var baseQuery = query.Cast<Interaction>();
@@ -704,19 +721,42 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         // Apply global filters using the centralized GlobalFilterService
         filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(filteredQuery, GetCurrentUserOrSystemContext());
         
-        // Apply access control filters (role-based permissions only) BEFORE pagination
+        // Apply access control filters (role-based permissions only)
         var filteredData = await ApplyAccessControlFilters(filteredQuery, GetCurrentUserOrSystemContext(), "read");
         
-        // Filter to ensure we only have UNOPSInteraction instances and handle pagination manually
-        var interactionArray = filteredData.OfType<UNOPSInteraction>().ToArray();
-        var totalCount = interactionArray.Length;
-        var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
-        var excludedRows = (pageIndex - 1) * pagination.PageSize;
+        // ⚡ PERFORMANCE OPTIMIZATION: Handle both IQueryable (optimized path) and IEnumerable (column filtering path)
+        IEnumerable<UNOPSInteraction> interactionCollection;
+        int totalCount;
+        int pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
+        int excludedRows = (pageIndex - 1) * pagination.PageSize;
         
-        var pagedItems = interactionArray
-            .Skip(excludedRows)
-            .Take(pagination.PageSize)
-            .ToArray();
+        if (filteredData is IQueryable<UNOPSInteraction> queryableData)
+        {
+            // Optimized path: No column filtering, can paginate at database level
+            totalCount = await queryableData.CountAsync();
+            
+            // Execute pagination at database level
+            interactionCollection = await queryableData
+                .Skip(excludedRows)
+                .Take(pagination.PageSize)
+                .ToListAsync();
+        }
+        else
+        {
+            // Column filtering path: Data is already materialized
+            var interactionArray = filteredData.OfType<UNOPSInteraction>().ToArray();
+            totalCount = interactionArray.Length;
+            
+            interactionCollection = interactionArray
+                .Skip(excludedRows)
+                .Take(pagination.PageSize);
+        }
+        
+        var pagedItems = interactionCollection.ToArray();
+
+        // ⚡ PERFORMANCE FIX: Load organization unit relationships ONLY for paginated items
+        // This avoids loading relationships for ALL interactions in the database
+        await pagedItems.LoadOrganizationUnitRelationshipsAsync(context);
 
         // Collect all user IDs from paginated items to bulk load user names
         var allUserIds = pagedItems
@@ -789,9 +829,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             ])
             .AsQueryable();
 
-        // Load organization unit relationships
-        await query.LoadOrganizationUnitRelationshipsAsync(context);
-
         // First get the paginated entities without mapping to avoid N+1 queries
         var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
         var excludedRows = (pageIndex - 1) * request.PageSize;
@@ -809,6 +846,9 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             .Skip(excludedRows)
             .Take(request.PageSize)
             .ToListAsync();
+
+        // ⚡ PERFORMANCE FIX: Load organization unit relationships ONLY for paginated items
+        await pagedEntities.LoadOrganizationUnitRelationshipsAsync(context);
 
         // Collect all user IDs from the paginated results to bulk load user names
         var allUserIds = pagedEntities
@@ -1522,5 +1562,81 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         }
 
         await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Data retrieval method for AI prompts - Gets comprehensive interaction details for opportunity creation
+    /// This method is called via reflection by the Gemini Manager
+    /// </summary>
+    /// <param name="id">Interaction ID</param>
+    /// <returns>Dictionary containing all interaction details formatted for AI prompt placeholders</returns>
+    public async Task<Dictionary<string, object>> GetInteractionDetailsForOpportunityCreationAsync(int id)
+    {
+        var interaction = await context.Set<Interaction>()
+            .Include(i => i.InteractionContacts)
+                .ThenInclude(ic => ic.Contact)
+            .Include(i => i.InteractionPartners)
+                .ThenInclude(ip => ip.Partner)
+            .Include(i => i.InteractionUsers)
+                .ThenInclude(iu => iu.User)
+                    .ThenInclude(u => u.UserProfile)
+            .Include(i => i.Documents)
+                .ThenInclude(d => d.DocumentType)
+            .FirstOrDefaultAsync(i => i.Id == id && !i.IsDeleted);
+
+        if (interaction == null)
+        {
+            return null;
+        }
+
+        // Build comprehensive interaction details
+        var details = new Dictionary<string, object>
+        {
+            ["id"] = interaction.Id,
+            ["subject"] = interaction.Subject ?? string.Empty,
+            ["description"] = interaction.Description ?? string.Empty,
+            ["date"] = interaction.Date.ToString("yyyy-MM-dd"),
+            ["type"] = interaction.Type.ToString(),
+            ["location"] = interaction.Location ?? string.Empty,
+            ["status"] = interaction.Status.ToString(),
+            
+            // UNOPS participants with org units
+            ["users"] = interaction.InteractionUsers?.Select(iu => new
+            {
+                id = iu.User?.Id ?? 0,
+                name = iu.User?.Name ?? string.Empty,
+                position = iu.User?.UserProfile?.Position ?? string.Empty,
+                orgUnit = iu.User?.UserProfile?.OrgUnit ?? string.Empty
+            }).ToList() ?? (object)new List<object>(),
+            
+            // Partner contacts
+            ["contacts"] = interaction.InteractionContacts?.Select(ic => new
+            {
+                id = ic.Contact?.Id ?? 0,
+                name = $"{ic.Contact?.FirstName ?? string.Empty} {ic.Contact?.LastName ?? string.Empty}".Trim(),
+                email = ic.Contact?.Email ?? string.Empty,
+                phone = ic.Contact?.Phone ?? string.Empty
+            }).ToList() ?? (object)new List<object>(),
+            
+            // Partner organizations
+            ["partners"] = interaction.InteractionPartners?.Select(ip => new
+            {
+                id = ip.Partner?.Id ?? 0,
+                name = ip.Partner?.Name ?? string.Empty
+            }).ToList() ?? (object)new List<object>(),
+            
+            // Documents
+            ["documents"] = interaction.Documents?.Select(d => new
+            {
+                id = d.Id,
+                name = d.Name ?? string.Empty,
+                documentType = d.DocumentType?.Name ?? string.Empty
+            }).ToList() ?? (object)new List<object>(),
+            
+            // Email addresses
+            ["emailAddresses"] = interaction.EmailAddresses ?? new List<string>()
+        };
+
+        return details;
     }
 }

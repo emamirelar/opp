@@ -944,5 +944,74 @@ namespace UNOPS.PAO.Presentation.Controllers.Interactions
                 });
             }
         }
+
+        /// <summary>
+        /// Get interactions with optional search query and pagination - Brief version for fast listing
+        /// Fast endpoint for listing interactions with basic details
+        /// </summary>
+        /// <param name="query">Optional search query text</param>
+        /// <param name="pageIndex">Page number (1-based), default: 1</param>
+        /// <param name="pageSize">Items per page, default: 50</param>
+        /// <param name="orderBy">Field to order by, default: CreatedDate</param>
+        /// <param name="ascending">Sort direction, default: false (descending)</param>
+        /// <param name="filterActive">Whether to apply global filters, default: true</param>
+        /// <returns>Paginated list of interactions with search metadata</returns>
+        [HttpGet(APIDictionary.InteractionsBrief)]
+        [AccessControlled(EntityTypes.Interaction, "read")]
+        public async Task<IActionResult> GetInteractionsBrief(
+            [FromQuery] string? query = null,
+            [FromQuery] int pageIndex = 1,
+            [FromQuery] int pageSize = 50,
+            [FromQuery] string? orderBy = "CreatedDate",
+            [FromQuery] bool? ascending = false,
+            [FromQuery] bool filterActive = true)
+        {
+            return await HandleOperationAsync(async () =>
+            {
+                var startTime = DateTime.UtcNow;
+                _logger.LogInformation("Getting interactions. Query: '{Query}', Page: {PageIndex}, PageSize: {PageSize}, OrderBy: {OrderBy}, Ascending: {Ascending}, FilterActive: {FilterActive}",
+                    query, pageIndex, pageSize, orderBy, ascending, filterActive);
+
+                PaginationResponse<InteractionModel> result;
+
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    // Use AdvancedSearchService for text search
+                    var pagination = new PaginationRequest
+                    {
+                        PageIndex = pageIndex,
+                        PageSize = pageSize,
+                        OrderBy = orderBy,
+                        Ascending = ascending,
+                        FilterActive = filterActive
+                    };
+
+                    result = await _advancedSearchService.SearchWithQueryAsync<UNOPSInteraction, InteractionModel>(
+                        query,
+                        pagination,
+                        User);
+                }
+                else
+                {
+                    // No search query - get all interactions (filtered by access control)
+                    var pagination = new PaginationRequest
+                    {
+                        PageIndex = pageIndex,
+                        PageSize = pageSize,
+                        OrderBy = orderBy,
+                        Ascending = ascending,
+                        FilterActive = filterActive
+                    };
+
+                    result = await _manager.GetInteractionsAsync(User, pagination);
+                }
+
+                var executionTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                result.ExecutionTimeMs = executionTime;
+
+                _logger.LogInformation("Returned {Count} interactions in {ExecutionTime}ms", result.Records?.Count ?? 0, executionTime);
+                return (object)result;
+            });
+        }
     }
 } 

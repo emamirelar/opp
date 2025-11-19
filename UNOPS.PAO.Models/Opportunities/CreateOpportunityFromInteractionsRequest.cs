@@ -1,0 +1,82 @@
+namespace UNOPS.PAO.Models.Opportunities;
+
+/// <summary>
+/// Request model for creating an opportunity from an AI-generated proposal
+/// Contains user-accepted fields with resolved IDs from the dependents
+/// </summary>
+public class CreateOpportunityFromInteractionsRequest
+{
+    /// <summary>
+    /// Opportunity name (user-provided, required)
+    /// </summary>
+    public required string Name { get; set; }
+    
+    /// <summary>
+    /// Opportunity description (enhanced by AI, required)
+    /// </summary>
+    public required string Description { get; set; }
+    
+    /// <summary>
+    /// Partner ID associated with the interactions (optional - only provided when creating from partner context)
+    /// </summary>
+    public int? PartnerId { get; set; }
+    
+    /// <summary>
+    /// Whether partner is a funding partner (only required if PartnerId is provided)
+    /// </summary>
+    public bool IsFundingPartner { get; set; }
+    
+    /// <summary>
+    /// Whether partner is a client partner (only required if PartnerId is provided)
+    /// </summary>
+    public bool IsClientPartner { get; set; }
+    
+    /// <summary>
+    /// Source interaction IDs that were analyzed
+    /// </summary>
+    public required List<int> SourceInteractionIds { get; set; }
+    
+    /// <summary>
+    /// GCS storage paths for newly uploaded documents (to be persisted to database)
+    /// </summary>
+    public List<string>? NewDocumentStoragePaths { get; set; }
+    
+    /// <summary>
+    /// MIME types for newly uploaded documents
+    /// </summary>
+    public List<string>? NewDocumentMimeTypes { get; set; }
+    
+    /// <summary>
+    /// Document type IDs for newly uploaded documents
+    /// </summary>
+    public List<int?>? NewDocumentTypeIds { get; set; }
+    
+    // WHAT Section Properties (AI-proposed, user-accepted)
+    public string? PartnerReference { get; set; }
+    public int? ResponsibleOrgUnitId { get; set; }
+    public int? ProposedInitiativeTypeId { get; set; }
+    public List<OpportunityDeliverableRequest>? Deliverables { get; set; }
+
+    // WHY Section Properties (AI-proposed, user-accepted)
+    public string? StrategicAlignment { get; set; }
+    public string? ResultsFocus { get; set; }
+    public string? IntendedImpactOutcomes { get; set; }
+    public string? ExpectedBeneficiaries { get; set; }
+    public List<int>? SdGs { get; set; }
+
+    // WHO Section Properties (AI-proposed, user-accepted)
+    // These are now proper structured objects from AI analysis
+    public List<OpportunityFundingPartnerRequest>? FundingPartners { get; set; }
+    public List<OpportunityClientPartnerRequest>? ClientPartners { get; set; }
+    public List<OpportunityStakeholderRequest>? Stakeholders { get; set; }
+
+    // WHERE Section Properties (AI-proposed, user-accepted)
+    public List<int>? Countries { get; set; }
+
+    // WHEN Section Properties (AI-proposed, user-accepted)
+    public DateTime? TargetSigningDate { get; set; }
+    public DateTime? TargetDeliveryDate { get; set; }
+    public decimal? InitiativeBudgetUSD { get; set; }
+    public string? PartnershipAgreementReference { get; set; }
+}
+

@@ -3639,6 +3639,336 @@ public class UNOPSGeminiManager : IGeminiManager
             }
         }
 
+        /// <summary>
+        /// Generates AI-powered opportunity proposal from multiple sources (interactions, documents, existing opportunities)
+        /// Supports flexible source selection: interactions, documents, or combination
+        /// Fetches source data, sends to Gemini AI, and processes dependents
+        /// </summary>
+        /// <summary>
+        /// Generates AI-powered opportunity proposal from multiple sources (interactions, documents, or both)
+        /// Documents are passed directly to Gemini via GCS URIs in the parts array
+        /// Frontend converts Office docs to PDF and uploads to GCS before calling this method
+        /// </summary>
+        public async Task<UNOPS.PAO.Models.Opportunities.OpportunityProposalResponse> GenerateOpportunityProposalAsync(
+            UNOPS.PAO.Models.Opportunities.OpportunityProposalRequest request,
+            ClaimsPrincipal? user = null)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            try
+            {
+                _logger.LogInformation($"🔍 [OPPORTUNITY-PROPOSAL] Starting proposal generation: " +
+                    $"Interactions={request.InteractionIds?.Count ?? 0}, " +
+                    $"NewDocuments={request.NewDocumentStoragePaths?.Count ?? 0}, " +
+                    $"ExistingDocuments={request.ExistingDocumentIds?.Count ?? 0}, " +
+                    $"PartnerId={request.PartnerId}");
+
+                // Step 1: Get partner information (if provided)
+                string partnerName = "Unknown Partner";
+                int? partnerId = request.PartnerId;
+                
+                if (request.PartnerId.HasValue && request.PartnerId.Value > 0)
+                {
+                    var partnerManager = _managerWrapper.PartnerManager as UNOPSPartnerManager;
+                    if (partnerManager == null)
+                    {
+                        throw new InvalidOperationException("UNOPSPartnerManager is required");
+                    }
+
+                    var partner = await partnerManager.GetPartnerAsync(request.PartnerId.Value);
+                    if (partner == null)
+                    {
+                        throw new KeyNotFoundException($"Partner with ID {request.PartnerId} not found");
+                    }
+
+                    partnerName = partner.Name ?? "Unknown Partner";
+                    _logger.LogInformation($"📊 [OPPORTUNITY-PROPOSAL] Found partner: {partnerName}");
+                }
+                else if (request.InteractionIds != null && request.InteractionIds.Any())
+                {
+                    // Try to infer partner from first interaction if not provided
+                    var interactionManager = _managerWrapper.InteractionManager as UNOPSInteractionManager;
+                    if (interactionManager != null)
+                    {
+                        var firstInteraction = await interactionManager.GetInteractionDetailsForOpportunityCreationAsync(request.InteractionIds.First());
+                        if (firstInteraction != null && firstInteraction.TryGetValue("partners", out var partnersObj))
+                        {
+                            var partnersList = partnersObj as List<dynamic>;
+                            if (partnersList != null && partnersList.Any())
+                            {
+                                partnerId = partnersList.First().id;
+                                partnerName = partnersList.First().name ?? "Unknown Partner";
+                                _logger.LogInformation($"📊 [OPPORTUNITY-PROPOSAL] Inferred partner from interaction: {partnerName}");
+                            }
+                        }
+                    }
+                }
+
+                // Step 2: Get interaction details if provided
+                var interactionsList = new List<Dictionary<string, object>>();
+                if (request.InteractionIds != null && request.InteractionIds.Any())
+                {
+                    var interactionManager = _managerWrapper.InteractionManager as UNOPSInteractionManager;
+                    if (interactionManager == null)
+                    {
+                        throw new InvalidOperationException("UNOPSInteractionManager is required");
+                    }
+
+                    foreach (var interactionId in request.InteractionIds)
+                    {
+                        var interactionDetails = await interactionManager.GetInteractionDetailsForOpportunityCreationAsync(interactionId);
+                        if (interactionDetails != null)
+                        {
+                            interactionsList.Add(interactionDetails);
+                        }
+                    }
+
+                    _logger.LogInformation($"✅ [OPPORTUNITY-PROPOSAL] Retrieved {interactionsList.Count} interaction details");
+                }
+
+                // Step 3: Gather document GCS paths from two sources:
+                // 1. New documents: Already uploaded to GCS by frontend, paths provided directly
+                // 2. Existing documents: Query database by ID to get their GCS paths
+                var documentParts = new List<(string storagePath, string mimeType, int? documentId)>();
+                
+                // 3a. Add newly uploaded documents
+                if (request.NewDocumentStoragePaths != null && request.NewDocumentStoragePaths.Any())
+                {
+                    _logger.LogInformation($"📄 [OPPORTUNITY-PROPOSAL] Processing {request.NewDocumentStoragePaths.Count} newly uploaded documents");
+                    
+                    for (int i = 0; i < request.NewDocumentStoragePaths.Count; i++)
+                    {
+                        var storagePath = request.NewDocumentStoragePaths[i];
+                        var mimeType = request.NewDocumentMimeTypes != null && i < request.NewDocumentMimeTypes.Count
+                            ? request.NewDocumentMimeTypes[i]
+                            : "application/pdf";
+                            
+                        if (!string.IsNullOrEmpty(storagePath) && storagePath.StartsWith("gs://"))
+                        {
+                            documentParts.Add((storagePath, mimeType, null));
+                            _logger.LogInformation($"  ✓ New document: {storagePath} ({mimeType})");
+                        }
+                    }
+                }
+                
+                // 3b. Add existing documents from database
+                var existingDocumentIds = new List<int>();
+                if (request.ExistingDocumentIds != null && request.ExistingDocumentIds.Any())
+                {
+                    _logger.LogInformation($"📄 [OPPORTUNITY-PROPOSAL] Retrieving {request.ExistingDocumentIds.Count} existing documents from database");
+                    
+                    var documentManager = _managerWrapper.DocumentManager as UNOPSDocumentManager;
+                    if (documentManager == null)
+                    {
+                        throw new InvalidOperationException("UNOPSDocumentManager is required");
+                    }
+
+                    foreach (var documentId in request.ExistingDocumentIds)
+                    {
+                        try
+                        {
+                            var document = await _context.Documents.FindAsync(documentId);
+                            if (document != null && !string.IsNullOrEmpty(document.StoragePath) && document.StoragePath.StartsWith("gs://"))
+                            {
+                                var mimeType = !string.IsNullOrEmpty(document.Type) 
+                                    ? document.Type 
+                                    : "application/pdf";
+                                    
+                                documentParts.Add((document.StoragePath, mimeType, documentId));
+                                existingDocumentIds.Add(documentId);
+                                _logger.LogInformation($"  ✓ Existing document {documentId}: {document.StoragePath} ({mimeType})");
+                            }
+                            else
+                            {
+                                _logger.LogWarning($"  ⚠️ Document {documentId} has no GCS storage path, skipping");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning($"  ⚠️ Error retrieving document {documentId}: {ex.Message}");
+                        }
+                    }
+                }
+
+                // Validate we have at least one source
+                if (!interactionsList.Any() && !documentParts.Any())
+                {
+                    throw new InvalidOperationException("At least one source (interaction or document) is required for proposal generation");
+                }
+
+                _logger.LogInformation($"📊 [OPPORTUNITY-PROPOSAL] Total sources: {interactionsList.Count} interactions, {documentParts.Count} documents");
+
+                // Step 4: Build prompt data
+                var promptData = await _aiService.GetPromptData("opportunity_from_interactions");
+                var opportunityPrompt = promptData.FirstOrDefault();
+                
+                if (opportunityPrompt == null)
+                {
+                    throw new InvalidOperationException("Prompt 'opportunity_from_interactions' not found in database");
+                }
+
+                // Determine partner role string
+                string partnerRole = "";
+                if (request.IsFundingPartner && request.IsClientPartner)
+                {
+                    partnerRole = "Both Funding and Client Partner";
+                }
+                else if (request.IsFundingPartner)
+                {
+                    partnerRole = "Funding Partner";
+                }
+                else if (request.IsClientPartner)
+                {
+                    partnerRole = "Client Partner";
+                }
+
+                // Step 5: Format source data for the prompt
+                var interactionsJson = JsonConvert.SerializeObject(interactionsList, Formatting.Indented);
+                
+                // Build document metadata (not the full content, just references)
+                var documentMetadata = documentParts.Select((doc, index) => new
+                {
+                    index = index + 1,
+                    storagePath = doc.storagePath,
+                    mimeType = doc.mimeType,
+                    documentId = doc.documentId,
+                    isNewUpload = !doc.documentId.HasValue
+                }).ToList();
+                var documentsJson = JsonConvert.SerializeObject(documentMetadata, Formatting.Indented);
+
+                // Build the prompt context
+                var promptContext = new Dictionary<string, object>
+                {
+                    { "opportunityName", request.OpportunityName },
+                    { "opportunityDescription", request.OpportunityDescription },
+                    { "partnerId", partnerId ?? 0 },
+                    { "partnerName", partnerName },
+                    { "partnerRole", partnerRole },
+                    { "interactions", interactionsJson },
+                    { "documents", documentsJson },
+                    { "hasInteractions", interactionsList.Any() },
+                    { "hasDocuments", documentParts.Any() },
+                    { "sourceCount", interactionsList.Count + documentParts.Count }
+                };
+
+                var promptJson = JsonConvert.SerializeObject(promptContext);
+                
+                // Process placeholders in system instructions
+                var systemInstructionsTemplate = opportunityPrompt.SystemInstructions ?? string.Empty;
+                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, promptJson);
+                
+                // Process placeholders in user prompt
+                var userPromptTemplate = opportunityPrompt.UserPrompt ?? string.Empty;
+                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, promptJson);
+
+                _logger.LogInformation($"📝 [OPPORTUNITY-PROPOSAL] Calling Gemini AI with {documentParts.Count} document(s) in parts array");
+
+                // Step 6: Build parts array for Gemini API (text + document URIs)
+                var parts = new List<object>
+                {
+                    new { text = fullyFormedUserPrompt }
+                };
+
+                // Add each document as a fileData part
+                foreach (var doc in documentParts)
+                {
+                    parts.Add(new 
+                    { 
+                        fileData = new
+                        {
+                            fileUri = doc.storagePath,
+                            mimeType = doc.mimeType
+                        }
+                    });
+                }
+
+                // Build user content with parts array
+                var userContent = new
+                {
+                    role = "user",
+                    parts = parts.ToArray()
+                };
+                
+                // Call Gemini API directly with document parts
+                var aiResponse = await _aiService.CallGeminiApi(userContent, opportunityPrompt, fullyFormedSystemInstructions);
+
+                _logger.LogInformation($"📄 [OPPORTUNITY-PROPOSAL] Received AI response (length: {aiResponse?.Length ?? 0} chars)");
+
+                // Step 7: Parse AI response
+                var parsedResponse = _aiService.GetDetailsFromGeminiResponse(aiResponse);
+
+                // Step 8: Process dependent dropdowns (convert text names to IDs)
+                var dependents = parsedResponse["dependents"]?.ToString();
+                if (!string.IsNullOrEmpty(dependents))
+                {
+                    _logger.LogInformation($"🔄 [OPPORTUNITY-PROPOSAL] Processing dependents: {dependents}");
+                    parsedResponse = await _aiService.GetDependentDropdownValues(dependents, parsedResponse, opportunityPrompt);
+                }
+                else
+                {
+                    _logger.LogWarning($"⚠️ [OPPORTUNITY-PROPOSAL] No dependents found in AI response, collection fields may not be properly resolved");
+                }
+
+                // Step 9: Stringify collection fields to avoid serialization issues
+                // The frontend will parse these JSON strings
+                _logger.LogInformation($"🔄 [OPPORTUNITY-PROPOSAL] Stringifying collection fields for safe transport");
+                
+                var proposedData = new UNOPS.PAO.Models.Opportunities.ProposedOpportunityData
+                {
+                    Name = parsedResponse["name"]?.ToString() ?? "",
+                    Description = parsedResponse["description"]?.ToString() ?? "",
+                    PartnerReference = parsedResponse["partnerReference"]?.ToString(),
+                    ResponsibleOrgUnitId = parsedResponse["responsibleOrgUnitId"]?.ToObject<int?>(),
+                    ResponsibleOrgUnitName = parsedResponse["responsibleOrgUnitName"]?.ToString(),
+                    ProposedInitiativeTypeId = parsedResponse["proposedInitiativeTypeId"]?.ToObject<int?>(),
+                    ProposedInitiativeTypeName = parsedResponse["proposedInitiativeTypeName"]?.ToString(),
+                    InitiativeBudgetUSD = parsedResponse["initiativeBudgetUSD"]?.ToObject<decimal?>(),
+                    PartnershipAgreementReference = parsedResponse["partnershipAgreementReference"]?.ToString(),
+                    TargetSigningDate = parsedResponse["targetSigningDate"]?.ToObject<DateTime?>(),
+                    TargetDeliveryDate = parsedResponse["targetDeliveryDate"]?.ToObject<DateTime?>(),
+                    StrategicAlignment = parsedResponse["strategicAlignment"]?.ToString(),
+                    ResultsFocus = parsedResponse["resultsFocus"]?.ToString(),
+                    IntendedImpactOutcomes = parsedResponse["intendedImpactOutcomes"]?.ToString(),
+                    ExpectedBeneficiaries = parsedResponse["expectedBeneficiaries"]?.ToString(),
+                    
+                    // Stringify collection fields (these are arrays of objects after GetDependentDropdownValues)
+                    FundingPartners = parsedResponse["fundingPartners"]?.ToString(),
+                    ClientPartners = parsedResponse["clientPartners"]?.ToString(),
+                    Stakeholders = parsedResponse["stakeholders"]?.ToString(),
+                    Deliverables = parsedResponse["deliverables"]?.ToString(),
+                    Countries = parsedResponse["countries"]?.ToString(),
+                    SdGs = parsedResponse["sdGs"]?.ToString(),
+                    
+                    Dependents = parsedResponse["dependents"]?.ToObject<List<string>>() ?? new List<string>()
+                };
+
+                stopwatch.Stop();
+
+                _logger.LogInformation($"✅ [OPPORTUNITY-PROPOSAL] Successfully generated opportunity proposal in {stopwatch.ElapsedMilliseconds}ms");
+                _logger.LogInformation($"📊 [OPPORTUNITY-PROPOSAL] Collection fields stringified - FundingPartners: {proposedData.FundingPartners?.Length ?? 0} chars");
+
+                // Step 10: Build response
+                return new UNOPS.PAO.Models.Opportunities.OpportunityProposalResponse
+                {
+                    Opportunity = proposedData,
+                    InteractionsAnalyzed = interactionsList.Count,
+                    SourceInteractionIds = request.InteractionIds,
+                    DocumentsAnalyzed = documentParts.Count,
+                    SourceDocumentIds = existingDocumentIds.Any() ? existingDocumentIds : null,
+                    PartnerId = partnerId,
+                    PartnerName = partnerName,
+                    IsFundingPartner = request.IsFundingPartner,
+                    IsClientPartner = request.IsClientPartner
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ [OPPORTUNITY-PROPOSAL] Error generating opportunity proposal: {ex.Message}");
+                stopwatch.Stop();
+                throw;
+            }
+        }
+
         #endregion
     }
 

@@ -50,7 +50,7 @@ import { routes } from './app.routes';
 /********************************/
 const httpLoaderFactory: (http: HttpClient) => TranslateHttpLoader = (
   http: HttpClient,
-) => new TranslateHttpLoader(http);
+) => new TranslateHttpLoader(http, './assets/i18n/', '.json');
 
 const socialAuthConfigFactory = (configService: ConfigurationService) => {
   return {

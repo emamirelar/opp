@@ -709,6 +709,47 @@ public class PartnerController : BaseController
     }
 
     /// <summary>
+    /// Gets all interactions associated with a specific partner for opportunity creation
+    /// Returns lightweight interaction summaries with key details
+    /// </summary>
+    /// <param name="id">Partner ID</param>
+    /// <returns>List of interactions associated with this partner</returns>
+    [HttpGet(APIDictionary.Partner + "/{id}/interactions")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<IActionResult> GetPartnerInteractions(int id)
+    {
+        try
+        {
+            _logger.LogInformation($"📋 [API] Getting interactions for partner {id}");
+
+            // Verify partner exists
+            var partner = await _manager.GetPartnerAsync(User, id);
+            if (partner == null)
+            {
+                return NotFound(new { error = $"Partner with ID {id} not found" });
+            }
+
+            // Get all interactions for this partner
+            var partnerManager = _manager as UNOPSPartnerManager;
+            if (partnerManager == null)
+            {
+                return StatusCode(500, new { error = "Partner manager not available" });
+            }
+
+            var interactions = await partnerManager.GetPartnerInteractionsAsync(id);
+
+            _logger.LogInformation($"✅ [API] Found {interactions.Count()} interactions for partner {id}");
+
+            return Ok(interactions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"❌ [API] Error getting interactions for partner {id}");
+            return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Uploads and associates a logo image with a partner (max 1MB, JPEG/PNG/WEBP only).
     /// </summary>
     /// <param name="id">Partner ID</param>

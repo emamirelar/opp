@@ -68,8 +68,8 @@ public class DocumentController : BaseController
         return await HandleOperationAsync(async () =>
         {
             // Log the UploadToGCS flag for debugging
-            _logger.LogInformation("DocumentUpload: UploadToGCS={UploadToGCS}, FileName={FileName}", 
-                model.UploadToGCS, model.File?.FileName);
+            _logger.LogInformation("DocumentUpload: UploadToGCS={UploadToGCS}, SkipDatabaseSave={SkipDatabaseSave}, FileName={FileName}", 
+                model.UploadToGCS, model.SkipDatabaseSave, model.File?.FileName);
 
             /*var isInternalUser = await this.IsInternalUser();
             var canCreateResult = await HasPermission(model.ParentEntityType.ToString(), model.ParentEntityId, this.GetRequirement(isInternalUser, model.ParentEntityType.ToString(), "Create"));
@@ -79,21 +79,48 @@ public class DocumentController : BaseController
                 throw new UnauthorizedAccessException("You don't have permission to create this document");
             }*/
 
-            // Check if UploadToGCS is specified (for client-side PDF uploads)
-            if (model.UploadToGCS && model.File != null)
+            // Check if UploadToGCS is specified
+            if (model.UploadToGCS)
             {
-                _logger.LogInformation("Uploading to GCS: {FileName}", model.File.FileName);
+                string gsUri = null;
+                string fileName = null;
+                string mimeType = null;
                 
-                // Validate PDF
-                if (model.File.ContentType != "application/pdf" && !model.File.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                // Handle uploaded file (from local or already processed from Google Drive on frontend)
+                if (model.File != null)
                 {
-                    throw new BusinessException("Only PDF files are supported for GCS upload");
-                }
+                    _logger.LogInformation("Uploading file to GCS: {FileName}", model.File.FileName);
+                    
+                    // Validate PDF
+                    if (model.File.ContentType != "application/pdf" && !model.File.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new BusinessException("Only PDF files are supported for GCS upload");
+                    }
 
-                // Upload to GCS
-                var gsUri = await _gcsService.UploadPdfAsync(model.File, model.ParentEntityType.ToString().ToLower(), model.ParentEntityId);
+                    // Upload to GCS
+                    gsUri = await _gcsService.UploadPdfAsync(model.File, model.ParentEntityType.ToString().ToLower(), model.ParentEntityId);
+                    fileName = model.File.FileName;
+                    mimeType = model.File.ContentType;
+                    
+                    _logger.LogInformation("GCS Upload successful: {GsUri}", gsUri);
+                }
+                else
+                {
+                    throw new BusinessException("Either File or GoogleId must be provided for GCS upload");
+                }
                 
-                _logger.LogInformation("GCS Upload successful: {GsUri}", gsUri);
+                // If SkipDatabaseSave is true, return only the GCS path without persisting to database
+                if (model.SkipDatabaseSave)
+                {
+                    _logger.LogInformation("SkipDatabaseSave=true, returning GCS path only without database persistence");
+                    return (object)new
+                    {
+                        storagePath = gsUri,
+                        mimeType = mimeType,
+                        fileName = fileName,
+                        message = "File uploaded to GCS successfully (not persisted to database)"
+                    };
+                }
                 
                 // Update model to use GCS storage path instead of blob
                 model.StoragePath = gsUri;
@@ -105,6 +132,7 @@ public class DocumentController : BaseController
                     model.UploadToGCS, model.File != null);
             }
 
+            // Persist to database (only if SkipDatabaseSave is false)
             var result = await _manager.CreateDocumentAsync(model);
 
             if (result == null)
@@ -112,7 +140,7 @@ public class DocumentController : BaseController
                 throw new BusinessException("Failed to create document");
             }
 
-            return result;
+            return (object)result;
         }, 201);
     }
 

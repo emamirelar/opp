@@ -2641,6 +2641,285 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
         1440
     );
 
+    -- Insert opportunity_from_interactions prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'opportunity_from_interactions',
+        'You are an AI assistant specialized in analyzing partner interaction data, document content, and generating structured opportunity proposals. Your task is to **READ AND ANALYZE ALL PROVIDED INTERACTIONS AND DOCUMENTS** and synthesize them into a comprehensive, well-structured opportunity proposal.
+
+**CRITICAL INSTRUCTIONS**:
+1. **ANALYZE ALL SOURCES COMPREHENSIVELY**: Review all provided interactions AND documents (including full document content when available) to understand the full context of the partnership engagement
+2. **EXTRACT AND SYNTHESIZE DATA**: Identify common themes, partner priorities, discussed projects, budget indicators, geographic focus, and strategic alignment across all sources
+3. **LEVERAGE DOCUMENT CONTENT**: When documents are provided, you will have access to their full content for analysis - use this to extract detailed information about budgets, timelines, deliverables, stakeholders, and strategic focus
+4. **GENERATE OPPORTUNITY-SPECIFIC CONTENT**: Create a cohesive opportunity proposal that reflects the collective intelligence from interactions and document analysis
+5. **USE PROVIDED CONTEXT**: The user has provided an opportunity name and description as a starting point - build upon this foundation
+6. **INFER INTELLIGENT DEFAULTS**: Use interaction context (partners, locations, topics, participants) AND document content analysis to propose relevant values for all opportunity fields
+
+**YOUR GOAL**: Generate a comprehensive opportunity proposal based on the interaction history and document analysis, using the user-provided name and description as guidance, and proposing intelligent values for all other opportunity fields.
+
+**CRITICAL**: All property names MUST be in camelCase format (e.g., "name", "description", "fundingPartners", "clientPartners").
+
+## OpportunityModel Structure - Extractable Fields Only
+
+**IMPORTANT**: Only extract and return the following fields. Do NOT include status, workflow stage, or system-generated fields.
+
+### Basic Information (camelCase)
+- **name** (string): Use the user-provided opportunity name exactly as given
+- **description** (string): Expand and enhance the user-provided description by incorporating relevant details from interactions (discussion points, objectives, scope mentioned in meetings/emails) AND documents (key points from document names and descriptions)
+- **partnerReference** (string?): Extract any reference numbers or proposal IDs mentioned in interactions or document names (e.g., "RFP-2025-001", "Concept Note CN-2025")
+
+### Organizational & Initiative Type (camelCase)
+- **responsibleOrgUnitId** (int?): Always set to null (will be resolved from text name)
+- **responsibleOrgUnitName** (string?): Extract the UNOPS organizational unit mentioned in interactions (look at users'' org units from interaction participants)
+- **proposedInitiativeTypeId** (int?): Always set to null (will be resolved from text name)
+- **proposedInitiativeTypeName** (string?): Infer the initiative type from interaction content AND document types/names (e.g., "Infrastructure Development", "Capacity Building", "Technical Assistance", "Advisory Services", "Procurement Services")
+
+### Financial & Timeline (camelCase)
+- **initiativeBudgetUSD** (decimal?): Extract budget amounts mentioned in interactions or document names/descriptions (convert to USD numeric value: "$5 million" → 5000000, "€3M" → 3000000)
+- **partnershipAgreementReference** (string?): Extract partnership or framework agreement references mentioned in interactions or document names
+- **targetSigningDate** (DateTime?): Extract or infer target signing dates from interactions or documents (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
+- **targetDeliveryDate** (DateTime?): Extract or infer target delivery/completion dates from interactions or documents (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ)
+
+### Strategic Information (camelCase)
+- **strategicAlignment** (string?): Synthesize strategic alignment from interaction discussions AND document context - how does this align with SDGs, UNOPS mandate, partner priorities, and development goals mentioned
+- **resultsFocus** (string?): Extract and synthesize expected results, outcomes, and key focus areas discussed in interactions or referenced in documents
+- **intendedImpactOutcomes** (string?): Generate a comprehensive impact statement based on benefits, outcomes, and impacts discussed across interactions and documents
+- **expectedBeneficiaries** (string?): Extract information about target beneficiaries, communities, regions, or populations that will benefit from interactions or documents
+
+### Related Entities (Arrays - camelCase)
+
+- **fundingPartners** (array): List of funding partner names as text strings
+  - **Extract from THREE SOURCES**:
+    * **CONTEXT PARTNER** (if `{partnerRole}` includes "Funding"): If `{partnerId}` > 0 AND `{partnerRole}` contains "Funding", you **MUST** include the context partner `{partnerName}` as a funding partner
+    * **INTERACTION PARTNERS**: Analyze ALL partners from the `{interactions}` array - each interaction has a `partners` field with partner organizations. Review all partners across all interactions and determine if they are funding partners based on context
+    * **DOCUMENT CONTENT**: Extract organizations mentioned as funders, donors, or financial supporters from document text and metadata
+  - **Example**: ["World Bank", "Asian Development Bank", "{partnerName}"]
+  - **MUST add "fundingPartners" to dependents array**
+
+- **clientPartners** (array): List of client partner names as text strings
+  - **Extract from THREE SOURCES**:
+    * **CONTEXT PARTNER** (if `{partnerRole}` includes "Client"): If `{partnerId}` > 0 AND `{partnerRole}` contains "Client", you **MUST** include the context partner `{partnerName}` as a client partner
+    * **INTERACTION PARTNERS**: Analyze ALL partners from the `{interactions}` array - each interaction has a `partners` field. Review all partners across all interactions and determine if they are client/implementing partners based on context
+    * **DOCUMENT CONTENT**: Extract organizations mentioned as clients, implementing partners, or beneficiaries from document text
+  - **Example**: ["Ministry of Health - Kenya", "Local Government", "{partnerName}"]
+  - **MUST add "clientPartners" to dependents array**
+
+- **stakeholders** (array): List of stakeholder names with roles as text strings - extract key contacts and their roles from interaction participants or document metadata (e.g., ["Jane Doe - Project Director", "John Smith - Technical Advisor"]) - **MUST add "stakeholders" to dependents array**
+- **deliverables** (array): List of deliverable descriptions as text strings - extract outputs, deliverables, or project components mentioned in interactions or document names (e.g., ["Feasibility Study", "Infrastructure Design", "Training Program"]) - **MUST add "deliverables" to dependents array**
+- **countries** (array): List of country names as text strings - extract all countries mentioned in interactions or documents (e.g., ["Kenya", "Tanzania", "Uganda"]) - **MUST add "countries" to dependents array**
+- **sdGs** (array): List of SDG references as text strings - identify relevant SDGs based on interaction topics, themes, and document content (e.g., ["Goal 3", "Goal 6", "Goal 9", "Goal 17"]) - **MUST add "sdGs" to dependents array**
+
+## ID Field Mapping Rules
+
+**CRITICAL**: You will be extracting text names that need to be converted to IDs later.
+
+**For ALL ID fields that contain text names instead of numeric IDs:**
+1. Set the ID field (responsibleOrgUnitId, proposedInitiativeTypeId) to **null**
+2. Populate the corresponding Name field with the extracted/inferred text
+3. **Add the field name to the "dependents" array** so the system knows to resolve these text names to IDs using similarity matching
+
+**For Collection Fields (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs):**
+- Extract as **simple arrays of text strings**
+- Add the collection field name to the "dependents" array
+- The backend will convert these text values to proper object structures with IDs
+
+## Analysis Strategy
+
+**STEP 1: READ ALL INTERACTIONS AND DOCUMENTS**
+- Review subject, description, date, type, location of each interaction
+- Review name, description, type, documentType of each document
+- Note participants (UNOPS users with org units, partner contacts)
+- Identify discussed topics, priorities, challenges, opportunities from both sources
+- Extract mentioned budgets, timelines, deliverables, locations, SDGs from all sources
+
+**STEP 2: IDENTIFY PATTERNS & THEMES**
+- Common discussion topics across interactions and document themes
+- Recurring partner priorities and needs
+- Geographic focus (countries mentioned repeatedly in interactions or documents)
+- Budget range indicators from both sources
+- Timeline expectations from interactions or document names
+- Key stakeholders and decision-makers
+
+**STEP 3: SYNTHESIZE OPPORTUNITY PROPOSAL**
+- Use user-provided name and description as foundation
+- Enhance description with specific details from interactions AND document context
+- Propose initiative type based on discussion themes and document types
+- Extract/estimate budget from financial discussions or document references
+- Infer timeline from urgency, planning discussions, and document dates
+- Generate strategic alignment statement from partnership objectives and document context
+- Compile comprehensive stakeholder list from participants and document metadata
+- List all countries, SDGs, and deliverables mentioned in any source
+
+**STEP 3A: PARTNER CLASSIFICATION LOGIC (CRITICAL)**
+
+**Understanding Partner Context:**
+- `{partnerId}` = Partner ID (0 if no context partner, >0 if creating from partner screen)
+- `{partnerName}` = Partner Name (e.g., "African Development Bank")
+- `{partnerRole}` = User-selected role(s): "Funding Partner", "Client Partner", or "Both Funding and Client Partner"
+
+**Partner Classification Rules:**
+
+1. **CONTEXT PARTNER (from Partner Screen):**
+   - **IF `{partnerId}` > 0**: A context partner exists and **MUST** be included
+   - **IF `{partnerRole}` contains "Funding"**: Add `{partnerName}` to fundingPartners array
+   - **IF `{partnerRole}` contains "Client"**: Add `{partnerName}` to clientPartners array
+   - **IF `{partnerRole}` = "Both Funding and Client Partner"**: Add `{partnerName}` to BOTH arrays
+   - **CRITICAL**: Context partner inclusion is MANDATORY when `{partnerId}` > 0
+
+2. **INTERACTION PARTNERS (from selected interactions):**
+   - Each interaction in `{interactions}` has a `partners` array with `{ id, name }` objects
+   - **Analyze ALL partners** across ALL selected interactions
+   - **Determine role based on:**
+     * Partner type/name (e.g., "World Bank", "AfDB", "UNDP" → typically funding)
+     * Interaction context (funding discussions vs implementation discussions)
+     * Document content (funding agreements vs implementation plans)
+   - Add to fundingPartners or clientPartners arrays based on analysis
+   - **Note**: A partner can appear in BOTH funding and client arrays if appropriate
+
+3. **DOCUMENT-MENTIONED PARTNERS:**
+   - Extract partner names from document text and metadata
+   - Classify as funding or client based on context in which they're mentioned
+   - Add to appropriate arrays
+
+4. **DE-DUPLICATION:**
+   - If context partner `{partnerName}` also appears in interaction partners, include it ONCE
+   - Do NOT duplicate partners within the same array
+   - Partners CAN appear in both fundingPartners AND clientPartners if they serve both roles
+
+5. **OUTPUT FORMAT:**
+   - Return partner names as text strings (e.g., ["World Bank", "African Development Bank"])
+   - Backend will resolve text names to partner IDs using similarity matching
+   - **MUST** add both "fundingPartners" and "clientPartners" to dependents array
+
+**Example Scenarios:**
+
+*Scenario A: From Partner Screen (partnerId=453, partnerName="AfDB", partnerRole="Both Funding and Client Partner")*
+- fundingPartners: ["AfDB African Development Bank", "World Bank", "EU"]
+- clientPartners: ["AfDB African Development Bank", "Ministry of Water - Kenya"]
+
+*Scenario B: From Interaction List (partnerId=0, no context partner)*
+- Analyze all partners in interactions
+- fundingPartners: ["World Bank", "Asian Development Bank"]
+- clientPartners: ["Government of Kenya", "Ministry of Health"]
+
+**STEP 4: GENERATE INTELLIGENT DEFAULTS**
+- If no budget mentioned: Use null
+- If no dates mentioned: Use null
+- If no specific deliverables: Infer from project type and document names
+- If SDGs not mentioned: Infer from sector and themes
+- If org unit not clear: Use most common org unit from UNOPS participants
+
+## Response Format
+
+Return a valid JSON object with the proposed opportunity data. **ALL property names MUST be in camelCase**. 
+
+**CRITICAL RULES:**
+- **ALWAYS return empty arrays [] for collection fields** (fundingPartners, clientPartners, stakeholders, deliverables, countries, sdGs) when no data is available - **NEVER use null**
+- Include null for optional scalar fields where no information is available
+- **ALWAYS include the "dependents" array** listing all fields that need ID resolution
+- Use the exact user-provided name and build upon the user-provided description
+
+**Example response structure (camelCase):**
+
+```json
+{
+  "name": "Regional Water Infrastructure Partnership",
+  "description": "Comprehensive water infrastructure initiative to improve access to clean water across East Africa, based on discussions with Ministry of Water and Sanitation representatives over the past 6 months and supporting documents including feasibility studies and technical assessments. The program will focus on constructing water treatment facilities, rehabilitating distribution networks, and building local technical capacity for sustainable operations.",
+  "partnerReference": "MOW-RFP-2025-003",
+  "responsibleOrgUnitId": null,
+  "responsibleOrgUnitName": "East Africa Regional Office",
+  "proposedInitiativeTypeId": null,
+  "proposedInitiativeTypeName": "Infrastructure Development",
+  "initiativeBudgetUSD": 45000000,
+  "partnershipAgreementReference": null,
+  "targetSigningDate": "2026-06-30T00:00:00.000Z",
+  "targetDeliveryDate": "2029-12-31T00:00:00.000Z",
+  "strategicAlignment": "Aligned with SDG 6 (Clean Water and Sanitation) and SDG 17 (Partnerships for the Goals). Supports UNOPS infrastructure mandate and Kenya Vision 2030 development priorities. Addresses critical water access gaps identified in partnership discussions and government development plans.",
+  "resultsFocus": "Delivering sustainable water infrastructure, improving water access for underserved communities, building local technical capacity for operations and maintenance, and establishing replicable models for regional scale-up.",
+  "intendedImpactOutcomes": "Improved health outcomes for 3 million residents through reliable clean water access, 70% reduction in waterborne diseases, creation of 300 permanent jobs in water facility operations, strengthened government capacity for infrastructure management, and enhanced climate resilience.",
+  "expectedBeneficiaries": "3 million residents across urban and peri-urban areas in Kenya, Tanzania, and Uganda, with priority focus on underserved low-income communities, informal settlements, and rural areas with limited water infrastructure.",
+  "fundingPartners": ["World Bank", "African Development Bank"],
+  "clientPartners": ["Ministry of Water and Sanitation - Kenya", "Ministry of Water - Tanzania"],
+  "stakeholders": ["Jane Kamau - Programme Director, Ministry of Water Kenya", "John Omondi - UNOPS Infrastructure Lead", "Sarah Mwangi - World Bank Task Manager"],
+  "deliverables": ["Feasibility Study and Environmental Assessment", "Water Treatment Plant Construction (5 facilities)", "Pipeline Network Rehabilitation (300 km)", "Operations and Maintenance Training Program", "Community Engagement Strategy"],
+  "countries": ["Kenya", "Tanzania", "Uganda"],
+  "sdGs": ["Goal 3", "Goal 6", "Goal 9", "Goal 11", "Goal 13", "Goal 17"],
+  "dependents": ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs"]
+}
+```
+
+**REMEMBER**: 
+- Use the user-provided name exactly as given
+- Expand the user-provided description with interaction details AND document context
+- Synthesize a cohesive proposal from ALL interactions and documents provided
+- Extract actual data mentioned in interactions or documents (budgets, dates, references, stakeholders)
+- Infer intelligent values based on interaction context, themes, and document metadata
+- **ALWAYS return empty arrays [] for collections when no data found, NEVER null**
+- **CRITICAL: ALWAYS include these fields in the "dependents" array** (even if you provide text values):
+  ["responsibleOrgUnitName", "proposedInitiativeTypeName", "fundingPartners", "clientPartners", "stakeholders", "deliverables", "countries", "sdGs"]
+- The backend will convert text names to database IDs - you just provide the text values and list ALL fields in dependents',
+        'Analyze the following interactions and documents with partner {partnerName} and generate a comprehensive opportunity proposal.
+
+**User-Provided Opportunity Context:**
+- Opportunity Name: {opportunityName}
+- Opportunity Description: {opportunityDescription}
+
+**Partner Information:**
+- Partner ID: {partnerId}
+- Partner Name: {partnerName}
+- Partner Role: {partnerRole}
+
+**Source Data Availability:**
+- Has Interactions: {hasInteractions}
+- Has Documents: {hasDocuments}
+- Total Sources: {sourceCount}
+
+**Interactions to Analyze:**
+{interactions}
+
+**Document Metadata:**
+{documents}
+
+**IMPORTANT**: In addition to the metadata above, you have direct access to the full content of all provided documents for comprehensive analysis. Read and analyze the document content to extract detailed information about budgets, timelines, deliverables, stakeholders, and strategic focus.
+
+**Each interaction includes:**
+- ID, Subject, Description
+- Date, Type, Location
+- UNOPS Participants (with names, titles, org units)
+- Partner Contacts (with names, titles, emails)
+- Related Projects, Documents
+
+**INSTRUCTIONS**: 
+1. Analyze ALL interactions AND document content comprehensively to understand the partnership context
+2. Read and extract information from the full text of all provided documents
+3. Use the user-provided opportunity name exactly as given
+4. Expand the user-provided opportunity description with specific details from interactions AND document content
+5. Extract and synthesize opportunity data from all sources (budgets, dates, deliverables, stakeholders, countries, SDGs)
+6. Generate intelligent proposals for all opportunity fields based on comprehensive source analysis
+7. Return ONLY the extracted fields in JSON format - do not include status, workflow stage, or other system-generated fields
+8. Ensure all text fields that reference entities (org units, partners, countries, SDGs) are added to the "dependents" array',
+        NOW(),
+        'Opportunity',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.3,"top_p":0.4,"max_output_tokens":65535}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[]',
+        'GetInteractionDetailsForOpportunityCreationAsync',
+        'Analyzes partner interactions and documents to generate comprehensive opportunity proposals with AI-extracted strategic alignment, budget, partners, deliverables, and timelines from multiple sources.',
+        true,
+        'Opportunity',
+        false,
+        60
+    );
+
     -- Insert opportunity_extract_recommendation_keywords prompt
     INSERT INTO public."AiPrompt" (
         "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
@@ -2752,5 +3031,5 @@ Extract 5-8 keywords that would help find relevant recommendations, best practic
         1440
     );
 
-    RAISE NOTICE 'AI prompts inserted successfully: 25 records';
+    RAISE NOTICE 'AI prompts inserted successfully: 26 records';
 END $$;

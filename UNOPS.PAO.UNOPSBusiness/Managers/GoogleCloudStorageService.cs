@@ -89,6 +89,54 @@ public class GoogleCloudStorageService
     }
 
     /// <summary>
+    /// Checks if a file with the same name and MIME type already exists in GCS
+    /// </summary>
+    /// <param name="folder">Folder name (e.g., "opportunities", "partners")</param>
+    /// <param name="entityId">Entity ID for organizing files</param>
+    /// <param name="fileName">Original file name</param>
+    /// <param name="mimeType">MIME type of the file</param>
+    /// <returns>Existing gs:// URI if duplicate found, null otherwise</returns>
+    public async Task<string?> CheckForDuplicateFileAsync(string folder, int entityId, string fileName, string mimeType)
+    {
+        try
+        {
+            // Construct object prefix: folder/entityId/
+            var prefix = $"{folder.ToLower()}/{entityId}/";
+            
+            // List all objects with the prefix
+            var objects = _storageClient.ListObjectsAsync(_bucketName, prefix);
+            
+            await foreach (var obj in objects)
+            {
+                // Check if file name matches (ignoring the GUID suffix)
+                // Original file format: filename_GUID.ext
+                // We want to match: filename*.ext with same MIME type
+                var originalFileName = Path.GetFileNameWithoutExtension(fileName);
+                var originalExtension = Path.GetExtension(fileName);
+                
+                // Extract the file name from the object (remove folder path)
+                var objectFileName = Path.GetFileName(obj.Name);
+                
+                // Check if it starts with the original filename and has the same extension
+                if (objectFileName.StartsWith(originalFileName + "_") && 
+                    objectFileName.EndsWith(originalExtension, StringComparison.OrdinalIgnoreCase) &&
+                    obj.ContentType == mimeType)
+                {
+                    // Found a duplicate - return its gs:// URI
+                    return $"gs://{_bucketName}/{obj.Name}";
+                }
+            }
+            
+            return null; // No duplicate found
+        }
+        catch (Exception ex)
+        {
+            // If checking fails, return null to proceed with upload
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Uploads a PDF file to Google Cloud Storage with organized folder structure
     /// </summary>
     /// <param name="file">PDF file to upload</param>
@@ -100,6 +148,14 @@ public class GoogleCloudStorageService
         if (file == null || file.Length == 0)
         {
             throw new ArgumentException("File cannot be null or empty", nameof(file));
+        }
+
+        // Check for duplicate file first
+        var duplicateUri = await CheckForDuplicateFileAsync(folder, entityId, file.FileName, file.ContentType ?? "application/pdf");
+        if (duplicateUri != null)
+        {
+            // Return existing file URI instead of uploading a duplicate
+            return duplicateUri;
         }
 
         // Generate unique filename to avoid collisions

@@ -39,6 +39,8 @@ import { SearchField } from '@shared/services/utils';
 import { PermissionUtilityService } from '@core/services/auth';
 import { EntityConfigurationService } from '@shared/services/api/entity-configuration.service';
 import { PageContextService } from '@shared/services/utils';
+import { CreateOpportunityFromInteractionsDialogComponent } from '@partnerships/interactions/components/dialogs/create-opportunity-from-interactions-dialog.component';
+import { CreateOpportunityFromInteractionsConfig } from '@partnerships/interactions/models/interaction-selection.model';
 
 /**
  * @uiEntity Opportunity
@@ -69,12 +71,7 @@ import { PageContextService } from '@shared/services/utils';
     NgIf,
     TranslateModule,
     RouterModule,
-    DialogModule,
-    InputTextModule,
-    InputTextarea,
-    FloatLabelModule,
-    MessageModule,
-    FormsModule,
+    CreateOpportunityFromInteractionsDialogComponent
   ],
   providers: [ConfirmationService],
 })
@@ -204,14 +201,18 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
   // Track current search term
   currentSearchText = '';
 
-  // Create opportunity dialog
+  // Unified opportunity creation dialog
   showCreateDialog = signal(false);
-  isCreating = signal(false);
-  showValidationError = signal(false);
   
-  // Form data
-  opportunityName = '';
-  opportunityDescription = '';
+  // Dialog configuration for unified dialog
+  dialogConfig = computed<CreateOpportunityFromInteractionsConfig>(() => {
+    return {
+      partnerId: 0, // No specific partner - user can select
+      partnerName: '',
+      mode: 'list-view', // From opportunity list
+      preSelectedInteractionIds: [] // No interactions pre-selected
+    };
+  });
 
   ngOnInit() {
     // Register component data for AI Assistant
@@ -430,66 +431,22 @@ export class OpportunityListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Reset form and open dialog
-    this.opportunityName = '';
-    this.opportunityDescription = '';
-    this.showValidationError.set(false);
     this.showCreateDialog.set(true);
   }
 
   /**
-   * Cancel create dialog
+   * Handle successful opportunity creation from unified dialog
    */
-  cancelCreateDialog() {
+  handleOpportunityCreated(opportunity: any): void {
     this.showCreateDialog.set(false);
-    this.opportunityName = '';
-    this.opportunityDescription = '';
-    this.showValidationError.set(false);
-  }
-
-  /**
-   * Create a new opportunity
-   */
-  createOpportunity() {
-    // Validate required fields
-    if (!this.opportunityName.trim() || !this.opportunityDescription.trim()) {
-      this.showValidationError.set(true);
-      return;
+    
+    // Refresh the listview
+    window.dispatchEvent(new CustomEvent('refresh-listview'));
+    
+    // Navigate to the new opportunity detail page
+    if (opportunity && opportunity.id) {
+      this.router.navigate(['/partnerships/opportunities', opportunity.id]);
     }
-
-    this.isCreating.set(true);
-
-    const opportunityRequest = {
-      name: this.opportunityName.trim(),
-      description: this.opportunityDescription.trim(),
-    };
-
-    this.opportunityService
-      .createOpportunity(opportunityRequest)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (response: any) => {
-          this.isCreating.set(false);
-          this.showCreateDialog.set(false);
-          this.feedbackDialogService.showSuccessToast({
-            summary: this.translateService.instant('message.success'),
-            detail: this.translateService.instant('message.opportunityCreatedSuccessfully'),
-          });
-          
-          // Refresh the listview
-          window.dispatchEvent(new CustomEvent('refresh-listview'));
-          
-          // Navigate to the new opportunity detail page
-          if (response && response.id) {
-            this.router.navigate(['/partnerships/opportunities', response.id]);
-          }
-        },
-        error: (error: any) => {
-          this.isCreating.set(false);
-          // Error handling done by global HTTP interceptor
-          console.error('Error creating opportunity:', error);
-        },
-      });
   }
 
   onRowClick(opportunity: Opportunity) {

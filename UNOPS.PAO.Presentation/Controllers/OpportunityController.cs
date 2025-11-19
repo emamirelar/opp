@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Opportunities;
@@ -23,12 +25,14 @@ public class OpportunityController : BaseController
     private readonly IGeminiManager _geminiManager;
     private readonly IRiskManager _riskManager;
     private readonly int _currentUserId;
+    private readonly AppDbContext _context;
 
     public OpportunityController(
         IManagerWrapper manager,
         UserResolverService<int> userResolverService,
         ILogger<OpportunityController> logger,
-        IAuthorizationService authorizationService)
+        IAuthorizationService authorizationService,
+        AppDbContext context)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.OpportunityManager;
@@ -36,6 +40,7 @@ public class OpportunityController : BaseController
         _geminiManager = manager.GeminiManager;
         _riskManager = manager.RiskManager;
         _currentUserId = userResolverService.GetCurrentUserId();
+        _context = context;
     }
 
     /// <summary>
@@ -706,6 +711,313 @@ public class OpportunityController : BaseController
         {
             _logger.LogError(ex, "Error generating insights for opportunity {OpportunityId}", id);
             return StatusCode(500, new { error = "Failed to generate insights", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Generates AI-powered opportunity proposal from multiple sources
+    /// Analyzes interactions, documents (new uploads or existing), or combination to create comprehensive proposal
+    /// Can be called from partner tabs, interaction lists, opportunity lists, etc.
+    /// </summary>
+    /// <param name="request">Proposal request with source data and basic info</param>
+    /// <returns>AI-proposed opportunity data for user review</returns>
+    [HttpPost(APIDictionary.Opportunity + "/generate-proposal")]
+    [AccessControlled(EntityTypes.Opportunity, "create")]
+    public async Task<ActionResult<UNOPS.PAO.Models.Opportunities.OpportunityProposalResponse>> GenerateOpportunityProposal(
+        [FromBody] UNOPS.PAO.Models.Opportunities.OpportunityProposalRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("🔍 [API] Generating opportunity proposal: Name='{Name}', PartnerId={PartnerId}, Interactions={InteractionCount}, NewDocs={NewDocCount}, ExistingDocs={ExistingDocCount}", 
+                request.OpportunityName, 
+                request.PartnerId ?? 0,
+                request.InteractionIds?.Count ?? 0,
+                request.NewDocumentStoragePaths?.Count ?? 0,
+                request.ExistingDocumentIds?.Count ?? 0);
+
+            // Validate request - at least one source is required
+            if ((request.InteractionIds == null || !request.InteractionIds.Any()) &&
+                (request.NewDocumentStoragePaths == null || !request.NewDocumentStoragePaths.Any()) &&
+                (request.ExistingDocumentIds == null || !request.ExistingDocumentIds.Any()))
+            {
+                return BadRequest(new { error = "At least one source is required: interactions, new documents, or existing documents" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.OpportunityName))
+            {
+                return BadRequest(new { error = "Opportunity name is required" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.OpportunityDescription))
+            {
+                return BadRequest(new { error = "Opportunity description is required" });
+            }
+
+            // Partner validation: if partnerId provided, require role selection
+            if (request.PartnerId.HasValue && request.PartnerId > 0)
+            {
+                if (!request.IsFundingPartner && !request.IsClientPartner)
+                {
+                    return BadRequest(new { error = "Partner must be marked as funding partner, client partner, or both" });
+                }
+            }
+
+            // Validate that NewDocumentStoragePaths and NewDocumentMimeTypes have matching counts
+            if (request.NewDocumentStoragePaths != null && request.NewDocumentStoragePaths.Any())
+            {
+                if (request.NewDocumentMimeTypes == null || 
+                    request.NewDocumentStoragePaths.Count != request.NewDocumentMimeTypes.Count)
+                {
+                    return BadRequest(new { error = "NewDocumentStoragePaths and NewDocumentMimeTypes must have the same number of elements" });
+                }
+                
+                // Validate all paths are GCS URIs
+                foreach (var path in request.NewDocumentStoragePaths)
+                {
+                    if (string.IsNullOrEmpty(path) || !path.StartsWith("gs://"))
+                    {
+                        return BadRequest(new { error = "All NewDocumentStoragePaths must be valid GCS URIs (gs://...)" });
+                    }
+                }
+            }
+
+            // Call Gemini Manager to generate proposal
+            var proposal = await _geminiManager.GenerateOpportunityProposalAsync(request, User);
+
+            _logger.LogInformation("✅ [API] Successfully generated opportunity proposal");
+
+            return Ok(proposal);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Source data not found for proposal generation");
+            return NotFound(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating opportunity proposal");
+            return StatusCode(500, new { error = "Internal server error while generating proposal", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Creates an opportunity from AI-generated proposal with user-accepted fields
+    /// Takes the reviewed and accepted proposal data to create the actual opportunity record
+    /// </summary>
+    /// <param name="request">Create request with accepted fields and resolved IDs</param>
+    /// <returns>Created opportunity model</returns>
+    [HttpPost(APIDictionary.Opportunity + "/create-from-proposal")]
+    [AccessControlled(EntityTypes.Opportunity, "create")]
+    public async Task<ActionResult<OpportunityModel>> CreateOpportunityFromProposal(
+        [FromBody] UNOPS.PAO.Models.Opportunities.CreateOpportunityFromInteractionsRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("🎯 [API] Creating opportunity '{Name}' from {Count} interactions for partner {PartnerId}", 
+                request.Name, request.SourceInteractionIds.Count, request.PartnerId);
+
+            // Validate request
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return BadRequest(new { error = "Opportunity name is required" });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Description))
+            {
+                return BadRequest(new { error = "Opportunity description is required" });
+            }
+
+            // Partner validation: only required if partnerId is provided (creating from partner context)
+            if (request.PartnerId.HasValue && request.PartnerId > 0)
+            {
+                if (!request.IsFundingPartner && !request.IsClientPartner)
+                {
+                    return BadRequest(new { error = "When creating from a partner context, the partner must be marked as funding partner, client partner, or both" });
+                }
+                
+                _logger.LogInformation("📊 [API] Context partner {PartnerId} will be added as {Role}", 
+                    request.PartnerId, 
+                    request.IsFundingPartner && request.IsClientPartner ? "both funding and client" :
+                    request.IsFundingPartner ? "funding partner" : "client partner");
+            }
+            else
+            {
+                _logger.LogInformation("📊 [API] No context partner - will use AI-proposed partners from interactions");
+            }
+
+            // Build opportunity request from accepted proposal
+            var opportunityRequest = new OpportunityRequest
+            {
+                Name = request.Name,
+                Description = request.Description,
+                PartnerReference = request.PartnerReference,
+                ResponsibleOrgUnitId = request.ResponsibleOrgUnitId,
+                ProposedInitiativeTypeId = request.ProposedInitiativeTypeId,
+                InitiativeBudgetUSD = request.InitiativeBudgetUSD,
+                PartnershipAgreementReference = request.PartnershipAgreementReference,
+                TargetSigningDate = request.TargetSigningDate,
+                TargetDeliveryDate = request.TargetDeliveryDate,
+                SDGs = request.SdGs?.Select(sdgId => new OpportunitySDGRequest { SDGId = sdgId }).ToList() ?? new List<OpportunitySDGRequest>(),
+                Countries = request.Countries?.Select(countryId => new OpportunityCountryRequest { CountryId = countryId }).ToList() ?? new List<OpportunityCountryRequest>(),
+                Deliverables = request.Deliverables ?? new List<OpportunityDeliverableRequest>(),
+                Stakeholders = request.Stakeholders ?? new List<OpportunityStakeholderRequest>(),
+                FundingPartners = new List<OpportunityFundingPartnerRequest>(),
+                ClientPartners = new List<OpportunityClientPartnerRequest>()
+            };
+
+            // Add the context partner as funding/client based on user selection (only if partnerId provided)
+            // This ensures the context partner is included even if not in the AI-proposed arrays
+            if (request.PartnerId.HasValue && request.PartnerId > 0)
+            {
+                // Check if context partner is already in the AI-proposed arrays
+                var contextPartnerInFunding = request.FundingPartners?.Any(fp => fp.PartnerId == request.PartnerId.Value) ?? false;
+                var contextPartnerInClient = request.ClientPartners?.Any(cp => cp.PartnerId == request.PartnerId.Value) ?? false;
+                
+                // Add to funding partners if user selected funding role and not already in array
+                if (request.IsFundingPartner && !contextPartnerInFunding)
+                {
+                    _logger.LogInformation("➕ [API] Adding context partner {PartnerId} to funding partners", request.PartnerId.Value);
+                    opportunityRequest.FundingPartners.Add(new OpportunityFundingPartnerRequest
+                    {
+                        PartnerId = request.PartnerId.Value,
+                        Amount = null // User can set later
+                    });
+                }
+                
+                // Add to client partners if user selected client role and not already in array
+                if (request.IsClientPartner && !contextPartnerInClient)
+                {
+                    _logger.LogInformation("➕ [API] Adding context partner {PartnerId} to client partners", request.PartnerId.Value);
+                    opportunityRequest.ClientPartners.Add(new OpportunityClientPartnerRequest
+                    {
+                        PartnerId = request.PartnerId.Value
+                    });
+                }
+            }
+
+            // Add all AI-proposed funding partners
+            if (request.FundingPartners != null && request.FundingPartners.Any())
+            {
+                _logger.LogInformation("➕ [API] Adding {Count} AI-proposed funding partners", request.FundingPartners.Count);
+                opportunityRequest.FundingPartners.AddRange(request.FundingPartners);
+            }
+
+            // Add all AI-proposed client partners  
+            if (request.ClientPartners != null && request.ClientPartners.Any())
+            {
+                _logger.LogInformation("➕ [API] Adding {Count} AI-proposed client partners", request.ClientPartners.Count);
+                opportunityRequest.ClientPartners.AddRange(request.ClientPartners);
+            }
+
+            // Create the opportunity
+            var result = await _manager.CreateOpportunityAsync(opportunityRequest);
+
+            // Persist uploaded documents to database if any (from GCS temporary uploads)
+            if (request.NewDocumentStoragePaths != null && request.NewDocumentStoragePaths.Any())
+            {
+                _logger.LogInformation("📄 [API] Persisting {Count} uploaded documents to database for opportunity {OpportunityId}", 
+                    request.NewDocumentStoragePaths.Count, result.Id);
+                
+                for (int i = 0; i < request.NewDocumentStoragePaths.Count; i++)
+                {
+                    try
+                    {
+                        var gcsPath = request.NewDocumentStoragePaths[i];
+                        var mimeType = request.NewDocumentMimeTypes?[i] ?? "application/octet-stream";
+                        var documentTypeId = request.NewDocumentTypeIds?[i];
+                        
+                        // Extract file name from GCS path (gs://bucket/folder/file.ext)
+                        var fileName = System.IO.Path.GetFileName(gcsPath);
+                        
+                        // Create document entity directly
+                        var document = new Document
+                        {
+                            Name = fileName,
+                            StoragePath = gcsPath,
+                            Type = mimeType,
+                            DocumentTypeId = documentTypeId,
+                            CreatedBy = _currentUserId,
+                            CreatedDate = DateTime.UtcNow
+                        };
+                        
+                        _context.Documents.Add(document);
+                        await _context.SaveChangesAsync();
+                        
+                        // Create document relationship to opportunity
+                        var docRelationship = new DocumentRelationship
+                        {
+                            DocumentId = document.Id,
+                            EntityId = result.Id,
+                            EntityType = "Opportunity"
+                        };
+                        
+                        _context.DocumentRelationships.Add(docRelationship);
+                        await _context.SaveChangesAsync();
+                        
+                        _logger.LogInformation("✅ [API] Persisted document {FileName} (ID: {DocumentId}) for opportunity {OpportunityId}", 
+                            fileName, document.Id, result.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "⚠️ Failed to persist document {Index} for opportunity {OpportunityId}", 
+                            i, result.Id);
+                    }
+                }
+            }
+            
+            // Save interaction relationships to OpportunityInteractions table
+            if (request.SourceInteractionIds != null && request.SourceInteractionIds.Any())
+            {
+                _logger.LogInformation("🔗 [API] Saving {Count} interaction relationships for opportunity {OpportunityId}", 
+                    request.SourceInteractionIds.Count, result.Id);
+                
+                foreach (var interactionId in request.SourceInteractionIds)
+                {
+                    try
+                    {
+                        var opportunityInteraction = new OpportunityInteraction
+                        {
+                            OpportunityId = result.Id,
+                            InteractionId = interactionId
+                        };
+                        
+                        _context.OpportunityInteractions.Add(opportunityInteraction);
+                        _logger.LogInformation("✅ [API] Linked interaction {InteractionId} to opportunity {OpportunityId}", 
+                            interactionId, result.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "⚠️ Failed to link interaction {InteractionId} to opportunity {OpportunityId}", 
+                            interactionId, result.Id);
+                    }
+                }
+                
+                await _context.SaveChangesAsync();
+            }
+
+            // Assign the current user as Opportunity Manager
+            try
+            {
+                await _manager.AssignCreatorAsOpportunityManagerAsync(result.Id, _currentUserId);
+                _logger.LogInformation("✅ Assigned user {UserId} as Opportunity Manager for opportunity {OpportunityId}", 
+                    _currentUserId, result.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "⚠️ Failed to assign creator as Opportunity Manager for opportunity {OpportunityId}", result.Id);
+            }
+
+            // Create audit log noting this was AI-assisted
+            await CreateAuditLogAsync(result.Id, "create", result);
+
+            _logger.LogInformation("✅ [API] Successfully created opportunity {OpportunityId} from interactions", result.Id);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating opportunity from interactions");
+            return StatusCode(500, new { error = "Internal server error while creating opportunity", details = ex.Message });
         }
     }
 

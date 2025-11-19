@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251119152810_OpportunityInteractionModel")]
+    partial class OpportunityInteractionModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -293,9 +296,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("AllowBulkUpdate")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("ApplicableEntityTypes")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -331,9 +331,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsSearchable")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsUsedForAI")
                         .HasColumnType("boolean");
 
@@ -353,10 +350,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<int>("Order")
                         .HasColumnType("integer");
-
-                    b.Property<string>("Source")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -1081,9 +1074,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
-
-                    b.Property<bool?>("ValueBoolean")
-                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("ValueDate")
                         .HasColumnType("timestamp with time zone");

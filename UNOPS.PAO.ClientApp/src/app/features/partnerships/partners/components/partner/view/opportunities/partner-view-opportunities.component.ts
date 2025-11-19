@@ -32,6 +32,8 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
 import { FormsModule } from '@angular/forms';
+import { CreateOpportunityFromInteractionsDialogComponent } from '@partnerships/interactions/components/dialogs/create-opportunity-from-interactions-dialog.component';
+import { CreateOpportunityFromInteractionsConfig } from '@partnerships/interactions/models/interaction-selection.model';
 
 // Backend SearchFieldInfo interface to match the API response
 interface SearchFieldInfo {
@@ -56,13 +58,7 @@ interface DropdownOption {
     ButtonModule,
     TranslateModule,
     ListviewComponent,
-    DialogModule,
-    InputTextModule,
-    TextareaModule,
-    CheckboxModule,
-    FloatLabelModule,
-    MessageModule,
-    FormsModule,
+    CreateOpportunityFromInteractionsDialogComponent
   ],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -113,14 +109,21 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
   isLoadingSearchFields = signal<boolean>(false);
   searchFieldsError = signal<string | null>(null);
 
-  // Opportunity creation dialog
+  // Unified opportunity creation dialog
   showCreateOpportunityDialog = signal<boolean>(false);
-  opportunityName = signal<string>('');
-  opportunityDescription = signal<string>('');
-  isFundingPartner = signal<boolean>(false);
-  isClientPartner = signal<boolean>(false);
-  showOpportunityValidationError = signal<boolean>(false);
-  isCreatingOpportunity = signal<boolean>(false);
+  
+  // Dialog configuration for unified dialog
+  dialogConfig = computed<CreateOpportunityFromInteractionsConfig>(() => {
+    const partnerId = this.partnerId() || this.getCurrentPartnerIdFromRoute();
+    const partnerName = this.partnerName() || '';
+    
+    return {
+      partnerId: partnerId ? +partnerId : 0,
+      partnerName: partnerName,
+      mode: 'list-view', // From partner opportunities tab
+      preSelectedInteractionIds: [] // No interactions pre-selected
+    };
+  });
 
   // Fallback columns definition
   private fallbackColumns: ListViewColumn[] = [
@@ -425,7 +428,7 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
   }
 
   /**
-   * Opens the create opportunity dialog
+   * Opens the unified create opportunity dialog
    */
   openCreateOpportunityDialog(): void {
     // Check if partner is active
@@ -437,90 +440,24 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
       return;
     }
 
-    // Reset dialog state - both checkboxes deselected by default
-    this.opportunityName.set('');
-    this.opportunityDescription.set('');
-    this.isFundingPartner.set(false);
-    this.isClientPartner.set(false);
-    this.showOpportunityValidationError.set(false);
     this.showCreateOpportunityDialog.set(true);
   }
 
   /**
-   * Cancels the create opportunity dialog
+   * Handle successful opportunity creation from unified dialog
    */
-  cancelCreateOpportunity() {
+  handleOpportunityCreated(opportunity: any): void {
     this.showCreateOpportunityDialog.set(false);
-    this.opportunityName.set('');
-    this.opportunityDescription.set('');
-    this.isFundingPartner.set(false);
-    this.isClientPartner.set(false);
-    this.showOpportunityValidationError.set(false);
-  }
+    
+    // Refresh the listview
+    window.dispatchEvent(new CustomEvent('refresh-listview'));
 
-  /**
-   * Confirms and creates the opportunity
-   */
-  confirmCreateOpportunity() {
-    // Validate opportunity name
-    if (!this.opportunityName() || this.opportunityName().trim() === '') {
-      this.showOpportunityValidationError.set(true);
-      return;
+    // Open the new opportunity in a new tab if we have an ID
+    if (opportunity && opportunity.id) {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(['/partnerships/opportunities', opportunity.id])
+      );
+      window.open(`/#${url}`, '_blank');
     }
-
-    // Validate at least one partner role is selected
-    if (!this.isFundingPartner() && !this.isClientPartner()) {
-      this.feedbackDialogService.showErrorToast({
-        detail: this.translateService.instant('message.opportunity.selectAtLeastOnePartnerRole'),
-        summary: this.translateService.instant('common.error.title')
-      });
-      return;
-    }
-
-    // Determine partner role based on checkboxes
-    let partnerRole: 'funding' | 'client' | 'both';
-    if (this.isFundingPartner() && this.isClientPartner()) {
-      partnerRole = 'both';
-    } else if (this.isFundingPartner()) {
-      partnerRole = 'funding';
-    } else {
-      partnerRole = 'client';
-    }
-
-    this.isCreatingOpportunity.set(true);
-
-    const currentPartnerId = this.partnerId() || this.getCurrentPartnerIdFromRoute();
-
-    this.partnerService.createOpportunityFromPartner(
-      parseInt(currentPartnerId),
-      {
-        name: this.opportunityName(),
-        partnerRole: partnerRole,
-        description: this.opportunityDescription() || undefined
-      }
-    ).subscribe({
-      next: (opportunity) => {
-        this.isCreatingOpportunity.set(false);
-        this.showCreateOpportunityDialog.set(false);
-        
-        this.feedbackDialogService.showSuccessToast({
-          summary: this.translateService.instant('common.success.title'),
-          detail: this.translateService.instant('message.opportunity.createdSuccessfully', { name: this.opportunityName() })
-        });
-
-        // Refresh the listview
-        window.dispatchEvent(new CustomEvent('refresh-listview'));
-
-        // Open the new opportunity in a new tab
-        const url = this.router.serializeUrl(
-          this.router.createUrlTree(['/partnerships/opportunities', opportunity.id])
-        );
-        window.open(`/#${url}`, '_blank');
-      },
-      error: () => {
-        this.isCreatingOpportunity.set(false);
-        // Error handled by global interceptor
-      }
-    });
   }
 }

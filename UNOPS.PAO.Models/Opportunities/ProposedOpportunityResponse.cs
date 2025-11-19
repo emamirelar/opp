@@ -1,0 +1,97 @@
+namespace UNOPS.PAO.Models.Opportunities;
+
+/// <summary>
+/// Response model containing AI-proposed opportunity data from multiple sources
+/// Includes both the raw AI response and the processed opportunity data ready for user review
+/// Can include data from interactions, documents, or other opportunities
+/// </summary>
+public class OpportunityProposalResponse
+{
+    /// <summary>
+    /// The proposed opportunity data with all fields populated by AI
+    /// </summary>
+    public required ProposedOpportunityData Opportunity { get; set; }
+    
+    /// <summary>
+    /// Number of interactions analyzed (if any)
+    /// </summary>
+    public int InteractionsAnalyzed { get; set; }
+    
+    /// <summary>
+    /// List of interaction IDs that were analyzed (if any)
+    /// </summary>
+    public List<int>? SourceInteractionIds { get; set; }
+    
+    /// <summary>
+    /// Number of documents analyzed (if any)
+    /// </summary>
+    public int DocumentsAnalyzed { get; set; }
+    
+    /// <summary>
+    /// List of document IDs that were analyzed (if any)
+    /// </summary>
+    public List<int>? SourceDocumentIds { get; set; }
+    
+    /// <summary>
+    /// Partner ID associated with the opportunity (may be null if not pre-selected)
+    /// </summary>
+    public int? PartnerId { get; set; }
+    
+    /// <summary>
+    /// Partner name (if partner was selected)
+    /// </summary>
+    public string? PartnerName { get; set; }
+    
+    /// <summary>
+    /// Whether partner is funding partner
+    /// </summary>
+    public bool IsFundingPartner { get; set; }
+    
+    /// <summary>
+    /// Whether partner is client partner
+    /// </summary>
+    public bool IsClientPartner { get; set; }
+}
+
+/// <summary>
+/// Proposed opportunity data structure matching the OpportunityModel fields
+/// Contains AI-extracted values from interactions with dependents for ID resolution
+/// </summary>
+public class ProposedOpportunityData
+{
+    // Basic Information
+    public required string Name { get; set; }
+    public required string Description { get; set; }
+    public string? PartnerReference { get; set; }
+    
+    // Organizational & Initiative Type
+    public int? ResponsibleOrgUnitId { get; set; }
+    public string? ResponsibleOrgUnitName { get; set; }
+    public int? ProposedInitiativeTypeId { get; set; }
+    public string? ProposedInitiativeTypeName { get; set; }
+    
+    // Financial & Timeline
+    public decimal? InitiativeBudgetUSD { get; set; }
+    public string? PartnershipAgreementReference { get; set; }
+    public DateTime? TargetSigningDate { get; set; }
+    public DateTime? TargetDeliveryDate { get; set; }
+    
+    // Strategic Information
+    public string? StrategicAlignment { get; set; }
+    public string? ResultsFocus { get; set; }
+    public string? IntendedImpactOutcomes { get; set; }
+    public string? ExpectedBeneficiaries { get; set; }
+    
+    // Related Entities (processed by GetDependentDropdownValues into structured objects)
+    // Stringified JSON arrays to avoid serialization issues - frontend will parse these
+    public string? FundingPartners { get; set; }
+    public string? ClientPartners { get; set; }
+    public string? Stakeholders { get; set; }
+    public string? Deliverables { get; set; }
+    public string? Countries { get; set; }
+    public string? SdGs { get; set; }
+    
+    // Dependents list indicating which fields need ID resolution
+    public List<string> Dependents { get; set; } = new();
+}
+
