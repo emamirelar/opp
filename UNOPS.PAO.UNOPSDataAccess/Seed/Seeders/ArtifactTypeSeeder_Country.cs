@@ -64,6 +64,12 @@ public static class ArtifactTypeSeeder_Country
                     hasChanges = true;
                 }
 
+                if (existingArtifactType.ArtifactDataTypeId != artifactTypeData.ArtifactDataTypeId)
+                {
+                    existingArtifactType.ArtifactDataTypeId = artifactTypeData.ArtifactDataTypeId;
+                    hasChanges = true;
+                }
+
                 if (existingArtifactType.Description != artifactTypeData.Description)
                 {
                     existingArtifactType.Description = artifactTypeData.Description;
@@ -342,7 +348,7 @@ public static class ArtifactTypeSeeder_Country
             {
                 Name = "World Bank Fragile Situation",
                 ArtifactTypeCode = "World_Bank_Fragile_Situation",
-                ArtifactDataTypeId = numberDataTypeId,
+                ArtifactDataTypeId = booleanDataTypeId,
                 Description = "Countries and territories identified as experiencing conflict and institutional and social fragility",
                 Category = null,
                 ApplicableEntityTypes = "Country",
@@ -851,6 +857,24 @@ public static class ArtifactTypeSeeder_Country
                 Category = null,
                 ApplicableEntityTypes = "Country",
                 Source = "Fragile States Index",
+                IsSearchable = false,
+                AllowBulkUpdate = false,
+                IsUsedForCalculations = false,
+                IsUsedForAI = false,
+                Order = 1038,
+                Status = EntityStatus.Active,
+                IsDeleted = false
+            },
+
+            new ArtifactType
+            {
+                Name = "Has Active UNSDCF",
+                ArtifactTypeCode = "Has_Active_UNSDCF",
+                ArtifactDataTypeId = booleanDataTypeId,
+                Description = "Indicates whether an active UNSDCF exists",
+                Category = null,
+                ApplicableEntityTypes = "Country",
+                Source = null,
                 IsSearchable = false,
                 AllowBulkUpdate = false,
                 IsUsedForCalculations = false,

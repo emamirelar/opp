@@ -15,12 +15,14 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
 
             var sequences = new List<(string TableName, string SequenceName)>
             {
+                ("ArtifactDataTypes", "ArtifactDataTypes_Id_seq"),
                 ("ArtifactTypes", "ArtifactTypes_Id_seq"),
                 ("PartnerTrees", "PartnerTrees_Id_seq"),
                 ("Partners", "Partners_Id_seq"),
                 ("Contacts", "Contacts_Id_seq"),
                 ("Interactions", "Interactions_Id_seq"),
                 ("Documents", "Documents_Id_seq"),
+                ("DocumentTypes", "DocumentTypes_Id_seq"),
                 ("OrganizationHierarchies", "OrganizationHierarchies_Id_seq"),
                 ("LiaisonOffices", "LiaisonOffices_Id_seq")
             };

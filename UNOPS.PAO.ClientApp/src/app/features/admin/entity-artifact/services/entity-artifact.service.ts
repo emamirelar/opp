@@ -41,6 +41,7 @@ export interface EntityArtifactResponse {
   name: string | null;
   valueText: string | null;
   valueNumber: number | null;
+  valueBoolean: boolean | null;
   valueDate: string | null;
   valueJson: string | null;
   documentId: number | null;
@@ -67,6 +68,7 @@ export interface EntityArtifactRequest {
   name?: string | null;
   valueText?: string | null;
   valueNumber?: number | null;
+  valueBoolean?: boolean | null;
   valueDate?: string | null;
   valueJson?: string | null;
   documentId?: number | null;

@@ -36,6 +36,11 @@ public class EntityArtifactRequest
     public decimal? ValueNumber { get; set; }
 
     /// <summary>
+    /// Boolean value for boolean artifacts
+    /// </summary>
+    public bool? ValueBoolean { get; set; }
+
+    /// <summary>
     /// Date value for date artifacts
     /// </summary>
     public DateTime? ValueDate { get; set; }
