@@ -48,6 +48,11 @@ public class EntityArtifact : ModifiableDeletableEntity
     public decimal? ValueNumber { get; set; }
 
     /// <summary>
+    /// For boolean values
+    /// </summary>
+    public bool? ValueBoolean { get; set; }
+
+    /// <summary>
     /// For date values
     /// </summary>
     public DateTime? ValueDate { get; set; }

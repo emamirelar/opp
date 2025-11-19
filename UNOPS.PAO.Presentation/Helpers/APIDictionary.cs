@@ -201,6 +201,7 @@ public class APIDictionary
     public const string EntityArtifactList = EntityArtifacts + "/list";
     
     // Bulk Entity Artifacts
+    public const string EntityArtifactBulkArtifactTypes = EntityArtifacts + "/bulk/artifact-types";
     public const string EntityArtifactBulkUniqueIdExample = EntityArtifacts + "/bulk/unique-id-example";
     public const string EntityArtifactBulkTemplateDownload = EntityArtifacts + "/bulk/template-download";
     public const string EntityArtifactBulkUpsert = EntityArtifacts + "/bulk/upsert";

@@ -18,6 +18,7 @@ DATA_TYPE_MAP = {
     "String": "stringDataTypeId",
     "Number": "numberDataTypeId",
     "Date": "dateDataTypeId",
+    "Boolean": "booleanDataTypeId",
     "Document": "documentDataTypeId"
 }
 
@@ -87,27 +88,64 @@ def determine_category(name, description):
         return "General"
 
 
+def convert_yes_no_to_bool(value):
+    """Convert YES/NO to C# boolean"""
+    if not value or not value.strip():
+        return "false"
+    value_upper = value.strip().upper()
+    return "true" if value_upper == "YES" else "false"
+
+
 def generate_artifact_type_code(row, order):
     """Generate a single ArtifactType object in C# code"""
     name = row["Name"].replace("_", " ").strip()
     code = row["ArtifactTypeCode"].strip()
     data_type = row["ArtifactDataType"].strip()
-    description = escape_csharp_string(row["Description"].strip()) if row["Description"].strip() else name
-    category = row["Category"].strip() if row["Category"].strip() else determine_category(row["Name"], row["Description"])
+    
+    # Handle Description - set to null if empty
+    description_value = row.get("Description", "").strip()
+    if description_value:
+        description = f'"{escape_csharp_string(description_value)}"'
+    else:
+        description = "null"
+    
+    # Handle Category - set to null if empty
+    category_value = row.get("Category", "").strip()
+    if category_value:
+        category = f'"{category_value}"'
+    else:
+        category = "null"
+    
+    # Handle Source - set to null if empty
+    source_value = row.get("Source", "").strip()
+    if source_value:
+        source = f'"{escape_csharp_string(source_value)}"'
+    else:
+        source = "null"
+    
     entity_types = row["ApplicableEntityTypes"].strip()
     
+    # Handle AllowBulkUpdate (YES/NO to true/false)
+    allow_bulk_update = convert_yes_no_to_bool(row.get("AllowBulkUpdate", "NO"))
+    
+    # Handle IsSearchable (YES/NO to true/false)
+    is_searchable = convert_yes_no_to_bool(row.get("IsSearchable", "NO"))
+    
     data_type_var = DATA_TYPE_MAP.get(data_type, "stringDataTypeId")
-    is_for_calculations = "true" if should_use_for_calculations(code, data_type, description) else "false"
-    is_for_ai = "true" if should_use_for_ai(code, data_type, description) else "false"
+    is_for_calculations = "true" if should_use_for_calculations(code, data_type, description_value) else "false"
+    is_for_ai = "true" if should_use_for_ai(code, data_type, description_value) else "false"
     
     code_template = f"""            new ArtifactType
             {{
                 Name = "{name}",
                 ArtifactTypeCode = "{code}",
                 ArtifactDataTypeId = {data_type_var},
-                Description = "{description}",
-                Category = "{category}",
+                Description = {description},
+                Category = {category},
                 ApplicableEntityTypes = "{entity_types}",
+                Source = {source},
+                IsSearchable = {is_searchable},
+                AllowBulkUpdate = {allow_bulk_update},
                 IsUsedForCalculations = {is_for_calculations},
                 IsUsedForAI = {is_for_ai},
                 Order = {order},
@@ -143,21 +181,23 @@ public static class ArtifactTypeSeeder_Country
         var stringDataType = dataTypes.FirstOrDefault(dt => dt.Name == "string");
         var numberDataType = dataTypes.FirstOrDefault(dt => dt.Name == "number");
         var dateDataType = dataTypes.FirstOrDefault(dt => dt.Name == "date");
+        var booleanDataType = dataTypes.FirstOrDefault(dt => dt.Name == "boolean");
         var documentDataType = dataTypes.FirstOrDefault(dt => dt.Name == "document");
 
-        if (stringDataType == null || numberDataType == null || dateDataType == null || documentDataType == null)
+        if (stringDataType == null || numberDataType == null || dateDataType == null || booleanDataType == null || documentDataType == null)
         {{
             Console.WriteLine("  ❌ Error: Required ArtifactDataTypes not found. Please seed ArtifactDataTypes first.");
-            Console.WriteLine($"     Found - string: {{stringDataType != null}}, number: {{numberDataType != null}}, date: {{dateDataType != null}}, document: {{documentDataType != null}}");
+            Console.WriteLine($"     Found - string: {{stringDataType != null}}, number: {{numberDataType != null}}, date: {{dateDataType != null}}, boolean: {{booleanDataType != null}}, document: {{documentDataType != null}}");
             return;
         }}
 
         var stringDataTypeId = stringDataType.Id;
         var numberDataTypeId = numberDataType.Id;
         var dateDataTypeId = dateDataType.Id;
+        var booleanDataTypeId = booleanDataType.Id;
         var documentDataTypeId = documentDataType.Id;
 
-        var artifactTypesToSeed = GetCountryArtifactTypesToSeed(stringDataTypeId, numberDataTypeId, dateDataTypeId, documentDataTypeId);
+        var artifactTypesToSeed = GetCountryArtifactTypesToSeed(stringDataTypeId, numberDataTypeId, dateDataTypeId, booleanDataTypeId, documentDataTypeId);
         var existingArtifactTypes = await context.Set<ArtifactType>().ToListAsync();
 
         int insertedCount = 0;
@@ -221,6 +261,24 @@ public static class ArtifactTypeSeeder_Country
                     hasChanges = true;
                 }}
 
+                if (existingArtifactType.Source != artifactTypeData.Source)
+                {{
+                    existingArtifactType.Source = artifactTypeData.Source;
+                    hasChanges = true;
+                }}
+
+                if (existingArtifactType.IsSearchable != artifactTypeData.IsSearchable)
+                {{
+                    existingArtifactType.IsSearchable = artifactTypeData.IsSearchable;
+                    hasChanges = true;
+                }}
+
+                if (existingArtifactType.AllowBulkUpdate != artifactTypeData.AllowBulkUpdate)
+                {{
+                    existingArtifactType.AllowBulkUpdate = artifactTypeData.AllowBulkUpdate;
+                    hasChanges = true;
+                }}
+
                 if (existingArtifactType.Status != artifactTypeData.Status)
                 {{
                     existingArtifactType.Status = artifactTypeData.Status;
@@ -257,7 +315,7 @@ public static class ArtifactTypeSeeder_Country
         }}
     }}
 
-    private static List<ArtifactType> GetCountryArtifactTypesToSeed(int stringDataTypeId, int numberDataTypeId, int dateDataTypeId, int documentDataTypeId)
+    private static List<ArtifactType> GetCountryArtifactTypesToSeed(int stringDataTypeId, int numberDataTypeId, int dateDataTypeId, int booleanDataTypeId, int documentDataTypeId)
     {{
         return new List<ArtifactType>
         {{

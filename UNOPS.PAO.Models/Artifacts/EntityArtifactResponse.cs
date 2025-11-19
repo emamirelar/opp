@@ -15,6 +15,7 @@ public class EntityArtifactResponse
     public string? Name { get; set; }
     public string? ValueText { get; set; }
     public decimal? ValueNumber { get; set; }
+    public bool? ValueBoolean { get; set; }
     public DateTime? ValueDate { get; set; }
     public string? ValueJson { get; set; }
     public int? DocumentId { get; set; }

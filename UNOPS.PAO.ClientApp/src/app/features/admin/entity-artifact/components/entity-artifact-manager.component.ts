@@ -100,6 +100,7 @@ export class EntityArtifactManagerComponent implements OnInit {
   // Form state
   readonly valueText = signal<string>('');
   readonly valueNumber = signal<number | null>(null);
+  readonly valueBoolean = signal<boolean | null>(null);
   readonly valueDate = signal<Date | null>(null);
   readonly documentId = signal<number | null>(null);
   readonly uploadedFile = signal<Base64FileData | null>(null);
@@ -395,6 +396,7 @@ export class EntityArtifactManagerComponent implements OnInit {
   private populateFormFromArtifact(artifact: EntityArtifactResponse) {
     this.valueText.set(artifact.valueText || '');
     this.valueNumber.set(artifact.valueNumber);
+    this.valueBoolean.set(artifact.valueBoolean);
     this.valueDate.set(artifact.valueDate ? new Date(artifact.valueDate) : null);
     this.documentId.set(artifact.documentId);
     
@@ -426,6 +428,7 @@ export class EntityArtifactManagerComponent implements OnInit {
   private resetFormValues() {
     this.valueText.set('');
     this.valueNumber.set(null);
+    this.valueBoolean.set(null);
     this.valueDate.set(null);
     this.documentId.set(null);
     this.uploadedFile.set(null);
@@ -624,6 +627,9 @@ export class EntityArtifactManagerComponent implements OnInit {
       case 'numeric':
       case 'decimal':
         return this.valueNumber() !== null;
+      case 'boolean':
+      case 'bool':
+        return this.valueBoolean() !== null;
       case 'date':
       case 'datetime':
         return this.valueDate() !== null;
@@ -681,6 +687,7 @@ export class EntityArtifactManagerComponent implements OnInit {
       artifactTypeId: artifactType.id,
       valueText: this.valueText() || null,
       valueNumber: this.valueNumber(),
+      valueBoolean: this.valueBoolean(),
       valueDate: this.valueDate()?.toISOString() || null,
       valueJson: valueJson,
       documentId: this.documentId(),

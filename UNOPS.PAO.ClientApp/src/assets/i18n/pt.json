@@ -2319,7 +2319,6 @@
   "label.fromComputer": "Do computador",
   "label.fromGoogleDrive": "Do Google Drive",
   "button.selectFiles": "Selecionar arquivos",
-  "button.selectFromGoogleDrive": "Selecionar do Google Drive",
   "message.acceptedFileTypes": "Aceito: PDF, Word, Excel, PowerPoint",
   "message.uploadingDocuments": "Carregando documentos...",
   "message.documentSourceSummary": "{newCount} novos, {existingCount} existentes",

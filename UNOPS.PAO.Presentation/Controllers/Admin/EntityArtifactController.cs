@@ -238,6 +238,36 @@ public class EntityArtifactController : BaseController
     }
 
     /// <summary>
+    /// Get artifact types for bulk operations (filtered by AllowBulkUpdate = true)
+    /// </summary>
+    [HttpGet(APIDictionary.EntityArtifactBulkArtifactTypes)]
+    public async Task<ActionResult<IEnumerable<ArtifactTypeResponse>>> GetBulkArtifactTypes([FromQuery] string entityType)
+    {
+        // Check role authorization
+        var authResult = await CheckRoleAuthorizationAsync(BaseRole.PARTNER_GLOB_ADMIN);
+        if (authResult != null)
+        {
+            return authResult;
+        }
+
+        if (string.IsNullOrEmpty(entityType))
+        {
+            return BadRequest(new { error = "Entity type is required" });
+        }
+
+        try
+        {
+            var artifactTypes = await _manager.GetBulkUpdateArtifactTypesByEntityTypeAsync(entityType);
+            return Ok(artifactTypes);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving bulk artifact types for entity type {EntityType}", entityType);
+            return StatusCode(500, new { error = "Failed to retrieve bulk artifact types" });
+        }
+    }
+
+    /// <summary>
     /// Get unique identifier example for bulk import template
     /// </summary>
     [HttpGet(APIDictionary.EntityArtifactBulkUniqueIdExample)]

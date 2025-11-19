@@ -69,6 +69,76 @@ export interface SDG {
 }
 
 /**
+ * @interface CountrySearchResult
+ * @description Country search result with match context
+ */
+export interface CountrySearchResult {
+  country: {
+    id: number;
+    name: string;
+    iso2Code: string;
+    continent?: string;
+    region?: string;
+  };
+  matchReasons: SearchMatchReason[];
+  relevanceScore: number;
+}
+
+/**
+ * @interface SearchMatchReason
+ * @description Describes why a country matched the search
+ */
+export interface SearchMatchReason {
+  matchType: 'CountryName' | 'ArtifactValue';
+  artifactTypeCode?: string;
+  artifactTypeName?: string;
+  category?: string;
+  matchedValue: string;
+  highlightedValue?: string;
+}
+
+/**
+ * @interface CountrySearchGroups
+ * @description Grouped country search results
+ */
+export interface CountrySearchGroups {
+  nameMatches: CountrySearchResult[];
+  regionMatches: CountrySearchResult[];
+  continentMatches: CountrySearchResult[];
+  artifactMatches: { [artifactType: string]: CountrySearchResult[] };
+}
+
+/**
+ * @interface CountryDynamicSearchResponse
+ * @description Dynamic search response with grouped results
+ */
+export interface CountryDynamicSearchResponse {
+  totalMatches: number;
+  groups: CountrySearchGroups;
+  allResults: CountrySearchResult[];
+  metadata: {
+    searchTerm: string;
+    artifactTypesSearched: number;
+    executionTimeMs: number;
+    fromCache: boolean;
+  };
+}
+
+/**
+ * @interface CountryDynamicSearchRequest
+ * @description Dynamic search request parameters
+ */
+export interface CountryDynamicSearchRequest {
+  searchTerm: string;
+  includeArtifacts?: boolean;
+  artifactTypeCodes?: string[];
+  caseSensitive?: boolean;
+  exactMatch?: boolean;
+  maxResults?: number;
+  highlightMatches?: boolean;
+}
+
+/**
  * @class ValuesService
  * @description Service for fetching dropdown/lookup values from the API
  * 
@@ -216,6 +286,34 @@ export class ValuesService {
    */
   getInternalUsers(): Observable<SimpleValue[]> {
     return this.http.get<SimpleValue[]>(`${this.baseUrl}/internal-users`);
+  }
+
+  /**
+   * @description Performs dynamic search across country names and artifact values
+   * @param {CountryDynamicSearchRequest} request - Search request parameters
+   * @returns {Observable<CountryDynamicSearchResponse>} Observable of grouped search results
+   * @example
+   * ```typescript
+   * const request: CountryDynamicSearchRequest = {
+   *   searchTerm: 'development',
+   *   includeArtifacts: true,
+   *   maxResults: 50,
+   *   highlightMatches: true
+   * };
+   * 
+   * this.valuesService.dynamicSearchCountries(request).subscribe(results => {
+   *   console.log('Found', results.totalMatches, 'countries');
+   *   console.log('Name matches:', results.groups.nameMatches);
+   *   console.log('Artifact matches:', results.groups.artifactMatches);
+   * });
+   * ```
+   * @since 1.0.0
+   */
+  dynamicSearchCountries(request: CountryDynamicSearchRequest): Observable<CountryDynamicSearchResponse> {
+    return this.http.post<CountryDynamicSearchResponse>(
+      '/api/country/dynamic-search',
+      request
+    );
   }
 }
 

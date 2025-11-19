@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251113220118_ArtifactTypeAdditionalFields")]
+    partial class ArtifactTypeAdditionalFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1082,9 +1085,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<bool?>("ValueBoolean")
-                        .HasColumnType("boolean");
-
                     b.Property<DateTime?>("ValueDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -1908,29 +1908,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("PartnerId");
 
                     b.ToTable("OpportunityFundingPartners", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityInteraction", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("InteractionId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("OpportunityId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InteractionId");
-
-                    b.HasIndex("OpportunityId");
-
-                    b.ToTable("OpportunityInteractions", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDG", b =>
@@ -3965,25 +3942,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("Opportunity");
 
                     b.Navigation("Partner");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityInteraction", b =>
-                {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Interaction", "Interaction")
-                        .WithMany()
-                        .HasForeignKey("InteractionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Opportunity", "Opportunity")
-                        .WithMany()
-                        .HasForeignKey("OpportunityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Interaction");
-
-                    b.Navigation("Opportunity");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDG", b =>
