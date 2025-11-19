@@ -80,7 +80,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         /// <param name="text">Text containing placeholders like {partnerName}, {userInfo}</param>
         /// <param name="jsonData">JSON data containing the replacement values</param>
         /// <returns>Text with placeholders replaced</returns>
-        private string ProcessPlaceholders(string text, string jsonData)
+        public string ProcessPlaceholders(string text, string jsonData)
         {
             if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(jsonData))
                 return text ?? string.Empty;
@@ -1039,7 +1039,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 partnerType = true;
             }
             bool opportunityType = false;
-            if (promptData?.Type?.Contains("opportunity_document_transcribe", StringComparison.OrdinalIgnoreCase) == true)
+            if (promptData?.Type?.Contains("opportunity", StringComparison.OrdinalIgnoreCase) == true)
             {
                 opportunityType = true;
             }

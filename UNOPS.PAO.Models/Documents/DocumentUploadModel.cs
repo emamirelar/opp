@@ -13,6 +13,12 @@ public class DocumentUploadModel: DocumentBaseCreateModel
     public bool UploadToGCS { get; set; } = false;
     
     /// <summary>
+    /// Flag to skip database persistence (for temporary uploads like AI proposal generation)
+    /// When true, only uploads to GCS and returns the storage path without creating a database record
+    /// </summary>
+    public bool SkipDatabaseSave { get; set; } = false;
+    
+    /// <summary>
     /// Google Drive link (optional - for files sourced from Drive)
     /// </summary>
     public string? Link { get; set; }

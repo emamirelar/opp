@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models.AI;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Opportunities;
 using Newtonsoft.Json.Linq;
 using System.Security.Claims;
 using UNOPS.PAO.Models.Shared;
@@ -41,6 +42,11 @@ public interface IGeminiManager
     /// Generates AI-powered insights and suggestions for an opportunity
     /// </summary>
     Task<OpportunityInsightsResponse> GenerateOpportunityInsightsAsync(int opportunityId, ClaimsPrincipal user = null);
+    
+    /// <summary>
+    /// Generates AI-powered opportunity proposal from multiple sources (interactions, documents, etc.)
+    /// </summary>
+    Task<OpportunityProposalResponse> GenerateOpportunityProposalAsync(OpportunityProposalRequest request, ClaimsPrincipal user = null);
 }
 
 /// <summary>

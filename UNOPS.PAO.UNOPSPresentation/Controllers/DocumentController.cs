@@ -68,8 +68,8 @@ public class DocumentController : BaseController
         return await HandleOperationAsync(async () =>
         {
             // Log the UploadToGCS flag for debugging
-            _logger.LogInformation("DocumentUpload: UploadToGCS={UploadToGCS}, FileName={FileName}", 
-                model.UploadToGCS, model.File?.FileName);
+            _logger.LogInformation("DocumentUpload: UploadToGCS={UploadToGCS}, SkipDatabaseSave={SkipDatabaseSave}, FileName={FileName}", 
+                model.UploadToGCS, model.SkipDatabaseSave, model.File?.FileName);
 
             /*var isInternalUser = await this.IsInternalUser();
             var canCreateResult = await HasPermission(model.ParentEntityType.ToString(), model.ParentEntityId, this.GetRequirement(isInternalUser, model.ParentEntityType.ToString(), "Create"));
@@ -95,6 +95,19 @@ public class DocumentController : BaseController
                 
                 _logger.LogInformation("GCS Upload successful: {GsUri}", gsUri);
                 
+                // If SkipDatabaseSave is true, return only the GCS path without persisting to database
+                if (model.SkipDatabaseSave)
+                {
+                    _logger.LogInformation("SkipDatabaseSave=true, returning GCS path only without database persistence");
+                    return (object)new
+                    {
+                        storagePath = gsUri,
+                        mimeType = model.File.ContentType,
+                        fileName = model.File.FileName,
+                        message = "File uploaded to GCS successfully (not persisted to database)"
+                    };
+                }
+                
                 // Update model to use GCS storage path instead of blob
                 model.StoragePath = gsUri;
                 model.Blob = null; // Don't store blob when using GCS
@@ -105,6 +118,7 @@ public class DocumentController : BaseController
                     model.UploadToGCS, model.File != null);
             }
 
+            // Persist to database (only if SkipDatabaseSave is false)
             var result = await _manager.CreateDocumentAsync(model);
 
             if (result == null)
@@ -112,7 +126,7 @@ public class DocumentController : BaseController
                 throw new BusinessException("Failed to create document");
             }
 
-            return result;
+            return (object)result;
         }, 201);
     }
 

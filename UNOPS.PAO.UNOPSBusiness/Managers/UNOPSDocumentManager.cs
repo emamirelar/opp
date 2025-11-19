@@ -16,6 +16,7 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 using UNOPS.PAO.Models.Documents;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -660,6 +661,99 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
             DocumentType = document.DocumentType?.Name ?? "Unknown",
             Blob = contentBytes,
             Size = contentBytes.Length
+        };
+    }
+
+    /// <summary>
+    /// Data retrieval method for AI prompts - Gets comprehensive document details for opportunity creation
+    /// This method is called by the Gemini Manager for document-based opportunity proposals
+    /// </summary>
+    /// <param name="id">Document ID</param>
+    /// <returns>Dictionary containing all document details formatted for AI prompt placeholders</returns>
+    public async Task<Dictionary<string, object>> GetDocumentDetailsForOpportunityCreationAsync(int id)
+    {
+        var document = await _context.Set<UNOPSDocument>()
+            .Include(d => d.DocumentType)
+            .Include(d => d.DocumentRelationships)
+            .FirstOrDefaultAsync(d => d.Id == id && !d.IsDeleted);
+
+        if (document == null)
+        {
+            return null;
+        }
+
+        // Extract text content if available (from previous extraction or transcription)
+        string extractedText = "";
+        
+        // Check if document has extracted text stored in GCS
+        if (!string.IsNullOrWhiteSpace(document.StoragePath) && document.StoragePath.StartsWith("gs://"))
+        {
+            // For GCS documents, the storage path contains the extracted text
+            // The AI service will access it directly via the gs:// URI
+            extractedText = $"[Text available at: {document.StoragePath}]";
+        }
+
+        // Get related entities (opportunities, partners, etc.)
+        var relatedEntitiesList = document.DocumentRelationships?
+            .Where(dr => !dr.IsDeleted)
+            .Select(dr => new
+            {
+                entityType = dr.Name ?? "",
+                entityId = dr.EntityId
+            }).ToList();
+        
+        var relatedEntities = relatedEntitiesList != null ? (object)relatedEntitiesList : new List<object>();
+
+        // Build comprehensive document details
+        var details = new Dictionary<string, object>
+        {
+            ["id"] = document.Id,
+            ["name"] = document.Name ?? string.Empty,
+            ["description"] = string.Empty, // UNOPSDocument doesn't have Description property
+            ["type"] = document.Type ?? string.Empty,
+            ["documentType"] = document.DocumentType?.Name ?? string.Empty,
+            ["link"] = document.Link ?? string.Empty,
+            ["googleId"] = document.GoogleId ?? string.Empty,
+            ["storagePath"] = document.StoragePath ?? string.Empty,
+            ["extractedText"] = extractedText,
+            ["uploadDate"] = document.CreatedDate.ToString("yyyy-MM-dd"),
+            ["relatedEntities"] = relatedEntities,
+            
+            // Metadata
+            ["hasContent"] = !string.IsNullOrWhiteSpace(document.GoogleId) || 
+                            (document.Blob != null && document.Blob.Length > 0) ||
+                            !string.IsNullOrWhiteSpace(document.StoragePath),
+            ["isLinked"] = document.LinkedFile,
+            ["isGcsDocument"] = !string.IsNullOrWhiteSpace(document.StoragePath) && document.StoragePath.StartsWith("gs://"),
+            ["fileSize"] = document.Blob?.Length ?? 0,
+            ["mimeType"] = GetMimeTypeFromFileType(document.Type ?? "")
+        };
+
+        return details;
+    }
+
+    /// <summary>
+    /// Helper method to get MIME type from file type
+    /// </summary>
+    private string GetMimeTypeFromFileType(string fileType)
+    {
+        return fileType.ToLower() switch
+        {
+            "pdf" => "application/pdf",
+            "doc" => "application/msword",
+            "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "xls" => "application/vnd.ms-excel",
+            "xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "ppt" => "application/vnd.ms-powerpoint",
+            "pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "txt" => "text/plain",
+            "csv" => "text/csv",
+            "json" => "application/json",
+            "xml" => "application/xml",
+            "jpg" or "jpeg" => "image/jpeg",
+            "png" => "image/png",
+            "gif" => "image/gif",
+            _ => "application/octet-stream"
         };
     }
 }

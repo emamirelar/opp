@@ -26,7 +26,7 @@ public class DocumentBaseCreateModel : DocumentBaseModel
             _parentEntityType = value;
         }
     }
-    public string ParentEntityName { get; set; }
+    public string? ParentEntityName { get; set; }
     public int ParentEntityId { get; set; }
     public int? DocumentTypeId { get; set; }
 }
