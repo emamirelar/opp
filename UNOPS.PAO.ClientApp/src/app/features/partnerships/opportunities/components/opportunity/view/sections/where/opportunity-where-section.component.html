@@ -146,14 +146,6 @@
               @if (isEditing()) {
                 <div class="flex items-center gap-1 flex-shrink-0">
                   <p-button
-                    icon="pi pi-pencil"
-                    size="small"
-                    [text]="true"
-                    [rounded]="true"
-                    severity="secondary"
-                    (onClick)="editCountry(i)"
-                  />
-                  <p-button
                     icon="pi pi-trash"
                     size="small"
                     [text]="true"
@@ -176,9 +168,9 @@
   </div>
 </p-panel>
 
-<!-- Add/Edit Countries Dialog -->
+<!-- Add Countries Dialog -->
 <p-dialog
-  [header]="isEditingCountry() ? ('title.editCountry' | translate) : ('title.addCountries' | translate)"
+  [header]="'title.addCountries' | translate"
   [(visible)]="showCountryDialog"
   [modal]="true"
   [style]="{ width: '50rem', maxHeight: '80vh' }"
@@ -352,7 +344,7 @@
       (onClick)="cancelCountryDialog()"
     />
     <p-button
-      [label]="isEditingCountry() ? ('button.update' | translate) : ('button.confirm' | translate)"
+      [label]="'button.confirm' | translate"
       severity="primary"
       (onClick)="confirmCountryDialog()"
       [disabled]="selectedSearchResults().size === 0"

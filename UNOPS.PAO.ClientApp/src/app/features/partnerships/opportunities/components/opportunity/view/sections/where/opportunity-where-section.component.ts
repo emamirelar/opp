@@ -104,8 +104,6 @@ export class OpportunityWhereSectionComponent implements OnInit {
   // Country dialog state
   readonly showCountryDialog = signal(false);
   readonly showValidationError = signal(false);
-  readonly isEditingCountry = signal(false);
-  readonly editingCountryIndex = signal(-1);
 
   // Available countries from API
   readonly availableCountries = signal<SimpleValue[]>([]);
@@ -304,28 +302,6 @@ export class OpportunityWhereSectionComponent implements OnInit {
     this.selectedSearchResults.set(new Set());
     this.searchTerm.setValue('');
     this.searchResults.set(null);
-    this.isEditingCountry.set(false);
-    this.editingCountryIndex.set(-1);
-    this.showValidationError.set(false);
-    this.showCountryDialog.set(true);
-    this.cdr.detectChanges();
-  }
-
-  /**
-   * @description Edit existing country (requires searching for it first)
-   */
-  editCountry(index: number): void {
-    const opp = this.opportunity();
-    const country = opp.countries?.[index];
-    
-    if (!country) return;
-
-    // Pre-populate search with country name to help user find it
-    this.searchTerm.setValue(country.country?.name || '');
-    this.onSearchTermChange(country.country?.name || '');
-    
-    this.isEditingCountry.set(true);
-    this.editingCountryIndex.set(index);
     this.showValidationError.set(false);
     this.showCountryDialog.set(true);
     this.cdr.detectChanges();
@@ -339,14 +315,12 @@ export class OpportunityWhereSectionComponent implements OnInit {
     this.selectedSearchResults.set(new Set());
     this.searchTerm.setValue('');
     this.searchResults.set(null);
-    this.isEditingCountry.set(false);
-    this.editingCountryIndex.set(-1);
     this.showValidationError.set(false);
     this.cdr.detectChanges();
   }
 
   /**
-   * @description Confirm country dialog (add or update multiple countries)
+   * @description Confirm country dialog (add multiple countries)
    */
   confirmCountryDialog(): void {
     // Get selected countries from dynamic search
@@ -375,11 +349,8 @@ export class OpportunityWhereSectionComponent implements OnInit {
 
     // Check for duplicates
     const opp = this.opportunity();
-    const currentEditingIndex = this.editingCountryIndex();
     const existingCountryIds = new Set(
-      opp.countries
-        ?.filter((_, index) => !this.isEditingCountry() || index !== currentEditingIndex)
-        .map(c => c.countryId) || []
+      opp.countries?.map(c => c.countryId) || []
     );
 
     // Filter out duplicates
@@ -397,12 +368,8 @@ export class OpportunityWhereSectionComponent implements OnInit {
       return;
     }
 
-    // Add or update countries
-    if (this.isEditingCountry() && newCountries.length === 1) {
-      this.updateCountry(newCountries[0]);
-    } else {
-      this.addMultipleCountries(newCountries);
-    }
+    // Add countries
+    this.addMultipleCountries(newCountries);
   }
 
   /**
@@ -448,39 +415,6 @@ export class OpportunityWhereSectionComponent implements OnInit {
    */
   addCountry(country: SimpleValue): void {
     this.addMultipleCountries([country]);
-  }
-
-  /**
-   * @description Update existing country
-   */
-  updateCountry(country: SimpleValue): void {
-    const opp = this.opportunity();
-    const currentCountries = [...(opp.countries || [])];
-    const index = this.editingCountryIndex();
-
-    if (index < 0 || index >= currentCountries.length) {
-      return;
-    }
-
-    currentCountries[index] = {
-      ...currentCountries[index],
-      countryId: country.id,
-      country: {
-        id: country.id,
-        name: country.name,
-        iso2Code: country.code || '',
-        continent: country.continent || null,
-        region: country.region || null
-      }
-    };
-
-    const updatedOpportunity = {
-      ...opp,
-      countries: currentCountries
-    };
-
-    this.opportunityUpdated.emit(updatedOpportunity);
-    this.cancelCountryDialog();
   }
 
   /**
