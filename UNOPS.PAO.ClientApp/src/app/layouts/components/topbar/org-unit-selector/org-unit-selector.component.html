@@ -59,9 +59,9 @@
         } @else {
           <div
             [class.org-unit-selected]="isNodeSelected(unit)"
-            [class.bg-blue-50]="isNodeSelected(unit)"
+            [class.bg-gray-100]="isNodeSelected(unit)"
             [class.border-l-4]="isNodeSelected(unit)"
-            [class.border-l-blue-500]="isNodeSelected(unit)"
+            [class.border-l-gray-500]="isNodeSelected(unit)"
             (click)="selectOrgUnit(unit)"
             class="group flex items-center gap-2 p-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100"
             [style.padding-left.px]="16 + (unit.level * 24)">

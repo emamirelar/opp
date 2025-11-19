@@ -64,6 +64,19 @@
           />
         }
       </div>
+      
+      <!-- Legend for acronyms -->
+      <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="flex items-start gap-2">
+          <i class="pi pi-info-circle text-blue-600 mt-0.5"></i>
+          <div class="text-xs text-gray-700">
+            <strong>HCA</strong> = {{ 'label.hostCountryAgreement' | translate }}, 
+            <strong>SIDS</strong> = {{ 'label.smallIslandDevelopingState' | translate }}, 
+            <strong>UNSDCF</strong> = {{ 'label.unCooperationFramework' | translate }}
+          </div>
+        </div>
+      </div>
+      
       @if (countryCount() > 0) {
         @for (country of opportunity().countries; track country.id; let i = $index) {
           <div class="bg-gray-50 rounded-lg p-3 border border-gray-200 mb-2">
@@ -108,12 +121,15 @@
                     <i class="pi pi-sitemap text-unops-primary"></i>
                     <div class="flex items-center gap-1 flex-wrap">
                       @for (node of country.country!.organizationUnitHierarchy!; track node.id; let isLast = $last) {
-                        <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded font-medium" 
-                              [title]="node.description || node.name">
-                          {{ node.name }}
-                        </span>
-                        @if (!isLast) {
-                          <i class="pi pi-angle-right text-gray-400 text-sm"></i>
+                        <!-- Skip root level nodes (nodes without a parent) -->
+                        @if (node.parentId) {
+                          <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium" 
+                                [title]="node.description || node.name">
+                            {{ node.name }}
+                          </span>
+                          @if (!isLast) {
+                            <i class="pi pi-angle-right text-gray-400 text-sm"></i>
+                          }
                         }
                       }
                     </div>
