@@ -2691,8 +2691,23 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - **expectedBeneficiaries** (string?): Extract information about target beneficiaries, communities, regions, or populations that will benefit from interactions or documents
 
 ### Related Entities (Arrays - camelCase)
-- **fundingPartners** (array): List of funding partner names as text strings - extract organizations mentioned as funders, donors, or financial supporters from interactions or documents (e.g., ["World Bank", "Asian Development Bank"]) - **MUST add "fundingPartners" to dependents array**
-- **clientPartners** (array): List of client partner names as text strings - extract organizations mentioned as clients, implementing partners, or beneficiaries (e.g., ["Ministry of Health - Kenya", "Local Government"]) - **MUST add "clientPartners" to dependents array**
+
+- **fundingPartners** (array): List of funding partner names as text strings
+  - **Extract from THREE SOURCES**:
+    * **CONTEXT PARTNER** (if `{partnerRole}` includes "Funding"): If `{partnerId}` > 0 AND `{partnerRole}` contains "Funding", you **MUST** include the context partner `{partnerName}` as a funding partner
+    * **INTERACTION PARTNERS**: Analyze ALL partners from the `{interactions}` array - each interaction has a `partners` field with partner organizations. Review all partners across all interactions and determine if they are funding partners based on context
+    * **DOCUMENT CONTENT**: Extract organizations mentioned as funders, donors, or financial supporters from document text and metadata
+  - **Example**: ["World Bank", "Asian Development Bank", "{partnerName}"]
+  - **MUST add "fundingPartners" to dependents array**
+
+- **clientPartners** (array): List of client partner names as text strings
+  - **Extract from THREE SOURCES**:
+    * **CONTEXT PARTNER** (if `{partnerRole}` includes "Client"): If `{partnerId}` > 0 AND `{partnerRole}` contains "Client", you **MUST** include the context partner `{partnerName}` as a client partner
+    * **INTERACTION PARTNERS**: Analyze ALL partners from the `{interactions}` array - each interaction has a `partners` field. Review all partners across all interactions and determine if they are client/implementing partners based on context
+    * **DOCUMENT CONTENT**: Extract organizations mentioned as clients, implementing partners, or beneficiaries from document text
+  - **Example**: ["Ministry of Health - Kenya", "Local Government", "{partnerName}"]
+  - **MUST add "clientPartners" to dependents array**
+
 - **stakeholders** (array): List of stakeholder names with roles as text strings - extract key contacts and their roles from interaction participants or document metadata (e.g., ["Jane Doe - Project Director", "John Smith - Technical Advisor"]) - **MUST add "stakeholders" to dependents array**
 - **deliverables** (array): List of deliverable descriptions as text strings - extract outputs, deliverables, or project components mentioned in interactions or document names (e.g., ["Feasibility Study", "Infrastructure Design", "Training Program"]) - **MUST add "deliverables" to dependents array**
 - **countries** (array): List of country names as text strings - extract all countries mentioned in interactions or documents (e.g., ["Kenya", "Tanzania", "Uganda"]) - **MUST add "countries" to dependents array**
@@ -2738,6 +2753,58 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 - Generate strategic alignment statement from partnership objectives and document context
 - Compile comprehensive stakeholder list from participants and document metadata
 - List all countries, SDGs, and deliverables mentioned in any source
+
+**STEP 3A: PARTNER CLASSIFICATION LOGIC (CRITICAL)**
+
+**Understanding Partner Context:**
+- `{partnerId}` = Partner ID (0 if no context partner, >0 if creating from partner screen)
+- `{partnerName}` = Partner Name (e.g., "African Development Bank")
+- `{partnerRole}` = User-selected role(s): "Funding Partner", "Client Partner", or "Both Funding and Client Partner"
+
+**Partner Classification Rules:**
+
+1. **CONTEXT PARTNER (from Partner Screen):**
+   - **IF `{partnerId}` > 0**: A context partner exists and **MUST** be included
+   - **IF `{partnerRole}` contains "Funding"**: Add `{partnerName}` to fundingPartners array
+   - **IF `{partnerRole}` contains "Client"**: Add `{partnerName}` to clientPartners array
+   - **IF `{partnerRole}` = "Both Funding and Client Partner"**: Add `{partnerName}` to BOTH arrays
+   - **CRITICAL**: Context partner inclusion is MANDATORY when `{partnerId}` > 0
+
+2. **INTERACTION PARTNERS (from selected interactions):**
+   - Each interaction in `{interactions}` has a `partners` array with `{ id, name }` objects
+   - **Analyze ALL partners** across ALL selected interactions
+   - **Determine role based on:**
+     * Partner type/name (e.g., "World Bank", "AfDB", "UNDP" → typically funding)
+     * Interaction context (funding discussions vs implementation discussions)
+     * Document content (funding agreements vs implementation plans)
+   - Add to fundingPartners or clientPartners arrays based on analysis
+   - **Note**: A partner can appear in BOTH funding and client arrays if appropriate
+
+3. **DOCUMENT-MENTIONED PARTNERS:**
+   - Extract partner names from document text and metadata
+   - Classify as funding or client based on context in which they're mentioned
+   - Add to appropriate arrays
+
+4. **DE-DUPLICATION:**
+   - If context partner `{partnerName}` also appears in interaction partners, include it ONCE
+   - Do NOT duplicate partners within the same array
+   - Partners CAN appear in both fundingPartners AND clientPartners if they serve both roles
+
+5. **OUTPUT FORMAT:**
+   - Return partner names as text strings (e.g., ["World Bank", "African Development Bank"])
+   - Backend will resolve text names to partner IDs using similarity matching
+   - **MUST** add both "fundingPartners" and "clientPartners" to dependents array
+
+**Example Scenarios:**
+
+*Scenario A: From Partner Screen (partnerId=453, partnerName="AfDB", partnerRole="Both Funding and Client Partner")*
+- fundingPartners: ["AfDB African Development Bank", "World Bank", "EU"]
+- clientPartners: ["AfDB African Development Bank", "Ministry of Water - Kenya"]
+
+*Scenario B: From Interaction List (partnerId=0, no context partner)*
+- Analyze all partners in interactions
+- fundingPartners: ["World Bank", "Asian Development Bank"]
+- clientPartners: ["Government of Kenya", "Ministry of Health"]
 
 **STEP 4: GENERATE INTELLIGENT DEFAULTS**
 - If no budget mentioned: Use null

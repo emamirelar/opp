@@ -17,24 +17,39 @@ public class CreateOpportunityFromInteractionsRequest
     public required string Description { get; set; }
     
     /// <summary>
-    /// Partner ID associated with the interactions
+    /// Partner ID associated with the interactions (optional - only provided when creating from partner context)
     /// </summary>
-    public required int PartnerId { get; set; }
+    public int? PartnerId { get; set; }
     
     /// <summary>
-    /// Whether partner is a funding partner
+    /// Whether partner is a funding partner (only required if PartnerId is provided)
     /// </summary>
-    public required bool IsFundingPartner { get; set; }
+    public bool IsFundingPartner { get; set; }
     
     /// <summary>
-    /// Whether partner is a client partner
+    /// Whether partner is a client partner (only required if PartnerId is provided)
     /// </summary>
-    public required bool IsClientPartner { get; set; }
+    public bool IsClientPartner { get; set; }
     
     /// <summary>
     /// Source interaction IDs that were analyzed
     /// </summary>
     public required List<int> SourceInteractionIds { get; set; }
+    
+    /// <summary>
+    /// GCS storage paths for newly uploaded documents (to be persisted to database)
+    /// </summary>
+    public List<string>? NewDocumentStoragePaths { get; set; }
+    
+    /// <summary>
+    /// MIME types for newly uploaded documents
+    /// </summary>
+    public List<string>? NewDocumentMimeTypes { get; set; }
+    
+    /// <summary>
+    /// Document type IDs for newly uploaded documents
+    /// </summary>
+    public List<int?>? NewDocumentTypeIds { get; set; }
     
     // WHAT Section Properties (AI-proposed, user-accepted)
     public string? PartnerReference { get; set; }
@@ -50,8 +65,9 @@ public class CreateOpportunityFromInteractionsRequest
     public List<int>? SdGs { get; set; }
 
     // WHO Section Properties (AI-proposed, user-accepted)
-    public List<int>? FundingPartners { get; set; }
-    public List<int>? ClientPartners { get; set; }
+    // These are now proper structured objects from AI analysis
+    public List<OpportunityFundingPartnerRequest>? FundingPartners { get; set; }
+    public List<OpportunityClientPartnerRequest>? ClientPartners { get; set; }
     public List<OpportunityStakeholderRequest>? Stakeholders { get; set; }
 
     // WHERE Section Properties (AI-proposed, user-accepted)

@@ -79,21 +79,35 @@ public class DocumentController : BaseController
                 throw new UnauthorizedAccessException("You don't have permission to create this document");
             }*/
 
-            // Check if UploadToGCS is specified (for client-side PDF uploads)
-            if (model.UploadToGCS && model.File != null)
+            // Check if UploadToGCS is specified
+            if (model.UploadToGCS)
             {
-                _logger.LogInformation("Uploading to GCS: {FileName}", model.File.FileName);
+                string gsUri = null;
+                string fileName = null;
+                string mimeType = null;
                 
-                // Validate PDF
-                if (model.File.ContentType != "application/pdf" && !model.File.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                // Handle uploaded file (from local or already processed from Google Drive on frontend)
+                if (model.File != null)
                 {
-                    throw new BusinessException("Only PDF files are supported for GCS upload");
-                }
+                    _logger.LogInformation("Uploading file to GCS: {FileName}", model.File.FileName);
+                    
+                    // Validate PDF
+                    if (model.File.ContentType != "application/pdf" && !model.File.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new BusinessException("Only PDF files are supported for GCS upload");
+                    }
 
-                // Upload to GCS
-                var gsUri = await _gcsService.UploadPdfAsync(model.File, model.ParentEntityType.ToString().ToLower(), model.ParentEntityId);
-                
-                _logger.LogInformation("GCS Upload successful: {GsUri}", gsUri);
+                    // Upload to GCS
+                    gsUri = await _gcsService.UploadPdfAsync(model.File, model.ParentEntityType.ToString().ToLower(), model.ParentEntityId);
+                    fileName = model.File.FileName;
+                    mimeType = model.File.ContentType;
+                    
+                    _logger.LogInformation("GCS Upload successful: {GsUri}", gsUri);
+                }
+                else
+                {
+                    throw new BusinessException("Either File or GoogleId must be provided for GCS upload");
+                }
                 
                 // If SkipDatabaseSave is true, return only the GCS path without persisting to database
                 if (model.SkipDatabaseSave)
@@ -102,8 +116,8 @@ public class DocumentController : BaseController
                     return (object)new
                     {
                         storagePath = gsUri,
-                        mimeType = model.File.ContentType,
-                        fileName = model.File.FileName,
+                        mimeType = mimeType,
+                        fileName = fileName,
                         message = "File uploaded to GCS successfully (not persisted to database)"
                     };
                 }

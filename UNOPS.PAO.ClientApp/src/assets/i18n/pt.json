@@ -459,6 +459,7 @@
   "button.seeMore": "Ver mais",
   "button.select": "Selecionar",
   "button.selectFromDrive": "Selecionar do Drive",
+  "button.selectFromGoogleDrive": "Selecionar do Google Drive",
   "button.submitProposal": "Enviar Proposta",
   "button.takePhoto": "Tirar Foto",
   "button.togglePin": "Fixar/Desfixar",
@@ -1047,6 +1048,7 @@
   "label.document.linked": "Está Vinculado",
   "label.document.name": "Nome do Documento",
   "label.document.type": "Tipo de Documento",
+  "label.documents": "Documentos",
   "label.documentType": "Tipo de Documento",
   "label.draft": "Rascunho",
   "label.dst.budget": "Orçamento",
@@ -1127,6 +1129,7 @@
   "label.interaction.userIds": "IDs dos Usuários",
   "label.interaction.users": "Usuários",
   "label.interaction.usersHelp": "Selecione membros da equipe UNOPS envolvidos nesta interação",
+  "label.interactions": "Interações",
   "label.items": "itens",
   "label.justNow": "Agora há pouco",
   "label.justification": "Justificativa",
@@ -1341,6 +1344,7 @@
   "label.selectFile": "Selecionar Arquivo",
   "label.selectFromDrive": "Selecionar do Drive",
   "label.selectSort": "Selecionar ordenação",
+  "label.selectSelection": "Selecionar seleção",
   "label.selected": "Selecionado",
   "label.selectedFromGoogleDrive": "Selecionado do Google Drive",
   "label.selectedInteractions": "Interações selecionadas",
@@ -2324,7 +2328,7 @@
   "message.googleDriveFilesSelected": "{count} arquivo(s) selecionado(s) do Google Drive",
   "message.documentSourcesSummaryNew": "{count} novo(s) documento(s) selecionado(s)",
   "message.validation.selectDocumentTypeForAllFiles": "Selecione um tipo de documento para todos os arquivos carregados",
-  "title.aiGeneratedProposal": "Proposta Gerada por IA",
+  "title.aiGeneratedProposal": "Conteúdo Proposto",
   "message.reviewAndEditProposal": "Revise e edite os detalhes da oportunidade gerada por IA abaixo. Os campos destacados em amarelo podem ser modificados.",
   "label.analysisSource": "Fonte de Análise",
   "label.interactionsAnalyzed": "Interações Analisadas",
@@ -2351,5 +2355,6 @@
   "title.sourceInteractions": "Interações Fonte",
   "label.totalProposalFields": "Total de Campos",
   "label.selectedProposalFields": "Campos Selecionados",
-  "message.selectFieldsToAccept": "Selecione os campos que deseja aceitar da proposta de IA"
+  "message.selectFieldsToAccept": "Selecione os campos que deseja aceitar da proposta de IA",
+  "label.opportunity.partners": "Parceiros"
 }

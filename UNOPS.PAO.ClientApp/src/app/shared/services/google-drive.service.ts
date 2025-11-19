@@ -312,6 +312,17 @@ export class GoogleDriveService {
   }
   
   /**
+   * @description Download Google Drive file directly (for PDFs and other non-convertible files)
+   * @param {string} fileId - Google Drive file ID
+   * @param {string} fileName - Original file name
+   * @param {string} mimeType - File MIME type
+   * @returns {Observable<{name: string, data: string, mimeType: string}>}
+   */
+  public downloadDriveFile(fileId: string, fileName: string, mimeType: string): Observable<{name: string, data: string, mimeType: string}> {
+    return from(this.downloadDriveFileAsync(fileId, fileName, mimeType));
+  }
+  
+  /**
    * @description Export Google Drive file as PDF
    * @param {string} fileId - Google Drive file ID
    * @param {string} fileName - Original file name
@@ -319,6 +330,52 @@ export class GoogleDriveService {
    */
   public exportDriveFileAsPdf(fileId: string, fileName: string): Observable<{name: string, data: string, mimeType: string}> {
     return from(this.exportDriveFileAsPdfAsync(fileId, fileName));
+  }
+  
+  /**
+   * @description Download Google Drive file directly asynchronously (for PDFs and other non-convertible files)
+   * @param {string} fileId - Google Drive file ID
+   * @param {string} fileName - Original file name
+   * @param {string} mimeType - File MIME type
+   * @returns {Promise<{name: string, data: string, mimeType: string}>}
+   */
+  private async downloadDriveFileAsync(fileId: string, fileName: string, mimeType: string): Promise<{name: string, data: string, mimeType: string}> {
+    try {
+      // Ensure we have access token
+      if (!this.accessToken) {
+        const hasToken = await this.requestAccessToken();
+        if (!hasToken) {
+          throw new Error('Failed to get Google Drive access token. Please authorize the application.');
+        }
+      }
+
+      // Download the file directly (not export - use alt=media for direct download)
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${this.accessToken}`
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const data = await this.blobToBase64(blob);
+      
+      return {
+        name: fileName,
+        data: data,
+        mimeType: mimeType
+      };
+    } catch (error: any) {
+      console.error('Error downloading Drive file:', error);
+      throw new Error(`Failed to download "${fileName}": ${error.message || 'Unknown error'}`);
+    }
   }
   
   /**

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Opportunities;
@@ -23,12 +25,14 @@ public class OpportunityController : BaseController
     private readonly IGeminiManager _geminiManager;
     private readonly IRiskManager _riskManager;
     private readonly int _currentUserId;
+    private readonly AppDbContext _context;
 
     public OpportunityController(
         IManagerWrapper manager,
         UserResolverService<int> userResolverService,
         ILogger<OpportunityController> logger,
-        IAuthorizationService authorizationService)
+        IAuthorizationService authorizationService,
+        AppDbContext context)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.OpportunityManager;
@@ -36,6 +40,7 @@ public class OpportunityController : BaseController
         _geminiManager = manager.GeminiManager;
         _riskManager = manager.RiskManager;
         _currentUserId = userResolverService.GetCurrentUserId();
+        _context = context;
     }
 
     /// <summary>
@@ -822,9 +827,22 @@ public class OpportunityController : BaseController
                 return BadRequest(new { error = "Opportunity description is required" });
             }
 
-            if (!request.IsFundingPartner && !request.IsClientPartner)
+            // Partner validation: only required if partnerId is provided (creating from partner context)
+            if (request.PartnerId.HasValue && request.PartnerId > 0)
             {
-                return BadRequest(new { error = "Partner must be marked as funding partner, client partner, or both" });
+                if (!request.IsFundingPartner && !request.IsClientPartner)
+                {
+                    return BadRequest(new { error = "When creating from a partner context, the partner must be marked as funding partner, client partner, or both" });
+                }
+                
+                _logger.LogInformation("📊 [API] Context partner {PartnerId} will be added as {Role}", 
+                    request.PartnerId, 
+                    request.IsFundingPartner && request.IsClientPartner ? "both funding and client" :
+                    request.IsFundingPartner ? "funding partner" : "client partner");
+            }
+            else
+            {
+                _logger.LogInformation("📊 [API] No context partner - will use AI-proposed partners from interactions");
             }
 
             // Build opportunity request from accepted proposal
@@ -847,54 +865,135 @@ public class OpportunityController : BaseController
                 ClientPartners = new List<OpportunityClientPartnerRequest>()
             };
 
-            // Add the primary partner as funding/client based on user selection
-            if (request.IsFundingPartner)
+            // Add the context partner as funding/client based on user selection (only if partnerId provided)
+            // This ensures the context partner is included even if not in the AI-proposed arrays
+            if (request.PartnerId.HasValue && request.PartnerId > 0)
             {
-                opportunityRequest.FundingPartners.Add(new OpportunityFundingPartnerRequest
+                // Check if context partner is already in the AI-proposed arrays
+                var contextPartnerInFunding = request.FundingPartners?.Any(fp => fp.PartnerId == request.PartnerId.Value) ?? false;
+                var contextPartnerInClient = request.ClientPartners?.Any(cp => cp.PartnerId == request.PartnerId.Value) ?? false;
+                
+                // Add to funding partners if user selected funding role and not already in array
+                if (request.IsFundingPartner && !contextPartnerInFunding)
                 {
-                    PartnerId = request.PartnerId
-                });
-            }
-
-            if (request.IsClientPartner)
-            {
-                opportunityRequest.ClientPartners.Add(new OpportunityClientPartnerRequest
-                {
-                    PartnerId = request.PartnerId
-                });
-            }
-
-            // Add any additional funding/client partners from the proposal
-            if (request.FundingPartners != null)
-            {
-                foreach (var fundingPartnerId in request.FundingPartners)
-                {
-                    if (fundingPartnerId != request.PartnerId) // Avoid duplicates
+                    _logger.LogInformation("➕ [API] Adding context partner {PartnerId} to funding partners", request.PartnerId.Value);
+                    opportunityRequest.FundingPartners.Add(new OpportunityFundingPartnerRequest
                     {
-                        opportunityRequest.FundingPartners.Add(new OpportunityFundingPartnerRequest
-                        {
-                            PartnerId = fundingPartnerId
-                        });
-                    }
+                        PartnerId = request.PartnerId.Value,
+                        Amount = null // User can set later
+                    });
+                }
+                
+                // Add to client partners if user selected client role and not already in array
+                if (request.IsClientPartner && !contextPartnerInClient)
+                {
+                    _logger.LogInformation("➕ [API] Adding context partner {PartnerId} to client partners", request.PartnerId.Value);
+                    opportunityRequest.ClientPartners.Add(new OpportunityClientPartnerRequest
+                    {
+                        PartnerId = request.PartnerId.Value
+                    });
                 }
             }
 
-            if (request.ClientPartners != null)
+            // Add all AI-proposed funding partners
+            if (request.FundingPartners != null && request.FundingPartners.Any())
             {
-                foreach (var clientPartnerId in request.ClientPartners)
-                {
-                    if (clientPartnerId != request.PartnerId) // Avoid duplicates
-                    {
-                        opportunityRequest.ClientPartners.Add(new OpportunityClientPartnerRequest
-                        {
-                            PartnerId = clientPartnerId
-                        });
-                    }
-                }
+                _logger.LogInformation("➕ [API] Adding {Count} AI-proposed funding partners", request.FundingPartners.Count);
+                opportunityRequest.FundingPartners.AddRange(request.FundingPartners);
+            }
+
+            // Add all AI-proposed client partners  
+            if (request.ClientPartners != null && request.ClientPartners.Any())
+            {
+                _logger.LogInformation("➕ [API] Adding {Count} AI-proposed client partners", request.ClientPartners.Count);
+                opportunityRequest.ClientPartners.AddRange(request.ClientPartners);
             }
 
             // Create the opportunity
             var result = await _manager.CreateOpportunityAsync(opportunityRequest);
+
+            // Persist uploaded documents to database if any (from GCS temporary uploads)
+            if (request.NewDocumentStoragePaths != null && request.NewDocumentStoragePaths.Any())
+            {
+                _logger.LogInformation("📄 [API] Persisting {Count} uploaded documents to database for opportunity {OpportunityId}", 
+                    request.NewDocumentStoragePaths.Count, result.Id);
+                
+                for (int i = 0; i < request.NewDocumentStoragePaths.Count; i++)
+                {
+                    try
+                    {
+                        var gcsPath = request.NewDocumentStoragePaths[i];
+                        var mimeType = request.NewDocumentMimeTypes?[i] ?? "application/octet-stream";
+                        var documentTypeId = request.NewDocumentTypeIds?[i];
+                        
+                        // Extract file name from GCS path (gs://bucket/folder/file.ext)
+                        var fileName = System.IO.Path.GetFileName(gcsPath);
+                        
+                        // Create document entity directly
+                        var document = new Document
+                        {
+                            Name = fileName,
+                            StoragePath = gcsPath,
+                            Type = mimeType,
+                            DocumentTypeId = documentTypeId,
+                            CreatedBy = _currentUserId,
+                            CreatedDate = DateTime.UtcNow
+                        };
+                        
+                        _context.Documents.Add(document);
+                        await _context.SaveChangesAsync();
+                        
+                        // Create document relationship to opportunity
+                        var docRelationship = new DocumentRelationship
+                        {
+                            DocumentId = document.Id,
+                            EntityId = result.Id,
+                            EntityType = "Opportunity"
+                        };
+                        
+                        _context.DocumentRelationships.Add(docRelationship);
+                        await _context.SaveChangesAsync();
+                        
+                        _logger.LogInformation("✅ [API] Persisted document {FileName} (ID: {DocumentId}) for opportunity {OpportunityId}", 
+                            fileName, document.Id, result.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "⚠️ Failed to persist document {Index} for opportunity {OpportunityId}", 
+                            i, result.Id);
+                    }
+                }
+            }
+            
+            // Save interaction relationships to OpportunityInteractions table
+            if (request.SourceInteractionIds != null && request.SourceInteractionIds.Any())
+            {
+                _logger.LogInformation("🔗 [API] Saving {Count} interaction relationships for opportunity {OpportunityId}", 
+                    request.SourceInteractionIds.Count, result.Id);
+                
+                foreach (var interactionId in request.SourceInteractionIds)
+                {
+                    try
+                    {
+                        var opportunityInteraction = new OpportunityInteraction
+                        {
+                            OpportunityId = result.Id,
+                            InteractionId = interactionId
+                        };
+                        
+                        _context.OpportunityInteractions.Add(opportunityInteraction);
+                        _logger.LogInformation("✅ [API] Linked interaction {InteractionId} to opportunity {OpportunityId}", 
+                            interactionId, result.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "⚠️ Failed to link interaction {InteractionId} to opportunity {OpportunityId}", 
+                            interactionId, result.Id);
+                    }
+                }
+                
+                await _context.SaveChangesAsync();
+            }
 
             // Assign the current user as Opportunity Manager
             try

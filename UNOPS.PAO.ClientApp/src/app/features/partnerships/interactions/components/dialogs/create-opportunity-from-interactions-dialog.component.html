@@ -920,16 +920,16 @@
                           <h4 class="font-semibold text-gray-900">
                             {{ country.country?.name || country.countryName || 'Unknown Country' }}
                           </h4>
-                          @if (country.country && (country.country?.continent || country.country?.region)) {
+                          @if (country.country && (country.country.continent || country.country.region)) {
                             <p class="text-sm text-gray-600">
-                              @if (country.country?.continent) {
-                                <span>{{ country.country?.continent }}</span>
+                              @if (country.country.continent) {
+                                <span>{{ country.country.continent }}</span>
                               }
-                              @if (country.country?.continent && country.country?.region) {
+                              @if (country.country.continent && country.country.region) {
                                 <span>, </span>
                               }
-                              @if (country.country?.region) {
-                                <span>{{ country.country?.region }}</span>
+                              @if (country.country.region) {
+                                <span>{{ country.country.region }}</span>
                               }
                             </p>
                           }
@@ -1009,30 +1009,30 @@
               </h3>
             </div>
             <div class="p-4 space-y-4">
-              <!-- Funding Partners -->
-              @if (proposedOpportunity()!.opportunity.fundingPartners && proposedOpportunity()!.opportunity.fundingPartners!.length > 0) {
+              <!-- Partners (Unified with Role Selection) -->
+              @if (allProposedPartners() && allProposedPartners().length > 0) {
                 <div>
                   <div class="flex items-center justify-between mb-3">
                     <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <i class="pi pi-dollar text-unops-success text-base"></i>
-                      {{ 'label.opportunity.fundingPartners' | translate }} ({{ proposedOpportunity()!.opportunity.fundingPartners!.length }})
+                      <i class="pi pi-building text-unops-primary text-base"></i>
+                      {{ 'label.opportunity.partners' | translate }} ({{ allProposedPartners().length }})
                     </label>
                     <div class="flex items-center gap-2">
                       <p-checkbox
                         [binary]="true"
-                        [ngModel]="isFieldSelected('fundingPartners')"
-                        (ngModelChange)="toggleField('fundingPartners')"
-                        inputId="field-fundingPartners"
+                        [ngModel]="areAllPartnersSelected()"
+                        (ngModelChange)="toggleAllPartners()"
+                        inputId="field-all-partners"
                       />
-                      <label for="field-fundingPartners" class="cursor-pointer text-sm font-medium text-gray-700">
-                        {{ 'label.selectSection' | translate }}
+                      <label for="field-all-partners" class="cursor-pointer text-sm font-medium text-gray-700">
+                        {{ 'label.selectAll' | translate }}
                       </label>
                     </div>
                   </div>
                   <div class="space-y-3">
-                    @for (partner of proposedOpportunity()!.opportunity.fundingPartners; track $index) {
+                    @for (partner of allProposedPartners(); track partner.partnerId) {
                       <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-start justify-between mb-3">
                           <div class="flex items-center gap-3 flex-1">
                             <!-- Partner Logo -->
                             <img
@@ -1042,18 +1042,12 @@
                             />
                             <div class="flex-1">
                               <div class="font-semibold text-gray-900">{{ partner.partnerName }}</div>
-                              <div class="grid grid-cols-2 gap-2 text-sm mt-2">
-                                <div>
+                              @if (partner.amount) {
+                                <div class="text-sm text-gray-600 mt-1">
                                   <span class="text-gray-600">{{ 'label.amount' | translate }}:</span>
-                                  <span class="font-semibold ml-2">{{ partner.amount ? ('$' + (partner.amount | number)) : '-' }}</span>
+                                  <span class="font-semibold ml-2">${{ partner.amount | number }}</span>
                                 </div>
-                                @if (partner.feeAmount) {
-                                  <div>
-                                    <span class="text-gray-600">{{ 'label.fee' | translate }}:</span>
-                                    <span class="font-semibold ml-2">${{ partner.feeAmount | number }}</span>
-                                  </div>
-                                }
-                              </div>
+                              }
                               @if (partner.partnershipAgreementReference) {
                                 <div class="text-xs text-blue-700 mt-2">
                                   <i class="pi pi-file"></i>
@@ -1065,58 +1059,40 @@
                           <div class="flex items-center gap-2">
                             <p-checkbox
                               [binary]="true"
-                              [ngModel]="isFieldSelected('fundingPartners[' + $index + ']')"
-                              (ngModelChange)="toggleField('fundingPartners[' + $index + ']')"
-                              [inputId]="'funding-partner-' + $index"
+                              [ngModel]="isPartnerSelected(partner.partnerId)"
+                              (ngModelChange)="togglePartnerSelection(partner.partnerId)"
+                              [inputId]="'partner-' + partner.partnerId"
                             />
                           </div>
                         </div>
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-
-              <!-- Client Partners -->
-              @if (proposedOpportunity()!.opportunity.clientPartners && proposedOpportunity()!.opportunity.clientPartners!.length > 0) {
-                <div>
-                  <div class="flex items-center justify-between mb-3">
-                    <label class="block text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      <i class="pi pi-building text-unops-primary text-base"></i>
-                      {{ 'label.opportunity.clientPartners' | translate }} ({{ proposedOpportunity()!.opportunity.clientPartners!.length }})
-                    </label>
-                    <div class="flex items-center gap-2">
-                      <p-checkbox
-                        [binary]="true"
-                        [ngModel]="isFieldSelected('clientPartners')"
-                        (ngModelChange)="toggleField('clientPartners')"
-                        inputId="field-clientPartners"
-                      />
-                      <label for="field-clientPartners" class="cursor-pointer text-sm font-medium text-gray-700">
-                        {{ 'label.selectSection' | translate }}
-                      </label>
-                    </div>
-                  </div>
-                  <div class="space-y-2">
-                    @for (partner of proposedOpportunity()!.opportunity.clientPartners; track $index) {
-                      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center justify-between">
-                        <div class="flex items-center gap-3 flex-1">
-                          <img
-                            [src]="partner.partnerLogoUrl || 'assets/images/Partner.png'"
-                            [alt]="partner.partnerName"
-                            class="w-10 h-10 object-contain rounded"
-                          />
-                          <div class="flex-1">
-                            <div class="font-semibold text-gray-900">{{ partner.partnerName }}</div>
+                        
+                        <!-- Partner Role Selection -->
+                        <div class="flex items-center gap-4 pl-15 border-t border-yellow-300 pt-3">
+                          <div class="text-sm text-gray-600 font-medium">{{ 'label.partnerRole' | translate }}:</div>
+                          <div class="flex items-center gap-2">
+                            <p-checkbox
+                              [binary]="true"
+                              [ngModel]="partnerRoleSelections().get(partner.partnerId)?.isFunding || false"
+                              (ngModelChange)="togglePartnerRole(partner.partnerId, 'funding')"
+                              [inputId]="'funding-' + partner.partnerId"
+                            />
+                            <label [for]="'funding-' + partner.partnerId" class="cursor-pointer text-sm text-gray-700">
+                              <i class="pi pi-dollar text-unops-success mr-1"></i>
+                              {{ 'label.fundingPartner' | translate }}
+                            </label>
                           </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                          <p-checkbox
-                            [binary]="true"
-                            [ngModel]="isFieldSelected('clientPartners[' + $index + ']')"
-                            (ngModelChange)="toggleField('clientPartners[' + $index + ']')"
-                            [inputId]="'client-partner-' + $index"
-                          />
+                          <div class="flex items-center gap-2">
+                            <p-checkbox
+                              [binary]="true"
+                              [ngModel]="partnerRoleSelections().get(partner.partnerId)?.isClient || false"
+                              (ngModelChange)="togglePartnerRole(partner.partnerId, 'client')"
+                              [inputId]="'client-' + partner.partnerId"
+                            />
+                            <label [for]="'client-' + partner.partnerId" class="cursor-pointer text-sm text-gray-700">
+                              <i class="pi pi-building text-unops-primary mr-1"></i>
+                              {{ 'label.clientPartner' | translate }}
+                            </label>
+                          </div>
                         </div>
                       </div>
                     }
@@ -1255,6 +1231,15 @@
         severity="secondary"
         (click)="cancel()"
         [disabled]="generating()">
+      </button>
+      <button
+        pButton
+        [label]="'button.create' | translate"
+        icon="pi pi-plus"
+        severity="success"
+        [disabled]="!canCreate()"
+        [loading]="generating()"
+        (click)="createDirectly()">
       </button>
       <button
         pButton

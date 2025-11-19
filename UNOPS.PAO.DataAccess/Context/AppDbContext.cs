@@ -61,6 +61,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<OpportunityDeliverable> OpportunityDeliverables { get; set; }
     public DbSet<OpportunityCountry> OpportunityCountries { get; set; }
     public DbSet<OpportunitySDG> OpportunitySDGs { get; set; }
+    public DbSet<OpportunityInteraction> OpportunityInteractions { get; set; }
 
     // Infrastructure entities
     public DbSet<WorkflowStage> WorkflowStages { get; set; }

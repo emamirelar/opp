@@ -185,17 +185,34 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     const hasExistingDocs = this.selectedExistingDocumentIds().length > 0;
     const hasAnySources = hasInteractions || hasNewDocs || hasExistingDocs;
     
-    const hasPartner = this.partnerId() && this.partnerId() > 0;
-    const hasRoleIfPartner = !hasPartner || (this.isFundingPartner() || this.isClientPartner());
+    // Only require partner role selection when partner fields are shown (list-view mode from partner context)
+    const needsPartnerRole = this.showPartnerFields();
+    const hasRoleIfNeeded = !needsPartnerRole || (this.isFundingPartner() || this.isClientPartner());
     
     return hasAnySources &&
            this.opportunityName().trim().length > 0 &&
            this.opportunityDescription().trim().length > 0 &&
-           hasRoleIfPartner;
+           hasRoleIfNeeded;
+  });
+  
+  readonly canCreate = computed(() => {
+    // Can create if name and description are provided
+    const hasBasicInfo = this.opportunityName().trim().length > 0 &&
+                        this.opportunityDescription().trim().length > 0;
+    
+    // If in partner context (showPartnerFields), need role selection
+    const needsPartnerRole = this.showPartnerFields();
+    const hasRoleIfNeeded = !needsPartnerRole || (this.isFundingPartner() || this.isClientPartner());
+    
+    return hasBasicInfo && hasRoleIfNeeded;
   });
   
   readonly showPartnerFields = computed(() => {
-    return this.partnerId() && this.partnerId() > 0;
+    // Only show partner role selection when:
+    // 1. We have a partner ID (partner context)
+    // 2. Mode is 'list-view' (from partner opportunities tab, not from interaction detail)
+    const cfg = this.config();
+    return this.partnerId() && this.partnerId() > 0 && cfg.mode === 'list-view';
   });
   
   readonly selectedFieldsCount = computed(() => {
@@ -235,6 +252,50 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     const total = this.totalProposalFields();
     const selected = this.selectedFieldsCount();
     return total > 0 && total === selected;
+  });
+  
+  // Partner role selection management
+  // Map<partnerId, {isFunding: boolean, isClient: boolean, selected: boolean}>
+  readonly partnerRoleSelections = signal<Map<number, { isFunding: boolean, isClient: boolean, selected: boolean }>>(new Map());
+  
+  // Unified partner list merging funding and client partners
+  readonly allProposedPartners = computed(() => {
+    const proposal = this.proposedOpportunity();
+    if (!proposal || !proposal.opportunity) return [];
+    
+    const partnerMap = new Map<number, any>();
+    
+    // Add funding partners
+    if (proposal.opportunity.fundingPartners) {
+      for (const fp of proposal.opportunity.fundingPartners) {
+        if (!fp.partnerId) continue; // Skip if partnerId is undefined
+        partnerMap.set(fp.partnerId, { 
+          ...fp, 
+          roles: { isFunding: true, isClient: false }
+        });
+      }
+    }
+    
+    // Add/merge client partners
+    if (proposal.opportunity.clientPartners) {
+      for (const cp of proposal.opportunity.clientPartners) {
+        if (!cp.partnerId) continue; // Skip if partnerId is undefined
+        const existing = partnerMap.get(cp.partnerId);
+        if (existing) {
+          existing.roles.isClient = true;
+        } else {
+          partnerMap.set(cp.partnerId, { 
+            ...cp, 
+            partnerName: cp.partnerName,
+            partnerLogoUrl: cp.partnerLogoUrl,
+            partnerId: cp.partnerId,
+            roles: { isFunding: false, isClient: true }
+          });
+        }
+      }
+    }
+    
+    return Array.from(partnerMap.values());
   });
 
   readonly filteredAvailableInteractions = computed(() => {
@@ -327,7 +388,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
    */
   private async loadInteractionSummary(interactionId: number): Promise<InteractionSummary | null> {
     try {
-      const response = await this.http.get<any>(`/api/interaction/${interactionId}`, { observe: 'response' }).toPromise();
+      const response = await this.http.get<any>(`/api/interactions/${interactionId}`, { observe: 'response' }).toPromise();
       if (response && response.body) {
         return this.mapToInteractionSummary(response.body);
       }
@@ -1011,42 +1072,37 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
             });
           }
         } else {
-          // File is already PDF - we'll pass the Google Drive ID to backend
-          // The backend can download it directly from Google Drive and upload to GCS
-          // For now, we'll export it as PDF (which won't modify PDF files) and upload
-          if (!this.googleDriveAuthAvailable) {
-            throw new Error('Google Drive auth not available');
-          }
+          // File is already PDF - just link it (same as opportunity-documents component)
+          // This avoids downloading and re-uploading, uses direct Google Drive reference
+          this.uploadProgress.set(`Linking ${driveFile.name} from Drive...`);
           
-          this.uploadProgress.set(`Exporting ${driveFile.name} from Drive...`);
-          const result = await firstValueFrom(
-            this.googleDriveService.exportDriveFileAsPdf(driveFile.id, driveFile.name || '')
-          );
-          
-          // Convert base64 to File object
-          const blob = this.base64ToBlob(result.data, result.mimeType);
-          const pdfFile = new File([blob], result.name, { type: driveFile.mimeType || result.mimeType });
-          
-          // Upload to GCS
-          this.uploadProgress.set(`Uploading ${driveFile.name} to cloud storage...`);
-          const formData = new FormData();
-          formData.append('File', pdfFile);
-          formData.append('Name', driveFile.name);
-          formData.append('UploadToGCS', 'true');
-          formData.append('SkipDatabaseSave', 'true'); // Don't save to database yet
-          formData.append('GoogleId', driveFile.id); // Keep Google Drive ID
-          
-          const response = await this.http
-            .post<any>('/api/document/upload', formData)
-            .toPromise();
-          
-          if (response && response.storagePath) {
-            uploadedDocs.push({
-              gcsPath: response.storagePath,
-              mimeType: pdfFile.type,
+          try {
+            const linkModel = {
+              link: `https://drive.google.com/file/d/${driveFile.id}/view`,
+              googleId: driveFile.id,
               name: driveFile.name,
-              documentTypeId: driveFileWithType.documentTypeId
-            });
+              type: driveFile.mimeType,
+              parentEntityName: 'Opportunity',
+              parentEntityId: 0, // Temporary - not saved to database yet
+              documentTypeId: driveFileWithType.documentTypeId,
+              skipDatabaseSave: true // Custom flag to indicate we're only getting the GCS path
+            };
+
+            const response = await this.http
+              .post<any>('/api/document/link', linkModel)
+              .toPromise();
+
+            if (response && response.storagePath) {
+              uploadedDocs.push({
+                gcsPath: response.storagePath,
+                mimeType: driveFile.mimeType,
+                name: driveFile.name,
+                documentTypeId: driveFileWithType.documentTypeId
+              });
+            }
+          } catch (error: any) {
+            console.error('Error linking PDF from Drive:', error);
+            throw new Error(`Failed to link "${driveFile.name}": ${error.message || 'Unknown error'}`);
           }
         }
       }
@@ -1236,6 +1292,67 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
   backToEdit(): void {
     this.currentStep.set('select');
   }
+  
+  /**
+   * Create opportunity directly without AI generation
+   * Used when user just wants to create with name and description
+   */
+  async createDirectly(): Promise<void> {
+    if (!this.canCreate()) {
+      return;
+    }
+    
+    this.generating.set(true);
+    
+    try {
+      console.log('📤 Creating opportunity directly (without AI)');
+      
+      // Build create request with basic info
+      const createRequest: any = {
+        name: this.opportunityName(),
+        description: this.opportunityDescription(),
+        partnerId: this.partnerId() || 0,
+        isFundingPartner: this.isFundingPartner(),
+        isClientPartner: this.isClientPartner(),
+        sourceInteractionIds: this.selectedInteractions().map(i => i.id),
+        
+        // Include uploaded document information for database persistence
+        newDocumentStoragePaths: this.uploadedDocuments().map(d => d.gcsPath),
+        newDocumentMimeTypes: this.uploadedDocuments().map(d => d.mimeType),
+        newDocumentTypeIds: this.uploadedDocuments().map(d => d.documentTypeId)
+      };
+      
+      console.log('📤 Sending direct create request:', createRequest);
+      
+      // Call backend API to create opportunity
+      const response = await firstValueFrom(
+        this.http.post<any>('/api/opportunity/create-from-proposal', createRequest)
+      );
+      
+      console.log('✅ Opportunity created:', response);
+      
+      this.feedbackDialogService.showSuccessToast({
+        summary: this.translateService.instant('common.success.title'),
+        detail: this.translateService.instant('message.opportunityCreated')
+      });
+      
+      // Emit the created opportunity
+      this.opportunityCreated.emit(response);
+      
+      // Close dialog and reset
+      this.reset();
+      this.visible.set(false);
+      
+    } catch (error: any) {
+      console.error('❌ Error creating opportunity:', error);
+      this.feedbackDialogService.showErrorToast({
+        summary: this.translateService.instant('common.error.title'),
+        detail: error?.error?.detail || this.translateService.instant('message.error.creatingOpportunity')
+      });
+    } finally {
+      this.generating.set(false);
+    }
+  }
 
   /**
    * Create opportunity from reviewed proposal
@@ -1260,7 +1377,12 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         partnerId: this.partnerId() || 0,
         isFundingPartner: this.isFundingPartner(),
         isClientPartner: this.isClientPartner(),
-        sourceInteractionIds: proposal.sourceInteractionIds || []
+        sourceInteractionIds: proposal.sourceInteractionIds || [],
+        
+        // Include uploaded document information for database persistence
+        newDocumentStoragePaths: this.uploadedDocuments().map(d => d.gcsPath),
+        newDocumentMimeTypes: this.uploadedDocuments().map(d => d.mimeType),
+        newDocumentTypeIds: this.uploadedDocuments().map(d => d.documentTypeId)
       };
       
       // Add optional fields only if selected
@@ -1314,18 +1436,49 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       }
       
       if (this.isFieldSelected('sdGs') && proposal.opportunity.sdGs && proposal.opportunity.sdGs.length > 0) {
-        // Extract SDG IDs from the resolved objects
-        createRequest.sdGs = proposal.opportunity.sdGs.map((sdg: any) => sdg.sdgId || sdg.id).filter(id => id);
+        // Map SDGs to proper structure with sdgId, isPrimary, and notes
+        createRequest.sdGs = proposal.opportunity.sdGs.map((sdg: any) => ({
+          sdgId: sdg.sdgId || sdg.id,
+          isPrimary: sdg.isPrimary || false,
+          notes: sdg.notes || null
+        })).filter(sdg => sdg.sdgId);
       }
       
-      if (this.isFieldSelected('fundingPartners') && proposal.opportunity.fundingPartners && proposal.opportunity.fundingPartners.length > 0) {
-        // Extract partner IDs from the resolved objects
-        createRequest.fundingPartners = proposal.opportunity.fundingPartners.map((p: any) => p.partnerId || p.id).filter(id => id);
+      // Handle partners based on user's role selections
+      const fundingPartners: any[] = [];
+      const clientPartners: any[] = [];
+      
+      for (const partner of this.allProposedPartners()) {
+        const roleSelection = this.partnerRoleSelections().get(partner.partnerId);
+        if (roleSelection && roleSelection.selected) {
+          if (roleSelection.isFunding) {
+            // Add to funding partners with full structure
+            fundingPartners.push({
+              partnerId: partner.partnerId,
+              amount: partner.amount || null,
+              percentage: partner.percentage || null,
+              feePercentage: partner.feePercentage || null,
+              feeAmount: partner.feeAmount || null,
+              feeAmountUSD: partner.feeAmountUSD || null,
+              isAmountBasedFee: partner.isAmountBasedFee || false,
+              partnershipAgreementReference: partner.partnershipAgreementReference || null
+            });
+          }
+          if (roleSelection.isClient) {
+            // Add to client partners with proper structure
+            clientPartners.push({
+              partnerId: partner.partnerId
+            });
+          }
+        }
       }
       
-      if (this.isFieldSelected('clientPartners') && proposal.opportunity.clientPartners && proposal.opportunity.clientPartners.length > 0) {
-        // Extract partner IDs from the resolved objects
-        createRequest.clientPartners = proposal.opportunity.clientPartners.map((p: any) => p.partnerId || p.id).filter(id => id);
+      if (fundingPartners.length > 0) {
+        createRequest.fundingPartners = fundingPartners;
+      }
+      
+      if (clientPartners.length > 0) {
+        createRequest.clientPartners = clientPartners;
       }
       
       if (this.isFieldSelected('stakeholders') && proposal.opportunity.stakeholders && proposal.opportunity.stakeholders.length > 0) {
@@ -1333,8 +1486,10 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       }
       
       if (this.isFieldSelected('countries') && proposal.opportunity.countries && proposal.opportunity.countries.length > 0) {
-        // Extract country IDs from the resolved objects
-        createRequest.countries = proposal.opportunity.countries.map((c: any) => c.countryId || c.id).filter(id => id);
+        // Map countries to just IDs (backend expects List<int>)
+        createRequest.countries = proposal.opportunity.countries
+          .map((c: any) => c.country?.id || c.countryId || c.id)
+          .filter((id: number) => id != null);
       }
       
       console.log('📤 Sending create request:', createRequest);
@@ -1450,6 +1605,135 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     if (opp.sdGs && opp.sdGs.length > 0) selected.set('sdGs', true);
     
     this.selectedFields.set(selected);
+    
+    // Initialize partner role selections
+    this.initializePartnerRoleSelections();
+  }
+  
+  /**
+   * Initialize partner role selections from AI proposal
+   */
+  private initializePartnerRoleSelections(): void {
+    const proposal = this.proposedOpportunity();
+    if (!proposal || !proposal.opportunity) return;
+    
+    const roleMap = new Map<number, { isFunding: boolean, isClient: boolean, selected: boolean }>();
+    
+    // Mark funding partners
+    if (proposal.opportunity.fundingPartners) {
+      for (const fp of proposal.opportunity.fundingPartners) {
+        if (!fp.partnerId) continue; // Skip if partnerId is undefined
+        const existing = roleMap.get(fp.partnerId);
+        roleMap.set(fp.partnerId, { 
+          isFunding: true, 
+          isClient: existing?.isClient || false,
+          selected: true // Auto-select all partners by default
+        });
+      }
+    }
+    
+    // Mark client partners
+    if (proposal.opportunity.clientPartners) {
+      for (const cp of proposal.opportunity.clientPartners) {
+        if (!cp.partnerId) continue; // Skip if partnerId is undefined
+        const existing = roleMap.get(cp.partnerId);
+        roleMap.set(cp.partnerId, { 
+          isFunding: existing?.isFunding || false, 
+          isClient: true,
+          selected: existing?.selected !== undefined ? existing.selected : true // Auto-select by default
+        });
+      }
+    }
+    
+    this.partnerRoleSelections.set(roleMap);
+  }
+  
+  /**
+   * Toggle partner role (funding or client)
+   */
+  togglePartnerRole(partnerId: number, role: 'funding' | 'client'): void {
+    const current = this.partnerRoleSelections().get(partnerId);
+    if (!current) return;
+    
+    const updated = new Map(this.partnerRoleSelections());
+    
+    if (role === 'funding') {
+      current.isFunding = !current.isFunding;
+    } else {
+      current.isClient = !current.isClient;
+    }
+    
+    updated.set(partnerId, current);
+    this.partnerRoleSelections.set(updated);
+  }
+  
+  /**
+   * Toggle partner selection checkbox
+   */
+  togglePartnerSelection(partnerId: number): void {
+    const current = this.partnerRoleSelections().get(partnerId);
+    if (!current) return;
+    
+    const updated = new Map(this.partnerRoleSelections());
+    
+    // Toggle selection
+    current.selected = !current.selected;
+    
+    // If selecting, enable default roles based on what the partner was proposed as
+    if (current.selected) {
+      const partner = this.allProposedPartners().find(p => p.partnerId === partnerId);
+      if (partner) {
+        current.isFunding = partner.roles.includes('funding');
+        current.isClient = partner.roles.includes('client');
+      }
+    }
+    
+    updated.set(partnerId, current);
+    this.partnerRoleSelections.set(updated);
+  }
+  
+  /**
+   * Check if partner is selected
+   */
+  isPartnerSelected(partnerId: number): boolean {
+    return this.partnerRoleSelections().get(partnerId)?.selected || false;
+  }
+  
+  /**
+   * Toggle all partners selection
+   */
+  toggleAllPartners(): void {
+    const allPartners = this.allProposedPartners();
+    const allSelected = allPartners.every(p => this.isPartnerSelected(p.partnerId));
+    
+    const updated = new Map(this.partnerRoleSelections());
+    for (const partner of allPartners) {
+      const current = updated.get(partner.partnerId);
+      if (current) {
+        // Toggle selection
+        current.selected = !allSelected;
+        
+        // If selecting all, also enable their default roles
+        if (!allSelected) {
+          // Set funding/client roles based on what the partner was proposed as
+          current.isFunding = partner.roles.includes('funding');
+          current.isClient = partner.roles.includes('client');
+        }
+        
+        updated.set(partner.partnerId, current);
+      }
+    }
+    
+    this.partnerRoleSelections.set(updated);
+  }
+  
+  /**
+   * Check if all partners are selected
+   */
+  areAllPartnersSelected(): boolean {
+    const allPartners = this.allProposedPartners();
+    if (allPartners.length === 0) return false;
+    return allPartners.every(p => this.isPartnerSelected(p.partnerId));
   }
 
   /**
