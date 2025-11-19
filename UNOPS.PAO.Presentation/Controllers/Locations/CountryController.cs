@@ -122,4 +122,32 @@ public class CountryController : BaseController
             return _mapper.Map<CountryModel>(country);
         });
     }
+
+    /// <summary>
+    /// Performs dynamic search across country names and artifact values.
+    /// Returns grouped results with match context for enhanced user experience.
+    /// Uses IsSearchable property on ArtifactTypes to determine which artifacts to search.
+    /// </summary>
+    /// <example_uses>
+    /// Search countries by name and artifact values
+    /// Find countries with specific strategic documents
+    /// Locate countries by searchable index values
+    /// Search across multiple artifact types
+    /// </example_uses>
+    /// <when_to_use>
+    /// Use this when the user needs advanced country search with artifact matching.
+    /// Ideal for searching countries by metrics, strategies, or other searchable attributes.
+    /// </when_to_use>
+    /// <returns>Grouped search results with match context and relevance scores</returns>
+    [HttpPost("dynamic-search")]
+    [AccessControlled(EntityTypes.Country, "read")]
+    public async Task<ActionResult<CountryDynamicSearchResponse>> DynamicSearchCountries(
+        [FromBody] CountryDynamicSearchRequest request)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _countryService.DynamicSearchCountriesAsync(request);
+            return result;
+        });
+    }
 }

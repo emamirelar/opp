@@ -96,6 +96,14 @@ public static class ArtifactDataTypeSeeder
             },
             new ArtifactDataType
             {
+                Name = "boolean",
+                Description = "Boolean data type for storing boolean values",
+                Order = 4,
+                Status = EntityStatus.Active,
+                IsDeleted = false
+            },
+            new ArtifactDataType
+            {
                 Name = "document",
                 Description = "Document reference data type for linking to Document entities",
                 Order = 5,

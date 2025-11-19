@@ -84,10 +84,44 @@ public class EntityArtifactManager : IEntityArtifactManager
             ApplicableEntityTypes = at.ApplicableEntityTypes,
             IsUsedForCalculations = at.IsUsedForCalculations,
             IsUsedForAI = at.IsUsedForAI,
-            Order = at.Order
+            Order = at.Order,
+            Source = at.Source,
+            IsSearchable = at.IsSearchable,
+            AllowBulkUpdate = at.AllowBulkUpdate
         }).ToList();
     }
 
+    public async Task<IEnumerable<ArtifactTypeResponse>> GetBulkUpdateArtifactTypesByEntityTypeAsync(string entityType)
+    {
+        var artifactTypes = await artifactTypeRepository
+            .GetAll()
+            .Include(at => at.ArtifactDataType)
+            .Where(at => at.ApplicableEntityTypes != null && 
+                        at.ApplicableEntityTypes.Contains(entityType) &&
+                        at.AllowBulkUpdate == true)
+            .OrderBy(at => at.Order)
+            .ThenBy(at => at.Name)
+            .ToListAsync();
+
+        return artifactTypes.Select(at => new ArtifactTypeResponse
+        {
+            Id = at.Id,
+            Name = at.Name,
+            ArtifactTypeCode = at.ArtifactTypeCode,
+            ArtifactDataTypeId = at.ArtifactDataTypeId,
+            ArtifactDataTypeName = at.ArtifactDataType?.Name,
+            Description = at.Description,
+            Category = at.Category,
+            ApplicableEntityTypes = at.ApplicableEntityTypes,
+            IsUsedForCalculations = at.IsUsedForCalculations,
+            IsUsedForAI = at.IsUsedForAI,
+            Order = at.Order,
+            Source = at.Source,
+            IsSearchable = at.IsSearchable,
+            AllowBulkUpdate = at.AllowBulkUpdate
+        }).ToList();
+    }
+    
     public async Task<IEnumerable<EntityRecordOption>> GetEntityRecordsAsync(string entityType, string? searchTerm = null)
     {
         // Dynamically query the appropriate table based on entity type
@@ -215,6 +249,7 @@ public class EntityArtifactManager : IEntityArtifactManager
             Name = artifact.Name,
             ValueText = artifact.ValueText,
             ValueNumber = artifact.ValueNumber,
+            ValueBoolean = artifact.ValueBoolean,
             ValueDate = artifact.ValueDate,
             ValueJson = artifact.ValueJson,
             DocumentId = artifact.DocumentId,
@@ -254,6 +289,7 @@ public class EntityArtifactManager : IEntityArtifactManager
             existingArtifact.Name = request.Name;
             existingArtifact.ValueText = request.ValueText;
             existingArtifact.ValueNumber = request.ValueNumber;
+            existingArtifact.ValueBoolean = request.ValueBoolean;
             existingArtifact.ValueDate = request.ValueDate;
             existingArtifact.ValueJson = request.ValueJson;
             existingArtifact.DocumentId = request.DocumentId;
@@ -276,6 +312,7 @@ public class EntityArtifactManager : IEntityArtifactManager
                 Name = request.Name,
                 ValueText = request.ValueText,
                 ValueNumber = request.ValueNumber,
+                ValueBoolean = request.ValueBoolean,
                 ValueDate = request.ValueDate,
                 ValueJson = request.ValueJson,
                 DocumentId = request.DocumentId,
@@ -314,6 +351,7 @@ public class EntityArtifactManager : IEntityArtifactManager
             Name = savedArtifact.Name,
             ValueText = savedArtifact.ValueText,
             ValueNumber = savedArtifact.ValueNumber,
+            ValueBoolean = savedArtifact.ValueBoolean,
             ValueDate = savedArtifact.ValueDate,
             ValueJson = savedArtifact.ValueJson,
             DocumentId = savedArtifact.DocumentId,
@@ -360,6 +398,7 @@ public class EntityArtifactManager : IEntityArtifactManager
             Name = artifact.Name,
             ValueText = artifact.ValueText,
             ValueNumber = artifact.ValueNumber,
+            ValueBoolean = artifact.ValueBoolean,
             ValueDate = artifact.ValueDate,
             ValueJson = artifact.ValueJson,
             DocumentId = artifact.DocumentId,
@@ -635,6 +674,15 @@ public class EntityArtifactManager : IEntityArtifactManager
                                     }
                                     break;
 
+                                case "boolean":
+                                case "bool":
+                                    if (TryParseFlexibleBoolean(cellValue, out var boolValue))
+                                    {
+                                        valueUnchanged = existingArtifact.ValueBoolean.HasValue && 
+                                                        existingArtifact.ValueBoolean.Value == boolValue;
+                                    }
+                                    break;
+
                                 case "date":
                                 case "datetime":
                                     if (DateTime.TryParse(cellValue, out var dateValue))
@@ -695,6 +743,18 @@ public class EntityArtifactManager : IEntityArtifactManager
                                 else
                                 {
                                     throw new FormatException($"Invalid number format: {cellValue}");
+                                }
+                                break;
+
+                            case "boolean":
+                            case "bool":
+                                if (TryParseFlexibleBoolean(cellValue, out var boolValue))
+                                {
+                                    upsertRequest.ValueBoolean = boolValue;
+                                }
+                                else
+                                {
+                                    throw new FormatException($"Invalid boolean format: {cellValue}. Expected 'true', 'false', '1', or '0'.");
                                 }
                                 break;
 
@@ -877,6 +937,10 @@ public class EntityArtifactManager : IEntityArtifactManager
             case "decimal":
                 return artifact.ValueNumber?.ToString();
             
+            case "boolean":
+            case "bool":
+                return artifact.ValueBoolean?.ToString();
+            
             case "date":
             case "datetime":
                 return artifact.ValueDate?.ToString("yyyy-MM-dd");
@@ -887,6 +951,37 @@ public class EntityArtifactManager : IEntityArtifactManager
             default:
                 return artifact.ValueText;
         }
+    }
+
+    // Helper method to parse boolean values with flexible formats
+    // Accepts: true, false, TRUE, FALSE, 1, 0
+    private bool TryParseFlexibleBoolean(string value, out bool result)
+    {
+        result = false;
+        
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+        
+        var trimmedValue = value.Trim();
+        
+        // Handle standard boolean strings (case-insensitive)
+        if (bool.TryParse(trimmedValue, out result))
+            return true;
+        
+        // Handle numeric representations
+        if (trimmedValue == "1")
+        {
+            result = true;
+            return true;
+        }
+        
+        if (trimmedValue == "0")
+        {
+            result = false;
+            return true;
+        }
+        
+        return false;
     }
 
     // Helper method to escape CSV values

@@ -160,11 +160,93 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
 
         var model = mapper.Map<OpportunityModel>(entity);
+        
+        // Enrich country models with organization unit hierarchy
+        if (model.Countries != null && model.Countries.Any())
+        {
+            await EnrichCountriesWithOrgUnitHierarchyAsync(model.Countries);
+        }
 
         // Compute statistics
         model.Stats = ComputeOpportunityStats(entity);
 
         return model;
+    }
+    
+    /// <summary>
+    /// Enriches country models with their organization unit hierarchy chains
+    /// </summary>
+    private async Task EnrichCountriesWithOrgUnitHierarchyAsync(IEnumerable<OpportunityCountryModel> countries)
+    {
+        foreach (var country in countries)
+        {
+            if (country.Country != null)
+            {
+                var hierarchy = await GetOrganizationUnitHierarchyForCountryAsync(country.Country.Id);
+                country.Country.OrganizationUnitHierarchy = hierarchy;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Gets the organization unit hierarchy chain for a given country
+    /// Returns the chain from root to the country's org unit (e.g., OPS → APR → B5101)
+    /// </summary>
+    private async Task<List<UNOPS.PAO.Models.Locations.OrganizationUnitHierarchyNode>?> GetOrganizationUnitHierarchyForCountryAsync(int countryId)
+    {
+        // Find the organization unit relationship for this country
+        var orgUnitRelationship = await context.Set<OrganizationUnitRelationship>()
+            .Include(r => r.OrganizationHierarchy)
+                .ThenInclude(oh => oh!.Parent)
+            .FirstOrDefaultAsync(r => 
+                r.EntityType == "Country" && 
+                r.EntityId == countryId && 
+                !r.IsDeleted);
+        
+        if (orgUnitRelationship?.OrganizationHierarchy == null)
+        {
+            return null;
+        }
+        
+        // Build the hierarchy chain from this org unit to the root
+        var hierarchyChain = new List<UNOPS.PAO.Models.Locations.OrganizationUnitHierarchyNode>();
+        var currentOrgUnit = orgUnitRelationship.OrganizationHierarchy;
+        
+        while (currentOrgUnit != null)
+        {
+            hierarchyChain.Add(new UNOPS.PAO.Models.Locations.OrganizationUnitHierarchyNode
+            {
+                Id = currentOrgUnit.Id,
+                Code = currentOrgUnit.Code,
+                Name = currentOrgUnit.Name,
+                Type = currentOrgUnit.Type.ToString(),
+                Description = currentOrgUnit.Description,
+                ParentId = currentOrgUnit.ParentId,
+                Level = 0 // Will be set after reversing
+            });
+            
+            // Load the parent if it exists
+            if (currentOrgUnit.ParentId.HasValue)
+            {
+                currentOrgUnit = await context.Set<OrganizationHierarchy>()
+                    .FirstOrDefaultAsync(oh => oh.Id == currentOrgUnit.ParentId.Value && !oh.IsDeleted);
+            }
+            else
+            {
+                currentOrgUnit = null;
+            }
+        }
+        
+        // Reverse the chain so it goes from root to leaf (e.g., OPS → APR → B5101)
+        hierarchyChain.Reverse();
+        
+        // Set levels after reversing (root = 0, leaf = highest)
+        for (int i = 0; i < hierarchyChain.Count; i++)
+        {
+            hierarchyChain[i].Level = i;
+        }
+        
+        return hierarchyChain.Any() ? hierarchyChain : null;
     }
 
     public async Task<IEnumerable<OpportunityModel>> GetAllOpportunitiesAsync()

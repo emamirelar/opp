@@ -206,6 +206,31 @@
                 }
               }
 
+              <!-- Boolean input -->
+              @if (selectedDataType() === 'boolean' || selectedDataType() === 'bool') {
+                <p-floatlabel variant="on">
+                  <p-select
+                    id="valueBoolean"
+                    [(ngModel)]="valueBoolean"
+                    [options]="[
+                      { label: 'True', value: true },
+                      { label: 'False', value: false }
+                    ]"
+                    optionLabel="label"
+                    optionValue="value"
+                    [showClear]="false"
+                    [disabled]="canViewOnly()"
+                    class="w-full"
+                  />
+                  <label for="valueBoolean">{{ 'entityArtifact.fields.value' | translate }} *</label>
+                </p-floatlabel>
+                @if (valueBoolean() === null && showValidationError()) {
+                  <p-message severity="error" variant="simple" styleClass="mt-2">
+                    {{ 'entityArtifact.validation.valueRequired' | translate }}
+                  </p-message>
+                }
+              }
+
               <!-- Date input -->
               @if (selectedDataType() === 'date' || selectedDataType() === 'datetime') {
                 <p-floatlabel variant="on">

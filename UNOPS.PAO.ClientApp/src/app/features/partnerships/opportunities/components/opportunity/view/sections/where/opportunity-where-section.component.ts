@@ -26,11 +26,22 @@ import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { TooltipModule } from 'primeng/tooltip';
+import { InputTextModule } from 'primeng/inputtext';
+import { TabsModule } from 'primeng/tabs';
+import { AccordionModule } from 'primeng/accordion';
 import { Opportunity, OpportunityCountry } from '@shared/models/opportunity.model';
 import { OpportunityService } from '@features/partnerships/opportunities/services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 import { Router } from '@angular/router';
-import { ValuesService, SimpleValue } from '@shared/services/api/values.service';
+import { EntityTagsComponent } from '@shared/components/data-display/entity-tags/entity-tags.component';
+import {
+  ValuesService,
+  SimpleValue,
+  CountryDynamicSearchRequest,
+  CountryDynamicSearchResponse,
+  CountrySearchResult
+} from '@shared/services/api/values.service';
+import { Subject, debounceTime, distinctUntilChanged, switchMap, of } from 'rxjs';
 
 /**
  * @class OpportunityWhereSectionComponent
@@ -62,7 +73,11 @@ import { ValuesService, SimpleValue } from '@shared/services/api/values.service'
     SelectModule,
     MessageModule,
     FloatLabelModule,
-    TooltipModule
+    TooltipModule,
+    InputTextModule,
+    TabsModule,
+    AccordionModule,
+    EntityTagsComponent
   ],
   templateUrl: './opportunity-where-section.component.html',
   styleUrls: ['./opportunity-where-section.component.scss'],
@@ -89,20 +104,37 @@ export class OpportunityWhereSectionComponent implements OnInit {
   // Country dialog state
   readonly showCountryDialog = signal(false);
   readonly showValidationError = signal(false);
-  readonly isEditingCountry = signal(false);
-  readonly editingCountryIndex = signal(-1);
-  readonly countryControl = new FormControl<SimpleValue | null>(null);
 
   // Available countries from API
   readonly availableCountries = signal<SimpleValue[]>([]);
+
+  // Dynamic search state
+  readonly searchTerm = new FormControl<string>('');
+  readonly searchResults = signal<CountryDynamicSearchResponse | null>(null);
+  readonly isSearching = signal(false);
+  readonly selectedSearchResults = signal<Set<number>>(new Set());
+  private searchTerms$ = new Subject<string>();
 
   // Computed count
   readonly countryCount = computed(() => {
     return this.opportunity().countries?.length || 0;
   });
 
+  // Computed: Group artifact matches by artifact type
+  readonly groupedArtifactMatches = computed(() => {
+    const results = this.searchResults();
+    if (!results?.groups.artifactMatches) return [];
+
+    return Object.entries(results.groups.artifactMatches).map(([artifactType, matches]) => ({
+      artifactType: matches[0]?.matchReasons[0]?.artifactTypeName || artifactType, // Use proper casing from match reasons
+      matches,
+      count: matches.length
+    }));
+  });
+
   ngOnInit(): void {
     this.loadCountries();
+    this.setupDynamicSearch();
   }
 
   /**
@@ -118,6 +150,90 @@ export class OpportunityWhereSectionComponent implements OnInit {
         console.error('Error loading countries:', error);
       }
     });
+  }
+
+  /**
+   * @description Setup dynamic search with debouncing
+   */
+  setupDynamicSearch(): void {
+    this.searchTerms$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((term: string) => {
+          if (!term || term.trim().length < 2) {
+            return of(null);
+          }
+          this.isSearching.set(true);
+          const request: CountryDynamicSearchRequest = {
+            searchTerm: term.trim(),
+            includeArtifacts: true,
+            maxResults: 100,
+            highlightMatches: true
+          };
+          return this.valuesService.dynamicSearchCountries(request);
+        })
+      )
+      .subscribe({
+        next: (results) => {
+          this.searchResults.set(results);
+          this.isSearching.set(false);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error performing dynamic search:', error);
+          this.isSearching.set(false);
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  /**
+   * @description Handle search term change
+   */
+  onSearchTermChange(term: string): void {
+    this.searchTerms$.next(term);
+  }
+
+  /**
+   * @description Toggle country selection in search results
+   */
+  toggleCountrySelection(countryId: number): void {
+    const selected = this.selectedSearchResults();
+    const newSelected = new Set(selected);
+    
+    if (newSelected.has(countryId)) {
+      newSelected.delete(countryId);
+    } else {
+      newSelected.add(countryId);
+    }
+    
+    this.selectedSearchResults.set(newSelected);
+  }
+
+  /**
+   * @description Select all countries from a specific artifact group
+   */
+  selectArtifactGroup(matches: CountrySearchResult[]): void {
+    const selected = this.selectedSearchResults();
+    const newSelected = new Set(selected);
+    
+    matches.forEach(match => {
+      newSelected.add(match.country.id);
+    });
+    
+    this.selectedSearchResults.set(newSelected);
+    this.feedbackService.showInfoToast({
+      summary: this.translateService.instant('message.info'),
+      detail: this.translateService.instant('message.countriesSelected', { count: matches.length })
+    });
+  }
+
+  /**
+   * @description Clear all search selections
+   */
+  clearSearchSelections(): void {
+    this.selectedSearchResults.set(new Set());
   }
 
   // ========================================================================
@@ -180,31 +296,12 @@ export class OpportunityWhereSectionComponent implements OnInit {
   // ========================================================================
 
   /**
-   * @description Open dialog to add country
+   * @description Open dialog to add countries
    */
   openAddCountryDialog(): void {
-    this.countryControl.setValue(null);
-    this.isEditingCountry.set(false);
-    this.editingCountryIndex.set(-1);
-    this.showValidationError.set(false);
-    this.showCountryDialog.set(true);
-    this.cdr.detectChanges();
-  }
-
-  /**
-   * @description Edit existing country
-   */
-  editCountry(index: number): void {
-    const opp = this.opportunity();
-    const country = opp.countries?.[index];
-    
-    if (!country) return;
-
-    const countrySimpleValue = this.availableCountries().find(c => c.id === country.countryId);
-    
-    this.isEditingCountry.set(true);
-    this.editingCountryIndex.set(index);
-    this.countryControl.setValue(countrySimpleValue || null);
+    this.selectedSearchResults.set(new Set());
+    this.searchTerm.setValue('');
+    this.searchResults.set(null);
     this.showValidationError.set(false);
     this.showCountryDialog.set(true);
     this.cdr.detectChanges();
@@ -215,60 +312,74 @@ export class OpportunityWhereSectionComponent implements OnInit {
    */
   cancelCountryDialog(): void {
     this.showCountryDialog.set(false);
-    this.countryControl.setValue(null);
-    this.isEditingCountry.set(false);
-    this.editingCountryIndex.set(-1);
+    this.selectedSearchResults.set(new Set());
+    this.searchTerm.setValue('');
+    this.searchResults.set(null);
     this.showValidationError.set(false);
     this.cdr.detectChanges();
   }
 
   /**
-   * @description Confirm country dialog (add or update)
+   * @description Confirm country dialog (add multiple countries)
    */
   confirmCountryDialog(): void {
-    const country = this.countryControl.value;
+    // Get selected countries from dynamic search
+    const selectedIds = this.selectedSearchResults();
+    const results = this.searchResults();
+    
+    let countriesToAdd: SimpleValue[] = [];
+    
+    if (results) {
+      countriesToAdd = results.allResults
+        .filter(r => selectedIds.has(r.country.id))
+        .map(r => ({
+          id: r.country.id,
+          name: r.country.name,
+          code: r.country.iso2Code,
+          continent: r.country.continent,
+          region: r.country.region
+        }));
+    }
 
-    if (!country) {
+    // Validation
+    if (countriesToAdd.length === 0) {
       this.showValidationError.set(true);
       return;
     }
 
-    // Check for duplicate country (both when adding and editing)
+    // Check for duplicates
     const opp = this.opportunity();
-    const currentEditingIndex = this.editingCountryIndex();
-    
-    // Check if country already exists (excluding current editing index)
-    const isDuplicate = opp.countries?.some((c, index) => {
-      // Skip the country we're currently editing
-      if (this.isEditingCountry() && index === currentEditingIndex) {
-        return false;
-      }
-      return c.countryId === country.id;
-    });
-    
-    if (isDuplicate) {
+    const existingCountryIds = new Set(
+      opp.countries?.map(c => c.countryId) || []
+    );
+
+    // Filter out duplicates
+    const newCountries = countriesToAdd.filter(c => !existingCountryIds.has(c.id));
+    const duplicateCount = countriesToAdd.length - newCountries.length;
+
+    if (duplicateCount > 0) {
       this.feedbackService.showWarningToast({
         summary: this.translateService.instant('message.warning'),
-        detail: this.translateService.instant('message.validation.countryAlreadyAdded')
+        detail: this.translateService.instant('message.validation.countriesAlreadyAdded', { count: duplicateCount })
       });
+    }
+
+    if (newCountries.length === 0) {
       return;
     }
 
-    if (this.isEditingCountry()) {
-      this.updateCountry(country);
-    } else {
-      this.addCountry(country);
-    }
+    // Add countries
+    this.addMultipleCountries(newCountries);
   }
 
   /**
-   * @description Add new country
+   * @description Add multiple countries
    */
-  addCountry(country: SimpleValue): void {
+  addMultipleCountries(countries: SimpleValue[]): void {
     const opp = this.opportunity();
     const currentCountries = [...(opp.countries || [])];
 
-    const newCountry: OpportunityCountry = {
+    const newCountries: OpportunityCountry[] = countries.map(country => ({
       id: 0,
       opportunityId: opp.id!,
       countryId: country.id,
@@ -282,9 +393,9 @@ export class OpportunityWhereSectionComponent implements OnInit {
         continent: country.continent || null,
         region: country.region || null
       }
-    };
+    }));
 
-    currentCountries.push(newCountry);
+    currentCountries.push(...newCountries);
 
     const updatedOpportunity = {
       ...opp,
@@ -292,40 +403,18 @@ export class OpportunityWhereSectionComponent implements OnInit {
     };
 
     this.opportunityUpdated.emit(updatedOpportunity);
+    this.feedbackService.showSuccessToast({
+      summary: this.translateService.instant('message.success'),
+      detail: this.translateService.instant('message.countriesAdded', { count: countries.length })
+    });
     this.cancelCountryDialog();
   }
 
   /**
-   * @description Update existing country
+   * @description Add new country (single)
    */
-  updateCountry(country: SimpleValue): void {
-    const opp = this.opportunity();
-    const currentCountries = [...(opp.countries || [])];
-    const index = this.editingCountryIndex();
-
-    if (index < 0 || index >= currentCountries.length) {
-      return;
-    }
-
-    currentCountries[index] = {
-      ...currentCountries[index],
-      countryId: country.id,
-      country: {
-        id: country.id,
-        name: country.name,
-        iso2Code: country.code || '',
-        continent: country.continent || null,
-        region: country.region || null
-      }
-    };
-
-    const updatedOpportunity = {
-      ...opp,
-      countries: currentCountries
-    };
-
-    this.opportunityUpdated.emit(updatedOpportunity);
-    this.cancelCountryDialog();
+  addCountry(country: SimpleValue): void {
+    this.addMultipleCountries([country]);
   }
 
   /**
