@@ -13,6 +13,7 @@ import {
   RelatedItems,
   SimilarProjectsResponse,
   SimilarOpportunitiesResponse,
+  RelevantPeopleResponse,
   DSTRisksResponse,
   DSTRecommendationsResponse,
   RiskCreateRequest,
@@ -212,6 +213,20 @@ export class OpportunityService {
    */
   getSimilarOpportunities(id: number, maxResults: number = 6): Observable<SimilarOpportunitiesResponse> {
     return this.http.get<SimilarOpportunitiesResponse>(`${this.apiUrl}/${id}/similar-opportunities`, {
+      params: {
+        maxResults: maxResults.toString()
+      }
+    });
+  }
+
+  /**
+   * Get relevant people from corporate directory for an opportunity using AI-powered semantic search
+   * @param id - Opportunity ID
+   * @param maxResults - Maximum number of relevant people to return (default: 10)
+   * @returns Observable with relevant people response
+   */
+  getRelevantPeople(id: number, maxResults: number = 10): Observable<RelevantPeopleResponse> {
+    return this.http.get<RelevantPeopleResponse>(`${this.apiUrl}/${id}/relevant-people`, {
       params: {
         maxResults: maxResults.toString()
       }

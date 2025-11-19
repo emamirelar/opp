@@ -3049,6 +3049,176 @@ public class UNOPSGeminiManager : IGeminiManager
         }
         
         /// <summary>
+        /// Gets relevant people from corporate directory for an opportunity
+        /// Step 1: Extract role keywords from opportunity context using specialized prompt
+        /// Step 2: Search vector store for PERSON entity type
+        /// Step 3: Map results to relevant person models
+        /// </summary>
+        /// <param name="opportunityId">The opportunity ID to find relevant people for</param>
+        /// <param name="maxResults">Maximum number of relevant people to return (default: 10)</param>
+        /// <param name="user">Current user context</param>
+        /// <returns>Response containing relevant people and extracted roles</returns>
+        public async Task<UNOPS.PAO.Models.RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null)
+        {
+            var startTime = DateTime.UtcNow;
+            
+            try
+            {
+                _logger.LogInformation($"👥 [RELEVANT-PEOPLE] Starting relevant people search for opportunity {opportunityId}");
+                
+                // Step 1: Get opportunity data through manager wrapper
+                if (_managerWrapper == null)
+                {
+                    throw new InvalidOperationException("Manager wrapper not initialized");
+                }
+                
+                var opportunityManager = _managerWrapper.OpportunityManager;
+                if (opportunityManager == null)
+                {
+                    throw new InvalidOperationException("Opportunity manager not available");
+                }
+                
+                // Cast to UNOPSOpportunityManager to access BaseUNOPSManager methods
+                if (!(opportunityManager is UNOPSOpportunityManager uNOPSOpportunityManager))
+                {
+                    throw new InvalidOperationException("Opportunity manager must be UNOPSOpportunityManager type");
+                }
+                
+                // Get complete opportunity context via DataRetrievalMethod
+                _logger.LogInformation($"📊 [RELEVANT-PEOPLE] Fetching opportunity context for ID {opportunityId}");
+                var opportunityContext = await uNOPSOpportunityManager.CallFunctionByNameAsync("GetOpportunityDetailsForAIAsync", opportunityId, user);
+                
+                if (opportunityContext == null)
+                {
+                    throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+                }
+                
+                var opportunityContextJson = JsonConvert.SerializeObject(opportunityContext);
+                _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Opportunity context retrieved. Length: {opportunityContextJson.Length} characters");
+                
+                // Step 2: Extract role keywords using specialized Gemini AI prompt
+                _logger.LogInformation($"🤖 [RELEVANT-PEOPLE] Extracting role keywords using specialized prompt 'opportunity_extract_people_keywords'");
+                var promptData = await _aiService.GetPromptData("opportunity_extract_people_keywords");
+                var extractRolesPrompt = promptData.FirstOrDefault();
+                
+                if (extractRolesPrompt == null)
+                {
+                    throw new InvalidOperationException("Role extraction prompt 'opportunity_extract_people_keywords' not found in database");
+                }
+                
+                var roles = await _aiService.ExtractKeywordsForSemanticSearchAsync(opportunityContextJson, extractRolesPrompt);
+                _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Extracted {roles.Count} role keywords: {string.Join(", ", roles.Take(5))}...");
+                
+                // Combine roles into a single search query
+                var searchQuery = string.Join(" ", roles);
+                
+                // Step 3: Search vector store for PERSON entity
+                _logger.LogInformation($"🔎 [RELEVANT-PEOPLE] Searching vector store for PERSON entity with query: \"{searchQuery.Substring(0, Math.Min(100, searchQuery.Length))}...\"");
+                
+                var vectorStoreRequest = new UNOPS.PAO.Models.AI.VectorStoreSearchRequest
+                {
+                    Query = searchQuery,
+                    MaxResults = maxResults,
+                    EntityTypeId = "PERSON",  // Search for people
+                    EntityId = "",
+                    ApplicationId = "",
+                    DatasourceId = "",
+                    DatasourceConnector = "GOOGLE_BIGQUERY",  // Corporate directory doesn't need specific connector
+                    PrimaryRelatedToEntityTypeId = "",
+                    PrimaryRelatedToEntityId = "",
+                    Filters = new Dictionary<string, string>(),
+                    Debug = false
+                };
+                
+                // Use AiRetrieverManager to search
+                var aiRetrieverManager = _managerWrapper.AiRetrieverManager;
+                if (aiRetrieverManager == null)
+                {
+                    throw new InvalidOperationException("AI Retriever manager not available");
+                }
+                
+                var userEmail = user?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                var vectorStoreResponse = await aiRetrieverManager.SearchVectorStoreAsync(vectorStoreRequest, userEmail);
+                
+                _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Vector store search returned {vectorStoreResponse.Documents?.Count ?? 0} results");
+                
+                // Step 4: Map vector store documents to relevant person models
+                var relevantPeople = new List<UNOPS.PAO.Models.RelevantPersonModel>();
+                
+                if (vectorStoreResponse.Documents != null && vectorStoreResponse.Documents.Any())
+                {
+                    foreach (var doc in vectorStoreResponse.Documents)
+                    {
+                        var personId = doc.EntityId ?? doc.DocumentId;
+                        
+                        // Extract expertise from metadata if available (could be skills, areas of expertise, etc.)
+                        var expertiseStr = ExtractFromMetadata(doc.Metadata, "Expertise") 
+                                          ?? ExtractFromMetadata(doc.Metadata, "Skills") 
+                                          ?? ExtractFromMetadata(doc.Metadata, "Areas_Of_Expertise");
+                        var expertiseList = string.IsNullOrEmpty(expertiseStr) 
+                            ? new List<string>() 
+                            : expertiseStr.Split(',').Select(e => e.Trim()).ToList();
+                        
+                        var relevantPerson = new UNOPS.PAO.Models.RelevantPersonModel
+                        {
+                            PersonId = personId,
+                            Name = ExtractFromMetadata(doc.Metadata, "Name") 
+                                  ?? ExtractFromMetadata(doc.Metadata, "Full_Name") 
+                                  ?? ExtractFromMetadata(doc.Metadata, "DisplayName"),
+                            Title = ExtractFromMetadata(doc.Metadata, "Title") 
+                                   ?? ExtractFromMetadata(doc.Metadata, "Job_Title") 
+                                   ?? ExtractFromMetadata(doc.Metadata, "Position"),
+                            Department = ExtractFromMetadata(doc.Metadata, "Department") 
+                                       ?? ExtractFromMetadata(doc.Metadata, "Organizational_Unit") 
+                                       ?? ExtractFromMetadata(doc.Metadata, "Unit"),
+                            Email = ExtractFromMetadata(doc.Metadata, "Email") 
+                                   ?? ExtractFromMetadata(doc.Metadata, "Email_Address"),
+                            Location = ExtractFromMetadata(doc.Metadata, "Location") 
+                                      ?? ExtractFromMetadata(doc.Metadata, "Duty_Station") 
+                                      ?? ExtractFromMetadata(doc.Metadata, "Office"),
+                            PhotoUrl = ExtractFromMetadata(doc.Metadata, "Photo") 
+                                      ?? ExtractFromMetadata(doc.Metadata, "ProfilePicture") 
+                                      ?? ExtractFromMetadata(doc.Metadata, "ProfilePhoto"),
+                            Expertise = expertiseList.Any() ? expertiseList : null,
+                            RelevanceScore = doc.Score * 100, // Convert to 0-100 scale
+                            Metadata = doc.Metadata
+                        };
+                        
+                        relevantPeople.Add(relevantPerson);
+                    }
+                }
+                
+                var executionTime = DateTime.UtcNow - startTime;
+                
+                var response = new UNOPS.PAO.Models.RelevantPeopleResponse
+                {
+                    RelevantPeople = relevantPeople,
+                    ExtractedRoles = roles,
+                    TotalFound = relevantPeople.Count,
+                    SearchTimestamp = DateTime.UtcNow
+                };
+                
+                _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Search completed successfully in {executionTime.TotalMilliseconds}ms. Found {relevantPeople.Count} relevant people");
+                
+                return response;
+            }
+            catch (Exception ex)
+            {
+                var executionTime = DateTime.UtcNow - startTime;
+                _logger.LogError(ex, $"❌ [RELEVANT-PEOPLE] Error finding relevant people for opportunity {opportunityId}: {ex.Message}");
+                
+                // Return empty result on error
+                return new UNOPS.PAO.Models.RelevantPeopleResponse
+                {
+                    RelevantPeople = new List<UNOPS.PAO.Models.RelevantPersonModel>(),
+                    ExtractedRoles = new List<string>(),
+                    TotalFound = 0,
+                    SearchTimestamp = DateTime.UtcNow
+                };
+            }
+        }
+        
+        /// <summary>
         /// Helper method to extract a value from metadata dictionary
         /// </summary>
         private string? ExtractFromMetadata(Dictionary<string, object>? metadata, string key)
