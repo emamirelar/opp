@@ -1,14 +1,21 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.Identity.Entities;
+using UNOPS.PAO.UNOPSBusiness.Managers;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Presentation.Controllers.Shared;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
@@ -27,13 +34,20 @@ public class OpportunityController : BaseController
     private readonly IRiskManager _riskManager;
     private readonly int _currentUserId;
     private readonly AppDbContext _context;
+    private readonly UNOPSDocumentManager _documentManager;
 
     public OpportunityController(
         IManagerWrapper manager,
         UserResolverService<int> userResolverService,
         ILogger<OpportunityController> logger,
         IAuthorizationService authorizationService,
-        AppDbContext context)
+        AppDbContext context,
+        UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext unopsContext,
+        AutoMapper.IMapper mapper,
+        IGoogleDriveDocumentManager driveManager,
+        IConfiguration configuration,
+        UserManager<PAOIdentityUser> userManager,
+        IServiceProvider serviceProvider)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.OpportunityManager;
@@ -42,6 +56,7 @@ public class OpportunityController : BaseController
         _riskManager = manager.RiskManager;
         _currentUserId = userResolverService.GetCurrentUserId();
         _context = context;
+        _documentManager = new UNOPSDocumentManager(driveManager, configuration, mapper, unopsContext, userManager, serviceProvider);
     }
 
     /// <summary>
@@ -1099,55 +1114,43 @@ public class OpportunityController : BaseController
             var result = await _manager.CreateOpportunityAsync(opportunityRequest);
 
             // Persist uploaded documents to database if any (from GCS temporary uploads)
-            if (request.NewDocumentStoragePaths != null && request.NewDocumentStoragePaths.Any())
+            if (request.Documents != null && request.Documents.Any())
             {
                 _logger.LogInformation("📄 [API] Persisting {Count} uploaded documents to database for opportunity {OpportunityId}", 
-                    request.NewDocumentStoragePaths.Count, result.Id);
+                    request.Documents.Count, result.Id);
                 
-                for (int i = 0; i < request.NewDocumentStoragePaths.Count; i++)
+                foreach (var doc in request.Documents)
                 {
                     try
                     {
-                        var gcsPath = request.NewDocumentStoragePaths[i];
-                        var mimeType = request.NewDocumentMimeTypes?[i] ?? "application/octet-stream";
-                        var documentTypeId = request.NewDocumentTypeIds?[i];
-                        
                         // Extract file name from GCS path (gs://bucket/folder/file.ext)
-                        var fileName = System.IO.Path.GetFileName(gcsPath);
+                        var fileName = System.IO.Path.GetFileName(doc.GcsPath);
                         
-                        // Create document entity directly
-                        var document = new Document
+                        // Create DocumentUploadModel for the document manager (without IFormFile since already uploaded to GCS)
+                        var documentModel = new DocumentUploadModel
                         {
                             Name = fileName,
-                            StoragePath = gcsPath,
-                            Type = mimeType,
-                            DocumentTypeId = documentTypeId,
-                            AITranscribed = true, // Mark as AI transcribed since these documents were used in AI proposal generation
-                            CreatedBy = _currentUserId,
-                            CreatedDate = DateTime.UtcNow
+                            StoragePath = doc.GcsPath,
+                            Type = doc.MimeType,
+                            DocumentTypeId = doc.DocumentTypeId,
+                            ParentEntityName = "Opportunity",
+                            ParentEntityId = result.Id,
+                            AITranscribed = true,
+                            UploadToGCS = false, // Already uploaded to GCS
+                            SkipDatabaseSave = false, // We want to save to database
+                            File = null // No file since already in GCS
                         };
                         
-                        _context.Documents.Add(document);
-                        await _context.SaveChangesAsync();
-                        
-                        // Create document relationship to opportunity
-                        var docRelationship = new DocumentRelationship
-                        {
-                            DocumentId = document.Id,
-                            EntityId = result.Id,
-                            EntityType = "Opportunity"
-                        };
-                        
-                        _context.DocumentRelationships.Add(docRelationship);
-                        await _context.SaveChangesAsync();
+                        // Use the document manager to create the document (handles UNOPSDocument creation correctly)
+                        var createdDoc = await _documentManager.CreateDocumentAsync(documentModel);
                         
                         _logger.LogInformation("✅ [API] Persisted document {FileName} (ID: {DocumentId}) for opportunity {OpportunityId}", 
-                            fileName, document.Id, result.Id);
+                            fileName, createdDoc.Id, result.Id);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "⚠️ Failed to persist document {Index} for opportunity {OpportunityId}", 
-                            i, result.Id);
+                        _logger.LogWarning(ex, "⚠️ Failed to persist document {FileName} for opportunity {OpportunityId}", 
+                            doc.GcsPath, result.Id);
                     }
                 }
             }

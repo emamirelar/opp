@@ -37,19 +37,9 @@ public class CreateOpportunityFromInteractionsRequest
     public List<int>? SourceInteractionIds { get; set; }
     
     /// <summary>
-    /// GCS storage paths for newly uploaded documents (to be persisted to database)
+    /// Newly uploaded documents to be persisted to database after opportunity creation
     /// </summary>
-    public List<string>? NewDocumentStoragePaths { get; set; }
-    
-    /// <summary>
-    /// MIME types for newly uploaded documents
-    /// </summary>
-    public List<string>? NewDocumentMimeTypes { get; set; }
-    
-    /// <summary>
-    /// Document type IDs for newly uploaded documents
-    /// </summary>
-    public List<int?>? NewDocumentTypeIds { get; set; }
+    public List<NewDocumentRequest>? Documents { get; set; }
     
     // WHAT Section Properties (AI-proposed, user-accepted)
     public string? PartnerReference { get; set; }

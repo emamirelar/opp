@@ -244,7 +244,11 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
             }
         }
 
-        var fileType = model.File.GetFileType();
+        var fileType = model.Type ?? "";
+        if (model.File != null)
+        {
+            fileType = model.File.GetFileType();
+        }
         var fileName = string.IsNullOrWhiteSpace(model.Name) ? model.File.FileName : model.Name;
 
         var documentEntity = new UNOPSDocument
@@ -256,7 +260,8 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
             GoogleId = model.GoogleId, // Will be populated if sourced from Google Drive
             StoragePath = model.StoragePath, // Use the GCS path if provided
             LinkedFile = !string.IsNullOrEmpty(model.Link), // True if it's a Drive-sourced file
-            DocumentTypeId = model.DocumentTypeId
+            DocumentTypeId = model.DocumentTypeId,
+            AITranscribed = model.AITranscribed ?? false
         };
 
         await _documentRepository.AddAsync(documentEntity);
