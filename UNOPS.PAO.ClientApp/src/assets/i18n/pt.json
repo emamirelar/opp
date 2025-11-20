@@ -1584,7 +1584,7 @@
   "message.validation.fundingPartnerAlreadyAdded": "Este parceiro financiador já foi adicionado",
   "message.validation.opportunityNameDescriptionRequired": "O nome e a descrição da oportunidade são obrigatórios",
   "message.validation.opportunityNameRequired": "Opportunity name is required",
-  "message.validation.outputAlreadyAdded": "Este produto já foi adicionado à lista de entregáveis",
+  "message.validation.outputAlreadyAdded": "Este produto já foi adicionado à lista de produtos e serviços",
   "message.validation.recommendationRequired": "A recomendação é obrigatória",
   "message.validation.selectAtLeastOneInteraction": "Por favor, selecione pelo menos uma interação",
   "message.validation.selectAtLeastOnePartnerRole": "Por favor, selecione pelo menos uma função de parceiro (Financiamento ou Cliente)",
