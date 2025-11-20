@@ -64,6 +64,7 @@ export class OpportunityWhenSectionComponent implements OnInit {
 
   // Inputs
   readonly opportunity = input.required<Opportunity>();
+  readonly suggestions = input<any[]>([]);
 
   // Outputs
   readonly opportunityUpdated = output<Opportunity>();

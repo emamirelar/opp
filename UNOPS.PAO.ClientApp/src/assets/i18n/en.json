@@ -1420,6 +1420,7 @@
   "label.stage": "Stage",
   "label.status": "Status",
   "label.suggestions": "Suggestions",
+  "label.aiSuggestions": "AI Suggestions",
   "label.totalDifferences": "Total Differences",
   "label.totalRecords": "Total Records",
   "label.user": "User",

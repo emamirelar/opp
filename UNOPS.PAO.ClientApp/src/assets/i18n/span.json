@@ -1360,6 +1360,7 @@
   "label.stage": "Etapa",
   "label.status": "Estado",
   "label.suggestions": "Sugerencias",
+  "label.aiSuggestions": "Sugerencias de IA",
   "label.totalRecords": "Total de Registros",
   "label.user.name": "Nombre de Usuario",
   "label.viewInGoogleDrive": "Ver en Google Drive",

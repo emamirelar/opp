@@ -75,6 +75,7 @@ export class OpportunityWhatSectionComponent implements OnInit {
    * @description Input signal for opportunity data from parent
    */
   readonly opportunity = input.required<Opportunity>();
+  readonly suggestions = input<any[]>([]);
 
   /**
    * @description Output event when opportunity is updated - signals parent to refresh
