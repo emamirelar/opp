@@ -66,12 +66,6 @@ export class OpportunityRelatedItemsComponent implements OnInit {
       ellipsis: true
     },
     {
-      field: 'partnerName',
-      label: 'Partner',
-      type: 'text',
-      sortable: false
-    },
-    {
       field: 'interactionType',
       label: 'Type',
       type: 'badge',
