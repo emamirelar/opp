@@ -2,12 +2,133 @@
     "seedSteps": [
         {
             "order": 0,
-            "name": "PartnerErpDimValueFix",
+            "name": "SystemUsers",
+            "type": "sql",
+            "path": "AspNetUsers_v3.sql",
+            "description": "System users configuration"
+        },
+        {
+            "order": 1,
+            "name": "SystemUserProfiles",
+            "type": "sql",
+            "path": "UserProfiles_v3.sql",
+            "description": "System user profiles configuration"
+        },
+        {
+            "order": 2,
+            "name": "PartnerTreeSeeder_v3",
             "type": "seeder",
-            "className": "PartnerErpDimValueFixSeeder",
-            "methodName": "FixPartnerErpDimValuesAsync",
-            "filePath": "Seeders/PartnerErpDimValueFixSeeder.cs",
-            "description": "Fix ErpDimValue for partners with values > 9999 by recalculating based on highest value excluding 8000-9999 range"
+            "className": "PartnerTreeSeeder_v3",
+            "methodName": "SeedPartnerTreeAsync",
+            "filePath": "Seeders/PartnerTreeSeeder_v3.cs"
+        },
+        {
+            "order": 3,
+            "name": "Partner_Update_With_CategoryGroup_Seeder_v3",
+            "type": "seeder",
+            "className": "Partner_Update_With_CategoryGroup_Seeder_v3",
+            "methodName": "UpdatePartnersWithCategoryGroupAsync",
+            "filePath": "Seeders/Partner_Update_With_CategoryGroup_Seeder_v3.cs"
+        },
+        {
+            "order": 4,
+            "name": "UnapprovedPartnerTreeSeeder_v3",
+            "type": "seeder",
+            "className": "UnapprovedPartnerTreeSeeder_v3",
+            "methodName": "SeedUnapprovedPartnerTreeAsync",
+            "filePath": "Seeders/UnapprovedPartnerTreeSeeder_v3.cs"
+        },
+        {
+            "order": 5,
+            "name": "UnapprovedPartner_Update_With_CategoryGroup_Seeder_v3",
+            "type": "seeder",
+            "className": "UnapprovedPartner_Update_With_CategoryGroup_Seeder_v3",
+            "methodName": "UpdateUnapprovedPartnersWithCategoryGroupAsync",
+            "filePath": "Seeders/UnapprovedPartner_Update_With_CategoryGroup_Seeder_v3.cs"
+        },
+        {
+            "order": 6,
+            "description": "Partner Liaison Office Fixes",
+            "name": "Partner_LiaisonOffice_Fixes_v3",
+            "type": "seeder",
+            "className": "Partner_LiaisonOffice_Fixes_v3",
+            "methodName": "UpdatePartnerLiaisonOfficesAsync",
+            "filePath": "Seeders/Partner_LiaisonOffice_Fixes_v3.cs"
+        },
+        {
+            "order": 7,
+            "description": "Unapproved Partner Liaison Office Fixes",
+            "name": "Unapproved_Partners_LiaisonOffice_Fixes_v3",
+            "type": "seeder",
+            "className": "Unapproved_Partners_LiaisonOffice_Fixes_v3",
+            "methodName": "UpdateUnapprovedPartnersLiaisonOfficeAsync",
+            "filePath": "Seeders/Unapproved_Partners_LiaisonOffice_Fixes_v3.cs"
+        },
+        {
+            "order": 8,
+            "name": "Partner_FocalPoint_OrgUnit_Fixes_v3",
+            "type": "seeder",
+            "className": "Partner_FocalPoint_OrgUnit_Fixes_v3",
+            "methodName": "UpdatePartnerFocalPointAndOrgUnitAsync",
+            "filePath": "Seeders/Partner_FocalPoint_OrgUnit_Fixes_v3.cs"
+        },
+        {
+            "order": 9,
+            "name": "Partner_FocalPoint_Fixes_v3",
+            "type": "seeder",
+            "className": "Partner_FocalPoint_Fixes_v3",
+            "methodName": "UpdatePartnerFocalPointsAsync",
+            "filePath": "Seeders/Partner_FocalPoint_Fixes_v3.cs"
+        },
+        {
+            "order": 10,
+            "name": "InteractionFromEventSeeder_v3",
+            "type": "seeder",
+            "className": "InteractionFromEventSeeder_v3",
+            "methodName": "SeedInteractionsFromEventsAsync",
+            "filePath": "Seeders/InteractionFromEventSeeder_v3.cs"
+        },
+        {
+            "order": 11,
+            "name": "InteractionFromTaskSeeder_v3",
+            "type": "seeder",
+            "className": "InteractionFromTaskSeeder_v3",
+            "methodName": "SeedInteractionsFromTasksAsync",
+            "filePath": "Seeders/InteractionFromTaskSeeder_v3.cs"
+        },
+        {
+            "order": 12,
+            "name": "Partner_Audit_Data_Fixes_v3",
+            "type": "seeder",
+            "className": "Partner_Audit_Data_Fixes_v3",
+            "methodName": "UpdatePartnerAuditDataAsync",
+            "filePath": "Seeders/Partner_Audit_Data_Fixes_v3.cs"
+        },
+        {
+            "order": 13,
+            "name": "Contact_Audit_Data_Fixes_v3",
+            "type": "seeder",
+            "className": "Contact_Audit_Data_Fixes_v3",
+            "methodName": "UpdateContactAuditDataAsync",
+            "filePath": "Seeders/Contact_Audit_Data_Fixes_v3.cs"
+        },
+        {
+            "order": 14,
+            "name": "Interaction_Audit_Data_Fixes_v3",
+            "type": "seeder",
+            "className": "Interaction_Audit_Data_Fixes_v3",
+            "methodName": "UpdateInteractionAuditDataAsync",
+            "filePath": "Seeders/Interaction_Audit_Data_Fixes_v3.cs"
+        },
+        {
+            "order": 15,
+            "name": "SequenceResyncSeeder_v3",
+            "type": "seeder",
+            "className": "SequenceResyncSeeder_v3",
+            "methodName": "ResyncAllSequencesAsync",
+            "filePath": "Seeders/SequenceResyncSeeder_v3.cs",
+            "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
+            "forceExecuteIfAnyChanged": true
         }
     ]
 }

@@ -1,0 +1,125 @@
+{
+    "seedSteps": [
+        {
+            "order": 0,
+            "name": "Roles",
+            "type": "seeder",
+            "className": "RoleSeeder",
+            "methodName": "SeedRolesAsync",
+            "filePath": "Seeders/RoleSeeder.cs",
+            "description": "Roles configuration"
+        },
+        {
+            "order": 1,
+            "name": "Entities",
+            "type": "seeder",
+            "className": "EntitySeeder",
+            "methodName": "SeedEntitiesAsync",
+            "filePath": "Seeders/EntitySeeder.cs",
+            "description": "Base entity types configuration"
+        },
+        {
+            "order": 2,
+            "name": "EntityManagers",
+            "type": "sql",
+            "path": "EntityManager.sql",
+            "description": "Entity managers and field managers complete configuration"
+        },
+        {
+            "order": 3,
+            "name": "DocumentTypes",
+            "type": "seeder",
+            "className": "DocumentTypeSeeder",
+            "methodName": "SeedDocumentTypesAsync",
+            "filePath": "Seeders/DocumentTypeSeeder.cs",
+            "description": "Document types configuration"
+        },
+        {
+            "order": 4,
+            "name": "LiaisonOffices",
+            "type": "seeder",
+            "className": "LiaisonOfficeSeeder",
+            "methodName": "SeedLiaisonOfficesAsync",
+            "filePath": "Seeders/LiaisonOfficeSeeder.cs",
+            "description": "Liaison offices data"
+        },
+        {
+            "order": 5,
+            "description": "Partner tree structure",
+            "name": "PartnerTree",
+            "type": "seeder",
+            "className": "PartnerTreeSeeder_v2",
+            "methodName": "SeedPartnerTreesAsync",
+            "filePath": "Seeders/PartnerTreeSeeder_v2.cs"
+        },
+        {
+            "order": 6,
+            "name": "AiPrompts",
+            "type": "sql",
+            "path": "AiPrompts.sql",
+            "description": "AiPrompts data"
+        },
+        {
+            "order": 7,
+            "name": "EntityPermissions",
+            "type": "sql",
+            "path": "EntityPermissions.sql",
+            "description": "Entity permissions configuration"
+        },
+        {
+            "order": 8,
+            "name": "Partners",
+            "type": "seeder",
+            "className": "PartnerSeeder_v2",
+            "methodName": "SeedPartnersV2Async",
+            "filePath": "Seeders/PartnerSeeder_v2.cs",
+            "description": "Partners data seeding"
+        },
+        {
+            "order": 9,
+            "name": "Prospects",
+            "type": "seeder",
+            "className": "ProspectAccountsSeeder",
+            "methodName": "SeedProspectAccountsAsync",
+            "filePath": "Seeders/ProspectAccountsSeeder.cs",
+            "description": "Partners data seeding"
+        },
+        {
+            "order": 10,
+            "name": "Contacts",
+            "type": "seeder",
+            "className": "ContactSeeder",
+            "methodName": "SeedContactsAsync",
+            "filePath": "Seeders/ContactSeeder.cs",
+            "description": "Contacts data seeding"
+        },
+        {
+            "order": 11,
+            "name": "InteractionFromTasks",
+            "type": "seeder",
+            "className": "InteractionFromTaskSeeder",
+            "methodName": "SeedInteractionsFromTasksAsync",
+            "filePath": "Seeders/InteractionFromTaskSeeder.cs",
+            "description": "Interactions from tasks data seeding"
+        },
+        {
+            "order": 12,
+            "name": "InteractionFromEvents",
+            "type": "seeder",
+            "className": "InteractionFromEventSeeder",
+            "methodName": "SeedInteractionsFromEventsAsync",
+            "filePath": "Seeders/InteractionFromEventSeeder.cs",
+            "description": "Interactions from events data seeding"
+        },
+        {
+            "order": 13,
+            "name": "SequenceResync",
+            "type": "seeder",
+            "className": "SequenceResyncSeeder",
+            "methodName": "ResyncAllSequencesAsync",
+            "filePath": "Seeders/SequenceResyncSeeder.cs",
+            "description": "Resynchronize all PostgreSQL sequences to prevent duplicate key errors",
+            "forceExecuteIfAnyChanged": true
+        }
+    ]
+}
