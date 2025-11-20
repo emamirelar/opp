@@ -133,6 +133,7 @@
           <div id="section-what" style="scroll-margin-top: 72px">
             <app-opportunity-what-section
               [opportunity]="opportunity()!"
+              [suggestions]="whatSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
           </div>
@@ -141,6 +142,7 @@
           <div id="section-why" style="scroll-margin-top: 72px">
             <app-opportunity-why-section
               [opportunity]="opportunity()!"
+              [suggestions]="whySuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
           </div>
@@ -149,6 +151,7 @@
           <div id="section-who" style="scroll-margin-top: 72px">
             <app-opportunity-who-section
               [opportunity]="opportunity()!"
+              [suggestions]="whoSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
           </div>
@@ -157,6 +160,7 @@
           <div id="section-where" style="scroll-margin-top: 72px">
             <app-opportunity-where-section
               [opportunity]="opportunity()!"
+              [suggestions]="whereSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
           </div>
@@ -165,6 +169,7 @@
           <div id="section-when" style="scroll-margin-top: 72px">
             <app-opportunity-when-section
               [opportunity]="opportunity()!"
+              [suggestions]="whenSuggestions()"
               (opportunityUpdated)="handleOpportunityUpdate($event)"
             />
           </div>

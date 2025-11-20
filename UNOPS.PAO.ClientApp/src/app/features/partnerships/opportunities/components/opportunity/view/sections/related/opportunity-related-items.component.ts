@@ -1,5 +1,5 @@
 /**
- * @fileoverview Related Items component for displaying contacts, partners, and interactions
+ * @fileoverview Related Items component for displaying source interactions
  * @author UNOPS Opportunity+ System Development Team
  */
 
@@ -10,20 +10,18 @@ import {
   inject,
   OnInit,
   ChangeDetectionStrategy,
-  ChangeDetectorRef
+  computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { PanelModule } from 'primeng/panel';
-import { AvatarModule } from 'primeng/avatar';
-import { DividerModule } from 'primeng/divider';
-import { BadgeModule } from 'primeng/badge';
-import { RelatedItems } from '@shared/models/opportunity.model';
 import { OpportunityService } from '@features/partnerships/opportunities/services/opportunity.service';
+import { ListviewCardComponent } from '@features/list-view/components/listview/card/listview-card.component';
+import { ListViewColumn, ListViewConfig } from '@features/list-view/components/listview/listview.model';
 
 /**
  * @class OpportunityRelatedItemsComponent
- * @description Component for displaying related contacts, partners, and interactions for an opportunity
+ * @description Component for displaying source interactions that led to opportunity creation
  * 
  * @example
  * ```html
@@ -41,9 +39,7 @@ import { OpportunityService } from '@features/partnerships/opportunities/service
     CommonModule,
     TranslateModule,
     PanelModule,
-    AvatarModule,
-    DividerModule,
-    BadgeModule
+    ListviewCardComponent
   ],
   templateUrl: './opportunity-related-items.component.html',
   styleUrls: ['./opportunity-related-items.component.scss'],
@@ -51,69 +47,70 @@ import { OpportunityService } from '@features/partnerships/opportunities/service
 })
 export class OpportunityRelatedItemsComponent implements OnInit {
   private readonly opportunityService = inject(OpportunityService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   // Inputs
   readonly opportunityId = input.required<number>();
 
   // State
-  readonly relatedItems = signal<RelatedItems>({
-    contacts: [],
-    partners: [],
-    interactions: []
-  });
+  readonly sourceInteractions = signal<any[]>([]);
   readonly isLoading = signal(false);
   readonly isCollapsed = signal(false);
 
+  // List view configuration
+  readonly interactionColumns = signal<ListViewColumn[]>([
+    {
+      field: 'subject',
+      label: 'Subject',
+      type: 'text',
+      sortable: false,
+      ellipsis: true
+    },
+    {
+      field: 'interactionType',
+      label: 'Type',
+      type: 'badge',
+      sortable: false
+    },
+    {
+      field: 'interactionDate',
+      label: 'Date',
+      type: 'date',
+      sortable: false
+    }
+  ]);
+
+  readonly listViewConfig = computed<ListViewConfig>(() => ({
+    pageSize: 20,
+    pageSizeOptions: [10, 20, 50],
+    selectable: false,
+    multiSelect: false,
+    showPaginator: false,
+    forceMobileMode: false
+  }));
+
   ngOnInit(): void {
-    this.loadRelatedItems();
+    this.loadSourceInteractions();
   }
 
   /**
-   * @description Load related items for the opportunity
+   * @description Load source interactions for the opportunity
    */
-  loadRelatedItems(): void {
+  loadSourceInteractions(): void {
     const id = this.opportunityId();
     if (!id) return;
 
     this.isLoading.set(true);
-    this.opportunityService.getRelatedItems(id).subscribe({
+    this.opportunityService.getSourceInteractions(id).subscribe({
       next: (data) => {
-        this.relatedItems.set(data);
+        this.sourceInteractions.set(data);
         this.isLoading.set(false);
-        this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Error loading related items:', error);
+        console.error('Error loading source interactions:', error);
         this.isLoading.set(false);
-        this.cdr.detectChanges();
+        this.sourceInteractions.set([]);
       }
     });
-  }
-
-  /**
-   * @description Get avatar initials from name
-   */
-  getInitials(name: string): string {
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-    }
-    return name.charAt(0).toUpperCase();
-  }
-
-  /**
-   * @description Navigate to contact detail page
-   */
-  navigateToContact(id: number): void {
-    window.open(`/#/partnerships/contacts/${id}`, '_blank');
-  }
-
-  /**
-   * @description Navigate to partner detail page
-   */
-  navigateToPartner(id: number): void {
-    window.open(`/#/partnerships/partners/${id}`, '_blank');
   }
 
   /**
@@ -122,18 +119,4 @@ export class OpportunityRelatedItemsComponent implements OnInit {
   navigateToInteraction(id: number): void {
     window.open(`/#/partnerships/interactions/${id}`, '_blank');
   }
-
-  /**
-   * @description Format date for display
-   */
-  formatDate(dateString?: string): string {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  }
 }
-

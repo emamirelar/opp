@@ -248,6 +248,30 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     return opp.stats?.sdgCount || opp.sdGs?.length || 0;
   });
 
+  // AI Suggestions state and filtering
+  allSuggestions = signal<any[]>([]);
+  
+  // Computed suggestions filtered by section
+  whoSuggestions = computed(() => 
+    this.allSuggestions().filter(s => s.actionTarget === 'WHO')
+  );
+  
+  whereSuggestions = computed(() => 
+    this.allSuggestions().filter(s => s.actionTarget === 'WHERE')
+  );
+  
+  whatSuggestions = computed(() => 
+    this.allSuggestions().filter(s => s.actionTarget === 'WHAT')
+  );
+  
+  whySuggestions = computed(() => 
+    this.allSuggestions().filter(s => s.actionTarget === 'WHY')
+  );
+  
+  whenSuggestions = computed(() => 
+    this.allSuggestions().filter(s => s.actionTarget === 'WHEN')
+  );
+
   // Filtered stakeholder lists
   internalStakeholders = computed(() => {
     const opp = this.opportunity();
@@ -380,6 +404,9 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
         this.loading.set(false);
         this.cdr.detectChanges();
         
+        // Load AI suggestions for sections
+        this._loadSuggestions();
+        
         // If a target section was specified, scroll to it after data loads
         if (targetSection && this.isValidSection(targetSection)) {
           setTimeout(() => {
@@ -394,6 +421,25 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
           detail: this.translateService.instant('message.opportunity.loadFailed'),
           summary: this.translateService.instant('message.error')
         });
+      }
+    });
+  }
+
+  /**
+   * Load AI suggestions for the opportunity
+   */
+  private _loadSuggestions(): void {
+    const opportunityId = this.opportunity()?.id;
+    if (!opportunityId) return;
+
+    this.opportunityService.getInsights(opportunityId).subscribe({
+      next: (response) => {
+        // Extract suggestions and set them
+        this.allSuggestions.set(response.suggestions || []);
+      },
+      error: (error) => {
+        console.error('Error loading suggestions:', error);
+        // Silent failure - suggestions are optional enhancement
       }
     });
   }
@@ -466,7 +512,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     
     // Refresh related items to reflect any changes in partners/stakeholders
     if (this.relatedItemsComponent) {
-      this.relatedItemsComponent.loadRelatedItems();
+      this.relatedItemsComponent.loadSourceInteractions();
     }
     
     // Angular signals automatically notify ALL child components

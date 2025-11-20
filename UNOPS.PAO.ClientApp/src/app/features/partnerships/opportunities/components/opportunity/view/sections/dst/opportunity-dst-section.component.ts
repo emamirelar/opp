@@ -21,6 +21,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
+import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 
 // Models
@@ -62,6 +63,7 @@ import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.servi
     TextareaModule,
     SelectModule,
     MessageModule,
+    TooltipModule
   ],
   templateUrl: './opportunity-dst-section.component.html',
   styleUrls: ['./opportunity-dst-section.component.scss'],
@@ -575,6 +577,17 @@ export class OpportunityDstSectionComponent {
   }
 
   /**
+   * @description Refresh similar opportunities - clears cache and reloads the data
+   * @since 1.0.0
+   */
+  refreshSimilarOpportunities(): void {
+    // Clear existing data and reload
+    this.similarOpportunities.set(null);
+    this.similarOpportunitiesResponse.set(null);
+    this.loadSimilarOpportunities();
+  }
+
+  /**
    * @description Load similar projects using AI-powered semantic search
    * Extracts keywords from opportunity context and searches vector store for similar projects
    * @since 1.0.0
@@ -604,6 +617,17 @@ export class OpportunityDstSectionComponent {
   }
 
   /**
+   * @description Refresh similar projects - clears cache and reloads the data
+   * @since 1.0.0
+   */
+  refreshSimilarProjects(): void {
+    // Clear existing data and reload
+    this.similarProjects.set(null);
+    this.similarProjectsResponse.set(null);
+    this.loadSimilarProjects();
+  }
+
+  /**
    * @description Load relevant people from corporate directory using AI-powered semantic search
    * Extracts role keywords from opportunity context and searches vector store for relevant people
    * @since 1.0.0
@@ -630,6 +654,17 @@ export class OpportunityDstSectionComponent {
         });
       }
     });
+  }
+
+  /**
+   * @description Refresh relevant people - clears cache and reloads the data
+   * @since 1.0.0
+   */
+  refreshRelevantPeople(): void {
+    // Clear existing data and reload
+    this.relevantPeople.set(null);
+    this.relevantPeopleResponse.set(null);
+    this.loadRelevantPeople();
   }
 
   /**

@@ -345,6 +345,7 @@ export interface SimilarProject {
   projectManagerName: string | null;
   projectManagerEmail: string | null;
   projectUrl: string | null;
+  relevanceExplanation?: string | null; // AI-generated one-line explanation of relevance (max 120 chars)
 }
 
 /**
@@ -392,6 +393,7 @@ export interface RelevantPerson {
   photoUrl: string | null; // Profile photo URL from Google Workspace
   expertise: string[] | null; // Areas of expertise or skills
   relevanceScore: number; // 0-100 similarity score based on role match
+  relevanceExplanation?: string | null; // AI-generated one-line explanation of relevance (max 120 chars)
   metadata: Record<string, any> | null; // Additional metadata
 }
 

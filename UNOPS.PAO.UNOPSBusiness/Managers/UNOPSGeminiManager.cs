@@ -3018,6 +3018,72 @@ public class UNOPSGeminiManager : IGeminiManager
                     }
                 }
                 
+                // Step 5: Refine results with Gemini to add relevance explanations
+                if (similarProjects.Any())
+                {
+                    _logger.LogInformation($"🤖 [SIMILAR-PROJECTS] Refining {similarProjects.Count} projects with AI-generated relevance explanations");
+                    
+                    try
+                    {
+                        var refinePromptData = await _aiService.GetPromptData("opportunity_refine_projects");
+                        var refinePrompt = refinePromptData.FirstOrDefault();
+                        
+                        if (refinePrompt != null)
+                        {
+                            // Prepare the data for the refine prompt
+                            var opportunityData = opportunityContext as Dictionary<string, object>;
+                            var placeholders = new Dictionary<string, string>
+                            {
+                                { "opportunityName", opportunityData?.GetValueOrDefault("name")?.ToString() ?? "" },
+                                { "opportunityDescription", opportunityData?.GetValueOrDefault("description")?.ToString() ?? "" },
+                                { "proposedInitiativeTypeName", opportunityData?.GetValueOrDefault("proposedInitiativeTypeName")?.ToString() ?? "" },
+                                { "countries", opportunityData?.GetValueOrDefault("countries")?.ToString() ?? "" },
+                                { "sdGs", opportunityData?.GetValueOrDefault("sdGs")?.ToString() ?? "" },
+                                { "deliverables", opportunityData?.GetValueOrDefault("deliverables")?.ToString() ?? "" },
+                                { "projects", JsonConvert.SerializeObject(new { projects = similarProjects }) }
+                            };
+                            
+                            // Process placeholders in the prompt
+                            var refinedPrompt = _aiService.ProcessPlaceholders(refinePrompt.UserPrompt, JsonConvert.SerializeObject(placeholders));
+                            
+                            // Call Gemini to refine the projects
+                            var refineResponse = await _aiService.FetchResultFromGemini(refinePrompt, refinedPrompt, opportunityId.ToString());
+                            
+                            if (!string.IsNullOrEmpty(refineResponse))
+                            {
+                                try
+                                {
+                                    // Extract JSON from Gemini response (handles both raw JSON and wrapped in API response)
+                                    var extractedJson = ExtractJsonFromGeminiResponse(refineResponse);
+                                    
+                                    if (!string.IsNullOrEmpty(extractedJson))
+                                    {
+                                        var refinedData = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(extractedJson);
+                                        if (refinedData != null && refinedData.ContainsKey("projects"))
+                                        {
+                                            var refinedProjects = JsonConvert.DeserializeObject<List<UNOPS.PAO.Models.SimilarProjectModel>>(refinedData["projects"].ToString());
+                                            if (refinedProjects != null)
+                                            {
+                                                similarProjects = refinedProjects;
+                                                _logger.LogInformation($"✅ [SIMILAR-PROJECTS] Successfully added relevance explanations to {similarProjects.Count} projects");
+                                            }
+                                        }
+                                    }
+                                }
+                                catch (Exception parseEx)
+                                {
+                                    _logger.LogWarning(parseEx, $"⚠️ [SIMILAR-PROJECTS] Failed to parse refined response: {parseEx.Message}");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception refineEx)
+                    {
+                        _logger.LogWarning(refineEx, $"⚠️ [SIMILAR-PROJECTS] Failed to refine projects with relevance explanations, returning original results: {refineEx.Message}");
+                        // Continue with original results if refinement fails
+                    }
+                }
+                
                 var executionTime = DateTime.UtcNow - startTime;
                 
                 var response = new UNOPS.PAO.Models.SimilarProjectsResponse
@@ -3185,6 +3251,73 @@ public class UNOPSGeminiManager : IGeminiManager
                         };
                         
                         relevantPeople.Add(relevantPerson);
+                    }
+                }
+                
+                // Step 5: Refine results with Gemini to add relevance explanations
+                if (relevantPeople.Any())
+                {
+                    _logger.LogInformation($"🤖 [RELEVANT-PEOPLE] Refining {relevantPeople.Count} people with AI-generated relevance explanations");
+                    
+                    try
+                    {
+                        var refinePromptData = await _aiService.GetPromptData("opportunity_refine_people");
+                        var refinePrompt = refinePromptData.FirstOrDefault();
+                        
+                        if (refinePrompt != null)
+                        {
+                            // Prepare the data for the refine prompt
+                            var opportunityData = opportunityContext as Dictionary<string, object>;
+                            var placeholders = new Dictionary<string, string>
+                            {
+                                { "opportunityName", opportunityData?.GetValueOrDefault("name")?.ToString() ?? "" },
+                                { "opportunityDescription", opportunityData?.GetValueOrDefault("description")?.ToString() ?? "" },
+                                { "proposedInitiativeTypeName", opportunityData?.GetValueOrDefault("proposedInitiativeTypeName")?.ToString() ?? "" },
+                                { "countries", opportunityData?.GetValueOrDefault("countries")?.ToString() ?? "" },
+                                { "sdGs", opportunityData?.GetValueOrDefault("sdGs")?.ToString() ?? "" },
+                                { "deliverables", opportunityData?.GetValueOrDefault("deliverables")?.ToString() ?? "" },
+                                { "expertiseAreas", string.Join(", ", roles) },
+                                { "people", JsonConvert.SerializeObject(new { people = relevantPeople }) }
+                            };
+                            
+                            // Process placeholders in the prompt
+                            var refinedPrompt = _aiService.ProcessPlaceholders(refinePrompt.UserPrompt, JsonConvert.SerializeObject(placeholders));
+                            
+                            // Call Gemini to refine the people
+                            var refineResponse = await _aiService.FetchResultFromGemini(refinePrompt, refinedPrompt, opportunityId.ToString());
+                            
+                            if (!string.IsNullOrEmpty(refineResponse))
+                            {
+                                try
+                                {
+                                    // Extract JSON from Gemini response (handles both raw JSON and wrapped in API response)
+                                    var extractedJson = ExtractJsonFromGeminiResponse(refineResponse);
+                                    
+                                    if (!string.IsNullOrEmpty(extractedJson))
+                                    {
+                                        var refinedData = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(extractedJson);
+                                        if (refinedData != null && refinedData.ContainsKey("people"))
+                                        {
+                                            var refinedPeople = JsonConvert.DeserializeObject<List<UNOPS.PAO.Models.RelevantPersonModel>>(refinedData["people"].ToString());
+                                            if (refinedPeople != null)
+                                            {
+                                                relevantPeople = refinedPeople;
+                                                _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Successfully added relevance explanations to {relevantPeople.Count} people");
+                                            }
+                                        }
+                                    }
+                                }
+                                catch (Exception parseEx)
+                                {
+                                    _logger.LogWarning(parseEx, $"⚠️ [RELEVANT-PEOPLE] Failed to parse refined response: {parseEx.Message}");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception refineEx)
+                    {
+                        _logger.LogWarning(refineEx, $"⚠️ [RELEVANT-PEOPLE] Failed to refine people with relevance explanations, returning original results: {refineEx.Message}");
+                        // Continue with original results if refinement fails
                     }
                 }
                 
@@ -3966,6 +4099,57 @@ public class UNOPSGeminiManager : IGeminiManager
                 _logger.LogError(ex, $"❌ [OPPORTUNITY-PROPOSAL] Error generating opportunity proposal: {ex.Message}");
                 stopwatch.Stop();
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Extracts JSON content from Gemini API response
+        /// Handles both raw JSON and responses wrapped in API structure with markdown code blocks
+        /// </summary>
+        /// <param name="geminiResponse">The raw response from Gemini API</param>
+        /// <returns>Extracted JSON string, or empty string if extraction fails</returns>
+        private string ExtractJsonFromGeminiResponse(string geminiResponse)
+        {
+            try
+            {
+                // First, try to parse as a Gemini API response structure
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(geminiResponse);
+                
+                // Check if it's wrapped in the standard Gemini API response format
+                if (apiResponse?.candidates != null && apiResponse.candidates.Count > 0)
+                {
+                    var firstCandidate = apiResponse.candidates[0];
+                    if (firstCandidate?.content?.parts != null && firstCandidate.content.parts.Count > 0)
+                    {
+                        var textContent = firstCandidate.content.parts[0]?.text?.ToString();
+                        
+                        if (!string.IsNullOrEmpty(textContent))
+                        {
+                            // Remove markdown code block wrapping if present (```json ... ```)
+                            var jsonMatch = System.Text.RegularExpressions.Regex.Match(
+                                textContent, 
+                                @"```(?:json)?\s*\n?(.*?)\n?```", 
+                                System.Text.RegularExpressions.RegexOptions.Singleline
+                            );
+                            
+                            if (jsonMatch.Success)
+                            {
+                                return jsonMatch.Groups[1].Value.Trim();
+                            }
+                            
+                            // If no markdown wrapping, return the text content directly
+                            return textContent.Trim();
+                        }
+                    }
+                }
+                
+                // If it's already valid JSON (not wrapped), return as is
+                return geminiResponse;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, $"⚠️ Failed to extract JSON from Gemini response: {ex.Message}");
+                return geminiResponse; // Return original if extraction fails
             }
         }
 

@@ -81,6 +81,9 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
   partnerName = input<string>();
   partnerStatus?: string;
   dataUrl = signal<string>('');
+  
+  // Internal partner name signal for when loaded from route data
+  internalPartnerName = signal<string>('');
 
   // Permission management for opportunities within partner context
   entityPermissions = signal<EntityPermissions>({
@@ -115,7 +118,8 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
   // Dialog configuration for unified dialog
   dialogConfig = computed<CreateOpportunityFromInteractionsConfig>(() => {
     const partnerId = this.partnerId() || this.getCurrentPartnerIdFromRoute();
-    const partnerName = this.partnerName() || '';
+    // Use input partnerName if available, otherwise use internal signal from route data
+    const partnerName = this.partnerName() || this.internalPartnerName() || '';
     
     return {
       partnerId: partnerId ? +partnerId : 0,
@@ -254,6 +258,10 @@ export class PartnerViewOpportunitiesComponent implements OnInit {
         const partnerData = data['partnerData'];
         if (partnerData) {
           this.partnerStatus = partnerData.status;
+          // Store partner name in internal signal for dialog config
+          if (partnerData.name) {
+            this.internalPartnerName.set(partnerData.name);
+          }
         }
       });
     }
