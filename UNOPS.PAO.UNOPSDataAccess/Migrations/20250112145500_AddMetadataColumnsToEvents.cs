@@ -11,9 +11,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(@"
-                ALTER TABLE events
-                ADD COLUMN usage_metadata JSONB,
-                ADD COLUMN citation_metadata JSONB;
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = 'events' AND column_name = 'usage_metadata'
+                    ) THEN
+                        ALTER TABLE events ADD COLUMN usage_metadata JSONB;
+                    END IF;
+                    
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = 'events' AND column_name = 'citation_metadata'
+                    ) THEN
+                        ALTER TABLE events ADD COLUMN citation_metadata JSONB;
+                    END IF;
+                END $$;
             ");
         }
 
@@ -21,9 +34,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(@"
-                ALTER TABLE events
-                DROP COLUMN IF EXISTS usage_metadata,
-                DROP COLUMN IF EXISTS citation_metadata;
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = 'events' AND column_name = 'usage_metadata'
+                    ) THEN
+                        ALTER TABLE events DROP COLUMN usage_metadata;
+                    END IF;
+                    
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_name = 'events' AND column_name = 'citation_metadata'
+                    ) THEN
+                        ALTER TABLE events DROP COLUMN citation_metadata;
+                    END IF;
+                END $$;
             ");
         }
     }
