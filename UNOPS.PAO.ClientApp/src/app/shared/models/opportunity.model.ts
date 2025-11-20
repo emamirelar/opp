@@ -4,6 +4,17 @@
  */
 
 /**
+ * Document detail model for display purposes
+ */
+export interface DocumentDetail {
+  id: number;
+  name: string | null;
+  type: string | null;
+  storagePath: string | null;
+  link: string | null;
+}
+
+/**
  * Main Opportunity model matching backend OpportunityModel.cs
  */
 export interface Opportunity {
@@ -26,6 +37,7 @@ export interface Opportunity {
   resultsFocus: string | null;
   intendedImpactOutcomes: string | null;
   expectedBeneficiaries: string | null;
+  challenges: string | null;
   fundingPartners: OpportunityFundingPartner[];
   clientPartners: OpportunityClientPartner[];
   stakeholders: OpportunityStakeholder[];
@@ -63,6 +75,9 @@ export interface OpportunityFundingPartner {
   isAmountBasedFee: boolean;
   partnershipAgreementReference: string | null;
   commitmentStatus: string | null;
+  documentId: number | null;
+  documentName: string | null;
+  associatedDocuments: DocumentDetail[] | null;
 }
 
 /**
@@ -74,6 +89,9 @@ export interface OpportunityClientPartner {
   partnerId: number;
   partnerName: string;
   partnerLogoUrl?: string;
+  documentId: number | null;
+  documentName: string | null;
+  associatedDocuments: DocumentDetail[] | null;
 }
 
 /**
@@ -228,10 +246,12 @@ export interface OpportunityFundingPartnerRequest {
   feeAmount?: number;
   feeAmountUSD?: number;
   isAmountBasedFee?: boolean;
+  documentId?: number;
 }
 
 export interface OpportunityClientPartnerRequest {
   partnerId: number;
+  documentId?: number;
 }
 
 export interface OpportunityStakeholderRequest {

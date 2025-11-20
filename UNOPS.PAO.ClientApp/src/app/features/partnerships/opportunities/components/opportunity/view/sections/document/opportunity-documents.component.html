@@ -103,6 +103,16 @@
                 </div>
                 <div class="flex gap-1" (click)="$event.stopPropagation()">
                   <p-button
+                    icon="pi pi-users"
+                    [rounded]="true"
+                    [text]="true"
+                    size="small"
+                    severity="secondary"
+                    [pTooltip]="'button.tagPartner' | translate"
+                    tooltipPosition="top"
+                    (onClick)="openPartnerTagDialog(doc)"
+                  />
+                  <p-button
                     icon="pi pi-sparkles"
                     [rounded]="true"
                     [text]="true"
@@ -314,4 +324,150 @@
   (visibleChange)="showComparisonDialog.set($event)"
   (applyChanges)="handleApplyChanges($event)"
 ></app-ai-comparison>
+
+<!-- Partner Results Framework Tag Dialog -->
+<p-dialog
+  [header]="'title.tagPartnerResultsFramework' | translate"
+  [(visible)]="showPartnerTagDialog"
+  [modal]="true"
+  [style]="{ width: '45rem' }"
+>
+  <!-- Validation Error Message -->
+  @if (showPartnerTagValidationError()) {
+    <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
+      {{ 'message.validation.selectAtLeastOnePartner' | translate }}
+    </p-message>
+  }
+  
+  <!-- Info Message -->
+  <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+    <div class="flex items-start gap-2">
+      <i class="pi pi-info-circle text-blue-600 text-sm mt-0.5"></i>
+      <div class="text-sm text-blue-900">
+        <p class="font-semibold mb-1">{{ 'label.partnerResultsFramework' | translate }}</p>
+        <p>{{ 'message.selectPartnersForDocument' | translate }}</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Document Info -->
+  @if (documentBeingTagged) {
+    <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
+      <div class="flex items-center gap-3">
+        <i [class]="'pi text-lg ' + getFileIcon(documentBeingTagged.type || '') + ' ' + getFileIconColor(documentBeingTagged.type || '')"></i>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-900">{{ documentBeingTagged.name }}</p>
+          <p class="text-xs text-gray-600">{{ documentBeingTagged.documentTypeName || 'Document' }}</p>
+        </div>
+      </div>
+    </div>
+  }
+  
+  <!-- Funding Partners -->
+  @if (opportunity()?.fundingPartners && opportunity()!.fundingPartners!.length > 0) {
+    <div class="mb-4">
+      <h4 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <i class="pi pi-dollar text-green-600"></i>
+        {{ 'label.fundingPartners' | translate }} ({{ opportunity()!.fundingPartners!.length }})
+      </h4>
+      <div class="space-y-2">
+        @for (partner of opportunity()!.fundingPartners; track partner.partnerId) {
+          <div
+            class="flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer"
+            [class.bg-green-50]="isFundingPartnerSelected(partner.partnerId)"
+            [class.border-green-300]="isFundingPartnerSelected(partner.partnerId)"
+            [class.bg-white]="!isFundingPartnerSelected(partner.partnerId)"
+            [class.border-gray-200]="!isFundingPartnerSelected(partner.partnerId)"
+            [class.hover:bg-gray-50]="!isFundingPartnerSelected(partner.partnerId)"
+            (click)="toggleFundingPartner(partner.partnerId)"
+          >
+            <p-checkbox
+              [binary]="true"
+              [ngModel]="isFundingPartnerSelected(partner.partnerId)"
+              (ngModelChange)="toggleFundingPartner(partner.partnerId)"
+              (click)="$event.stopPropagation()"
+            />
+            <img
+              [src]="partner.partnerLogoUrl || 'assets/images/Partner.png'"
+              [alt]="partner.partnerName"
+              class="w-10 h-10 object-contain rounded"
+            />
+            <div class="flex-1">
+              <div class="font-semibold text-gray-900">{{ partner.partnerName }}</div>
+              @if (partner.amount) {
+                <div class="text-sm text-gray-600 mt-1">
+                  <span>{{ 'label.amount' | translate }}:</span>
+                  <span class="font-semibold ml-2">${{ partner.amount | number }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+  
+  <!-- Client Partners -->
+  @if (opportunity()?.clientPartners && opportunity()!.clientPartners!.length > 0) {
+    <div class="mb-4">
+      <h4 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <i class="pi pi-building text-blue-600"></i>
+        {{ 'label.clientPartners' | translate }} ({{ opportunity()!.clientPartners!.length }})
+      </h4>
+      <div class="space-y-2">
+        @for (partner of opportunity()!.clientPartners; track partner.partnerId) {
+          <div
+            class="flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer"
+            [class.bg-blue-50]="isClientPartnerSelected(partner.partnerId)"
+            [class.border-blue-300]="isClientPartnerSelected(partner.partnerId)"
+            [class.bg-white]="!isClientPartnerSelected(partner.partnerId)"
+            [class.border-gray-200]="!isClientPartnerSelected(partner.partnerId)"
+            [class.hover:bg-gray-50]="!isClientPartnerSelected(partner.partnerId)"
+            (click)="toggleClientPartner(partner.partnerId)"
+          >
+            <p-checkbox
+              [binary]="true"
+              [ngModel]="isClientPartnerSelected(partner.partnerId)"
+              (ngModelChange)="toggleClientPartner(partner.partnerId)"
+              (click)="$event.stopPropagation()"
+            />
+            <img
+              [src]="partner.partnerLogoUrl || 'assets/images/Partner.png'"
+              [alt]="partner.partnerName"
+              class="w-10 h-10 object-contain rounded"
+            />
+            <div class="flex-1">
+              <div class="font-semibold text-gray-900">{{ partner.partnerName }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+  
+  <!-- No Partners Message -->
+  @if (!opportunity()?.fundingPartners?.length && !opportunity()?.clientPartners?.length) {
+    <div class="p-4 bg-yellow-50 border border-yellow-200 rounded">
+      <div class="flex items-center gap-2 text-yellow-800">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span class="text-sm">{{ 'message.noPartnersAvailableForTagging' | translate }}</span>
+      </div>
+    </div>
+  }
+  
+  <!-- Dialog Footer -->
+  <ng-template pTemplate="footer">
+    <p-button
+      [label]="'button.cancel' | translate"
+      severity="secondary"
+      (onClick)="cancelPartnerTagging()"
+    />
+    <p-button
+      [label]="'button.confirm' | translate"
+      severity="primary"
+      (onClick)="confirmPartnerTagging()"
+      [disabled]="selectedFundingPartners.length === 0 && selectedClientPartners.length === 0"
+    />
+  </ng-template>
+</p-dialog>
 

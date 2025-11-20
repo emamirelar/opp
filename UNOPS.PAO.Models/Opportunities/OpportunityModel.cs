@@ -22,6 +22,7 @@ public class OpportunityModel
     public string? ResultsFocus { get; set; }
     public string? IntendedImpactOutcomes { get; set; }
     public string? ExpectedBeneficiaries { get; set; }
+    public string? Challenges { get; set; }
     
     public List<OpportunityFundingPartnerModel>? FundingPartners { get; set; }
     public List<OpportunityClientPartnerModel>? ClientPartners { get; set; }

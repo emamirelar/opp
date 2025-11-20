@@ -10,6 +10,7 @@ public class Document : ModifiableDeletableEntity, IValidatableObject
     public string? StoragePath { get; set; }
     public string? GoogleId { get; set; }
     public string? Type { get; set; }
+    public bool AITranscribed { get; set; } = false;
     public virtual ICollection<DocumentRelationship> DocumentRelationships { get; set; } = new HashSet<DocumentRelationship>();
     public int? DocumentTypeId { get; set; }
     public DocumentType? DocumentType { get; set; }

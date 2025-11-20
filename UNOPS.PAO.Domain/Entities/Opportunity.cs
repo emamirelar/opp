@@ -46,6 +46,9 @@ public class Opportunity : ModifiableDeletableEntity
     [MaxLength(1000)]
     public string? ExpectedBeneficiaries { get; set; }
     
+    [MaxLength(2000)]
+    public string? Challenges { get; set; }
+    
     public virtual ICollection<OpportunityFundingPartner> FundingPartners { get; set; } = new HashSet<OpportunityFundingPartner>();
     
     public virtual ICollection<OpportunityClientPartner> ClientPartners { get; set; } = new HashSet<OpportunityClientPartner>();

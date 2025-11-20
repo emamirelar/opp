@@ -10,16 +10,26 @@ public class WhySectionRequest
     /// Strategic alignment description
     /// </summary>
     public string? StrategicAlignment { get; set; }
-
+    
     /// <summary>
-    /// Expected beneficiaries description
+    /// Results focus description
     /// </summary>
-    public string? ExpectedBeneficiaries { get; set; }
+    public string? ResultsFocus { get; set; }
 
     /// <summary>
     /// Intended impact and outcomes description
     /// </summary>
     public string? IntendedImpactOutcomes { get; set; }
+
+    /// <summary>
+    /// Expected beneficiaries description
+    /// </summary>
+    public string? ExpectedBeneficiaries { get; set; }
+    
+    /// <summary>
+    /// Challenges that the initiative will address
+    /// </summary>
+    public string? Challenges { get; set; }
 
     /// <summary>
     /// List of SDG alignments for the opportunity

@@ -311,6 +311,130 @@ public class OpportunityController : BaseController
     }
 
     /// <summary>
+    /// Retrieves partner-document associations for a specific document
+    /// </summary>
+    [HttpGet(APIDictionary.Opportunity + "/retrieve-partner-document-association/{documentId}")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> RetrievePartnerDocumentAssociation(int documentId)
+    {
+        try
+        {
+            // Find all funding partners associated with this document
+            var fundingPartners = await _context.OpportunityFundingPartners
+                .Where(fp => fp.DocumentId == documentId)
+                .Select(fp => new
+                {
+                    partnerId = fp.PartnerId,
+                    partnerType = "funding"
+                })
+                .ToListAsync();
+            
+            // Find all client partners associated with this document
+            var clientPartners = await _context.OpportunityClientPartners
+                .Where(cp => cp.DocumentId == documentId)
+                .Select(cp => new
+                {
+                    partnerId = cp.PartnerId,
+                    partnerType = "client"
+                })
+                .ToListAsync();
+            
+            // Combine both lists
+            var allPartners = fundingPartners.Concat(clientPartners).ToList();
+            
+            return Ok(new
+            {
+                documentId = documentId,
+                partners = allPartners
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving partner-document associations for document {DocumentId}", documentId);
+            return StatusCode(500, new { error = "Internal server error while retrieving partner-document associations", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Tags a document as Partner Results Framework for specific funding/client partners
+    /// Updates OpportunityFundingPartner and OpportunityClientPartner records with the document ID
+    /// </summary>
+    [HttpPost(APIDictionary.Opportunity + "/{opportunityId}/tag-related-partner-to-doc")]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> TagDocumentToPartners(int opportunityId, [FromBody] TagDocumentToPartnersRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("📎 [API] Tagging document {DocumentId} to partners for opportunity {OpportunityId}", 
+                request.DocumentId, opportunityId);
+
+            // Validate request
+            if ((request.FundingPartnerIds == null || !request.FundingPartnerIds.Any()) &&
+                (request.ClientPartnerIds == null || !request.ClientPartnerIds.Any()))
+            {
+                return BadRequest(new { error = "At least one funding or client partner must be selected" });
+            }
+
+            // Get the document to verify it exists and get its name
+            var document = await _context.Documents.FindAsync(request.DocumentId);
+            if (document == null)
+            {
+                return NotFound(new { error = $"Document with ID {request.DocumentId} not found" });
+            }
+
+            // Update funding partners with document ID
+            if (request.FundingPartnerIds != null && request.FundingPartnerIds.Any())
+            {
+                var fundingPartnersToUpdate = await _context.OpportunityFundingPartners
+                    .Where(fp => fp.OpportunityId == opportunityId && request.FundingPartnerIds.Contains(fp.PartnerId))
+                    .ToListAsync();
+
+                foreach (var fundingPartner in fundingPartnersToUpdate)
+                {
+                    fundingPartner.DocumentId = request.DocumentId;
+                    _logger.LogInformation("✅ [API] Tagged document {DocumentId} to funding partner {PartnerId}", 
+                        request.DocumentId, fundingPartner.PartnerId);
+                }
+            }
+
+            // Update client partners with document ID
+            if (request.ClientPartnerIds != null && request.ClientPartnerIds.Any())
+            {
+                var clientPartnersToUpdate = await _context.OpportunityClientPartners
+                    .Where(cp => cp.OpportunityId == opportunityId && request.ClientPartnerIds.Contains(cp.PartnerId))
+                    .ToListAsync();
+
+                foreach (var clientPartner in clientPartnersToUpdate)
+                {
+                    clientPartner.DocumentId = request.DocumentId;
+                    _logger.LogInformation("✅ [API] Tagged document {DocumentId} to client partner {PartnerId}", 
+                        request.DocumentId, clientPartner.PartnerId);
+                }
+            }
+
+            // Save all changes
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("✅ [API] Successfully tagged document {DocumentId} to partners for opportunity {OpportunityId}", 
+                request.DocumentId, opportunityId);
+
+            return Ok(new
+            {
+                message = "Document successfully tagged to partners",
+                documentId = request.DocumentId,
+                fundingPartnersUpdated = request.FundingPartnerIds?.Count ?? 0,
+                clientPartnersUpdated = request.ClientPartnerIds?.Count ?? 0
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error tagging document {DocumentId} to partners for opportunity {OpportunityId}", 
+                request.DocumentId, opportunityId);
+            return StatusCode(500, new { error = "Internal server error while tagging document to partners", details = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Updates the WHERE section of an opportunity (implementation countries)
     /// </summary>
     [HttpPatch(APIDictionary.OpportunityWhere)]
@@ -998,6 +1122,7 @@ public class OpportunityController : BaseController
                             StoragePath = gcsPath,
                             Type = mimeType,
                             DocumentTypeId = documentTypeId,
+                            AITranscribed = true, // Mark as AI transcribed since these documents were used in AI proposal generation
                             CreatedBy = _currentUserId,
                             CreatedDate = DateTime.UtcNow
                         };

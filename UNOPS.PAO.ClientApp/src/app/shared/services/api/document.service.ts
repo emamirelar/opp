@@ -236,4 +236,21 @@ export class DocumentService {
       })
     );
   }
+
+  /**
+   * Get partner-document associations for a specific document
+   */
+  getPartnerDocumentAssociation(documentId: number) {
+    this.isLoading.set(true);
+    return this.http.get<{ documentId: number; partners: Array<{ partnerId: number; partnerType: string }> }>(`/api/opportunity/retrieve-partner-document-association/${documentId}`).pipe(
+      tap({
+        next: () => {
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+        },
+      })
+    );
+  }
 }

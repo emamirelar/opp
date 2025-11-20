@@ -87,6 +87,7 @@ export class OpportunityWhySectionComponent implements OnInit {
   strategicAlignmentControl = new FormControl<string | null>(null);
   expectedBeneficiariesControl = new FormControl<string | null>(null);
   expectedOutcomesControl = new FormControl<string | null>(null);
+  challengesControl = new FormControl<string | null>(null);
 
   // SDG data
   sdgs = signal<SDG[]>([]);
@@ -132,6 +133,7 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
     this.expectedBeneficiariesControl.setValue(opp.expectedBeneficiaries ?? null);
     this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
+    this.challengesControl.setValue(opp.challenges ?? null);
 
     this.isEditing.set(true);
     this.cdr.detectChanges();
@@ -148,6 +150,7 @@ export class OpportunityWhySectionComponent implements OnInit {
       strategicAlignment: this.strategicAlignmentControl.value ?? undefined,
       expectedBeneficiaries: this.expectedBeneficiariesControl.value ?? undefined,
       intendedImpactOutcomes: this.expectedOutcomesControl.value ?? undefined,
+      challenges: this.challengesControl.value ?? undefined,
       sdGs: opp.sdGs?.map(sdg => ({
         sdgId: sdg.sdgDatabaseId || 0,  // Use the integer database ID
         isPrimary: sdg.isPrimary,
@@ -188,6 +191,7 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.strategicAlignmentControl.setValue(opp.strategicAlignment ?? null);
     this.expectedBeneficiariesControl.setValue(opp.expectedBeneficiaries ?? null);
     this.expectedOutcomesControl.setValue(opp.intendedImpactOutcomes ?? null);
+    this.challengesControl.setValue(opp.challenges ?? null);
     
     this.cdr.detectChanges();
   }

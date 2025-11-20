@@ -635,6 +635,11 @@ public class GeminiController : BaseController
             {
                 throw new BusinessException("Failed to transcribe document. AI analysis returned no results.");
             }
+            
+            // Mark document as AI transcribed
+            document.AITranscribed = true;
+            _context.Documents.Update(document);
+            await _context.SaveChangesAsync();
 
             return response.Trim();
         });

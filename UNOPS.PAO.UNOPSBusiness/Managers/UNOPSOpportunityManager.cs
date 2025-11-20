@@ -161,6 +161,32 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         var model = mapper.Map<OpportunityModel>(entity);
         
+        // Populate associated documents for funding partners
+        if (model.FundingPartners != null && model.FundingPartners.Any())
+        {
+            foreach (var fundingPartner in model.FundingPartners)
+            {
+                fundingPartner.AssociatedDocuments = await GetDocumentsForPartner(
+                    id, 
+                    fundingPartner.PartnerId, 
+                    isFundingPartner: true
+                );
+            }
+        }
+        
+        // Populate associated documents for client partners
+        if (model.ClientPartners != null && model.ClientPartners.Any())
+        {
+            foreach (var clientPartner in model.ClientPartners)
+            {
+                clientPartner.AssociatedDocuments = await GetDocumentsForPartner(
+                    id, 
+                    clientPartner.PartnerId, 
+                    isFundingPartner: false
+                );
+            }
+        }
+        
         // Enrich country models with organization unit hierarchy
         if (model.Countries != null && model.Countries.Any())
         {
@@ -171,6 +197,76 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         model.Stats = ComputeOpportunityStats(entity);
 
         return model;
+    }
+    
+    /// <summary>
+    /// Get all documents associated with a specific partner for an opportunity
+    /// </summary>
+    /// <param name="opportunityId">Opportunity ID</param>
+    /// <param name="partnerId">Partner ID</param>
+    /// <param name="isFundingPartner">True for funding partners, false for client partners</param>
+    /// <returns>List of document details</returns>
+    private async Task<List<UNOPS.PAO.Models.Documents.DocumentDetailModel>> GetDocumentsForPartner(
+        int opportunityId, 
+        int partnerId, 
+        bool isFundingPartner)
+    {
+        var documents = new List<UNOPS.PAO.Models.Documents.DocumentDetailModel>();
+        
+        if (isFundingPartner)
+        {
+            // Get documents from OpportunityFundingPartner table
+            var fundingPartnerDocs = await context.OpportunityFundingPartners
+                .Where(fp => fp.OpportunityId == opportunityId && fp.PartnerId == partnerId && fp.DocumentId != null)
+                .Include(fp => fp.Document)
+                .Select(fp => fp.Document)
+                .Where(d => d != null && !d.IsDeleted)
+                .Distinct()
+                .ToListAsync();
+            
+            foreach (var doc in fundingPartnerDocs)
+            {
+                if (doc != null)
+                {
+                    documents.Add(new UNOPS.PAO.Models.Documents.DocumentDetailModel
+                    {
+                        Id = doc.Id,
+                        Name = doc.Name,
+                        Type = doc.Type,
+                        StoragePath = doc.StoragePath,
+                        Link = doc.Link
+                    });
+                }
+            }
+        }
+        else
+        {
+            // Get documents from OpportunityClientPartner table
+            var clientPartnerDocs = await context.OpportunityClientPartners
+                .Where(cp => cp.OpportunityId == opportunityId && cp.PartnerId == partnerId && cp.DocumentId != null)
+                .Include(cp => cp.Document)
+                .Select(cp => cp.Document)
+                .Where(d => d != null && !d.IsDeleted)
+                .Distinct()
+                .ToListAsync();
+            
+            foreach (var doc in clientPartnerDocs)
+            {
+                if (doc != null)
+                {
+                    documents.Add(new UNOPS.PAO.Models.Documents.DocumentDetailModel
+                    {
+                        Id = doc.Id,
+                        Name = doc.Name,
+                        Type = doc.Type,
+                        StoragePath = doc.StoragePath,
+                        Link = doc.Link
+                    });
+                }
+            }
+        }
+        
+        return documents;
     }
     
     /// <summary>
@@ -452,6 +548,16 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         if (request.IntendedImpactOutcomes != null)
         {
             entity.IntendedImpactOutcomes = request.IntendedImpactOutcomes;
+        }
+
+        if (request.Challenges != null)
+        {
+            entity.Challenges = request.Challenges;
+        }
+
+        if (request.ResultsFocus != null)
+        {
+            entity.ResultsFocus = request.ResultsFocus;
         }
 
         // Update SDG alignments

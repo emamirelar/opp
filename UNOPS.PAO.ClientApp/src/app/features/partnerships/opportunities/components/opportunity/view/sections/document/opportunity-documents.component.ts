@@ -17,6 +17,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { FloatLabelModule } from 'primeng/floatlabel';
+import { CheckboxModule } from 'primeng/checkbox';
 import { FormsModule } from '@angular/forms';
 
 // Services
@@ -61,6 +62,7 @@ declare const google: any;
     MessageModule,
     SelectModule,
     FloatLabelModule,
+    CheckboxModule,
     FormsModule,
     AiComparisonComponent
   ],
@@ -88,6 +90,12 @@ export class OpportunityDocumentsComponent implements OnInit {
    * @type {Signal<number>}
    */
   readonly opportunityId = input.required<number>();
+  
+  /**
+   * @description The full opportunity object with partner details
+   * @type {Signal<any>}
+   */
+  readonly opportunity = input.required<any>();
 
   /**
    * @description Event emitted when opportunity data changes and parent should reload
@@ -203,6 +211,36 @@ export class OpportunityDocumentsComponent implements OnInit {
    * @type {Signal<any>}
    */
   aiExtractedData = signal<any>(null);
+  
+  /**
+   * @description Show partner selection dialog for document tagging
+   * @type {Signal<boolean>}
+   */
+  showPartnerTagDialog = signal<boolean>(false);
+  
+  /**
+   * @description Document being tagged with partner
+   * @type {any}
+   */
+  documentBeingTagged: any = null;
+  
+  /**
+   * @description Selected funding partners for document
+   * @type {number[]}
+   */
+  selectedFundingPartners: number[] = [];
+  
+  /**
+   * @description Selected client partners for document
+   * @type {number[]}
+   */
+  selectedClientPartners: number[] = [];
+  
+  /**
+   * @description Show partner tag validation error
+   * @type {Signal<boolean>}
+   */
+  showPartnerTagValidationError = signal<boolean>(false);
 
   /**
    * @description Field mappings for opportunity comparison display
@@ -1121,6 +1159,182 @@ export class OpportunityDocumentsComponent implements OnInit {
     }
     const byteArray = new Uint8Array(byteNumbers);
     return new Blob([byteArray], { type: mimeType });
+  }
+  
+  /**
+   * @description Open dialog to tag document with partners (Partner Results Framework)
+   * @param {any} doc - Document to tag
+   * @returns {void}
+   */
+  openPartnerTagDialog(doc: any): void {
+    this.documentBeingTagged = doc;
+    this.selectedFundingPartners = [];
+    this.selectedClientPartners = [];
+    this.showPartnerTagValidationError.set(false);
+    
+    // Call API to retrieve existing partner-document associations
+    if (doc.id) {
+      this.documentService.getPartnerDocumentAssociation(doc.id).subscribe({
+        next: (response: any) => {
+          if (response && response.partners) {
+            // Pre-select partners based on existing associations
+            response.partners.forEach((partner: any) => {
+              if (partner.partnerType === 'funding' && !this.selectedFundingPartners.includes(partner.partnerId)) {
+                this.selectedFundingPartners.push(partner.partnerId);
+              } else if (partner.partnerType === 'client' && !this.selectedClientPartners.includes(partner.partnerId)) {
+                this.selectedClientPartners.push(partner.partnerId);
+              }
+            });
+          }
+          // Open dialog after loading associations
+          this.showPartnerTagDialog.set(true);
+        },
+        error: (error) => {
+          console.error('Error retrieving partner-document associations:', error);
+          // Open dialog anyway even if API call fails
+          this.showPartnerTagDialog.set(true);
+        }
+      });
+    } else {
+      // If no document ID, just open the dialog
+      this.showPartnerTagDialog.set(true);
+    }
+  }
+  
+  /**
+   * @description Cancel partner tagging
+   * @returns {void}
+   */
+  cancelPartnerTagging(): void {
+    this.showPartnerTagDialog.set(false);
+    this.documentBeingTagged = null;
+    this.selectedFundingPartners = [];
+    this.selectedClientPartners = [];
+    this.showPartnerTagValidationError.set(false);
+  }
+  
+  /**
+   * @description Confirm partner tagging for document
+   * @returns {void}
+   */
+  confirmPartnerTagging(): void {
+    // Validate - at least one partner must be selected
+    if (this.selectedFundingPartners.length === 0 && this.selectedClientPartners.length === 0) {
+      this.showPartnerTagValidationError.set(true);
+      return;
+    }
+    
+    const opp = this.opportunity();
+    if (!opp || !this.documentBeingTagged) return;
+    
+    // Call the new API endpoint to tag the document with partners
+    this.opportunityService.tagDocumentToPartners(
+      opp.id!,
+      this.documentBeingTagged.id,
+      this.selectedFundingPartners,
+      this.selectedClientPartners
+    ).subscribe({
+      next: () => {
+        this.feedbackService.showSuccessToast({
+          summary: this.translateService.instant('message.success'),
+          detail: this.translateService.instant('message.document.partnerTaggedSuccessfully')
+        });
+        
+        this.showPartnerTagDialog.set(false);
+        this.documentBeingTagged = null;
+        this.selectedFundingPartners = [];
+        this.selectedClientPartners = [];
+        this.showPartnerTagValidationError.set(false);
+        
+        // Emit event to reload opportunity
+        this.opportunityUpdated.emit();
+      },
+      error: (error) => {
+        console.error('Error tagging document with partners:', error);
+      }
+    });
+  }
+  
+  /**
+   * @description Toggle funding partner selection
+   * @param {number} partnerId - Partner ID to toggle
+   * @returns {void}
+   */
+  toggleFundingPartner(partnerId: number): void {
+    const index = this.selectedFundingPartners.indexOf(partnerId);
+    if (index > -1) {
+      this.selectedFundingPartners.splice(index, 1);
+    } else {
+      this.selectedFundingPartners.push(partnerId);
+    }
+    this.showPartnerTagValidationError.set(false);
+  }
+  
+  /**
+   * @description Toggle client partner selection
+   * @param {number} partnerId - Partner ID to toggle
+   * @returns {void}
+   */
+  toggleClientPartner(partnerId: number): void {
+    const index = this.selectedClientPartners.indexOf(partnerId);
+    if (index > -1) {
+      this.selectedClientPartners.splice(index, 1);
+    } else {
+      this.selectedClientPartners.push(partnerId);
+    }
+    this.showPartnerTagValidationError.set(false);
+  }
+  
+  /**
+   * @description Check if funding partner is selected
+   * @param {number} partnerId - Partner ID
+   * @returns {boolean} True if selected
+   */
+  isFundingPartnerSelected(partnerId: number): boolean {
+    return this.selectedFundingPartners.includes(partnerId);
+  }
+  
+  /**
+   * @description Check if client partner is selected
+   * @param {number} partnerId - Partner ID
+   * @returns {boolean} True if selected
+   */
+  isClientPartnerSelected(partnerId: number): boolean {
+    return this.selectedClientPartners.includes(partnerId);
+  }
+  
+  /**
+   * @description Get partners associated with a document
+   * @param {any} doc - Document
+   * @returns {any[]} Array of partners
+   */
+  getDocumentPartners(doc: any): any[] {
+    const opp = this.opportunity();
+    if (!opp || !doc) return [];
+    
+    const partners: any[] = [];
+    
+    // Find funding partners linked to this document
+    const fundingPartners = (opp.fundingPartners || []).filter((fp: any) => fp.documentId === doc.id);
+    fundingPartners.forEach((fp: any) => {
+      partners.push({
+        ...fp,
+        type: 'funding',
+        typeName: this.translateService.instant('label.fundingPartner')
+      });
+    });
+    
+    // Find client partners linked to this document
+    const clientPartners = (opp.clientPartners || []).filter((cp: any) => cp.documentId === doc.id);
+    clientPartners.forEach((cp: any) => {
+      partners.push({
+        ...cp,
+        type: 'client',
+        typeName: this.translateService.instant('label.clientPartner')
+      });
+    });
+    
+    return partners;
   }
 }
 

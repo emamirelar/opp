@@ -1,3 +1,5 @@
+using UNOPS.PAO.Models.Documents;
+
 namespace UNOPS.PAO.Models;
 
 public class OpportunityClientPartnerModel
@@ -7,5 +9,8 @@ public class OpportunityClientPartnerModel
     public int PartnerId { get; set; }
     public string? PartnerName { get; set; }
     public string? PartnerLogoUrl { get; set; }
+    public int? DocumentId { get; set; }
+    public string? DocumentName { get; set; }
+    public List<DocumentDetailModel>? AssociatedDocuments { get; set; }
 }
 
