@@ -607,10 +607,10 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
     /// <summary>
     /// Retrieves document details including type and content for AI processing.
     /// This method is called dynamically by the Gemini service as a DataRetrievalMethod.
-    /// For GCS documents, returns metadata only without blob content.
+    /// For GCS documents, fetches content from Google Cloud Storage for AI processing.
     /// </summary>
     /// <param name="id">Document ID</param>
-    /// <returns>Object containing document type and blob data (or metadata only for GCS documents)</returns>
+    /// <returns>Object containing document type and blob data</returns>
     public async Task<object> GetDocumentDetailsForAiAsync(int id)
     {
         var document = await _documentRepository.GetByIdAsync(id, new[] { "DocumentType" });
@@ -620,26 +620,38 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
             throw new Exception("Document not found.");
         }
 
+        byte[]? contentBytes = null;
+
         // Check if document is stored in Google Cloud Storage
         var isGcsDocument = !string.IsNullOrWhiteSpace(document.StoragePath) && document.StoragePath.StartsWith("gs://");
         
         if (isGcsDocument)
         {
-            // For GCS documents, return metadata only (blob is in cloud storage)
-            return new
+            // For GCS documents, fetch content from Google Cloud Storage
+            try
             {
-                Id = document.Id,
-                Name = document.Name,
-                Type = document.Type,
-                DocumentType = document.DocumentType?.Name ?? "Unknown",
-                StoragePath = document.StoragePath,
-                Link = document.Link,
-                GoogleId = document.GoogleId,
-                Size = 0 // Size not available for GCS documents without fetching from storage
-            };
+                contentBytes = await _driveManager.DownloadFromGCSAsync(document.StoragePath);
+                
+                if (contentBytes != null && contentBytes.Length > 0)
+                {
+                    return new
+                    {
+                        Id = document.Id,
+                        Name = document.Name,
+                        Type = document.Type,
+                        DocumentType = document.DocumentType?.Name ?? "Unknown",
+                        Blob = contentBytes,
+                        Size = contentBytes.Length,
+                        StoragePath = document.StoragePath
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error downloading document {DocumentId} from GCS path {StoragePath}", id, document.StoragePath);
+                throw new Exception($"Failed to retrieve document content from Google Cloud Storage: {ex.Message}");
+            }
         }
-
-        byte[]? contentBytes = null;
 
         // Get document content (blob or from Google Drive)
         if (document.Blob != null && document.Blob.Length > 0)
@@ -655,7 +667,7 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
 
         if (contentBytes == null || contentBytes.Length == 0)
         {
-            throw new Exception("Document has no content available.");
+            throw new Exception("Document has no content available. The document may be stored in an unsupported location or the content was not properly saved.");
         }
 
         return new
