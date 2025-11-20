@@ -51,6 +51,11 @@ public class RelevantPersonModel
     public double RelevanceScore { get; set; }
     
     /// <summary>
+    /// AI-generated explanation of why this person is relevant to the opportunity (one-line, max 120 chars)
+    /// </summary>
+    public string? RelevanceExplanation { get; set; }
+    
+    /// <summary>
     /// Additional metadata from the vector store
     /// </summary>
     public Dictionary<string, object>? Metadata { get; set; }

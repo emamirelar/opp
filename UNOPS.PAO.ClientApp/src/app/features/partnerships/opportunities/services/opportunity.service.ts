@@ -90,6 +90,13 @@ export class OpportunityService {
   }
 
   /**
+   * Get source interactions for opportunity from OpportunityInteractions table
+   */
+  getSourceInteractions(id: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${id}/source-interactions`);
+  }
+
+  /**
    * Update WHY section of opportunity (SDGs, alignment, outcomes)
    */
   updateOpportunityWhy(id: number, data: any): Observable<Opportunity> {

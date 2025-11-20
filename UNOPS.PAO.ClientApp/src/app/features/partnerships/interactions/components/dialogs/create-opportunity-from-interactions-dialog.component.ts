@@ -1302,24 +1302,48 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       return;
     }
     
+    // Check if user has selected interactions or documents
+    const hasInteractions = this.selectedInteractions().length > 0;
+    const hasDocuments = this.selectedFiles().length > 0 || 
+                        this.selectedGoogleDriveFiles().length > 0 || 
+                        this.selectedExistingDocumentIds().length > 0 ||
+                        this.uploadedDocuments().length > 0;
+    
+    // If interactions or documents are selected, warn user they will be ignored
+    if (hasInteractions || hasDocuments) {
+      this.feedbackDialogService.showConfirmDialog(
+        {
+          summary: this.translateService.instant('common.confirmation.title'),
+          detail: this.translateService.instant('message.confirmation.createWithoutInteractionsDocuments')
+        },
+        () => {
+          // User confirmed - proceed with direct creation
+          this.performDirectCreation();
+        }
+      );
+    } else {
+      // No interactions/documents selected - proceed directly
+      this.performDirectCreation();
+    }
+  }
+  
+  /**
+   * Perform the actual direct creation (called after confirmation if needed)
+   */
+  private async performDirectCreation(): Promise<void> {
     this.generating.set(true);
     
     try {
       console.log('📤 Creating opportunity directly (without AI)');
       
-      // Build create request with basic info
+      // Build create request with basic info only (no interactions or documents)
       const createRequest: any = {
         name: this.opportunityName(),
         description: this.opportunityDescription(),
         partnerId: this.partnerId() || 0,
         isFundingPartner: this.isFundingPartner(),
-        isClientPartner: this.isClientPartner(),
-        sourceInteractionIds: this.selectedInteractions().map(i => i.id),
-        
-        // Include uploaded document information for database persistence
-        newDocumentStoragePaths: this.uploadedDocuments().map(d => d.gcsPath),
-        newDocumentMimeTypes: this.uploadedDocuments().map(d => d.mimeType),
-        newDocumentTypeIds: this.uploadedDocuments().map(d => d.documentTypeId)
+        isClientPartner: this.isClientPartner()
+        // Note: Explicitly NOT including interactions or documents
       };
       
       console.log('📤 Sending direct create request:', createRequest);

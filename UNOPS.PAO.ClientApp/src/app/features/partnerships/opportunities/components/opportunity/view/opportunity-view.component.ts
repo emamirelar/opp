@@ -248,6 +248,30 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     return opp.stats?.sdgCount || opp.sdGs?.length || 0;
   });
 
+  // AI Suggestions state and filtering
+  allSuggestions = signal<any[]>([]);
+  
+  // Computed suggestions filtered by section
+  whoSuggestions = computed(() => 
+    this.allSuggestions().filter(s => s.actionTarget === 'WHO')
+  );
+  
+  whereSuggestions = computed(() => 
+    this.allSuggestions().filter(s => s.actionTarget === 'WHERE')
+  );
+  
+  whatSuggestions = computed(() => 
+    this.allSuggestions().filter(s => s.actionTarget === 'WHAT')
+  );
+  
+  whySuggestions = computed(() => 
+    this.allSuggestions().filter(s => s.actionTarget === 'WHY')
+  );
+  
+  whenSuggestions = computed(() => 
+    this.allSuggestions().filter(s => s.actionTarget === 'WHEN')
+  );
+
   // Filtered stakeholder lists
   internalStakeholders = computed(() => {
     const opp = this.opportunity();
@@ -466,7 +490,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     
     // Refresh related items to reflect any changes in partners/stakeholders
     if (this.relatedItemsComponent) {
-      this.relatedItemsComponent.loadRelatedItems();
+      this.relatedItemsComponent.loadSourceInteractions();
     }
     
     // Angular signals automatically notify ALL child components

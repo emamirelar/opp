@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.DataAccess.Context;
@@ -711,6 +712,67 @@ public class OpportunityController : BaseController
         {
             _logger.LogError(ex, "Error generating insights for opportunity {OpportunityId}", id);
             return StatusCode(500, new { error = "Failed to generate insights", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Gets source interactions that led to opportunity creation from OpportunityInteractions table
+    /// </summary>
+    [HttpGet(APIDictionary.Opportunity + "/{id}/source-interactions")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> GetSourceInteractions(int id)
+    {
+        try
+        {
+            _logger.LogInformation("🔗 [API] Getting source interactions for opportunity {OpportunityId}", id);
+
+            // Verify opportunity exists
+            var opportunity = await _manager.GetOpportunityAsync(id);
+            if (opportunity == null)
+            {
+                _logger.LogWarning("Opportunity {OpportunityId} not found", id);
+                return NotFound(new { error = $"Opportunity with ID {id} not found" });
+            }
+
+            // Get interaction IDs from OpportunityInteractions table
+            var interactionIds = await _context.OpportunityInteractions
+                .Where(oi => oi.OpportunityId == id)
+                .Select(oi => oi.InteractionId)
+                .ToListAsync();
+
+            if (!interactionIds.Any())
+            {
+                return Ok(new List<object>()); // Return empty array if no interactions found
+            }
+
+            // Get full interaction details with partner info via InteractionPartners
+            var interactions = await _context.Interactions
+                .Where(i => interactionIds.Contains(i.Id))
+                .Include(i => i.InteractionPartners)
+                    .ThenInclude(ip => ip.Partner)
+                .Select(i => new
+                {
+                    id = i.Id,
+                    subject = i.Subject,
+                    interactionType = i.Type.ToString(),
+                    interactionDate = i.Date,
+                    partnerName = i.InteractionPartners != null && i.InteractionPartners.Any()
+                        ? i.InteractionPartners.First().Partner != null 
+                            ? i.InteractionPartners.First().Partner.Name 
+                            : "Unknown Partner"
+                        : "Unknown Partner",
+                    summary = i.Description
+                })
+                .ToListAsync();
+
+            _logger.LogInformation("✅ [API] Found {Count} source interactions for opportunity {OpportunityId}", interactions.Count, id);
+
+            return Ok(interactions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting source interactions for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Failed to get source interactions", details = ex.Message });
         }
     }
 

@@ -54,6 +54,11 @@ public class SimilarProjectModel
     /// oneUNOPS project URL
     /// </summary>
     public string? ProjectUrl { get; set; }
+    
+    /// <summary>
+    /// AI-generated explanation of why this project is relevant to the opportunity (one-line, max 120 chars)
+    /// </summary>
+    public string? RelevanceExplanation { get; set; }
 }
 
 /// <summary>

@@ -135,12 +135,14 @@
           </span>
         </h3>
         <p-button
-          [label]="'button.dst.refreshSimilarOpportunities' | translate"
           icon="pi pi-refresh"
+          [text]="true"
+          [rounded]="true"
           size="small"
-          [outlined]="true"
           [loading]="loadingSimilarOpportunities()"
-          (onClick)="loadSimilarOpportunities()"
+          (onClick)="refreshSimilarOpportunities()"
+          pTooltip="{{ 'button.refresh' | translate }}"
+          tooltipPosition="left"
         />
       </div>
 
@@ -233,33 +235,35 @@
         <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <i class="pi pi-box text-unops-primary"></i>
           <span>
-            {{ 'title.dst.similarProjects' | translate }}
+            {{ 'title.dst.relevantUnopsExperience' | translate }}
             @if (similarProjects(); as projects) {
               ({{ projects.length }})
             }
           </span>
         </h3>
         <p-button
-          [label]="'button.dst.refreshSimilarProjects' | translate"
           icon="pi pi-refresh"
+          [text]="true"
+          [rounded]="true"
           size="small"
-          [outlined]="true"
           [loading]="loadingSimilarProjects()"
-          (onClick)="loadSimilarProjects()"
+          (onClick)="refreshSimilarProjects()"
+          pTooltip="{{ 'button.refresh' | translate }}"
+          tooltipPosition="left"
         />
       </div>
 
         @if (loadingSimilarProjects()) {
           <div class="text-center py-8">
             <i class="pi pi-spin pi-spinner text-3xl text-gray-400"></i>
-            <p class="text-sm text-gray-500 mt-2">{{ 'message.dst.loadingSimilarProjects' | translate }}</p>
+            <p class="text-sm text-gray-500 mt-2">{{ 'message.dst.loadingRelevantExperience' | translate }}</p>
           </div>
         } @else if (similarProjectsError()) {
           <div class="bg-red-50 rounded-lg p-4 border border-red-200">
             <div class="flex items-start gap-2">
               <i class="pi pi-exclamation-circle text-red-500 mt-1"></i>
                   <div>
-                <h4 class="font-semibold text-red-900 mb-1">{{ 'message.dst.errorLoadingSimilarProjects' | translate }}</h4>
+                <h4 class="font-semibold text-red-900 mb-1">{{ 'message.dst.errorLoadingRelevantExperience' | translate }}</h4>
                 <p class="text-sm text-red-700">{{ similarProjectsError() }}</p>
               </div>
             </div>
@@ -267,9 +271,9 @@
         } @else if (!similarProjects() || similarProjects()!.length === 0) {
           <div class="bg-white rounded-lg p-6 border border-gray-200 text-center">
             <i class="pi pi-inbox text-4xl text-gray-300 mb-3"></i>
-            <p class="text-gray-500">{{ 'message.dst.noSimilarProjects' | translate }}</p>
+            <p class="text-gray-500">{{ 'message.dst.noRelevantExperience' | translate }}</p>
             <p-button
-              [label]="'button.dst.findSimilarProjects' | translate"
+              [label]="'button.dst.findRelevantExperience' | translate"
               icon="pi pi-search"
               size="small"
               styleClass="mt-3"
@@ -285,9 +289,19 @@
                    (click)="openProjectUrl(project.projectUrl)">
                 <!-- Description -->
                 @if (project.description) {
-                  <p class="text-sm text-gray-700 mb-3 line-clamp-2 font-medium">
+                  <p class="text-sm text-gray-700 mb-2 line-clamp-2 font-medium">
                     {{ project.description }}
                   </p>
+                }
+                
+                <!-- Relevance Explanation (AI-generated) -->
+                @if (project.relevanceExplanation) {
+                  <div class="bg-blue-50 border border-blue-200 rounded px-3 py-2 mb-3 flex items-start gap-2">
+                    <i class="pi pi-info-circle text-blue-600 text-xs mt-0.5 flex-shrink-0"></i>
+                    <p class="text-xs text-blue-800 italic">
+                      {{ project.relevanceExplanation }}
+                    </p>
+                  </div>
                 }
 
                 <!-- Project Details -->
@@ -339,10 +353,24 @@
 
       <!-- Relevant People Section -->
       <div class="mb-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <i class="pi pi-users text-unops-primary"></i>
-          <span>{{ 'title.dst.relevantPeople' | translate }}</span>
-        </h2>
+          <span>
+            {{ 'title.dst.relevantPeopleWithSkills' | translate }}
+          </span>
+        </h3>
+        <p-button
+          icon="pi pi-refresh"
+          [text]="true"
+          [rounded]="true"
+          size="small"
+          [loading]="loadingRelevantPeople()"
+          (onClick)="refreshRelevantPeople()"
+          pTooltip="{{ 'button.refresh' | translate }}"
+          tooltipPosition="left"
+        />
+      </div>
 
         @if (loadingRelevantPeople()) {
           <div class="text-center py-8">
@@ -403,6 +431,16 @@
                     </div>
                   }
                 </div>
+                
+                <!-- Relevance Explanation (AI-generated) -->
+                @if (person.relevanceExplanation) {
+                  <div class="bg-green-50 border border-green-200 rounded px-3 py-2 mb-3 flex items-start gap-2">
+                    <i class="pi pi-info-circle text-green-600 text-xs mt-0.5 flex-shrink-0"></i>
+                    <p class="text-xs text-green-800 italic">
+                      {{ person.relevanceExplanation }}
+                    </p>
+                  </div>
+                }
 
                 <!-- Person Details -->
                 <div class="text-xs text-gray-600 space-y-2">

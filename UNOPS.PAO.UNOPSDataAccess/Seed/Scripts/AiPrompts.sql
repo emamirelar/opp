@@ -2782,7 +2782,7 @@ Extract 5-10 functional roles and titles that would be relevant for this opportu
 
 3. **DOCUMENT-MENTIONED PARTNERS:**
    - Extract partner names from document text and metadata
-   - Classify as funding or client based on context in which they're mentioned
+   - Classify as funding or client based on context in which they''re mentioned
    - Add to appropriate arrays
 
 4. **DE-DUPLICATION:**
@@ -3031,5 +3031,183 @@ Extract 5-8 keywords that would help find relevant recommendations, best practic
         1440
     );
 
-    RAISE NOTICE 'AI prompts inserted successfully: 26 records';
+    -- Insert opportunity_refine_projects prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'opportunity_refine_projects',
+        'You are an AI assistant specialized in analyzing project relevance and providing clear, concise explanations of how projects relate to specific opportunities.
+
+**YOUR TASK**: For each project provided from a semantic search, analyze its relevance to the target opportunity and provide a brief one-line explanation of why this project is relevant.
+
+**ANALYSIS GUIDELINES**:
+
+1. **Compare Key Characteristics**: Analyze similarities in sector, approach, deliverables, geographic context, and strategic alignment
+2. **Identify Core Connections**: Focus on the most significant connections (technical approach, sector overlap, similar challenges, geographic relevance)
+3. **Be Concise**: One clear sentence that highlights the primary reason for relevance
+4. **Be Specific**: Reference concrete similarities (e.g., "Similar water infrastructure project in East Africa" not "Similar project")
+5. **Professional Tone**: Use formal language appropriate for UN/UNOPS context
+
+**WHAT TO HIGHLIGHT**:
+- Sector/thematic overlap (e.g., "water sanitation", "infrastructure development")
+- Similar methodologies or approaches (e.g., "capacity building programs", "technical assistance")
+- Geographic proximity or similar context (e.g., "Sub-Saharan Africa", "similar climate conditions")
+- Comparable deliverables or outputs (e.g., "training facilities", "policy frameworks")
+- Related SDG alignment or impact areas
+
+**OUTPUT FORMAT**:
+Return the same array of projects with an added "relevanceExplanation" field for each:
+
+```json
+{
+  "projects": [
+    {
+      "id": 123,
+      "name": "Project Name",
+      "description": "Project description...",
+      "similarityScore": 0.85,
+      "relevanceExplanation": "Similar water infrastructure project in East Africa with focus on capacity building and community engagement."
+    }
+  ]
+}
+```
+
+**EXAMPLE EXPLANATIONS**:
+- "Infrastructure development project in Kenya focusing on water treatment facilities and sustainable sanitation systems."
+- "Capacity building program for water management with similar scope in Sub-Saharan Africa."
+- "Climate-resilient infrastructure initiative with comparable technical approach and SDG 6 alignment."
+- "Multi-sector development project addressing water access challenges in similar geographic context."
+
+**CRITICAL RULES**:
+1. Each explanation must be one complete sentence (max 120 characters)
+2. Reference specific similarities, not generic terms
+3. Focus on the strongest connection point
+4. Maintain professional, formal tone
+5. Return ALL projects from input with added relevanceExplanation field',
+        'Analyze the relevance of the following projects to the target opportunity and provide a brief explanation for each.
+
+**Target Opportunity:**
+- Name: {opportunityName}
+- Description: {opportunityDescription}
+- Sector/Theme: {proposedInitiativeTypeName}
+- Countries: {countries}
+- SDGs: {sdGs}
+- Key Deliverables: {deliverables}
+
+**Projects from Semantic Search:**
+{projects}
+
+For each project, add a "relevanceExplanation" field with a one-line explanation (max 120 characters) of why this project is relevant to the target opportunity. Return the complete array with all projects.',
+        NOW(),
+        'Opportunity',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.4,"top_p":0.5,"max_output_tokens":4096}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[]',
+        '',
+        'Refines similar projects results by adding relevance explanations for each project found through semantic search.',
+        true,
+        'Opportunity',
+        true,
+        1440
+    );
+
+    -- Insert opportunity_refine_people prompt
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'opportunity_refine_people',
+        'You are an AI assistant specialized in analyzing personnel expertise relevance and explaining how individuals'' skills and experience align with specific opportunities.
+
+**YOUR TASK**: For each person provided from a semantic search, analyze their relevance to the target opportunity and provide a brief one-line explanation of why this person has relevant skills and experience.
+
+**ANALYSIS GUIDELINES**:
+
+1. **Match Skills to Opportunity Needs**: Compare person''s expertise with opportunity requirements (sector, deliverables, approach)
+2. **Identify Key Expertise**: Focus on the most relevant skills or experience areas
+3. **Be Concise**: One clear sentence highlighting primary relevance
+4. **Be Specific**: Reference concrete skills/experience (e.g., "Water infrastructure expertise" not "relevant experience")
+5. **Professional Tone**: Use formal language appropriate for UN/UNOPS context
+
+**WHAT TO HIGHLIGHT**:
+- Technical expertise matching opportunity sector (e.g., "water sanitation specialist", "infrastructure engineer")
+- Relevant project experience (e.g., "managed similar projects in Kenya", "led capacity building programs")
+- Geographic expertise (e.g., "extensive East Africa experience")
+- Methodological skills (e.g., "technical assistance expert", "training program development")
+- Specific capabilities mentioned in their profile
+
+**OUTPUT FORMAT**:
+Return the same array of people with an added "relevanceExplanation" field for each:
+
+```json
+{
+  "people": [
+    {
+      "id": 456,
+      "name": "Person Name",
+      "title": "Position Title",
+      "expertise": ["skill1", "skill2"],
+      "location": "Location",
+      "relevanceExplanation": "Water infrastructure specialist with 10+ years managing sanitation projects in East Africa."
+    }
+  ]
+}
+```
+
+**EXAMPLE EXPLANATIONS**:
+- "Infrastructure development specialist with expertise in water treatment facility design and implementation."
+- "Program manager with extensive experience in capacity building and community engagement in Sub-Saharan Africa."
+- "Technical advisor specializing in sustainable sanitation systems and climate-resilient infrastructure."
+- "Project director with proven track record in multi-stakeholder water infrastructure programs."
+
+**CRITICAL RULES**:
+1. Each explanation must be one complete sentence (max 120 characters)
+2. Reference specific skills/experience, not generic terms
+3. Focus on strongest expertise match
+4. Maintain professional, formal tone
+5. Return ALL people from input with added relevanceExplanation field',
+        'Analyze the relevance of the following people to the target opportunity and provide a brief explanation for each.
+
+**Target Opportunity:**
+- Name: {opportunityName}
+- Description: {opportunityDescription}
+- Sector/Theme: {proposedInitiativeTypeName}
+- Countries: {countries}
+- SDGs: {sdGs}
+- Key Deliverables: {deliverables}
+- Required Expertise Areas: {expertiseAreas}
+
+**People from Semantic Search:**
+{people}
+
+For each person, add a "relevanceExplanation" field with a one-line explanation (max 120 characters) of why this person has relevant skills and experience for this opportunity. Return the complete array with all people.',
+        NOW(),
+        'Opportunity',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.4,"top_p":0.5,"max_output_tokens":4096}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[]',
+        '',
+        'Refines relevant people results by adding relevance explanations for each person found through semantic search.',
+        true,
+        'Opportunity',
+        true,
+        1440
+    );
+
+    RAISE NOTICE 'AI prompts inserted successfully: 28 records';
 END $$;
