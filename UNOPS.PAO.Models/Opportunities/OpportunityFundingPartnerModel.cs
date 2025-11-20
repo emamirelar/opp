@@ -1,3 +1,5 @@
+using UNOPS.PAO.Models.Documents;
+
 namespace UNOPS.PAO.Models;
 
 public class OpportunityFundingPartnerModel
@@ -18,5 +20,8 @@ public class OpportunityFundingPartnerModel
     public decimal? FeePercentage { get; set; }
     public decimal? FeeAmount { get; set; }
     public decimal? FeeAmountUSD { get; set; }
+    public int? DocumentId { get; set; }
+    public string? DocumentName { get; set; }
+    public List<DocumentDetailModel>? AssociatedDocuments { get; set; }
 }
 

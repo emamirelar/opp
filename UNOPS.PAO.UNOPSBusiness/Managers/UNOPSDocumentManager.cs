@@ -244,7 +244,11 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
             }
         }
 
-        var fileType = model.File.GetFileType();
+        var fileType = model.Type ?? "";
+        if (model.File != null)
+        {
+            fileType = model.File.GetFileType();
+        }
         var fileName = string.IsNullOrWhiteSpace(model.Name) ? model.File.FileName : model.Name;
 
         var documentEntity = new UNOPSDocument
@@ -256,7 +260,8 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
             GoogleId = model.GoogleId, // Will be populated if sourced from Google Drive
             StoragePath = model.StoragePath, // Use the GCS path if provided
             LinkedFile = !string.IsNullOrEmpty(model.Link), // True if it's a Drive-sourced file
-            DocumentTypeId = model.DocumentTypeId
+            DocumentTypeId = model.DocumentTypeId,
+            AITranscribed = model.AITranscribed ?? false
         };
 
         await _documentRepository.AddAsync(documentEntity);
@@ -602,10 +607,10 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
     /// <summary>
     /// Retrieves document details including type and content for AI processing.
     /// This method is called dynamically by the Gemini service as a DataRetrievalMethod.
-    /// For GCS documents, returns metadata only without blob content.
+    /// For GCS documents, returns the storage path for AI service to access directly.
     /// </summary>
     /// <param name="id">Document ID</param>
-    /// <returns>Object containing document type and blob data (or metadata only for GCS documents)</returns>
+    /// <returns>Object containing document type and blob data (or GCS path for cloud-stored documents)</returns>
     public async Task<object> GetDocumentDetailsForAiAsync(int id)
     {
         var document = await _documentRepository.GetByIdAsync(id, new[] { "DocumentType" });
@@ -615,12 +620,15 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
             throw new Exception("Document not found.");
         }
 
+        byte[]? contentBytes = null;
+
         // Check if document is stored in Google Cloud Storage
         var isGcsDocument = !string.IsNullOrWhiteSpace(document.StoragePath) && document.StoragePath.StartsWith("gs://");
         
         if (isGcsDocument)
         {
-            // For GCS documents, return metadata only (blob is in cloud storage)
+            // For GCS documents, return the storage path for AI service to access directly
+            // The Gemini AI service has direct access to GCS and can read the document content
             return new
             {
                 Id = document.Id,
@@ -628,13 +636,10 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
                 Type = document.Type,
                 DocumentType = document.DocumentType?.Name ?? "Unknown",
                 StoragePath = document.StoragePath,
-                Link = document.Link,
-                GoogleId = document.GoogleId,
-                Size = 0 // Size not available for GCS documents without fetching from storage
+                IsGcsDocument = true,
+                Size = 0 // Size not available without fetching from GCS
             };
         }
-
-        byte[]? contentBytes = null;
 
         // Get document content (blob or from Google Drive)
         if (document.Blob != null && document.Blob.Length > 0)
@@ -643,14 +648,21 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
         }
         else if (!string.IsNullOrWhiteSpace(document.GoogleId))
         {
-            var userEmail = await GetCreatorEmailAsync(id);
-            var contents = await _driveManager.GetFileStream(document.GoogleId, userEmail);
-            contentBytes = contents.ToArray();
+            try
+            {
+                var userEmail = await GetCreatorEmailAsync(id);
+                var contents = await _driveManager.GetFileStream(document.GoogleId, userEmail);
+                contentBytes = contents.ToArray();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to retrieve document content from Google Drive: {ex.Message}");
+            }
         }
 
         if (contentBytes == null || contentBytes.Length == 0)
         {
-            throw new Exception("Document has no content available.");
+            throw new Exception("Document has no content available. The document may not have been properly uploaded or saved.");
         }
 
         return new
@@ -660,7 +672,8 @@ public class UNOPSDocumentManager : BaseUNOPSManager, IDocumentManager
             Type = document.Type,
             DocumentType = document.DocumentType?.Name ?? "Unknown",
             Blob = contentBytes,
-            Size = contentBytes.Length
+            Size = contentBytes.Length,
+            IsGcsDocument = false
         };
     }
 

@@ -1,14 +1,21 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.Identity.Entities;
+using UNOPS.PAO.UNOPSBusiness.Managers;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.Models.Documents;
 using UNOPS.PAO.Presentation.Controllers.Shared;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
@@ -27,13 +34,20 @@ public class OpportunityController : BaseController
     private readonly IRiskManager _riskManager;
     private readonly int _currentUserId;
     private readonly AppDbContext _context;
+    private readonly UNOPSDocumentManager _documentManager;
 
     public OpportunityController(
         IManagerWrapper manager,
         UserResolverService<int> userResolverService,
         ILogger<OpportunityController> logger,
         IAuthorizationService authorizationService,
-        AppDbContext context)
+        AppDbContext context,
+        UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext unopsContext,
+        AutoMapper.IMapper mapper,
+        IGoogleDriveDocumentManager driveManager,
+        IConfiguration configuration,
+        UserManager<PAOIdentityUser> userManager,
+        IServiceProvider serviceProvider)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.OpportunityManager;
@@ -42,6 +56,7 @@ public class OpportunityController : BaseController
         _riskManager = manager.RiskManager;
         _currentUserId = userResolverService.GetCurrentUserId();
         _context = context;
+        _documentManager = new UNOPSDocumentManager(driveManager, configuration, mapper, unopsContext, userManager, serviceProvider);
     }
 
     /// <summary>
@@ -307,6 +322,130 @@ public class OpportunityController : BaseController
         {
             _logger.LogError(ex, "Error updating WHO section for opportunity {OpportunityId}", id);
             return StatusCode(500, new { error = "Internal server error while updating WHO section", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Retrieves partner-document associations for a specific document
+    /// </summary>
+    [HttpGet(APIDictionary.Opportunity + "/retrieve-partner-document-association/{documentId}")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> RetrievePartnerDocumentAssociation(int documentId)
+    {
+        try
+        {
+            // Find all funding partners associated with this document
+            var fundingPartners = await _context.OpportunityFundingPartners
+                .Where(fp => fp.DocumentId == documentId)
+                .Select(fp => new
+                {
+                    partnerId = fp.PartnerId,
+                    partnerType = "funding"
+                })
+                .ToListAsync();
+            
+            // Find all client partners associated with this document
+            var clientPartners = await _context.OpportunityClientPartners
+                .Where(cp => cp.DocumentId == documentId)
+                .Select(cp => new
+                {
+                    partnerId = cp.PartnerId,
+                    partnerType = "client"
+                })
+                .ToListAsync();
+            
+            // Combine both lists
+            var allPartners = fundingPartners.Concat(clientPartners).ToList();
+            
+            return Ok(new
+            {
+                documentId = documentId,
+                partners = allPartners
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving partner-document associations for document {DocumentId}", documentId);
+            return StatusCode(500, new { error = "Internal server error while retrieving partner-document associations", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Tags a document as Partner Results Framework for specific funding/client partners
+    /// Updates OpportunityFundingPartner and OpportunityClientPartner records with the document ID
+    /// </summary>
+    [HttpPost(APIDictionary.Opportunity + "/{opportunityId}/tag-related-partner-to-doc")]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> TagDocumentToPartners(int opportunityId, [FromBody] TagDocumentToPartnersRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("📎 [API] Tagging document {DocumentId} to partners for opportunity {OpportunityId}", 
+                request.DocumentId, opportunityId);
+
+            // Validate request
+            if ((request.FundingPartnerIds == null || !request.FundingPartnerIds.Any()) &&
+                (request.ClientPartnerIds == null || !request.ClientPartnerIds.Any()))
+            {
+                return BadRequest(new { error = "At least one funding or client partner must be selected" });
+            }
+
+            // Get the document to verify it exists and get its name
+            var document = await _context.Documents.FindAsync(request.DocumentId);
+            if (document == null)
+            {
+                return NotFound(new { error = $"Document with ID {request.DocumentId} not found" });
+            }
+
+            // Update funding partners with document ID
+            if (request.FundingPartnerIds != null && request.FundingPartnerIds.Any())
+            {
+                var fundingPartnersToUpdate = await _context.OpportunityFundingPartners
+                    .Where(fp => fp.OpportunityId == opportunityId && request.FundingPartnerIds.Contains(fp.PartnerId))
+                    .ToListAsync();
+
+                foreach (var fundingPartner in fundingPartnersToUpdate)
+                {
+                    fundingPartner.DocumentId = request.DocumentId;
+                    _logger.LogInformation("✅ [API] Tagged document {DocumentId} to funding partner {PartnerId}", 
+                        request.DocumentId, fundingPartner.PartnerId);
+                }
+            }
+
+            // Update client partners with document ID
+            if (request.ClientPartnerIds != null && request.ClientPartnerIds.Any())
+            {
+                var clientPartnersToUpdate = await _context.OpportunityClientPartners
+                    .Where(cp => cp.OpportunityId == opportunityId && request.ClientPartnerIds.Contains(cp.PartnerId))
+                    .ToListAsync();
+
+                foreach (var clientPartner in clientPartnersToUpdate)
+                {
+                    clientPartner.DocumentId = request.DocumentId;
+                    _logger.LogInformation("✅ [API] Tagged document {DocumentId} to client partner {PartnerId}", 
+                        request.DocumentId, clientPartner.PartnerId);
+                }
+            }
+
+            // Save all changes
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("✅ [API] Successfully tagged document {DocumentId} to partners for opportunity {OpportunityId}", 
+                request.DocumentId, opportunityId);
+
+            return Ok(new
+            {
+                message = "Document successfully tagged to partners",
+                documentId = request.DocumentId,
+                fundingPartnersUpdated = request.FundingPartnerIds?.Count ?? 0,
+                clientPartnersUpdated = request.ClientPartnerIds?.Count ?? 0
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error tagging document {DocumentId} to partners for opportunity {OpportunityId}", 
+                request.DocumentId, opportunityId);
+            return StatusCode(500, new { error = "Internal server error while tagging document to partners", details = ex.Message });
         }
     }
 
@@ -975,54 +1114,43 @@ public class OpportunityController : BaseController
             var result = await _manager.CreateOpportunityAsync(opportunityRequest);
 
             // Persist uploaded documents to database if any (from GCS temporary uploads)
-            if (request.NewDocumentStoragePaths != null && request.NewDocumentStoragePaths.Any())
+            if (request.Documents != null && request.Documents.Any())
             {
                 _logger.LogInformation("📄 [API] Persisting {Count} uploaded documents to database for opportunity {OpportunityId}", 
-                    request.NewDocumentStoragePaths.Count, result.Id);
+                    request.Documents.Count, result.Id);
                 
-                for (int i = 0; i < request.NewDocumentStoragePaths.Count; i++)
+                foreach (var doc in request.Documents)
                 {
                     try
                     {
-                        var gcsPath = request.NewDocumentStoragePaths[i];
-                        var mimeType = request.NewDocumentMimeTypes?[i] ?? "application/octet-stream";
-                        var documentTypeId = request.NewDocumentTypeIds?[i];
-                        
                         // Extract file name from GCS path (gs://bucket/folder/file.ext)
-                        var fileName = System.IO.Path.GetFileName(gcsPath);
+                        var fileName = System.IO.Path.GetFileName(doc.GcsPath);
                         
-                        // Create document entity directly
-                        var document = new Document
+                        // Create DocumentUploadModel for the document manager (without IFormFile since already uploaded to GCS)
+                        var documentModel = new DocumentUploadModel
                         {
                             Name = fileName,
-                            StoragePath = gcsPath,
-                            Type = mimeType,
-                            DocumentTypeId = documentTypeId,
-                            CreatedBy = _currentUserId,
-                            CreatedDate = DateTime.UtcNow
+                            StoragePath = doc.GcsPath,
+                            Type = doc.MimeType,
+                            DocumentTypeId = doc.DocumentTypeId,
+                            ParentEntityName = "Opportunity",
+                            ParentEntityId = result.Id,
+                            AITranscribed = true,
+                            UploadToGCS = false, // Already uploaded to GCS
+                            SkipDatabaseSave = false, // We want to save to database
+                            File = null // No file since already in GCS
                         };
                         
-                        _context.Documents.Add(document);
-                        await _context.SaveChangesAsync();
-                        
-                        // Create document relationship to opportunity
-                        var docRelationship = new DocumentRelationship
-                        {
-                            DocumentId = document.Id,
-                            EntityId = result.Id,
-                            EntityType = "Opportunity"
-                        };
-                        
-                        _context.DocumentRelationships.Add(docRelationship);
-                        await _context.SaveChangesAsync();
+                        // Use the document manager to create the document (handles UNOPSDocument creation correctly)
+                        var createdDoc = await _documentManager.CreateDocumentAsync(documentModel);
                         
                         _logger.LogInformation("✅ [API] Persisted document {FileName} (ID: {DocumentId}) for opportunity {OpportunityId}", 
-                            fileName, document.Id, result.Id);
+                            fileName, createdDoc.Id, result.Id);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "⚠️ Failed to persist document {Index} for opportunity {OpportunityId}", 
-                            i, result.Id);
+                        _logger.LogWarning(ex, "⚠️ Failed to persist document {FileName} for opportunity {OpportunityId}", 
+                            doc.GcsPath, result.Id);
                     }
                 }
             }

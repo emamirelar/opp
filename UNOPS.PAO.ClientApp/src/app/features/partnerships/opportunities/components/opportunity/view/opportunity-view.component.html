@@ -46,6 +46,7 @@
   <!-- LEFT SIDEBAR: Documents Panel -->
   <app-opportunity-documents
     [opportunityId]="opportunity()!.id!"
+    [opportunity]="opportunity()"
     [collapsed]="documentsCollapsed()"
     (togglePanel)="toggleDocumentsPanel()"
     (opportunityUpdated)="reloadOpportunity()"

@@ -9,4 +9,5 @@ public class DocumentModel: DocumentBaseModel, IModifiableEntityModel<int, int>
     public int LastModifiedBy { get; set; }
     public DateTime? LastModifiedDate { get; set; }
     public DocumentTypeModel DocumentType { get; set; }
+    public bool AITranscribed { get; set; }
 }

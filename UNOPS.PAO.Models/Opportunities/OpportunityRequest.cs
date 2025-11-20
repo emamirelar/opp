@@ -13,6 +13,12 @@ public class OpportunityRequest
     public DateTime? TargetDeliveryDate { get; set; }
     public int? ProposedInitiativeTypeId { get; set; }
     
+    public string? StrategicAlignment { get; set; }
+    public string? ResultsFocus { get; set; }
+    public string? IntendedImpactOutcomes { get; set; }
+    public string? ExpectedBeneficiaries { get; set; }
+    public string? Challenges { get; set; }
+    
     public List<OpportunityFundingPartnerRequest>? FundingPartners { get; set; }
     public List<OpportunityClientPartnerRequest>? ClientPartners { get; set; }
     public List<OpportunityStakeholderRequest>? Stakeholders { get; set; }

@@ -32,24 +32,14 @@ public class CreateOpportunityFromInteractionsRequest
     public bool IsClientPartner { get; set; }
     
     /// <summary>
-    /// Source interaction IDs that were analyzed
+    /// Source interaction IDs that were analyzed (optional - may not be provided in all cases)
     /// </summary>
-    public required List<int> SourceInteractionIds { get; set; }
+    public List<int>? SourceInteractionIds { get; set; }
     
     /// <summary>
-    /// GCS storage paths for newly uploaded documents (to be persisted to database)
+    /// Newly uploaded documents to be persisted to database after opportunity creation
     /// </summary>
-    public List<string>? NewDocumentStoragePaths { get; set; }
-    
-    /// <summary>
-    /// MIME types for newly uploaded documents
-    /// </summary>
-    public List<string>? NewDocumentMimeTypes { get; set; }
-    
-    /// <summary>
-    /// Document type IDs for newly uploaded documents
-    /// </summary>
-    public List<int?>? NewDocumentTypeIds { get; set; }
+    public List<NewDocumentRequest>? Documents { get; set; }
     
     // WHAT Section Properties (AI-proposed, user-accepted)
     public string? PartnerReference { get; set; }
@@ -62,6 +52,7 @@ public class CreateOpportunityFromInteractionsRequest
     public string? ResultsFocus { get; set; }
     public string? IntendedImpactOutcomes { get; set; }
     public string? ExpectedBeneficiaries { get; set; }
+    public string? Challenges { get; set; }
     public List<int>? SdGs { get; set; }
 
     // WHO Section Properties (AI-proposed, user-accepted)

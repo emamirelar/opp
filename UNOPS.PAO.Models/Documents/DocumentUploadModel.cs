@@ -27,4 +27,6 @@ public class DocumentUploadModel: DocumentBaseCreateModel
     /// Google Drive file ID (optional - for files sourced from Drive)
     /// </summary>
     public string? GoogleId { get; set; }
+
+    public bool? AITranscribed { get; set; }
 }

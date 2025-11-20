@@ -1296,33 +1296,30 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
   /**
    * Create opportunity directly without AI generation
    * Used when user just wants to create with name and description
+   * Documents will be uploaded and attached, but interactions will be ignored
    */
   async createDirectly(): Promise<void> {
     if (!this.canCreate()) {
       return;
     }
     
-    // Check if user has selected interactions or documents
+    // Check if user has selected interactions (warn they will be ignored)
     const hasInteractions = this.selectedInteractions().length > 0;
-    const hasDocuments = this.selectedFiles().length > 0 || 
-                        this.selectedGoogleDriveFiles().length > 0 || 
-                        this.selectedExistingDocumentIds().length > 0 ||
-                        this.uploadedDocuments().length > 0;
     
-    // If interactions or documents are selected, warn user they will be ignored
-    if (hasInteractions || hasDocuments) {
+    // If interactions are selected, warn user they will be ignored (but documents will be included)
+    if (hasInteractions) {
       this.feedbackDialogService.showConfirmDialog(
         {
           summary: this.translateService.instant('common.confirmation.title'),
-          detail: this.translateService.instant('message.confirmation.createWithoutInteractionsDocuments')
+          detail: this.translateService.instant('message.confirmation.createWithoutInteractions')
         },
         () => {
-          // User confirmed - proceed with direct creation
+          // User confirmed - proceed with direct creation (documents will be uploaded and attached)
           this.performDirectCreation();
         }
       );
     } else {
-      // No interactions/documents selected - proceed directly
+      // No interactions selected - proceed directly (documents will be uploaded if selected)
       this.performDirectCreation();
     }
   }
@@ -1336,17 +1333,39 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     try {
       console.log('📤 Creating opportunity directly (without AI)');
       
-      // Build create request with basic info only (no interactions or documents)
+      // Step 1: Upload files to GCS if any selected (local or Google Drive)
+      let uploadedDocs: {gcsPath: string, mimeType: string, name: string, documentTypeId: number | null}[] = [];
+      if (this.selectedFiles().length > 0 || this.selectedGoogleDriveFiles().length > 0) {
+        try {
+          uploadedDocs = await this.uploadFilesToGCS();
+        } catch (uploadError) {
+          console.error('Error uploading files:', uploadError);
+          this.feedbackDialogService.showErrorToast({
+            summary: this.translateService.instant('common.error.title'),
+            detail: this.translateService.instant('message.error.uploadingDocuments')
+          });
+          this.generating.set(false);
+          return;
+        }
+      }
+      
+      // Build create request with basic info and documents
       const createRequest: any = {
         name: this.opportunityName(),
         description: this.opportunityDescription(),
         partnerId: this.partnerId() || 0,
         isFundingPartner: this.isFundingPartner(),
-        isClientPartner: this.isClientPartner()
-        // Note: Explicitly NOT including interactions or documents
+        isClientPartner: this.isClientPartner(),
+        
+        // Include uploaded documents as structured array
+        documents: uploadedDocs.map(d => ({
+          gcsPath: d.gcsPath,
+          mimeType: d.mimeType,
+          documentTypeId: d.documentTypeId
+        }))
       };
       
-      console.log('📤 Sending direct create request:', createRequest);
+      console.log('📤 Sending direct create request with {0} documents:', uploadedDocs.length, createRequest);
       
       // Call backend API to create opportunity
       const response = await firstValueFrom(
@@ -1403,10 +1422,12 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         isClientPartner: this.isClientPartner(),
         sourceInteractionIds: proposal.sourceInteractionIds || [],
         
-        // Include uploaded document information for database persistence
-        newDocumentStoragePaths: this.uploadedDocuments().map(d => d.gcsPath),
-        newDocumentMimeTypes: this.uploadedDocuments().map(d => d.mimeType),
-        newDocumentTypeIds: this.uploadedDocuments().map(d => d.documentTypeId)
+        // Include uploaded documents as structured array
+        documents: this.uploadedDocuments().map(d => ({
+          gcsPath: d.gcsPath,
+          mimeType: d.mimeType,
+          documentTypeId: d.documentTypeId
+        }))
       };
       
       // Add optional fields only if selected
@@ -1460,12 +1481,10 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       }
       
       if (this.isFieldSelected('sdGs') && proposal.opportunity.sdGs && proposal.opportunity.sdGs.length > 0) {
-        // Map SDGs to proper structure with sdgId, isPrimary, and notes
-        createRequest.sdGs = proposal.opportunity.sdGs.map((sdg: any) => ({
-          sdgId: sdg.sdgId || sdg.id,
-          isPrimary: sdg.isPrimary || false,
-          notes: sdg.notes || null
-        })).filter(sdg => sdg.sdgId);
+        // Map SDGs to just IDs (backend expects List<int>)
+        createRequest.sdGs = proposal.opportunity.sdGs
+          .map((sdg: any) => sdg.sdgId || sdg.id)
+          .filter((id: number) => id != null);
       }
       
       // Handle partners based on user's role selections

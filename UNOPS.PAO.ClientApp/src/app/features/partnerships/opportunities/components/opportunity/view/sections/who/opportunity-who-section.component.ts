@@ -31,11 +31,12 @@ import { MessageModule } from 'primeng/message';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
-import { Opportunity, OpportunityFundingPartner, OpportunityClientPartner, OpportunityStakeholder } from '@shared/models/opportunity.model';
+import { Opportunity, OpportunityFundingPartner, OpportunityClientPartner, OpportunityStakeholder, DocumentDetail } from '@shared/models/opportunity.model';
 import { OpportunityService } from '@features/partnerships/opportunities/services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 import { Router } from '@angular/router';
 import { ValuesService, SimpleValue } from '@shared/services/api/values.service';
+import { DocumentService } from '@shared/services/api/document.service';
 
 /**
  * @class OpportunityWhoSectionComponent
@@ -361,7 +362,10 @@ export class OpportunityWhoSectionComponent implements OnInit {
       feeAmountUSD: this.feeAmountControl.value, // Same as feeAmount for USD
       isAmountBasedFee: true, // We're collecting amount-based fees
       partnershipAgreementReference: this.partnershipAgreementControl.value || null,
-      commitmentStatus: null
+      commitmentStatus: null,
+      documentId: null,
+      documentName: null,
+      associatedDocuments: null
     };
 
     currentPartners.push(newPartner);
@@ -530,7 +534,10 @@ export class OpportunityWhoSectionComponent implements OnInit {
       opportunityId: opp.id!,
       partnerId: partner.id,
       partnerName: partner.name || '',
-      partnerLogoUrl: partner.logoUrl || undefined
+      partnerLogoUrl: partner.logoUrl || undefined,
+      documentId: null,
+      documentName: null,
+      associatedDocuments: null
     };
 
     currentClients.push(newClient);
@@ -624,6 +631,71 @@ export class OpportunityWhoSectionComponent implements OnInit {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
     }).format(value);
+  }
+  
+  /**
+   * @description Open document in new tab or download
+   */
+  openDocument(doc: DocumentDetail): void {
+    if (!doc.id) return;
+    
+    const documentService = inject(DocumentService);
+    const translateService = inject(TranslateService);
+    const feedbackService = inject(FeedbackDialogService);
+    
+    // First try to get the view URL
+    documentService.getDocumentViewUrl(doc.id).subscribe({
+      next: (response) => {
+        if (response && response.url) {
+          // Open in new tab
+          window.open(response.url, '_blank');
+        } else if (doc.storagePath) {
+          // If we have storagePath (GCS path), try to open directly
+          window.open(doc.storagePath, '_blank');
+        } else {
+          // Fallback to download
+          this.downloadDocument(doc.id!);
+        }
+      },
+      error: (error) => {
+        console.error('View error:', error);
+        // Try download as fallback
+        if (doc.storagePath) {
+          window.open(doc.storagePath, '_blank');
+        } else {
+          this.downloadDocument(doc.id!);
+        }
+      }
+    });
+  }
+  
+  /**
+   * @description Download document
+   */
+  private downloadDocument(documentId: number): void {
+    const documentService = inject(DocumentService);
+    const feedbackService = inject(FeedbackDialogService);
+    const translateService = inject(TranslateService);
+    
+    documentService.downloadDocument(documentId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'document';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (error) => {
+        console.error('Download error:', error);
+        feedbackService.showErrorToast({
+          summary: translateService.instant('message.error'),
+          detail: translateService.instant('message.document.viewFailed')
+        });
+      }
+    });
   }
 
   // ========================================================================

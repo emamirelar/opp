@@ -60,7 +60,7 @@ interface DropdownOption {
       </app-timeline>
 
       @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
-        <div class="flex items-center gap-4 flex-wrap">
+        <div class="flex items-center justify-end gap-4 flex-wrap">
             <p-button
               [label]="'button.createOpportunityFromInteractions' | translate"
               icon="pi pi-briefcase"
@@ -68,11 +68,12 @@ interface DropdownOption {
               rounded
               (click)="openCreateOpportunityDialog()"
             />
-            <p-button class="ml-auto"
-                      [label]="'title.newInteraction' | translate"
-                      icon="pi pi-plus"
-                      rounded
-                      (click)="openNewInteractionModal()"></p-button>
+            <p-button
+              [label]="'title.newInteraction' | translate"
+              icon="pi pi-plus"
+              rounded
+              (click)="openNewInteractionModal()"
+            />
         </div>
       }
 

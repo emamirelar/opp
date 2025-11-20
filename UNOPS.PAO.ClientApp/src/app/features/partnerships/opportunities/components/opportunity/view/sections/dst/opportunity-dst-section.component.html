@@ -145,6 +145,14 @@
           tooltipPosition="left"
         />
       </div>
+      
+      <!-- Help Text -->
+      <div class="mb-4 p-2 bg-blue-50 border border-blue-100 rounded text-xs text-blue-900">
+        <div class="flex items-start gap-2">
+          <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+          <span>{{ 'helpText.dst.similarOpportunities' | translate }}</span>
+        </div>
+      </div>
 
         @if (loadingSimilarOpportunities()) {
           <div class="text-center py-8">
@@ -251,6 +259,14 @@
           pTooltip="{{ 'button.refresh' | translate }}"
           tooltipPosition="left"
         />
+      </div>
+      
+      <!-- Help Text -->
+      <div class="mb-4 p-2 bg-blue-50 border border-blue-100 rounded text-xs text-blue-900">
+        <div class="flex items-start gap-2">
+          <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+          <span>{{ 'helpText.dst.similarProjects' | translate }}</span>
+        </div>
       </div>
 
         @if (loadingSimilarProjects()) {
@@ -370,6 +386,14 @@
           pTooltip="{{ 'button.refresh' | translate }}"
           tooltipPosition="left"
         />
+      </div>
+      
+      <!-- Help Text -->
+      <div class="mb-4 p-2 bg-blue-50 border border-blue-100 rounded text-xs text-blue-900">
+        <div class="flex items-start gap-2">
+          <i class="pi pi-info-circle text-blue-600 mt-0.5 flex-shrink-0"></i>
+          <span>{{ 'helpText.dst.relevantPeople' | translate }}</span>
+        </div>
       </div>
 
         @if (loadingRelevantPeople()) {

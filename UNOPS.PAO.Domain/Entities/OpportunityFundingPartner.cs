@@ -39,5 +39,8 @@ public class OpportunityFundingPartner
     
     [MaxLength(50)]
     public string? CommitmentStatus { get; set; }
+    
+    public int? DocumentId { get; set; }
+    public virtual Document? Document { get; set; }
 }
 

@@ -12,5 +12,6 @@ public class OpportunityFundingPartnerRequest
     public decimal? FeeAmountUSD { get; set; }
     public bool IsAmountBasedFee { get; set; }
     public string? PartnershipAgreementReference { get; set; }
+    public int? DocumentId { get; set; }
 }
 

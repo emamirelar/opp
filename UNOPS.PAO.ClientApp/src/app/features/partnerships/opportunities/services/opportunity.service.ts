@@ -121,6 +121,27 @@ export class OpportunityService {
   }
 
   /**
+   * Tag a document as Partner Results Framework for specific funding/client partners
+   * @param opportunityId - Opportunity ID
+   * @param documentId - Document ID to tag
+   * @param fundingPartnerIds - Array of funding partner IDs
+   * @param clientPartnerIds - Array of client partner IDs
+   * @returns Observable with success message
+   */
+  tagDocumentToPartners(
+    opportunityId: number,
+    documentId: number,
+    fundingPartnerIds: number[],
+    clientPartnerIds: number[]
+  ): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${opportunityId}/tag-related-partner-to-doc`, {
+      documentId: documentId,
+      fundingPartnerIds: fundingPartnerIds,
+      clientPartnerIds: clientPartnerIds
+    });
+  }
+
+  /**
    * Delete an opportunity by ID
    */
   deleteOpportunityById(id: number): Observable<void> {

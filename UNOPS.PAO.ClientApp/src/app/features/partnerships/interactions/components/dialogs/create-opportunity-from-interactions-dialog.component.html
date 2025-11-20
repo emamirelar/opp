@@ -1,5 +1,5 @@
 <p-dialog
-  [header]="'title.createOpportunityFromInteractions' | translate"
+  [header]="'title.createNewOpportunity' | translate"
   [(visible)]="visible"
   [modal]="true"
   [style]="{ width: '85vw', maxHeight: '90vh' }"
@@ -24,230 +24,6 @@
         }
       </p-message>
     }
-
-    <!-- Selected Interactions Section -->
-    <div class="mb-6">
-      <h3 class="text-lg font-semibold mb-3 text-gray-800">
-        {{ 'label.selectedInteractions' | translate }} ({{ selectedCount() }})
-      </h3>
-
-      @if (selectedInteractions().length === 0) {
-        <div class="p-4 bg-gray-50 border border-gray-200 rounded text-center text-gray-600">
-          {{ 'message.noInteractionsSelected' | translate }}
-        </div>
-      } @else {
-        <!-- ✅ Fixed height container with scrollbar -->
-        <div class="flex flex-col gap-2 max-h-60 overflow-y-auto border border-gray-200 rounded p-2 bg-gray-50">
-          @for (interaction of selectedInteractions(); track interaction.id) {
-            <div class="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="font-medium text-gray-900">{{ interaction.subject }}</span>
-                  @if (isCurrentInteraction(interaction.id)) {
-                    <p-tag 
-                      value="{{ 'label.current' | translate }}" 
-                      severity="info" 
-                      styleClass="text-xs"
-                    />
-                  }
-                </div>
-                <div class="text-sm text-gray-600 flex items-center gap-2">
-                  <span>{{ interaction.type }}</span>
-                  <span>•</span>
-                  <span>{{ interaction.date | date }}</span>
-                </div>
-                @if (interaction.description) {
-                  <div class="text-xs text-gray-500 mt-1 line-clamp-1">
-                    {{ interaction.description }}
-                  </div>
-                }
-              </div>
-
-              @if (!isCurrentInteraction(interaction.id)) {
-                <button
-                  pButton
-                  icon="pi pi-times"
-                  severity="danger"
-                  [text]="true"
-                  [rounded]="true"
-                  size="small"
-                  (click)="removeInteraction(interaction.id)"
-                  [pTooltip]="'button.remove' | translate">
-                </button>
-              }
-            </div>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- Select Interactions Section (List View Mode - from Partner Interactions tab) -->
-    @if (mode() === 'list-view') {
-      <div class="mb-6">
-        <button
-          pButton
-          [label]="showAdditionalSelection() 
-            ? ('button.hideInteractionSelection' | translate) 
-            : ('button.selectInteractions' | translate)"
-          icon="pi pi-{{ showAdditionalSelection() ? 'minus' : 'list' }}"
-          severity="primary"
-          [outlined]="true"
-          (click)="toggleAdditionalSelection()">
-        </button>
-
-        @if (showAdditionalSelection()) {
-          <div class="mt-3 p-4 border border-gray-200 rounded bg-gray-50">
-            <!-- Search -->
-            <div class="mb-3">
-              <span class="p-input-icon-left w-full">
-                <i class="pi pi-search"></i>
-                <input
-                  pInputText
-                  [(ngModel)]="searchQuery"
-                  (ngModelChange)="searchInteractions($event)"
-                  [placeholder]="'search.interactions' | translate"
-                  [disabled]="loadingInteractions()"
-                  class="w-full">
-              </span>
-            </div>
-
-            <!-- Loading Indicator -->
-            @if (loadingInteractions()) {
-              <div class="flex justify-center items-center py-8">
-                <p-progressSpinner styleClass="w-12 h-12" />
-              </div>
-            }
-
-            <!-- Available Interactions List with Infinite Scroll -->
-            @if (!loadingInteractions()) {
-              <div 
-                class="flex flex-col gap-2 max-h-60 overflow-y-auto"
-                (scroll)="onInteractionListScroll($event)">
-                @if (filteredAvailableInteractions().length === 0) {
-                  <div class="text-center text-gray-500 py-4">
-                    {{ 'message.noInteractionsAvailable' | translate }}
-                  </div>
-                } @else {
-                  @for (interaction of filteredAvailableInteractions(); track interaction.id) {
-                    <div
-                      [class]="'flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ' + 
-                        (isSelected(interaction.id) ? 'bg-blue-50 border border-blue-300' : 'hover:bg-gray-100')"
-                      (click)="addInteraction(interaction)">
-                      <p-checkbox
-                        [binary]="true"
-                        [ngModel]="isSelected(interaction.id)"
-                        (ngModelChange)="addInteraction(interaction)"
-                        (click)="$event.stopPropagation()">
-                      </p-checkbox>
-
-                      <div class="flex-1 min-w-0">
-                        <div class="font-medium text-sm text-gray-900">{{ interaction.subject }}</div>
-                        <div class="text-xs text-gray-600">
-                          {{ interaction.type }} • {{ interaction.date | date }}
-                        </div>
-                      </div>
-                    </div>
-                  }
-                  
-                  <!-- Loading More Indicator -->
-                  @if (loadingMoreInteractions()) {
-                    <div class="flex justify-center items-center py-3">
-                      <p-progressSpinner styleClass="w-8 h-8" />
-                      <span class="ml-2 text-sm text-gray-600">Loading more...</span>
-                    </div>
-                  }
-                }
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-
-    <!-- Add More Interactions Section (Detail View Only) -->
-    @if (mode() === 'detail-view') {
-      <div class="mb-6">
-        <button
-          pButton
-          [label]="showAdditionalSelection() 
-            ? ('button.hideAdditionalInteractions' | translate) 
-            : ('button.addMoreInteractions' | translate)"
-          icon="pi pi-{{ showAdditionalSelection() ? 'minus' : 'plus' }}"
-          severity="secondary"
-          [text]="true"
-          (click)="toggleAdditionalSelection()">
-        </button>
-
-        @if (showAdditionalSelection()) {
-          <div class="mt-3 p-4 border border-gray-200 rounded bg-gray-50">
-            <!-- Search -->
-            <div class="mb-3">
-              <span class="p-input-icon-left w-full">
-                <i class="pi pi-search"></i>
-                <input
-                  pInputText
-                  [(ngModel)]="searchQuery"
-                  (ngModelChange)="searchInteractions($event)"
-                  [placeholder]="'search.interactions' | translate"
-                  [disabled]="loadingInteractions()"
-                  class="w-full">
-              </span>
-            </div>
-
-            <!-- Loading Indicator -->
-            @if (loadingInteractions()) {
-              <div class="flex justify-center items-center py-8">
-                <p-progressSpinner styleClass="w-12 h-12" />
-              </div>
-            }
-
-            <!-- Available Interactions List with Infinite Scroll -->
-            @if (!loadingInteractions()) {
-              <div 
-                class="flex flex-col gap-2 max-h-60 overflow-y-auto"
-                (scroll)="onInteractionListScroll($event)">
-                @if (filteredAvailableInteractions().length === 0) {
-                  <div class="text-center text-gray-500 py-4">
-                    {{ 'message.noMoreInteractions' | translate }}
-                  </div>
-                } @else {
-                  @for (interaction of filteredAvailableInteractions(); track interaction.id) {
-                    <div
-                      [class]="'flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ' + 
-                        (isSelected(interaction.id) ? 'bg-blue-50 border border-blue-300' : 'hover:bg-gray-100')"
-                      (click)="addInteraction(interaction)">
-                      <p-checkbox
-                        [binary]="true"
-                        [ngModel]="isSelected(interaction.id)"
-                        (ngModelChange)="addInteraction(interaction)"
-                        (click)="$event.stopPropagation()">
-                      </p-checkbox>
-
-                      <div class="flex-1 min-w-0">
-                        <div class="font-medium text-sm text-gray-900">{{ interaction.subject }}</div>
-                        <div class="text-xs text-gray-600">
-                          {{ interaction.type }} • {{ interaction.date | date }}
-                        </div>
-                      </div>
-                    </div>
-                  }
-                  
-                  <!-- Loading More Indicator -->
-                  @if (loadingMoreInteractions()) {
-                    <div class="flex justify-center items-center py-3">
-                      <p-progressSpinner styleClass="w-8 h-8" />
-                      <span class="ml-2 text-sm text-gray-600">Loading more...</span>
-                    </div>
-                  }
-                }
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-
-    <p-divider />
 
     <!-- Opportunity Basic Info -->
     <div class="mb-4">
@@ -529,6 +305,239 @@
         </div>
       }
     </div>
+    
+    <p-divider />
+
+    <!-- Source Content Section (Interactions) -->
+    <div class="mb-4">
+      <h3 class="text-lg font-semibold mb-4 text-gray-800">
+        {{ 'title.sourceContent' | translate }} 
+        <span class="text-sm font-normal text-gray-600">({{ 'label.optional' | translate }})</span>
+      </h3>
+      
+      <!-- Selected Interactions Summary -->
+      <div class="mb-6">
+        <h4 class="text-md font-semibold mb-3 text-gray-700">
+          {{ 'label.interactions' | translate }} ({{ selectedCount() }})
+        </h4>
+
+        @if (selectedInteractions().length === 0) {
+          <div class="p-4 bg-gray-50 border border-gray-200 rounded text-center text-gray-600">
+            {{ 'message.noInteractionsSelected' | translate }}
+          </div>
+        } @else {
+          <!-- ✅ Fixed height container with scrollbar -->
+          <div class="flex flex-col gap-2 max-h-60 overflow-y-auto border border-gray-200 rounded p-2 bg-gray-50">
+            @for (interaction of selectedInteractions(); track interaction.id) {
+              <div class="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="font-medium text-gray-900">{{ interaction.subject }}</span>
+                    @if (isCurrentInteraction(interaction.id)) {
+                      <p-tag 
+                        value="{{ 'label.current' | translate }}" 
+                        severity="info" 
+                        styleClass="text-xs"
+                      />
+                    }
+                  </div>
+                  <div class="text-sm text-gray-600 flex items-center gap-2">
+                    <span>{{ interaction.type }}</span>
+                    <span>•</span>
+                    <span>{{ interaction.date | date }}</span>
+                  </div>
+                  @if (interaction.description) {
+                    <div class="text-xs text-gray-500 mt-1 line-clamp-1">
+                      {{ interaction.description }}
+                    </div>
+                  }
+                </div>
+
+                @if (!isCurrentInteraction(interaction.id)) {
+                  <button
+                    pButton
+                    icon="pi pi-times"
+                    severity="danger"
+                    [text]="true"
+                    [rounded]="true"
+                    size="small"
+                    (click)="removeInteraction(interaction.id)"
+                    [pTooltip]="'button.remove' | translate">
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    <!-- Select Interactions Section (List View Mode - from Partner Interactions tab) -->
+    @if (mode() === 'list-view') {
+      <div class="mb-6">
+        <button
+          pButton
+          [label]="showAdditionalSelection() 
+            ? ('button.hideInteractionSelection' | translate) 
+            : ('button.selectInteractions' | translate)"
+          icon="pi pi-{{ showAdditionalSelection() ? 'minus' : 'list' }}"
+          severity="primary"
+          [outlined]="true"
+          (click)="toggleAdditionalSelection()">
+        </button>
+
+        @if (showAdditionalSelection()) {
+          <div class="mt-3 p-4 border border-gray-200 rounded bg-gray-50">
+            <!-- Search -->
+            <div class="mb-3">
+              <span class="p-input-icon-left w-full">
+                <i class="pi pi-search"></i>
+                <input
+                  pInputText
+                  [(ngModel)]="searchQuery"
+                  (ngModelChange)="searchInteractions($event)"
+                  [placeholder]="'search.interactions' | translate"
+                  [disabled]="loadingInteractions()"
+                  class="w-full">
+              </span>
+            </div>
+
+            <!-- Loading Indicator -->
+            @if (loadingInteractions()) {
+              <div class="flex justify-center items-center py-8">
+                <p-progressSpinner styleClass="w-12 h-12" />
+              </div>
+            }
+
+            <!-- Available Interactions List with Infinite Scroll -->
+            @if (!loadingInteractions()) {
+              <div 
+                class="flex flex-col gap-2 max-h-60 overflow-y-auto"
+                (scroll)="onInteractionListScroll($event)">
+                @if (filteredAvailableInteractions().length === 0) {
+                  <div class="text-center text-gray-500 py-4">
+                    {{ 'message.noInteractionsAvailable' | translate }}
+                  </div>
+                } @else {
+                  @for (interaction of filteredAvailableInteractions(); track interaction.id) {
+                    <div
+                      [class]="'flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ' + 
+                        (isSelected(interaction.id) ? 'bg-blue-50 border border-blue-300' : 'hover:bg-gray-100')"
+                      (click)="addInteraction(interaction)">
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isSelected(interaction.id)"
+                        (ngModelChange)="addInteraction(interaction)"
+                        (click)="$event.stopPropagation()">
+                      </p-checkbox>
+
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm text-gray-900">{{ interaction.subject }}</div>
+                        <div class="text-xs text-gray-600">
+                          {{ interaction.type }} • {{ interaction.date | date }}
+                        </div>
+                      </div>
+                    </div>
+                  }
+                  
+                  <!-- Loading More Indicator -->
+                  @if (loadingMoreInteractions()) {
+                    <div class="flex justify-center items-center py-3">
+                      <p-progressSpinner styleClass="w-8 h-8" />
+                      <span class="ml-2 text-sm text-gray-600">Loading more...</span>
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Add More Interactions Section (Detail View Only) -->
+    @if (mode() === 'detail-view') {
+      <div class="mb-6">
+        <button
+          pButton
+          [label]="showAdditionalSelection() 
+            ? ('button.hideAdditionalInteractions' | translate) 
+            : ('button.addMoreInteractions' | translate)"
+          icon="pi pi-{{ showAdditionalSelection() ? 'minus' : 'plus' }}"
+          severity="secondary"
+          [text]="true"
+          (click)="toggleAdditionalSelection()">
+        </button>
+
+        @if (showAdditionalSelection()) {
+          <div class="mt-3 p-4 border border-gray-200 rounded bg-gray-50">
+            <!-- Search -->
+            <div class="mb-3">
+              <span class="p-input-icon-left w-full">
+                <i class="pi pi-search"></i>
+                <input
+                  pInputText
+                  [(ngModel)]="searchQuery"
+                  (ngModelChange)="searchInteractions($event)"
+                  [placeholder]="'search.interactions' | translate"
+                  [disabled]="loadingInteractions()"
+                  class="w-full">
+              </span>
+            </div>
+
+            <!-- Loading Indicator -->
+            @if (loadingInteractions()) {
+              <div class="flex justify-center items-center py-8">
+                <p-progressSpinner styleClass="w-12 h-12" />
+              </div>
+            }
+
+            <!-- Available Interactions List with Infinite Scroll -->
+            @if (!loadingInteractions()) {
+              <div 
+                class="flex flex-col gap-2 max-h-60 overflow-y-auto"
+                (scroll)="onInteractionListScroll($event)">
+                @if (filteredAvailableInteractions().length === 0) {
+                  <div class="text-center text-gray-500 py-4">
+                    {{ 'message.noMoreInteractions' | translate }}
+                  </div>
+                } @else {
+                  @for (interaction of filteredAvailableInteractions(); track interaction.id) {
+                    <div
+                      [class]="'flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ' + 
+                        (isSelected(interaction.id) ? 'bg-blue-50 border border-blue-300' : 'hover:bg-gray-100')"
+                      (click)="addInteraction(interaction)">
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isSelected(interaction.id)"
+                        (ngModelChange)="addInteraction(interaction)"
+                        (click)="$event.stopPropagation()">
+                      </p-checkbox>
+
+                      <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm text-gray-900">{{ interaction.subject }}</div>
+                        <div class="text-xs text-gray-600">
+                          {{ interaction.type }} • {{ interaction.date | date }}
+                        </div>
+                      </div>
+                    </div>
+                  }
+                  
+                  <!-- Loading More Indicator -->
+                  @if (loadingMoreInteractions()) {
+                    <div class="flex justify-center items-center py-3">
+                      <p-progressSpinner styleClass="w-8 h-8" />
+                      <span class="ml-2 text-sm text-gray-600">Loading more...</span>
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+    </div>
+    <!-- End Source Content Section -->
 
   }
 
