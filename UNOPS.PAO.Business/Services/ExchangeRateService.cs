@@ -75,11 +75,17 @@ public class ExchangeRateService : IExchangeRateService
 
         var amountUSD = amount * exchangeRate.Exchange_Rate.Value;
 
+        // Ensure the date is in UTC format for PostgreSQL
+        var rateDate = exchangeRate.Effective_Date ?? DateTime.UtcNow;
+        var exchangeRateDate = rateDate.Kind == DateTimeKind.Utc 
+            ? rateDate 
+            : DateTime.SpecifyKind(rateDate, DateTimeKind.Utc);
+
         return new ExchangeRateResult
         {
             AmountUSD = Math.Round(amountUSD, 2),
             ExchangeRate = exchangeRate.Exchange_Rate.Value,
-            ExchangeRateDate = exchangeRate.Effective_Date ?? DateTime.UtcNow,
+            ExchangeRateDate = exchangeRateDate,
             ExchangeRateId = exchangeRate.Id
         };
     }

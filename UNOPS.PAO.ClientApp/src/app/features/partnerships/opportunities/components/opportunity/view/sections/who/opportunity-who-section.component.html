@@ -517,6 +517,28 @@
       }
     </div>
 
+    <!-- Currency Selection -->
+    <div>
+      <p-floatlabel variant="on">
+        <p-select
+          id="fundingCurrency"
+          [formControl]="currencyControl"
+          [options]="availableCurrencies()"
+          optionLabel="name"
+          optionValue="id"
+          [filter]="true"
+          filterBy="name,code"
+          class="w-full"
+        />
+        <label for="fundingCurrency">{{ 'label.currency' | translate }} *</label>
+      </p-floatlabel>
+      @if (!currencyControl.value && showFundingValidationError()) {
+        <p-message severity="error" variant="simple" styleClass="mt-2">
+          {{ 'message.validation.currencyRequired' | translate }}
+        </p-message>
+      }
+    </div>
+
     <!-- Amount -->
     <div>
       <p-floatlabel variant="on">
@@ -524,7 +546,7 @@
           id="amount"
           [formControl]="amountControl"
           mode="currency"
-          currency="USD"
+          [currency]="getSelectedCurrencyCode() || 'USD'"
           [minFractionDigits]="0"
           class="w-full"
         />
