@@ -13,5 +13,6 @@ public class OpportunityFundingPartnerRequest
     public bool IsAmountBasedFee { get; set; }
     public string? PartnershipAgreementReference { get; set; }
     public int? DocumentId { get; set; }
+    public bool IsPooledContribution { get; set; }
 }
 

@@ -84,7 +84,8 @@ public class ValuesController : BaseController
             {
                 Id = p.Id,
                 Name = p.Name ?? "",
-                LogoUrl = p.LogoUrl
+                LogoUrl = p.LogoUrl,
+                PooledFund = p.PooledFund
             }).ToList();
         });
     }

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
+using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
@@ -142,6 +143,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .Include(o => o.Stakeholders)
                 .ThenInclude(s => s.User)
                     .ThenInclude(u => u!.UserProfile)
+            .Include(o => o.ExternalStakeholders)
+                .ThenInclude(es => es.Contact)
+                    .ThenInclude(c => c!.Partner)
             .Include(o => o.Deliverables)
                 .ThenInclude(d => d.Output)
                     .ThenInclude(o => o.Unit)
@@ -166,9 +170,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return null;
         }
 
-        var model = mapper.Map<OpportunityModel>(entity);
+        var model = mapper.Map<OpportunityModel>(entity, opt => opt.Items["Opportunity"] = entity);
         
-        // Populate associated documents for funding partners
+        // Populate associated documents and DD fields for funding partners
         if (model.FundingPartners != null && model.FundingPartners.Any())
         {
             foreach (var fundingPartner in model.FundingPartners)
@@ -178,10 +182,41 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     fundingPartner.PartnerId, 
                     isFundingPartner: true
                 );
+                
+                // Populate DD fields from the entity's Partner navigation property
+                var fundingPartnerEntity = entity.FundingPartners?
+                    .FirstOrDefault(fp => fp.Id == fundingPartner.Id);
+                    
+                if (fundingPartnerEntity?.Partner != null)
+                {
+                    var partner = fundingPartnerEntity.Partner;
+                    
+                    // DD Approval
+                    fundingPartner.DDApproval = partner.DueDiligenceApproval?.ToString();
+                    fundingPartner.DDApprovalDate = partner.DueDiligenceApprovalDate;
+                    fundingPartner.DDExpiryDate = partner.DueDiligenceExpiryDate;
+                    
+                    // DD Status calculation
+                    fundingPartner.DDStatus = CalculateDDStatus(partner);
+                    
+                    // DD Expires before opportunity end
+                    if (partner.DueDiligenceExpiryDate != null && entity.TargetDeliveryDate != null)
+                    {
+                        fundingPartner.DDExpiresBeforeOpportunityEnd = 
+                            partner.DueDiligenceExpiryDate < entity.TargetDeliveryDate;
+                    }
+                    
+                    // Exchange Rate Display
+                    if (fundingPartnerEntity.ExchangeRate != null && fundingPartnerEntity.ExchangeRateDate != null)
+                    {
+                        fundingPartner.ExchangeRateDisplay = 
+                            $"{fundingPartnerEntity.ExchangeRate:F4} on {fundingPartnerEntity.ExchangeRateDate:MMM dd, yyyy}";
+                    }
+                }
             }
         }
         
-        // Populate associated documents for client partners
+        // Populate associated documents and DD fields for client partners
         if (model.ClientPartners != null && model.ClientPartners.Any())
         {
             foreach (var clientPartner in model.ClientPartners)
@@ -191,6 +226,30 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     clientPartner.PartnerId, 
                     isFundingPartner: false
                 );
+                
+                // Populate DD fields from the entity's Partner navigation property
+                var clientPartnerEntity = entity.ClientPartners?
+                    .FirstOrDefault(cp => cp.Id == clientPartner.Id);
+                    
+                if (clientPartnerEntity?.Partner != null)
+                {
+                    var partner = clientPartnerEntity.Partner;
+                    
+                    // DD Approval
+                    clientPartner.DDApproval = partner.DueDiligenceApproval?.ToString();
+                    clientPartner.DDApprovalDate = partner.DueDiligenceApprovalDate;
+                    clientPartner.DDExpiryDate = partner.DueDiligenceExpiryDate;
+                    
+                    // DD Status calculation
+                    clientPartner.DDStatus = CalculateDDStatus(partner);
+                    
+                    // DD Expires before opportunity end
+                    if (partner.DueDiligenceExpiryDate != null && entity.TargetDeliveryDate != null)
+                    {
+                        clientPartner.DDExpiresBeforeOpportunityEnd = 
+                            partner.DueDiligenceExpiryDate < entity.TargetDeliveryDate;
+                    }
+                }
             }
         }
         
@@ -202,6 +261,37 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         // Compute statistics
         model.Stats = ComputeOpportunityStats(entity);
+        
+        // Check if this is a new value range for the responsible org unit
+        if (model.ResponsibleOrgUnitId.HasValue && model.Stats?.TotalFundingUSD != null && model.Stats.TotalFundingUSD > 0)
+        {
+            try
+            {
+                // Find the historical maximum budget for this org unit (excluding current opportunity)
+                var historicalMax = await context.Opportunities
+                    .Where(o => o.ResponsibleOrgUnitId == model.ResponsibleOrgUnitId
+                             && o.Id != id
+                             && !o.IsDeleted)
+                    .SelectMany(o => o.FundingPartners)
+                    .GroupBy(fp => fp.OpportunityId)
+                    .Select(g => new { 
+                        OpportunityId = g.Key, 
+                        Total = g.Sum(fp => fp.AmountUSD ?? 0) 
+                    })
+                    .OrderByDescending(x => x.Total)
+                    .FirstOrDefaultAsync();
+                
+                model.OrgUnitHistoricalMaxValue = historicalMax?.Total ?? 0;
+                model.IsNewValueRangeForOrgUnit = model.Stats.TotalFundingUSD > (historicalMax?.Total ?? 0);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the entire request
+                // Logger not available in this context - silently continue
+                model.IsNewValueRangeForOrgUnit = null;
+                model.OrgUnitHistoricalMaxValue = null;
+            }
+        }
 
         return model;
     }
@@ -760,12 +850,16 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .Include(o => o.FundingPartners)
             .Include(o => o.ClientPartners)
             .Include(o => o.Stakeholders)
+            .Include(o => o.ExternalStakeholders)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
         {
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
+
+        // AC8: Update pooled funding flag
+        opportunity.IsPooledFunding = request.IsPooledFunding;
 
         // Update Funding Partners
         if (request.FundingPartners != null)
@@ -791,21 +885,61 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
 
             // Add new funding partners
-            opportunity.FundingPartners = request.FundingPartners
-                .Select(fp => new OpportunityFundingPartner
+            var exchangeRateService = new ExchangeRateService(context);
+            var fundingPartners = new List<OpportunityFundingPartner>();
+            
+            foreach (var fp in request.FundingPartners)
+            {
+                var partner = await context.Partners.FindAsync(fp.PartnerId);
+                var currency = await context.Currencies.FindAsync(fp.CurrencyId ?? defaultCurrencyId);
+                
+                var fundingPartner = new OpportunityFundingPartner
                 {
                     OpportunityId = id,
                     PartnerId = fp.PartnerId,
                     Amount = fp.Amount,
-                    CurrencyId = fp.CurrencyId ?? defaultCurrencyId, // Use provided or default currency
+                    CurrencyId = fp.CurrencyId ?? defaultCurrencyId,
                     Percentage = fp.Percentage,
                     FeePercentage = fp.FeePercentage,
                     FeeAmount = fp.FeeAmount,
                     FeeAmountUSD = fp.FeeAmountUSD,
                     IsAmountBasedFee = fp.IsAmountBasedFee,
-                    PartnershipAgreementReference = fp.PartnershipAgreementReference
-                })
-                .ToList();
+                    PartnershipAgreementReference = fp.PartnershipAgreementReference,
+                    DocumentId = fp.DocumentId,
+                    IsPooledContribution = fp.IsPooledContribution // AC8
+                    // PartnerPreferredCurrency will remain null until Partner entity gets this field
+                };
+                
+                // Convert amount to USD if amount is provided
+                if (fp.Amount.HasValue && fp.Amount.Value > 0 && currency != null)
+                {
+                    try
+                    {
+                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                            fp.Amount.Value, 
+                            currency.Code ?? "USD"
+                        );
+                        
+                        fundingPartner.AmountUSD = conversionResult.AmountUSD;
+                        fundingPartner.ExchangeRate = conversionResult.ExchangeRate;
+                        fundingPartner.ExchangeRateDate = conversionResult.ExchangeRateDate;
+                        fundingPartner.ExchangeRateId = conversionResult.ExchangeRateId > 0 ? conversionResult.ExchangeRateId : null;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log warning but don't fail the operation
+                        Console.WriteLine($"Warning: Could not convert amount to USD for partner {fp.PartnerId}: {ex.Message}");
+                        // If conversion fails, just store the original amount as USD
+                        fundingPartner.AmountUSD = fp.Amount.Value;
+                        fundingPartner.ExchangeRate = 1.0m;
+                        fundingPartner.ExchangeRateDate = DateTime.UtcNow;
+                    }
+                }
+                
+                fundingPartners.Add(fundingPartner);
+            }
+            
+            opportunity.FundingPartners = fundingPartners;
         }
 
         // Update Client Partners
@@ -871,6 +1005,72 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 })
                 .ToList();
         }
+        
+        // Update External Stakeholders
+        if (request.ExternalStakeholders != null && request.ExternalStakeholders.Any())
+        {
+            // Get all partner IDs from the opportunity
+            var opportunityPartnerIds = new HashSet<int>();
+            
+            // Add funding partner IDs
+            if (opportunity.FundingPartners != null)
+            {
+                foreach (var fp in opportunity.FundingPartners)
+                {
+                    opportunityPartnerIds.Add(fp.PartnerId);
+                }
+            }
+            
+            // Add client partner IDs
+            if (opportunity.ClientPartners != null)
+            {
+                foreach (var cp in opportunity.ClientPartners)
+                {
+                    opportunityPartnerIds.Add(cp.PartnerId);
+                }
+            }
+            
+            // Validate that all contacts belong to the opportunity's partners
+            var contactIds = request.ExternalStakeholders.Select(es => es.ContactId).Distinct().ToList();
+            var contacts = await context.Contacts
+                .Where(c => contactIds.Contains(c.Id))
+                .ToListAsync();
+            
+            foreach (var contact in contacts)
+            {
+                if (contact.PartnerId == 0 || !opportunityPartnerIds.Contains(contact.PartnerId))
+                {
+                    throw new BusinessException("All external stakeholder contacts must belong to the opportunity's funding or client partners.");
+                }
+            }
+            
+            // Remove existing external stakeholders
+            if (opportunity.ExternalStakeholders != null && opportunity.ExternalStakeholders.Any())
+            {
+                context.Set<OpportunityExternalStakeholder>().RemoveRange(opportunity.ExternalStakeholders);
+            }
+
+            // Add new external stakeholders
+            opportunity.ExternalStakeholders = request.ExternalStakeholders
+                .Select(es => new OpportunityExternalStakeholder
+                {
+                    OpportunityId = id,
+                    ContactId = es.ContactId
+                })
+                .ToList();
+        }
+        else if (request.ExternalStakeholders != null && !request.ExternalStakeholders.Any())
+        {
+            // If empty list is sent, remove all external stakeholders
+            if (opportunity.ExternalStakeholders != null && opportunity.ExternalStakeholders.Any())
+            {
+                context.Set<OpportunityExternalStakeholder>().RemoveRange(opportunity.ExternalStakeholders);
+            }
+        }
+        
+        // Update misc external stakeholders and notes
+        opportunity.MiscExternalStakeholders = request.MiscExternalStakeholders;
+        opportunity.ExternalStakeholderNotes = request.ExternalStakeholderNotes;
 
         await context.SaveChangesAsync();
 
@@ -1305,10 +1505,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ExternalStakeholderCount = opportunity.Stakeholders?.Count(s => !s.IsInternal) ?? 0
         };
 
-        // Calculate total funding
+        // Calculate total funding from all funding partners
         if (opportunity.FundingPartners != null && opportunity.FundingPartners.Any())
         {
-            stats.TotalFundingUSD = opportunity.InitiativeBudgetUSD ?? 0;
+            // Sum all funding partner amounts in USD
+            stats.TotalFundingUSD = opportunity.FundingPartners
+                .Where(fp => fp.AmountUSD.HasValue)
+                .Sum(fp => fp.AmountUSD.Value);
+                
             stats.TotalFeeAmountUSD = opportunity.FundingPartners
                 .Where(fp => fp.FeeAmountUSD.HasValue)
                 .Sum(fp => fp.FeeAmountUSD.Value);
@@ -1318,6 +1522,30 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         stats.PrimarySDGId = opportunity.SDGs?.FirstOrDefault(s => s.IsPrimary)?.SDGId;
 
         return stats;
+    }
+
+    /// <summary>
+    /// Calculate Due Diligence status based on partner DD information
+    /// </summary>
+    private static string CalculateDDStatus(Partner partner)
+    {
+        if (partner.DueDiligenceRequired == null || partner.DueDiligenceRequired == Domain.Enums.DueDiligenceRequired.NotRequired)
+            return "Not Required";
+            
+        if (partner.DueDiligenceApproval == null || partner.DueDiligenceApproval == Domain.Enums.DueDiligenceApproval.NotApproved)
+            return "Pending";
+            
+        if (partner.DueDiligenceExpiryDate == null)
+            return "Approved";
+            
+        var now = DateTime.UtcNow;
+        if (partner.DueDiligenceExpiryDate < now)
+            return "Expired";
+            
+        if (partner.DueDiligenceExpiryDate <= now.AddMonths(6))
+            return "Expiring Soon";
+            
+        return "Valid";
     }
 
     /// <summary>

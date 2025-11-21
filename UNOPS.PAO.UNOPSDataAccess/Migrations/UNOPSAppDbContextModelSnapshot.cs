@@ -1707,6 +1707,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("ExternalStakeholderNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.Property<decimal?>("InitiativeBudgetUSD")
                         .HasColumnType("decimal(18, 2)");
 
@@ -1717,11 +1721,18 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsPooledFunding")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("LastModifiedBy")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("LastModifiedDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MiscExternalStakeholders")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -1868,6 +1879,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.ToTable("OpportunityDeliverables", "public");
                 });
 
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityExternalStakeholder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ContactId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OpportunityId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContactId");
+
+                    b.HasIndex("OpportunityId");
+
+                    b.ToTable("OpportunityExternalStakeholder", "public");
+                });
+
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityFundingPartner", b =>
                 {
                     b.Property<int>("Id")
@@ -1879,6 +1913,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<decimal?>("Amount")
                         .HasColumnType("decimal(18, 2)");
 
+                    b.Property<decimal?>("AmountUSD")
+                        .HasColumnType("decimal(18, 2)");
+
                     b.Property<string>("CommitmentStatus")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -1887,6 +1924,15 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int?>("DocumentId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("ExchangeRate")
+                        .HasColumnType("decimal(18, 8)");
+
+                    b.Property<DateTime?>("ExchangeRateDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ExchangeRateId")
                         .HasColumnType("integer");
 
                     b.Property<decimal?>("FeeAmount")
@@ -1901,11 +1947,18 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<bool>("IsAmountBasedFee")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsPooledContribution")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("OpportunityId")
                         .HasColumnType("integer");
 
                     b.Property<int>("PartnerId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("PartnerPreferredCurrency")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("PartnershipAgreementReference")
                         .HasMaxLength(255)
@@ -1919,6 +1972,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("CurrencyId");
 
                     b.HasIndex("DocumentId");
+
+                    b.HasIndex("ExchangeRateId");
 
                     b.HasIndex("OpportunityId");
 
@@ -4071,6 +4126,25 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("Output");
                 });
 
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityExternalStakeholder", b =>
+                {
+                    b.HasOne("UNOPS.PAO.Domain.Entities.Contact", "Contact")
+                        .WithMany()
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("UNOPS.PAO.Domain.Entities.Opportunity", "Opportunity")
+                        .WithMany("ExternalStakeholders")
+                        .HasForeignKey("OpportunityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Contact");
+
+                    b.Navigation("Opportunity");
+                });
+
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityFundingPartner", b =>
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.Currency", "Currency")
@@ -4082,6 +4156,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasOne("UNOPS.PAO.Domain.Entities.Document", "Document")
                         .WithMany()
                         .HasForeignKey("DocumentId");
+
+                    b.HasOne("UNOPS.PAO.Domain.Entities.ExchangeRate", "ExchangeRateRecord")
+                        .WithMany()
+                        .HasForeignKey("ExchangeRateId");
 
                     b.HasOne("UNOPS.PAO.Domain.Entities.Opportunity", "Opportunity")
                         .WithMany("FundingPartners")
@@ -4098,6 +4176,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("Currency");
 
                     b.Navigation("Document");
+
+                    b.Navigation("ExchangeRateRecord");
 
                     b.Navigation("Opportunity");
 
@@ -4385,6 +4465,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("Deliverables");
 
                     b.Navigation("Documents");
+
+                    b.Navigation("ExternalStakeholders");
 
                     b.Navigation("FundingPartners");
 

@@ -68,12 +68,13 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var result = mapper.Map<UNOPSPartner, PartnerModel>(entity);
 
         // Resolve user names for audit fields
-        if (entity.CreatedBy > 0)
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        if (entity.CreatedBy != 0)
         {
             result.CreatedByName = await GetUserNameByIdAsync(entity.CreatedBy);
         }
-        
-        if (entity.LastModifiedBy > 0)
+        //Updated the condition to include Opportunity+ User that has Id of -1
+        if (entity.LastModifiedBy != 0)
         {
             result.LastModifiedByName = await GetUserNameByIdAsync(entity.LastModifiedBy);
         }
@@ -1945,11 +1946,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     /// <summary>
     /// Gets the next available ErpDimValue based on the highest existing value
+    /// Excludes values in the range 8000-9999 from the calculation
+    /// Considers all partners regardless of deletion status to ensure unique values
     /// </summary>
     private async Task<int> GetNextErpDimValueAsync()
     {
         var highestErpDimValue = await _context.Partners
-            .Where(p => p.ErpDimValue.HasValue && !p.IsDeleted)
+            .Where(p => p.ErpDimValue.HasValue 
+                && (p.ErpDimValue.Value < 8000 || p.ErpDimValue.Value > 9999))
             .MaxAsync(p => (int?)p.ErpDimValue) ?? 0;
         
         return highestErpDimValue + 1;

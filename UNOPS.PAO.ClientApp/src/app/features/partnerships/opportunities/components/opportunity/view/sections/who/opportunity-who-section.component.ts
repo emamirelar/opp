@@ -31,7 +31,8 @@ import { MessageModule } from 'primeng/message';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
-import { Opportunity, OpportunityFundingPartner, OpportunityClientPartner, OpportunityStakeholder, DocumentDetail } from '@shared/models/opportunity.model';
+import { CheckboxModule } from 'primeng/checkbox';
+import { Opportunity, OpportunityFundingPartner, OpportunityClientPartner, OpportunityStakeholder, OpportunityExternalStakeholder, DocumentDetail } from '@shared/models/opportunity.model';
 import { OpportunityService } from '@features/partnerships/opportunities/services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 import { Router } from '@angular/router';
@@ -72,7 +73,8 @@ import { DocumentService } from '@shared/services/api/document.service';
     MessageModule,
     FloatLabelModule,
     TooltipModule,
-    TextareaModule
+    TextareaModule,
+    CheckboxModule
   ],
   templateUrl: './opportunity-who-section.component.html',
   styleUrls: ['./opportunity-who-section.component.scss'],
@@ -103,6 +105,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly isEditingFundingPartner = signal(false);
   readonly editingFundingPartnerIndex = signal(-1);
   readonly partnerControl = new FormControl<SimpleValue | null>(null);
+  readonly currencyControl = new FormControl<number | null>(null); // Currency ID
   readonly amountControl = new FormControl<number | null>(null);
   readonly feeAmountControl = new FormControl<number | null>(null);
   readonly partnershipAgreementControl = new FormControl<string | null>(null);
@@ -121,11 +124,23 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly editingStakeholderIndex = signal(-1);
   readonly userControl = new FormControl<SimpleValue | null>(null);
   readonly roleControl = new FormControl<SimpleValue | null>(null);
+  
+  // External Stakeholder dialog state
+  readonly showExternalStakeholderDialog = signal(false);
+  readonly showExternalStakeholderValidationError = signal(false);
+  readonly contactControl = new FormControl<SimpleValue | null>(null);
+  readonly miscExternalStakeholdersControl = new FormControl<string | null>(null);
+  readonly externalStakeholderNotesControl = new FormControl<string | null>(null);
 
-  // Available partners from API
+  // Available partners and currencies from API
   readonly availablePartners = signal<SimpleValue[]>([]);
+  readonly availableCurrencies = signal<SimpleValue[]>([]);
+  readonly availableContacts = signal<SimpleValue[]>([]);
   readonly entityRoles = signal<SimpleValue[]>([]);
   readonly internalUsers = signal<SimpleValue[]>([]);
+
+  // Pooled funding state
+  isPooledFunding = false;
 
   // Computed counts
   readonly fundingPartnerCount = computed(() => {
@@ -139,23 +154,96 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly stakeholderCount = computed(() => {
     return this.opportunity().stakeholders?.length || 0;
   });
+  
+  readonly externalStakeholderCount = computed(() => {
+    return this.opportunity().externalStakeholders?.length || 0;
+  });
 
   ngOnInit(): void {
     this.loadPartners();
     this.loadEntityRoles();
     this.loadInternalUsers();
+    this.loadCurrencies();
+    this.loadContacts();
+    
+    // Initialize pooled funding state
+    this.isPooledFunding = this.opportunity().isPooledFunding || false;
+    
+    // Initialize external stakeholder controls
+    this.miscExternalStakeholdersControl.setValue(this.opportunity().miscExternalStakeholders);
+    this.externalStakeholderNotesControl.setValue(this.opportunity().externalStakeholderNotes);
   }
 
   /**
-   * @description Load available partners from API
+   * @description Load available partners from API (excludes pooled fund partners)
    */
   loadPartners(): void {
     this.valuesService.getPartners().subscribe({
       next: (partners) => {
-        this.availablePartners.set(partners);
+        // Filter out pooled funding partners for funding partner selection
+        const eligiblePartners = partners.filter(p => !p.pooledFund);
+        this.availablePartners.set(eligiblePartners);
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /**
+   * @description Load available currencies
+   */
+  loadCurrencies(): void {
+    this.valuesService.getCurrencies().subscribe({
+      next: (currencies) => {
+        this.availableCurrencies.set(currencies);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+  
+  /**
+   * @description Load available contacts - only from partners in this opportunity
+   */
+  loadContacts(): void {
+    this.valuesService.getContacts().subscribe({
+      next: (allContacts) => {
+        // Get all partner IDs from the opportunity (funding + client partners)
+        const opp = this.opportunity();
+        const partnerIds = new Set<number>();
+        
+        // Add funding partner IDs
+        opp.fundingPartners?.forEach(fp => {
+          if (fp.partnerId) {
+            partnerIds.add(fp.partnerId);
+          }
+        });
+        
+        // Add client partner IDs
+        opp.clientPartners?.forEach(cp => {
+          if (cp.partnerId) {
+            partnerIds.add(cp.partnerId);
+          }
+        });
+        
+        // Filter contacts to only those belonging to the opportunity's partners
+        const filteredContacts = allContacts.filter(contact => 
+          contact.partnerId && partnerIds.has(contact.partnerId)
+        );
+        
+        this.availableContacts.set(filteredContacts);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * @description Get selected currency code from currency control
+   */
+  getSelectedCurrencyCode(): string | null {
+    const currencyId = this.currencyControl.value;
+    if (!currencyId) return null;
+    
+    const selected = this.availableCurrencies().find(c => c.id === currencyId);
+    return selected?.code || null;
   }
 
   /**
@@ -204,24 +292,34 @@ export class OpportunityWhoSectionComponent implements OnInit {
     if (!opp || !opp.id) return;
 
     const whoData = {
+      isPooledFunding: this.isPooledFunding, // AC8
       fundingPartners: opp.fundingPartners?.map(fp => ({
         partnerId: fp.partnerId,
         amount: fp.amount,
+        currencyId: fp.currencyId,
         percentage: fp.percentage,
         feePercentage: fp.feePercentage,
         feeAmount: fp.feeAmount,
         feeAmountUSD: fp.feeAmountUSD,
         isAmountBasedFee: fp.isAmountBasedFee,
-        partnershipAgreementReference: fp.partnershipAgreementReference
+        partnershipAgreementReference: fp.partnershipAgreementReference,
+        documentId: fp.documentId, // Include document ID if set
+        isPooledContribution: fp.isPooledContribution || false
       })),
       clientPartners: opp.clientPartners?.map(cp => ({
-        partnerId: cp.partnerId
+        partnerId: cp.partnerId,
+        documentId: cp.documentId // Include document ID if set
       })),
       stakeholders: opp.stakeholders?.map(s => ({
         userId: s.userId!,
         entityRoleId: s.entityRoleId,
         notes: s.notes
-      }))
+      })),
+      externalStakeholders: opp.externalStakeholders?.map(es => ({
+        contactId: es.contactId
+      })),
+      miscExternalStakeholders: this.miscExternalStakeholdersControl.value,
+      externalStakeholderNotes: this.externalStakeholderNotesControl.value
     };
 
     this.isSaving.set(true);
@@ -238,8 +336,20 @@ export class OpportunityWhoSectionComponent implements OnInit {
         });
         this.cdr.detectChanges();
       },
-      error: () => {
+      error: (error) => {
         this.isSaving.set(false);
+        // Keep editing mode active so user can fix the issue
+        
+        // Display specific error message to user
+        const errorMessage = error?.error?.detail || error?.error?.message || error?.message || 
+                            this.translateService.instant('message.error.unexpectedError');
+        
+        this.feedbackService.showErrorToast({
+          summary: this.translateService.instant('message.error'),
+          detail: errorMessage
+        });
+        
+        console.error('Error saving WHO section:', error);
         this.cdr.detectChanges();
       }
     });
@@ -254,6 +364,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
    */
   openAddFundingPartnerDialog(): void {
     this.partnerControl.setValue(null);
+    this.currencyControl.setValue(141); // Default to USD (id: 141)
     this.amountControl.setValue(null);
     this.feeAmountControl.setValue(null);
     this.partnershipAgreementControl.setValue(null);
@@ -279,6 +390,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     this.isEditingFundingPartner.set(true);
     this.editingFundingPartnerIndex.set(index);
     this.partnerControl.setValue(masterPartner || null);
+    this.currencyControl.setValue(partner.currencyId || 141); // Set currency or default to USD
     this.amountControl.setValue(partner.amount);
     this.feeAmountControl.setValue(partner.feeAmount);
     this.partnershipAgreementControl.setValue(partner.partnershipAgreementReference || null);
@@ -293,6 +405,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
   cancelFundingPartnerDialog(): void {
     this.showFundingPartnerDialog.set(false);
     this.partnerControl.setValue(null);
+    this.currencyControl.setValue(null);
     this.amountControl.setValue(null);
     this.feeAmountControl.setValue(null);
     this.partnershipAgreementControl.setValue(null);
@@ -307,9 +420,10 @@ export class OpportunityWhoSectionComponent implements OnInit {
    */
   confirmFundingPartnerDialog(): void {
     const partner = this.partnerControl.value;
+    const currency = this.currencyControl.value;
     const amount = this.amountControl.value;
 
-    if (!partner || amount === null) {
+    if (!partner || !currency || amount === null) {
       this.showFundingValidationError.set(true);
       return;
     }
@@ -347,6 +461,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
     const opp = this.opportunity();
     const currentPartners = [...(opp.fundingPartners || [])];
 
+    const currencyId = this.currencyControl.value || 141; // Default to USD (id: 141)
+    const currencyCode = this.getSelectedCurrencyCode() || 'USD';
+
     const newPartner: OpportunityFundingPartner = {
       id: 0,
       opportunityId: opp.id!,
@@ -354,8 +471,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
       partnerName: partner.name || '',
       partnerLogoUrl: partner.logoUrl || undefined,
       amount: amount,
-      currencyId: null, // Backend will use default USD currency
-      currencyCode: 'USD',
+      currencyId: currencyId,
+      currencyCode: currencyCode,
       percentage: null,
       feePercentage: null,
       feeAmount: this.feeAmountControl.value,
@@ -365,7 +482,20 @@ export class OpportunityWhoSectionComponent implements OnInit {
       commitmentStatus: null,
       documentId: null,
       documentName: null,
-      associatedDocuments: null
+      associatedDocuments: null,
+      partnerStatus: null,
+      partnerApprovalStatus: null,
+      ddApproval: null,
+      ddApprovalDate: null,
+      ddExpiryDate: null,
+      ddStatus: null,
+      ddExpiresBeforeOpportunityEnd: null,
+      partnerPreferredCurrency: null,
+      amountUSD: null,
+      exchangeRate: null,
+      exchangeRateDate: null,
+      exchangeRateDisplay: null, // Backend will calculate
+      isPooledContribution: false
     };
 
     currentPartners.push(newPartner);
@@ -391,18 +521,28 @@ export class OpportunityWhoSectionComponent implements OnInit {
       return;
     }
 
+    const currencyId = this.currencyControl.value || 141; // Default to USD
+    const currencyCode = this.getSelectedCurrencyCode() || 'USD';
+
     currentPartners[index] = {
       ...currentPartners[index],
       partnerId: partner.id,
       partnerName: partner.name || '',
       partnerLogoUrl: partner.logoUrl || undefined,
       amount: amount,
+      currencyId: currencyId,
+      currencyCode: currencyCode,
       percentage: null,
       feePercentage: null,
       feeAmount: this.feeAmountControl.value,
       feeAmountUSD: this.feeAmountControl.value,
       isAmountBasedFee: true,
-      partnershipAgreementReference: this.partnershipAgreementControl.value || null
+      partnershipAgreementReference: this.partnershipAgreementControl.value || null,
+      // Reset USD conversion fields - backend will recalculate
+      amountUSD: null,
+      exchangeRate: null,
+      exchangeRateDate: null,
+      exchangeRateDisplay: null
     };
 
     const updatedOpportunity = {
@@ -537,7 +677,14 @@ export class OpportunityWhoSectionComponent implements OnInit {
       partnerLogoUrl: partner.logoUrl || undefined,
       documentId: null,
       documentName: null,
-      associatedDocuments: null
+      associatedDocuments: null,
+      partnerStatus: null,
+      partnerApprovalStatus: null,
+      ddApproval: null,
+      ddApprovalDate: null,
+      ddExpiryDate: null,
+      ddStatus: null,
+      ddExpiresBeforeOpportunityEnd: null
     };
 
     currentClients.push(newClient);
@@ -873,6 +1020,132 @@ export class OpportunityWhoSectionComponent implements OnInit {
         this.cdr.detectChanges();
       }
     );
+  }
+  
+  // ==================================================================
+  // External Stakeholder Management Methods (AC10)
+  // ==================================================================
+  
+  /**
+   * @description Open dialog to add external stakeholder
+   */
+  openAddExternalStakeholderDialog(): void {
+    this.contactControl.reset();
+    this.showExternalStakeholderValidationError.set(false);
+    this.showExternalStakeholderDialog.set(true);
+  }
+  
+  /**
+   * @description Cancel external stakeholder dialog
+   */
+  cancelExternalStakeholderDialog(): void {
+    this.showExternalStakeholderDialog.set(false);
+    this.contactControl.reset();
+    this.showExternalStakeholderValidationError.set(false);
+  }
+  
+  /**
+   * @description Confirm external stakeholder dialog
+   */
+  confirmExternalStakeholderDialog(): void {
+    const contact = this.contactControl.value;
+    
+    if (!contact) {
+      this.showExternalStakeholderValidationError.set(true);
+      return;
+    }
+    
+    this.addExternalStakeholder(contact);
+  }
+  
+  /**
+   * @description Add external stakeholder
+   */
+  addExternalStakeholder(contact: SimpleValue): void {
+    const opp = this.opportunity();
+    const currentExternalStakeholders = [...(opp.externalStakeholders || [])];
+    
+    // Check for duplicates
+    const isDuplicate = currentExternalStakeholders.some(es => es.contactId === contact.id);
+    if (isDuplicate) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.validation.externalStakeholderAlreadyAdded')
+      });
+      return;
+    }
+    
+    const newExternalStakeholder: OpportunityExternalStakeholder = {
+      id: 0,
+      opportunityId: opp.id!,
+      contactId: contact.id,
+      contactName: contact.name || '',
+      contactEmail: contact.email || null,
+      contactOrganization: null
+    };
+    
+    currentExternalStakeholders.push(newExternalStakeholder);
+    
+    const updatedOpportunity = {
+      ...opp,
+      externalStakeholders: currentExternalStakeholders
+    };
+    
+    this.opportunityUpdated.emit(updatedOpportunity);
+    this.cancelExternalStakeholderDialog();
+  }
+  
+  /**
+   * @description Remove external stakeholder
+   */
+  removeExternalStakeholder(index: number): void {
+    this.feedbackService.showConfirmDialog(
+      {
+        summary: this.translateService.instant('confirmation.removeExternalStakeholder'),
+        detail: this.translateService.instant('message.confirmRemoveExternalStakeholder')
+      },
+      () => {
+        const opp = this.opportunity();
+        const currentExternalStakeholders = [...(opp.externalStakeholders || [])];
+        currentExternalStakeholders.splice(index, 1);
+
+        const updatedOpportunity = {
+          ...opp,
+          externalStakeholders: currentExternalStakeholders
+        };
+
+        this.opportunityUpdated.emit(updatedOpportunity);
+        this.cdr.detectChanges();
+      }
+    );
+  }
+
+  /**
+   * @description Get severity for partner status badge
+   */
+  getPartnerStatusSeverity(status: string | null): 'success' | 'warn' | 'danger' | 'info' {
+    switch (status) {
+      case 'Active': return 'success';
+      case 'Draft': return 'warn';
+      case 'Closed': return 'danger';
+      case 'Archived': return 'info';
+      default: return 'info';
+    }
+  }
+
+  /**
+   * Get severity for DD status badge
+   */
+  getDDStatusSeverity(status: string | null): 'success' | 'warn' | 'danger' | 'info' {
+    switch (status) {
+      case 'Valid': return 'success';
+      case 'Approved': return 'success';
+      case 'Expiring Soon': return 'warn';
+      case 'Expired': return 'danger';
+      case 'Pending': return 'info';
+      case 'Not Required': return 'info';
+      default: return 'info';
+    }
   }
 }
 

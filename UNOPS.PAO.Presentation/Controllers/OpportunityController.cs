@@ -307,6 +307,43 @@ public class OpportunityController : BaseController
     {
         try
         {
+            // Validate that no pooled fund partners are being added
+            if (req.FundingPartners != null && req.FundingPartners.Any())
+            {
+                var partnerIds = req.FundingPartners.Select(fp => fp.PartnerId).ToList();
+                var pooledFundPartners = await _context.Partners
+                    .Where(p => partnerIds.Contains(p.Id) && p.PooledFund)
+                    .Select(p => new { p.Id, p.Name })
+                    .ToListAsync();
+
+                if (pooledFundPartners.Any())
+                {
+                    var partnerNames = string.Join(", ", pooledFundPartners.Select(p => p.Name));
+                    return BadRequest(new { 
+                        error = $"Cannot add pooled funding programmes as funding partners: {partnerNames}. " +
+                               "Pooled funding programmes represent programme funding pots and are not eligible as funding partners." 
+                    });
+                }
+            }
+
+            if (req.ClientPartners != null && req.ClientPartners.Any())
+            {
+                var partnerIds = req.ClientPartners.Select(cp => cp.PartnerId).ToList();
+                var pooledFundPartners = await _context.Partners
+                    .Where(p => partnerIds.Contains(p.Id) && p.PooledFund)
+                    .Select(p => new { p.Id, p.Name })
+                    .ToListAsync();
+
+                if (pooledFundPartners.Any())
+                {
+                    var partnerNames = string.Join(", ", pooledFundPartners.Select(p => p.Name));
+                    return BadRequest(new { 
+                        error = $"Cannot add pooled funding programmes as client partners: {partnerNames}. " +
+                               "Pooled funding programmes represent programme funding pots and are not eligible as client partners." 
+                    });
+                }
+            }
+
             var result = await _manager.UpdateWhoSectionAsync(id, req);
             
             // Create audit log
@@ -1015,7 +1052,7 @@ public class OpportunityController : BaseController
         try
         {
             _logger.LogInformation("🎯 [API] Creating opportunity '{Name}' from {Count} interactions for partner {PartnerId}", 
-                request.Name, request.SourceInteractionIds.Count, request.PartnerId);
+                request.Name, request.SourceInteractionIds?.Count ?? 0, request.PartnerId);
 
             // Validate request
             if (string.IsNullOrWhiteSpace(request.Name))

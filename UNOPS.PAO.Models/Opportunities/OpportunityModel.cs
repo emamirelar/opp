@@ -24,14 +24,29 @@ public class OpportunityModel
     public string? ExpectedBeneficiaries { get; set; }
     public string? Challenges { get; set; }
     
+    public bool IsPooledFunding { get; set; }
+    
     public List<OpportunityFundingPartnerModel>? FundingPartners { get; set; }
     public List<OpportunityClientPartnerModel>? ClientPartners { get; set; }
     public List<OpportunityStakeholderModel>? Stakeholders { get; set; }
+    public List<OpportunityExternalStakeholderModel>? ExternalStakeholders { get; set; }
+    public string? MiscExternalStakeholders { get; set; }
+    public string? ExternalStakeholderNotes { get; set; }
     public List<OpportunityDeliverableModel>? Deliverables { get; set; }
     public List<OpportunityCountryModel>? Countries { get; set; }
     public List<OpportunitySDGModel>? SDGs { get; set; }
     
     public OpportunityStats? Stats { get; set; }
+    
+    /// <summary>
+    /// Whether this is a new value range for the responsible org unit
+    /// </summary>
+    public bool? IsNewValueRangeForOrgUnit { get; set; }
+    
+    /// <summary>
+    /// Historical max value for the org unit
+    /// </summary>
+    public decimal? OrgUnitHistoricalMaxValue { get; set; }
     
     public DateTime? CreatedDate { get; set; }
     public DateTime? LastModifiedDate { get; set; }
