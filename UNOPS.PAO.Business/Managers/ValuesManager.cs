@@ -14,6 +14,8 @@ using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.Locations;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Contacts;
+using UNOPS.PAO.Models.Values;
+using UNOPS.PAO.Models.SDG;
 
 public class ValuesManager : IApplicationService
 {
@@ -30,7 +32,7 @@ public class ValuesManager : IApplicationService
     public IEnumerable<CurrencyModel> GetCurrencies() => repository.GetCurrencies().Select(mapper.Map<CurrencyModel>);
 
     public IEnumerable<EligibleEntityModel> GetEligibleEntities() => repository.GetEligibleEntities().Select(mapper.Map<EligibleEntityModel>);
-    public IEnumerable<CountryModel> GetCountries() => repository.GetCountries().Select(mapper.Map<CountryModel>);
+    public IEnumerable<SimpleValueModel> GetCountries() => repository.GetCountries();
 
     public IQueryable<PartnerValueModel> GetPartners()
          => (IQueryable<PartnerValueModel>)repository.GetPartners().Select(mapper.Map<PartnerValueModel>);
@@ -78,4 +80,31 @@ public class ValuesManager : IApplicationService
 
     public IEnumerable<LiaisonOfficeModel> GetLiaisonOffices()
          => repository.GetLiaisonOffices().Select(mapper.Map<LiaisonOfficeModel>);
+
+    public IEnumerable<SimpleValueModel> GetProposedInitiativeTypes()
+         => repository.GetProposedInitiativeTypes().Select(mapper.Map<SimpleValueModel>);
+
+    public IEnumerable<OutputModel> GetOutputs()
+         => repository.GetOutputs().Select(mapper.Map<OutputModel>);
+
+    public IEnumerable<SDGModel> GetSDGs()
+         => repository.GetSDGs().Select(mapper.Map<SDGModel>);
+
+    public IEnumerable<SDGTargetModel> GetSDGTargets()
+         => repository.GetSDGTargets().Select(mapper.Map<SDGTargetModel>);
+
+    public IEnumerable<SDGTargetModel> GetSDGTargetsBySDGId(string sdgId)
+         => repository.GetSDGTargetsBySDGId(sdgId).Select(mapper.Map<SDGTargetModel>);
+
+    public IEnumerable<SDGIndicatorModel> GetSDGIndicators()
+         => repository.GetSDGIndicators().Select(mapper.Map<SDGIndicatorModel>);
+
+    public IEnumerable<SDGIndicatorModel> GetSDGIndicatorsByTargetId(string targetId)
+         => repository.GetSDGIndicatorsByTargetId(targetId).Select(mapper.Map<SDGIndicatorModel>);
+
+    public async Task<IEnumerable<SimpleValueModel>> GetEntityRolesAsync(string entityType)
+         => await repository.GetEntityRolesAsync(entityType);
+
+    public async Task<IEnumerable<SimpleValueModel>> GetInternalUsersAsync()
+         => await repository.GetInternalUsersAsync();
 }

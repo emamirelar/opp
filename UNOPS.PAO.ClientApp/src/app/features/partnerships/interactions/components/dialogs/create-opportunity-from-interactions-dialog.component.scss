@@ -1,0 +1,99 @@
+/**
+ * Styles for Create Opportunity from Interactions Dialog
+ */
+
+:host ::ng-deep {
+  // Dialog customization
+  .p-dialog {
+    .p-dialog-header {
+      background-color: var(--unops-surface-primary);
+      border-bottom: 1px solid var(--unops-neutral-light);
+    }
+
+    .p-dialog-content {
+      max-height: calc(90vh - 150px);
+      overflow-y: auto;
+    }
+  }
+
+  // Selected interaction cards
+  .interaction-card {
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  // Available interactions list
+  .available-interactions {
+    .interaction-item {
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: var(--unops-neutral-lightest);
+      }
+
+      &.selected {
+        background-color: var(--unops-primary-light);
+      }
+    }
+  }
+
+  // Confidence badges
+  .confidence-badge {
+    &.high {
+      background-color: var(--unops-success);
+      color: white;
+    }
+
+    &.medium {
+      background-color: var(--unops-warning);
+      color: white;
+    }
+
+    &.low {
+      background-color: var(--unops-danger);
+      color: white;
+    }
+  }
+
+  // Form fields
+  .p-float-label {
+    margin-bottom: 1.5rem;
+
+    input,
+    textarea {
+      &:focus {
+        border-color: var(--unops-primary);
+        box-shadow: 0 0 0 0.2rem rgba(var(--unops-primary-rgb), 0.2);
+      }
+    }
+  }
+
+  // Custom scrollbar for interaction lists
+  .overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: var(--unops-neutral-grey) var(--unops-neutral-lightest);
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--unops-neutral-lightest);
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--unops-neutral-grey);
+      border-radius: 3px;
+
+      &:hover {
+        background: var(--unops-neutral-dark);
+      }
+    }
+  }
+}
+

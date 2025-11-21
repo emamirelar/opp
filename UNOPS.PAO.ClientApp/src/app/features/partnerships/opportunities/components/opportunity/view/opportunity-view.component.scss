@@ -1,0 +1,89 @@
+/**
+ * Opportunity View Component Styles
+ * Unified Dashboard View styling
+ */
+
+:host {
+  display: block;
+  background-color: #f9fafb;
+  min-height: 100vh;
+}
+
+// Smooth transitions for interactive elements
+.bg-white,
+p-card,
+p-badge,
+p-chip {
+  transition: all 0.2s ease-in-out;
+}
+
+// Hover effects for cards
+p-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+// Stat card styling
+.bg-white.rounded-lg.shadow-sm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+// Back button hover effect
+a:hover i {
+  transform: translateX(-2px);
+  transition: transform 0.2s ease-in-out;
+}
+
+// Loading spinner
+.pi-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Badge styling enhancements
+::ng-deep {
+  p-badge .p-badge {
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+  }
+  
+  p-chip .p-chip {
+    font-weight: 500;
+  }
+
+  // Card header styling
+  p-card .p-card-header {
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  // Card body padding
+  p-card .p-card-body {
+    padding: 1.5rem;
+  }
+
+  // Divider styling
+  p-divider .p-divider {
+    margin: 0.75rem 0;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  h1 {
+    font-size: 1.5rem !important;
+  }
+}
+

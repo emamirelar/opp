@@ -46,6 +46,19 @@
               class="capitalize">
             </p-tag>
           }
+          @if (!loading() && interaction() && canCreateOpportunity()) {
+            <button
+              pButton
+              pRipple
+              icon="pi pi-plus-circle"
+              [rounded]="true"
+              [text]="true"
+              [size]="'small'"
+              class="create-opportunity-button"
+              (click)="openCreateOpportunityDialog()"
+              [pTooltip]="'button.createOpportunityFromInteractions' | translate">
+            </button>
+          }
           @if (!loading() && interaction() && canEdit()) {
             <button
               pButton
@@ -125,6 +138,19 @@
 
       <!-- Action Buttons -->
       <div class="flex items-center gap-2">
+        @if (!loading() && interaction() && canCreateOpportunity()) {
+          <button
+            pButton
+            pRipple
+            icon="pi pi-plus-circle"
+            [label]="'button.createOpportunity' | translate"
+            [rounded]="true"
+            [outlined]="true"
+            [size]="'small'"
+            class="create-opportunity-button"
+            (click)="openCreateOpportunityDialog()">
+          </button>
+        }
         @if (!loading() && interaction() && canEdit()) {
           <button
             pButton
@@ -601,3 +627,12 @@
 
 <!-- Confirmation Dialog -->
 <p-confirmDialog></p-confirmDialog>
+
+<!-- Create Opportunity from Interactions Dialog -->
+@if (dialogConfig()) {
+  <app-create-opportunity-from-interactions-dialog
+    [(visible)]="showCreateOpportunityDialog"
+    [config]="dialogConfig()!"
+    (opportunityCreated)="handleOpportunityCreated($event)"
+  />
+}

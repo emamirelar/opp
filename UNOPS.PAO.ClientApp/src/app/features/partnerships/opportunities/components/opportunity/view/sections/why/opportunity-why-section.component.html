@@ -1,0 +1,541 @@
+<!-- WHY - Impact & Alignment -->
+<p-panel [toggleable]="true" [collapsed]="false" class="{{isSaving() ? 'opacity-50 pointer-events-none' : ''}}">
+  <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full pr-4">
+      <span class="font-semibold">💡 {{ 'label.opportunity.why' | translate }} - {{ 'label.opportunity.impactAlignment' | translate }}</span>
+      <div class="flex items-center gap-2">
+        @if (isSaving()) {
+          <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
+        }
+        @if (!isEditing()) {
+          <p-button
+            icon="pi pi-pencil"
+            [text]="true"
+            [rounded]="true"
+            severity="secondary"
+            size="small"
+            (onClick)="startEditing()"
+            pTooltip="{{ 'button.edit' | translate }}"
+            [disabled]="isSaving()"
+          />
+        } @else {
+          <p-button
+            icon="pi pi-check"
+            [text]="true"
+            [rounded]="true"
+            severity="success"
+            size="small"
+            (onClick)="saveSection()"
+            [disabled]="isSaving()"
+            pTooltip="{{ 'button.save' | translate }}"
+          />
+          <p-button
+            icon="pi pi-times"
+            [text]="true"
+            [rounded]="true"
+            severity="danger"
+            size="small"
+            (onClick)="cancelEditing()"
+            [disabled]="isSaving()"
+            pTooltip="{{ 'button.cancel' | translate }}"
+          />
+        }
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="space-y-6">
+    <!-- AI Suggestions -->
+    @if (suggestions() && suggestions().length > 0) {
+      <div class="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+        <div class="flex items-start gap-2 mb-2">
+          <i class="pi pi-lightbulb text-yellow-600 text-sm mt-0.5"></i>
+          <h4 class="text-xs font-semibold text-gray-900">{{ 'label.aiSuggestions' | translate }}</h4>
+        </div>
+        <div class="space-y-2 pl-5">
+          @for (suggestion of suggestions(); track $index) {
+            <div class="bg-white rounded p-2 border border-yellow-100">
+              <div class="font-semibold text-xs text-gray-900 mb-1">{{ suggestion.title }}</div>
+              <p class="text-xs text-gray-700">{{ suggestion.description }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Strategic Alignment -->
+    <div>
+      <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+        <i class="pi pi-sitemap text-purple-600"></i>
+        {{ 'label.opportunity.strategicAlignment' | translate }}
+      </h3>
+      @if (isEditing()) {
+        <textarea
+          pInputTextarea
+          [formControl]="strategicAlignmentControl"
+          rows="4"
+          class="w-full"
+          [placeholder]="'label.opportunity.strategicAlignmentPlaceholder' | translate"
+        ></textarea>
+      } @else {
+        <p class="text-gray-700 leading-relaxed">
+          {{ opportunity().strategicAlignment || '-' }}
+        </p>
+      }
+    </div>
+
+    <!-- Context and Challenge(s) -->
+    <div>
+      <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+        <i class="pi pi-exclamation-triangle text-amber-600"></i>
+        {{ 'label.opportunity.contextAndChallenges' | translate }}
+      </h3>
+      @if (isEditing()) {
+        <textarea
+          pInputTextarea
+          [formControl]="challengesControl"
+          rows="4"
+          class="w-full"
+          [placeholder]="'label.opportunity.challengesPlaceholder' | translate"
+        ></textarea>
+      } @else {
+        <p class="text-gray-700 leading-relaxed">
+          {{ opportunity().challenges || '-' }}
+        </p>
+      }
+    </div>
+
+    <!-- SDG Alignment -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="pi pi-globe text-green-600"></i>
+          {{ 'label.opportunity.sdgAlignment' | translate }} ({{ sdgCount() }})
+        </h3>
+        @if (isEditing()) {
+          <p-button
+            [label]="'button.addSDG' | translate"
+            icon="pi pi-plus"
+            size="small"
+            [outlined]="true"
+            (onClick)="openSDGDialog()"
+          />
+        }
+      </div>
+
+      <div class="space-y-3">
+        @if (opportunity().sdGs && opportunity().sdGs!.length > 0) {
+          @for (sdg of opportunity().sdGs; track sdg.sdgId; let idx = $index) {
+            <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-4 flex-1">
+                  <!-- SDG Logo -->
+                  @if (getSDGLogo(sdg.sdgId)) {
+                    <img 
+                      [src]="getSDGLogo(sdg.sdgId)" 
+                      [alt]="'SDG ' + sdg.sdgNumber"
+                      class="w-16 h-16 object-contain rounded"
+                    />
+                  } @else {
+                    <div class="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm">
+                      {{ sdg.sdgNumber }}
+                    </div>
+                  }
+                  <div class="flex-1">
+                    <h4 class="font-semibold text-gray-900 mb-1">
+                      {{ 'label.opportunity.sdg' | translate }} {{ sdg.sdgNumber }}: {{ sdg.sdgName }}
+                    </h4>
+                    <div class="flex items-center gap-2 mb-2">
+                      <p-chip 
+                        [label]="getSDGChipLabel(sdg.isPrimary)" 
+                        styleClass="text-xs font-bold"
+                        [style]="getSDGChipStyle(sdg.isPrimary)"
+                      />
+                    </div>
+                    
+                    <!-- Display Targets and Indicators -->
+                    @if (sdg.targets && sdg.targets.length > 0) {
+                      <div class="mt-3 pl-4 border-l-2 border-blue-200 space-y-2">
+                        @for (target of sdg.targets; track target.id) {
+                          <div class="text-sm">
+                            <div class="font-medium text-blue-700 flex items-center gap-2">
+                              <i class="pi pi-check-circle text-xs"></i>
+                              {{ 'label.target' | translate }} {{ target.sdgTargetId }}
+                            </div>
+                            <div class="text-gray-600 ml-5 text-xs mt-1">{{ target.targetDescription }}</div>
+                            
+                            <!-- Display Indicators for this target -->
+                            @if (target.indicators && target.indicators.length > 0) {
+                              <div class="ml-5 mt-2 space-y-1">
+                                @for (indicator of target.indicators; track indicator.id) {
+                                  <div class="flex items-start gap-1.5">
+                                    <i class="pi pi-angle-right text-xs text-gray-400 mt-0.5"></i>
+                                    <div class="text-xs text-gray-600">
+                                      {{ indicator.sdgIndicatorLongDescription }}
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+                @if (isEditing()) {
+                  <div class="flex gap-2">
+                    <p-button
+                      icon="pi pi-pencil"
+                      [text]="true"
+                      [rounded]="true"
+                      severity="secondary"
+                      size="small"
+                      (onClick)="editSDG(idx)"
+                      pTooltip="{{ 'button.edit' | translate }}"
+                    />
+                    <p-button
+                      icon="pi pi-trash"
+                      [text]="true"
+                      [rounded]="true"
+                      severity="danger"
+                      size="small"
+                      (onClick)="removeSDG(idx)"
+                      pTooltip="{{ 'button.delete' | translate }}"
+                    />
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        } @else {
+          <div class="text-center py-8 text-gray-400">
+            <i class="pi pi-globe text-4xl mb-3"></i>
+            <p>{{ 'message.opportunity.noSDGs' | translate }}</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Expected Beneficiaries -->
+    <div>
+      <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+        <i class="pi pi-users text-orange-600"></i>
+        {{ 'label.opportunity.expectedBeneficiaries' | translate }}
+      </h3>
+      @if (isEditing()) {
+        <textarea
+          pInputTextarea
+          [formControl]="expectedBeneficiariesControl"
+          rows="4"
+          class="w-full"
+          [placeholder]="'label.opportunity.expectedBeneficiariesPlaceholder' | translate"
+        ></textarea>
+      } @else {
+        <p class="text-gray-700 leading-relaxed">
+          {{ opportunity().expectedBeneficiaries || '-' }}
+        </p>
+      }
+    </div>
+
+    <!-- Expected Outcomes -->
+    <div>
+      <h3 class="text-sm font-semibold text-gray-600 mb-2 flex items-center gap-2">
+        <i class="pi pi-chart-line text-blue-600"></i>
+        {{ 'label.opportunity.expectedOutcomes' | translate }}
+      </h3>
+      @if (isEditing()) {
+        <textarea
+          pInputTextarea
+          [formControl]="expectedOutcomesControl"
+          rows="4"
+          class="w-full"
+          [placeholder]="'label.opportunity.expectedOutcomesPlaceholder' | translate"
+        ></textarea>
+      } @else {
+        <p class="text-gray-700 leading-relaxed">
+          {{ opportunity().intendedImpactOutcomes || '-' }}
+        </p>
+      }
+    </div>
+  </div>
+</p-panel>
+
+<!-- SDG Dialog -->
+<p-dialog
+  [header]="isEditingSDG() ? ('label.opportunity.editSDG' | translate) : ('label.opportunity.addSDG' | translate)"
+  [(visible)]="showSDGDialog"
+  [modal]="true"
+  [style]="{ width: '50rem', 'max-height': '90vh' }"
+  [contentStyle]="{ overflow: 'visible' }"
+>
+  <!-- Validation Error Message -->
+  @if (showValidationError()) {
+    <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4 w-full">
+      {{ 'message.validation.sdgRequired' | translate }}
+    </p-message>
+  }
+
+  <div class="space-y-4">
+    <!-- SDG Dropdown -->
+    <div>
+      <label class="block text-sm font-semibold text-gray-600 mb-2">
+        {{ 'label.opportunity.sdg' | translate }} *
+      </label>
+      <p-select
+        [formControl]="sdgControl"
+        [options]="sdgs()"
+        optionLabel="name"
+        [placeholder]="'label.opportunity.selectSDG' | translate"
+        styleClass="w-full"
+        [appendTo]="'body'"
+        [showClear]="true"
+        [filter]="true"
+        filterBy="name,sdgNumber"
+        (onChange)="onSDGChange($event.value)"
+      >
+        <ng-template let-sdg pTemplate="item">
+          <div class="flex items-center gap-3">
+            @if (sdg.sdgLogo) {
+              <img 
+                [src]="sdg.sdgLogo" 
+                [alt]="'SDG ' + sdg.sdgNumber"
+                class="w-12 h-12 object-contain"
+              />
+            } @else {
+              <div class="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-lg rounded">
+                {{ sdg.sdgNumber }}
+              </div>
+            }
+            <div>
+              <div class="font-semibold">SDG {{ sdg.sdgNumber }}: {{ sdg.name }}</div>
+              @if (sdg.sdgDescription) {
+                <div class="text-sm text-gray-600">{{ sdg.sdgDescription }}</div>
+              }
+            </div>
+          </div>
+        </ng-template>
+      </p-select>
+      @if (!sdgControl.value && showValidationError()) {
+        <p-message severity="error" variant="simple" styleClass="mt-2">
+          {{ 'message.validation.sdgRequired' | translate }}
+        </p-message>
+      }
+    </div>
+
+    <!-- SDG Details Section (Blue Info Box) -->
+    @if (sdgControl.value) {
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 space-y-4">
+        <div class="flex items-start gap-4">
+          <!-- SDG Logo -->
+          @if (sdgControl.value.sdgLogo) {
+            <img 
+              [src]="sdgControl.value.sdgLogo" 
+              [alt]="'SDG ' + sdgControl.value.sdgNumber"
+              class="w-20 h-20 object-contain rounded"
+            />
+          } @else {
+            <div class="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-teal-600 text-white font-bold text-2xl rounded shadow-sm">
+              {{ sdgControl.value.sdgNumber }}
+            </div>
+          }
+          <div class="flex-1">
+            <h4 class="text-base font-bold text-gray-900 mb-2">
+              SDG {{ sdgControl.value.sdgNumber }}: {{ sdgControl.value.name }}
+            </h4>
+            @if (sdgControl.value.sdgDescription) {
+              <p class="text-sm text-gray-700 leading-relaxed mb-3">
+                {{ sdgControl.value.sdgDescription }}
+              </p>
+            }
+            @if (sdgControl.value.sdgLongDescription) {
+              <p class="text-xs text-gray-600 leading-relaxed">
+                {{ sdgControl.value.sdgLongDescription }}
+              </p>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Primary/Secondary Selection -->
+    <div>
+      <label class="block text-sm font-semibold text-gray-600 mb-2">
+        {{ 'label.opportunity.alignmentType' | translate }} *
+      </label>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <input
+            type="radio"
+            id="primary"
+            [formControl]="isPrimaryControl"
+            [value]="true"
+            class="w-4 h-4 text-green-600"
+          />
+          <label for="primary" class="text-sm font-medium text-gray-700 cursor-pointer">
+            <span class="inline-flex items-center gap-2">
+              <p-chip 
+                label="Primary" 
+                styleClass="text-xs font-bold"
+                [style]="{ 'background-color': '#22c55e', 'color': 'white' }"
+              />
+            </span>
+          </label>
+        </div>
+        <div class="flex items-center gap-2">
+          <input
+            type="radio"
+            id="secondary"
+            [formControl]="isPrimaryControl"
+            [value]="false"
+            class="w-4 h-4 text-blue-600"
+          />
+          <label for="secondary" class="text-sm font-medium text-gray-700 cursor-pointer">
+            <span class="inline-flex items-center gap-2">
+              <p-chip 
+                label="Secondary" 
+                styleClass="text-xs font-bold"
+                [style]="{ 'background-color': '#0ea5e9', 'color': 'white' }"
+              />
+            </span>
+          </label>
+        </div>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">
+        <i class="pi pi-info-circle"></i> You can only have one Primary SDG, but multiple Secondary SDGs
+      </p>
+    </div>
+
+    <!-- SDG Targets Section -->
+    @if (sdgControl.value) {
+      <div class="border-t border-gray-200 pt-4 mt-4">
+        <label class="block text-sm font-semibold text-gray-700 mb-3">
+          {{ 'label.opportunity.sdgTargets' | translate }}
+        </label>
+        <p class="text-xs text-gray-600 mb-3">
+          <i class="pi pi-info-circle"></i> {{ 'message.opportunity.sdgTargetsInfo' | translate }}
+        </p>
+
+        <!-- Option to skip targets and indicators -->
+        <div class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+          <p-checkbox
+            [binary]="true"
+            [formControl]="skipTargetsControl"
+            inputId="skipTargets"
+          />
+          <div class="flex-1">
+            <label for="skipTargets" class="text-sm font-medium text-gray-900 cursor-pointer block mb-1">
+              {{ 'label.opportunity.skipTargetsAndIndicators' | translate }}
+            </label>
+            <p class="text-xs text-gray-600">
+              {{ 'message.opportunity.skipTargetsAndIndicatorsInfo' | translate }}
+            </p>
+          </div>
+        </div>
+        
+        @if (!skipTargetsControl.value) {
+          @if (loadingTargets()) {
+            <!-- Loading state for targets -->
+            <div class="flex items-center gap-2 text-sm text-blue-600 py-4">
+              <i class="pi pi-spin pi-spinner"></i>
+              <span>{{ 'message.loading' | translate }}...</span>
+            </div>
+          } @else if (availableTargets().length > 0) {
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+              @for (target of availableTargets(); track target.id) {
+                <div class="border border-gray-200 rounded-lg">
+                  <!-- Target Checkbox -->
+                  <div class="p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div class="flex items-start gap-3">
+                      <p-checkbox
+                        [binary]="true"
+                        [ngModel]="isTargetSelected(target.id)"
+                        (ngModelChange)="toggleTarget(target)"
+                        [inputId]="'target-' + target.id"
+                      />
+                      <label [for]="'target-' + target.id" class="flex-1 cursor-pointer">
+                        <div class="font-semibold text-gray-900">
+                          {{ 'label.target' | translate }} {{ target.sdgTargetId }}
+                        </div>
+                        <div class="text-sm text-gray-600 mt-1">{{ target.targetDescription }}</div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Indicators for selected target -->
+                  @if (isTargetSelected(target.id)) {
+                    <div class="p-3 bg-white border-t border-gray-200">
+                      <div class="text-xs font-semibold text-gray-700 mb-2 uppercase">
+                        {{ 'label.opportunity.sdgIndicators' | translate }}
+                      </div>
+                      
+                      @if (isLoadingIndicators(target.id)) {
+                        <!-- Loading state -->
+                        <div class="flex items-center gap-2 text-xs text-blue-600 pl-4 py-2">
+                          <i class="pi pi-spin pi-spinner"></i>
+                          <span>{{ 'message.loading' | translate }}...</span>
+                        </div>
+                      } @else if (getIndicatorsForTarget(target.sdgTargetId).length > 0) {
+                        <!-- Indicators loaded and available -->
+                        <div class="space-y-2 pl-4">
+                          @for (indicator of getIndicatorsForTarget(target.sdgTargetId); track indicator.id) {
+                            <div class="flex items-start gap-2">
+                              <p-checkbox
+                                [binary]="true"
+                                [ngModel]="isIndicatorSelected(target.id, indicator.id)"
+                                (ngModelChange)="toggleIndicator(target.id, indicator.id)"
+                                [inputId]="'indicator-' + indicator.id"
+                              />
+                              <label [for]="'indicator-' + indicator.id" class="flex-1 cursor-pointer text-sm text-gray-700">
+                                {{ indicator.sdgIndicatorLongDescription }}
+                              </label>
+                            </div>
+                          }
+                        </div>
+                      } @else {
+                        <!-- No indicators found -->
+                        <div class="text-xs text-amber-600 pl-4 py-2">
+                          <div class="flex items-center gap-2 mb-1">
+                            <i class="pi pi-info-circle"></i>
+                            <span class="font-medium">No indicators available for this target</span>
+                          </div>
+                          <div class="text-gray-600 text-xs ml-5">
+                            Please ensure the database has been seeded with SDG Indicators data.
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      [label]="'button.cancel' | translate"
+      severity="secondary"
+      (onClick)="cancelSDGDialog()"
+    />
+    @if (isEditingSDG()) {
+      <p-button
+        [label]="'button.confirm' | translate"
+        severity="primary"
+        (onClick)="updateSDG()"
+        [disabled]="!sdgControl.value"
+      />
+    } @else {
+      <p-button
+        [label]="'button.add' | translate"
+        severity="primary"
+        (onClick)="addSDG()"
+        [disabled]="!sdgControl.value"
+      />
+    }
+  </ng-template>
+</p-dialog>
+

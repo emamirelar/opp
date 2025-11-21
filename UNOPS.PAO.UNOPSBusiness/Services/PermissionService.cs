@@ -177,7 +177,15 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 }
             }
 
-            // Execute the query to get data
+            // ⚡ PERFORMANCE OPTIMIZATION: Only materialize the query if column filtering is needed
+            // This allows pagination to happen at the database level when no column filtering is required
+            if (!permittedColumns.Any())
+            {
+                // No column filtering - return the IQueryable to allow database-level pagination
+                return query;
+            }
+
+            // Column filtering is needed - must materialize the query
             List<T> data;
             try
             {
@@ -195,17 +203,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 data = query.ToList();
             }
 
-            // Apply column filtering if there are permitted columns
-            if (permittedColumns.Any())
-            {
-                // Always ensure Id and permissions are included, even if not in PropertyFilter
-                permittedColumns.Add("Id");
-                permittedColumns.Add("permissions");
-                
-                return await ApplyColumnFilteringToDataGeneric(data, permittedColumns);
-            }
-
-            return data;
+            // Apply column filtering
+            // Always ensure Id and permissions are included, even if not in PropertyFilter
+            permittedColumns.Add("Id");
+            permittedColumns.Add("permissions");
+            
+            return await ApplyColumnFilteringToDataGeneric(data, permittedColumns);
         }
 
         /// <summary>

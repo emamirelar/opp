@@ -1,0 +1,79 @@
+<p-confirmDialog></p-confirmDialog>
+
+<!-- Unified Create Opportunity Dialog -->
+<app-create-opportunity-from-interactions-dialog
+  [(visible)]="showCreateDialog"
+  [config]="dialogConfig()"
+  (opportunityCreated)="handleOpportunityCreated($event)"
+/>
+
+<div class="flex flex-col gap-8">
+  <div class="flex flex-wrap items-center gap-4">
+    <div class="flex items-center gap-3 opportunity-section-header">
+      <span class="material-symbols-outlined text-3xl">lightbulb</span>
+      <p class="text-3xl font-bold">{{ "title.opportunities" | translate }}</p>
+    </div>
+    <div class="ml-auto flex gap-2 flex-wrap">
+      <p-button
+        *ngIf="entityPermissions().permissions.canExport"
+        icon="pi pi-file-export"
+        [label]="'button.export' | translate"
+        (click)="exportData()"
+        text
+        rounded
+        class="opportunity-export-button"
+      />
+      <p-button
+        *ngIf="entityPermissions().permissions.canCreate"
+        icon="pi pi-plus"
+        [label]="'button.new' | translate"
+        (onClick)="openOpportunityEditDialog()"
+        rounded
+        class="opportunity-new-button"
+      />
+    </div>
+  </div>
+
+  <!-- UI Options Demo Section -->
+  <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6" hidden>
+    <div class="flex items-center gap-3 mb-4">
+      <i class="pi pi-eye text-blue-600 text-2xl"></i>
+      <h2 class="text-xl font-bold text-gray-900">UI Design Preview</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div
+        class="bg-white rounded-lg p-4 border border-blue-200 hover:shadow-lg transition-shadow"
+      >
+        <h3 class="font-semibold text-gray-900 mb-2">
+          Unified Dashboard - With Mock Data
+        </h3>
+        <p class="text-sm text-gray-600 mb-4">
+          All information visible in a single scrolling page. Best for
+          experienced users who need complete context at a glance.
+        </p>
+        <a routerLink="demo/option1" class="block">
+          <p-button
+            label="View Demo"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            styleClass="w-full"
+            size="small"
+          />
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <app-listview
+    #listviewComponent
+    [dataUrl]="opportunityService.getUrl()"
+    [columns]="opportunityColumns()"
+    [entityType]="'Opportunity'"
+    [config]="listviewConfig()"
+    (rowClick)="onRowClick($event)"
+    (searchChange)="onSearchChange($event)"
+    class="opportunity-listview"
+  >
+  </app-listview>
+</div>

@@ -1,0 +1,40 @@
+<div class="flex flex-col gap-8">
+  <div class="flex flex-wrap items-center gap-4">
+    <div class="flex items-center gap-3 opportunity-section-header">
+      <span class="material-symbols-outlined text-3xl">work</span>
+      <p class="text-3xl font-bold">
+        {{ 'title.opportunities' | translate }}
+        <span *ngIf="partnerName()" class="text-lg font-normal text-gray-600 ml-2">
+          - {{ partnerName() }}
+        </span>
+      </p>
+    </div>
+    <div class="ml-auto flex gap-2 flex-wrap">
+      <p-button
+        icon="pi pi-plus"
+        [label]="'button.new' | translate"
+        (onClick)="openCreateOpportunityDialog()"
+        rounded
+        class="opportunity-new-button"
+      />
+    </div>
+  </div>
+
+  <app-listview
+    #listviewComponent
+    [dataUrl]="dataUrl()"
+    [columns]="columns()"
+    [config]="config()"
+    [entityType]="'Opportunity'"
+    (rowClick)="handleOnOpenRecordDetails($event)"
+    class="opportunity-listview"
+  >
+  </app-listview>
+</div>
+
+<!-- Unified Create Opportunity Dialog -->
+<app-create-opportunity-from-interactions-dialog
+  [(visible)]="showCreateOpportunityDialog"
+  [config]="dialogConfig()"
+  (opportunityCreated)="handleOpportunityCreated($event)"
+/>

@@ -3,7 +3,7 @@ import { SearchField } from '@shared/services/utils';
 /**
  * Supported entity types for saved filters and advanced search functionality
  */
-export type EntityType = 'Partner' | 'Interaction' | 'Contact' | 'PartnerCategory' | 'PartnerGroup';
+export type EntityType = 'Partner' | 'Interaction' | 'Contact' | 'PartnerCategory' | 'PartnerGroup' | 'Opportunity';
 
 export interface ListViewColumn {
   label: string;

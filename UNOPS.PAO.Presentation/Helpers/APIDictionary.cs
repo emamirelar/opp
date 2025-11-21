@@ -11,6 +11,10 @@ public class APIDictionary
     public const string Document = APIPrefix + "document";
     public const string DocumentType = APIPrefix + "document-type";
     public const string DocumentGenerate = Document + "/generate-document";
+    public const string DocumentUpload = Document + "/upload";
+    public const string DocumentLink = Document + "/link";
+    public const string DocumentViewUrl = Document + "/view-url";
+    public const string DocumentDownload = Document + "/download";
 
     // Profile
     public const string Profile = APIPrefix + "profile";
@@ -25,14 +29,21 @@ public class APIDictionary
     public const string EligibleEntity = APIPrefix + "values/eligible-entity";
     public const string ApplicationType = APIPrefix + "values/application-type";
     public const string SDG = APIPrefix + "values/sdg";
+    public const string SDGs = APIPrefix + "values/sdgs";
+    public const string SDGTargets = APIPrefix + "values/sdg-targets";
+    public const string SDGIndicators = APIPrefix + "values/sdg-indicators";
     public const string Country = APIPrefix + "values/country";
     public const string Partners = APIPrefix + "values/partners";
+    public const string EntityRoles = APIPrefix + "values/entity-roles";
+    public const string InternalUsers = APIPrefix + "values/internal-users";
     public const string OrganizationUnits = APIPrefix + "values/organization-units";
     public const string PartnerCategories = APIPrefix + "values/partner-categories";
     public const string LiaisonOffices = APIPrefix + "values/liaison-offices";
     public const string Contacts = APIPrefix + "values/contacts";
     public const string Users = APIPrefix + "values/users";
     public const string GeminiModels = APIPrefix + "values/gemini-models";
+    public const string ProposedInitiativeTypes = APIPrefix + "values/proposed-initiative-types";
+    public const string Outputs = APIPrefix + "values/outputs";
 
     // Workflow
     public const string Workflow = APIPrefix + "workflow";
@@ -44,6 +55,7 @@ public class APIDictionary
     // Interaction
     public const string Interaction = APIPrefix + "interactions";
     public const string SingularInteraction = APIPrefix + "interaction";
+    public const string InteractionsBrief = APIPrefix + "interactions-brief";
 
     // Partner Tree
     
@@ -84,6 +96,9 @@ public class APIDictionary
     public const string OrganizationHierarchy = APIPrefix + "organization-hierarchy";
 
     public const string GeminiProcessDataSummary = APIPrefix + "process-data";
+    public const string GeminiDocumentTranscribe = APIPrefix + "document-transcribe";
+    public const string AuditLog = APIPrefix + "auditlog";
+    public const string AuditLogLatest = APIPrefix + "auditlog/latest";
     public const string AiAssistantCreateSession = APIPrefix + "ai-assistant/create-session";
     public const string AiAssistantGetSession = APIPrefix + "ai-assistant/get-session";
     public const string AiAssistantGetUserSessions = APIPrefix + "ai-assistant/get-user-sessions";
@@ -161,4 +176,51 @@ public class APIDictionary
     public const string DashboardMyDraftContacts = Dashboard + "/my-draft-contacts";
     public const string DashboardMyDraftInteractions = Dashboard + "/my-draft-interactions";
     public const string DashboardOrgUnitRecentUpdates = Dashboard + "/org-unit-recent-updates";
+
+    // Opportunity
+    public const string Opportunity = APIPrefix + "opportunity";
+    public const string OpportunityWhat = Opportunity + "/{id}/what";
+    public const string OpportunityWhy = Opportunity + "/{id}/why";
+    public const string OpportunityWho = Opportunity + "/{id}/who";
+    public const string OpportunityWhere = Opportunity + "/{id}/where";
+    public const string OpportunityWhen = Opportunity + "/{id}/when";
+    public const string OpportunityRelated = Opportunity + "/{id}/related";
+    public const string OpportunityApplyAiChanges = Opportunity + "/{id}/apply-ai-changes";
+
+    // Comment
+    public const string Comment = APIPrefix + "comment";
+    public const string CommentsByEntity = Comment + "/{entityType}/{entityId}";
+    public const string CommentTogglePin = Comment + "/{id}/toggle-pin";
+    public const string CommentCount = Comment + "/{entityType}/{entityId}/count";
+
+    // Entity Artifacts
+    public const string EntityArtifacts = APIPrefix + "entity-artifacts";
+    public const string EntityArtifactEntityTypes = EntityArtifacts + "/entity-types";
+    public const string EntityArtifactTypes = EntityArtifacts + "/artifact-types";
+    public const string EntityArtifactRecords = EntityArtifacts + "/entity-records";
+    public const string EntityArtifactGet = EntityArtifacts + "/get";
+    public const string EntityArtifactUpsert = EntityArtifacts + "/upsert";
+    public const string EntityArtifactList = EntityArtifacts + "/list";
+    
+    // Bulk Entity Artifacts
+    public const string EntityArtifactBulkArtifactTypes = EntityArtifacts + "/bulk/artifact-types";
+    public const string EntityArtifactBulkUniqueIdExample = EntityArtifacts + "/bulk/unique-id-example";
+    public const string EntityArtifactBulkTemplateDownload = EntityArtifacts + "/bulk/template-download";
+    public const string EntityArtifactBulkUpsert = EntityArtifacts + "/bulk/upsert";
+
+    // AI Retriever Service (External API)
+    public static class AIRetriever
+    {
+        private const string BaseRoute = APIPrefix + "ai-retriever";
+        
+        // Vector Store
+        public const string VectorStoreSearch = BaseRoute + "/vector-store/search";
+        
+        // Document Conversion
+        public const string ConvertUrl = BaseRoute + "/convert/url";
+        public const string ConvertMarkdownToGoogleDoc = BaseRoute + "/convert/markdown-to-google-doc";
+        
+        // Health Check
+        public const string Health = BaseRoute + "/health";
+    }
 }

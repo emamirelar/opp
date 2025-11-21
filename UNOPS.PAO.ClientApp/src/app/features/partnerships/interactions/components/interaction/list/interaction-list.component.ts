@@ -22,6 +22,8 @@ import { Popover } from 'primeng/popover';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { PageContextService } from '@shared/services/utils';
+import { CreateOpportunityFromInteractionsDialogComponent } from '../../dialogs/create-opportunity-from-interactions-dialog.component';
+import { CreateOpportunityFromInteractionsConfig } from '../../../models/interaction-selection.model';
 
 /**
  * @uiEntity InteractionList
@@ -50,6 +52,7 @@ import { PageContextService } from '@shared/services/utils';
     InteractionPreviewComponent,
     PopoverModule,
     MenuModule,
+    CreateOpportunityFromInteractionsDialogComponent
   ],
   providers: [
     DialogService
@@ -67,6 +70,19 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   previewPanel?: Popover;
 
   previewInteraction = signal<Interaction | null>(null);
+  
+  // Create Opportunity dialog state
+  showCreateOpportunityDialog = signal<boolean>(false);
+  
+  // Dialog configuration for unified dialog
+  dialogConfig = computed<CreateOpportunityFromInteractionsConfig>(() => {
+    return {
+      partnerId: 0, // No specific partner - user can select from interactions
+      partnerName: '',
+      mode: 'list-view', // From interaction list
+      preSelectedInteractionIds: [] // User will select interactions in dialog
+    };
+  });
 
   // Inject services
   router = inject(Router);
@@ -295,6 +311,29 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       }
     ];
     this.columns.set(fallbackColumns);
+  }
+  
+  /**
+   * Open the unified create opportunity dialog
+   */
+  openCreateOpportunityDialog(): void {
+    // Just open the dialog - user will select interactions inside
+    this.showCreateOpportunityDialog.set(true);
+  }
+  
+  /**
+   * Handle successful opportunity creation from unified dialog
+   */
+  handleOpportunityCreated(opportunity: any): void {
+    this.showCreateOpportunityDialog.set(false);
+    
+    // Open the new opportunity in a new tab if we have an ID
+    if (opportunity && opportunity.id) {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(['/partnerships/opportunities', opportunity.id])
+      );
+      window.open(`/#${url}`, '_blank');
+    }
   }
 
   ngOnDestroy() {

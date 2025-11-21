@@ -194,11 +194,15 @@ public class Startup
         // Register dev middleware
         services.AddScoped<DevelopmentIAPAuthHandler>();
 
+        // Register the EntityArtifactValueResolver and EntityDocumentValueResolver for automatic artifact and document loading
+        services.AddScoped<UNOPS.PAO.Business.Mapping.EntityArtifactValueResolver>();
+        services.AddScoped<UNOPS.PAO.Business.Mapping.EntityDocumentValueResolver>();
+
         services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
         // Register the mapping profile
         services.AddAutoMapper(cfg => cfg.AddProfile<UNOPS.PAO.UNOPSBusiness.Mapping.MappingProfile>());
-
+        
         services.AddScoped<IPAOExecutionContext, PAOExecutionContext>();
         services.AddScoped<SystemConfigurationManager>();
         
@@ -444,6 +448,16 @@ public class Startup
         
         // Register Global Filter Service for centralized global filter logic
         services.AddScoped<GlobalFilterService>();
+        
+        // Register External API configuration for AI retriever services
+        services.Configure<UNOPS.PAO.Models.Configuration.ExternalApiSettings>(
+            Configuration.GetSection("ExternalApiSettings"));
+        
+        // Register IAP authentication helper for service account impersonation (singleton for token caching)
+        services.AddSingleton<IAPAuthHelper>();
+        
+        // Register AI Retriever Manager for external API calls with shared authentication
+        services.AddScoped<IAiRetrieverManager, AiRetrieverManager>();
         
         // Data seeding is now triggered manually via API endpoint: POST /api/system-admin/seeding/run
         // services.AddDataSeeding(); // REMOVED - no longer runs on startup

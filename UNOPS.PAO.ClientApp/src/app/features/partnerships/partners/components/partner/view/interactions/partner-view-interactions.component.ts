@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, computed, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, computed, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -17,6 +17,8 @@ import { InteractionIconService } from '@shared/services/domain';
 import { TimelineComponent, TimelineConfig } from '@shared/components/data-display/timeline/timeline.component';
 import { TabViewModule } from 'primeng/tabview';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { CreateOpportunityFromInteractionsDialogComponent } from '@partnerships/interactions/components/dialogs/create-opportunity-from-interactions-dialog.component';
+import { CreateOpportunityFromInteractionsConfig } from '@partnerships/interactions/models/interaction-selection.model';
 
 // Backend SearchFieldInfo interface to match the API response
 interface SearchFieldInfo {
@@ -43,7 +45,8 @@ interface DropdownOption {
     ListviewComponent,
     TimelineComponent,
     TabViewModule,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    CreateOpportunityFromInteractionsDialogComponent
   ],
   providers: [DialogService],
   template: `
@@ -57,12 +60,20 @@ interface DropdownOption {
       </app-timeline>
 
       @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
-        <div class="flex items-center gap-4 flex-wrap">
-            <p-button class="ml-auto"
-                      [label]="'title.newInteraction' | translate"
-                      icon="pi pi-plus"
-                      rounded
-                      (click)="openNewInteractionModal()"></p-button>
+        <div class="flex items-center justify-end gap-4 flex-wrap">
+            <p-button
+              [label]="'button.createOpportunityFromInteractions' | translate"
+              icon="pi pi-briefcase"
+              severity="secondary"
+              rounded
+              (click)="openCreateOpportunityDialog()"
+            />
+            <p-button
+              [label]="'title.newInteraction' | translate"
+              icon="pi pi-plus"
+              rounded
+              (click)="openNewInteractionModal()"
+            />
         </div>
       }
 
@@ -75,6 +86,12 @@ interface DropdownOption {
         (searchChange)="onSearchChange($event)"
       >
       </app-listview>
+      
+      <!-- Create Opportunity from Interactions Dialog -->
+      <app-create-opportunity-from-interactions-dialog
+        [config]="dialogConfig()"
+        (opportunityCreated)="handleOpportunityCreated($event)"
+      />
     </div>
   `,
   styles: [``],
@@ -91,8 +108,21 @@ export class PartnerViewInteractionsComponent implements OnInit {
   private interactionIconService = inject(InteractionIconService);
   private translateService = inject(TranslateService);
 
+  // ViewChild to access the dialog component
+  @ViewChild(CreateOpportunityFromInteractionsDialogComponent)
+  createOpportunityDialog?: CreateOpportunityFromInteractionsDialogComponent;
+
   // Get partner ID from route
   partnerId = signal<string>('');
+  partnerName = signal<string>('');
+
+  // Dialog configuration
+  dialogConfig = computed<CreateOpportunityFromInteractionsConfig>(() => ({
+    mode: 'list-view',
+    partnerId: parseInt(this.partnerId()),
+    partnerName: this.partnerName(),
+    preSelectedInteractionIds: []
+  }));
 
   // Permission handling for interactions
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Interaction');
@@ -232,6 +262,13 @@ export class PartnerViewInteractionsComponent implements OnInit {
       const id = params.get('recordId');
       if (id) {
         this.partnerId.set(id);
+      }
+    });
+
+    // Get partner data from resolver
+    this.route.parent?.data.subscribe(data => {
+      if (data['partnerData']) {
+        this.partnerName.set(data['partnerData'].name || '');
       }
     });
 
@@ -457,7 +494,28 @@ export class PartnerViewInteractionsComponent implements OnInit {
     // console.log('Partner interactions search changed:', searchParams);
   }
 
-
   onTimelineRangeChanged(range: {start: Date, end: Date}) {
+  }
+
+  /**
+   * Open the Create Opportunity from Interactions dialog
+   */
+  openCreateOpportunityDialog(): void {
+    if (this.createOpportunityDialog) {
+      this.createOpportunityDialog.visible.set(true);
+    }
+  }
+
+  /**
+   * Handle opportunity creation success
+   */
+  handleOpportunityCreated(opportunity: any): void {
+    this.feedbackDialogService.showSuccessToast({
+      summary: this.translateService.instant('common.success.title'),
+      detail: this.translateService.instant('message.opportunityCreatedFromInteractions', { count: 1 })
+    });
+
+    // Navigate to the new opportunity
+    this.router.navigate(['/partnerships/opportunities', opportunity.id]);
   }
 }

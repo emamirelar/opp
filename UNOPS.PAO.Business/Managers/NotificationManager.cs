@@ -49,6 +49,8 @@ public class NotificationManager : IApplicationService
             Message = n.Message,
             Category = n.Category,
             ResponseType = n.ResponseType,
+            Entity = n.Entity,
+            EntityId = n.EntityId,
             Records = ParseRecordData(n.RecordData)
         }).ToList();
     }

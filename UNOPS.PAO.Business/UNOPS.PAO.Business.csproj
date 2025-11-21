@@ -24,6 +24,7 @@
     <ProjectReference Include="..\UNOPS.PAO.Domain\UNOPS.PAO.Domain.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.Models\UNOPS.PAO.Models.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.MailSender\UNOPS.PAO.MailSender.csproj" />
+    <ProjectReference Include="..\UNOPS.PAO.GoogleServices\UNOPS.PAO.GoogleServices.csproj" />
   </ItemGroup>
 
   <ItemGroup>

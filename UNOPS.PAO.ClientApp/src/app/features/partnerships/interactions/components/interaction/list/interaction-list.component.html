@@ -34,6 +34,14 @@
       }
       @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
         <p-button
+          [label]="'button.createOpportunityFromInteractions' | translate"
+          icon="pi pi-briefcase"
+          (click)="openCreateOpportunityDialog()"
+          severity="secondary"
+          rounded
+          class="interaction-create-opportunity-button"
+        ></p-button>
+        <p-button
           [label]="'title.newInteraction' | translate"
           icon="pi pi-plus"
           (click)="openNewInteractionModal()"
@@ -65,4 +73,11 @@
       <app-interaction-preview [interaction]="previewInteraction()!"></app-interaction-preview>
     }
   </p-popover>
+  
+  <!-- Unified Create Opportunity Dialog -->
+  <app-create-opportunity-from-interactions-dialog
+    [(visible)]="showCreateOpportunityDialog"
+    [config]="dialogConfig()"
+    (opportunityCreated)="handleOpportunityCreated($event)"
+  />
 </div>

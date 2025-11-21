@@ -5,6 +5,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
@@ -29,6 +30,12 @@ public class ManagerWrapper : IManagerWrapper
     private IUserManagementManager userManagementManager;
     private IAiPromptManager aiPromptManager;
     private IGmailAddonManager gmailAddonManager;
+    private IOpportunityManager opportunityManager;
+    private ICommentManager commentManager;
+    private IAuditLogManager auditLogManager;
+    private IEntityArtifactManager entityArtifactManager;
+    private IAiRetrieverManager aiRetrieverManager;
+    private IRiskManager riskManager;
     
     public ManagerWrapper(IMapper mapper, AppDbContext context,
                           UserManager<PAOIdentityUser> userManager, 
@@ -54,6 +61,18 @@ public class ManagerWrapper : IManagerWrapper
         userDataManager = new UserDataManager(mapper, context, httpContextAccessor);
         
         gmailAddonManager = new GmailAddonManager(mapper, context);
+        
+        opportunityManager = new OpportunityManager(mapper, context);
+        
+        commentManager = new CommentManager(mapper, context, this);
+        
+        // Create AuditLogManager
+        auditLogManager = new AuditLogManager(mapper, context);
+        
+        entityArtifactManager = new EntityArtifactManager(mapper, context);
+        
+        // Get AiRetrieverManager from service provider
+        aiRetrieverManager = serviceProvider.GetService<IAiRetrieverManager>();
         
         // Default implementation - will be overridden in UNOPSManagerWrapper
         userManagementManager = null;
@@ -81,4 +100,10 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IUserManagementManager UserManagementManager => userManagementManager;
     public virtual IAiPromptManager AiPromptManager => aiPromptManager;
     public virtual IGmailAddonManager GmailAddonManager => gmailAddonManager;
+    public virtual IOpportunityManager OpportunityManager => opportunityManager;
+    public virtual ICommentManager CommentManager => commentManager;
+    public virtual IAuditLogManager AuditLogManager => auditLogManager;
+    public virtual IEntityArtifactManager EntityArtifactManager => entityArtifactManager;
+    public virtual IAiRetrieverManager AiRetrieverManager => aiRetrieverManager;
+    public virtual IRiskManager RiskManager => riskManager;
 }

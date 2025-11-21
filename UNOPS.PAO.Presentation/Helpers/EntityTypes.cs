@@ -14,4 +14,5 @@ public class EntityTypes
     public const string Country = "Country";
     public const string LiaisonOffice = "LiaisonOffice";
     public const string OrganizationHierarchy = "OrganizationHierarchy";
+    public const string Opportunity = "Opportunity";
 }

@@ -141,4 +141,116 @@ export class DocumentService {
         }
       }));
   }
+
+  /**
+   * Get documents by entity type and ID (for Opportunity feature)
+   */
+  getDocumentsByEntity(entityType: string, entityId: number) {
+    this.isLoading.set(true);
+    return this.http.get(`/api/document/entity/${entityType}/${entityId}`).pipe(
+      tap({
+        next: () => {
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+        },
+      })
+    );
+  }
+
+  /**
+   * Upload document (for Opportunity feature)
+   */
+  uploadDocument(file: File, parentEntityName: string, parentEntityId: number, documentTypeId?: number) {
+    const formData = new FormData();
+    formData.append('File', file);
+    formData.append('ParentEntityName', parentEntityName);
+    formData.append('ParentEntityId', parentEntityId.toString());
+    if (documentTypeId) {
+      formData.append('DocumentTypeId', documentTypeId.toString());
+    }
+    return this.uploadFile(formData);
+  }
+
+  /**
+   * Link document (for Opportunity feature)
+   */
+  linkDocument(link: string, googleId: string, parentEntityName: string, parentEntityId: number, documentTypeId?: number) {
+    const body: DocumentLinkModel = {
+      link,
+      googleId,
+      name: '',
+      type: '',
+      parentEntityName,
+      parentEntityId,
+      documentTypeId: documentTypeId || 0
+    };
+    return this.linkFile(body);
+  }
+
+  /**
+   * Delete document by ID (for Opportunity feature)
+   */
+  deleteDocument(documentId: number) {
+    return this.delete(documentId);
+  }
+
+  /**
+   * Download document by ID (for Opportunity feature)
+   */
+  downloadDocument(documentId: number) {
+    return this.download(documentId);
+  }
+
+  /**
+   * Transcribe document using AI (for Opportunity feature)
+   */
+  transcribeDocument(documentId: number) {
+    this.isLoading.set(true);
+    return this.http.post(`/api/document-transcribe`, { id: documentId }).pipe(
+      tap({
+        next: () => {
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+        },
+      })
+    );
+  }
+
+  /**
+   * Get viewable URL for a document (signed URL for GCS documents)
+   */
+  getDocumentViewUrl(documentId: number) {
+    this.isLoading.set(true);
+    return this.http.get<{ url: string; type: string; mimeType?: string }>(`/api/document/view-url/${documentId}`).pipe(
+      tap({
+        next: () => {
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+        },
+      })
+    );
+  }
+
+  /**
+   * Get partner-document associations for a specific document
+   */
+  getPartnerDocumentAssociation(documentId: number) {
+    this.isLoading.set(true);
+    return this.http.get<{ documentId: number; partners: Array<{ partnerId: number; partnerType: string }> }>(`/api/opportunity/retrieve-partner-document-association/${documentId}`).pipe(
+      tap({
+        next: () => {
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+        },
+      })
+    );
+  }
 }

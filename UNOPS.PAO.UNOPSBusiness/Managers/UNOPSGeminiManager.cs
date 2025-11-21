@@ -531,7 +531,53 @@ public class UNOPSGeminiManager : IGeminiManager
         // Fetch result from Gemini with caching support
         // Pass entity ID for caching if available
         var entityIdForCache = req.Id > 0 ? req.Id.ToString() : null;
-        return await FetchResultFromGemini(promptData, relatedMessage, entityIdForCache);
+        
+        // Pass document storage path if available (for document transcription)
+        string geminiResponse;
+        if (!string.IsNullOrEmpty(req.DocumentStoragePath) && req.DocumentStoragePath.StartsWith("gs://"))
+        {
+            // Document transcription: pass gs:// URI and MIME type
+            geminiResponse = await _aiService.FetchResultFromGeminiWithDocument(
+                promptData, 
+                relatedMessage, 
+                req.DocumentStoragePath, 
+                req.DocumentMimeType ?? "application/pdf",
+                entityIdForCache
+            );
+        }
+        else
+        {
+            // Regular processing without document
+            geminiResponse = await FetchResultFromGemini(promptData, relatedMessage, entityIdForCache);
+        }
+        
+        // Process dependent dropdowns for opportunity document transcription
+        if (promptData.Type == "opportunity_document_transcribe")
+        {
+            try
+            {
+                // Parse the Gemini response to extract the JSON content
+                var parsedResponse = _aiService.GetDetailsFromGeminiResponse(geminiResponse);
+                
+                // Check if there are dependents to process
+                var dependents = parsedResponse["dependents"]?.ToString();
+                if (!string.IsNullOrEmpty(dependents))
+                {
+                    // Process dependents to convert names to IDs
+                    var processedResponse = await _aiService.GetDependentDropdownValues(dependents, parsedResponse, promptData);
+                    
+                    // Return the processed response as JSON string
+                    return JsonConvert.SerializeObject(processedResponse);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue with unprocessed response
+                _logger.LogWarning(ex, "Error processing dependent dropdowns for opportunity transcription. Returning unprocessed response.");
+            }
+        }
+        
+        return geminiResponse;
     }
 
     public async Task<string> ScanFileForGeminiProcessing(GeminiFileRequest req)
@@ -2852,5 +2898,1262 @@ public class UNOPSGeminiManager : IGeminiManager
         }
 
         #endregion
+
+        #region Similar Projects
+
+        /// <summary>
+        /// Finds similar projects for an opportunity using AI-powered keyword extraction and vector store search
+        /// </summary>
+        /// <param name="opportunityId">The opportunity ID to find similar projects for</param>
+        /// <param name="maxResults">Maximum number of similar projects to return (default: 10)</param>
+        /// <param name="user">Current user context</param>
+        /// <returns>Response containing similar projects and extracted keywords</returns>
+        public async Task<UNOPS.PAO.Models.SimilarProjectsResponse> GetSimilarProjectsAsync(int opportunityId, int maxResults = 6, ClaimsPrincipal user = null)
+        {
+            var startTime = DateTime.UtcNow;
+            
+            try
+            {
+                _logger.LogInformation($"🔍 [SIMILAR-PROJECTS] Starting similar projects search for opportunity {opportunityId}");
+                
+                // Step 1: Get opportunity data through manager wrapper
+                if (_managerWrapper == null)
+                {
+                    throw new InvalidOperationException("Manager wrapper not initialized");
+                }
+                
+                var opportunityManager = _managerWrapper.OpportunityManager;
+                if (opportunityManager == null)
+                {
+                    throw new InvalidOperationException("Opportunity manager not available");
+                }
+                
+                // Cast to UNOPSOpportunityManager to access BaseUNOPSManager methods
+                if (!(opportunityManager is UNOPSOpportunityManager uNOPSOpportunityManager))
+                {
+                    throw new InvalidOperationException("Opportunity manager must be UNOPSOpportunityManager type");
+                }
+                
+                // Get complete opportunity context via DataRetrievalMethod
+                _logger.LogInformation($"📊 [SIMILAR-PROJECTS] Fetching opportunity context for ID {opportunityId}");
+                var opportunityContext = await uNOPSOpportunityManager.CallFunctionByNameAsync("GetOpportunityDetailsForAIAsync", opportunityId, user);
+                
+                if (opportunityContext == null)
+                {
+                    throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+                }
+                
+                var opportunityContextJson = JsonConvert.SerializeObject(opportunityContext);
+                _logger.LogInformation($"✅ [SIMILAR-PROJECTS] Opportunity context retrieved. Length: {opportunityContextJson.Length} characters");
+                
+                // Step 2: Extract keywords using Gemini AI
+                _logger.LogInformation($"🤖 [SIMILAR-PROJECTS] Extracting semantic search keywords using Gemini AI");
+                var promptData = await _aiService.GetPromptData("opportunity_extract_keywords");
+                var extractKeywordsPrompt = promptData.FirstOrDefault();
+                
+                if (extractKeywordsPrompt == null)
+                {
+                    throw new InvalidOperationException("Keyword extraction prompt 'opportunity_extract_keywords' not found in database");
+                }
+                
+                var keywords = await _aiService.ExtractKeywordsForSemanticSearchAsync(opportunityContextJson, extractKeywordsPrompt);
+                _logger.LogInformation($"✅ [SIMILAR-PROJECTS] Extracted {keywords.Count} keywords: {string.Join(", ", keywords.Take(5))}...");
+                
+                // Combine keywords into a single search query
+                var searchQuery = string.Join(" ", keywords);
+                
+                // Step 3: Search vector store for similar projects
+                _logger.LogInformation($"🔎 [SIMILAR-PROJECTS] Searching vector store with query: \"{searchQuery.Substring(0, Math.Min(100, searchQuery.Length))}...\"");
+                
+                var vectorStoreRequest = new UNOPS.PAO.Models.AI.VectorStoreSearchRequest
+                {
+                    Query = searchQuery,
+                    MaxResults = maxResults,
+                    EntityTypeId = "PROJECT",  // Search for projects
+                    EntityId = "",
+                    ApplicationId = "",
+                    DatasourceId = "",
+                    DatasourceConnector = "GOOGLE_BIGQUERY",  // Filter by BigQuery datasource
+                    PrimaryRelatedToEntityTypeId = "",
+                    PrimaryRelatedToEntityId = "",
+                    Filters = new Dictionary<string, string>(),
+                    Debug = false
+                };
+                
+                // Use AiRetrieverManager to search
+                var aiRetrieverManager = _managerWrapper.AiRetrieverManager;
+                if (aiRetrieverManager == null)
+                {
+                    throw new InvalidOperationException("AI Retriever manager not available");
+                }
+                
+                var userEmail = user?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                var vectorStoreResponse = await aiRetrieverManager.SearchVectorStoreAsync(vectorStoreRequest, userEmail);
+                
+                _logger.LogInformation($"✅ [SIMILAR-PROJECTS] Vector store search returned {vectorStoreResponse.Documents?.Count ?? 0} results");
+                
+                // Step 4: Map vector store documents to similar project models
+                var similarProjects = new List<UNOPS.PAO.Models.SimilarProjectModel>();
+                
+                if (vectorStoreResponse.Documents != null && vectorStoreResponse.Documents.Any())
+                {
+                    foreach (var doc in vectorStoreResponse.Documents)
+                    {
+                        var projectId = doc.EntityId ?? doc.DocumentId;
+                        var similarProject = new UNOPS.PAO.Models.SimilarProjectModel
+                        {
+                            ProjectId = projectId,
+                            Description = ExtractFromMetadata(doc.Metadata, "Project_Description"),
+                            RelevanceScore = doc.Score * 100, // Convert to 0-100 scale
+                            StartDate = ExtractFromMetadata(doc.Metadata, "Implementation_Start_Date"),
+                            EndDate = ExtractFromMetadata(doc.Metadata, "Implementation_End_Date"),
+                            Partners = ExtractFromMetadata(doc.Metadata, "Partners"),
+                            Countries = ExtractFromMetadata(doc.Metadata, "Project_Country_List"),
+                            ProjectManagerName = ExtractFromMetadata(doc.Metadata, "Project_Manager_Name"),
+                            ProjectManagerEmail = ExtractFromMetadata(doc.Metadata, "Project_Manager_Email_Address"),
+                            ProjectUrl = $"https://projects.unops.org/#b0/{projectId}/dashboard/overview"
+                        };
+                        
+                        similarProjects.Add(similarProject);
+                    }
+                }
+                
+                // Step 5: Refine results with Gemini to add relevance explanations
+                if (similarProjects.Any())
+                {
+                    _logger.LogInformation($"🤖 [SIMILAR-PROJECTS] Refining {similarProjects.Count} projects with AI-generated relevance explanations");
+                    
+                    try
+                    {
+                        var refinePromptData = await _aiService.GetPromptData("opportunity_refine_projects");
+                        var refinePrompt = refinePromptData.FirstOrDefault();
+                        
+                        if (refinePrompt != null)
+                        {
+                            // Prepare the data for the refine prompt
+                            var opportunityData = opportunityContext as Dictionary<string, object>;
+                            var placeholders = new Dictionary<string, string>
+                            {
+                                { "opportunityName", opportunityData?.GetValueOrDefault("name")?.ToString() ?? "" },
+                                { "opportunityDescription", opportunityData?.GetValueOrDefault("description")?.ToString() ?? "" },
+                                { "proposedInitiativeTypeName", opportunityData?.GetValueOrDefault("proposedInitiativeTypeName")?.ToString() ?? "" },
+                                { "countries", opportunityData?.GetValueOrDefault("countries")?.ToString() ?? "" },
+                                { "sdGs", opportunityData?.GetValueOrDefault("sdGs")?.ToString() ?? "" },
+                                { "deliverables", opportunityData?.GetValueOrDefault("deliverables")?.ToString() ?? "" },
+                                { "projects", JsonConvert.SerializeObject(new { projects = similarProjects }) }
+                            };
+                            
+                            // Process placeholders in the prompt
+                            var refinedPrompt = _aiService.ProcessPlaceholders(refinePrompt.UserPrompt, JsonConvert.SerializeObject(placeholders));
+                            
+                            // Call Gemini to refine the projects
+                            var refineResponse = await _aiService.FetchResultFromGemini(refinePrompt, refinedPrompt, opportunityId.ToString());
+                            
+                            if (!string.IsNullOrEmpty(refineResponse))
+                            {
+                                try
+                                {
+                                    // Extract JSON from Gemini response (handles both raw JSON and wrapped in API response)
+                                    var extractedJson = ExtractJsonFromGeminiResponse(refineResponse);
+                                    
+                                    if (!string.IsNullOrEmpty(extractedJson))
+                                    {
+                                        var refinedData = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(extractedJson);
+                                        if (refinedData != null && refinedData.ContainsKey("projects"))
+                                        {
+                                            var refinedProjects = JsonConvert.DeserializeObject<List<UNOPS.PAO.Models.SimilarProjectModel>>(refinedData["projects"].ToString());
+                                            if (refinedProjects != null)
+                                            {
+                                                similarProjects = refinedProjects;
+                                                _logger.LogInformation($"✅ [SIMILAR-PROJECTS] Successfully added relevance explanations to {similarProjects.Count} projects");
+                                            }
+                                        }
+                                    }
+                                }
+                                catch (Exception parseEx)
+                                {
+                                    _logger.LogWarning(parseEx, $"⚠️ [SIMILAR-PROJECTS] Failed to parse refined response: {parseEx.Message}");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception refineEx)
+                    {
+                        _logger.LogWarning(refineEx, $"⚠️ [SIMILAR-PROJECTS] Failed to refine projects with relevance explanations, returning original results: {refineEx.Message}");
+                        // Continue with original results if refinement fails
+                    }
+                }
+                
+                var executionTime = DateTime.UtcNow - startTime;
+                
+                var response = new UNOPS.PAO.Models.SimilarProjectsResponse
+                {
+                    SimilarProjects = similarProjects,
+                    ExtractedKeywords = keywords,
+                    TotalFound = similarProjects.Count,
+                    ExecutionTimeMs = (long)executionTime.TotalMilliseconds
+                };
+                
+                _logger.LogInformation($"✅ [SIMILAR-PROJECTS] Search completed successfully in {executionTime.TotalMilliseconds}ms. Found {similarProjects.Count} similar projects");
+                
+                return response;
+            }
+            catch (Exception ex)
+            {
+                var executionTime = DateTime.UtcNow - startTime;
+                _logger.LogError(ex, $"❌ [SIMILAR-PROJECTS] Error finding similar projects for opportunity {opportunityId}: {ex.Message}");
+                
+                // Return empty result on error
+                return new UNOPS.PAO.Models.SimilarProjectsResponse
+                {
+                    SimilarProjects = new List<UNOPS.PAO.Models.SimilarProjectModel>(),
+                    ExtractedKeywords = new List<string>(),
+                    TotalFound = 0,
+                    ExecutionTimeMs = (long)executionTime.TotalMilliseconds
+                };
+            }
+        }
+        
+        /// <summary>
+        /// Gets relevant people from corporate directory for an opportunity
+        /// Step 1: Extract role keywords from opportunity context using specialized prompt
+        /// Step 2: Search vector store for PERSON entity type
+        /// Step 3: Map results to relevant person models
+        /// </summary>
+        /// <param name="opportunityId">The opportunity ID to find relevant people for</param>
+        /// <param name="maxResults">Maximum number of relevant people to return (default: 10)</param>
+        /// <param name="user">Current user context</param>
+        /// <returns>Response containing relevant people and extracted roles</returns>
+        public async Task<UNOPS.PAO.Models.RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null)
+        {
+            var startTime = DateTime.UtcNow;
+            
+            try
+            {
+                _logger.LogInformation($"👥 [RELEVANT-PEOPLE] Starting relevant people search for opportunity {opportunityId}");
+                
+                // Step 1: Get opportunity data through manager wrapper
+                if (_managerWrapper == null)
+                {
+                    throw new InvalidOperationException("Manager wrapper not initialized");
+                }
+                
+                var opportunityManager = _managerWrapper.OpportunityManager;
+                if (opportunityManager == null)
+                {
+                    throw new InvalidOperationException("Opportunity manager not available");
+                }
+                
+                // Cast to UNOPSOpportunityManager to access BaseUNOPSManager methods
+                if (!(opportunityManager is UNOPSOpportunityManager uNOPSOpportunityManager))
+                {
+                    throw new InvalidOperationException("Opportunity manager must be UNOPSOpportunityManager type");
+                }
+                
+                // Get complete opportunity context via DataRetrievalMethod
+                _logger.LogInformation($"📊 [RELEVANT-PEOPLE] Fetching opportunity context for ID {opportunityId}");
+                var opportunityContext = await uNOPSOpportunityManager.CallFunctionByNameAsync("GetOpportunityDetailsForAIAsync", opportunityId, user);
+                
+                if (opportunityContext == null)
+                {
+                    throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+                }
+                
+                var opportunityContextJson = JsonConvert.SerializeObject(opportunityContext);
+                _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Opportunity context retrieved. Length: {opportunityContextJson.Length} characters");
+                
+                // Step 2: Extract role keywords using specialized Gemini AI prompt
+                _logger.LogInformation($"🤖 [RELEVANT-PEOPLE] Extracting role keywords using specialized prompt 'opportunity_extract_people_keywords'");
+                var promptData = await _aiService.GetPromptData("opportunity_extract_people_keywords");
+                var extractRolesPrompt = promptData.FirstOrDefault();
+                
+                if (extractRolesPrompt == null)
+                {
+                    throw new InvalidOperationException("Role extraction prompt 'opportunity_extract_people_keywords' not found in database");
+                }
+                
+                var roles = await _aiService.ExtractKeywordsForSemanticSearchAsync(opportunityContextJson, extractRolesPrompt);
+                _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Extracted {roles.Count} role keywords: {string.Join(", ", roles.Take(5))}...");
+                
+                // Combine roles into a single search query
+                var searchQuery = string.Join(" ", roles);
+                
+                // Step 3: Search vector store for PERSON entity
+                _logger.LogInformation($"🔎 [RELEVANT-PEOPLE] Searching vector store for PERSON entity with query: \"{searchQuery.Substring(0, Math.Min(100, searchQuery.Length))}...\"");
+                
+                var vectorStoreRequest = new UNOPS.PAO.Models.AI.VectorStoreSearchRequest
+                {
+                    Query = searchQuery,
+                    MaxResults = maxResults,
+                    EntityTypeId = "PERSON",  // Search for people
+                    EntityId = "",
+                    ApplicationId = "",
+                    DatasourceId = "",
+                    DatasourceConnector = "GOOGLE_BIGQUERY",  // Corporate directory doesn't need specific connector
+                    PrimaryRelatedToEntityTypeId = "",
+                    PrimaryRelatedToEntityId = "",
+                    Filters = new Dictionary<string, string>(),
+                    Debug = false
+                };
+                
+                // Use AiRetrieverManager to search
+                var aiRetrieverManager = _managerWrapper.AiRetrieverManager;
+                if (aiRetrieverManager == null)
+                {
+                    throw new InvalidOperationException("AI Retriever manager not available");
+                }
+                
+                var userEmail = user?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                var vectorStoreResponse = await aiRetrieverManager.SearchVectorStoreAsync(vectorStoreRequest, userEmail);
+                
+                _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Vector store search returned {vectorStoreResponse.Documents?.Count ?? 0} results");
+                
+                // Step 4: Map vector store documents to relevant person models
+                var relevantPeople = new List<UNOPS.PAO.Models.RelevantPersonModel>();
+                
+                if (vectorStoreResponse.Documents != null && vectorStoreResponse.Documents.Any())
+                {
+                    foreach (var doc in vectorStoreResponse.Documents)
+                    {
+                        var personId = doc.EntityId ?? doc.DocumentId;
+                        
+                        // Extract expertise from metadata if available (could be skills, areas of expertise, etc.)
+                        var expertiseStr = ExtractFromMetadata(doc.Metadata, "Expertise") 
+                                          ?? ExtractFromMetadata(doc.Metadata, "Skills") 
+                                          ?? ExtractFromMetadata(doc.Metadata, "Areas_Of_Expertise");
+                        var expertiseList = string.IsNullOrEmpty(expertiseStr) 
+                            ? new List<string>() 
+                            : expertiseStr.Split(',').Select(e => e.Trim()).ToList();
+                        
+                        var relevantPerson = new UNOPS.PAO.Models.RelevantPersonModel
+                        {
+                            PersonId = personId,
+                            Name = ExtractFromMetadata(doc.Metadata, "Name") 
+                                  ?? ExtractFromMetadata(doc.Metadata, "Full_Name") 
+                                  ?? ExtractFromMetadata(doc.Metadata, "DisplayName"),
+                            Title = ExtractFromMetadata(doc.Metadata, "Title") 
+                                   ?? ExtractFromMetadata(doc.Metadata, "Job_Title") 
+                                   ?? ExtractFromMetadata(doc.Metadata, "Position"),
+                            Department = ExtractFromMetadata(doc.Metadata, "Department") 
+                                       ?? ExtractFromMetadata(doc.Metadata, "Organizational_Unit") 
+                                       ?? ExtractFromMetadata(doc.Metadata, "Unit"),
+                            Email = ExtractFromMetadata(doc.Metadata, "Email") 
+                                   ?? ExtractFromMetadata(doc.Metadata, "Email_Address"),
+                            Location = ExtractFromMetadata(doc.Metadata, "Location") 
+                                      ?? ExtractFromMetadata(doc.Metadata, "Duty_Station") 
+                                      ?? ExtractFromMetadata(doc.Metadata, "Office"),
+                            PhotoUrl = ExtractFromMetadata(doc.Metadata, "Photo") 
+                                      ?? ExtractFromMetadata(doc.Metadata, "ProfilePicture") 
+                                      ?? ExtractFromMetadata(doc.Metadata, "ProfilePhoto"),
+                            Expertise = expertiseList.Any() ? expertiseList : null,
+                            RelevanceScore = doc.Score * 100, // Convert to 0-100 scale
+                            Metadata = doc.Metadata
+                        };
+                        
+                        relevantPeople.Add(relevantPerson);
+                    }
+                }
+                
+                // Step 5: Refine results with Gemini to add relevance explanations
+                if (relevantPeople.Any())
+                {
+                    _logger.LogInformation($"🤖 [RELEVANT-PEOPLE] Refining {relevantPeople.Count} people with AI-generated relevance explanations");
+                    
+                    try
+                    {
+                        var refinePromptData = await _aiService.GetPromptData("opportunity_refine_people");
+                        var refinePrompt = refinePromptData.FirstOrDefault();
+                        
+                        if (refinePrompt != null)
+                        {
+                            // Prepare the data for the refine prompt
+                            var opportunityData = opportunityContext as Dictionary<string, object>;
+                            var placeholders = new Dictionary<string, string>
+                            {
+                                { "opportunityName", opportunityData?.GetValueOrDefault("name")?.ToString() ?? "" },
+                                { "opportunityDescription", opportunityData?.GetValueOrDefault("description")?.ToString() ?? "" },
+                                { "proposedInitiativeTypeName", opportunityData?.GetValueOrDefault("proposedInitiativeTypeName")?.ToString() ?? "" },
+                                { "countries", opportunityData?.GetValueOrDefault("countries")?.ToString() ?? "" },
+                                { "sdGs", opportunityData?.GetValueOrDefault("sdGs")?.ToString() ?? "" },
+                                { "deliverables", opportunityData?.GetValueOrDefault("deliverables")?.ToString() ?? "" },
+                                { "expertiseAreas", string.Join(", ", roles) },
+                                { "people", JsonConvert.SerializeObject(new { people = relevantPeople }) }
+                            };
+                            
+                            // Process placeholders in the prompt
+                            var refinedPrompt = _aiService.ProcessPlaceholders(refinePrompt.UserPrompt, JsonConvert.SerializeObject(placeholders));
+                            
+                            // Call Gemini to refine the people
+                            var refineResponse = await _aiService.FetchResultFromGemini(refinePrompt, refinedPrompt, opportunityId.ToString());
+                            
+                            if (!string.IsNullOrEmpty(refineResponse))
+                            {
+                                try
+                                {
+                                    // Extract JSON from Gemini response (handles both raw JSON and wrapped in API response)
+                                    var extractedJson = ExtractJsonFromGeminiResponse(refineResponse);
+                                    
+                                    if (!string.IsNullOrEmpty(extractedJson))
+                                    {
+                                        var refinedData = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(extractedJson);
+                                        if (refinedData != null && refinedData.ContainsKey("people"))
+                                        {
+                                            var refinedPeople = JsonConvert.DeserializeObject<List<UNOPS.PAO.Models.RelevantPersonModel>>(refinedData["people"].ToString());
+                                            if (refinedPeople != null)
+                                            {
+                                                relevantPeople = refinedPeople;
+                                                _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Successfully added relevance explanations to {relevantPeople.Count} people");
+                                            }
+                                        }
+                                    }
+                                }
+                                catch (Exception parseEx)
+                                {
+                                    _logger.LogWarning(parseEx, $"⚠️ [RELEVANT-PEOPLE] Failed to parse refined response: {parseEx.Message}");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception refineEx)
+                    {
+                        _logger.LogWarning(refineEx, $"⚠️ [RELEVANT-PEOPLE] Failed to refine people with relevance explanations, returning original results: {refineEx.Message}");
+                        // Continue with original results if refinement fails
+                    }
+                }
+                
+                var executionTime = DateTime.UtcNow - startTime;
+                
+                var response = new UNOPS.PAO.Models.RelevantPeopleResponse
+                {
+                    RelevantPeople = relevantPeople,
+                    ExtractedRoles = roles,
+                    TotalFound = relevantPeople.Count,
+                    SearchTimestamp = DateTime.UtcNow
+                };
+                
+                _logger.LogInformation($"✅ [RELEVANT-PEOPLE] Search completed successfully in {executionTime.TotalMilliseconds}ms. Found {relevantPeople.Count} relevant people");
+                
+                return response;
+            }
+            catch (Exception ex)
+            {
+                var executionTime = DateTime.UtcNow - startTime;
+                _logger.LogError(ex, $"❌ [RELEVANT-PEOPLE] Error finding relevant people for opportunity {opportunityId}: {ex.Message}");
+                
+                // Return empty result on error
+                return new UNOPS.PAO.Models.RelevantPeopleResponse
+                {
+                    RelevantPeople = new List<UNOPS.PAO.Models.RelevantPersonModel>(),
+                    ExtractedRoles = new List<string>(),
+                    TotalFound = 0,
+                    SearchTimestamp = DateTime.UtcNow
+                };
+            }
+        }
+        
+        /// <summary>
+        /// Helper method to extract a value from metadata dictionary
+        /// </summary>
+        private string? ExtractFromMetadata(Dictionary<string, object>? metadata, string key)
+        {
+            if (metadata == null || !metadata.ContainsKey(key))
+                return null;
+                
+            var value = metadata[key]?.ToString();
+            return string.IsNullOrWhiteSpace(value) ? null : value;
+        }
+        
+        /// <summary>
+        /// Gets AI-powered DST risk recommendations for an opportunity (3-step process)
+        /// Step 1: Extract risk keywords from opportunity context
+        /// Step 2: Search vector store for similar risks
+        /// Step 3: Refine and rank top 5 risks with LLM
+        /// </summary>
+        public async Task<UNOPS.PAO.Models.DSTRecommendationsResponse> GetDSTRecommendationsAsync(int opportunityId, ClaimsPrincipal? user = null, int maxResults = 10)
+        {
+            var startTime = DateTime.UtcNow;
+            _logger.LogInformation($"🎯 [DST-RECOMMENDATIONS] Starting DST recommendations for opportunity {opportunityId}");
+            
+            try
+            {
+                // Step 1: Get opportunity details for AI context
+                _logger.LogInformation($"📋 [DST-RECOMMENDATIONS] Step 1: Fetching opportunity details for AI context");
+                var opportunityManager = _managerWrapper.OpportunityManager as UNOPSOpportunityManager;
+                if (opportunityManager == null)
+                {
+                    throw new InvalidOperationException("Opportunity manager not available");
+                }
+                
+                var opportunityDetails = await opportunityManager.CallFunctionByNameAsync("GetOpportunityDetailsForAIAsync", opportunityId, user);
+                
+                if (opportunityDetails == null)
+                {
+                    throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+                }
+                
+                var opportunityDetailsDict = opportunityDetails as Dictionary<string, object>;
+                if (opportunityDetailsDict == null)
+                {
+                    throw new InvalidOperationException("Unable to convert opportunity details to dictionary");
+                }
+                
+                // Step 2: Extract risk-related keywords using LLM
+                _logger.LogInformation($"🔍 [DST-RECOMMENDATIONS] Step 2: Extracting risk keywords from opportunity context");
+                var keywords = await ExtractRiskKeywordsAsync(opportunityDetailsDict, user);
+                
+                if (!keywords.Any())
+                {
+                    _logger.LogWarning($"⚠️ [DST-RECOMMENDATIONS] No keywords extracted, returning empty recommendations");
+                    return new UNOPS.PAO.Models.DSTRecommendationsResponse
+                    {
+                        Recommendations = new List<UNOPS.PAO.Models.DSTRecommendation>(),
+                        ExtractedKeywords = new List<string>(),
+                        TotalFound = 0,
+                        ExecutionTimeMs = (long)(DateTime.UtcNow - startTime).TotalMilliseconds
+                    };
+                }
+                
+                _logger.LogInformation($"✅ [DST-RECOMMENDATIONS] Extracted {keywords.Count} risk keywords: {string.Join(", ", keywords.Take(5))}...");
+                
+                // Combine keywords into a single search query
+                var searchQuery = string.Join(" ", keywords);
+                
+                // Step 3: Search vector store for similar risks
+                _logger.LogInformation($"🔎 [DST-RECOMMENDATIONS] Step 3: Searching vector store for similar risks with query: \"{searchQuery.Substring(0, Math.Min(100, searchQuery.Length))}...\"");
+                
+                var vectorStoreRequest = new UNOPS.PAO.Models.AI.VectorStoreSearchRequest
+                {
+                    Query = searchQuery,
+                    MaxResults = maxResults,
+                    EntityTypeId = "RISK",  // Search for risks
+                    EntityId = "",
+                    ApplicationId = "",
+                    DatasourceId = "",
+                    DatasourceConnector = "GOOGLE_BIGQUERY",  // Filter by BigQuery datasource
+                    PrimaryRelatedToEntityTypeId = "",
+                    PrimaryRelatedToEntityId = "",
+                    Filters = new Dictionary<string, string>(),
+                    Debug = false
+                };
+                
+                // Use AiRetrieverManager to search
+                var aiRetrieverManager = _managerWrapper.AiRetrieverManager;
+                if (aiRetrieverManager == null)
+                {
+                    throw new InvalidOperationException("AI Retriever manager not available");
+                }
+                
+                var userEmail = user?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                var vectorStoreResponse = await aiRetrieverManager.SearchVectorStoreAsync(vectorStoreRequest, userEmail);
+                
+                _logger.LogInformation($"✅ [DST-RECOMMENDATIONS] Vector store search returned {vectorStoreResponse.Documents?.Count ?? 0} risk results");
+                
+                // Step 4: Refine and rank risks using LLM
+                _logger.LogInformation($"🤖 [DST-RECOMMENDATIONS] Step 4: Refining and ranking top risks with LLM");
+                var refinedRecommendations = await RefineAndRankRisksAsync(opportunityDetailsDict, vectorStoreResponse, user);
+                
+                var executionTime = DateTime.UtcNow - startTime;
+                
+                var response = new UNOPS.PAO.Models.DSTRecommendationsResponse
+                {
+                    Recommendations = refinedRecommendations,
+                    ExtractedKeywords = keywords,
+                    TotalFound = refinedRecommendations.Count(),
+                    ExecutionTimeMs = (long)executionTime.TotalMilliseconds
+                };
+                
+                _logger.LogInformation($"✅ [DST-RECOMMENDATIONS] Completed successfully in {executionTime.TotalMilliseconds}ms. Returned {refinedRecommendations.Count()} recommendations");
+                
+                return response;
+            }
+            catch (Exception ex)
+            {
+                var executionTime = DateTime.UtcNow - startTime;
+                _logger.LogError(ex, $"❌ [DST-RECOMMENDATIONS] Error getting DST recommendations for opportunity {opportunityId}: {ex.Message}");
+                
+                // Return empty result on error
+                return new UNOPS.PAO.Models.DSTRecommendationsResponse
+                {
+                    Recommendations = new List<UNOPS.PAO.Models.DSTRecommendation>(),
+                    ExtractedKeywords = new List<string>(),
+                    TotalFound = 0,
+                    ExecutionTimeMs = (long)executionTime.TotalMilliseconds
+                };
+            }
+        }
+        
+        /// <summary>
+        /// Extract risk-related keywords from opportunity context using LLM
+        /// Uses the opportunity_extract_risk_keywords AI prompt
+        /// </summary>
+        private async Task<List<string>> ExtractRiskKeywordsAsync(Dictionary<string, object> opportunityDetails, ClaimsPrincipal? user)
+        {
+            try
+            {
+                _logger.LogInformation($"🔍 [EXTRACT-RISK-KEYWORDS] Calling LLM to extract risk keywords from opportunity context");
+                
+                // Get the keyword extraction prompt
+                var promptData = await _aiService.GetPromptData("opportunity_extract_risk_keywords");
+                var extractKeywordsPrompt = promptData.FirstOrDefault();
+                
+                if (extractKeywordsPrompt == null)
+                {
+                    throw new InvalidOperationException("Risk keyword extraction prompt 'opportunity_extract_risk_keywords' not found in database");
+                }
+                
+                // Convert opportunity details to JSON string
+                var opportunityContextJson = JsonConvert.SerializeObject(opportunityDetails);
+                
+                // Call Gemini to extract keywords
+                var keywords = await _aiService.ExtractKeywordsForSemanticSearchAsync(opportunityContextJson, extractKeywordsPrompt);
+                _logger.LogInformation($"✅ [EXTRACT-RISK-KEYWORDS] Successfully extracted {keywords?.Count ?? 0} risk keywords");
+                return keywords ?? new List<string>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ [EXTRACT-RISK-KEYWORDS] Error extracting risk keywords: {ex.Message}");
+                return new List<string>();
+            }
+        }
+        
+        /// <summary>
+        /// Refine and rank risks from vector store using LLM
+        /// Uses the refine_opportunity_risks AI prompt to select top 5 most relevant risks
+        /// </summary>
+        private async Task<List<UNOPS.PAO.Models.DSTRecommendation>> RefineAndRankRisksAsync(
+            Dictionary<string, object> opportunityDetails,
+            UNOPS.PAO.Models.AI.VectorStoreSearchResponse vectorStoreResponse,
+            ClaimsPrincipal? user)
+        {
+            try
+            {
+                _logger.LogInformation($"🤖 [REFINE-RISKS] Calling LLM to refine and rank {vectorStoreResponse.Documents?.Count ?? 0} risks");
+                
+                // Get the refine risks prompt
+                var promptData = await _aiService.GetPromptData("refine_opportunity_risks");
+                var refineRisksPrompt = promptData.FirstOrDefault();
+                
+                if (refineRisksPrompt == null)
+                {
+                    throw new InvalidOperationException("Risk refinement prompt 'refine_opportunity_risks' not found in database");
+                }
+                
+                // Prepare vector store risks as JSON string for the prompt
+                var vectorStoreRisks = JsonConvert.SerializeObject(vectorStoreResponse.Documents ?? new List<UNOPS.PAO.Models.AI.VectorStoreDocument>());
+                
+                // Create prompt data combining opportunity details and vector store risks
+                var opportunityContextJson = JsonConvert.SerializeObject(opportunityDetails);
+                var promptDataJson = $"{{\"opportunityDetails\": {opportunityContextJson}, \"vectorStoreRisks\": {vectorStoreRisks}}}";
+                
+                // Call Gemini to refine and rank risks
+                var refinedRisksJson = await _aiService.FetchResultFromGemini(refineRisksPrompt, promptDataJson, entityId: null, bypassCache: false);
+                
+                _logger.LogInformation($"📝 [REFINE-RISKS] Raw Gemini response: {refinedRisksJson}");
+                
+                // Parse the Gemini response to extract the text content
+                var geminiResponse = JObject.Parse(refinedRisksJson);
+                var textContent = geminiResponse["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
+                
+                if (string.IsNullOrEmpty(textContent))
+                {
+                    _logger.LogWarning($"⚠️ [REFINE-RISKS] No text content found in Gemini response");
+                    return new List<UNOPS.PAO.Models.DSTRecommendation>();
+                }
+                
+                _logger.LogInformation($"📝 [REFINE-RISKS] Extracted text content: {textContent}");
+                
+                // Try to extract JSON array from the response
+                List<UNOPS.PAO.Models.DSTRecommendation>? refinedRisks = null;
+                
+                // Remove markdown code fences if present
+                textContent = System.Text.RegularExpressions.Regex.Replace(textContent, @"```json\s*|\s*```", "");
+                textContent = textContent.Trim();
+                
+                // Try to find the JSON array
+                var arrayStart = textContent.IndexOf('[');
+                var arrayEnd = textContent.LastIndexOf(']');
+                
+                if (arrayStart >= 0 && arrayEnd > arrayStart)
+                {
+                    var jsonArray = textContent.Substring(arrayStart, arrayEnd - arrayStart + 1);
+                    _logger.LogInformation($"📝 [REFINE-RISKS] Extracted JSON array: {jsonArray}");
+                    
+                    try
+                    {
+                        refinedRisks = JsonConvert.DeserializeObject<List<UNOPS.PAO.Models.DSTRecommendation>>(jsonArray);
+                    }
+                    catch (Newtonsoft.Json.JsonException ex)
+                    {
+                        _logger.LogError(ex, $"❌ [REFINE-RISKS] Failed to deserialize JSON array: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"⚠️ [REFINE-RISKS] Could not find JSON array in response: {textContent}");
+                }
+                
+                if (refinedRisks != null && refinedRisks.Any())
+                {
+                    _logger.LogInformation($"✅ [REFINE-RISKS] Successfully refined and ranked {refinedRisks.Count} risks");
+                    
+                    // Add relevance scores from vector store if available
+                    for (int i = 0; i < refinedRisks.Count && i < (vectorStoreResponse.Documents?.Count ?? 0); i++)
+                    {
+                        refinedRisks[i].RelevanceScore = vectorStoreResponse.Documents![i].Score * 100;
+                        refinedRisks[i].SourceRiskId = vectorStoreResponse.Documents[i].DocumentId;
+                    }
+                    
+                    return refinedRisks;
+                }
+                
+                _logger.LogWarning($"⚠️ [REFINE-RISKS] No refined risks returned from LLM");
+                return new List<UNOPS.PAO.Models.DSTRecommendation>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ [REFINE-RISKS] Error refining and ranking risks: {ex.Message}");
+                return new List<UNOPS.PAO.Models.DSTRecommendation>();
+            }
+        }
+        
+        /// <summary>
+        /// Generates AI-powered insights and suggestions for an opportunity
+        /// Analyzes opportunity data for completeness, quality, strategic alignment, and provides actionable recommendations
+        /// Uses the opportunity_generate_insights AI prompt
+        /// </summary>
+        public async Task<UNOPS.PAO.Models.OpportunityInsightsResponse> GenerateOpportunityInsightsAsync(
+            int opportunityId, 
+            ClaimsPrincipal? user = null)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            try
+            {
+                _logger.LogInformation($"🔍 [INSIGHTS] Starting AI insights generation for opportunity {opportunityId}");
+
+                // Get comprehensive opportunity data
+                var opportunityManager = _managerWrapper.OpportunityManager as UNOPSOpportunityManager;
+                if (opportunityManager == null)
+                {
+                    throw new InvalidOperationException("UNOPSOpportunityManager is required for insights generation");
+                }
+
+                var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
+
+                if (opportunityDetails == null || !opportunityDetails.Any())
+                {
+                    throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+                }
+
+                _logger.LogInformation($"📊 [INSIGHTS] Retrieved opportunity details with {opportunityDetails.Count} fields");
+
+                // Get the insights generation prompt
+                var promptData = await _aiService.GetPromptData("opportunity_generate_insights");
+                var insightsPrompt = promptData.FirstOrDefault();
+                
+                if (insightsPrompt == null)
+                {
+                    throw new InvalidOperationException("Insights generation prompt 'opportunity_generate_insights' not found in database");
+                }
+
+                // Call AI service to generate insights
+                var opportunityContextJson = JsonConvert.SerializeObject(opportunityDetails);
+                var aiResponse = await _aiService.FetchResultFromGemini(insightsPrompt, opportunityContextJson, entityId: opportunityId.ToString(), bypassCache: false);
+
+                _logger.LogInformation($"📝 [INSIGHTS] Received AI response: {aiResponse?.Substring(0, Math.Min(200, aiResponse?.Length ?? 0))}...");
+
+                // Parse the Gemini response to extract the text content
+                var geminiResponse = JObject.Parse(aiResponse);
+                var textContent = geminiResponse["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
+                
+                if (string.IsNullOrEmpty(textContent))
+                {
+                    _logger.LogWarning($"⚠️ [INSIGHTS] No text content found in Gemini response");
+                    stopwatch.Stop();
+                    return new UNOPS.PAO.Models.OpportunityInsightsResponse
+                    {
+                        Insights = new List<UNOPS.PAO.Models.OpportunityInsight>(),
+                        Suggestions = new List<UNOPS.PAO.Models.OpportunitySuggestion>(),
+                        AnalysisConfidence = 0,
+                        AnalysisTimestamp = DateTime.UtcNow,
+                        ExecutionTimeMs = stopwatch.ElapsedMilliseconds
+                    };
+                }
+                
+                _logger.LogInformation($"📄 [INSIGHTS] Full text content from AI: {textContent}");
+                
+                // Parse the JSON response with robust handling
+                JObject parsedResponse;
+                try
+                {
+                    // Try direct parse first
+                    parsedResponse = JObject.Parse(textContent);
+                    _logger.LogInformation($"✅ [INSIGHTS] Successfully parsed JSON directly");
+                }
+                catch (Newtonsoft.Json.JsonException ex)
+                {
+                    _logger.LogWarning($"⚠️ [INSIGHTS] Direct JSON parse failed, attempting to extract JSON from text: {ex.Message}");
+                    
+                    // Try to extract JSON from markdown or wrapped text
+                    var jsonMatch = System.Text.RegularExpressions.Regex.Match(textContent, @"\{[\s\S]*\}", System.Text.RegularExpressions.RegexOptions.Multiline);
+                    if (jsonMatch.Success)
+                    {
+                        try
+                        {
+                            parsedResponse = JObject.Parse(jsonMatch.Value);
+                            _logger.LogInformation($"✅ [INSIGHTS] Successfully extracted and parsed JSON from text");
+                        }
+                        catch
+                        {
+                            _logger.LogError($"❌ [INSIGHTS] Failed to parse extracted JSON. Raw text content: {textContent}");
+                            stopwatch.Stop();
+                            return new UNOPS.PAO.Models.OpportunityInsightsResponse
+                            {
+                                Insights = new List<UNOPS.PAO.Models.OpportunityInsight>(),
+                                Suggestions = new List<UNOPS.PAO.Models.OpportunitySuggestion>(),
+                                AnalysisConfidence = 0,
+                                AnalysisTimestamp = DateTime.UtcNow,
+                                ExecutionTimeMs = stopwatch.ElapsedMilliseconds
+                            };
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogError($"❌ [INSIGHTS] No JSON object found in text content: {textContent}");
+                        stopwatch.Stop();
+                        return new UNOPS.PAO.Models.OpportunityInsightsResponse
+                        {
+                            Insights = new List<UNOPS.PAO.Models.OpportunityInsight>(),
+                            Suggestions = new List<UNOPS.PAO.Models.OpportunitySuggestion>(),
+                            AnalysisConfidence = 0,
+                            AnalysisTimestamp = DateTime.UtcNow,
+                            ExecutionTimeMs = stopwatch.ElapsedMilliseconds
+                        };
+                    }
+                }
+                
+                _logger.LogInformation($"📋 [INSIGHTS] Parsed response keys: {string.Join(", ", parsedResponse.Properties().Select(p => p.Name))}");
+                
+                var insights = parsedResponse["insights"]?.ToObject<List<UNOPS.PAO.Models.OpportunityInsight>>() ?? new();
+                var suggestions = parsedResponse["suggestions"]?.ToObject<List<UNOPS.PAO.Models.OpportunitySuggestion>>() ?? new();
+                var confidence = parsedResponse["analysisConfidence"]?.Value<double>() ?? 0.85;
+                var timestamp = parsedResponse["analysisTimestamp"]?.Value<DateTime>() ?? DateTime.UtcNow;
+                
+                _logger.LogInformation($"📊 [INSIGHTS] Deserialized {insights.Count} insights and {suggestions.Count} suggestions");
+
+                stopwatch.Stop();
+
+                _logger.LogInformation(
+                    $"✅ [INSIGHTS] Generated {insights.Count()} insights and {suggestions.Count()} suggestions for opportunity {opportunityId} in {stopwatch.ElapsedMilliseconds}ms"
+                );
+
+                return new UNOPS.PAO.Models.OpportunityInsightsResponse
+                {
+                    Insights = insights,
+                    Suggestions = suggestions,
+                    AnalysisConfidence = confidence,
+                    AnalysisTimestamp = timestamp,
+                    ExecutionTimeMs = stopwatch.ElapsedMilliseconds
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ [INSIGHTS] Error generating insights for opportunity {opportunityId}: {ex.Message}");
+                stopwatch.Stop();
+                
+                return new UNOPS.PAO.Models.OpportunityInsightsResponse
+                {
+                    Insights = new List<UNOPS.PAO.Models.OpportunityInsight>(),
+                    Suggestions = new List<UNOPS.PAO.Models.OpportunitySuggestion>(),
+                    AnalysisConfidence = 0,
+                    AnalysisTimestamp = DateTime.UtcNow,
+                    ExecutionTimeMs = stopwatch.ElapsedMilliseconds
+                };
+            }
+        }
+
+        /// <summary>
+        /// Generates AI-powered opportunity proposal from multiple sources (interactions, documents, existing opportunities)
+        /// Supports flexible source selection: interactions, documents, or combination
+        /// Fetches source data, sends to Gemini AI, and processes dependents
+        /// </summary>
+        /// <summary>
+        /// Generates AI-powered opportunity proposal from multiple sources (interactions, documents, or both)
+        /// Documents are passed directly to Gemini via GCS URIs in the parts array
+        /// Frontend converts Office docs to PDF and uploads to GCS before calling this method
+        /// </summary>
+        public async Task<UNOPS.PAO.Models.Opportunities.OpportunityProposalResponse> GenerateOpportunityProposalAsync(
+            UNOPS.PAO.Models.Opportunities.OpportunityProposalRequest request,
+            ClaimsPrincipal? user = null)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            try
+            {
+                _logger.LogInformation($"🔍 [OPPORTUNITY-PROPOSAL] Starting proposal generation: " +
+                    $"Interactions={request.InteractionIds?.Count ?? 0}, " +
+                    $"NewDocuments={request.NewDocumentStoragePaths?.Count ?? 0}, " +
+                    $"ExistingDocuments={request.ExistingDocumentIds?.Count ?? 0}, " +
+                    $"PartnerId={request.PartnerId}");
+
+                // Step 1: Get partner information (if provided)
+                string partnerName = "Unknown Partner";
+                int? partnerId = request.PartnerId;
+                
+                if (request.PartnerId.HasValue && request.PartnerId.Value > 0)
+                {
+                    var partnerManager = _managerWrapper.PartnerManager as UNOPSPartnerManager;
+                    if (partnerManager == null)
+                    {
+                        throw new InvalidOperationException("UNOPSPartnerManager is required");
+                    }
+
+                    var partner = await partnerManager.GetPartnerAsync(request.PartnerId.Value);
+                    if (partner == null)
+                    {
+                        throw new KeyNotFoundException($"Partner with ID {request.PartnerId} not found");
+                    }
+
+                    partnerName = partner.Name ?? "Unknown Partner";
+                    _logger.LogInformation($"📊 [OPPORTUNITY-PROPOSAL] Found partner: {partnerName}");
+                }
+                else if (request.InteractionIds != null && request.InteractionIds.Any())
+                {
+                    // Try to infer partner from first interaction if not provided
+                    var interactionManager = _managerWrapper.InteractionManager as UNOPSInteractionManager;
+                    if (interactionManager != null)
+                    {
+                        var firstInteraction = await interactionManager.GetInteractionDetailsForOpportunityCreationAsync(request.InteractionIds.First());
+                        if (firstInteraction != null && firstInteraction.TryGetValue("partners", out var partnersObj))
+                        {
+                            var partnersList = partnersObj as List<dynamic>;
+                            if (partnersList != null && partnersList.Any())
+                            {
+                                partnerId = partnersList.First().id;
+                                partnerName = partnersList.First().name ?? "Unknown Partner";
+                                _logger.LogInformation($"📊 [OPPORTUNITY-PROPOSAL] Inferred partner from interaction: {partnerName}");
+                            }
+                        }
+                    }
+                }
+
+                // Step 2: Get interaction details if provided
+                var interactionsList = new List<Dictionary<string, object>>();
+                if (request.InteractionIds != null && request.InteractionIds.Any())
+                {
+                    var interactionManager = _managerWrapper.InteractionManager as UNOPSInteractionManager;
+                    if (interactionManager == null)
+                    {
+                        throw new InvalidOperationException("UNOPSInteractionManager is required");
+                    }
+
+                    foreach (var interactionId in request.InteractionIds)
+                    {
+                        var interactionDetails = await interactionManager.GetInteractionDetailsForOpportunityCreationAsync(interactionId);
+                        if (interactionDetails != null)
+                        {
+                            interactionsList.Add(interactionDetails);
+                        }
+                    }
+
+                    _logger.LogInformation($"✅ [OPPORTUNITY-PROPOSAL] Retrieved {interactionsList.Count} interaction details");
+                }
+
+                // Step 3: Gather document GCS paths from two sources:
+                // 1. New documents: Already uploaded to GCS by frontend, paths provided directly
+                // 2. Existing documents: Query database by ID to get their GCS paths
+                var documentParts = new List<(string storagePath, string mimeType, int? documentId)>();
+                
+                // 3a. Add newly uploaded documents
+                if (request.NewDocumentStoragePaths != null && request.NewDocumentStoragePaths.Any())
+                {
+                    _logger.LogInformation($"📄 [OPPORTUNITY-PROPOSAL] Processing {request.NewDocumentStoragePaths.Count} newly uploaded documents");
+                    
+                    for (int i = 0; i < request.NewDocumentStoragePaths.Count; i++)
+                    {
+                        var storagePath = request.NewDocumentStoragePaths[i];
+                        var mimeType = request.NewDocumentMimeTypes != null && i < request.NewDocumentMimeTypes.Count
+                            ? request.NewDocumentMimeTypes[i]
+                            : "application/pdf";
+                            
+                        if (!string.IsNullOrEmpty(storagePath) && storagePath.StartsWith("gs://"))
+                        {
+                            documentParts.Add((storagePath, mimeType, null));
+                            _logger.LogInformation($"  ✓ New document: {storagePath} ({mimeType})");
+                        }
+                    }
+                }
+                
+                // 3b. Add existing documents from database
+                var existingDocumentIds = new List<int>();
+                if (request.ExistingDocumentIds != null && request.ExistingDocumentIds.Any())
+                {
+                    _logger.LogInformation($"📄 [OPPORTUNITY-PROPOSAL] Retrieving {request.ExistingDocumentIds.Count} existing documents from database");
+                    
+                    var documentManager = _managerWrapper.DocumentManager as UNOPSDocumentManager;
+                    if (documentManager == null)
+                    {
+                        throw new InvalidOperationException("UNOPSDocumentManager is required");
+                    }
+
+                    foreach (var documentId in request.ExistingDocumentIds)
+                    {
+                        try
+                        {
+                            var document = await _context.Documents.FindAsync(documentId);
+                            if (document != null && !string.IsNullOrEmpty(document.StoragePath) && document.StoragePath.StartsWith("gs://"))
+                            {
+                                var mimeType = !string.IsNullOrEmpty(document.Type) 
+                                    ? document.Type 
+                                    : "application/pdf";
+                                    
+                                documentParts.Add((document.StoragePath, mimeType, documentId));
+                                existingDocumentIds.Add(documentId);
+                                _logger.LogInformation($"  ✓ Existing document {documentId}: {document.StoragePath} ({mimeType})");
+                            }
+                            else
+                            {
+                                _logger.LogWarning($"  ⚠️ Document {documentId} has no GCS storage path, skipping");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning($"  ⚠️ Error retrieving document {documentId}: {ex.Message}");
+                        }
+                    }
+                }
+
+                // Validate we have at least one source
+                if (!interactionsList.Any() && !documentParts.Any())
+                {
+                    throw new InvalidOperationException("At least one source (interaction or document) is required for proposal generation");
+                }
+
+                _logger.LogInformation($"📊 [OPPORTUNITY-PROPOSAL] Total sources: {interactionsList.Count} interactions, {documentParts.Count} documents");
+
+                // Step 4: Build prompt data
+                var promptData = await _aiService.GetPromptData("opportunity_from_interactions");
+                var opportunityPrompt = promptData.FirstOrDefault();
+                
+                if (opportunityPrompt == null)
+                {
+                    throw new InvalidOperationException("Prompt 'opportunity_from_interactions' not found in database");
+                }
+
+                // Determine partner role string
+                string partnerRole = "";
+                if (request.IsFundingPartner && request.IsClientPartner)
+                {
+                    partnerRole = "Both Funding and Client Partner";
+                }
+                else if (request.IsFundingPartner)
+                {
+                    partnerRole = "Funding Partner";
+                }
+                else if (request.IsClientPartner)
+                {
+                    partnerRole = "Client Partner";
+                }
+
+                // Step 5: Format source data for the prompt
+                var interactionsJson = JsonConvert.SerializeObject(interactionsList, Formatting.Indented);
+                
+                // Build document metadata (not the full content, just references)
+                var documentMetadata = documentParts.Select((doc, index) => new
+                {
+                    index = index + 1,
+                    storagePath = doc.storagePath,
+                    mimeType = doc.mimeType,
+                    documentId = doc.documentId,
+                    isNewUpload = !doc.documentId.HasValue
+                }).ToList();
+                var documentsJson = JsonConvert.SerializeObject(documentMetadata, Formatting.Indented);
+
+                // Build the prompt context
+                var promptContext = new Dictionary<string, object>
+                {
+                    { "opportunityName", request.OpportunityName },
+                    { "opportunityDescription", request.OpportunityDescription },
+                    { "partnerId", partnerId ?? 0 },
+                    { "partnerName", partnerName },
+                    { "partnerRole", partnerRole },
+                    { "interactions", interactionsJson },
+                    { "documents", documentsJson },
+                    { "hasInteractions", interactionsList.Any() },
+                    { "hasDocuments", documentParts.Any() },
+                    { "sourceCount", interactionsList.Count + documentParts.Count }
+                };
+
+                var promptJson = JsonConvert.SerializeObject(promptContext);
+                
+                // Process placeholders in system instructions
+                var systemInstructionsTemplate = opportunityPrompt.SystemInstructions ?? string.Empty;
+                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, promptJson);
+                
+                // Process placeholders in user prompt
+                var userPromptTemplate = opportunityPrompt.UserPrompt ?? string.Empty;
+                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, promptJson);
+
+                _logger.LogInformation($"📝 [OPPORTUNITY-PROPOSAL] Calling Gemini AI with {documentParts.Count} document(s) in parts array");
+
+                // Step 6: Build parts array for Gemini API (text + document URIs)
+                var parts = new List<object>
+                {
+                    new { text = fullyFormedUserPrompt }
+                };
+
+                // Add each document as a fileData part
+                foreach (var doc in documentParts)
+                {
+                    parts.Add(new 
+                    { 
+                        fileData = new
+                        {
+                            fileUri = doc.storagePath,
+                            mimeType = doc.mimeType
+                        }
+                    });
+                }
+
+                // Build user content with parts array
+                var userContent = new
+                {
+                    role = "user",
+                    parts = parts.ToArray()
+                };
+                
+                // Call Gemini API directly with document parts
+                var aiResponse = await _aiService.CallGeminiApi(userContent, opportunityPrompt, fullyFormedSystemInstructions);
+
+                _logger.LogInformation($"📄 [OPPORTUNITY-PROPOSAL] Received AI response (length: {aiResponse?.Length ?? 0} chars)");
+
+                // Step 7: Parse AI response
+                var parsedResponse = _aiService.GetDetailsFromGeminiResponse(aiResponse);
+
+                // Step 8: Process dependent dropdowns (convert text names to IDs)
+                var dependents = parsedResponse["dependents"]?.ToString();
+                if (!string.IsNullOrEmpty(dependents))
+                {
+                    _logger.LogInformation($"🔄 [OPPORTUNITY-PROPOSAL] Processing dependents: {dependents}");
+                    parsedResponse = await _aiService.GetDependentDropdownValues(dependents, parsedResponse, opportunityPrompt);
+                }
+                else
+                {
+                    _logger.LogWarning($"⚠️ [OPPORTUNITY-PROPOSAL] No dependents found in AI response, collection fields may not be properly resolved");
+                }
+
+                // Step 9: Stringify collection fields to avoid serialization issues
+                // The frontend will parse these JSON strings
+                _logger.LogInformation($"🔄 [OPPORTUNITY-PROPOSAL] Stringifying collection fields for safe transport");
+                
+                var proposedData = new UNOPS.PAO.Models.Opportunities.ProposedOpportunityData
+                {
+                    Name = parsedResponse["name"]?.ToString() ?? "",
+                    Description = parsedResponse["description"]?.ToString() ?? "",
+                    PartnerReference = parsedResponse["partnerReference"]?.ToString(),
+                    ResponsibleOrgUnitId = parsedResponse["responsibleOrgUnitId"]?.ToObject<int?>(),
+                    ResponsibleOrgUnitName = parsedResponse["responsibleOrgUnitName"]?.ToString(),
+                    ProposedInitiativeTypeId = parsedResponse["proposedInitiativeTypeId"]?.ToObject<int?>(),
+                    ProposedInitiativeTypeName = parsedResponse["proposedInitiativeTypeName"]?.ToString(),
+                    InitiativeBudgetUSD = parsedResponse["initiativeBudgetUSD"]?.ToObject<decimal?>(),
+                    PartnershipAgreementReference = parsedResponse["partnershipAgreementReference"]?.ToString(),
+                    TargetSigningDate = parsedResponse["targetSigningDate"]?.ToObject<DateTime?>(),
+                    TargetDeliveryDate = parsedResponse["targetDeliveryDate"]?.ToObject<DateTime?>(),
+                    StrategicAlignment = parsedResponse["strategicAlignment"]?.ToString(),
+                    ResultsFocus = parsedResponse["resultsFocus"]?.ToString(),
+                    IntendedImpactOutcomes = parsedResponse["intendedImpactOutcomes"]?.ToString(),
+                    ExpectedBeneficiaries = parsedResponse["expectedBeneficiaries"]?.ToString(),
+                    
+                    // Stringify collection fields (these are arrays of objects after GetDependentDropdownValues)
+                    FundingPartners = parsedResponse["fundingPartners"]?.ToString(),
+                    ClientPartners = parsedResponse["clientPartners"]?.ToString(),
+                    Stakeholders = parsedResponse["stakeholders"]?.ToString(),
+                    Deliverables = parsedResponse["deliverables"]?.ToString(),
+                    Countries = parsedResponse["countries"]?.ToString(),
+                    SdGs = parsedResponse["sdGs"]?.ToString(),
+                    
+                    Dependents = parsedResponse["dependents"]?.ToObject<List<string>>() ?? new List<string>()
+                };
+
+                stopwatch.Stop();
+
+                _logger.LogInformation($"✅ [OPPORTUNITY-PROPOSAL] Successfully generated opportunity proposal in {stopwatch.ElapsedMilliseconds}ms");
+                _logger.LogInformation($"📊 [OPPORTUNITY-PROPOSAL] Collection fields stringified - FundingPartners: {proposedData.FundingPartners?.Length ?? 0} chars");
+
+                // Step 10: Build response
+                return new UNOPS.PAO.Models.Opportunities.OpportunityProposalResponse
+                {
+                    Opportunity = proposedData,
+                    InteractionsAnalyzed = interactionsList.Count,
+                    SourceInteractionIds = request.InteractionIds,
+                    DocumentsAnalyzed = documentParts.Count,
+                    SourceDocumentIds = existingDocumentIds.Any() ? existingDocumentIds : null,
+                    PartnerId = partnerId,
+                    PartnerName = partnerName,
+                    IsFundingPartner = request.IsFundingPartner,
+                    IsClientPartner = request.IsClientPartner
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ [OPPORTUNITY-PROPOSAL] Error generating opportunity proposal: {ex.Message}");
+                stopwatch.Stop();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Extracts JSON content from Gemini API response
+        /// Handles both raw JSON and responses wrapped in API structure with markdown code blocks
+        /// </summary>
+        /// <param name="geminiResponse">The raw response from Gemini API</param>
+        /// <returns>Extracted JSON string, or empty string if extraction fails</returns>
+        private string ExtractJsonFromGeminiResponse(string geminiResponse)
+        {
+            try
+            {
+                // First, try to parse as a Gemini API response structure
+                var apiResponse = JsonConvert.DeserializeObject<dynamic>(geminiResponse);
+                
+                // Check if it's wrapped in the standard Gemini API response format
+                if (apiResponse?.candidates != null && apiResponse.candidates.Count > 0)
+                {
+                    var firstCandidate = apiResponse.candidates[0];
+                    if (firstCandidate?.content?.parts != null && firstCandidate.content.parts.Count > 0)
+                    {
+                        var textContent = firstCandidate.content.parts[0]?.text?.ToString();
+                        
+                        if (!string.IsNullOrEmpty(textContent))
+                        {
+                            // Remove markdown code block wrapping if present (```json ... ```)
+                            var jsonMatch = System.Text.RegularExpressions.Regex.Match(
+                                textContent, 
+                                @"```(?:json)?\s*\n?(.*?)\n?```", 
+                                System.Text.RegularExpressions.RegexOptions.Singleline
+                            );
+                            
+                            if (jsonMatch.Success)
+                            {
+                                return jsonMatch.Groups[1].Value.Trim();
+                            }
+                            
+                            // If no markdown wrapping, return the text content directly
+                            return textContent.Trim();
+                        }
+                    }
+                }
+                
+                // If it's already valid JSON (not wrapped), return as is
+                return geminiResponse;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, $"⚠️ Failed to extract JSON from Gemini response: {ex.Message}");
+                return geminiResponse; // Return original if extraction fails
+            }
+        }
+
+        #endregion
     }
+
 

@@ -76,6 +76,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
             icon: 'chat',
             routerLink: ['/partnerships/interactions']
           },
+          {
+            label: 'title.opportunities',
+            icon: 'lightbulb',
+            routerLink: ['/partnerships/opportunities']
+          },
           // {
           //   label: 'title.partnerTree',
           //   icon: 'account_tree',
@@ -143,6 +148,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
           label: 'title.translationWorkbench',
           icon: 'translate',
           routerLink: ['/admin/translations']
+        },
+        {
+          label: 'title.entityArtifactManager',
+          icon: 'database',
+          routerLink: ['/admin/entity-artifacts']
+        },
+        {
+          label: 'title.bulkEntityArtifactUpdate',
+          icon: 'upload_file',
+          routerLink: ['/admin/bulk-entity-artifacts']
         }
       ];
     }
