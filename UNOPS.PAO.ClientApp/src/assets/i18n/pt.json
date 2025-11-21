@@ -1385,6 +1385,9 @@
   "label.totalBudget": "Orçamento Total",
   "label.totalOpportunityBudget": "Orçamento Total da Oportunidade (USD)",
   "label.sumOfAllFundingPartners": "Soma de todas as contribuições dos parceiros financiadores",
+  "label.pooledFunding": "Financiamento Agrupado",
+  "label.pooledContribution": "Marcar como contribuição agrupada",
+  "helpText.pooledFunding": "Marque esta caixa se o financiamento de vários parceiros for agrupado para esta oportunidade",
   "label.user.name": "Nome do Usuário",
   "label.viewInGoogleDrive": "Ver no Google Drive",
   "label.yes": "Sim",
@@ -2421,5 +2424,15 @@
 	"message.noContinentMatches": "Nenhum país corresponde por continente",
 	"message.noSearchResults": "Nenhum país encontrado correspondente à sua pesquisa",
 	"message.country.activeUNSDCF": "Existe um UNSDCF ativo para este país. Será necessário completar a seção de Alinhamento Estratégico.",
-	"message.country.noActiveUNSDCF": "Não existe um UNSDCF ativo para este país."
+	"message.country.noActiveUNSDCF": "Não existe um UNSDCF ativo para este país.",
+	"message.noStakeholders": "Nenhum membro da equipe ou parte interessada adicionada ainda",
+	"message.noExternalStakeholders": "Nenhuma parte interessada externa adicionada ainda",
+	"message.validation.contactRequired": "Por favor, selecione um contato",
+	"message.validation.externalStakeholderRequired": "Por favor, selecione um contato para adicionar como parte interessada externa",
+	"message.validation.externalStakeholderAlreadyAdded": "Este contato já foi adicionado como parte interessada externa",
+	"message.confirmRemoveExternalStakeholder": "Tem certeza de que deseja remover esta parte interessada externa?",
+	"title.addStakeholder": "Adicionar Membro da Equipe",
+	"title.addExternalStakeholder": "Adicionar Parte Interessada Externa",
+	"confirmation.removeStakeholder": "Remover Membro da Equipe",
+	"confirmation.removeExternalStakeholder": "Remover Parte Interessada Externa"
 }

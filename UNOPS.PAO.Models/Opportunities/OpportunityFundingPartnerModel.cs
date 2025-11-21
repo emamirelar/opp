@@ -83,5 +83,10 @@ public class OpportunityFundingPartnerModel
     /// Display text for exchange rate (e.g., "1.11 on Nov 20, 2024")
     /// </summary>
     public string? ExchangeRateDisplay { get; set; }
+    
+    /// <summary>
+    /// Whether this partner's contribution is part of pooled funding
+    /// </summary>
+    public bool IsPooledContribution { get; set; }
 }
 

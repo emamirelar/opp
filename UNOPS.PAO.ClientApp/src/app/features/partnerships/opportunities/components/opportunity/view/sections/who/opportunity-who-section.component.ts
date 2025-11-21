@@ -31,7 +31,8 @@ import { MessageModule } from 'primeng/message';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
-import { Opportunity, OpportunityFundingPartner, OpportunityClientPartner, OpportunityStakeholder, DocumentDetail } from '@shared/models/opportunity.model';
+import { CheckboxModule } from 'primeng/checkbox';
+import { Opportunity, OpportunityFundingPartner, OpportunityClientPartner, OpportunityStakeholder, OpportunityExternalStakeholder, DocumentDetail } from '@shared/models/opportunity.model';
 import { OpportunityService } from '@features/partnerships/opportunities/services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 import { Router } from '@angular/router';
@@ -72,7 +73,8 @@ import { DocumentService } from '@shared/services/api/document.service';
     MessageModule,
     FloatLabelModule,
     TooltipModule,
-    TextareaModule
+    TextareaModule,
+    CheckboxModule
   ],
   templateUrl: './opportunity-who-section.component.html',
   styleUrls: ['./opportunity-who-section.component.scss'],
@@ -122,12 +124,23 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly editingStakeholderIndex = signal(-1);
   readonly userControl = new FormControl<SimpleValue | null>(null);
   readonly roleControl = new FormControl<SimpleValue | null>(null);
+  
+  // External Stakeholder dialog state
+  readonly showExternalStakeholderDialog = signal(false);
+  readonly showExternalStakeholderValidationError = signal(false);
+  readonly contactControl = new FormControl<SimpleValue | null>(null);
+  readonly miscExternalStakeholdersControl = new FormControl<string | null>(null);
+  readonly externalStakeholderNotesControl = new FormControl<string | null>(null);
 
   // Available partners and currencies from API
   readonly availablePartners = signal<SimpleValue[]>([]);
   readonly availableCurrencies = signal<SimpleValue[]>([]);
+  readonly availableContacts = signal<SimpleValue[]>([]);
   readonly entityRoles = signal<SimpleValue[]>([]);
   readonly internalUsers = signal<SimpleValue[]>([]);
+
+  // Pooled funding state
+  isPooledFunding = false;
 
   // Computed counts
   readonly fundingPartnerCount = computed(() => {
@@ -141,12 +154,24 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly stakeholderCount = computed(() => {
     return this.opportunity().stakeholders?.length || 0;
   });
+  
+  readonly externalStakeholderCount = computed(() => {
+    return this.opportunity().externalStakeholders?.length || 0;
+  });
 
   ngOnInit(): void {
     this.loadPartners();
     this.loadEntityRoles();
     this.loadInternalUsers();
     this.loadCurrencies();
+    this.loadContacts();
+    
+    // Initialize pooled funding state
+    this.isPooledFunding = this.opportunity().isPooledFunding || false;
+    
+    // Initialize external stakeholder controls
+    this.miscExternalStakeholdersControl.setValue(this.opportunity().miscExternalStakeholders);
+    this.externalStakeholderNotesControl.setValue(this.opportunity().externalStakeholderNotes);
   }
 
   /**
@@ -170,6 +195,41 @@ export class OpportunityWhoSectionComponent implements OnInit {
     this.valuesService.getCurrencies().subscribe({
       next: (currencies) => {
         this.availableCurrencies.set(currencies);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+  
+  /**
+   * @description Load available contacts - only from partners in this opportunity
+   */
+  loadContacts(): void {
+    this.valuesService.getContacts().subscribe({
+      next: (allContacts) => {
+        // Get all partner IDs from the opportunity (funding + client partners)
+        const opp = this.opportunity();
+        const partnerIds = new Set<number>();
+        
+        // Add funding partner IDs
+        opp.fundingPartners?.forEach(fp => {
+          if (fp.partnerId) {
+            partnerIds.add(fp.partnerId);
+          }
+        });
+        
+        // Add client partner IDs
+        opp.clientPartners?.forEach(cp => {
+          if (cp.partnerId) {
+            partnerIds.add(cp.partnerId);
+          }
+        });
+        
+        // Filter contacts to only those belonging to the opportunity's partners
+        const filteredContacts = allContacts.filter(contact => 
+          contact.partnerId && partnerIds.has(contact.partnerId)
+        );
+        
+        this.availableContacts.set(filteredContacts);
         this.cdr.detectChanges();
       }
     });
@@ -232,6 +292,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     if (!opp || !opp.id) return;
 
     const whoData = {
+      isPooledFunding: this.isPooledFunding, // AC8
       fundingPartners: opp.fundingPartners?.map(fp => ({
         partnerId: fp.partnerId,
         amount: fp.amount,
@@ -242,7 +303,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
         feeAmountUSD: fp.feeAmountUSD,
         isAmountBasedFee: fp.isAmountBasedFee,
         partnershipAgreementReference: fp.partnershipAgreementReference,
-        documentId: fp.documentId // Include document ID if set
+        documentId: fp.documentId, // Include document ID if set
+        isPooledContribution: fp.isPooledContribution || false
       })),
       clientPartners: opp.clientPartners?.map(cp => ({
         partnerId: cp.partnerId,
@@ -252,7 +314,12 @@ export class OpportunityWhoSectionComponent implements OnInit {
         userId: s.userId!,
         entityRoleId: s.entityRoleId,
         notes: s.notes
-      }))
+      })),
+      externalStakeholders: opp.externalStakeholders?.map(es => ({
+        contactId: es.contactId
+      })),
+      miscExternalStakeholders: this.miscExternalStakeholdersControl.value,
+      externalStakeholderNotes: this.externalStakeholderNotesControl.value
     };
 
     this.isSaving.set(true);
@@ -272,7 +339,16 @@ export class OpportunityWhoSectionComponent implements OnInit {
       error: (error) => {
         this.isSaving.set(false);
         // Keep editing mode active so user can fix the issue
-        // this.isEditing.set(false); // Don't exit edit mode on error
+        
+        // Display specific error message to user
+        const errorMessage = error?.error?.detail || error?.error?.message || error?.message || 
+                            this.translateService.instant('message.error.unexpectedError');
+        
+        this.feedbackService.showErrorToast({
+          summary: this.translateService.instant('message.error'),
+          detail: errorMessage
+        });
+        
         console.error('Error saving WHO section:', error);
         this.cdr.detectChanges();
       }
@@ -415,10 +491,11 @@ export class OpportunityWhoSectionComponent implements OnInit {
       ddStatus: null,
       ddExpiresBeforeOpportunityEnd: null,
       partnerPreferredCurrency: null,
-      amountUSD: null, // Backend will calculate
-      exchangeRate: null, // Backend will calculate
-      exchangeRateDate: null, // Backend will calculate
-      exchangeRateDisplay: null // Backend will calculate
+      amountUSD: null,
+      exchangeRate: null,
+      exchangeRateDate: null,
+      exchangeRateDisplay: null, // Backend will calculate
+      isPooledContribution: false
     };
 
     currentPartners.push(newPartner);
@@ -937,6 +1014,104 @@ export class OpportunityWhoSectionComponent implements OnInit {
         const updatedOpportunity = {
           ...opp,
           stakeholders: currentStakeholders
+        };
+
+        this.opportunityUpdated.emit(updatedOpportunity);
+        this.cdr.detectChanges();
+      }
+    );
+  }
+  
+  // ==================================================================
+  // External Stakeholder Management Methods (AC10)
+  // ==================================================================
+  
+  /**
+   * @description Open dialog to add external stakeholder
+   */
+  openAddExternalStakeholderDialog(): void {
+    this.contactControl.reset();
+    this.showExternalStakeholderValidationError.set(false);
+    this.showExternalStakeholderDialog.set(true);
+  }
+  
+  /**
+   * @description Cancel external stakeholder dialog
+   */
+  cancelExternalStakeholderDialog(): void {
+    this.showExternalStakeholderDialog.set(false);
+    this.contactControl.reset();
+    this.showExternalStakeholderValidationError.set(false);
+  }
+  
+  /**
+   * @description Confirm external stakeholder dialog
+   */
+  confirmExternalStakeholderDialog(): void {
+    const contact = this.contactControl.value;
+    
+    if (!contact) {
+      this.showExternalStakeholderValidationError.set(true);
+      return;
+    }
+    
+    this.addExternalStakeholder(contact);
+  }
+  
+  /**
+   * @description Add external stakeholder
+   */
+  addExternalStakeholder(contact: SimpleValue): void {
+    const opp = this.opportunity();
+    const currentExternalStakeholders = [...(opp.externalStakeholders || [])];
+    
+    // Check for duplicates
+    const isDuplicate = currentExternalStakeholders.some(es => es.contactId === contact.id);
+    if (isDuplicate) {
+      this.feedbackService.showWarningToast({
+        summary: this.translateService.instant('message.warning'),
+        detail: this.translateService.instant('message.validation.externalStakeholderAlreadyAdded')
+      });
+      return;
+    }
+    
+    const newExternalStakeholder: OpportunityExternalStakeholder = {
+      id: 0,
+      opportunityId: opp.id!,
+      contactId: contact.id,
+      contactName: contact.name || '',
+      contactEmail: contact.email || null,
+      contactOrganization: null
+    };
+    
+    currentExternalStakeholders.push(newExternalStakeholder);
+    
+    const updatedOpportunity = {
+      ...opp,
+      externalStakeholders: currentExternalStakeholders
+    };
+    
+    this.opportunityUpdated.emit(updatedOpportunity);
+    this.cancelExternalStakeholderDialog();
+  }
+  
+  /**
+   * @description Remove external stakeholder
+   */
+  removeExternalStakeholder(index: number): void {
+    this.feedbackService.showConfirmDialog(
+      {
+        summary: this.translateService.instant('confirmation.removeExternalStakeholder'),
+        detail: this.translateService.instant('message.confirmRemoveExternalStakeholder')
+      },
+      () => {
+        const opp = this.opportunity();
+        const currentExternalStakeholders = [...(opp.externalStakeholders || [])];
+        currentExternalStakeholders.splice(index, 1);
+
+        const updatedOpportunity = {
+          ...opp,
+          externalStakeholders: currentExternalStakeholders
         };
 
         this.opportunityUpdated.emit(updatedOpportunity);

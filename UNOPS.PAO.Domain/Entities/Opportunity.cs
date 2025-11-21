@@ -49,11 +49,30 @@ public class Opportunity : ModifiableDeletableEntity
     [MaxLength(2000)]
     public string? Challenges { get; set; }
     
+    /// <summary>
+    /// Whether funding is pooled across multiple partners
+    /// </summary>
+    public bool IsPooledFunding { get; set; }
+    
     public virtual ICollection<OpportunityFundingPartner> FundingPartners { get; set; } = new HashSet<OpportunityFundingPartner>();
     
     public virtual ICollection<OpportunityClientPartner> ClientPartners { get; set; } = new HashSet<OpportunityClientPartner>();
     
     public virtual ICollection<OpportunityStakeholder> Stakeholders { get; set; } = new HashSet<OpportunityStakeholder>();
+    
+    public virtual ICollection<OpportunityExternalStakeholder> ExternalStakeholders { get; set; } = new HashSet<OpportunityExternalStakeholder>();
+    
+    /// <summary>
+    /// Free-text list of external stakeholders not found in the contact list
+    /// </summary>
+    [MaxLength(2000)]
+    public string? MiscExternalStakeholders { get; set; }
+    
+    /// <summary>
+    /// Additional notes about external stakeholders (e.g., their influence, capacity, role)
+    /// </summary>
+    [MaxLength(2000)]
+    public string? ExternalStakeholderNotes { get; set; }
     
     public virtual ICollection<OpportunityDeliverable> Deliverables { get; set; } = new HashSet<OpportunityDeliverable>();
     

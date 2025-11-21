@@ -73,5 +73,10 @@ public class OpportunityFundingPartner
     
     // Navigation property
     public virtual ExchangeRate? ExchangeRateRecord { get; set; }
+    
+    /// <summary>
+    /// Whether this partner's contribution is part of pooled funding
+    /// </summary>
+    public bool IsPooledContribution { get; set; }
 }
 

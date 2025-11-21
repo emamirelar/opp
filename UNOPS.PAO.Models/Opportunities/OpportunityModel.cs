@@ -24,9 +24,14 @@ public class OpportunityModel
     public string? ExpectedBeneficiaries { get; set; }
     public string? Challenges { get; set; }
     
+    public bool IsPooledFunding { get; set; }
+    
     public List<OpportunityFundingPartnerModel>? FundingPartners { get; set; }
     public List<OpportunityClientPartnerModel>? ClientPartners { get; set; }
     public List<OpportunityStakeholderModel>? Stakeholders { get; set; }
+    public List<OpportunityExternalStakeholderModel>? ExternalStakeholders { get; set; }
+    public string? MiscExternalStakeholders { get; set; }
+    public string? ExternalStakeholderNotes { get; set; }
     public List<OpportunityDeliverableModel>? Deliverables { get; set; }
     public List<OpportunityCountryModel>? Countries { get; set; }
     public List<OpportunitySDGModel>? SDGs { get; set; }

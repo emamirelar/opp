@@ -38,9 +38,13 @@ export interface Opportunity {
   intendedImpactOutcomes: string | null;
   expectedBeneficiaries: string | null;
   challenges: string | null;
+  isPooledFunding: boolean;
   fundingPartners: OpportunityFundingPartner[];
   clientPartners: OpportunityClientPartner[];
   stakeholders: OpportunityStakeholder[];
+  externalStakeholders: OpportunityExternalStakeholder[];
+  miscExternalStakeholders: string | null;
+  externalStakeholderNotes: string | null;
   deliverables: OpportunityDeliverable[];
   countries: OpportunityCountry[];
   sdGs: OpportunitySDG[];
@@ -93,6 +97,7 @@ export interface OpportunityFundingPartner {
   exchangeRate: number | null;
   exchangeRateDate: Date | null;
   exchangeRateDisplay: string | null;
+  isPooledContribution: boolean;
 }
 
 /**
@@ -130,6 +135,18 @@ export interface OpportunityStakeholder {
   userName: string | null;
   userEmail: string | null;
   notes: string | null;
+}
+
+/**
+ * External Stakeholder model (contacts)
+ */
+export interface OpportunityExternalStakeholder {
+  id: number;
+  opportunityId: number;
+  contactId: number;
+  contactName: string | null;
+  contactEmail: string | null;
+  contactOrganization: string | null;
 }
 
 /**
@@ -269,6 +286,7 @@ export interface OpportunityFundingPartnerRequest {
   feeAmountUSD?: number;
   isAmountBasedFee?: boolean;
   documentId?: number;
+  isPooledContribution?: boolean;
 }
 
 export interface OpportunityClientPartnerRequest {
@@ -280,6 +298,10 @@ export interface OpportunityStakeholderRequest {
   stakeholderType: string;
   userId?: number;
   entityRoleId: number;
+}
+
+export interface OpportunityExternalStakeholderRequest {
+  contactId: number;
 }
 
 export interface OpportunityDeliverableRequest {
