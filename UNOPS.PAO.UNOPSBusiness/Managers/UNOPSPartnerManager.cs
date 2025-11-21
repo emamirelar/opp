@@ -2098,6 +2098,53 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     }
 
     /// <summary>
+    /// Gets all interactions associated with a specific partner
+    /// Used for opportunity creation from interactions
+    /// </summary>
+    /// <param name="partnerId">The partner ID</param>
+    /// <returns>List of interaction summaries for the partner</returns>
+    public async Task<IEnumerable<InteractionSummaryModel>> GetPartnerInteractionsAsync(int partnerId)
+    {
+        try
+        {
+            _logger?.LogInformation($"📋 [MANAGER] Getting interactions for partner {partnerId}");
+
+            // Get all interactions for this partner
+            var interactions = await _context.Interactions
+                .Where(i => !i.IsDeleted && i.InteractionPartners.Any(ip => ip.PartnerId == partnerId))
+                .Include(i => i.InteractionPartners)
+                .Include(i => i.InteractionContacts)
+                    .ThenInclude(ic => ic.Contact)
+                .Include(i => i.InteractionUsers)
+                    .ThenInclude(iu => iu.User)
+                .OrderByDescending(i => i.Date)
+                .ToListAsync();
+
+            var summaries = interactions.Select(i => new InteractionSummaryModel
+            {
+                Id = i.Id,
+                Subject = i.Subject ?? string.Empty,
+                Description = i.Description ?? string.Empty,
+                Date = i.Date,
+                Type = i.Type.ToString(),
+                Status = i.Status.ToString(),
+                Location = i.Location ?? string.Empty,
+                ContactCount = i.InteractionContacts?.Count ?? 0,
+                UserCount = i.InteractionUsers?.Count ?? 0
+            }).ToList();
+
+            _logger?.LogInformation($"✅ [MANAGER] Found {summaries.Count} interactions for partner {partnerId}");
+
+            return summaries;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, $"❌ [MANAGER] Error getting interactions for partner {partnerId}");
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Performs smart search for partners using AI-powered search capabilities
     /// </summary>
     public async Task<PaginationResponse<PartnerModel>> SmartSearchPartnersAsync(

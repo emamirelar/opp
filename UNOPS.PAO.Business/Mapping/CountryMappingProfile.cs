@@ -12,12 +12,15 @@ public class CountryMappingProfile : Profile
 {
     public CountryMappingProfile()
     {
-        // Country to CountryModel mapping
+        // Map Country entity to CountryModel with artifacts
         CreateMap<Country, CountryModel>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
             .ForMember(dest => dest.PartnerCount, opt => opt.MapFrom(src => src.PartnerCount))
             .ForMember(dest => dest.LiaisonOfficeCount, opt => opt.MapFrom(src => src.LiaisonOfficeCount))
-            .ForMember(dest => dest.Permissions, opt => opt.Ignore()); // Will be populated separately
+            .ForMember(dest => dest.Permissions, opt => opt.Ignore()) // Will be populated separately
+            .ForMember(dest => dest.Artifacts, opt => opt.MapFrom<EntityArtifactValueResolver>())
+            .ForMember(dest => dest.Continent, opt => opt.MapFrom(src => src.ContinentDescription))
+            .ForMember(dest => dest.Region, opt => opt.MapFrom(src => src.RegionDescription));
 
         // CountryModel to Country mapping (if needed for updates)
         CreateMap<CountryModel, Country>()

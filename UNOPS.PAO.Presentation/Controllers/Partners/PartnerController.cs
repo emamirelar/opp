@@ -31,11 +31,14 @@ using System.Collections.Generic;
 using System.Linq;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using static UNOPS.PAO.UNOPSBusiness.Services.AdvancedSearchService;
+using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.Search;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.AI;
 using UNOPS.PAO.Models.EntityConfiguration;
+using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.Models.AuditLogs;
 using UNOPS.PAO.Presentation.Controllers.Shared;
 
 [Route("/")]
@@ -43,6 +46,8 @@ using UNOPS.PAO.Presentation.Controllers.Shared;
 public class PartnerController : BaseController
 {
     private readonly IPartnerManager _manager;
+    private readonly IOpportunityManager _opportunityManager;
+    private readonly IAuditLogManager _auditLogManager;
     private readonly IGeminiManager _geminiManager;
     private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
     private readonly AiContextualService _aiContextualService;
@@ -58,6 +63,8 @@ public class PartnerController : BaseController
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.PartnerManager;
+        _opportunityManager = manager.OpportunityManager;
+        _auditLogManager = manager.AuditLogManager;
         _geminiManager = manager.GeminiManager;
         _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
         _aiContextualService = aiContextualService;
@@ -699,6 +706,47 @@ public class PartnerController : BaseController
         var permissions = new { CanRead = true, CanUpdate = true, CanDelete = true };
         
         return Ok(permissions);
+    }
+
+    /// <summary>
+    /// Gets all interactions associated with a specific partner for opportunity creation
+    /// Returns lightweight interaction summaries with key details
+    /// </summary>
+    /// <param name="id">Partner ID</param>
+    /// <returns>List of interactions associated with this partner</returns>
+    [HttpGet(APIDictionary.Partner + "/{id}/interactions")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<IActionResult> GetPartnerInteractions(int id)
+    {
+        try
+        {
+            _logger.LogInformation($"📋 [API] Getting interactions for partner {id}");
+
+            // Verify partner exists
+            var partner = await _manager.GetPartnerAsync(User, id);
+            if (partner == null)
+            {
+                return NotFound(new { error = $"Partner with ID {id} not found" });
+            }
+
+            // Get all interactions for this partner
+            var partnerManager = _manager as UNOPSPartnerManager;
+            if (partnerManager == null)
+            {
+                return StatusCode(500, new { error = "Partner manager not available" });
+            }
+
+            var interactions = await partnerManager.GetPartnerInteractionsAsync(id);
+
+            _logger.LogInformation($"✅ [API] Found {interactions.Count()} interactions for partner {id}");
+
+            return Ok(interactions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"❌ [API] Error getting interactions for partner {id}");
+            return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+        }
     }
 
     /// <summary>
@@ -1580,6 +1628,176 @@ public class PartnerController : BaseController
                 duplicateInfo = (object)null,
                 warning = "Duplicate detection temporarily unavailable"
             });
+        }
+    }
+
+    /// <summary>
+    /// Creates a new opportunity directly from a partner record with the partner pre-populated as funding/client partner
+    /// </summary>
+    /// <param name="partnerId">ID of the partner to create opportunity for</param>
+    /// <param name="req">Opportunity creation request with name and partner role</param>
+    /// <returns>Created opportunity with partner relationship established</returns>
+    [HttpPost(APIDictionary.Partner + "/{partnerId}/create-opportunity")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<IActionResult> CreateOpportunityFromPartner(int partnerId, [FromBody] CreateOpportunityFromPartnerRequest req)
+    {
+        try
+        {
+            _logger.LogInformation("Creating opportunity for partner {PartnerId} with name '{Name}' and role '{Role}'", 
+                partnerId, req.Name, req.PartnerRole);
+
+            // Validate partner exists and is active
+            var partner = await _manager.GetPartnerAsync(partnerId);
+            if (partner == null)
+            {
+                _logger.LogWarning("Partner {PartnerId} not found", partnerId);
+                return NotFound(new { error = $"Partner with ID {partnerId} not found" });
+            }
+
+            if (partner.Status != "Active")
+            {
+                _logger.LogWarning("Cannot create opportunity for inactive partner {PartnerId}", partnerId);
+                return BadRequest(new { error = "Cannot create opportunity for inactive partner" });
+            }
+
+            // Validate partner role
+            var validRoles = new[] { "funding", "client", "both" };
+            if (!validRoles.Contains(req.PartnerRole.ToLower()))
+            {
+                return BadRequest(new { error = "PartnerRole must be 'funding', 'client', or 'both'" });
+            }
+
+            // Build opportunity request with partner relationship
+            var opportunityRequest = new OpportunityRequest
+            {
+                Name = req.Name,
+                Description = req.Description ?? $"Opportunity created from partner: {partner.Name}",
+                FundingPartners = new List<OpportunityFundingPartnerRequest>(),
+                ClientPartners = new List<OpportunityClientPartnerRequest>(),
+                Stakeholders = new List<OpportunityStakeholderRequest>()
+            };
+
+            // Add partner as funding partner
+            if (req.PartnerRole.ToLower() == "funding" || req.PartnerRole.ToLower() == "both")
+            {
+                opportunityRequest.FundingPartners.Add(new OpportunityFundingPartnerRequest
+                {
+                    PartnerId = partnerId
+                });
+            }
+
+            // Add partner as client partner
+            if (req.PartnerRole.ToLower() == "client" || req.PartnerRole.ToLower() == "both")
+            {
+                opportunityRequest.ClientPartners.Add(new OpportunityClientPartnerRequest
+                {
+                    PartnerId = partnerId
+                });
+            }
+
+            // Create the opportunity
+            var result = await _opportunityManager.CreateOpportunityAsync(opportunityRequest);
+
+            // Assign the current user as Opportunity Manager
+            try
+            {
+                await _opportunityManager.AssignCreatorAsOpportunityManagerAsync(result.Id, CurrentUserId);
+                _logger.LogInformation("✅ Assigned user {UserId} as Opportunity Manager for opportunity {OpportunityId}", 
+                    CurrentUserId, result.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "⚠️ Failed to assign creator as Opportunity Manager for opportunity {OpportunityId}", result.Id);
+                // Don't fail the request if role assignment fails
+            }
+
+            // Create audit log for the new opportunity
+            await CreateAuditLogAsync(result.Id, "create", result);
+
+            _logger.LogInformation("✅ Successfully created opportunity {OpportunityId} from partner {PartnerId}", 
+                result.Id, partnerId);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating opportunity from partner {PartnerId}", partnerId);
+            return StatusCode(500, new { error = "Internal server error while creating opportunity", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Gets all opportunities related to a partner (where partner is funding or client partner)
+    /// </summary>
+    /// <param name="partnerId">ID of the partner</param>
+    /// <returns>List of related opportunities</returns>
+    [HttpGet(APIDictionary.Partner + "/{partnerId}/opportunities")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<IActionResult> GetPartnerOpportunities(int partnerId)
+    {
+        try
+        {
+            _logger.LogInformation("Getting opportunities for partner {PartnerId}", partnerId);
+
+            // Validate partner exists
+            var partner = await _manager.GetPartnerAsync(partnerId);
+            if (partner == null)
+            {
+                _logger.LogWarning("Partner {PartnerId} not found", partnerId);
+                return NotFound(new { error = $"Partner with ID {partnerId} not found" });
+            }
+
+            // Get related opportunities
+            var opportunities = await _opportunityManager.GetOpportunitiesByPartnerIdAsync(partnerId);
+
+            _logger.LogInformation("Found {Count} opportunities for partner {PartnerId}", 
+                opportunities.Count(), partnerId);
+
+            return Ok(opportunities);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting opportunities for partner {PartnerId}", partnerId);
+            return StatusCode(500, new { error = "Internal server error while getting opportunities", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Helper method to create audit log entry with complete opportunity data
+    /// </summary>
+    private async Task CreateAuditLogAsync(int opportunityId, string action, OpportunityModel? opportunityData = null)
+    {
+        try
+        {
+            // Get the current opportunity data if not provided
+            if (opportunityData == null)
+            {
+                opportunityData = await _opportunityManager.GetOpportunityAsync(opportunityId);
+            }
+
+            if (opportunityData != null)
+            {
+                var jsonData = System.Text.Json.JsonSerializer.Serialize(opportunityData, new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = false,
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                });
+
+                await _auditLogManager.CreateAuditLogAsync(new AuditLogCreateRequest
+                {
+                    EntityType = "Opportunity",
+                    EntityId = opportunityId,
+                    Action = action,
+                    UserId = CurrentUserId,
+                    JsonData = jsonData,
+                    Description = $"Opportunity {action} from partner - {opportunityData.Name}"
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "⚠️ Failed to create audit log for opportunity {OpportunityId}", opportunityId);
+            // Don't fail the request if audit log creation fails
         }
     }
 

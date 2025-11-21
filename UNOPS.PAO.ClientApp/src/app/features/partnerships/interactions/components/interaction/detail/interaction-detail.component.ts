@@ -17,11 +17,13 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DocumentComponent } from '@shared/components/documents/document/document.component';
 import { GDriveDocumentComponent } from '@shared/components/documents/gdrive/document-gdrive.component';
 import { AiPanelComponent } from '@features/ai/components/ai-panel/ai-panel.component';
+import { CreateOpportunityFromInteractionsDialogComponent } from '@partnerships/interactions/components/dialogs/create-opportunity-from-interactions-dialog.component';
 
 import { Interaction } from '@partnerships/interactions/models/interaction.model';
 import { InteractionService } from '@partnerships/interactions/services/interaction.service';
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
 import { InteractionType } from '../../../models/interaction-type.enum';
+import { CreateOpportunityFromInteractionsConfig } from '../../../models/interaction-selection.model';
 import { PermissionUtilityService } from '@core/services/auth';
 import { FeedbackDialogService } from '@shared/services/ui';
 import { InteractionIconService } from '@shared/services/domain';
@@ -47,7 +49,8 @@ import { PageContextService } from '@shared/services/utils';
     ConfirmDialogModule,
     DocumentComponent,
     GDriveDocumentComponent,
-    AiPanelComponent
+    AiPanelComponent,
+    CreateOpportunityFromInteractionsDialogComponent
   ],
   providers: [DialogService, ConfirmationService],
   templateUrl: './interaction-detail.component.html',
@@ -75,6 +78,9 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
   loading = signal(true);
   error = signal<string | null>(null);
   showFullDescription = signal<boolean>(false);
+
+  // Dialog state
+  showCreateOpportunityDialog = signal(false);
 
   // Width tracking for responsive layout
   componentWidth = signal<number>(0);
@@ -142,6 +148,44 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
   canDelete = computed(() =>
     this.permissionUtilityService.canDelete(this.entityPermissions())
   );
+
+  // Computed properties for Create Opportunity dialog
+  primaryPartner = computed(() => {
+    const currentInteraction = this.interaction();
+    if (!currentInteraction?.partners || currentInteraction.partners.length === 0) {
+      return null;
+    }
+    // Return the first partner (or you could add logic to determine primary)
+    return currentInteraction.partners[0];
+  });
+
+  canCreateOpportunity = computed(() => {
+    // TODO: Add permission check when permissions are implemented
+    // For now, always show the button
+    return true;
+    // Original logic (will be re-enabled with permissions):
+    // return this.primaryPartner() !== null;
+  });
+
+  // Dialog configuration
+  dialogConfig = computed<CreateOpportunityFromInteractionsConfig | null>(() => {
+    const partner = this.primaryPartner();
+    const currentInteraction = this.interaction();
+    
+    if (!currentInteraction) {
+      return null;
+    }
+    
+    // If no partner, still return config with placeholder values
+    // The dialog will handle partner selection
+    return {
+      partnerId: partner ? Number(partner.id!) : 0,
+      partnerName: partner ? (partner.name || partner.partnerDescription || 'Unknown Partner') : '',
+      preSelectedInteractionIds: [currentInteraction.id!],
+      currentInteractionId: currentInteraction.id,
+      mode: 'detail-view'
+    };
+  });
 
   // Description display logic
   shouldShowSeeMoreButton = computed(() => {
@@ -299,6 +343,29 @@ export class InteractionDetailComponent implements OnInit, AfterViewInit, OnDest
         });
       }
     });
+  }
+
+  openCreateOpportunityDialog() {
+    const currentInteraction = this.interaction();
+    
+    if (!currentInteraction) {
+      this.feedbackDialogService.showWarningToast({
+        summary: this.translateService.instant('common.warning.title'),
+        detail: this.translateService.instant('message.interactionRequired')
+      });
+      return;
+    }
+
+    // Note: Partner is optional now - dialog will handle partner selection if needed
+    this.showCreateOpportunityDialog.set(true);
+  }
+
+  handleOpportunityCreated(opportunity: any) {
+    this.showCreateOpportunityDialog.set(false);
+    // Navigate to the newly created opportunity (when backend is implemented)
+    if (opportunity && opportunity.id) {
+      this.router.navigate(['/opportunities', opportunity.id]);
+    }
   }
 
   goBack() {

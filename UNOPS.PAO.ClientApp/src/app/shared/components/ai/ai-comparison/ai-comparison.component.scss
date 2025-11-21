@@ -1,0 +1,40 @@
+// AiComparisonComponent styles
+// Most styling is done via Tailwind classes in the template
+
+.ai-comparison-dialog {
+  ::ng-deep {
+    .p-dialog-content {
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .p-dialog-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--unops-neutral-light);
+    }
+  }
+}
+
+// Custom scrollbar for better UX
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(var(--unops-neutral-grey), 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--unops-primary), 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--unops-primary), 0.5);
+}
+

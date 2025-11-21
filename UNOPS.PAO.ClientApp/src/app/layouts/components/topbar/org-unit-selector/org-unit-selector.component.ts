@@ -141,8 +141,12 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
 
   filterOrgUnits() {
     if (!this.searchText.trim()) {
-      // Show all items with proper visibility based on expansion
+      // Show all items with proper visibility based on expansion, excluding root level (no parent)
       this.filteredOrgUnits = this.orgUnitOptions.filter(unit => {
+        // Skip root level nodes (nodes without a parent)
+        if (!unit.parentId) {
+          return false;
+        }
         // Set visibility based on expansion state
         unit.visible = this.isUnitVisible(unit);
         return unit.visible;
@@ -173,8 +177,12 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
       parentIds.forEach(id => this.expandedNodeIds.add(id));
     }
 
-    // Filter to show only matching items and their parents, maintaining original order
+    // Filter to show only matching items and their parents, maintaining original order, excluding root level
     this.filteredOrgUnits = this.orgUnitOptions.filter(unit => {
+      // Skip root level nodes (nodes without a parent)
+      if (!unit.parentId) {
+        return false;
+      }
       const shouldShow = matchingIds.has(unit.id) || parentIds.has(unit.id);
       // Update visibility flag
       unit.visible = shouldShow;

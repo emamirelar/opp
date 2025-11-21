@@ -17,4 +17,18 @@
             </p-button>
         </div>
     }
+    @if (dialogConfig?.onConfirm) {
+        <div class="flex justify-end gap-2 mt-4">
+            <p-button
+                [label]="'button.cancel' | translate"
+                severity="secondary"
+                (onClick)="onCancel()">
+            </p-button>
+            <p-button
+                [label]="'button.confirm' | translate"
+                severity="danger"
+                (onClick)="onConfirm()">
+            </p-button>
+        </div>
+    }
 </p-dialog>

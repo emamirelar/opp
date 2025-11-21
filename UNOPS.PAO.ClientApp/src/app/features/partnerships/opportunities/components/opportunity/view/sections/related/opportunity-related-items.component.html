@@ -1,0 +1,36 @@
+<p-panel [toggleable]="true" [(collapsed)]="isCollapsed">
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-link text-xl"></i>
+      <span class="font-semibold">{{ 'label.opportunity.sourceInteractions' | translate }}</span>
+    </div>
+  </ng-template>
+
+  @if (isLoading()) {
+    <div class="text-center py-8">
+      <i class="pi pi-spin pi-spinner text-3xl text-primary"></i>
+      <p class="text-gray-500 mt-2">{{ 'message.loading' | translate }}</p>
+    </div>
+  } @else {
+    <!-- Source Interactions Section -->
+    @if (sourceInteractions() && sourceInteractions().length > 0) {
+      <app-listview-card
+        [data]="sourceInteractions()"
+        [columns]="interactionColumns()"
+        [config]="listViewConfig()"
+        [totalRecords]="sourceInteractions().length"
+        [loading]="false"
+        [error]="false"
+        [hasMoreData]="false"
+        [isLoadingMore]="false"
+        [entityType]="'Interaction'"
+        (rowClick)="navigateToInteraction($event.id)"
+      />
+    } @else {
+      <div class="text-center py-8 text-gray-400">
+        <i class="pi pi-comments text-4xl mb-2"></i>
+        <p class="text-sm">{{ 'message.noSourceInteractions' | translate }}</p>
+      </div>
+    }
+  }
+</p-panel>

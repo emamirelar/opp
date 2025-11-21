@@ -12,6 +12,7 @@ using UNOPS.PAO.Models.Locations;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Models.Notifications;
+using UNOPS.PAO.Models.Values;
 
 public class MappingProfile : Profile
 {
@@ -38,10 +39,21 @@ public class MappingProfile : Profile
         // Value entity mappings
         CreateMap<Currency, CurrencyModel>();
         CreateMap<EligibleEntity, EligibleEntityModel>();
-        CreateMap<Country, CountryModel>();
+        // Country mapping moved to CountryMappingProfile
         CreateMap<Contact, ContactValueModel>();
         CreateMap<PAOUser, UserValueModel>();
         CreateMap<LiaisonOffice, LiaisonOfficeModel>();
+
+        // Proposed Initiative Type and Output mappings
+        CreateMap<ProposedInitiativeType, SimpleValueModel>()
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name));
+        CreateMap<Output, OutputModel>()
+            .ForMember(dest => dest.OutputName, opt => opt.MapFrom(src => src.OutputName))
+            .ForMember(dest => dest.UnitName, opt => opt.MapFrom(src => src.Unit != null ? src.Unit.Name : null))
+            .ForMember(dest => dest.ProjectCategoryName, opt => opt.MapFrom(src => src.ProjectCategory != null ? src.ProjectCategory.Name : null));
+
+        // SDG mappings
+        CreateMap<SDG, SDGModel>();
 
         // OrganizationHierarchy mappings
         CreateMap<OrganizationHierarchy, OrganizationHierarchyModel>().ReverseMap();

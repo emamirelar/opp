@@ -113,12 +113,38 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
 
         private BaseUNOPSManager GetUNOPSManagerByEntityName(string entityName)
         {
-            // Create manager field name: entityName + "Manager" (e.g., "contact" -> "contactManager")
-            var entityType = entityName.ToLower().TrimEnd('s'); // Remove plural 's' if present
+            // Special handling for entity names to ensure proper singularization
+            string entityType = entityName.ToLower();
+            
+            // Handle special cases for proper singularization
+            if (entityType == "opportunities")
+            {
+                entityType = "opportunity";
+            }
+            else if (entityType.EndsWith("ies"))
+            {
+                // Words ending in 'ies' -> change to 'y' (e.g., "entities" -> "entity")
+                entityType = entityType.Substring(0, entityType.Length - 3) + "y";
+            }
+            else if (entityType.EndsWith("s") && !entityType.EndsWith("ss"))
+            {
+                // Remove trailing 's' for regular plurals (but not words ending in 'ss')
+                entityType = entityType.Substring(0, entityType.Length - 1);
+            }
+            
             var fieldName = $"{entityType}Manager";
+            
+            _logger.LogDebug($"Looking for manager field: {fieldName} (from entity name: {entityName})");
             
             // Get the private field from UNOPSManagerWrapper that contains the actual UNOPS manager instance
             var field = _managerWrapper.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            
+            if (field == null)
+            {
+                _logger.LogError($"Manager field not found: {fieldName}. Available fields: {string.Join(", ", _managerWrapper.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance).Select(f => f.Name))}");
+                throw new ArgumentException($"Manager field not found: {fieldName} (from entity name: {entityName})");
+            }
+            
             var manager = field?.GetValue(_managerWrapper) as BaseUNOPSManager;
             
             return manager ?? throw new ArgumentException($"Manager not found or doesn't inherit from BaseUNOPSManager: {fieldName}");
@@ -182,6 +208,51 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         {
             try
             {
+                // Handle collections (arrays, lists) - CRITICAL for embeddings
+                if (value is System.Collections.IEnumerable enumerable && value is not string)
+                {
+                    var items = new List<string>();
+                    foreach (var item in enumerable)
+                    {
+                        if (item == null) continue;
+                        
+                        // For complex objects (like OpportunityDeliverableModel, OpportunityCountryModel, etc.)
+                        if (item.GetType().IsClass && item.GetType() != typeof(string))
+                        {
+                            // Try to get the most meaningful property (Name, Title, Description)
+                            var nameProperty = item.GetType().GetProperty("Name") 
+                                ?? item.GetType().GetProperty("Title")
+                                ?? item.GetType().GetProperty("Description");
+                            
+                            if (nameProperty != null)
+                            {
+                                var nameValue = nameProperty.GetValue(item);
+                                if (nameValue != null && !string.IsNullOrWhiteSpace(nameValue.ToString()))
+                                {
+                                    items.Add(nameValue.ToString());
+                                }
+                            }
+                            else
+                            {
+                                // For objects without Name/Title/Description, use ToString()
+                                var stringValue = item.ToString();
+                                if (!stringValue.StartsWith(item.GetType().FullName)) // Skip default ToString() output
+                                {
+                                    items.Add(stringValue);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // For primitive types in collections
+                            items.Add(item.ToString());
+                        }
+                    }
+                    
+                    // Return comma-separated list if we have items
+                    return items.Count > 0 ? string.Join(", ", items) : null;
+                }
+                
                 // Handle different value types
                 string formattedValue = value switch
                 {
@@ -195,8 +266,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                     decimal dec when dec == 0 => null, // Skip zero values  
                     decimal dec => dec.ToString("0.##"),
                     Enum enumValue => enumValue.ToString(),
-                    // Skip complex objects and collections
-                    System.Collections.IEnumerable => null,
+                    // Skip complex objects (but collections are already handled above)
                     _ when value.GetType().IsClass && value.GetType() != typeof(string) => null,
                     _ => value.ToString()
                 };

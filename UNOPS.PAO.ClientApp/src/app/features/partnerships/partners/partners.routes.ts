@@ -44,6 +44,11 @@ export const PARTNERS_ROUTES: Routes = [
         data: { breadcrumb: 'Data' }
       },
       {
+        path: 'opportunities',
+        loadComponent: () => import('@partnerships/partners/components/partner/view/opportunities/partner-view-opportunities.component').then(m => m.PartnerViewOpportunitiesComponent),
+        data: { breadcrumb: 'Opportunities' }
+      },
+      {
         path: 'contacts',
         loadComponent: () => import('@partnerships/partners/components/partner/contacts/partner-contacts.component').then(m => m.PartnerContactsComponent),
         data: { breadcrumb: 'Contacts' }

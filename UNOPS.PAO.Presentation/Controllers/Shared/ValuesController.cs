@@ -83,7 +83,9 @@ public class ValuesController : BaseController
             return allPartners.Select(p => new PartnerValueModel
             {
                 Id = p.Id,
-                Name = p.Name ?? ""
+                Name = p.Name ?? "",
+                LogoUrl = p.LogoUrl,
+                PooledFund = p.PooledFund
             }).ToList();
         });
     }
@@ -124,6 +126,24 @@ public class ValuesController : BaseController
         return await HandleOperationAsync(async () => await _manager.SearchUsersAsync(searchTerm, maxResults, selectedUserIds));
     }
 
+    [HttpGet(APIDictionary.ProposedInitiativeTypes)]
+    public async Task<ActionResult> GetProposedInitiativeTypes()
+    {
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetProposedInitiativeTypes()));
+    }
+
+    [HttpGet(APIDictionary.Outputs)]
+    public async Task<ActionResult> GetOutputs()
+    {
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetOutputs()));
+    }
+
+    [HttpGet(APIDictionary.SDGs)]
+    public async Task<ActionResult> GetSDGs()
+    {
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetSDGs()));
+    }
+
     [HttpGet(APIDictionary.GeminiModels)]
     public async Task<ActionResult> GetGeminiModels()
     {
@@ -140,6 +160,32 @@ public class ValuesController : BaseController
                 .ToList();
 
             return await Task.FromResult(models);
+        });
+    }
+
+    /// <summary>
+    /// Gets entity roles for a specific entity type
+    /// </summary>
+    [HttpGet(APIDictionary.EntityRoles + "/{entityType}")]
+    public async Task<ActionResult> GetEntityRoles(string entityType)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var roles = await _manager.GetEntityRolesAsync(entityType);
+            return roles;
+        });
+    }
+
+    /// <summary>
+    /// Gets all internal users (UNOPS staff)
+    /// </summary>
+    [HttpGet(APIDictionary.InternalUsers)]
+    public async Task<ActionResult> GetInternalUsers()
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var users = await _manager.GetInternalUsersAsync();
+            return users;
         });
     }
 

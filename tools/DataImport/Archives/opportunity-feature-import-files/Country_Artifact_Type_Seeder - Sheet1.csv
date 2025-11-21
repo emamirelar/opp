@@ -1,0 +1,40 @@
+Name,ArtifactTypeCode,ArtifactDataType,Description,Category,ApplicableEntityTypes,Source,AllowBulkUpdate,IsSearchable
+Country_Code,Country_Code,Number,"Standard Country or Area Codes for Statistical Use"" (published by the United Nations Statistics Division)",,Country,UNSD,YES,NO
+UN_Region,UN_Region,String,UN-defined regional classification based on the M49 standard,,Country,UNSD,YES,YES
+UN_Sub_Region,UN_Sub_Region,String,UN-defined regional classification based on the M49 standard,,Country,UNSD,YES,YES
+UNOPS_Region,UNOPS_Region,String,Global business units and entities within UNOPS,UNOPS Internal (centrally managed),Country,Annex 2 UNOPS Global Structure,NO,NO
+LDC,LDC,Boolean,Least Developed Countries,External Global Index,Country,OHRLLS LDCS,YES,NO
+LLDC,LLDC,Boolean,Land Locked Developing Countries,External Global Index,Country,OHRLLS LLDCs,YES,NO
+SIDS,SIDS,Boolean,,External Global Index,Country,OHRLLS SIDS,YES,NO
+MVI_Score,MVI_Score,Number,"Structural vulnerability and lack of resilience of countries to external shocks across three dimensions: Environmental vulnerability, Economic vulnerability, Social vulnerability",External Global Index,Country,OHRLLS MVI,YES,NO
+Structural_Vulnerability_Index,Structural_Vulnerability_Index,Number,,,Country,,NO,NO
+Lack_of_Structural_Resilience_Index,Lack_of_Structural_Resilience_Index,Number,,,Country,,NO,NO
+World_Bank_Fragile_Situation,World_Bank_Fragile_Situation,Number,Countries and territories identified as experiencing conflict and institutional and social fragility,,Country,World Bank List of Fragile and Conflict-affected Situations,YES,NO
+UN_Programme_Country,UN_Programme_Country,Boolean,,,Country,UNSDG Countries listing,YES,NO
+OECD_Member,OECD_Member,Boolean,,,Country,OECD Members,YES,NO
+DAC_Member,DAC_Member,Boolean,,,Country,DAC ODA recipients,YES,NO
+UNOPS_Country_Typology,UNOPS_Country_Typology,String,,,Country,,NO,NO
+OECD_List_High_Extreme_Fragility,OECD_List_High_Extreme_Fragility,Boolean,"Evidence-based assessment of fragility trends across countries, to understand where, how, and why fragility is evolving",,Country,,NO,NO
+States_of_Fragility_OECD,States_of_Fragility_OECD,String,"Evidence-based assessment of fragility trends across countries, to understand where, how, and why fragility is evolving",External Global Index,Country,OECD States of Fragility,YES,NO
+Fragility_Score_OECD,Fragility_Score_OECD,Number,,,Country,,NO,NO
+SDG_Index,SDG_Index,Number,"Progress towards each of the 17 SDGs, per country",External Global Index,Country,Sustainable Development Report,YES,NO
+SDG_Index_Rank,SDG_Index_Rank,Number,,,Country,,NO,NO
+SDGI_Year,SDGI_Year,Number,,,Country,,NO,NO
+HDI_Index,HDI_Index,Number,Achievements in human development,External Global Index,Country,UNDP HDR HDI,YES,NO
+HDI_Fiscal_Year,HDI_Fiscal_Year,Number,,,Country,,NO,NO
+HDI_Group,HDI_Group,String,,,Country,,NO,NO
+Inform_Risk_Index,Inform_Risk_Index,Number,Risk from humanitarian crisis and disasters that could overwhelm national response capacity,,Country,,YES,NO
+Inform_Risk_Class,Inform_Risk_Class,String,,,Country,,NO,NO
+Inform_Rank,Inform_Rank,Number,,,Country,,NO,NO
+Inform_Version,Inform_Version,String,,,Country,,NO,NO
+Inform_Download_Date,Inform_Download_Date,Date,,,Country,,NO,NO
+GNI_Per_Capita_USD_2024,GNI_Per_Capita_USD_2024,Number,,,Country,,NO,NO
+GNI_Download_At,GNI_Download_At,Date,,,Country,,NO,NO
+Population_2024,Population_2024,Number,,,Country,,NO,NO
+Population_Download_At,Population_Download_At,Date,,,Country,,NO,NO
+Urban_Population_2024,Urban_Population_2024,Number,,,Country,,NO,NO
+Urban_Population_Download_At,Urban_Population_Download_At,Date,,,Country,,NO,NO
+Gini_Index_2024,Gini_Index_2024,Number,,,Country,,NO,NO
+Gini_Index_Download_At,Gini_Index_Download_At,Date,,,Country,,NO,NO
+Special_Situation_Countries,Special_Situation_Countries,Boolean,"QCPR (combines LDC, LLDC, SIDS). Report focuses on tracking demographic trends in LDCs, LLDCs, and SIDS",,Country,,NO,NO
+FSI,FSI,Number,Fragile State Index,,Country,Fragile States Index,NO,NO

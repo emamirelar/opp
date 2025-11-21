@@ -88,6 +88,127 @@ public class GoogleCloudStorageService
         return await UploadToGCS(memoryStream, fileName, file.ContentType);
     }
 
+    /// <summary>
+    /// Checks if a file with the same name and MIME type already exists in GCS
+    /// </summary>
+    /// <param name="folder">Folder name (e.g., "opportunities", "partners")</param>
+    /// <param name="entityId">Entity ID for organizing files</param>
+    /// <param name="fileName">Original file name</param>
+    /// <param name="mimeType">MIME type of the file</param>
+    /// <returns>Existing gs:// URI if duplicate found, null otherwise</returns>
+    public async Task<string?> CheckForDuplicateFileAsync(string folder, int entityId, string fileName, string mimeType)
+    {
+        try
+        {
+            // Construct object prefix: folder/entityId/
+            var prefix = $"{folder.ToLower()}/{entityId}/";
+            
+            // List all objects with the prefix
+            var objects = _storageClient.ListObjectsAsync(_bucketName, prefix);
+            
+            await foreach (var obj in objects)
+            {
+                // Check if file name matches (ignoring the GUID suffix)
+                // Original file format: filename_GUID.ext
+                // We want to match: filename*.ext with same MIME type
+                var originalFileName = Path.GetFileNameWithoutExtension(fileName);
+                var originalExtension = Path.GetExtension(fileName);
+                
+                // Extract the file name from the object (remove folder path)
+                var objectFileName = Path.GetFileName(obj.Name);
+                
+                // Check if it starts with the original filename and has the same extension
+                if (objectFileName.StartsWith(originalFileName + "_") && 
+                    objectFileName.EndsWith(originalExtension, StringComparison.OrdinalIgnoreCase) &&
+                    obj.ContentType == mimeType)
+                {
+                    // Found a duplicate - return its gs:// URI
+                    return $"gs://{_bucketName}/{obj.Name}";
+                }
+            }
+            
+            return null; // No duplicate found
+        }
+        catch (Exception ex)
+        {
+            // If checking fails, return null to proceed with upload
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Uploads a PDF file to Google Cloud Storage with organized folder structure
+    /// </summary>
+    /// <param name="file">PDF file to upload</param>
+    /// <param name="folder">Folder name (e.g., "opportunities", "partners")</param>
+    /// <param name="entityId">Entity ID for organizing files</param>
+    /// <returns>Google Cloud Storage URI (gs://bucket/path)</returns>
+    public async Task<string> UploadPdfAsync(IFormFile file, string folder, int entityId)
+    {
+        if (file == null || file.Length == 0)
+        {
+            throw new ArgumentException("File cannot be null or empty", nameof(file));
+        }
+
+        // Check for duplicate file first
+        var duplicateUri = await CheckForDuplicateFileAsync(folder, entityId, file.FileName, file.ContentType ?? "application/pdf");
+        if (duplicateUri != null)
+        {
+            // Return existing file URI instead of uploading a duplicate
+            return duplicateUri;
+        }
+
+        // Generate unique filename to avoid collisions
+        var fileExtension = Path.GetExtension(file.FileName);
+        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.FileName);
+        var uniqueId = Guid.NewGuid().ToString();
+        var fileName = $"{fileNameWithoutExtension}_{uniqueId}{fileExtension}";
+        
+        // Construct object path: folder/entityId/filename
+        var objectName = $"{folder.ToLower()}/{entityId}/{fileName}";
+
+        // Upload to GCS
+        using var stream = file.OpenReadStream();
+        await _storageClient.UploadObjectAsync(
+            _bucketName, 
+            objectName, 
+            file.ContentType ?? "application/pdf", 
+            stream
+        );
+
+        // Return gs:// URI
+        return $"gs://{_bucketName}/{objectName}";
+    }
+
+    /// <summary>
+    /// Generates a signed URL from a gs:// URI
+    /// </summary>
+    /// <param name="gsUri">Google Cloud Storage URI (gs://bucket/path)</param>
+    /// <param name="expirationMinutes">Number of minutes before the URL expires (default: 60)</param>
+    /// <returns>Signed URL that can be used to access the file</returns>
+    public async Task<string> GetSignedUrlFromGsUri(string gsUri, int expirationMinutes = 60)
+    {
+        if (string.IsNullOrEmpty(gsUri) || !gsUri.StartsWith("gs://"))
+        {
+            throw new ArgumentException("Invalid Google Cloud Storage URI. Must start with gs://", nameof(gsUri));
+        }
+
+        // Parse gs:// URI to extract bucket and object name
+        // Format: gs://bucket-name/path/to/object
+        var uriWithoutPrefix = gsUri.Replace("gs://", "");
+        var parts = uriWithoutPrefix.Split('/', 2);
+        
+        if (parts.Length != 2)
+        {
+            throw new ArgumentException("Invalid Google Cloud Storage URI format", nameof(gsUri));
+        }
+
+        var objectName = parts[1]; // Extract object path (skip bucket name)
+
+        // Generate signed URL using existing method
+        return await GenerateSignedUrlAsync(objectName, TimeSpan.FromMinutes(expirationMinutes));
+    }
+
     // Generate a signed URL for secure access to a private object
     public async Task<string> GenerateSignedUrlAsync(string objectName, TimeSpan expiration, HttpMethod httpMethod = null)
     {

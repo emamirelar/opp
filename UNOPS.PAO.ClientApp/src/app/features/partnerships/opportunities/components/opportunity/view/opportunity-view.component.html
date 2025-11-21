@@ -1,0 +1,238 @@
+<p-confirmDialog></p-confirmDialog>
+
+<!-- Header - Full Width (outside main layout) -->
+<div id="opportunity-header" class="flex flex-col gap-4 shadow-sm p-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <a
+        routerLink="/partnerships/opportunities"
+        class="text-gray-600 hover:text-gray-900"
+      >
+        <i class="pi pi-arrow-left text-xl"></i>
+      </a>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">
+          {{ opportunity()?.name || "Loading..." }}
+        </h1>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <p-badge [value]="opportunity()?.status || ''" [severity]="getStatusSeverity(opportunity()?.status)" />
+      @if (opportunity()?.workflowStageName) {
+        <p-badge [value]="opportunity()?.workflowStageName || ''" severity="warn" />
+      }
+    </div>
+  </div>
+
+  @if (opportunity()) {
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+      <span><strong>{{ 'label.opportunity.partnerRef' | translate }}:</strong> {{ opportunity()!.partnerReference || '-' }}</span>
+      <span class="text-gray-300">|</span>
+      <span><strong>{{ 'label.opportunity.manager' | translate }}:</strong> {{ opportunityManager() || '-' }}</span>
+      <span class="text-gray-300">|</span>
+      <span><strong>{{ 'label.opportunity.orgUnit' | translate }}:</strong> {{ opportunity()!.responsibleOrgUnitName || '-' }}</span>
+      @if (opportunity()!.stats?.totalFundingUSD && opportunity()!.stats?.totalFundingUSD! > 0) {
+        <span class="text-gray-300">|</span>
+        <span class="flex items-center gap-1">
+          <strong>{{ 'label.totalBudget' | translate }}:</strong> 
+          <span class="text-unops-primary font-semibold">${{ opportunity()!.stats!.totalFundingUSD | number:'1.2-2' }}</span>
+        </span>
+      }
+    </div>
+  }
+</div>
+
+@if (loading()) {
+  <div class="flex items-center justify-center py-12">
+    <i class="pi pi-spin pi-spinner text-4xl text-unops-primary"></i>
+  </div>
+}
+
+<!-- Three-Column Layout -->
+<div class="flex gap-0 bg-gray-50 min-h-screen">
+  <!-- LEFT SIDEBAR: Documents Panel -->
+  <app-opportunity-documents
+    [opportunityId]="opportunity()!.id!"
+    [opportunity]="opportunity()"
+    [collapsed]="documentsCollapsed()"
+    (togglePanel)="toggleDocumentsPanel()"
+    (opportunityUpdated)="reloadOpportunity()"
+  />
+
+  <!-- MIDDLE: Main Content -->
+  <div class="flex-1 flex flex-col min-w-0">
+    @if (!loading() && opportunity()) {
+      <!-- Section Navigator -->
+      <div
+        class="sticky top-0 z-50 bg-gray-50 border-b border-gray-200 px-6 py-3 shadow-sm relative"
+        style="box-shadow: 0 -20px 0 0px #f9fafb"
+      >
+        <!-- Hidden 1px sizer div to track navigation bar width -->
+        <div
+          #navigationSizer
+          class="absolute top-0 left-0 right-0"
+          style="height: 1px; visibility: hidden; pointer-events: none"
+        ></div>
+
+        <!-- Chips Navigation -->
+        <div
+          #chipsContainer
+          [class]="
+            showDropdown()
+              ? 'flex items-center gap-2 pb-1 absolute opacity-0 pointer-events-none'
+              : 'flex items-center gap-2 pb-1'
+          "
+          style="overflow: hidden"
+        >
+          @for (section of sections; track section.id) {
+            <button
+              (click)="scrollToSection(section.id)"
+              [class]="
+                activeSection() === section.id
+                  ? 'flex items-center gap-2 px-4 py-2 rounded-full bg-unops-primary text-white font-medium text-sm transition-all duration-200 whitespace-nowrap'
+                  : 'flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium text-sm transition-all duration-200 whitespace-nowrap'
+              "
+            >
+              <i [class]="'pi ' + section.icon + ' text-sm'"></i>
+              <span>{{ section.label }}</span>
+            </button>
+          }
+        </div>
+
+        <!-- Dropdown Navigation (shown when chips don't fit) -->
+        <div [class]="showDropdown() ? 'flex items-center gap-3' : 'hidden'">
+          <label class="text-sm font-medium text-gray-700">{{ 'label.section' | translate }}:</label>
+          <p-dropdown
+            [options]="sections"
+            [(ngModel)]="selectedSection"
+            (onChange)="onSectionDropdownChange($event)"
+            optionLabel="label"
+            [placeholder]="'label.selectSection' | translate"
+            styleClass="w-full"
+          >
+            <ng-template pTemplate="selectedItem">
+              <div class="flex items-center gap-2" *ngIf="selectedSection">
+                <i [class]="'pi ' + selectedSection.icon + ' text-unops-primary'"></i>
+                <span>{{ selectedSection.label }}</span>
+              </div>
+            </ng-template>
+            <ng-template let-section pTemplate="item">
+              <div class="flex items-center gap-2">
+                <i [class]="'pi ' + section.icon"></i>
+                <span>{{ section.label }}</span>
+              </div>
+            </ng-template>
+          </p-dropdown>
+        </div>
+      </div>
+
+      <!-- Scrollable Content Area -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <div class="flex flex-col gap-6">
+          
+          <!-- ANALYSIS - Quick Stats & Insights -->
+          <div id="section-analysis" style="scroll-margin-top: 72px">
+            <app-opportunity-analysis-section
+              [opportunity]="opportunity()!"
+            />
+          </div>
+
+          <!-- WHAT Section -->
+          <div id="section-what" style="scroll-margin-top: 72px">
+            <app-opportunity-what-section
+              [opportunity]="opportunity()!"
+              [suggestions]="whatSuggestions()"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
+          </div>
+
+          <!-- WHY Section -->
+          <div id="section-why" style="scroll-margin-top: 72px">
+            <app-opportunity-why-section
+              [opportunity]="opportunity()!"
+              [suggestions]="whySuggestions()"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
+          </div>
+
+          <!-- WHO Section - Partners & People -->
+          <div id="section-who" style="scroll-margin-top: 72px">
+            <app-opportunity-who-section
+              [opportunity]="opportunity()!"
+              [suggestions]="whoSuggestions()"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
+          </div>
+
+          <!-- WHERE Section - Geography -->
+          <div id="section-where" style="scroll-margin-top: 72px">
+            <app-opportunity-where-section
+              [opportunity]="opportunity()!"
+              [suggestions]="whereSuggestions()"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
+          </div>
+
+          <!-- WHEN Section - Timeline -->
+          <div id="section-when" style="scroll-margin-top: 72px">
+            <app-opportunity-when-section
+              [opportunity]="opportunity()!"
+              [suggestions]="whenSuggestions()"
+              (opportunityUpdated)="handleOpportunityUpdate($event)"
+            />
+          </div>
+
+          <!-- DST Section - Insights & Recommendations -->
+          <div id="section-dst" style="scroll-margin-top: 72px">
+            <app-opportunity-dst-section
+              [opportunity]="opportunity()!"
+            />
+          </div>
+
+          <!-- Related Items Section -->
+          <div id="section-related" style="scroll-margin-top: 72px">
+            <app-opportunity-related-items
+              #relatedItemsComponent
+              [opportunityId]="opportunity()!.id!"
+            />
+          </div>
+
+          
+
+          <!-- COLLABORATION Section - Comments -->
+          <div id="section-collaboration" style="scroll-margin-top: 72px">
+            <app-opportunity-collaboration
+              [opportunityId]="opportunity()!.id!"
+            />
+          </div>
+
+          <!-- Action Bar -->
+          <div class="bg-white rounded-lg shadow-lg p-4 sticky bottom-4 border border-gray-200">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-info-circle text-blue-600"></i>
+                <span class="text-sm text-gray-600">
+                  {{ 'label.opportunity.lastModified' | translate }}: {{ formatDate(opportunity()!.lastModifiedDate) }}
+                </span>
+              </div>
+              <div class="flex gap-2">
+                <p-button
+                  [label]="'button.exportPDF' | translate"
+                  icon="pi pi-file-pdf"
+                  severity="secondary"
+                  [outlined]="true"
+                  [disabled]="true"
+                />
+                <p-button 
+                  [label]="'button.submitForReview' | translate" 
+                  icon="pi pi-send" 
+                  [disabled]="true"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

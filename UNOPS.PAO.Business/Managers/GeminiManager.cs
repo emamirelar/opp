@@ -13,6 +13,7 @@ using Newtonsoft.Json.Linq;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.Models.Opportunities;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using System.Security.Claims;
@@ -172,6 +173,31 @@ public class GeminiManager : IGeminiManager
 
 
     public Task<SessionConfiguration> GetSessionConfigurationAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<SimilarProjectsResponse> GetSimilarProjectsAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null)
+    {
+        throw new NotImplementedException();
+    }
+    
+    public Task<RelevantPeopleResponse> GetRelevantPeopleAsync(int opportunityId, int maxResults = 10, ClaimsPrincipal user = null)
+    {
+        throw new NotImplementedException();
+    }
+    
+    public Task<DSTRecommendationsResponse> GetDSTRecommendationsAsync(int opportunityId, ClaimsPrincipal user = null, int maxResults = 10)
+    {
+        throw new NotImplementedException();
+    }
+    
+    public Task<OpportunityInsightsResponse> GenerateOpportunityInsightsAsync(int opportunityId, ClaimsPrincipal user = null)                                                                             
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<OpportunityProposalResponse> GenerateOpportunityProposalAsync(OpportunityProposalRequest request, ClaimsPrincipal user = null)
     {
         throw new NotImplementedException();
     }

@@ -29,6 +29,15 @@ public class UserResolverService<TUserId>
 
     public string? GetUserEmail()
     {
+        // First try to get email from the email claim (this contains the actual email)
+        // Identity.Name might contain the Firebase UID (sub claim) which is not what we want
+        var emailClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Email)?.Value;
+        if (!string.IsNullOrEmpty(emailClaim))
+        {
+            return emailClaim;
+        }
+        
+        // Fallback to Identity.Name only if no email claim exists
         return _userEmail ?? _httpContextAccessor.HttpContext?.User?.Identity?.Name;
     }
 

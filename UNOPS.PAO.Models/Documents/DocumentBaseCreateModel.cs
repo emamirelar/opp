@@ -17,6 +17,7 @@ public class DocumentBaseCreateModel : DocumentBaseModel
                 EntityNames.Partner => DocumentParentEntityType.Partner,
                 EntityNames.Interaction => DocumentParentEntityType.Interaction,
                 EntityNames.PartnerTree => DocumentParentEntityType.PartnerTree,
+                EntityNames.Opportunity => DocumentParentEntityType.Opportunity,
                 _ => DocumentParentEntityType.Drive
             };
         }
@@ -25,7 +26,7 @@ public class DocumentBaseCreateModel : DocumentBaseModel
             _parentEntityType = value;
         }
     }
-    public string ParentEntityName { get; set; }
+    public string? ParentEntityName { get; set; }
     public int ParentEntityId { get; set; }
     public int? DocumentTypeId { get; set; }
 }
