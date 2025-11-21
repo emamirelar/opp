@@ -704,7 +704,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     // PartnerPreferredCurrency will remain null until Partner entity gets this field
                 };
                 
-                // AC5: Convert amount to USD if amount is provided
+                // Convert amount to USD if amount is provided
                 if (fp.Amount.HasValue && fp.Amount.Value > 0 && currency != null)
                 {
                     try
@@ -1233,10 +1233,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             ExternalStakeholderCount = opportunity.Stakeholders?.Count(s => !s.IsInternal) ?? 0
         };
 
-        // Calculate total funding
+        // Calculate total funding from all funding partners
         if (opportunity.FundingPartners != null && opportunity.FundingPartners.Any())
         {
-            stats.TotalFundingUSD = opportunity.InitiativeBudgetUSD ?? 0;
+            // Sum all funding partner amounts in USD
+            stats.TotalFundingUSD = opportunity.FundingPartners
+                .Where(fp => fp.AmountUSD.HasValue)
+                .Sum(fp => fp.AmountUSD.Value);
+                
             stats.TotalFeeAmountUSD = opportunity.FundingPartners
                 .Where(fp => fp.FeeAmountUSD.HasValue)
                 .Sum(fp => fp.FeeAmountUSD.Value);

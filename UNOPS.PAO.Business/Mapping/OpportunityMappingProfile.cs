@@ -61,7 +61,7 @@ public class OpportunityMappingProfile : Profile
             // Map both Amount and FundedAmount for backwards compatibility
             .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount))
             .ForMember(dest => dest.FundedAmount, opt => opt.MapFrom(src => src.Amount)) // Use Amount for FundedAmount
-            // AC5: Exchange rate and USD conversion fields
+            // Exchange rate and USD conversion fields
             .ForMember(dest => dest.PartnerPreferredCurrency, opt => opt.Ignore()) // Partner doesn't have PreferredCurrency yet
             .ForMember(dest => dest.AmountUSD, opt => opt.MapFrom(src => src.AmountUSD))
             .ForMember(dest => dest.ExchangeRate, opt => opt.MapFrom(src => src.ExchangeRate))

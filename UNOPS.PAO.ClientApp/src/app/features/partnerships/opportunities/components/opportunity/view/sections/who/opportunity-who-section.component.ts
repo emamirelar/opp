@@ -235,7 +235,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
       fundingPartners: opp.fundingPartners?.map(fp => ({
         partnerId: fp.partnerId,
         amount: fp.amount,
-        currencyId: fp.currencyId, // AC5: Include currency ID
+        currencyId: fp.currencyId,
         percentage: fp.percentage,
         feePercentage: fp.feePercentage,
         feeAmount: fp.feeAmount,

@@ -61,6 +61,29 @@
       </div>
     }
 
+    <!-- Total Budget USD Display -->
+    @if (opportunity().stats?.totalFundingUSD && opportunity().stats?.totalFundingUSD! > 0) {
+      <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="text-sm text-gray-600 mb-1">
+              <i class="pi pi-dollar text-blue-600 mr-2"></i>
+              {{ 'label.totalOpportunityBudget' | translate }}
+            </div>
+            <div class="text-4xl font-bold text-unops-primary mb-1">
+              ${{ opportunity().stats!.totalFundingUSD | number:'1.2-2' }}
+            </div>
+            <div class="text-xs text-gray-500">
+              {{ 'label.sumOfAllFundingPartners' | translate }}
+            </div>
+          </div>
+          <div class="text-right">
+            <i class="pi pi-chart-line text-6xl text-blue-200"></i>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Funding Partners -->
     <div>
       <div class="flex items-center justify-between mb-3">
@@ -175,7 +198,7 @@
                     }
                   </div>
                   
-                  <!-- AC5: USD Equivalent and Exchange Rate -->
+                  <!-- USD Equivalent and Exchange Rate -->
                   @if (partner.amountUSD && partner.currencyCode !== 'USD') {
                     <div class="mt-2 p-2 bg-blue-50 border border-blue-100 rounded">
                       <div class="text-xs text-blue-900">
