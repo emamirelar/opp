@@ -143,6 +143,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .Include(o => o.Stakeholders)
                 .ThenInclude(s => s.User)
                     .ThenInclude(u => u!.UserProfile)
+            .Include(o => o.ExternalStakeholders)
+                .ThenInclude(es => es.Contact)
+                    .ThenInclude(c => c!.Partner)
             .Include(o => o.Deliverables)
                 .ThenInclude(d => d.Output)
                     .ThenInclude(o => o.Unit)
@@ -680,6 +683,7 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             .Include(o => o.FundingPartners)
             .Include(o => o.ClientPartners)
             .Include(o => o.Stakeholders)
+            .Include(o => o.ExternalStakeholders)
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (opportunity == null)
@@ -834,6 +838,72 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 })
                 .ToList();
         }
+        
+        // Update External Stakeholders
+        if (request.ExternalStakeholders != null && request.ExternalStakeholders.Any())
+        {
+            // Get all partner IDs from the opportunity
+            var opportunityPartnerIds = new HashSet<int>();
+            
+            // Add funding partner IDs
+            if (opportunity.FundingPartners != null)
+            {
+                foreach (var fp in opportunity.FundingPartners)
+                {
+                    opportunityPartnerIds.Add(fp.PartnerId);
+                }
+            }
+            
+            // Add client partner IDs
+            if (opportunity.ClientPartners != null)
+            {
+                foreach (var cp in opportunity.ClientPartners)
+                {
+                    opportunityPartnerIds.Add(cp.PartnerId);
+                }
+            }
+            
+            // Validate that all contacts belong to the opportunity's partners
+            var contactIds = request.ExternalStakeholders.Select(es => es.ContactId).Distinct().ToList();
+            var contacts = await context.Contacts
+                .Where(c => contactIds.Contains(c.Id))
+                .ToListAsync();
+            
+            foreach (var contact in contacts)
+            {
+                if (contact.PartnerId == 0 || !opportunityPartnerIds.Contains(contact.PartnerId))
+                {
+                    throw new BusinessException("All external stakeholder contacts must belong to the opportunity's funding or client partners.");
+                }
+            }
+            
+            // Remove existing external stakeholders
+            if (opportunity.ExternalStakeholders != null && opportunity.ExternalStakeholders.Any())
+            {
+                context.Set<OpportunityExternalStakeholder>().RemoveRange(opportunity.ExternalStakeholders);
+            }
+
+            // Add new external stakeholders
+            opportunity.ExternalStakeholders = request.ExternalStakeholders
+                .Select(es => new OpportunityExternalStakeholder
+                {
+                    OpportunityId = id,
+                    ContactId = es.ContactId
+                })
+                .ToList();
+        }
+        else if (request.ExternalStakeholders != null && !request.ExternalStakeholders.Any())
+        {
+            // If empty list is sent, remove all external stakeholders
+            if (opportunity.ExternalStakeholders != null && opportunity.ExternalStakeholders.Any())
+            {
+                context.Set<OpportunityExternalStakeholder>().RemoveRange(opportunity.ExternalStakeholders);
+            }
+        }
+        
+        // Update misc external stakeholders and notes
+        opportunity.MiscExternalStakeholders = request.MiscExternalStakeholders;
+        opportunity.ExternalStakeholderNotes = request.ExternalStakeholderNotes;
 
         await context.SaveChangesAsync();
 

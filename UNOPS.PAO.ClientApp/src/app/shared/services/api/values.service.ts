@@ -21,6 +21,7 @@ export interface SimpleValue {
   logoUrl?: string;  // For partners
   email?: string;  // For users
   pooledFund?: boolean;  // For partners - indicates if this is a pooled funding programme
+  partnerId?: number;  // For contacts - the partner they belong to
 }
 
 /**
@@ -259,6 +260,15 @@ export class ValuesService {
    */
   getCurrencies(): Observable<SimpleValue[]> {
     return this.http.get<SimpleValue[]>(`${this.baseUrl}/currency`);
+  }
+
+  /**
+   * @description Get all contacts
+   * @returns {Observable<SimpleValue[]>}
+   * @since 1.0.0
+   */
+  getContacts(): Observable<SimpleValue[]> {
+    return this.http.get<SimpleValue[]>(`${this.baseUrl}/contacts`);
   }
 
   /**

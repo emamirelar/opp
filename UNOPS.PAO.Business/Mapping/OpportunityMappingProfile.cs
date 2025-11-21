@@ -20,6 +20,7 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.FundingPartners, opt => opt.MapFrom(src => src.FundingPartners))
             .ForMember(dest => dest.ClientPartners, opt => opt.MapFrom(src => src.ClientPartners))
             .ForMember(dest => dest.Stakeholders, opt => opt.MapFrom(src => src.Stakeholders))
+            .ForMember(dest => dest.ExternalStakeholders, opt => opt.MapFrom(src => src.ExternalStakeholders))
             .ForMember(dest => dest.Deliverables, opt => opt.MapFrom(src => src.Deliverables))
             .ForMember(dest => dest.Countries, opt => opt.MapFrom(src => src.Countries))
             .ForMember(dest => dest.SDGs, opt => opt.MapFrom(src => src.SDGs));
@@ -110,6 +111,18 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User != null ? src.User.Email : null));
             
         CreateMap<OpportunityStakeholderRequest, OpportunityStakeholder>()
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.OpportunityId, opt => opt.Ignore());
+        
+        // =================================================================
+        // OpportunityExternalStakeholder mappings
+        // =================================================================
+        CreateMap<OpportunityExternalStakeholder, OpportunityExternalStakeholderModel>()
+            .ForMember(dest => dest.ContactName, opt => opt.MapFrom(src => src.Contact != null ? src.Contact.Name : null))
+            .ForMember(dest => dest.ContactEmail, opt => opt.MapFrom(src => src.Contact != null ? src.Contact.Email : null))
+            .ForMember(dest => dest.ContactOrganization, opt => opt.MapFrom(src => src.Contact != null && src.Contact.Partner != null ? src.Contact.Partner.Name : null));
+        
+        CreateMap<OpportunityExternalStakeholderRequest, OpportunityExternalStakeholder>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.OpportunityId, opt => opt.Ignore());
         

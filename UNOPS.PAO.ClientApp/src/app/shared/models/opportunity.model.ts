@@ -42,6 +42,9 @@ export interface Opportunity {
   fundingPartners: OpportunityFundingPartner[];
   clientPartners: OpportunityClientPartner[];
   stakeholders: OpportunityStakeholder[];
+  externalStakeholders: OpportunityExternalStakeholder[];
+  miscExternalStakeholders: string | null;
+  externalStakeholderNotes: string | null;
   deliverables: OpportunityDeliverable[];
   countries: OpportunityCountry[];
   sdGs: OpportunitySDG[];
@@ -132,6 +135,18 @@ export interface OpportunityStakeholder {
   userName: string | null;
   userEmail: string | null;
   notes: string | null;
+}
+
+/**
+ * External Stakeholder model (contacts)
+ */
+export interface OpportunityExternalStakeholder {
+  id: number;
+  opportunityId: number;
+  contactId: number;
+  contactName: string | null;
+  contactEmail: string | null;
+  contactOrganization: string | null;
 }
 
 /**
@@ -283,6 +298,10 @@ export interface OpportunityStakeholderRequest {
   stakeholderType: string;
   userId?: number;
   entityRoleId: number;
+}
+
+export interface OpportunityExternalStakeholderRequest {
+  contactId: number;
 }
 
 export interface OpportunityDeliverableRequest {

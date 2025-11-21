@@ -60,6 +60,20 @@ public class Opportunity : ModifiableDeletableEntity
     
     public virtual ICollection<OpportunityStakeholder> Stakeholders { get; set; } = new HashSet<OpportunityStakeholder>();
     
+    public virtual ICollection<OpportunityExternalStakeholder> ExternalStakeholders { get; set; } = new HashSet<OpportunityExternalStakeholder>();
+    
+    /// <summary>
+    /// Free-text list of external stakeholders not found in the contact list
+    /// </summary>
+    [MaxLength(2000)]
+    public string? MiscExternalStakeholders { get; set; }
+    
+    /// <summary>
+    /// Additional notes about external stakeholders (e.g., their influence, capacity, role)
+    /// </summary>
+    [MaxLength(2000)]
+    public string? ExternalStakeholderNotes { get; set; }
+    
     public virtual ICollection<OpportunityDeliverable> Deliverables { get; set; } = new HashSet<OpportunityDeliverable>();
     
     public virtual ICollection<OpportunityCountry> Countries { get; set; } = new HashSet<OpportunityCountry>();

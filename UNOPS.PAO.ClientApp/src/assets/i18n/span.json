@@ -2424,5 +2424,15 @@
 	"message.noContinentMatches": "No hay países que coincidan por continente",
 	"message.noSearchResults": "No se encontraron países que coincidan con su búsqueda",
 	"message.country.activeUNSDCF": "Existe un UNSDCF activo para este país. Se le requerirá completar la sección de Alineación Estratégica.",
-	"message.country.noActiveUNSDCF": "No existe un UNSDCF activo para este país."
+	"message.country.noActiveUNSDCF": "No existe un UNSDCF activo para este país.",
+	"message.noStakeholders": "No se han agregado miembros del equipo o partes interesadas todavía",
+	"message.noExternalStakeholders": "No se han agregado partes interesadas externas todavía",
+	"message.validation.contactRequired": "Por favor seleccione un contacto",
+	"message.validation.externalStakeholderRequired": "Por favor seleccione un contacto para agregar como parte interesada externa",
+	"message.validation.externalStakeholderAlreadyAdded": "Este contacto ya ha sido agregado como parte interesada externa",
+	"message.confirmRemoveExternalStakeholder": "¿Está seguro de que desea eliminar esta parte interesada externa?",
+	"title.addStakeholder": "Agregar Miembro del Equipo",
+	"title.addExternalStakeholder": "Agregar Parte Interesada Externa",
+	"confirmation.removeStakeholder": "Eliminar Miembro del Equipo",
+	"confirmation.removeExternalStakeholder": "Eliminar Parte Interesada Externa"
 }
