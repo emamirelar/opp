@@ -117,10 +117,55 @@
                     </div>
                   }
                   
+                  <!-- DD Status Display -->
+                  @if (partner.ddStatus) {
+                    <div class="mt-2 flex items-center gap-2">
+                      <span class="text-xs font-medium text-gray-700">
+                        {{ 'label.dueDiligence' | translate }}:
+                      </span>
+                      <p-badge 
+                        [value]="partner.ddStatus" 
+                        [severity]="getDDStatusSeverity(partner.ddStatus)"
+                      />
+                      @if (partner.ddExpiryDate) {
+                        <span class="text-xs text-gray-600">
+                          {{ 'label.expires' | translate }}: {{ partner.ddExpiryDate | date:'mediumDate' }}
+                        </span>
+                      }
+                    </div>
+                    
+                    <!-- DD Expiry Warning -->
+                    @if (partner.ddStatus === 'Expired' || partner.ddStatus === 'Expiring Soon') {
+                      <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded flex items-start gap-2">
+                        <i class="pi pi-exclamation-triangle text-red-600 text-sm mt-0.5"></i>
+                        <span class="text-xs text-red-800">
+                          @if (partner.ddStatus === 'Expired') {
+                            {{ 'message.warning.ddExpired' | translate }}
+                          } @else {
+                            {{ 'message.warning.ddExpiringSoon' | translate }}
+                          }
+                        </span>
+                      </div>
+                    }
+                    
+                    <!-- DD Expires Before Opportunity End Warning -->
+                    @if (partner.ddExpiresBeforeOpportunityEnd && partner.ddExpiryDate) {
+                      <div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded flex items-start gap-2">
+                        <i class="pi pi-exclamation-circle text-orange-600 text-sm mt-0.5"></i>
+                        <span class="text-xs text-orange-800">
+                          {{ 'message.warning.ddExpiresBeforeOpportunityEnd' | translate: {
+                            expiryDate: (partner.ddExpiryDate | date:'mediumDate'),
+                            opportunityEndDate: (opportunity().targetDeliveryDate | date:'mediumDate')
+                          } }}
+                        </span>
+                      </div>
+                    }
+                  }
+                  
                   <div class="grid grid-cols-2 gap-2 text-sm mt-2">
                     <div>
                       <span class="text-gray-600">{{ 'label.amount' | translate }}:</span>
-                      <span class="font-semibold ml-2">{{ formatCurrency(partner.amount) }}</span>
+                      <span class="font-semibold ml-2">{{ formatCurrency(partner.amount) }} {{ partner.currencyCode }}</span>
                     </div>
                     @if (partner.feeAmount) {
                       <div>
@@ -129,6 +174,25 @@
                       </div>
                     }
                   </div>
+                  
+                  <!-- AC5: USD Equivalent and Exchange Rate -->
+                  @if (partner.amountUSD && partner.currencyCode !== 'USD') {
+                    <div class="mt-2 p-2 bg-blue-50 border border-blue-100 rounded">
+                      <div class="text-xs text-blue-900">
+                        <div class="flex items-center justify-between mb-1">
+                          <span class="font-medium">{{ 'label.usdEquivalent' | translate }}:</span>
+                          <span class="font-semibold">{{ formatCurrency(partner.amountUSD) }} USD</span>
+                        </div>
+                        @if (partner.exchangeRateDisplay) {
+                          <div class="text-xs text-blue-700">
+                            <i class="pi pi-info-circle mr-1"></i>
+                            {{ 'label.exchangeRate' | translate }}: {{ partner.exchangeRateDisplay }}
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                  
                   @if (partner.partnershipAgreementReference) {
                     <div class="text-xs text-blue-700 mt-2">
                       <i class="pi pi-file"></i>
@@ -247,6 +311,51 @@
                       {{ 'message.warning.partnerDraftStatus' | translate }}
                     </span>
                   </div>
+                }
+                
+                <!-- DD Status Display -->
+                @if (client.ddStatus) {
+                  <div class="mt-2 flex items-center gap-2">
+                    <span class="text-xs font-medium text-gray-700">
+                      {{ 'label.dueDiligence' | translate }}:
+                    </span>
+                    <p-badge 
+                      [value]="client.ddStatus" 
+                      [severity]="getDDStatusSeverity(client.ddStatus)"
+                    />
+                    @if (client.ddExpiryDate) {
+                      <span class="text-xs text-gray-600">
+                        {{ 'label.expires' | translate }}: {{ client.ddExpiryDate | date:'mediumDate' }}
+                      </span>
+                    }
+                  </div>
+                  
+                  <!-- DD Expiry Warning -->
+                  @if (client.ddStatus === 'Expired' || client.ddStatus === 'Expiring Soon') {
+                    <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded flex items-start gap-2">
+                      <i class="pi pi-exclamation-triangle text-red-600 text-sm mt-0.5"></i>
+                      <span class="text-xs text-red-800">
+                        @if (client.ddStatus === 'Expired') {
+                          {{ 'message.warning.ddExpired' | translate }}
+                        } @else {
+                          {{ 'message.warning.ddExpiringSoon' | translate }}
+                        }
+                      </span>
+                    </div>
+                  }
+                  
+                  <!-- DD Expires Before Opportunity End Warning -->
+                  @if (client.ddExpiresBeforeOpportunityEnd && client.ddExpiryDate) {
+                    <div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded flex items-start gap-2">
+                      <i class="pi pi-exclamation-circle text-orange-600 text-sm mt-0.5"></i>
+                      <span class="text-xs text-orange-800">
+                        {{ 'message.warning.ddExpiresBeforeOpportunityEnd' | translate: {
+                          expiryDate: (client.ddExpiryDate | date:'mediumDate'),
+                          opportunityEndDate: (opportunity().targetDeliveryDate | date:'mediumDate')
+                        } }}
+                      </span>
+                    </div>
+                  }
                 }
                 
                 @if (client.associatedDocuments && client.associatedDocuments.length > 0) {

@@ -80,6 +80,17 @@ export interface OpportunityFundingPartner {
   associatedDocuments: DocumentDetail[] | null;
   partnerStatus: string | null;
   partnerApprovalStatus: string | null;
+  ddApproval: string | null;
+  ddApprovalDate: Date | null;
+  ddExpiryDate: Date | null;
+  ddStatus: string | null;
+  ddExpiresBeforeOpportunityEnd: boolean | null;
+  // AC5: Currency and USD conversion fields
+  partnerPreferredCurrency: string | null;
+  amountUSD: number | null;
+  exchangeRate: number | null;
+  exchangeRateDate: Date | null;
+  exchangeRateDisplay: string | null;
 }
 
 /**
@@ -96,6 +107,11 @@ export interface OpportunityClientPartner {
   associatedDocuments: DocumentDetail[] | null;
   partnerStatus: string | null;
   partnerApprovalStatus: string | null;
+  ddApproval: string | null;
+  ddApprovalDate: Date | null;
+  ddExpiryDate: Date | null;
+  ddStatus: string | null;
+  ddExpiresBeforeOpportunityEnd: boolean | null;
 }
 
 /**

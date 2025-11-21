@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
+using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
@@ -159,9 +160,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             return null;
         }
 
-        var model = mapper.Map<OpportunityModel>(entity);
+        var model = mapper.Map<OpportunityModel>(entity, opt => opt.Items["Opportunity"] = entity);
         
-        // Populate associated documents for funding partners
+        // Populate associated documents and DD fields for funding partners
         if (model.FundingPartners != null && model.FundingPartners.Any())
         {
             foreach (var fundingPartner in model.FundingPartners)
@@ -171,10 +172,41 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     fundingPartner.PartnerId, 
                     isFundingPartner: true
                 );
+                
+                // Populate DD fields from the entity's Partner navigation property
+                var fundingPartnerEntity = entity.FundingPartners?
+                    .FirstOrDefault(fp => fp.Id == fundingPartner.Id);
+                    
+                if (fundingPartnerEntity?.Partner != null)
+                {
+                    var partner = fundingPartnerEntity.Partner;
+                    
+                    // DD Approval
+                    fundingPartner.DDApproval = partner.DueDiligenceApproval?.ToString();
+                    fundingPartner.DDApprovalDate = partner.DueDiligenceApprovalDate;
+                    fundingPartner.DDExpiryDate = partner.DueDiligenceExpiryDate;
+                    
+                    // DD Status calculation
+                    fundingPartner.DDStatus = CalculateDDStatus(partner);
+                    
+                    // DD Expires before opportunity end
+                    if (partner.DueDiligenceExpiryDate != null && entity.TargetDeliveryDate != null)
+                    {
+                        fundingPartner.DDExpiresBeforeOpportunityEnd = 
+                            partner.DueDiligenceExpiryDate < entity.TargetDeliveryDate;
+                    }
+                    
+                    // Exchange Rate Display
+                    if (fundingPartnerEntity.ExchangeRate != null && fundingPartnerEntity.ExchangeRateDate != null)
+                    {
+                        fundingPartner.ExchangeRateDisplay = 
+                            $"{fundingPartnerEntity.ExchangeRate:F4} on {fundingPartnerEntity.ExchangeRateDate:MMM dd, yyyy}";
+                    }
+                }
             }
         }
         
-        // Populate associated documents for client partners
+        // Populate associated documents and DD fields for client partners
         if (model.ClientPartners != null && model.ClientPartners.Any())
         {
             foreach (var clientPartner in model.ClientPartners)
@@ -184,6 +216,30 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     clientPartner.PartnerId, 
                     isFundingPartner: false
                 );
+                
+                // Populate DD fields from the entity's Partner navigation property
+                var clientPartnerEntity = entity.ClientPartners?
+                    .FirstOrDefault(cp => cp.Id == clientPartner.Id);
+                    
+                if (clientPartnerEntity?.Partner != null)
+                {
+                    var partner = clientPartnerEntity.Partner;
+                    
+                    // DD Approval
+                    clientPartner.DDApproval = partner.DueDiligenceApproval?.ToString();
+                    clientPartner.DDApprovalDate = partner.DueDiligenceApprovalDate;
+                    clientPartner.DDExpiryDate = partner.DueDiligenceExpiryDate;
+                    
+                    // DD Status calculation
+                    clientPartner.DDStatus = CalculateDDStatus(partner);
+                    
+                    // DD Expires before opportunity end
+                    if (partner.DueDiligenceExpiryDate != null && entity.TargetDeliveryDate != null)
+                    {
+                        clientPartner.DDExpiresBeforeOpportunityEnd = 
+                            partner.DueDiligenceExpiryDate < entity.TargetDeliveryDate;
+                    }
+                }
             }
         }
         
@@ -624,21 +680,60 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             }
 
             // Add new funding partners
-            opportunity.FundingPartners = request.FundingPartners
-                .Select(fp => new OpportunityFundingPartner
+            var exchangeRateService = new ExchangeRateService(context);
+            var fundingPartners = new List<OpportunityFundingPartner>();
+            
+            foreach (var fp in request.FundingPartners)
+            {
+                var partner = await context.Partners.FindAsync(fp.PartnerId);
+                var currency = await context.Currencies.FindAsync(fp.CurrencyId ?? defaultCurrencyId);
+                
+                var fundingPartner = new OpportunityFundingPartner
                 {
                     OpportunityId = id,
                     PartnerId = fp.PartnerId,
                     Amount = fp.Amount,
-                    CurrencyId = fp.CurrencyId ?? defaultCurrencyId, // Use provided or default currency
+                    CurrencyId = fp.CurrencyId ?? defaultCurrencyId,
                     Percentage = fp.Percentage,
                     FeePercentage = fp.FeePercentage,
                     FeeAmount = fp.FeeAmount,
                     FeeAmountUSD = fp.FeeAmountUSD,
                     IsAmountBasedFee = fp.IsAmountBasedFee,
-                    PartnershipAgreementReference = fp.PartnershipAgreementReference
-                })
-                .ToList();
+                    PartnershipAgreementReference = fp.PartnershipAgreementReference,
+                    DocumentId = fp.DocumentId
+                    // PartnerPreferredCurrency will remain null until Partner entity gets this field
+                };
+                
+                // AC5: Convert amount to USD if amount is provided
+                if (fp.Amount.HasValue && fp.Amount.Value > 0 && currency != null)
+                {
+                    try
+                    {
+                        var conversionResult = await exchangeRateService.ConvertToUSDAsync(
+                            fp.Amount.Value, 
+                            currency.Code ?? "USD"
+                        );
+                        
+                        fundingPartner.AmountUSD = conversionResult.AmountUSD;
+                        fundingPartner.ExchangeRate = conversionResult.ExchangeRate;
+                        fundingPartner.ExchangeRateDate = conversionResult.ExchangeRateDate;
+                        fundingPartner.ExchangeRateId = conversionResult.ExchangeRateId > 0 ? conversionResult.ExchangeRateId : null;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log warning but don't fail the operation
+                        Console.WriteLine($"Warning: Could not convert amount to USD for partner {fp.PartnerId}: {ex.Message}");
+                        // If conversion fails, just store the original amount as USD
+                        fundingPartner.AmountUSD = fp.Amount.Value;
+                        fundingPartner.ExchangeRate = 1.0m;
+                        fundingPartner.ExchangeRateDate = DateTime.UtcNow;
+                    }
+                }
+                
+                fundingPartners.Add(fundingPartner);
+            }
+            
+            opportunity.FundingPartners = fundingPartners;
         }
 
         // Update Client Partners
@@ -1151,6 +1246,30 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         stats.PrimarySDGId = opportunity.SDGs?.FirstOrDefault(s => s.IsPrimary)?.SDGId;
 
         return stats;
+    }
+
+    /// <summary>
+    /// Calculate Due Diligence status based on partner DD information
+    /// </summary>
+    private static string CalculateDDStatus(Partner partner)
+    {
+        if (partner.DueDiligenceRequired == null || partner.DueDiligenceRequired == Domain.Enums.DueDiligenceRequired.NotRequired)
+            return "Not Required";
+            
+        if (partner.DueDiligenceApproval == null || partner.DueDiligenceApproval == Domain.Enums.DueDiligenceApproval.NotApproved)
+            return "Pending";
+            
+        if (partner.DueDiligenceExpiryDate == null)
+            return "Approved";
+            
+        var now = DateTime.UtcNow;
+        if (partner.DueDiligenceExpiryDate < now)
+            return "Expired";
+            
+        if (partner.DueDiligenceExpiryDate <= now.AddMonths(6))
+            return "Expiring Soon";
+            
+        return "Valid";
     }
 
     /// <summary>

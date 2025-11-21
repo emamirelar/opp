@@ -240,8 +240,11 @@ export class OpportunityWhoSectionComponent implements OnInit {
         });
         this.cdr.detectChanges();
       },
-      error: () => {
+      error: (error) => {
         this.isSaving.set(false);
+        // Keep editing mode active so user can fix the issue
+        // this.isEditing.set(false); // Don't exit edit mode on error
+        console.error('Error saving WHO section:', error);
         this.cdr.detectChanges();
       }
     });
@@ -369,7 +372,17 @@ export class OpportunityWhoSectionComponent implements OnInit {
       documentName: null,
       associatedDocuments: null,
       partnerStatus: null,
-      partnerApprovalStatus: null
+      partnerApprovalStatus: null,
+      ddApproval: null,
+      ddApprovalDate: null,
+      ddExpiryDate: null,
+      ddStatus: null,
+      ddExpiresBeforeOpportunityEnd: null,
+      partnerPreferredCurrency: null,
+      amountUSD: null,
+      exchangeRate: null,
+      exchangeRateDate: null,
+      exchangeRateDisplay: null
     };
 
     currentPartners.push(newPartner);
@@ -543,7 +556,12 @@ export class OpportunityWhoSectionComponent implements OnInit {
       documentName: null,
       associatedDocuments: null,
       partnerStatus: null,
-      partnerApprovalStatus: null
+      partnerApprovalStatus: null,
+      ddApproval: null,
+      ddApprovalDate: null,
+      ddExpiryDate: null,
+      ddStatus: null,
+      ddExpiresBeforeOpportunityEnd: null
     };
 
     currentClients.push(newClient);
@@ -890,6 +908,21 @@ export class OpportunityWhoSectionComponent implements OnInit {
       case 'Draft': return 'warn';
       case 'Closed': return 'danger';
       case 'Archived': return 'info';
+      default: return 'info';
+    }
+  }
+
+  /**
+   * Get severity for DD status badge
+   */
+  getDDStatusSeverity(status: string | null): 'success' | 'warn' | 'danger' | 'info' {
+    switch (status) {
+      case 'Valid': return 'success';
+      case 'Approved': return 'success';
+      case 'Expiring Soon': return 'warn';
+      case 'Expired': return 'danger';
+      case 'Pending': return 'info';
+      case 'Not Required': return 'info';
       default: return 'info';
     }
   }
