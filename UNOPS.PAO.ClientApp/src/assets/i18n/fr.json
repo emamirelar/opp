@@ -875,6 +875,8 @@
   "message.warning.ddExpired": "La diligence raisonnable a expiré. Veuillez renouveler l'évaluation DD avant de continuer.",
   "message.warning.ddExpiringSoon": "La diligence raisonnable expire dans les 6 mois. Envisagez le renouvellement.",
   "message.warning.ddExpiresBeforeOpportunityEnd": "La DD expire le {{expiryDate}}, avant la fin de l'opportunité ({{opportunityEndDate}}). Renouvellement requis.",
+  "message.warning.newValueRangeForOrgUnit": "Nouvelle Fourchette de Valeur pour l'Unité Organisationnelle",
+  "message.warning.newValueRangeDetails": "Il s'agit de la première opportunité de cette valeur pour {{orgUnit}}. Budget actuel: ${{currentValue}} USD, Maximum précédent: ${{historicalMax}} USD.",
   "iapStatus.allCookies": "Tous les Cookies",
   "iapStatus.authenticationStatus": "Statut d'Authentification",
   "iapStatus.cookieInformation": "Information sur les Cookies",

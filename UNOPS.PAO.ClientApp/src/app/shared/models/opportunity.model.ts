@@ -45,6 +45,8 @@ export interface Opportunity {
   countries: OpportunityCountry[];
   sdGs: OpportunitySDG[];
   stats: OpportunityStats | null;
+  isNewValueRangeForOrgUnit: boolean | null;
+  orgUnitHistoricalMaxValue: number | null;
   dstAnalysis: DSTAnalysis | null; // DST Insights & Recommendations
   insights: OpportunityInsight[]; // Analysis insights
   suggestions: OpportunitySuggestion[]; // Analysis suggestions

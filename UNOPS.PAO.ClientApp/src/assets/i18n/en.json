@@ -889,6 +889,8 @@
   "message.warning.ddExpired": "Due Diligence has expired. Please renew DD assessment before proceeding.",
   "message.warning.ddExpiringSoon": "Due Diligence expires within 6 months. Consider renewal.",
   "message.warning.ddExpiresBeforeOpportunityEnd": "DD expires on {{expiryDate}}, before opportunity completion ({{opportunityEndDate}}). Renewal required.",
+  "message.warning.newValueRangeForOrgUnit": "New Value Range for Organization Unit",
+  "message.warning.newValueRangeDetails": "This is the first opportunity of this value for {{orgUnit}}. Current budget: ${{currentValue}} USD, Previous maximum: ${{historicalMax}} USD.",
   "iapStatus.allCookies": "All Cookies",
   "iapStatus.authenticationStatus": "Authentication Status",
   "iapStatus.cookieInformation": "Cookie Information",

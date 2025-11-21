@@ -251,6 +251,37 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
 
         // Compute statistics
         model.Stats = ComputeOpportunityStats(entity);
+        
+        // Check if this is a new value range for the responsible org unit
+        if (model.ResponsibleOrgUnitId.HasValue && model.Stats?.TotalFundingUSD != null && model.Stats.TotalFundingUSD > 0)
+        {
+            try
+            {
+                // Find the historical maximum budget for this org unit (excluding current opportunity)
+                var historicalMax = await context.Opportunities
+                    .Where(o => o.ResponsibleOrgUnitId == model.ResponsibleOrgUnitId
+                             && o.Id != id
+                             && !o.IsDeleted)
+                    .SelectMany(o => o.FundingPartners)
+                    .GroupBy(fp => fp.OpportunityId)
+                    .Select(g => new { 
+                        OpportunityId = g.Key, 
+                        Total = g.Sum(fp => fp.AmountUSD ?? 0) 
+                    })
+                    .OrderByDescending(x => x.Total)
+                    .FirstOrDefaultAsync();
+                
+                model.OrgUnitHistoricalMaxValue = historicalMax?.Total ?? 0;
+                model.IsNewValueRangeForOrgUnit = model.Stats.TotalFundingUSD > (historicalMax?.Total ?? 0);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the entire request
+                // Logger not available in this context - silently continue
+                model.IsNewValueRangeForOrgUnit = null;
+                model.OrgUnitHistoricalMaxValue = null;
+            }
+        }
 
         return model;
     }

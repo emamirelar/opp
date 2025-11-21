@@ -84,6 +84,25 @@
       </div>
     }
 
+    <!-- Org Unit Value Range Warning -->
+    @if (opportunity().isNewValueRangeForOrgUnit) {
+      <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+        <i class="pi pi-exclamation-triangle text-yellow-600 text-xl mt-0.5"></i>
+        <div class="flex-1">
+          <div class="font-semibold text-yellow-900 mb-1">
+            {{ 'message.warning.newValueRangeForOrgUnit' | translate }}
+          </div>
+          <div class="text-sm text-yellow-800">
+            {{ 'message.warning.newValueRangeDetails' | translate: {
+              orgUnit: opportunity().responsibleOrgUnitName,
+              currentValue: (opportunity().stats?.totalFundingUSD | number:'1.2-2'),
+              historicalMax: (opportunity().orgUnitHistoricalMaxValue | number:'1.2-2')
+            } }}
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Funding Partners -->
     <div>
       <div class="flex items-center justify-between mb-3">

@@ -875,6 +875,8 @@
   "message.warning.ddExpired": "La debida diligencia ha expirado. Por favor, renueve la evaluación DD antes de proceder.",
   "message.warning.ddExpiringSoon": "La debida diligencia expira dentro de 6 meses. Considere la renovación.",
   "message.warning.ddExpiresBeforeOpportunityEnd": "La DD expira el {{expiryDate}}, antes de la finalización de la oportunidad ({{opportunityEndDate}}). Renovación requerida.",
+  "message.warning.newValueRangeForOrgUnit": "Nuevo Rango de Valor para la Unidad Organizacional",
+  "message.warning.newValueRangeDetails": "Esta es la primera oportunidad de este valor para {{orgUnit}}. Presupuesto actual: ${{currentValue}} USD, Máximo anterior: ${{historicalMax}} USD.",
   "iapStatus.allCookies": "Todas las Cookies",
   "iapStatus.authenticationStatus": "Estado de Autenticación",
   "iapStatus.cookieInformation": "Información de Cookies",
