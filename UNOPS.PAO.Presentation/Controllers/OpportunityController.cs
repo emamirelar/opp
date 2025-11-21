@@ -1015,7 +1015,7 @@ public class OpportunityController : BaseController
         try
         {
             _logger.LogInformation("🎯 [API] Creating opportunity '{Name}' from {Count} interactions for partner {PartnerId}", 
-                request.Name, request.SourceInteractionIds.Count, request.PartnerId);
+                request.Name, request.SourceInteractionIds?.Count ?? 0, request.PartnerId);
 
             // Validate request
             if (string.IsNullOrWhiteSpace(request.Name))
