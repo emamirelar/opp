@@ -71,6 +71,31 @@ export interface SDG {
 }
 
 /**
+ * @interface SDGTarget
+ * @description SDG Target reference model
+ */
+export interface SDGTarget {
+  id: number;
+  name: string;
+  sdgTargetId: string;  // e.g., "1.1", "3.3"
+  sdgId: string;  // Parent SDG ID
+  targetDescription: string | null;
+  targetType: string | null;
+}
+
+/**
+ * @interface SDGIndicator
+ * @description SDG Indicator reference model
+ */
+export interface SDGIndicator {
+  id: number;
+  name: string;
+  sdgIndicatorId: string;  // e.g., "1.1.1", "3.3.2"
+  sdgTargetId: string;  // Parent Target ID
+  sdgIndicatorLongDescription: string | null;
+}
+
+/**
  * @interface CountrySearchResult
  * @description Country search result with match context
  */
@@ -198,6 +223,32 @@ export class ValuesService {
    */
   getSDGs(): Observable<SDG[]> {
     return this.http.get<SDG[]>(`${this.baseUrl}/sdgs`);
+  }
+
+  /**
+   * @description Get all SDG Targets, optionally filtered by SDG ID
+   * @param {string} sdgId - Optional SDG ID to filter targets
+   * @returns {Observable<SDGTarget[]>}
+   * @since 1.0.0
+   */
+  getSDGTargets(sdgId?: string): Observable<SDGTarget[]> {
+    const url = sdgId
+      ? `${this.baseUrl}/sdg-targets?sdgId=${sdgId}`
+      : `${this.baseUrl}/sdg-targets`;
+    return this.http.get<SDGTarget[]>(url);
+  }
+
+  /**
+   * @description Get all SDG Indicators, optionally filtered by Target ID
+   * @param {string} targetId - Optional Target ID to filter indicators
+   * @returns {Observable<SDGIndicator[]>}
+   * @since 1.0.0
+   */
+  getSDGIndicators(targetId?: string): Observable<SDGIndicator[]> {
+    const url = targetId
+      ? `${this.baseUrl}/sdg-indicators?targetId=${targetId}`
+      : `${this.baseUrl}/sdg-indicators`;
+    return this.http.get<SDGIndicator[]>(url);
   }
 
   /**

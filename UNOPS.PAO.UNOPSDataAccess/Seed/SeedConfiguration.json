@@ -113,6 +113,15 @@
         },
         {
             "order": 13,
+            "name": "SDGIndicators",
+            "type": "seeder",
+            "className": "SDGIndicatorSeeder",
+            "methodName": "SeedSDGIndicatorsAsync",
+            "filePath": "Seeders/SDGIndicatorSeeder.cs",
+            "description": "UN SDG Indicators (247 indicators under the 169 SDG Targets)"
+        },
+        {
+            "order": 14,
             "name": "Units",
             "type": "seeder",
             "className": "UnitSeeder",
@@ -121,7 +130,7 @@
             "description": "Units of measurement (Days, Number, Litres, etc.)"
         },
         {
-            "order": 14,
+            "order": 15,
             "name": "ProjectCategories",
             "type": "seeder",
             "className": "ProjectCategorySeeder",
@@ -130,7 +139,7 @@
             "description": "Project categories (Category 1, 2, 3)"
         },
         {
-            "order": 15,
+            "order": 16,
             "name": "Outputs",
             "type": "seeder",
             "className": "OutputSeeder",
@@ -139,7 +148,7 @@
             "description": "UNOPS Output catalog"
         },
         {
-            "order": 16,
+            "order": 17,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",
