@@ -49,6 +49,11 @@ public class Opportunity : ModifiableDeletableEntity
     [MaxLength(2000)]
     public string? Challenges { get; set; }
     
+    /// <summary>
+    /// Whether funding is pooled across multiple partners
+    /// </summary>
+    public bool IsPooledFunding { get; set; }
+    
     public virtual ICollection<OpportunityFundingPartner> FundingPartners { get; set; } = new HashSet<OpportunityFundingPartner>();
     
     public virtual ICollection<OpportunityClientPartner> ClientPartners { get; set; } = new HashSet<OpportunityClientPartner>();

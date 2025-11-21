@@ -38,6 +38,7 @@ export interface Opportunity {
   intendedImpactOutcomes: string | null;
   expectedBeneficiaries: string | null;
   challenges: string | null;
+  isPooledFunding: boolean;
   fundingPartners: OpportunityFundingPartner[];
   clientPartners: OpportunityClientPartner[];
   stakeholders: OpportunityStakeholder[];
@@ -93,6 +94,7 @@ export interface OpportunityFundingPartner {
   exchangeRate: number | null;
   exchangeRateDate: Date | null;
   exchangeRateDisplay: string | null;
+  isPooledContribution: boolean;
 }
 
 /**
@@ -269,6 +271,7 @@ export interface OpportunityFundingPartnerRequest {
   feeAmountUSD?: number;
   isAmountBasedFee?: boolean;
   documentId?: number;
+  isPooledContribution?: boolean;
 }
 
 export interface OpportunityClientPartnerRequest {

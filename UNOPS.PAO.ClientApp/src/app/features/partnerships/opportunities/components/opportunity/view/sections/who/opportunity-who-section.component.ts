@@ -31,6 +31,7 @@ import { MessageModule } from 'primeng/message';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
+import { CheckboxModule } from 'primeng/checkbox';
 import { Opportunity, OpportunityFundingPartner, OpportunityClientPartner, OpportunityStakeholder, DocumentDetail } from '@shared/models/opportunity.model';
 import { OpportunityService } from '@features/partnerships/opportunities/services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
@@ -72,7 +73,8 @@ import { DocumentService } from '@shared/services/api/document.service';
     MessageModule,
     FloatLabelModule,
     TooltipModule,
-    TextareaModule
+    TextareaModule,
+    CheckboxModule
   ],
   templateUrl: './opportunity-who-section.component.html',
   styleUrls: ['./opportunity-who-section.component.scss'],
@@ -129,6 +131,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly entityRoles = signal<SimpleValue[]>([]);
   readonly internalUsers = signal<SimpleValue[]>([]);
 
+  // Pooled funding state
+  isPooledFunding = false;
+
   // Computed counts
   readonly fundingPartnerCount = computed(() => {
     return this.opportunity().fundingPartners?.length || 0;
@@ -147,6 +152,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
     this.loadEntityRoles();
     this.loadInternalUsers();
     this.loadCurrencies();
+    
+    // Initialize pooled funding state
+    this.isPooledFunding = this.opportunity().isPooledFunding || false;
   }
 
   /**
@@ -232,6 +240,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     if (!opp || !opp.id) return;
 
     const whoData = {
+      isPooledFunding: this.isPooledFunding, // AC8
       fundingPartners: opp.fundingPartners?.map(fp => ({
         partnerId: fp.partnerId,
         amount: fp.amount,
@@ -242,7 +251,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
         feeAmountUSD: fp.feeAmountUSD,
         isAmountBasedFee: fp.isAmountBasedFee,
         partnershipAgreementReference: fp.partnershipAgreementReference,
-        documentId: fp.documentId // Include document ID if set
+        documentId: fp.documentId, // Include document ID if set
+        isPooledContribution: fp.isPooledContribution || false
       })),
       clientPartners: opp.clientPartners?.map(cp => ({
         partnerId: cp.partnerId,
@@ -415,10 +425,11 @@ export class OpportunityWhoSectionComponent implements OnInit {
       ddStatus: null,
       ddExpiresBeforeOpportunityEnd: null,
       partnerPreferredCurrency: null,
-      amountUSD: null, // Backend will calculate
-      exchangeRate: null, // Backend will calculate
-      exchangeRateDate: null, // Backend will calculate
-      exchangeRateDisplay: null // Backend will calculate
+      amountUSD: null,
+      exchangeRate: null,
+      exchangeRateDate: null,
+      exchangeRateDisplay: null, // Backend will calculate
+      isPooledContribution: false
     };
 
     currentPartners.push(newPartner);

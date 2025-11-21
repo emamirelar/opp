@@ -24,6 +24,8 @@ public class OpportunityModel
     public string? ExpectedBeneficiaries { get; set; }
     public string? Challenges { get; set; }
     
+    public bool IsPooledFunding { get; set; }
+    
     public List<OpportunityFundingPartnerModel>? FundingPartners { get; set; }
     public List<OpportunityClientPartnerModel>? ClientPartners { get; set; }
     public List<OpportunityStakeholderModel>? Stakeholders { get; set; }

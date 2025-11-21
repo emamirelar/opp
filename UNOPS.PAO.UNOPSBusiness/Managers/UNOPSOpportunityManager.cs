@@ -687,6 +687,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             throw new KeyNotFoundException($"Opportunity with ID {id} not found");
         }
 
+        // AC8: Update pooled funding flag
+        opportunity.IsPooledFunding = request.IsPooledFunding;
+
         // Update Funding Partners
         if (request.FundingPartners != null)
         {
@@ -731,7 +734,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     FeeAmountUSD = fp.FeeAmountUSD,
                     IsAmountBasedFee = fp.IsAmountBasedFee,
                     PartnershipAgreementReference = fp.PartnershipAgreementReference,
-                    DocumentId = fp.DocumentId
+                    DocumentId = fp.DocumentId,
+                    IsPooledContribution = fp.IsPooledContribution // AC8
                     // PartnerPreferredCurrency will remain null until Partner entity gets this field
                 };
                 

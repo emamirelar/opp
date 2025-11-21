@@ -120,6 +120,28 @@
           />
         }
       </div>
+      
+      <!-- Pooled Funding Toggle (only show if 2+ partners or in edit mode) -->
+      @if (isEditing() && fundingPartnerCount() >= 1) {
+        <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div class="flex items-center gap-3">
+            <p-checkbox
+              [(ngModel)]="isPooledFunding"
+              [binary]="true"
+              inputId="pooledFunding"
+            />
+            <label for="pooledFunding" class="cursor-pointer">
+              <span class="font-medium text-gray-900">
+                {{ 'label.pooledFunding' | translate }}
+              </span>
+              <p class="text-xs text-gray-600 mt-1">
+                {{ 'helpText.pooledFunding' | translate }}
+              </p>
+            </label>
+          </div>
+        </div>
+      }
+      
       @if (fundingPartnerCount() > 0) {
         @for (partner of opportunity().fundingPartners; track partner.id) {
           <div class="bg-blue-50 rounded-lg p-4 mb-3 border border-blue-100">
@@ -232,6 +254,29 @@
                           </div>
                         }
                       </div>
+                    </div>
+                  }
+                  
+                  <!-- AC8: Pooled Contribution Checkbox & Badge -->
+                  @if (isPooledFunding && isEditing()) {
+                    <div class="mt-2 flex items-center gap-2">
+                      <p-checkbox
+                        [(ngModel)]="partner.isPooledContribution"
+                        [binary]="true"
+                        [inputId]="'pooled-' + partner.id"
+                      />
+                      <label [for]="'pooled-' + partner.id" class="text-xs cursor-pointer text-gray-700">
+                        {{ 'label.pooledContribution' | translate }}
+                      </label>
+                    </div>
+                  }
+                  @if (isPooledFunding && !isEditing() && partner.isPooledContribution) {
+                    <div class="mt-2">
+                      <p-badge 
+                        value="Pooled" 
+                        severity="info" 
+                        styleClass="text-xs"
+                      />
                     </div>
                   }
                   
