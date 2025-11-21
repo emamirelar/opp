@@ -61,6 +61,48 @@
       </div>
     }
 
+    <!-- Total Budget USD Display -->
+    @if (opportunity().stats?.totalFundingUSD && opportunity().stats?.totalFundingUSD! > 0) {
+      <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+        <div class="flex items-center justify-between">
+          <div class="flex-1">
+            <div class="text-sm text-gray-600 mb-1">
+              <i class="pi pi-dollar text-blue-600 mr-2"></i>
+              {{ 'label.totalOpportunityBudget' | translate }}
+            </div>
+            <div class="text-4xl font-bold text-unops-primary mb-1">
+              ${{ opportunity().stats!.totalFundingUSD | number:'1.2-2' }}
+            </div>
+            <div class="text-xs text-gray-500">
+              {{ 'label.sumOfAllFundingPartners' | translate }}
+            </div>
+          </div>
+          <div class="text-right">
+            <i class="pi pi-chart-line text-6xl text-blue-200"></i>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Org Unit Value Range Warning -->
+    @if (opportunity().isNewValueRangeForOrgUnit) {
+      <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+        <i class="pi pi-exclamation-triangle text-yellow-600 text-xl mt-0.5"></i>
+        <div class="flex-1">
+          <div class="font-semibold text-yellow-900 mb-1">
+            {{ 'message.warning.newValueRangeForOrgUnit' | translate }}
+          </div>
+          <div class="text-sm text-yellow-800">
+            {{ 'message.warning.newValueRangeDetails' | translate: {
+              orgUnit: opportunity().responsibleOrgUnitName,
+              currentValue: (opportunity().stats?.totalFundingUSD | number:'1.2-2'),
+              historicalMax: (opportunity().orgUnitHistoricalMaxValue | number:'1.2-2')
+            } }}
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Funding Partners -->
     <div>
       <div class="flex items-center justify-between mb-3">
@@ -97,10 +139,75 @@
                     {{ partner.partnerName }}
                     <i class="pi pi-external-link text-xs ml-1"></i>
                   </a>
+                  
+                  <!-- Partner Status Badge -->
+                  @if (partner.partnerStatus) {
+                    <p-badge 
+                      [value]="partner.partnerStatus" 
+                      [severity]="getPartnerStatusSeverity(partner.partnerStatus)"
+                      styleClass="ml-2"
+                    />
+                  }
+                  
+                  <!-- Draft Warning -->
+                  @if (partner.partnerStatus === 'Draft') {
+                    <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded flex items-start gap-2">
+                      <i class="pi pi-exclamation-triangle text-yellow-600 text-sm mt-0.5"></i>
+                      <span class="text-xs text-yellow-800">
+                        {{ 'message.warning.partnerDraftStatus' | translate }}
+                      </span>
+                    </div>
+                  }
+                  
+                  <!-- DD Status Display -->
+                  @if (partner.ddStatus) {
+                    <div class="mt-2 flex items-center gap-2">
+                      <span class="text-xs font-medium text-gray-700">
+                        {{ 'label.dueDiligence' | translate }}:
+                      </span>
+                      <p-badge 
+                        [value]="partner.ddStatus" 
+                        [severity]="getDDStatusSeverity(partner.ddStatus)"
+                      />
+                      @if (partner.ddExpiryDate) {
+                        <span class="text-xs text-gray-600">
+                          {{ 'label.expires' | translate }}: {{ partner.ddExpiryDate | date:'mediumDate' }}
+                        </span>
+                      }
+                    </div>
+                    
+                    <!-- DD Expiry Warning -->
+                    @if (partner.ddStatus === 'Expired' || partner.ddStatus === 'Expiring Soon') {
+                      <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded flex items-start gap-2">
+                        <i class="pi pi-exclamation-triangle text-red-600 text-sm mt-0.5"></i>
+                        <span class="text-xs text-red-800">
+                          @if (partner.ddStatus === 'Expired') {
+                            {{ 'message.warning.ddExpired' | translate }}
+                          } @else {
+                            {{ 'message.warning.ddExpiringSoon' | translate }}
+                          }
+                        </span>
+                      </div>
+                    }
+                    
+                    <!-- DD Expires Before Opportunity End Warning -->
+                    @if (partner.ddExpiresBeforeOpportunityEnd && partner.ddExpiryDate) {
+                      <div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded flex items-start gap-2">
+                        <i class="pi pi-exclamation-circle text-orange-600 text-sm mt-0.5"></i>
+                        <span class="text-xs text-orange-800">
+                          {{ 'message.warning.ddExpiresBeforeOpportunityEnd' | translate: {
+                            expiryDate: (partner.ddExpiryDate | date:'mediumDate'),
+                            opportunityEndDate: (opportunity().targetDeliveryDate | date:'mediumDate')
+                          } }}
+                        </span>
+                      </div>
+                    }
+                  }
+                  
                   <div class="grid grid-cols-2 gap-2 text-sm mt-2">
                     <div>
                       <span class="text-gray-600">{{ 'label.amount' | translate }}:</span>
-                      <span class="font-semibold ml-2">{{ formatCurrency(partner.amount) }}</span>
+                      <span class="font-semibold ml-2">{{ formatCurrency(partner.amount) }} {{ partner.currencyCode }}</span>
                     </div>
                     @if (partner.feeAmount) {
                       <div>
@@ -109,6 +216,25 @@
                       </div>
                     }
                   </div>
+                  
+                  <!-- USD Equivalent and Exchange Rate -->
+                  @if (partner.amountUSD && partner.currencyCode !== 'USD') {
+                    <div class="mt-2 p-2 bg-blue-50 border border-blue-100 rounded">
+                      <div class="text-xs text-blue-900">
+                        <div class="flex items-center justify-between mb-1">
+                          <span class="font-medium">{{ 'label.usdEquivalent' | translate }}:</span>
+                          <span class="font-semibold">{{ formatCurrency(partner.amountUSD) }} USD</span>
+                        </div>
+                        @if (partner.exchangeRateDisplay) {
+                          <div class="text-xs text-blue-700">
+                            <i class="pi pi-info-circle mr-1"></i>
+                            {{ 'label.exchangeRate' | translate }}: {{ partner.exchangeRateDisplay }}
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                  
                   @if (partner.partnershipAgreementReference) {
                     <div class="text-xs text-blue-700 mt-2">
                       <i class="pi pi-file"></i>
@@ -209,6 +335,71 @@
                   {{ client.partnerName }}
                   <i class="pi pi-external-link text-xs ml-1"></i>
                 </a>
+                
+                <!-- Partner Status Badge -->
+                @if (client.partnerStatus) {
+                  <p-badge 
+                    [value]="client.partnerStatus" 
+                    [severity]="getPartnerStatusSeverity(client.partnerStatus)"
+                    styleClass="ml-2"
+                  />
+                }
+                
+                <!-- Draft Warning -->
+                @if (client.partnerStatus === 'Draft') {
+                  <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded flex items-start gap-2">
+                    <i class="pi pi-exclamation-triangle text-yellow-600 text-sm mt-0.5"></i>
+                    <span class="text-xs text-yellow-800">
+                      {{ 'message.warning.partnerDraftStatus' | translate }}
+                    </span>
+                  </div>
+                }
+                
+                <!-- DD Status Display -->
+                @if (client.ddStatus) {
+                  <div class="mt-2 flex items-center gap-2">
+                    <span class="text-xs font-medium text-gray-700">
+                      {{ 'label.dueDiligence' | translate }}:
+                    </span>
+                    <p-badge 
+                      [value]="client.ddStatus" 
+                      [severity]="getDDStatusSeverity(client.ddStatus)"
+                    />
+                    @if (client.ddExpiryDate) {
+                      <span class="text-xs text-gray-600">
+                        {{ 'label.expires' | translate }}: {{ client.ddExpiryDate | date:'mediumDate' }}
+                      </span>
+                    }
+                  </div>
+                  
+                  <!-- DD Expiry Warning -->
+                  @if (client.ddStatus === 'Expired' || client.ddStatus === 'Expiring Soon') {
+                    <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded flex items-start gap-2">
+                      <i class="pi pi-exclamation-triangle text-red-600 text-sm mt-0.5"></i>
+                      <span class="text-xs text-red-800">
+                        @if (client.ddStatus === 'Expired') {
+                          {{ 'message.warning.ddExpired' | translate }}
+                        } @else {
+                          {{ 'message.warning.ddExpiringSoon' | translate }}
+                        }
+                      </span>
+                    </div>
+                  }
+                  
+                  <!-- DD Expires Before Opportunity End Warning -->
+                  @if (client.ddExpiresBeforeOpportunityEnd && client.ddExpiryDate) {
+                    <div class="mt-2 p-2 bg-orange-50 border border-orange-200 rounded flex items-start gap-2">
+                      <i class="pi pi-exclamation-circle text-orange-600 text-sm mt-0.5"></i>
+                      <span class="text-xs text-orange-800">
+                        {{ 'message.warning.ddExpiresBeforeOpportunityEnd' | translate: {
+                          expiryDate: (client.ddExpiryDate | date:'mediumDate'),
+                          opportunityEndDate: (opportunity().targetDeliveryDate | date:'mediumDate')
+                        } }}
+                      </span>
+                    </div>
+                  }
+                }
+                
                 @if (client.associatedDocuments && client.associatedDocuments.length > 0) {
                   <div class="mt-2">
                     <div class="flex flex-wrap gap-1">
@@ -357,9 +548,35 @@
         />
         <label for="fundingPartner">{{ 'label.partner' | translate }} *</label>
       </p-floatlabel>
+      <div class="text-xs text-gray-600 mt-1">
+        <i class="pi pi-info-circle mr-1"></i>
+        {{ 'helpText.opportunity.fundingPartnerSelection' | translate }}
+      </div>
       @if (!partnerControl.value && showFundingValidationError()) {
         <p-message severity="error" variant="simple" styleClass="mt-2">
           {{ 'message.validation.partnerRequired' | translate }}
+        </p-message>
+      }
+    </div>
+
+    <!-- Currency Selection -->
+    <div>
+      <p-floatlabel variant="on">
+        <p-select
+          id="fundingCurrency"
+          [formControl]="currencyControl"
+          [options]="availableCurrencies()"
+          optionLabel="name"
+          optionValue="id"
+          [filter]="true"
+          filterBy="name,code"
+          class="w-full"
+        />
+        <label for="fundingCurrency">{{ 'label.currency' | translate }} *</label>
+      </p-floatlabel>
+      @if (!currencyControl.value && showFundingValidationError()) {
+        <p-message severity="error" variant="simple" styleClass="mt-2">
+          {{ 'message.validation.currencyRequired' | translate }}
         </p-message>
       }
     </div>
@@ -371,7 +588,7 @@
           id="amount"
           [formControl]="amountControl"
           mode="currency"
-          currency="USD"
+          [currency]="getSelectedCurrencyCode() || 'USD'"
           [minFractionDigits]="0"
           class="w-full"
         />

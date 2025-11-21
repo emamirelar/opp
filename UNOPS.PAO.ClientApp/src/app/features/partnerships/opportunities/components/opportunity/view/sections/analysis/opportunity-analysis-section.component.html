@@ -28,7 +28,7 @@
           <i class="pi pi-dollar text-unops-success"></i>
           <div>
             <div class="text-lg font-bold text-gray-900">
-              {{ formatCurrency(opportunity().initiativeBudgetUSD) }}
+              {{ formatCurrency(opportunity().stats?.totalFundingUSD) }}
             </div>
             <div class="text-xs text-gray-500">{{ 'label.opportunity.totalBudget' | translate }}</div>
           </div>

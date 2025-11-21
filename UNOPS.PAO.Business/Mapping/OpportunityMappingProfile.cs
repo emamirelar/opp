@@ -45,9 +45,31 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.PartnerLogoUrl, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.LogoUrl : null))
             .ForMember(dest => dest.CurrencyCode, opt => opt.MapFrom(src => src.Currency != null ? src.Currency.Code : "USD"))
             .ForMember(dest => dest.DocumentName, opt => opt.MapFrom(src => src.Document != null ? src.Document.Name : null))
+            .ForMember(dest => dest.PartnerStatus, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Status.ToString() : null))
+            .ForMember(dest => dest.PartnerApprovalStatus, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.PartnerApprovalStatus.ToString() : null))
+            .ForMember(dest => dest.DDApproval, opt => opt.MapFrom(src => src.Partner != null && src.Partner.DueDiligenceApproval.HasValue ? src.Partner.DueDiligenceApproval.Value.ToString() : null))
+            .ForMember(dest => dest.DDApprovalDate, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.DueDiligenceApprovalDate : null))
+            .ForMember(dest => dest.DDExpiryDate, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.DueDiligenceExpiryDate : null))
+            .ForMember(dest => dest.DDStatus, opt => opt.MapFrom(src => src.Partner != null ? CalculateDDStatus(src.Partner) : null))
+            .ForMember(dest => dest.DDExpiresBeforeOpportunityEnd, opt => opt.MapFrom((src, dest, destMember, context) =>
+            {
+                if (src.Partner == null || src.Partner.DueDiligenceExpiryDate == null) return false;
+                var opportunity = context.Items.ContainsKey("Opportunity") ? context.Items["Opportunity"] as Opportunity : null;
+                if (opportunity?.TargetDeliveryDate == null) return false;
+                return src.Partner.DueDiligenceExpiryDate < opportunity.TargetDeliveryDate;
+            }))
             // Map both Amount and FundedAmount for backwards compatibility
             .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount))
-            .ForMember(dest => dest.FundedAmount, opt => opt.MapFrom(src => src.Amount)); // Use Amount for FundedAmount
+            .ForMember(dest => dest.FundedAmount, opt => opt.MapFrom(src => src.Amount)) // Use Amount for FundedAmount
+            // Exchange rate and USD conversion fields
+            .ForMember(dest => dest.PartnerPreferredCurrency, opt => opt.Ignore()) // Partner doesn't have PreferredCurrency yet
+            .ForMember(dest => dest.AmountUSD, opt => opt.MapFrom(src => src.AmountUSD))
+            .ForMember(dest => dest.ExchangeRate, opt => opt.MapFrom(src => src.ExchangeRate))
+            .ForMember(dest => dest.ExchangeRateDate, opt => opt.MapFrom(src => src.ExchangeRateDate))
+            .ForMember(dest => dest.ExchangeRateDisplay, opt => opt.MapFrom(src => 
+                src.ExchangeRate.HasValue && src.ExchangeRateDate.HasValue 
+                    ? $"{src.ExchangeRate.Value:F4} on {src.ExchangeRateDate.Value:MMM dd, yyyy}" 
+                    : null));
             
         CreateMap<OpportunityFundingPartnerRequest, OpportunityFundingPartner>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -59,7 +81,20 @@ public class OpportunityMappingProfile : Profile
         CreateMap<OpportunityClientPartner, OpportunityClientPartnerModel>()
             .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null))
             .ForMember(dest => dest.PartnerLogoUrl, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.LogoUrl : null))
-            .ForMember(dest => dest.DocumentName, opt => opt.MapFrom(src => src.Document != null ? src.Document.Name : null));
+            .ForMember(dest => dest.DocumentName, opt => opt.MapFrom(src => src.Document != null ? src.Document.Name : null))
+            .ForMember(dest => dest.PartnerStatus, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Status.ToString() : null))
+            .ForMember(dest => dest.PartnerApprovalStatus, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.PartnerApprovalStatus.ToString() : null))
+            .ForMember(dest => dest.DDApproval, opt => opt.MapFrom(src => src.Partner != null && src.Partner.DueDiligenceApproval.HasValue ? src.Partner.DueDiligenceApproval.Value.ToString() : null))
+            .ForMember(dest => dest.DDApprovalDate, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.DueDiligenceApprovalDate : null))
+            .ForMember(dest => dest.DDExpiryDate, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.DueDiligenceExpiryDate : null))
+            .ForMember(dest => dest.DDStatus, opt => opt.MapFrom(src => src.Partner != null ? CalculateDDStatus(src.Partner) : null))
+            .ForMember(dest => dest.DDExpiresBeforeOpportunityEnd, opt => opt.MapFrom((src, dest, destMember, context) =>
+            {
+                if (src.Partner == null || src.Partner.DueDiligenceExpiryDate == null) return false;
+                var opportunity = context.Items.ContainsKey("Opportunity") ? context.Items["Opportunity"] as Opportunity : null;
+                if (opportunity?.TargetDeliveryDate == null) return false;
+                return src.Partner.DueDiligenceExpiryDate < opportunity.TargetDeliveryDate;
+            }));
             
         CreateMap<OpportunityClientPartnerRequest, OpportunityClientPartner>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -124,6 +159,30 @@ public class OpportunityMappingProfile : Profile
         CreateMap<OpportunitySDGRequest, OpportunitySDG>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.OpportunityId, opt => opt.Ignore());
+    }
+    
+    /// <summary>
+    /// Calculate Due Diligence status based on partner DD information
+    /// </summary>
+    private static string CalculateDDStatus(Partner partner)
+    {
+        if (partner.DueDiligenceRequired == null || partner.DueDiligenceRequired == Domain.Enums.DueDiligenceRequired.NotRequired)
+            return "Not Required";
+            
+        if (partner.DueDiligenceApproval == null || partner.DueDiligenceApproval == Domain.Enums.DueDiligenceApproval.NotApproved)
+            return "Pending";
+            
+        if (partner.DueDiligenceExpiryDate == null)
+            return "Approved";
+            
+        var now = DateTime.UtcNow;
+        if (partner.DueDiligenceExpiryDate < now)
+            return "Expired";
+            
+        if (partner.DueDiligenceExpiryDate <= now.AddMonths(6))
+            return "Expiring Soon";
+            
+        return "Valid";
     }
 }
 

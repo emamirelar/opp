@@ -23,5 +23,65 @@ public class OpportunityFundingPartnerModel
     public int? DocumentId { get; set; }
     public string? DocumentName { get; set; }
     public List<DocumentDetailModel>? AssociatedDocuments { get; set; }
+    
+    /// <summary>
+    /// Partner's current status (Draft/Active/Closed/Archived)
+    /// </summary>
+    public string? PartnerStatus { get; set; }
+    
+    /// <summary>
+    /// Partner's approval status (Approved/NotApproved)
+    /// </summary>
+    public string? PartnerApprovalStatus { get; set; }
+    
+    /// <summary>
+    /// Due Diligence approval status (NotRequired/Required/NotApproved/Approved)
+    /// </summary>
+    public string? DDApproval { get; set; }
+    
+    /// <summary>
+    /// Due Diligence approval date
+    /// </summary>
+    public DateTime? DDApprovalDate { get; set; }
+    
+    /// <summary>
+    /// Due Diligence expiry date
+    /// </summary>
+    public DateTime? DDExpiryDate { get; set; }
+    
+    /// <summary>
+    /// Computed: DD status based on expiry date
+    /// </summary>
+    public string? DDStatus { get; set; }
+    
+    /// <summary>
+    /// Computed: Whether DD expires before opportunity end
+    /// </summary>
+    public bool? DDExpiresBeforeOpportunityEnd { get; set; }
+    
+    /// <summary>
+    /// Partner's preferred currency (for suggestion)
+    /// </summary>
+    public string? PartnerPreferredCurrency { get; set; }
+    
+    /// <summary>
+    /// Amount in USD
+    /// </summary>
+    public decimal? AmountUSD { get; set; }
+    
+    /// <summary>
+    /// Exchange rate used
+    /// </summary>
+    public decimal? ExchangeRate { get; set; }
+    
+    /// <summary>
+    /// Exchange rate date
+    /// </summary>
+    public DateTime? ExchangeRateDate { get; set; }
+    
+    /// <summary>
+    /// Display text for exchange rate (e.g., "1.11 on Nov 20, 2024")
+    /// </summary>
+    public string? ExchangeRateDisplay { get; set; }
 }
 

@@ -103,6 +103,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly isEditingFundingPartner = signal(false);
   readonly editingFundingPartnerIndex = signal(-1);
   readonly partnerControl = new FormControl<SimpleValue | null>(null);
+  readonly currencyControl = new FormControl<number | null>(null); // Currency ID
   readonly amountControl = new FormControl<number | null>(null);
   readonly feeAmountControl = new FormControl<number | null>(null);
   readonly partnershipAgreementControl = new FormControl<string | null>(null);
@@ -122,8 +123,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
   readonly userControl = new FormControl<SimpleValue | null>(null);
   readonly roleControl = new FormControl<SimpleValue | null>(null);
 
-  // Available partners from API
+  // Available partners and currencies from API
   readonly availablePartners = signal<SimpleValue[]>([]);
+  readonly availableCurrencies = signal<SimpleValue[]>([]);
   readonly entityRoles = signal<SimpleValue[]>([]);
   readonly internalUsers = signal<SimpleValue[]>([]);
 
@@ -144,18 +146,44 @@ export class OpportunityWhoSectionComponent implements OnInit {
     this.loadPartners();
     this.loadEntityRoles();
     this.loadInternalUsers();
+    this.loadCurrencies();
   }
 
   /**
-   * @description Load available partners from API
+   * @description Load available partners from API (excludes pooled fund partners)
    */
   loadPartners(): void {
     this.valuesService.getPartners().subscribe({
       next: (partners) => {
-        this.availablePartners.set(partners);
+        // Filter out pooled funding partners for funding partner selection
+        const eligiblePartners = partners.filter(p => !p.pooledFund);
+        this.availablePartners.set(eligiblePartners);
         this.cdr.detectChanges();
       }
     });
+  }
+
+  /**
+   * @description Load available currencies
+   */
+  loadCurrencies(): void {
+    this.valuesService.getCurrencies().subscribe({
+      next: (currencies) => {
+        this.availableCurrencies.set(currencies);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * @description Get selected currency code from currency control
+   */
+  getSelectedCurrencyCode(): string | null {
+    const currencyId = this.currencyControl.value;
+    if (!currencyId) return null;
+    
+    const selected = this.availableCurrencies().find(c => c.id === currencyId);
+    return selected?.code || null;
   }
 
   /**
@@ -207,15 +235,18 @@ export class OpportunityWhoSectionComponent implements OnInit {
       fundingPartners: opp.fundingPartners?.map(fp => ({
         partnerId: fp.partnerId,
         amount: fp.amount,
+        currencyId: fp.currencyId,
         percentage: fp.percentage,
         feePercentage: fp.feePercentage,
         feeAmount: fp.feeAmount,
         feeAmountUSD: fp.feeAmountUSD,
         isAmountBasedFee: fp.isAmountBasedFee,
-        partnershipAgreementReference: fp.partnershipAgreementReference
+        partnershipAgreementReference: fp.partnershipAgreementReference,
+        documentId: fp.documentId // Include document ID if set
       })),
       clientPartners: opp.clientPartners?.map(cp => ({
-        partnerId: cp.partnerId
+        partnerId: cp.partnerId,
+        documentId: cp.documentId // Include document ID if set
       })),
       stakeholders: opp.stakeholders?.map(s => ({
         userId: s.userId!,
@@ -238,8 +269,11 @@ export class OpportunityWhoSectionComponent implements OnInit {
         });
         this.cdr.detectChanges();
       },
-      error: () => {
+      error: (error) => {
         this.isSaving.set(false);
+        // Keep editing mode active so user can fix the issue
+        // this.isEditing.set(false); // Don't exit edit mode on error
+        console.error('Error saving WHO section:', error);
         this.cdr.detectChanges();
       }
     });
@@ -254,6 +288,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
    */
   openAddFundingPartnerDialog(): void {
     this.partnerControl.setValue(null);
+    this.currencyControl.setValue(141); // Default to USD (id: 141)
     this.amountControl.setValue(null);
     this.feeAmountControl.setValue(null);
     this.partnershipAgreementControl.setValue(null);
@@ -279,6 +314,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
     this.isEditingFundingPartner.set(true);
     this.editingFundingPartnerIndex.set(index);
     this.partnerControl.setValue(masterPartner || null);
+    this.currencyControl.setValue(partner.currencyId || 141); // Set currency or default to USD
     this.amountControl.setValue(partner.amount);
     this.feeAmountControl.setValue(partner.feeAmount);
     this.partnershipAgreementControl.setValue(partner.partnershipAgreementReference || null);
@@ -293,6 +329,7 @@ export class OpportunityWhoSectionComponent implements OnInit {
   cancelFundingPartnerDialog(): void {
     this.showFundingPartnerDialog.set(false);
     this.partnerControl.setValue(null);
+    this.currencyControl.setValue(null);
     this.amountControl.setValue(null);
     this.feeAmountControl.setValue(null);
     this.partnershipAgreementControl.setValue(null);
@@ -307,9 +344,10 @@ export class OpportunityWhoSectionComponent implements OnInit {
    */
   confirmFundingPartnerDialog(): void {
     const partner = this.partnerControl.value;
+    const currency = this.currencyControl.value;
     const amount = this.amountControl.value;
 
-    if (!partner || amount === null) {
+    if (!partner || !currency || amount === null) {
       this.showFundingValidationError.set(true);
       return;
     }
@@ -347,6 +385,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
     const opp = this.opportunity();
     const currentPartners = [...(opp.fundingPartners || [])];
 
+    const currencyId = this.currencyControl.value || 141; // Default to USD (id: 141)
+    const currencyCode = this.getSelectedCurrencyCode() || 'USD';
+
     const newPartner: OpportunityFundingPartner = {
       id: 0,
       opportunityId: opp.id!,
@@ -354,8 +395,8 @@ export class OpportunityWhoSectionComponent implements OnInit {
       partnerName: partner.name || '',
       partnerLogoUrl: partner.logoUrl || undefined,
       amount: amount,
-      currencyId: null, // Backend will use default USD currency
-      currencyCode: 'USD',
+      currencyId: currencyId,
+      currencyCode: currencyCode,
       percentage: null,
       feePercentage: null,
       feeAmount: this.feeAmountControl.value,
@@ -365,7 +406,19 @@ export class OpportunityWhoSectionComponent implements OnInit {
       commitmentStatus: null,
       documentId: null,
       documentName: null,
-      associatedDocuments: null
+      associatedDocuments: null,
+      partnerStatus: null,
+      partnerApprovalStatus: null,
+      ddApproval: null,
+      ddApprovalDate: null,
+      ddExpiryDate: null,
+      ddStatus: null,
+      ddExpiresBeforeOpportunityEnd: null,
+      partnerPreferredCurrency: null,
+      amountUSD: null, // Backend will calculate
+      exchangeRate: null, // Backend will calculate
+      exchangeRateDate: null, // Backend will calculate
+      exchangeRateDisplay: null // Backend will calculate
     };
 
     currentPartners.push(newPartner);
@@ -391,18 +444,28 @@ export class OpportunityWhoSectionComponent implements OnInit {
       return;
     }
 
+    const currencyId = this.currencyControl.value || 141; // Default to USD
+    const currencyCode = this.getSelectedCurrencyCode() || 'USD';
+
     currentPartners[index] = {
       ...currentPartners[index],
       partnerId: partner.id,
       partnerName: partner.name || '',
       partnerLogoUrl: partner.logoUrl || undefined,
       amount: amount,
+      currencyId: currencyId,
+      currencyCode: currencyCode,
       percentage: null,
       feePercentage: null,
       feeAmount: this.feeAmountControl.value,
       feeAmountUSD: this.feeAmountControl.value,
       isAmountBasedFee: true,
-      partnershipAgreementReference: this.partnershipAgreementControl.value || null
+      partnershipAgreementReference: this.partnershipAgreementControl.value || null,
+      // Reset USD conversion fields - backend will recalculate
+      amountUSD: null,
+      exchangeRate: null,
+      exchangeRateDate: null,
+      exchangeRateDisplay: null
     };
 
     const updatedOpportunity = {
@@ -537,7 +600,14 @@ export class OpportunityWhoSectionComponent implements OnInit {
       partnerLogoUrl: partner.logoUrl || undefined,
       documentId: null,
       documentName: null,
-      associatedDocuments: null
+      associatedDocuments: null,
+      partnerStatus: null,
+      partnerApprovalStatus: null,
+      ddApproval: null,
+      ddApprovalDate: null,
+      ddExpiryDate: null,
+      ddStatus: null,
+      ddExpiresBeforeOpportunityEnd: null
     };
 
     currentClients.push(newClient);
@@ -873,6 +943,34 @@ export class OpportunityWhoSectionComponent implements OnInit {
         this.cdr.detectChanges();
       }
     );
+  }
+
+  /**
+   * @description Get severity for partner status badge
+   */
+  getPartnerStatusSeverity(status: string | null): 'success' | 'warn' | 'danger' | 'info' {
+    switch (status) {
+      case 'Active': return 'success';
+      case 'Draft': return 'warn';
+      case 'Closed': return 'danger';
+      case 'Archived': return 'info';
+      default: return 'info';
+    }
+  }
+
+  /**
+   * Get severity for DD status badge
+   */
+  getDDStatusSeverity(status: string | null): 'success' | 'warn' | 'danger' | 'info' {
+    switch (status) {
+      case 'Valid': return 'success';
+      case 'Approved': return 'success';
+      case 'Expiring Soon': return 'warn';
+      case 'Expired': return 'danger';
+      case 'Pending': return 'info';
+      case 'Not Required': return 'info';
+      default: return 'info';
+    }
   }
 }
 

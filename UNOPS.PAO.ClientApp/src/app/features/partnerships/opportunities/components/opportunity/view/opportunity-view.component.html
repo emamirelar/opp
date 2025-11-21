@@ -31,6 +31,13 @@
       <span><strong>{{ 'label.opportunity.manager' | translate }}:</strong> {{ opportunityManager() || '-' }}</span>
       <span class="text-gray-300">|</span>
       <span><strong>{{ 'label.opportunity.orgUnit' | translate }}:</strong> {{ opportunity()!.responsibleOrgUnitName || '-' }}</span>
+      @if (opportunity()!.stats?.totalFundingUSD && opportunity()!.stats?.totalFundingUSD! > 0) {
+        <span class="text-gray-300">|</span>
+        <span class="flex items-center gap-1">
+          <strong>{{ 'label.totalBudget' | translate }}:</strong> 
+          <span class="text-unops-primary font-semibold">${{ opportunity()!.stats!.totalFundingUSD | number:'1.2-2' }}</span>
+        </span>
+      }
     </div>
   }
 </div>

@@ -20,6 +20,7 @@ export interface SimpleValue {
   region?: string;  // For countries
   logoUrl?: string;  // For partners
   email?: string;  // For users
+  pooledFund?: boolean;  // For partners - indicates if this is a pooled funding programme
 }
 
 /**

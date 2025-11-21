@@ -33,6 +33,16 @@ public class OpportunityModel
     
     public OpportunityStats? Stats { get; set; }
     
+    /// <summary>
+    /// Whether this is a new value range for the responsible org unit
+    /// </summary>
+    public bool? IsNewValueRangeForOrgUnit { get; set; }
+    
+    /// <summary>
+    /// Historical max value for the org unit
+    /// </summary>
+    public decimal? OrgUnitHistoricalMaxValue { get; set; }
+    
     public DateTime? CreatedDate { get; set; }
     public DateTime? LastModifiedDate { get; set; }
     public int? CreatedBy { get; set; }

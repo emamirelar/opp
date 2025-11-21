@@ -42,5 +42,36 @@ public class OpportunityFundingPartner
     
     public int? DocumentId { get; set; }
     public virtual Document? Document { get; set; }
+    
+    /// <summary>
+    /// Preferred currency from partner record (for suggestion)
+    /// </summary>
+    [MaxLength(10)]
+    public string? PartnerPreferredCurrency { get; set; }
+    
+    /// <summary>
+    /// Amount in USD (converted)
+    /// </summary>
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? AmountUSD { get; set; }
+    
+    /// <summary>
+    /// Exchange rate used for conversion
+    /// </summary>
+    [Column(TypeName = "decimal(18, 8)")]
+    public decimal? ExchangeRate { get; set; }
+    
+    /// <summary>
+    /// Date of exchange rate
+    /// </summary>
+    public DateTime? ExchangeRateDate { get; set; }
+    
+    /// <summary>
+    /// Exchange rate ID used (FK to ExchangeRate table)
+    /// </summary>
+    public int? ExchangeRateId { get; set; }
+    
+    // Navigation property
+    public virtual ExchangeRate? ExchangeRateRecord { get; set; }
 }
 

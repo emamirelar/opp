@@ -45,6 +45,8 @@ export interface Opportunity {
   countries: OpportunityCountry[];
   sdGs: OpportunitySDG[];
   stats: OpportunityStats | null;
+  isNewValueRangeForOrgUnit: boolean | null;
+  orgUnitHistoricalMaxValue: number | null;
   dstAnalysis: DSTAnalysis | null; // DST Insights & Recommendations
   insights: OpportunityInsight[]; // Analysis insights
   suggestions: OpportunitySuggestion[]; // Analysis suggestions
@@ -78,6 +80,19 @@ export interface OpportunityFundingPartner {
   documentId: number | null;
   documentName: string | null;
   associatedDocuments: DocumentDetail[] | null;
+  partnerStatus: string | null;
+  partnerApprovalStatus: string | null;
+  ddApproval: string | null;
+  ddApprovalDate: Date | null;
+  ddExpiryDate: Date | null;
+  ddStatus: string | null;
+  ddExpiresBeforeOpportunityEnd: boolean | null;
+  // AC5: Currency and USD conversion fields
+  partnerPreferredCurrency: string | null;
+  amountUSD: number | null;
+  exchangeRate: number | null;
+  exchangeRateDate: Date | null;
+  exchangeRateDisplay: string | null;
 }
 
 /**
@@ -92,6 +107,13 @@ export interface OpportunityClientPartner {
   documentId: number | null;
   documentName: string | null;
   associatedDocuments: DocumentDetail[] | null;
+  partnerStatus: string | null;
+  partnerApprovalStatus: string | null;
+  ddApproval: string | null;
+  ddApprovalDate: Date | null;
+  ddExpiryDate: Date | null;
+  ddStatus: string | null;
+  ddExpiresBeforeOpportunityEnd: boolean | null;
 }
 
 /**
