@@ -186,6 +186,36 @@ export interface OpportunitySDG {
   sdgNumber: string;
   sdgName: string;
   isPrimary: boolean;
+  skipTargetsAndIndicators?: boolean | null;
+  notes: string | null;
+  targets?: OpportunitySDGTarget[];
+}
+
+/**
+ * SDG Target model for opportunity
+ */
+export interface OpportunitySDGTarget {
+  id: number;
+  opportunityId: number;
+  opportunitySDGId: number;
+  sdgTargetDatabaseId: number;  // Database FK
+  sdgTargetId: string;  // String identifier like "1.1", "3.3"
+  targetDescription: string | null;
+  targetType: string | null;
+  notes: string | null;
+  indicators?: OpportunitySDGIndicator[];
+}
+
+/**
+ * SDG Indicator model for opportunity
+ */
+export interface OpportunitySDGIndicator {
+  id: number;
+  opportunityId: number;
+  opportunitySDGTargetId: number;
+  sdgIndicatorDatabaseId: number;  // Database FK
+  sdgIndicatorId: string;  // String identifier like "1.1.1", "3.3.2"
+  sdgIndicatorLongDescription: string | null;
   notes: string | null;
 }
 
@@ -274,7 +304,22 @@ export interface OpportunityCountryRequest {
 export interface OpportunitySDGRequest {
   sdgId: number;
   isPrimary: boolean;
+  skipTargetsAndIndicators?: boolean | null;
   contributionLevel?: string;
+  notes?: string;
+  targets?: OpportunitySDGTargetRequest[];
+}
+
+export interface OpportunitySDGTargetRequest {
+  opportunitySDGId: number;
+  sdgTargetDatabaseId: number;
+  notes?: string;
+  sdgIndicatorDatabaseIds?: number[];  // List of indicator database IDs
+}
+
+export interface OpportunitySDGIndicatorRequest {
+  opportunitySDGTargetId: number;
+  sdgIndicatorDatabaseId: number;
   notes?: string;
 }
 

@@ -145,13 +145,47 @@
                     <h4 class="font-semibold text-gray-900 mb-1">
                       {{ 'label.opportunity.sdg' | translate }} {{ sdg.sdgNumber }}: {{ sdg.sdgName }}
                     </h4>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 mb-2">
                       <p-chip 
                         [label]="getSDGChipLabel(sdg.isPrimary)" 
                         styleClass="text-xs font-bold"
                         [style]="getSDGChipStyle(sdg.isPrimary)"
                       />
                     </div>
+                    
+                    <!-- Display Targets and Indicators -->
+                    @if (sdg.targets && sdg.targets.length > 0) {
+                      <div class="mt-3 pl-4 border-l-2 border-blue-200 space-y-2">
+                        @for (target of sdg.targets; track target.id) {
+                          <div class="text-sm">
+                            <div class="font-medium text-blue-700 flex items-center gap-2">
+                              <i class="pi pi-check-circle text-xs"></i>
+                              {{ 'label.target' | translate }} {{ target.sdgTargetId }}
+                              @if (target.targetType) {
+                                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                  {{ target.targetType }}
+                                </span>
+                              }
+                            </div>
+                            <div class="text-gray-600 ml-5 text-xs mt-1">{{ target.targetDescription }}</div>
+                            
+                            <!-- Display Indicators for this target -->
+                            @if (target.indicators && target.indicators.length > 0) {
+                              <div class="ml-5 mt-2 space-y-1">
+                                @for (indicator of target.indicators; track indicator.id) {
+                                  <div class="flex items-start gap-1.5">
+                                    <i class="pi pi-angle-right text-xs text-gray-400 mt-0.5"></i>
+                                    <div class="text-xs text-gray-600">
+                                      {{ indicator.sdgIndicatorLongDescription }}
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
                   </div>
                 </div>
                 @if (isEditing()) {
@@ -376,6 +410,121 @@
         <i class="pi pi-info-circle"></i> You can only have one Primary SDG, but multiple Secondary SDGs
       </p>
     </div>
+
+    <!-- Option to skip targets and indicators -->
+    <div class="border-t border-gray-200 pt-4 mt-4">
+      <div class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <p-checkbox
+          [binary]="true"
+          [formControl]="skipTargetsControl"
+          inputId="skipTargets"
+        />
+        <div class="flex-1">
+          <label for="skipTargets" class="text-sm font-medium text-gray-900 cursor-pointer block mb-1">
+            {{ 'label.opportunity.skipTargetsAndIndicators' | translate }}
+          </label>
+          <p class="text-xs text-gray-600">
+            {{ 'message.opportunity.skipTargetsAndIndicatorsInfo' | translate }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SDG Targets Selection -->
+    @if (sdgControl.value && !skipTargetsControl.value) {
+      <div class="border-t border-gray-200 pt-4 mt-4">
+        <label class="block text-sm font-semibold text-gray-700 mb-3">
+          {{ 'label.opportunity.sdgTargets' | translate }}
+        </label>
+        <p class="text-xs text-gray-600 mb-3">
+          <i class="pi pi-info-circle"></i> {{ 'message.opportunity.sdgTargetsInfo' | translate }}
+        </p>
+        
+        @if (loadingTargets()) {
+          <!-- Loading state for targets -->
+          <div class="flex items-center gap-2 text-sm text-blue-600 py-4">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>{{ 'message.loading' | translate }}...</span>
+          </div>
+        } @else if (availableTargets().length > 0) {
+          <div class="space-y-2 max-h-96 overflow-y-auto">
+          @for (target of availableTargets(); track target.id) {
+            <div class="border border-gray-200 rounded-lg">
+              <!-- Target Checkbox -->
+              <div class="p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div class="flex items-start gap-3">
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="isTargetSelected(target.id)"
+                    (ngModelChange)="toggleTarget(target)"
+                    [inputId]="'target-' + target.id"
+                  />
+                  <label [for]="'target-' + target.id" class="flex-1 cursor-pointer">
+                    <div class="font-semibold text-gray-900">
+                      {{ 'label.target' | translate }} {{ target.sdgTargetId }}
+                      @if (target.targetType) {
+                        <p-chip 
+                          [label]="target.targetType" 
+                          styleClass="text-xs ml-2"
+                          [style]="{ 'background-color': target.targetType === 'Outcome' ? '#3b82f6' : '#8b5cf6', 'color': 'white' }"
+                        />
+                      }
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">{{ target.targetDescription }}</div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Indicators for selected target -->
+              @if (isTargetSelected(target.id)) {
+                <div class="p-3 bg-white border-t border-gray-200">
+                  <div class="text-xs font-semibold text-gray-700 mb-2 uppercase">
+                    {{ 'label.opportunity.sdgIndicators' | translate }}
+                  </div>
+                  
+                  @if (isLoadingIndicators(target.id)) {
+                    <!-- Loading state -->
+                    <div class="flex items-center gap-2 text-xs text-blue-600 pl-4 py-2">
+                      <i class="pi pi-spin pi-spinner"></i>
+                      <span>{{ 'message.loading' | translate }}...</span>
+                    </div>
+                  } @else if (getIndicatorsForTarget(target.sdgTargetId).length > 0) {
+                    <!-- Indicators loaded and available -->
+                    <div class="space-y-2 pl-4">
+                      @for (indicator of getIndicatorsForTarget(target.sdgTargetId); track indicator.id) {
+                        <div class="flex items-start gap-2">
+                          <p-checkbox
+                            [binary]="true"
+                            [ngModel]="isIndicatorSelected(target.id, indicator.id)"
+                            (ngModelChange)="toggleIndicator(target.id, indicator.id)"
+                            [inputId]="'indicator-' + indicator.id"
+                          />
+                          <label [for]="'indicator-' + indicator.id" class="flex-1 cursor-pointer text-sm text-gray-700">
+                            {{ indicator.sdgIndicatorLongDescription }}
+                          </label>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <!-- No indicators found -->
+                    <div class="text-xs text-amber-600 pl-4 py-2">
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="pi pi-info-circle"></i>
+                        <span class="font-medium">No indicators available for this target</span>
+                      </div>
+                      <div class="text-gray-600 text-xs ml-5">
+                        Please ensure the database has been seeded with SDG Indicators data.
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+          </div>
+        }
+      </div>
+    }
   </div>
 
   <ng-template pTemplate="footer">
@@ -386,7 +535,7 @@
     />
     @if (isEditingSDG()) {
       <p-button
-        [label]="'button.update' | translate"
+        [label]="'button.confirm' | translate"
         severity="primary"
         (onClick)="updateSDG()"
         [disabled]="!sdgControl.value"

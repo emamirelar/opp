@@ -96,7 +96,9 @@ public class OpportunityManager : IOpportunityManager
             "Deliverables.Output.Unit",
             "Deliverables.Output.ProjectCategory",
             "Countries.Country",
-            "SDGs.SDG"
+            "SDGs.SDG",
+            "SDGs.Targets.SDGTarget",
+            "SDGs.Targets.Indicators.SDGIndicator"
         };
 
         var entity = await opportunityRepository.GetByIdAsync(id, includes);
@@ -394,31 +396,191 @@ public class OpportunityManager : IOpportunityManager
             entity.IntendedImpactOutcomes = request.IntendedImpactOutcomes;
         }
 
-        // Update SDG alignments
+        if (request.Challenges != null)
+        {
+            entity.Challenges = request.Challenges;
+        }
+
+        // Update SDG alignments with differential update strategy
         if (request.SdGs != null)
         {
-            // Remove existing SDGs
-            if (entity.SDGs != null && entity.SDGs.Any())
+            // Load existing SDGs with their targets and indicators for comparison
+            var existingSDGs = await context.Set<OpportunitySDG>()
+                .Where(sdg => sdg.OpportunityId == id)
+                .Include(sdg => sdg.Targets)
+                    .ThenInclude(t => t.Indicators)
+                .ToListAsync();
+
+            var requestedSDGIds = request.SdGs.Select(s => s.SDGId).ToHashSet();
+
+            // Remove SDGs that are no longer in the request
+            var sdgsToRemove = existingSDGs.Where(s => !requestedSDGIds.Contains(s.SDGId)).ToList();
+            if (sdgsToRemove.Any())
             {
-                context.Set<OpportunitySDG>().RemoveRange(entity.SDGs);
+                context.Set<OpportunitySDG>().RemoveRange(sdgsToRemove);
             }
 
-            // Add new SDGs
-            entity.SDGs = request.SdGs
-                .Select(s => new OpportunitySDG
+            // Process each requested SDG
+            foreach (var sdgRequest in request.SdGs)
+            {
+                var existingSDG = existingSDGs.FirstOrDefault(s => s.SDGId == sdgRequest.SDGId);
+
+                if (existingSDG == null)
                 {
-                    OpportunityId = id,
-                    SDGId = s.SDGId,
-                    IsPrimary = s.IsPrimary,
-                    Notes = s.Notes
-                })
-                .ToList();
+                    // Add new SDG with its targets and indicators
+                    var newSDG = new OpportunitySDG
+                    {
+                        OpportunityId = id,
+                        SDGId = sdgRequest.SDGId,
+                        IsPrimary = sdgRequest.IsPrimary,
+                        Notes = sdgRequest.Notes
+                    };
+
+                    // Add targets
+                    if (sdgRequest.Targets != null && sdgRequest.Targets.Any())
+                    {
+                        foreach (var targetRequest in sdgRequest.Targets)
+                        {
+                            var newTarget = new OpportunitySDGTarget
+                            {
+                                OpportunityId = id,
+                                SDGTargetId = targetRequest.SDGTargetDatabaseId,
+                                Notes = targetRequest.Notes
+                            };
+
+                            // Add indicators
+                            if (targetRequest.SDGIndicatorDatabaseIds != null && targetRequest.SDGIndicatorDatabaseIds.Any())
+                            {
+                                foreach (var indicatorId in targetRequest.SDGIndicatorDatabaseIds)
+                                {
+                                    newTarget.Indicators.Add(new OpportunitySDGIndicator
+                                    {
+                                        OpportunityId = id,
+                                        SDGIndicatorId = indicatorId
+                                    });
+                                }
+                            }
+
+                            newSDG.Targets.Add(newTarget);
+                        }
+                    }
+
+                    context.Set<OpportunitySDG>().Add(newSDG);
+                }
+                else
+                {
+                    // Update existing SDG properties
+                    existingSDG.IsPrimary = sdgRequest.IsPrimary;
+                    existingSDG.Notes = sdgRequest.Notes;
+
+                    // Update targets with differential strategy
+                    var requestedTargetIds = sdgRequest.Targets?.Select(t => t.SDGTargetDatabaseId).ToHashSet() ?? new HashSet<int>();
+
+                    // Remove targets that are no longer in the request
+                    var targetsToRemove = existingSDG.Targets.Where(t => !requestedTargetIds.Contains(t.SDGTargetId)).ToList();
+                    if (targetsToRemove.Any())
+                    {
+                        foreach (var target in targetsToRemove)
+                        {
+                            existingSDG.Targets.Remove(target);
+                            context.Set<OpportunitySDGTarget>().Remove(target);
+                        }
+                    }
+
+                    // Process each requested target
+                    if (sdgRequest.Targets != null)
+                    {
+                        foreach (var targetRequest in sdgRequest.Targets)
+                        {
+                            var existingTarget = existingSDG.Targets.FirstOrDefault(t => t.SDGTargetId == targetRequest.SDGTargetDatabaseId);
+
+                            if (existingTarget == null)
+                            {
+                                // Add new target with its indicators
+                                var newTarget = new OpportunitySDGTarget
+                                {
+                                    OpportunityId = id,
+                                    OpportunitySDGId = existingSDG.Id,
+                                    SDGTargetId = targetRequest.SDGTargetDatabaseId,
+                                    Notes = targetRequest.Notes
+                                };
+
+                                // Add indicators
+                                if (targetRequest.SDGIndicatorDatabaseIds != null && targetRequest.SDGIndicatorDatabaseIds.Any())
+                                {
+                                    foreach (var indicatorId in targetRequest.SDGIndicatorDatabaseIds)
+                                    {
+                                        newTarget.Indicators.Add(new OpportunitySDGIndicator
+                                        {
+                                            OpportunityId = id,
+                                            SDGIndicatorId = indicatorId
+                                        });
+                                    }
+                                }
+
+                                existingSDG.Targets.Add(newTarget);
+                            }
+                            else
+                            {
+                                // Update existing target properties
+                                existingTarget.Notes = targetRequest.Notes;
+
+                                // Update indicators with differential strategy
+                                var requestedIndicatorIds = targetRequest.SDGIndicatorDatabaseIds?.ToHashSet() ?? new HashSet<int>();
+
+                                // Remove indicators that are no longer in the request
+                                var indicatorsToRemove = existingTarget.Indicators.Where(i => !requestedIndicatorIds.Contains(i.SDGIndicatorId)).ToList();
+                                if (indicatorsToRemove.Any())
+                                {
+                                    foreach (var indicator in indicatorsToRemove)
+                                    {
+                                        existingTarget.Indicators.Remove(indicator);
+                                        context.Set<OpportunitySDGIndicator>().Remove(indicator);
+                                    }
+                                }
+
+                                // Add new indicators
+                                if (targetRequest.SDGIndicatorDatabaseIds != null)
+                                {
+                                    foreach (var indicatorId in targetRequest.SDGIndicatorDatabaseIds)
+                                    {
+                                        if (!existingTarget.Indicators.Any(i => i.SDGIndicatorId == indicatorId))
+                                        {
+                                            existingTarget.Indicators.Add(new OpportunitySDGIndicator
+                                            {
+                                                OpportunityId = id,
+                                                OpportunitySDGTargetId = existingTarget.Id,
+                                                SDGIndicatorId = indicatorId
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         await opportunityRepository.UpdateAsync(entity);
 
-        // Reload with all includes for complete response
-        return await GetOpportunityAsync(entity.Id) ?? throw new InvalidOperationException("Failed to reload opportunity after update");
+        // Reload with all includes for complete response  
+        var reloadedEntity = await opportunityRepository.GetByIdAsync(entity.Id, new[]
+        {
+            $"{nameof(Opportunity.SDGs)}.{nameof(OpportunitySDG.Targets)}.{nameof(OpportunitySDGTarget.Indicators)}",
+            nameof(Opportunity.FundingPartners),
+            nameof(Opportunity.ClientPartners),
+            nameof(Opportunity.Stakeholders),
+            nameof(Opportunity.Deliverables),
+            nameof(Opportunity.Countries)
+        });
+        
+        if (reloadedEntity == null)
+        {
+            throw new InvalidOperationException("Failed to reload opportunity after update");
+        }
+        
+        return mapper.Map<OpportunityModel>(reloadedEntity);
     }
 
     public async Task<OpportunityModel> UpdateWhoSectionAsync(int id, WhoSectionRequest request)

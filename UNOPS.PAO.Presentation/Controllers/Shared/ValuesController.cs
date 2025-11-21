@@ -143,6 +143,26 @@ public class ValuesController : BaseController
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetSDGs()));
     }
 
+    [HttpGet(APIDictionary.SDGTargets)]
+    public async Task<ActionResult> GetSDGTargets([FromQuery] string? sdgId = null)
+    {
+        if (string.IsNullOrEmpty(sdgId))
+        {
+            return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetSDGTargets()));
+        }
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetSDGTargetsBySDGId(sdgId)));
+    }
+
+    [HttpGet(APIDictionary.SDGIndicators)]
+    public async Task<ActionResult> GetSDGIndicators([FromQuery] string? targetId = null)
+    {
+        if (string.IsNullOrEmpty(targetId))
+        {
+            return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetSDGIndicators()));
+        }
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetSDGIndicatorsByTargetId(targetId)));
+    }
+
     [HttpGet(APIDictionary.GeminiModels)]
     public async Task<ActionResult> GetGeminiModels()
     {

@@ -20,7 +20,15 @@ public class OpportunitySDG
     
     public bool IsPrimary { get; set; } = false;
 
+    /// <summary>
+    /// Indicates if the user has opted out of providing SDG Targets and Indicators for this SDG
+    /// When true, no targets or indicators will be selected/displayed
+    /// </summary>
+    public bool? SkipTargetsAndIndicators { get; set; }
+
     [MaxLength(2000)]
     public string? Notes { get; set; }
+    
+    public virtual ICollection<OpportunitySDGTarget> Targets { get; set; } = new HashSet<OpportunitySDGTarget>();
 }
 

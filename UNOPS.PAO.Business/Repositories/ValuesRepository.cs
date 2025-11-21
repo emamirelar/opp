@@ -319,6 +319,18 @@ public class ValuesRepository
     public IEnumerable<SDG> GetSDGs()
         => context.SDGs.Where(x => x.Status == EntityStatus.Active);
 
+    public IEnumerable<SDGTarget> GetSDGTargets()
+        => context.SDGTargets.Where(x => x.Status == EntityStatus.Active);
+
+    public IEnumerable<SDGTarget> GetSDGTargetsBySDGId(string sdgId)
+        => context.SDGTargets.Where(x => x.SDGId == sdgId && x.Status == EntityStatus.Active);
+
+    public IEnumerable<SDGIndicator> GetSDGIndicators()
+        => context.SDGIndicators.Where(x => x.Status == EntityStatus.Active);
+
+    public IEnumerable<SDGIndicator> GetSDGIndicatorsByTargetId(string targetId)
+        => context.SDGIndicators.Where(x => x.SDGTargetId == targetId && x.Status == EntityStatus.Active);
+
     public async Task<IEnumerable<Models.Shared.SimpleValueModel>> GetEntityRolesAsync(string entityType)
     {
         return await context.EntityRoles
