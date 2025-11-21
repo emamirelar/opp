@@ -45,6 +45,8 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.PartnerLogoUrl, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.LogoUrl : null))
             .ForMember(dest => dest.CurrencyCode, opt => opt.MapFrom(src => src.Currency != null ? src.Currency.Code : "USD"))
             .ForMember(dest => dest.DocumentName, opt => opt.MapFrom(src => src.Document != null ? src.Document.Name : null))
+            .ForMember(dest => dest.PartnerStatus, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Status.ToString() : null))
+            .ForMember(dest => dest.PartnerApprovalStatus, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.PartnerApprovalStatus.ToString() : null))
             // Map both Amount and FundedAmount for backwards compatibility
             .ForMember(dest => dest.Amount, opt => opt.MapFrom(src => src.Amount))
             .ForMember(dest => dest.FundedAmount, opt => opt.MapFrom(src => src.Amount)); // Use Amount for FundedAmount
@@ -59,7 +61,9 @@ public class OpportunityMappingProfile : Profile
         CreateMap<OpportunityClientPartner, OpportunityClientPartnerModel>()
             .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null))
             .ForMember(dest => dest.PartnerLogoUrl, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.LogoUrl : null))
-            .ForMember(dest => dest.DocumentName, opt => opt.MapFrom(src => src.Document != null ? src.Document.Name : null));
+            .ForMember(dest => dest.DocumentName, opt => opt.MapFrom(src => src.Document != null ? src.Document.Name : null))
+            .ForMember(dest => dest.PartnerStatus, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Status.ToString() : null))
+            .ForMember(dest => dest.PartnerApprovalStatus, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.PartnerApprovalStatus.ToString() : null));
             
         CreateMap<OpportunityClientPartnerRequest, OpportunityClientPartner>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())

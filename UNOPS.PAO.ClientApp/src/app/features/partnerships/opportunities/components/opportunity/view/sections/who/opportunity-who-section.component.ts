@@ -147,12 +147,14 @@ export class OpportunityWhoSectionComponent implements OnInit {
   }
 
   /**
-   * @description Load available partners from API
+   * @description Load available partners from API (excludes pooled fund partners)
    */
   loadPartners(): void {
     this.valuesService.getPartners().subscribe({
       next: (partners) => {
-        this.availablePartners.set(partners);
+        // Filter out pooled funding partners for funding partner selection
+        const eligiblePartners = partners.filter(p => !p.pooledFund);
+        this.availablePartners.set(eligiblePartners);
         this.cdr.detectChanges();
       }
     });
@@ -365,7 +367,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
       commitmentStatus: null,
       documentId: null,
       documentName: null,
-      associatedDocuments: null
+      associatedDocuments: null,
+      partnerStatus: null,
+      partnerApprovalStatus: null
     };
 
     currentPartners.push(newPartner);
@@ -537,7 +541,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
       partnerLogoUrl: partner.logoUrl || undefined,
       documentId: null,
       documentName: null,
-      associatedDocuments: null
+      associatedDocuments: null,
+      partnerStatus: null,
+      partnerApprovalStatus: null
     };
 
     currentClients.push(newClient);
@@ -873,6 +879,19 @@ export class OpportunityWhoSectionComponent implements OnInit {
         this.cdr.detectChanges();
       }
     );
+  }
+
+  /**
+   * @description Get severity for partner status badge
+   */
+  getPartnerStatusSeverity(status: string | null): 'success' | 'warn' | 'danger' | 'info' {
+    switch (status) {
+      case 'Active': return 'success';
+      case 'Draft': return 'warn';
+      case 'Closed': return 'danger';
+      case 'Archived': return 'info';
+      default: return 'info';
+    }
   }
 }
 

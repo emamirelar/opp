@@ -78,6 +78,8 @@ export interface OpportunityFundingPartner {
   documentId: number | null;
   documentName: string | null;
   associatedDocuments: DocumentDetail[] | null;
+  partnerStatus: string | null;
+  partnerApprovalStatus: string | null;
 }
 
 /**
@@ -92,6 +94,8 @@ export interface OpportunityClientPartner {
   documentId: number | null;
   documentName: string | null;
   associatedDocuments: DocumentDetail[] | null;
+  partnerStatus: string | null;
+  partnerApprovalStatus: string | null;
 }
 
 /**

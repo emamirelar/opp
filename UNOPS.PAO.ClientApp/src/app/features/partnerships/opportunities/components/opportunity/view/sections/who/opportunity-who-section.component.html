@@ -97,6 +97,26 @@
                     {{ partner.partnerName }}
                     <i class="pi pi-external-link text-xs ml-1"></i>
                   </a>
+                  
+                  <!-- Partner Status Badge -->
+                  @if (partner.partnerStatus) {
+                    <p-badge 
+                      [value]="partner.partnerStatus" 
+                      [severity]="getPartnerStatusSeverity(partner.partnerStatus)"
+                      styleClass="ml-2"
+                    />
+                  }
+                  
+                  <!-- Draft Warning -->
+                  @if (partner.partnerStatus === 'Draft') {
+                    <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded flex items-start gap-2">
+                      <i class="pi pi-exclamation-triangle text-yellow-600 text-sm mt-0.5"></i>
+                      <span class="text-xs text-yellow-800">
+                        {{ 'message.warning.partnerDraftStatus' | translate }}
+                      </span>
+                    </div>
+                  }
+                  
                   <div class="grid grid-cols-2 gap-2 text-sm mt-2">
                     <div>
                       <span class="text-gray-600">{{ 'label.amount' | translate }}:</span>
@@ -209,6 +229,26 @@
                   {{ client.partnerName }}
                   <i class="pi pi-external-link text-xs ml-1"></i>
                 </a>
+                
+                <!-- Partner Status Badge -->
+                @if (client.partnerStatus) {
+                  <p-badge 
+                    [value]="client.partnerStatus" 
+                    [severity]="getPartnerStatusSeverity(client.partnerStatus)"
+                    styleClass="ml-2"
+                  />
+                }
+                
+                <!-- Draft Warning -->
+                @if (client.partnerStatus === 'Draft') {
+                  <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded flex items-start gap-2">
+                    <i class="pi pi-exclamation-triangle text-yellow-600 text-sm mt-0.5"></i>
+                    <span class="text-xs text-yellow-800">
+                      {{ 'message.warning.partnerDraftStatus' | translate }}
+                    </span>
+                  </div>
+                }
+                
                 @if (client.associatedDocuments && client.associatedDocuments.length > 0) {
                   <div class="mt-2">
                     <div class="flex flex-wrap gap-1">
@@ -357,6 +397,10 @@
         />
         <label for="fundingPartner">{{ 'label.partner' | translate }} *</label>
       </p-floatlabel>
+      <div class="text-xs text-gray-600 mt-1">
+        <i class="pi pi-info-circle mr-1"></i>
+        {{ 'helpText.opportunity.fundingPartnerSelection' | translate }}
+      </div>
       @if (!partnerControl.value && showFundingValidationError()) {
         <p-message severity="error" variant="simple" styleClass="mt-2">
           {{ 'message.validation.partnerRequired' | translate }}

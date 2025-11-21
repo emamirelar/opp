@@ -12,5 +12,15 @@ public class OpportunityClientPartnerModel
     public int? DocumentId { get; set; }
     public string? DocumentName { get; set; }
     public List<DocumentDetailModel>? AssociatedDocuments { get; set; }
+    
+    /// <summary>
+    /// Partner's current status (Draft/Active/Closed/Archived)
+    /// </summary>
+    public string? PartnerStatus { get; set; }
+    
+    /// <summary>
+    /// Partner's approval status (Approved/NotApproved)
+    /// </summary>
+    public string? PartnerApprovalStatus { get; set; }
 }
 

@@ -870,6 +870,8 @@
   "helpText.dst.relevantPeople": "Descubra funcionários do UNOPS com habilidades e experiência relevantes para sua oportunidade",
   "helpText.dst.similarOpportunities": "Encontre oportunidades similares no sistema para aprender com propostas anteriores",
   "helpText.dst.similarProjects": "Com base na descrição da sua oportunidade, encontramos experiência relevante do UNOPS",
+  "helpText.opportunity.fundingPartnerSelection": "Parceiros marcados como programas de financiamento conjunto não são elegíveis para seleção",
+  "message.warning.partnerDraftStatus": "Este parceiro está em status de rascunho. O processo de Due Diligence deve ser iniciado para prosseguir.",
   "iapStatus.allCookies": "Todos os Cookies",
   "iapStatus.authenticationStatus": "Status de Autenticação",
   "iapStatus.cookieInformation": "Informações de Cookie",

@@ -870,6 +870,8 @@
   "helpText.dst.relevantPeople": "Descubra personal de UNOPS con habilidades y experiencia relevantes para su oportunidad",
   "helpText.dst.similarOpportunities": "Encuentre oportunidades similares en el sistema para aprender de propuestas anteriores",
   "helpText.dst.similarProjects": "Basado en la descripción de su oportunidad, encontramos experiencia relevante de UNOPS",
+  "helpText.opportunity.fundingPartnerSelection": "Los socios marcados como programas de financiación conjunta no son elegibles para la selección",
+  "message.warning.partnerDraftStatus": "Este socio está en estado de borrador. El proceso de diligencia debida debe iniciarse para proceder.",
   "iapStatus.allCookies": "Todas las Cookies",
   "iapStatus.authenticationStatus": "Estado de Autenticación",
   "iapStatus.cookieInformation": "Información de Cookies",
