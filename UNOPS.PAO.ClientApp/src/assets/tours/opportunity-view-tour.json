@@ -1,0 +1,208 @@
+{
+  "tourId": "opportunity-view-tour",
+  "titleKey": "tour.opportunityview.title",
+  "descriptionKey": "tour.opportunityview.description",
+  "entity": "Opportunity",
+  "route": "/partnerships/opportunities/:id",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.welcome.title",
+        "descriptionKey": "tour.opportunityview.steps.welcome.description",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".opportunity-header",
+      "fallbackType": "section-header",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.opportunityHeader.title",
+        "descriptionKey": "tour.opportunityview.steps.opportunityHeader.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".opportunity-edit-button",
+      "fallbackType": "edit-button",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.editButton.title",
+        "descriptionKey": "tour.opportunityview.steps.editButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".opportunity-information",
+      "fallbackType": ".opportunity-information",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.opportunityInfo.title",
+        "descriptionKey": "tour.opportunityview.steps.opportunityInfo.description",
+        "side": "left",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".section-navigation",
+      "fallbackType": ".section-navigation",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.sectionNavigation.title",
+        "descriptionKey": "tour.opportunityview.steps.sectionNavigation.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": "#section-analysis",
+      "fallbackType": "#section-analysis",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.analysisSection.title",
+        "descriptionKey": "tour.opportunityview.steps.analysisSection.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "#section-what",
+      "fallbackType": "#section-what",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.whatSection.title",
+        "descriptionKey": "tour.opportunityview.steps.whatSection.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "#section-why",
+      "fallbackType": "#section-why",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.whySection.title",
+        "descriptionKey": "tour.opportunityview.steps.whySection.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "#section-who",
+      "fallbackType": "#section-who",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.whoSection.title",
+        "descriptionKey": "tour.opportunityview.steps.whoSection.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "#section-where",
+      "fallbackType": "#section-where",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.whereSection.title",
+        "descriptionKey": "tour.opportunityview.steps.whereSection.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "#section-when",
+      "fallbackType": "#section-when",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.whenSection.title",
+        "descriptionKey": "tour.opportunityview.steps.whenSection.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "#section-dst",
+      "fallbackType": "#section-dst",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.dstSection.title",
+        "descriptionKey": "tour.opportunityview.steps.dstSection.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "#section-related",
+      "fallbackType": "#section-related",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.relatedSection.title",
+        "descriptionKey": "tour.opportunityview.steps.relatedSection.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "app-opportunity-documents",
+      "fallbackType": "app-opportunity-documents",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.documentsPanel.title",
+        "descriptionKey": "tour.opportunityview.steps.documentsPanel.description",
+        "side": "left",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".document-ai-transcribe-button",
+      "fallbackType": ".document-ai-transcribe-button",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.aiTranscribe.title",
+        "descriptionKey": "tour.opportunityview.steps.aiTranscribe.description",
+        "side": "left",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".export-pdf-button",
+      "fallbackType": ".export-pdf-button",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.exportPdf.title",
+        "descriptionKey": "tour.opportunityview.steps.exportPdf.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".send-review-button",
+      "fallbackType": ".send-review-button",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.sendReview.title",
+        "descriptionKey": "tour.opportunityview.steps.sendReview.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "#section-collaboration",
+      "fallbackType": "#section-collaboration",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.collaborationSection.title",
+        "descriptionKey": "tour.opportunityview.steps.collaborationSection.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.opportunityview.steps.tourControl.title",
+        "descriptionKey": "tour.opportunityview.steps.tourControl.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2024-11-22T14:00:00Z",
+  "version": "1.1"
+}
+
