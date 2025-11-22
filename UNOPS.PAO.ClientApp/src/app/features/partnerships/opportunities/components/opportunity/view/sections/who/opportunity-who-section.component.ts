@@ -304,11 +304,13 @@ export class OpportunityWhoSectionComponent implements OnInit {
         isAmountBasedFee: fp.isAmountBasedFee,
         partnershipAgreementReference: fp.partnershipAgreementReference,
         documentId: fp.documentId, // Include document ID if set
-        isPooledContribution: fp.isPooledContribution || false
+        isPooledContribution: fp.isPooledContribution || false,
+        selectedPartnerAgreementNumber: fp.selectedPartnerAgreementNumber // AC9
       })),
       clientPartners: opp.clientPartners?.map(cp => ({
         partnerId: cp.partnerId,
-        documentId: cp.documentId // Include document ID if set
+        documentId: cp.documentId, // Include document ID if set
+        selectedPartnerAgreementNumber: cp.selectedPartnerAgreementNumber // AC9
       })),
       stakeholders: opp.stakeholders?.map(s => ({
         userId: s.userId!,
@@ -495,7 +497,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
       exchangeRate: null,
       exchangeRateDate: null,
       exchangeRateDisplay: null, // Backend will calculate
-      isPooledContribution: false
+      isPooledContribution: false,
+      selectedPartnerAgreementNumber: null, // AC9
+      availableAgreements: null // AC9
     };
 
     currentPartners.push(newPartner);
@@ -684,7 +688,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
       ddApprovalDate: null,
       ddExpiryDate: null,
       ddStatus: null,
-      ddExpiresBeforeOpportunityEnd: null
+      ddExpiresBeforeOpportunityEnd: null,
+      selectedPartnerAgreementNumber: null, // AC9
+      availableAgreements: null // AC9
     };
 
     currentClients.push(newClient);

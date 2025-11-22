@@ -2439,5 +2439,12 @@
 	"title.addStakeholder": "Ajouter un Membre d'Équipe",
 	"title.addExternalStakeholder": "Ajouter une Partie Prenante Externe",
 	"confirmation.removeStakeholder": "Retirer le Membre d'Équipe",
-	"confirmation.removeExternalStakeholder": "Retirer la Partie Prenante Externe"
+	"confirmation.removeExternalStakeholder": "Retirer la Partie Prenante Externe",
+	"label.partnerAgreements": "Accords de Partenariat",
+	"label.agreement": "Accord",
+	"label.serviceLines": "Lignes de Service",
+	"label.geography": "Géographie",
+	"label.selectAgreement": "Sélectionner l'accord applicable",
+	"message.info.multipleAgreementsAvailable": "{{count}} accords disponibles - veuillez sélectionner celui qui s'applique",
+	"message.info.noAgreementFound": "Aucun protocole d'accord ou accord de partenariat trouvé. Veuillez télécharger sur le dossier du partenaire s'il en existe un."
 }

@@ -2434,5 +2434,12 @@
 	"title.addStakeholder": "Adicionar Membro da Equipe",
 	"title.addExternalStakeholder": "Adicionar Parte Interessada Externa",
 	"confirmation.removeStakeholder": "Remover Membro da Equipe",
-	"confirmation.removeExternalStakeholder": "Remover Parte Interessada Externa"
+	"confirmation.removeExternalStakeholder": "Remover Parte Interessada Externa",
+	"label.partnerAgreements": "Acordos de Parceria",
+	"label.agreement": "Acordo",
+	"label.serviceLines": "Linhas de Serviço",
+	"label.geography": "Geografia",
+	"label.selectAgreement": "Selecionar acordo aplicável",
+	"message.info.multipleAgreementsAvailable": "{{count}} acordos disponíveis - por favor selecione qual se aplica",
+	"message.info.noAgreementFound": "Nenhum Memorando de Entendimento ou Acordo de Parceria encontrado. Por favor, faça o upload no registro do parceiro se existir um."
 }

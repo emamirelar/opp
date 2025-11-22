@@ -2535,5 +2535,12 @@
 	"message.noContinentMatches": "No countries match by continent",
 	"message.noSearchResults": "No countries found matching your search",
 	"message.country.activeUNSDCF": "An active UNSDCF exists for this country. You will be required to complete the Strategic Alignment section.",
-	"message.country.noActiveUNSDCF": "No active UNSDCF exists for this country."
+	"message.country.noActiveUNSDCF": "No active UNSDCF exists for this country.",
+	"label.partnerAgreements": "Partner Agreements",
+	"label.agreement": "Agreement",
+	"label.serviceLines": "Service Lines",
+	"label.geography": "Geography",
+	"label.selectAgreement": "Select applicable agreement",
+	"message.info.multipleAgreementsAvailable": "{{count}} agreements available - please select which applies",
+	"message.info.noAgreementFound": "No MoU or Partnership Agreement found. Please upload to partner record if one exists."
 }

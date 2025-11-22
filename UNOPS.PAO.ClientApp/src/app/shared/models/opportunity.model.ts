@@ -15,6 +15,27 @@ export interface DocumentDetail {
 }
 
 /**
+ * Partner Agreement Information model (AC9)
+ */
+export interface PartnerAgreementInfo {
+  partnerAgreementNumber: string;
+  name: string;
+  partnerAgreementType: string | null;
+  partnerAgreementTypeDescription: string | null;
+  partnerAgreementScope: string | null;
+  partnerAgreementScopeDescription: string | null;
+  startDate: Date | null;
+  endDate: Date | null;
+  signedDate: Date | null;
+  coversOpportunityPeriod: boolean;
+  expiresBeforeOpportunityEnd: boolean;
+  serviceLinesDescription: string | null;
+  geographicRestrictions: string | null;
+  hasGeographicRestrictions: boolean;
+  warningMessage: string | null;
+}
+
+/**
  * Main Opportunity model matching backend OpportunityModel.cs
  */
 export interface Opportunity {
@@ -98,6 +119,9 @@ export interface OpportunityFundingPartner {
   exchangeRateDate: Date | null;
   exchangeRateDisplay: string | null;
   isPooledContribution: boolean;
+  // AC9: Partner agreements
+  selectedPartnerAgreementNumber: string | null;
+  availableAgreements: PartnerAgreementInfo[] | null;
 }
 
 /**
@@ -119,6 +143,9 @@ export interface OpportunityClientPartner {
   ddExpiryDate: Date | null;
   ddStatus: string | null;
   ddExpiresBeforeOpportunityEnd: boolean | null;
+  // AC9: Partner agreements
+  selectedPartnerAgreementNumber: string | null;
+  availableAgreements: PartnerAgreementInfo[] | null;
 }
 
 /**
@@ -287,11 +314,13 @@ export interface OpportunityFundingPartnerRequest {
   isAmountBasedFee?: boolean;
   documentId?: number;
   isPooledContribution?: boolean;
+  selectedPartnerAgreementNumber?: string; // AC9
 }
 
 export interface OpportunityClientPartnerRequest {
   partnerId: number;
   documentId?: number;
+  selectedPartnerAgreementNumber?: string; // AC9
 }
 
 export interface OpportunityStakeholderRequest {
