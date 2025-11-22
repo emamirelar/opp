@@ -62,6 +62,8 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<OpportunityDeliverable> OpportunityDeliverables { get; set; }
     public DbSet<OpportunityCountry> OpportunityCountries { get; set; }
     public DbSet<OpportunitySDG> OpportunitySDGs { get; set; }
+    public DbSet<OpportunitySDGTarget> OpportunitySDGTargets { get; set; }
+    public DbSet<OpportunitySDGIndicator> OpportunitySDGIndicators { get; set; }
     public DbSet<OpportunityInteraction> OpportunityInteractions { get; set; }
 
     // Infrastructure entities
@@ -81,6 +83,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     // External Data Service entities (Read-Only)
     public DbSet<SDG> SDGs { get; set; }
     public DbSet<SDGTarget> SDGTargets { get; set; }
+    public DbSet<SDGIndicator> SDGIndicators { get; set; }
     public DbSet<UNCFOutcome> UNCFOutcomes { get; set; }
     public DbSet<ExchangeRate> ExchangeRates { get; set; }
     
@@ -480,6 +483,50 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasIndex(x => x.SDGId);
         });
 
+        // OpportunitySDGTarget configuration (cascades delete from OpportunitySDG)
+        modelBuilder.Entity<OpportunitySDGTarget>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.SDGTargets)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.OpportunitySDG)
+                .WithMany(x => x.Targets)
+                .HasForeignKey(x => x.OpportunitySDGId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.SDGTarget)
+                .WithMany()
+                .HasForeignKey(x => x.SDGTargetId);
+                
+            entity.HasIndex(x => x.OpportunityId);
+            entity.HasIndex(x => x.OpportunitySDGId);
+            entity.HasIndex(x => x.SDGTargetId);
+        });
+
+        // OpportunitySDGIndicator configuration (cascades delete from OpportunitySDGTarget)
+        modelBuilder.Entity<OpportunitySDGIndicator>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.SDGIndicators)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.OpportunitySDGTarget)
+                .WithMany(x => x.Indicators)
+                .HasForeignKey(x => x.OpportunitySDGTargetId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.SDGIndicator)
+                .WithMany()
+                .HasForeignKey(x => x.SDGIndicatorId);
+                
+            entity.HasIndex(x => x.OpportunityId);
+            entity.HasIndex(x => x.OpportunitySDGTargetId);
+            entity.HasIndex(x => x.SDGIndicatorId);
+        });
+
         // WorkflowStage configuration
         modelBuilder.Entity<WorkflowStage>(entity =>
         {
@@ -594,6 +641,14 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasIndex(x => x.SDGTargetId);
             entity.HasIndex(x => x.SDGId);
             entity.HasIndex(x => x.TargetType);
+            entity.HasIndex(x => x.Status);
+        });
+
+        // SDGIndicator configuration (External Data Service - Read Only)
+        modelBuilder.Entity<SDGIndicator>(entity =>
+        {
+            entity.HasIndex(x => x.SDGIndicatorId);
+            entity.HasIndex(x => x.SDGTargetId);
             entity.HasIndex(x => x.Status);
         });
 

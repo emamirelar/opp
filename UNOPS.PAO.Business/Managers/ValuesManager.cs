@@ -15,6 +15,7 @@ using UNOPS.PAO.Models.Locations;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Models.Values;
+using UNOPS.PAO.Models.SDG;
 
 public class ValuesManager : IApplicationService
 {
@@ -88,6 +89,18 @@ public class ValuesManager : IApplicationService
 
     public IEnumerable<SDGModel> GetSDGs()
          => repository.GetSDGs().Select(mapper.Map<SDGModel>);
+
+    public IEnumerable<SDGTargetModel> GetSDGTargets()
+         => repository.GetSDGTargets().Select(mapper.Map<SDGTargetModel>);
+
+    public IEnumerable<SDGTargetModel> GetSDGTargetsBySDGId(string sdgId)
+         => repository.GetSDGTargetsBySDGId(sdgId).Select(mapper.Map<SDGTargetModel>);
+
+    public IEnumerable<SDGIndicatorModel> GetSDGIndicators()
+         => repository.GetSDGIndicators().Select(mapper.Map<SDGIndicatorModel>);
+
+    public IEnumerable<SDGIndicatorModel> GetSDGIndicatorsByTargetId(string targetId)
+         => repository.GetSDGIndicatorsByTargetId(targetId).Select(mapper.Map<SDGIndicatorModel>);
 
     public async Task<IEnumerable<SimpleValueModel>> GetEntityRolesAsync(string entityType)
          => await repository.GetEntityRolesAsync(entityType);

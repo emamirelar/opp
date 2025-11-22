@@ -2,6 +2,7 @@ using AutoMapper;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.SDG;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers.Mapping;
 
@@ -116,11 +117,51 @@ public class OpportunityMappingProfile : Profile
                 src.SDG != null ? src.SDG.SDGId : null))
             .ForMember(dest => dest.SDGNumber, opt => opt.MapFrom(src => 
                 src.SDG != null ? src.SDG.SDGNumber : null))
-            .ForMember(dest => dest.SDGName, opt => opt.MapFrom(src => src.SDG != null ? src.SDG.SDGDescription : null));
+            .ForMember(dest => dest.SDGName, opt => opt.MapFrom(src => src.SDG != null ? src.SDG.SDGDescription : null))
+            .ForMember(dest => dest.Targets, opt => opt.MapFrom(src => src.Targets));
             
         CreateMap<OpportunitySDGRequest, OpportunitySDG>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.OpportunityId, opt => opt.Ignore());
+        
+        // =================================================================
+        // OpportunitySDGTarget mappings
+        // =================================================================
+        CreateMap<OpportunitySDGTarget, OpportunitySDGTargetModel>()
+            .ForMember(dest => dest.SDGTargetDatabaseId, opt => opt.MapFrom(src => src.SDGTargetId))
+            .ForMember(dest => dest.SDGTargetId, opt => opt.MapFrom(src => 
+                src.SDGTarget != null ? src.SDGTarget.SDGTargetId : null))
+            .ForMember(dest => dest.TargetDescription, opt => opt.MapFrom(src => 
+                src.SDGTarget != null ? src.SDGTarget.TargetDescription : null))
+            .ForMember(dest => dest.TargetType, opt => opt.MapFrom(src => 
+                src.SDGTarget != null ? src.SDGTarget.TargetType : null))
+            .ForMember(dest => dest.Indicators, opt => opt.MapFrom(src => src.Indicators));
+            
+        CreateMap<OpportunitySDGTargetRequest, OpportunitySDGTarget>()
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.OpportunityId, opt => opt.Ignore())
+            .ForMember(dest => dest.SDGTargetId, opt => opt.MapFrom(src => src.SDGTargetDatabaseId));
+        
+        // =================================================================
+        // OpportunitySDGIndicator mappings
+        // =================================================================
+        CreateMap<OpportunitySDGIndicator, OpportunitySDGIndicatorModel>()
+            .ForMember(dest => dest.SDGIndicatorDatabaseId, opt => opt.MapFrom(src => src.SDGIndicatorId))
+            .ForMember(dest => dest.SDGIndicatorId, opt => opt.MapFrom(src => 
+                src.SDGIndicator != null ? src.SDGIndicator.SDGIndicatorId : null))
+            .ForMember(dest => dest.SDGIndicatorLongDescription, opt => opt.MapFrom(src => 
+                src.SDGIndicator != null ? src.SDGIndicator.SDGIndicatorLongDescription : null));
+            
+        CreateMap<OpportunitySDGIndicatorRequest, OpportunitySDGIndicator>()
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.OpportunityId, opt => opt.Ignore())
+            .ForMember(dest => dest.SDGIndicatorId, opt => opt.MapFrom(src => src.SDGIndicatorDatabaseId));
+        
+        // =================================================================
+        // SDG reference data mappings
+        // =================================================================
+        CreateMap<SDGTarget, SDGTargetModel>();
+        CreateMap<SDGIndicator, SDGIndicatorModel>();
     }
 }
 

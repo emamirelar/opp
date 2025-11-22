@@ -29,15 +29,6 @@
         },
         {
             "order": 3,
-            "name": "Roles",
-            "type": "seeder",
-            "className": "RoleSeeder",
-            "methodName": "SeedRolesAsync",
-            "filePath": "Seeders/RoleSeeder.cs",
-            "description": "Roles configuration"
-        },
-        {
-            "order": 4,
             "name": "Entities",
             "type": "seeder",
             "className": "EntitySeeder",
@@ -46,14 +37,14 @@
             "description": "Base entity types configuration"
         },
         {
-            "order": 5,
+            "order": 4,
             "name": "EntityManagers",
             "type": "sql",
             "path": "EntityManager.sql",
             "description": "Entity managers and field managers complete configuration"
         },
         {
-            "order": 6,
+            "order": 5,
             "name": "DocumentTypes",
             "type": "seeder",
             "className": "DocumentTypeSeeder",
@@ -62,30 +53,21 @@
             "description": "Document types configuration"
         },
         {
-            "order": 7,
-            "name": "LiaisonOffices",
-            "type": "seeder",
-            "className": "LiaisonOfficeSeeder",
-            "methodName": "SeedLiaisonOfficesAsync",
-            "filePath": "Seeders/LiaisonOfficeSeeder.cs",
-            "description": "Liaison offices data"
-        },
-        {
-            "order": 8,
+            "order": 6,
             "name": "AiPrompts",
             "type": "sql",
             "path": "AiPrompts.sql",
             "description": "AiPrompts data"
         },
         {
-            "order": 9,
+            "order": 7,
             "name": "EntityPermissions",
             "type": "sql",
             "path": "EntityPermissions.sql",
             "description": "Entity permissions configuration"
         },
         {
-            "order": 10,
+            "order": 8,
             "name": "WorkflowStages",
             "type": "seeder",
             "className": "WorkflowStageSeeder",
@@ -94,7 +76,7 @@
             "description": "Workflow stages for entities"
         },
         {
-            "order": 11,
+            "order": 9,
             "name": "EntityRoles",
             "type": "seeder",
             "className": "EntityRoleSeeder",
@@ -103,7 +85,7 @@
             "description": "Entity roles for entities"
         },
         {
-            "order": 12,
+            "order": 10,
             "name": "ProposedInitiativeTypes",
             "type": "seeder",
             "className": "ProposedInitiativeTypeSeeder",
@@ -112,7 +94,7 @@
             "description": "Proposed initiative types (Project, Programme, Portfolio)"
         },
         {
-            "order": 13,
+            "order": 11,
             "name": "SDGs",
             "type": "seeder",
             "className": "SDGSeeder",
@@ -121,7 +103,7 @@
             "description": "UN Sustainable Development Goals (SDGs)"
         },
         {
-            "order": 14,
+            "order": 12,
             "name": "SDGTargets",
             "type": "seeder",
             "className": "SDGTargetSeeder",
@@ -130,7 +112,16 @@
             "description": "UN SDG Targets (169 targets under the 17 SDGs)"
         },
         {
-            "order": 15,
+            "order": 13,
+            "name": "SDGIndicators",
+            "type": "seeder",
+            "className": "SDGIndicatorSeeder",
+            "methodName": "SeedSDGIndicatorsAsync",
+            "filePath": "Seeders/SDGIndicatorSeeder.cs",
+            "description": "UN SDG Indicators (247 indicators under the 169 SDG Targets)"
+        },
+        {
+            "order": 14,
             "name": "Units",
             "type": "seeder",
             "className": "UnitSeeder",
@@ -139,7 +130,7 @@
             "description": "Units of measurement (Days, Number, Litres, etc.)"
         },
         {
-            "order": 16,
+            "order": 15,
             "name": "ProjectCategories",
             "type": "seeder",
             "className": "ProjectCategorySeeder",
@@ -148,7 +139,7 @@
             "description": "Project categories (Category 1, 2, 3)"
         },
         {
-            "order": 17,
+            "order": 16,
             "name": "Outputs",
             "type": "seeder",
             "className": "OutputSeeder",
@@ -157,16 +148,7 @@
             "description": "UNOPS Output catalog"
         },
         {
-            "order": 18,
-            "name": "Prospects",
-            "type": "seeder",
-            "className": "ProspectAccountsSeeder",
-            "methodName": "SeedProspectAccountsAsync",
-            "filePath": "Seeders/ProspectAccountsSeeder.cs",
-            "description": "Partners data seeding"
-        },
-        {
-            "order": 19,
+            "order": 17,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",
