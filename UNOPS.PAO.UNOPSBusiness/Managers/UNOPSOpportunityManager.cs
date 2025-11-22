@@ -1929,6 +1929,62 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         }
     }
 
+    /// <summary>
+    /// Gets multiple opportunities by their IDs with RBAC filtering
+    /// Used by GlobalController for search results
+    /// </summary>
+    public override async Task<List<object>> GetByIdsAsync(int[] ids, ClaimsPrincipal user = null)
+    {
+        if (ids == null || ids.Length == 0)
+            return new List<object>();
+
+        var opportunities = opportunityRepository
+            .GetAll([
+                "WorkflowStage",
+                "ResponsibleOrgUnit",
+                "ProposedInitiativeType",
+                "FundingPartners",
+                "FundingPartners.Partner",
+                "ClientPartners",
+                "ClientPartners.Partner",
+                "Stakeholders",
+                "Stakeholders.EntityRole",
+                "Stakeholders.User",
+                "Deliverables",
+                "Countries",
+                "Countries.Country",
+                "SDGs",
+                "SDGs.SDG"
+            ])
+            .Where(o => ids.Contains(o.Id))
+            .ToList();
+
+        // Apply access control if user context is provided
+        if (user != null)
+        {
+            var filteredData = await ApplyAccessControlFilters(opportunities.AsQueryable(), user, "read");
+            if (filteredData is IEnumerable<Opportunity> opportunityList)
+            {
+                opportunities = opportunityList.ToList();
+            }
+        }
+
+        // Map to models
+        var opportunityModels = mapper.Map<List<OpportunityModel>>(opportunities);
+
+        // Add permissions if user context is provided
+        if (user != null)
+        {
+            foreach (var model in opportunityModels)
+            {
+                var sourceEntity = opportunities.FirstOrDefault(o => o.Id == model.Id);
+                await MapEntityToModelWithPermissionsAsync(model, user, sourceEntity);
+            }
+        }
+
+        return opportunityModels.Cast<object>().ToList();
+    }
+
     public List<SearchFieldInfo> GetOpportunitySearchFields()
     {
         try
