@@ -8,6 +8,7 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSBusiness.Managers;
@@ -21,6 +22,8 @@ using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
 using System.Text.Json;
 using UNOPS.PAO.Models.AuditLogs;
+using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.Models.Search;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -35,6 +38,7 @@ public class OpportunityController : BaseController
     private readonly int _currentUserId;
     private readonly AppDbContext _context;
     private readonly UNOPSDocumentManager _documentManager;
+    private readonly AdvancedSearchService _advancedSearchService;
 
     public OpportunityController(
         IManagerWrapper manager,
@@ -47,7 +51,8 @@ public class OpportunityController : BaseController
         IGoogleDriveDocumentManager driveManager,
         IConfiguration configuration,
         UserManager<PAOIdentityUser> userManager,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        AdvancedSearchService advancedSearchService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.OpportunityManager;
@@ -57,6 +62,7 @@ public class OpportunityController : BaseController
         _currentUserId = userResolverService.GetCurrentUserId();
         _context = context;
         _documentManager = new UNOPSDocumentManager(driveManager, configuration, mapper, unopsContext, userManager, serviceProvider);
+        _advancedSearchService = advancedSearchService;
     }
 
     /// <summary>
@@ -177,6 +183,138 @@ public class OpportunityController : BaseController
         {
             _logger.LogError(ex, "Error getting opportunities");
             return StatusCode(500, new { error = "Internal server error while fetching opportunities", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Performs simple text search across multiple opportunity fields (name, description, reference, etc.).
+    /// </summary>
+    /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
+    /// <param name="query">Text to search across opportunity name, description, and other basic fields</param>
+    /// <param name="export">Whether to export all results without pagination</param>
+    /// <returns>Paginated list of opportunities matching the search text</returns>
+    [HttpGet(APIDictionary.Opportunity + "/search")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> SearchOpportunities(
+        [FromQuery] PaginationRequest request,
+        [FromQuery] string query,
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
+    {
+        // Validate pagination parameters
+        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
+        if (validationResult != null) return validationResult;
+        
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            throw new BusinessException("Search text is required for opportunity search");
+        }
+
+        // Use the enhanced search pattern (PostgreSQL similarity search)
+        var paginationRequest = new PaginationRequest
+        {
+            PageIndex = request.PageIndex,
+            PageSize = export ? int.MaxValue : request.PageSize,
+            OrderBy = request.OrderBy ?? "Name",
+            Ascending = request.Ascending ?? true,
+            FilterActive = filterActive
+        };
+
+        // Use AdvancedSearchService for unified text search with PostgreSQL similarity and metadata
+        var result = await _advancedSearchService.SearchWithQueryAndMetadataAsync<Opportunity, OpportunityModel>(
+            query, 
+            paginationRequest, 
+            User);
+
+        _logger.LogInformation("Opportunity search completed: Found {TotalCount} results for query: {Query}, export: {Export}", result.TotalCount, query, export);
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Performs advanced search with structured criteria including relationships and complex filters.
+    /// </summary>
+    /// <param name="filters">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
+    /// <param name="pageIndex">Page number for pagination (default: 1)</param>
+    /// <param name="pageSize">Number of items per page (default: 20)</param>
+    /// <param name="orderBy">Field to order by (optional)</param>
+    /// <param name="ascending">Sort direction (default: true)</param>
+    /// <returns>Paginated list of opportunities matching the advanced search criteria</returns>
+    [HttpGet(APIDictionary.Opportunity + "/advanced-search")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> AdvancedSearchOpportunities(
+        [FromQuery] string filters,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = "Name",
+        [FromQuery] bool ascending = true,
+        [FromQuery] bool export = false,
+        [FromQuery] bool filterActive = true)
+    {
+        try
+        {
+            _logger.LogInformation("=== OPPORTUNITY ADVANCED SEARCH ENDPOINT ===");
+            _logger.LogInformation("Filters: {Filters}, Page: {PageIndex}, Size: {PageSize}", filters, pageIndex, pageSize);
+
+            if (string.IsNullOrWhiteSpace(filters))
+            {
+                return BadRequest(new { error = "Search filters are required" });
+            }
+
+            // Parse filters from JSON
+            List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter> searchFilters;
+            try
+            {
+                searchFilters = System.Text.Json.JsonSerializer.Deserialize<List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>>(filters) ?? new List<UNOPS.PAO.UNOPSBusiness.Services.SearchFilter>();
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse search filters: {Filters}", filters);
+                return BadRequest(new { error = "Invalid filter format. Expected JSON array of filter objects." });
+            }
+
+            // Use AdvancedSearchService for structured filters with PostgreSQL similarity on "like" operators
+            var paginationRequest = new PaginationRequest
+            {
+                PageIndex = pageIndex,
+                PageSize = export ? int.MaxValue : pageSize,
+                OrderBy = orderBy ?? "Name",
+                Ascending = ascending,
+                FilterActive = filterActive
+            };
+
+            var result = await _advancedSearchService.SearchWithFiltersAsync<Opportunity, OpportunityModel>(
+                searchFilters,
+                paginationRequest,
+                User);
+            
+            _logger.LogInformation("Advanced opportunity search completed: Found {TotalCount} results", result.TotalCount);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in advanced opportunity search");
+            return StatusCode(500, new { error = "Internal server error during opportunity search", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Get supported search fields for opportunities - helps frontend build dynamic search forms
+    /// </summary>
+    /// <returns>List of all supported search fields with their metadata</returns>
+    [HttpGet(APIDictionary.Opportunity + "/search-fields")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public ActionResult<List<SearchFieldInfo>> GetOpportunitySearchFields()
+    {
+        try
+        {
+            var fields = _manager.GetOpportunitySearchFields();
+            return Ok(fields);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving opportunity search fields");
+            return StatusCode(500, new { error = "An error occurred while retrieving search fields" });
         }
     }
 

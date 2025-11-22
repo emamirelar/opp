@@ -237,9 +237,32 @@
                           <div class="flex items-start gap-2">
                             <i class="pi pi-check-circle text-green-600 text-sm mt-0.5"></i>
                             <div class="flex-1 text-xs">
-                              <div class="font-medium text-green-900">{{ partner.availableAgreements[0].name }}</div>
-                              <div class="text-green-800">
-                                {{ 'label.agreement' | translate }}: {{ partner.availableAgreements[0].partnerAgreementNumber }}
+                              <div class="flex items-center justify-between">
+                                <div class="font-medium text-green-900">{{ partner.availableAgreements[0].name }}</div>
+                                @if (partner.availableAgreements[0].source === 'Document' && partner.availableAgreements[0].documentId) {
+                                  <button
+                                    type="button"
+                                    class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
+                                    (click)="openAgreementDocument(partner.availableAgreements[0])"
+                                    pTooltip="Open document in new tab"
+                                    tooltipPosition="top"
+                                  >
+                                    <i class="pi pi-external-link text-[0.6rem]"></i>
+                                    <span>{{ 'button.open' | translate }}</span>
+                                  </button>
+                                }
+                              </div>
+                              <div class="text-green-800 flex items-center gap-2">
+                                <span>{{ 'label.agreement' | translate }}: {{ partner.availableAgreements[0].partnerAgreementNumber }}</span>
+                                @if (partner.availableAgreements[0].source) {
+                                  <span class="text-[0.65rem] px-1.5 py-0.5 rounded" 
+                                        [ngClass]="{
+                                          'bg-blue-100 text-blue-700': partner.availableAgreements[0].source === 'ERP',
+                                          'bg-purple-100 text-purple-700': partner.availableAgreements[0].source === 'Document'
+                                        }">
+                                    {{ partner.availableAgreements[0].source }}
+                                  </span>
+                                }
                               </div>
                               @if (partner.availableAgreements[0].startDate && partner.availableAgreements[0].endDate) {
                                 <div class="text-green-700">
@@ -597,9 +620,32 @@
                         <div class="flex items-start gap-2">
                           <i class="pi pi-check-circle text-green-600 text-sm mt-0.5"></i>
                           <div class="flex-1 text-xs">
-                            <div class="font-medium text-green-900">{{ client.availableAgreements[0].name }}</div>
-                            <div class="text-green-800">
-                              {{ 'label.agreement' | translate }}: {{ client.availableAgreements[0].partnerAgreementNumber }}
+                            <div class="flex items-center justify-between">
+                              <div class="font-medium text-green-900">{{ client.availableAgreements[0].name }}</div>
+                              @if (client.availableAgreements[0].source === 'Document' && client.availableAgreements[0].documentId) {
+                                <button
+                                  type="button"
+                                  class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
+                                  (click)="openAgreementDocument(client.availableAgreements[0])"
+                                  pTooltip="Open document in new tab"
+                                  tooltipPosition="top"
+                                >
+                                  <i class="pi pi-external-link text-[0.6rem]"></i>
+                                  <span>{{ 'button.open' | translate }}</span>
+                                </button>
+                              }
+                            </div>
+                            <div class="text-green-800 flex items-center gap-2">
+                              <span>{{ 'label.agreement' | translate }}: {{ client.availableAgreements[0].partnerAgreementNumber }}</span>
+                              @if (client.availableAgreements[0].source) {
+                                <span class="text-[0.65rem] px-1.5 py-0.5 rounded" 
+                                      [ngClass]="{
+                                        'bg-blue-100 text-blue-700': client.availableAgreements[0].source === 'ERP',
+                                        'bg-purple-100 text-purple-700': client.availableAgreements[0].source === 'Document'
+                                      }">
+                                  {{ client.availableAgreements[0].source }}
+                                </span>
+                              }
                             </div>
                             @if (client.availableAgreements[0].startDate && client.availableAgreements[0].endDate) {
                               <div class="text-green-700">

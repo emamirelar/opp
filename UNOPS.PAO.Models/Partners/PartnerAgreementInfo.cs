@@ -44,5 +44,20 @@ public class PartnerAgreementInfo
     /// Warning message if any (e.g., expires before opportunity end, geographic mismatch)
     /// </summary>
     public string? WarningMessage { get; set; }
+    
+    /// <summary>
+    /// Source of agreement: "ERP" for BigQuery synced, "Document" for manually uploaded
+    /// </summary>
+    public string Source { get; set; } = "ERP";
+    
+    /// <summary>
+    /// Document ID if this is a manually uploaded Partnership Agreement document
+    /// </summary>
+    public int? DocumentId { get; set; }
+    
+    /// <summary>
+    /// Document storage path for opening in new tab
+    /// </summary>
+    public string? DocumentStoragePath { get; set; }
 }
 

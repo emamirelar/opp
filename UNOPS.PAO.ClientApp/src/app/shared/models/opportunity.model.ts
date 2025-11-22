@@ -33,6 +33,9 @@ export interface PartnerAgreementInfo {
   geographicRestrictions: string | null;
   hasGeographicRestrictions: boolean;
   warningMessage: string | null;
+  source: string; // "ERP" or "Document"
+  documentId: number | null;
+  documentStoragePath: string | null;
 }
 
 /**

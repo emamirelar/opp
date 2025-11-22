@@ -119,6 +119,7 @@ export class SearchResultComponent implements OnInit {
   contactColumns = signal<ListViewColumn[]>([]);
   partnerColumns = signal<ListViewColumn[]>([]);
   interactionColumns = signal<ListViewColumn[]>([]);
+  opportunityColumns = signal<ListViewColumn[]>([]);
   columnsLoading = signal(false);
 
   // Memoization cache for metadata checks
@@ -421,10 +422,21 @@ export class SearchResultComponent implements OnInit {
       .subscribe({
         next: (columns: any) => {
           this.interactionColumns.set(this.processColumns(columns, 'Interaction'));
-          this.columnsLoading.set(false);
         },
         error: (error: any) => {
           console.error('Failed to load interaction columns:', error);
+        }
+      });
+    
+    // Load Opportunity columns
+    this.entityConfigurationService.getEntityListViewConfiguration('Opportunity')
+      .subscribe({
+        next: (columns: any) => {
+          this.opportunityColumns.set(this.processColumns(columns, 'Opportunity'));
+          this.columnsLoading.set(false);
+        },
+        error: (error: any) => {
+          console.error('Failed to load opportunity columns:', error);
           this.columnsLoading.set(false);
         }
       });
@@ -508,6 +520,8 @@ export class SearchResultComponent implements OnInit {
         return this.partnerColumns();
       case 'interactions':
         return this.interactionColumns();
+      case 'opportunities':
+        return this.opportunityColumns();
       default:
         return [];
     }
@@ -552,6 +566,7 @@ export class SearchResultComponent implements OnInit {
       case 'contacts': return 'contacts';
       case 'partners': return 'corporate_fare';
       case 'interactions': return 'chat';
+      case 'opportunities': return 'lightbulb';
       default: return 'help';
     }
   }
@@ -561,6 +576,7 @@ export class SearchResultComponent implements OnInit {
       case 'contacts': return 'blue';
       case 'partners': return 'green';
       case 'interactions': return 'purple';
+      case 'opportunities': return 'orange';
       default: return 'gray';
     }
   }
@@ -574,6 +590,8 @@ export class SearchResultComponent implements OnInit {
       this.router.navigate(['/partnerships/partners', result.id]);
     } else if (this.activeTabKey === 'interactions') {
       this.router.navigate(['/partnerships/interactions', result.id]);
+    } else if (this.activeTabKey === 'opportunities') {
+      this.router.navigate(['/partnerships/opportunities', result.id]);
     }
   }
 
@@ -764,6 +782,8 @@ export class SearchResultComponent implements OnInit {
       return entity['name'] || entity['shortName'] || 'Unknown Partner';
     } else if (this.activeTabKey === 'interactions') {
       return entity['title'] || entity['subject'] || 'Unknown Interaction';
+    } else if (this.activeTabKey === 'opportunities') {
+      return entity['name'] || 'Unknown Opportunity';
     }
     return 'Unknown Entity';
   }

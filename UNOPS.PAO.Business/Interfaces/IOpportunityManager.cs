@@ -1,5 +1,6 @@
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.Models.Search;
 using System.Security.Claims;
 
 namespace UNOPS.PAO.Business.Interfaces;
@@ -21,5 +22,7 @@ public interface IOpportunityManager
     Task<SimilarOpportunitiesResponse> GetSimilarOpportunitiesAsync(int id, int maxResults = 6, ClaimsPrincipal? user = null);
     Task AssignCreatorAsOpportunityManagerAsync(int opportunityId, int userId);
     Task<IEnumerable<OpportunityModel>> GetOpportunitiesByPartnerIdAsync(int partnerId);
+    List<SearchFieldInfo> GetOpportunitySearchFields();
 }
+
 
