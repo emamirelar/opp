@@ -54,5 +54,10 @@ public class OpportunityModel
     public string? CreatedByName { get; set; }
     public int? LastModifiedBy { get; set; }
     public string? LastModifiedByName { get; set; }
+    
+    /// <summary>
+    /// The current user's role(s) for this opportunity (for dashboard display)
+    /// </summary>
+    public string? UserRole { get; set; }
 }
 
