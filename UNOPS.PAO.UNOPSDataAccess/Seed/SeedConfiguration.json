@@ -122,6 +122,24 @@
         },
         {
             "order": 14,
+            "name": "UNCFOutcomes",
+            "type": "seeder",
+            "className": "UNCFOutcomeSeeder",
+            "methodName": "SeedUNCFOutcomesAsync",
+            "filePath": "Seeders/UNCFOutcomeSeeder.cs",
+            "description": "UNCF Outcome Seeder"
+        },
+        {
+            "order": 15,
+            "name": "UNCFIndicators",
+            "type": "seeder",
+            "className": "UNCFIndicatorSeeder",
+            "methodName": "SeedUNCFIndicatorsAsync",
+            "filePath": "Seeders/UNCFIndicatorSeeder.cs",
+            "description": "UNCF Indicator Seeder"
+        },
+        {
+            "order": 16,
             "name": "Units",
             "type": "seeder",
             "className": "UnitSeeder",
@@ -130,7 +148,7 @@
             "description": "Units of measurement (Days, Number, Litres, etc.)"
         },
         {
-            "order": 15,
+            "order": 17,
             "name": "ProjectCategories",
             "type": "seeder",
             "className": "ProjectCategorySeeder",
@@ -139,7 +157,7 @@
             "description": "Project categories (Category 1, 2, 3)"
         },
         {
-            "order": 16,
+            "order": 18,
             "name": "Outputs",
             "type": "seeder",
             "className": "OutputSeeder",
@@ -148,7 +166,7 @@
             "description": "UNOPS Output catalog"
         },
         {
-            "order": 17,
+            "order": 19,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",

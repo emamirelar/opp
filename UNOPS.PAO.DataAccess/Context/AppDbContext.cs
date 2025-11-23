@@ -84,6 +84,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<SDGTarget> SDGTargets { get; set; }
     public DbSet<SDGIndicator> SDGIndicators { get; set; }
     public DbSet<UNCFOutcome> UNCFOutcomes { get; set; }
+    public DbSet<UNCFIndicator> UNCFIndicators { get; set; }
     public DbSet<ExchangeRate> ExchangeRates { get; set; }
     
     // Output catalog entities
@@ -660,6 +661,21 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasIndex(x => x.UNCFOutcomeStartDate);
             entity.HasIndex(x => x.UNCFOutcomeEndDate);
             entity.HasIndex(x => x.Status);
+        });
+
+        // UNCFIndicator configuration (External Data Service - Read Only)
+        modelBuilder.Entity<UNCFIndicator>(entity =>
+        {
+            entity.HasIndex(x => x.UNCFIndicatorId);
+            entity.HasIndex(x => x.UNCFOutcomeExternalId);
+            entity.HasIndex(x => x.Country);
+            entity.HasIndex(x => x.UNCooperationFrameworkVersionNo);
+            entity.HasIndex(x => x.UNCFIndicatorStartDate);
+            entity.HasIndex(x => x.UNCFIndicatorEndDate);
+            entity.HasIndex(x => x.Status);
+            
+            // Composite index for efficient parent outcome lookups
+            entity.HasIndex(x => new { x.UNCFOutcomeExternalId, x.UNCooperationFrameworkVersionNo });
         });
 
         // Country configuration (External Data Service - Read Only)
