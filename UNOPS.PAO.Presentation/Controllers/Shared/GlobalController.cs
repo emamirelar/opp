@@ -491,7 +491,7 @@ public class GlobalController : BaseController
             // Convert the GlobalSearchResponse to the expected format for ProcessAndConsolidateResults
             var formattedResults = new
             {
-                availableEntities = new[] { "Partners", "Contacts", "Interactions" },
+                availableEntities = new[] { "Partners", "Contacts", "Interactions", "Opportunities" },
                 results = new
                 {
                     Partners = new
@@ -532,14 +532,28 @@ public class GlobalController : BaseController
                             matchCriteria = r.MatchCriteria,
                             snippet = r.Snippet
                         }).ToArray() ?? new object[0]
+                    },
+                    Opportunities = new
+                    {
+                        items = searchResults.Opportunities?.Select(r => new
+                        {
+                            entityId = r.EntityId,
+                            score = r.Score,
+                            matchedField = r.MatchedField,
+                            fieldValue = r.FieldValue,
+                            searchType = r.SearchType,
+                            matchCriteria = r.MatchCriteria,
+                            snippet = r.Snippet
+                        }).ToArray() ?? new object[0]
                     }
                 }
             };
             
-            _logger.LogInformation("Modular search completed. Partners: {PartnerCount}, Contacts: {ContactCount}, Interactions: {InteractionCount}, ExecutionTime: {ExecutionTime}ms",
+            _logger.LogInformation("Modular search completed. Partners: {PartnerCount}, Contacts: {ContactCount}, Interactions: {InteractionCount}, Opportunities: {OpportunityCount}, ExecutionTime: {ExecutionTime}ms",
                 searchResults.Partners?.Count ?? 0,
                 searchResults.Contacts?.Count ?? 0,
                 searchResults.Interactions?.Count ?? 0,
+                searchResults.Opportunities?.Count ?? 0,
                 searchResults.ExecutionTimeMs);
             
             return formattedResults;
@@ -917,6 +931,7 @@ public class GlobalController : BaseController
                 "partners" => await ApplyGlobalFiltersToPartners(entityIds, user, context),
                 "contacts" => await ApplyGlobalFiltersToContacts(entityIds, user, context),
                 "interactions" => await ApplyGlobalFiltersToInteractions(entityIds, user, context),
+                "opportunities" => await ApplyGlobalFiltersToOpportunities(entityIds, user, context),
                 "baseengagements" => await ApplyGlobalFiltersToBaseEngagements(entityIds, user, context),
                 _ => entityIds.ToList()
             };
@@ -955,6 +970,15 @@ public class GlobalController : BaseController
         return await filteredQuery.Select(i => i.Id).ToListAsync();
     }
 
+    private async Task<List<int>> ApplyGlobalFiltersToOpportunities(int[] entityIds, ClaimsPrincipal user, UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext context)
+    {
+        var query = context.Set<UNOPS.PAO.Domain.Entities.Opportunity>()
+            .Where(o => entityIds.Contains(o.Id) && !o.IsDeleted);
+        
+        var filteredQuery = await _globalFilterService.ApplyGlobalFiltersAsync(query, user);
+        return await filteredQuery.Select(o => o.Id).ToListAsync();
+    }
+
     private async Task<List<int>> ApplyGlobalFiltersToBaseEngagements(int[] entityIds, ClaimsPrincipal user, UNOPS.PAO.UNOPSDataAccess.Context.UNOPSAppDbContext context)
     {
         var query = context.Set<UNOPS.PAO.UNOPSDomain.Entities.BaseEngagement>()
@@ -974,6 +998,7 @@ public class GlobalController : BaseController
             "contacts" => "contactManager",
             "interactions" => "interactionManager", 
             "partners" => "partnerManager",
+            "opportunities" => "opportunityManager",
             _ => $"{entityType.ToLower().TrimEnd('s')}Manager" // Fallback pattern
         };
     }

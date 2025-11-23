@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251122184101_PartnerAgreementModel")]
+    partial class PartnerAgreementModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2034,9 +2037,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("SDGId")
                         .HasColumnType("integer");
 
-                    b.Property<bool?>("SkipTargetsAndIndicators")
-                        .HasColumnType("boolean");
-
                     b.HasKey("Id");
 
                     b.HasIndex("OpportunityId");
@@ -2044,70 +2044,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("SDGId");
 
                     b.ToTable("OpportunitySDGs", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDGIndicator", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<int>("OpportunityId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("OpportunitySDGTargetId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SDGIndicatorId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OpportunityId");
-
-                    b.HasIndex("OpportunitySDGTargetId");
-
-                    b.HasIndex("SDGIndicatorId");
-
-                    b.ToTable("OpportunitySDGIndicators", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDGTarget", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<int>("OpportunityId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("OpportunitySDGId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SDGTargetId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OpportunityId");
-
-                    b.HasIndex("OpportunitySDGId");
-
-                    b.HasIndex("SDGTargetId");
-
-                    b.ToTable("OpportunitySDGTargets", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityStakeholder", b =>
@@ -2922,47 +2858,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("Status");
 
                     b.ToTable("SDGs", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.SDGIndicator", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("SDGIndicatorId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("SDGIndicatorLongDescription")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SDGTargetId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SDGIndicatorId");
-
-                    b.HasIndex("SDGTargetId");
-
-                    b.HasIndex("Status");
-
-                    b.ToTable("SDGIndicators", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.SDGTarget", b =>
@@ -4331,60 +4226,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("SDG");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDGIndicator", b =>
-                {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Opportunity", "Opportunity")
-                        .WithMany("SDGIndicators")
-                        .HasForeignKey("OpportunityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.OpportunitySDGTarget", "OpportunitySDGTarget")
-                        .WithMany("Indicators")
-                        .HasForeignKey("OpportunitySDGTargetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.SDGIndicator", "SDGIndicator")
-                        .WithMany()
-                        .HasForeignKey("SDGIndicatorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Opportunity");
-
-                    b.Navigation("OpportunitySDGTarget");
-
-                    b.Navigation("SDGIndicator");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDGTarget", b =>
-                {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Opportunity", "Opportunity")
-                        .WithMany("SDGTargets")
-                        .HasForeignKey("OpportunityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.OpportunitySDG", "OpportunitySDG")
-                        .WithMany("Targets")
-                        .HasForeignKey("OpportunitySDGId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.SDGTarget", "SDGTarget")
-                        .WithMany()
-                        .HasForeignKey("SDGTargetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Opportunity");
-
-                    b.Navigation("OpportunitySDG");
-
-                    b.Navigation("SDGTarget");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunityStakeholder", b =>
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.EntityRole", "EntityRole")
@@ -4579,23 +4420,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Navigation("FundingPartners");
 
-                    b.Navigation("SDGIndicators");
-
-                    b.Navigation("SDGTargets");
-
                     b.Navigation("SDGs");
 
                     b.Navigation("Stakeholders");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDG", b =>
-                {
-                    b.Navigation("Targets");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OpportunitySDGTarget", b =>
-                {
-                    b.Navigation("Indicators");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OrganizationHierarchy", b =>

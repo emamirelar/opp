@@ -11,6 +11,8 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.Models.Partners;
+using UNOPS.PAO.Models.Search;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
@@ -175,6 +177,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         // Populate associated documents and DD fields for funding partners
         if (model.FundingPartners != null && model.FundingPartners.Any())
         {
+            // Get opportunity country IDs for agreement matching
+            var opportunityCountryIds = entity.Countries?.Select(c => c.CountryId).ToList() ?? new List<int>();
+            
             foreach (var fundingPartner in model.FundingPartners)
             {
                 fundingPartner.AssociatedDocuments = await GetDocumentsForPartner(
@@ -212,6 +217,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                         fundingPartner.ExchangeRateDisplay = 
                             $"{fundingPartnerEntity.ExchangeRate:F4} on {fundingPartnerEntity.ExchangeRateDate:MMM dd, yyyy}";
                     }
+                    
+                    // AC9: Load partner agreements
+                    fundingPartner.AvailableAgreements = await LoadPartnerAgreementsAsync(
+                        fundingPartner.PartnerId,
+                        entity.CreatedDate, // Use created date as start
+                        entity.TargetDeliveryDate,
+                        opportunityCountryIds
+                    );
                 }
             }
         }
@@ -219,6 +232,9 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
         // Populate associated documents and DD fields for client partners
         if (model.ClientPartners != null && model.ClientPartners.Any())
         {
+            // Get opportunity country IDs for agreement matching
+            var opportunityCountryIds = entity.Countries?.Select(c => c.CountryId).ToList() ?? new List<int>();
+            
             foreach (var clientPartner in model.ClientPartners)
             {
                 clientPartner.AssociatedDocuments = await GetDocumentsForPartner(
@@ -249,6 +265,14 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                         clientPartner.DDExpiresBeforeOpportunityEnd = 
                             partner.DueDiligenceExpiryDate < entity.TargetDeliveryDate;
                     }
+                    
+                    // AC9: Load partner agreements
+                    clientPartner.AvailableAgreements = await LoadPartnerAgreementsAsync(
+                        clientPartner.PartnerId,
+                        entity.CreatedDate, // Use created date as start
+                        entity.TargetDeliveryDate,
+                        opportunityCountryIds
+                    );
                 }
             }
         }
@@ -906,7 +930,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                     IsAmountBasedFee = fp.IsAmountBasedFee,
                     PartnershipAgreementReference = fp.PartnershipAgreementReference,
                     DocumentId = fp.DocumentId,
-                    IsPooledContribution = fp.IsPooledContribution // AC8
+                    IsPooledContribution = fp.IsPooledContribution, // AC8
+                    SelectedPartnerAgreementNumber = fp.SelectedPartnerAgreementNumber // AC9
                     // PartnerPreferredCurrency will remain null until Partner entity gets this field
                 };
                 
@@ -956,7 +981,8 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
                 .Select(cp => new OpportunityClientPartner
                 {
                     OpportunityId = id,
-                    PartnerId = cp.PartnerId
+                    PartnerId = cp.PartnerId,
+                    SelectedPartnerAgreementNumber = cp.SelectedPartnerAgreementNumber // AC9
                 })
                 .ToList();
         }
@@ -1901,6 +1927,294 @@ public class UNOPSOpportunityManager : BaseUNOPSManager, IOpportunityManager
             Console.WriteLine($"Error getting opportunities for partner {partnerId}: {ex.Message}");
             throw;
         }
+    }
+
+    /// <summary>
+    /// Gets multiple opportunities by their IDs with RBAC filtering
+    /// Used by GlobalController for search results
+    /// </summary>
+    public override async Task<List<object>> GetByIdsAsync(int[] ids, ClaimsPrincipal user = null)
+    {
+        if (ids == null || ids.Length == 0)
+            return new List<object>();
+
+        var opportunities = opportunityRepository
+            .GetAll([
+                "WorkflowStage",
+                "ResponsibleOrgUnit",
+                "ProposedInitiativeType",
+                "FundingPartners",
+                "FundingPartners.Partner",
+                "ClientPartners",
+                "ClientPartners.Partner",
+                "Stakeholders",
+                "Stakeholders.EntityRole",
+                "Stakeholders.User",
+                "Deliverables",
+                "Countries",
+                "Countries.Country",
+                "SDGs",
+                "SDGs.SDG"
+            ])
+            .Where(o => ids.Contains(o.Id))
+            .ToList();
+
+        // Apply access control if user context is provided
+        if (user != null)
+        {
+            var filteredData = await ApplyAccessControlFilters(opportunities.AsQueryable(), user, "read");
+            if (filteredData is IEnumerable<Opportunity> opportunityList)
+            {
+                opportunities = opportunityList.ToList();
+            }
+        }
+
+        // Map to models
+        var opportunityModels = mapper.Map<List<OpportunityModel>>(opportunities);
+
+        // Add permissions if user context is provided
+        if (user != null)
+        {
+            foreach (var model in opportunityModels)
+            {
+                var sourceEntity = opportunities.FirstOrDefault(o => o.Id == model.Id);
+                await MapEntityToModelWithPermissionsAsync(model, user, sourceEntity);
+            }
+        }
+
+        return opportunityModels.Cast<object>().ToList();
+    }
+
+    public List<SearchFieldInfo> GetOpportunitySearchFields()
+    {
+        try
+        {
+            var fields = new List<SearchFieldInfo>
+            {
+                // Core Opportunity Identity fields
+                new() { Field = "name", DisplayName = "label.opportunity.name", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "description", DisplayName = "label.opportunity.description", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "partnerReference", DisplayName = "label.opportunity.partnerReference", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+
+                // Status field
+                new() { 
+                    Field = "status", 
+                    DisplayName = "label.common.status", 
+                    FieldType = "enum", 
+                    AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq" },
+                    DropdownOptions = new List<DropdownOption>
+                    {
+                        new() { Value = "Inactive", Label = "enums.entityStatus.inactive" },
+                        new() { Value = "Active", Label = "enums.entityStatus.active" },
+                        new() { Value = "Closed", Label = "enums.entityStatus.closed" },
+                        new() { Value = "Draft", Label = "enums.entityStatus.draft" },
+                        new() { Value = "Archived", Label = "enums.entityStatus.archived" }
+                    }
+                },
+
+                // Strategic Information fields
+                new() { Field = "strategicAlignment", DisplayName = "label.opportunity.strategicAlignment", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "resultsFocus", DisplayName = "label.opportunity.resultsFocus", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "intendedImpactOutcomes", DisplayName = "label.opportunity.intendedImpactOutcomes", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "expectedBeneficiaries", DisplayName = "label.opportunity.expectedBeneficiaries", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+
+                // Budget field
+                new() { Field = "initiativeBudgetUSD", DisplayName = "label.opportunity.budgetUSD", FieldType = "number", AllowedOperators = new List<string> { "entityCards.operators.eq", "entityCards.operators.neq", "entityCards.operators.gt", "entityCards.operators.lt", "entityCards.operators.gte", "entityCards.operators.lte", "entityCards.operators.between" } },
+
+                // Date fields
+                new() { Field = "targetSigningDate", DisplayName = "label.opportunity.targetSigningDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "targetDeliveryDate", DisplayName = "label.opportunity.targetDeliveryDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "createdDate", DisplayName = "label.common.createdDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+                new() { Field = "lastModifiedDate", DisplayName = "label.common.lastModifiedDate", FieldType = "date", AllowedOperators = new List<string> { "entityCards.operators.on", "entityCards.operators.after", "entityCards.operators.before", "entityCards.operators.between" } },
+
+                // Related entity fields
+                new() { Field = "workflowStage.name", DisplayName = "label.opportunity.workflowStage", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "responsibleOrgUnit.name", DisplayName = "label.opportunity.responsibleOrgUnit", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+                new() { Field = "proposedInitiativeType.name", DisplayName = "label.opportunity.proposedInitiativeType", FieldType = "text", AllowedOperators = new List<string> { "entityCards.operators.like", "entityCards.operators.eq", "entityCards.operators.neq" } },
+            };
+
+            return fields;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting opportunity search fields: {ex.Message}");
+            throw;
+        }
+    }
+    
+    /// <summary>
+    /// Load partner agreements for a specific partner (AC9)
+    /// </summary>
+    private async Task<List<PartnerAgreementInfo>> LoadPartnerAgreementsAsync(
+        int partnerId, 
+        DateTime? opportunityStartDate, 
+        DateTime? opportunityEndDate,
+        List<int> opportunityCountryIds)
+    {
+        var agreements = new List<PartnerAgreementInfo>();
+        
+        try
+        {
+            // ==========================================
+            // SOURCE 1: Load agreements from BigQuery (via EDS)
+            // ==========================================
+            
+            // Get partner's ERP dimension value to match with agreements
+            var partner = await context.Partners
+                .Where(p => p.Id == partnerId)
+                .Select(p => new { p.ErpDimValue })
+                .FirstOrDefaultAsync();
+                
+            if (partner != null && partner.ErpDimValue.HasValue)
+            {
+                // Convert ErpDimValue to string for matching with PartnerAgreementPartner
+                var partnerNumber = partner.ErpDimValue.Value.ToString();
+                
+                // Load all active agreements for this partner from BigQuery
+                var partnerAgreements = await context.PartnerAgreements
+                    .Where(pa => pa.PartnerAgreementPartner == partnerNumber && !pa.IsDeleted)
+                    .OrderByDescending(pa => pa.PartnerAgreementStartDate)
+                    .ToListAsync();
+                    
+                foreach (var agreement in partnerAgreements)
+                {
+                    var agreementInfo = new PartnerAgreementInfo
+                    {
+                        PartnerAgreementNumber = agreement.PartnerAgreementNumber,
+                        Name = agreement.Name,
+                        PartnerAgreementType = agreement.PartnerAgreementType,
+                        PartnerAgreementTypeDescription = agreement.PartnerAgreementTypeDescription,
+                        PartnerAgreementScope = agreement.PartnerAgreementScope,
+                        PartnerAgreementScopeDescription = agreement.PartnerAgreementScopeDescription,
+                        StartDate = agreement.PartnerAgreementStartDate,
+                        EndDate = agreement.PartnerAgreementEndDate,
+                        SignedDate = agreement.PartnerAgreementSignedDate,
+                        Source = "ERP" // From BigQuery
+                    };
+                    
+                    // Check if agreement covers opportunity period
+                    if (opportunityStartDate.HasValue && opportunityEndDate.HasValue &&
+                        agreement.PartnerAgreementStartDate.HasValue && agreement.PartnerAgreementEndDate.HasValue)
+                    {
+                        agreementInfo.CoversOpportunityPeriod = 
+                            agreement.PartnerAgreementStartDate <= opportunityStartDate &&
+                            agreement.PartnerAgreementEndDate >= opportunityEndDate;
+                            
+                        agreementInfo.ExpiresBeforeOpportunityEnd = 
+                            agreement.PartnerAgreementEndDate < opportunityEndDate;
+                    }
+                    
+                    // Build service lines description
+                    var serviceLines = new List<string>();
+                    if (agreement.PartnerAgreementServiceLineInfrastructureFlag) serviceLines.Add("Infrastructure");
+                    if (agreement.PartnerAgreementServiceLineProcurementFlag) serviceLines.Add("Procurement");
+                    if (agreement.PartnerAgreementServiceLineProjectManagementFlag) serviceLines.Add("Project Management");
+                    if (agreement.PartnerAgreementServiceLineFundManagementFlag) serviceLines.Add("Fund Management");
+                    if (agreement.PartnerAgreementServiceLineHumanResourcesFlag) serviceLines.Add("Human Resources");
+                    if (agreement.PartnerAgreementServiceLineOtherFlag) serviceLines.Add("Other");
+                    
+                    if (serviceLines.Any())
+                    {
+                        agreementInfo.ServiceLinesDescription = string.Join(", ", serviceLines);
+                    }
+                    
+                    // Check geographic restrictions
+                    if (!string.IsNullOrEmpty(agreement.PartnerAgreementCountries))
+                    {
+                        agreementInfo.HasGeographicRestrictions = true;
+                        agreementInfo.GeographicRestrictions = agreement.PartnerAgreementCountries;
+                        
+                        // Check if opportunity countries match agreement restrictions
+                        if (opportunityCountryIds != null && opportunityCountryIds.Any())
+                        {
+                            var agreementCountryCodes = agreement.PartnerAgreementCountries.Split(',')
+                                .Select(c => c.Trim())
+                                .ToList();
+                                
+                            var opportunityCountryCodes = await context.OpportunityCountries
+                                .Where(oc => oc.OpportunityId == opportunityCountryIds.FirstOrDefault())
+                                .Select(oc => oc.Country!.Iso2Code)
+                                .ToListAsync();
+                                
+                            var hasMatchingCountry = opportunityCountryCodes.Any(oc => 
+                                agreementCountryCodes.Contains(oc, StringComparer.OrdinalIgnoreCase));
+                                
+                            if (!hasMatchingCountry && opportunityCountryCodes.Any())
+                            {
+                                agreementInfo.WarningMessage = "This agreement has geographic restrictions that may not match the opportunity countries.";
+                            }
+                        }
+                    }
+                    else if (agreement.PartnerAgreementScope == "GLOBAL")
+                    {
+                        agreementInfo.HasGeographicRestrictions = false;
+                        agreementInfo.GeographicRestrictions = "Global (no restrictions)";
+                    }
+                    
+                    // Add expiry warning
+                    if (agreementInfo.ExpiresBeforeOpportunityEnd)
+                    {
+                        agreementInfo.WarningMessage = agreementInfo.WarningMessage != null
+                            ? agreementInfo.WarningMessage + " Agreement expires before opportunity end date."
+                            : "Agreement expires before opportunity end date.";
+                    }
+                    
+                    agreements.Add(agreementInfo);
+                }
+            }
+            
+            // ==========================================
+            // SOURCE 2: Load Partnership Agreement documents from Partner record
+            // ==========================================
+            
+            // Get the "Partnership Agreement" document type ID
+            var partnershipAgreementDocType = await context.DocumentTypes
+                .Where(dt => dt.EntityType == "Partner" && dt.Name == "Partnership Agreement")
+                .Select(dt => dt.Id)
+                .FirstOrDefaultAsync();
+                
+            if (partnershipAgreementDocType > 0)
+            {
+                // Load documents of type "Partnership Agreement" linked to this partner via DocumentRelationship
+                var partnershipDocs = await context.Set<DocumentRelationship>()
+                    .Include(dr => dr.Document)
+                    .Where(dr => dr.EntityType == "Partner" 
+                        && dr.EntityId == partnerId 
+                        && dr.Document!.DocumentTypeId == partnershipAgreementDocType 
+                        && !dr.Document.IsDeleted)
+                    .Select(dr => dr.Document!)
+                    .OrderByDescending(d => d.CreatedDate)
+                    .ToListAsync();
+                    
+                foreach (var doc in partnershipDocs)
+                {
+                    var docAgreementInfo = new PartnerAgreementInfo
+                    {
+                        PartnerAgreementNumber = $"DOC-{doc.Id}", // Unique identifier for document-based agreements
+                        Name = doc.Name ?? "Partnership Agreement",
+                        PartnerAgreementType = "Uploaded Document",
+                        PartnerAgreementTypeDescription = "Manually uploaded Partnership Agreement",
+                        PartnerAgreementScope = "Unknown", // No scope info from uploaded docs
+                        StartDate = doc.CreatedDate,
+                        EndDate = null, // Unknown from uploaded docs
+                        Source = "Document", // From partner record upload
+                        DocumentId = doc.Id,
+                        DocumentStoragePath = doc.StoragePath,
+                        GeographicRestrictions = "Unknown (review document for details)",
+                        HasGeographicRestrictions = false // Unknown, so assume no restrictions
+                    };
+                    
+                    agreements.Add(docAgreementInfo);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading partner agreements for partner {partnerId}: {ex.Message}");
+            // Return empty list on error, don't fail the whole operation
+        }
+        
+        return agreements;
     }
 }
 

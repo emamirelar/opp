@@ -19,6 +19,7 @@ using NpgsqlTypes;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using AutoMapper;
 using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.Search;
 using UNOPS.PAO.Models.Shared;
@@ -212,6 +213,9 @@ public class AdvancedSearchService
                 case "Interaction":
                     searchResults = await SearchInteractionsAsync(query);
                     break;
+                case "Opportunity":
+                    searchResults = await SearchOpportunitiesAsync(query);
+                    break;
                 default:
                     throw new ArgumentException($"Unsupported entity type: {entityType}");
             }
@@ -363,6 +367,7 @@ public class AdvancedSearchService
                 Partners = new List<GlobalSearchResult>(),
                 Contacts = new List<GlobalSearchResult>(),
                 Interactions = new List<GlobalSearchResult>(),
+                Opportunities = new List<GlobalSearchResult>(),
                 SearchQuery = searchText,
                 ExecutionTimeMs = 0
             };
@@ -378,7 +383,8 @@ public class AdvancedSearchService
         {
             Partners = new List<GlobalSearchResult>(),
             Contacts = new List<GlobalSearchResult>(),
-            Interactions = new List<GlobalSearchResult>()
+            Interactions = new List<GlobalSearchResult>(),
+            Opportunities = new List<GlobalSearchResult>()
         };
 
         try
@@ -606,6 +612,52 @@ public class AdvancedSearchService
     }
 
     /// <summary>
+    /// Search Opportunities using the dedicated PostgreSQL function with nested properties
+    /// </summary>
+    public async Task<List<GlobalSearchResult>> SearchOpportunitiesAsync(string searchText, float textBoost = 1.0f, int snippetLength = 150)
+    {
+        try
+        {
+            _logger.LogInformation("Searching Opportunities with nested properties: '{SearchText}'", searchText);
+
+            using var connection = new NpgsqlConnection(_context.Database.GetConnectionString());
+            await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = "SELECT * FROM public.search_opportunities_with_nested($1, $2, $3)";
+            command.Parameters.Add(new NpgsqlParameter { Value = searchText });
+            command.Parameters.Add(new NpgsqlParameter { Value = textBoost });
+            command.Parameters.Add(new NpgsqlParameter { Value = snippetLength });
+
+            var results = new List<GlobalSearchResult>();
+            using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                results.Add(new GlobalSearchResult
+                {
+                    EntityType = reader.GetString("entity_type"),
+                    EntityId = int.Parse(reader.GetString("entity_id")),
+                    Score = reader.GetDouble("score"),
+                    MatchedField = reader.GetString("matched_field"),
+                    FieldValue = reader.GetString("field_value"),
+                    SearchType = reader.GetString("search_type"),
+                    MatchCriteria = reader.GetString("match_criteria"),
+                    Snippet = reader.GetString("snippet")
+                });
+            }
+
+            _logger.LogInformation("Opportunities search completed. Found {Count} results", results.Count);
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching Opportunities with nested properties: '{SearchText}'", searchText);
+            return new List<GlobalSearchResult>();
+        }
+    }
+
+    /// <summary>
     /// Enhanced global search using modular functions for better performance and control
     /// </summary>
     public async Task<GlobalSearchResponse> SearchAllEntitiesModularAsync(string searchText, float textBoost = 1.0f, int maxResultsPerEntity = 15, bool filterActive = true)
@@ -622,12 +674,14 @@ public class AdvancedSearchService
             var partnersTask = SearchPartnersAsync(searchText, textBoost);
             var contactsTask = SearchContactsAsync(searchText, textBoost);
             var interactionsTask = SearchInteractionsAsync(searchText, textBoost);
+            var opportunitiesTask = SearchOpportunitiesAsync(searchText, textBoost);
 
-            await Task.WhenAll(partnersTask, contactsTask, interactionsTask);
+            await Task.WhenAll(partnersTask, contactsTask, interactionsTask, opportunitiesTask);
 
             var partners = await partnersTask;
             var contacts = await contactsTask;
             var interactions = await interactionsTask;
+            var opportunities = await opportunitiesTask;
 
             // Limit results per entity
             var response = new GlobalSearchResponse
@@ -636,13 +690,15 @@ public class AdvancedSearchService
                 Partners = partners.Take(maxResultsPerEntity).ToList(),
                 Contacts = contacts.Take(maxResultsPerEntity).ToList(),
                 Interactions = interactions.Take(maxResultsPerEntity).ToList(),
+                Opportunities = opportunities.Take(maxResultsPerEntity).ToList(),
                 ExecutionTimeMs = (DateTime.UtcNow - startTime).TotalMilliseconds
             };
 
-            _logger.LogInformation("Enhanced modular search completed. Partners: {PartnerCount}, Contacts: {ContactCount}, Interactions: {InteractionCount}, Time: {ExecutionTime}ms",
+            _logger.LogInformation("Enhanced modular search completed. Partners: {PartnerCount}, Contacts: {ContactCount}, Interactions: {InteractionCount}, Opportunities: {OpportunityCount}, Time: {ExecutionTime}ms",
                 response.Partners.Count,
                 response.Contacts.Count,
                 response.Interactions.Count,
+                response.Opportunities.Count,
                 response.ExecutionTimeMs);
 
             return response;
@@ -655,6 +711,7 @@ public class AdvancedSearchService
                 Partners = new List<GlobalSearchResult>(),
                 Contacts = new List<GlobalSearchResult>(),
                 Interactions = new List<GlobalSearchResult>(),
+                Opportunities = new List<GlobalSearchResult>(),
                 SearchQuery = searchText,
                 ExecutionTimeMs = 0
             };
@@ -696,6 +753,19 @@ public class AdvancedSearchService
                     .Include("InteractionContacts.Contact")
                     .Include("InteractionPartners.Partner")
                     .Include("InteractionUsers.User");
+                break;
+
+            case "Opportunity":
+                query = query
+                    .Include("WorkflowStage")
+                    .Include("ResponsibleOrgUnit")
+                    .Include("ProposedInitiativeType")
+                    .Include("FundingPartners.Partner")
+                    .Include("ClientPartners.Partner")
+                    .Include("Stakeholders.EntityRole")
+                    .Include("Deliverables")
+                    .Include("Countries.Country")
+                    .Include("SDGs.SDG");
                 break;
 
             default:
@@ -900,6 +970,9 @@ public class AdvancedSearchService
                 case "Interaction":
                     searchResults = await SearchInteractionsAsync(searchText);
                     break;
+                case "Opportunity":
+                    searchResults = await SearchOpportunitiesAsync(searchText);
+                    break;
                 default:
                     _logger.LogWarning("Entity type {EntityType} not supported for modular similarity search", entityType);
                     return new List<TEntity>();
@@ -1103,6 +1176,37 @@ public class AdvancedSearchService
                     AddFieldIfNotNull(fields, "Location", interaction.Location);
 
                     // Related entities would be added here
+                }
+                break;
+
+            case "Opportunity":
+                var opportunity = entity as Opportunity;
+                if (opportunity != null)
+                {
+                    // Core fields
+                    AddFieldIfNotNull(fields, "Name", opportunity.Name);
+                    AddFieldIfNotNull(fields, "Description", opportunity.Description);
+                    AddFieldIfNotNull(fields, "PartnerReference", opportunity.PartnerReference);
+                    AddFieldIfNotNull(fields, "StrategicAlignment", opportunity.StrategicAlignment);
+                    AddFieldIfNotNull(fields, "ResultsFocus", opportunity.ResultsFocus);
+                    AddFieldIfNotNull(fields, "IntendedImpactOutcomes", opportunity.IntendedImpactOutcomes);
+                    AddFieldIfNotNull(fields, "ExpectedBeneficiaries", opportunity.ExpectedBeneficiaries);
+
+                    // Related entities
+                    if (opportunity.WorkflowStage != null)
+                    {
+                        AddFieldIfNotNull(fields, "WorkflowStage.Name", opportunity.WorkflowStage.Name);
+                    }
+
+                    if (opportunity.ResponsibleOrgUnit != null)
+                    {
+                        AddFieldIfNotNull(fields, "ResponsibleOrgUnit.Name", opportunity.ResponsibleOrgUnit.Name);
+                    }
+
+                    if (opportunity.ProposedInitiativeType != null)
+                    {
+                        AddFieldIfNotNull(fields, "ProposedInitiativeType.Name", opportunity.ProposedInitiativeType.Name);
+                    }
                 }
                 break;
         }
@@ -2139,6 +2243,11 @@ public class AdvancedSearchService
                 {
                     mappedModel = await MapInteractionToModel(entity);
                 }
+                // Handle Opportunity entities
+                else if (entityTypeName == "Opportunity" && modelTypeName == "OpportunityModel")
+                {
+                    mappedModel = await MapOpportunityToModel(entity);
+                }
                 else
                 {
                     _logger.LogWarning("Unknown entity/model mapping: {EntityType} -> {ModelType}", entityTypeName, modelTypeName);
@@ -2222,6 +2331,24 @@ public class AdvancedSearchService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error mapping UNOPSInteraction to InteractionModel");
+        }
+        return null;
+    }
+    
+    private async Task<object?> MapOpportunityToModel(object entity)
+    {
+        try
+        {
+            if (entity is Opportunity opportunity)
+            {
+                // Use AutoMapper for OpportunityModel mapping
+                var result = _mapper.Map<Opportunity, OpportunityModel>(opportunity);
+                return result;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error mapping Opportunity to OpportunityModel");
         }
         return null;
     }

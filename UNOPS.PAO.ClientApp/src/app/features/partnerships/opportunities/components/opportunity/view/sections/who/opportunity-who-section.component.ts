@@ -32,7 +32,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { CheckboxModule } from 'primeng/checkbox';
-import { Opportunity, OpportunityFundingPartner, OpportunityClientPartner, OpportunityStakeholder, OpportunityExternalStakeholder, DocumentDetail } from '@shared/models/opportunity.model';
+import { Opportunity, OpportunityFundingPartner, OpportunityClientPartner, OpportunityStakeholder, OpportunityExternalStakeholder, DocumentDetail, PartnerAgreementInfo } from '@shared/models/opportunity.model';
 import { OpportunityService } from '@features/partnerships/opportunities/services/opportunity.service';
 import { FeedbackDialogService } from '@shared/services/ui/feedback-dialog.service';
 import { Router } from '@angular/router';
@@ -304,11 +304,13 @@ export class OpportunityWhoSectionComponent implements OnInit {
         isAmountBasedFee: fp.isAmountBasedFee,
         partnershipAgreementReference: fp.partnershipAgreementReference,
         documentId: fp.documentId, // Include document ID if set
-        isPooledContribution: fp.isPooledContribution || false
+        isPooledContribution: fp.isPooledContribution || false,
+        selectedPartnerAgreementNumber: fp.selectedPartnerAgreementNumber // AC9
       })),
       clientPartners: opp.clientPartners?.map(cp => ({
         partnerId: cp.partnerId,
-        documentId: cp.documentId // Include document ID if set
+        documentId: cp.documentId, // Include document ID if set
+        selectedPartnerAgreementNumber: cp.selectedPartnerAgreementNumber // AC9
       })),
       stakeholders: opp.stakeholders?.map(s => ({
         userId: s.userId!,
@@ -495,7 +497,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
       exchangeRate: null,
       exchangeRateDate: null,
       exchangeRateDisplay: null, // Backend will calculate
-      isPooledContribution: false
+      isPooledContribution: false,
+      selectedPartnerAgreementNumber: null, // AC9
+      availableAgreements: null // AC9
     };
 
     currentPartners.push(newPartner);
@@ -684,7 +688,9 @@ export class OpportunityWhoSectionComponent implements OnInit {
       ddApprovalDate: null,
       ddExpiryDate: null,
       ddStatus: null,
-      ddExpiresBeforeOpportunityEnd: null
+      ddExpiresBeforeOpportunityEnd: null,
+      selectedPartnerAgreementNumber: null, // AC9
+      availableAgreements: null // AC9
     };
 
     currentClients.push(newClient);
@@ -811,6 +817,33 @@ export class OpportunityWhoSectionComponent implements OnInit {
           window.open(doc.storagePath, '_blank');
         } else {
           this.downloadDocument(doc.id!);
+        }
+      }
+    });
+  }
+  
+  /**
+   * @description Open Partnership Agreement document in new tab (AC9)
+   */
+  openAgreementDocument(agreement: PartnerAgreementInfo): void {
+    if (!agreement.documentId) return;
+    
+    const documentService = inject(DocumentService);
+    
+    // Use document service to get view URL
+    documentService.getDocumentViewUrl(agreement.documentId).subscribe({
+      next: (response) => {
+        if (response && response.url) {
+          window.open(response.url, '_blank');
+        } else if (agreement.documentStoragePath) {
+          window.open(agreement.documentStoragePath, '_blank');
+        }
+      },
+      error: (error) => {
+        console.error('Error opening agreement document:', error);
+        // Try storage path as fallback
+        if (agreement.documentStoragePath) {
+          window.open(agreement.documentStoragePath, '_blank');
         }
       }
     });

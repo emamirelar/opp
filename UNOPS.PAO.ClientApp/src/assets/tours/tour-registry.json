@@ -36,6 +36,16 @@
       "description": "Interaction list page"
     },
     {
+      "pattern": "/partnerships/opportunities/:id",
+      "tourFile": "opportunity-view-tour",
+      "description": "Opportunity detail page with tabs"
+    },
+    {
+      "pattern": "/partnerships/opportunities",
+      "tourFile": "opportunity-list-tour",
+      "description": "Opportunity list/grid page"
+    },
+    {
       "pattern": "/admin/entity-manager",
       "tourFile": "entitymanager-tour",
       "description": "Entity manager admin page"
@@ -91,6 +101,7 @@
       ".partner-new-button",
       ".contact-new-button", 
       ".interaction-new-button",
+      ".opportunity-new-button",
       "p-button[label*=\"New\"]",
       "p-button[icon=\"pi pi-plus\"]", 
       "button[title*=\"New\"]",
@@ -101,6 +112,7 @@
       ".partner-import-button",
       ".contact-import-button",
       ".interaction-import-button",
+      ".opportunity-import-button",
       "p-button[label*=\"Import\"]",
       "p-button[icon=\"pi pi-file-import\"]",
       "button[title*=\"Import\"]"
@@ -129,6 +141,7 @@
       ".edit-button",
       ".contact-edit-button",
       ".partner-edit-button",
+      ".opportunity-edit-button",
       "p-button[icon=\"pi pi-pencil\"]",
       ".pi-pencil",
       "button[title*=\"edit\"]"
@@ -137,6 +150,7 @@
       ".partner-listview",
       ".contact-listview", 
       ".interaction-listview",
+      ".opportunity-listview",
       "app-listview",
       ".grid",
       ".cards-container",
@@ -146,6 +160,7 @@
       ".partner-section-header",
       ".contact-section-header",
       ".interaction-section-header",
+      ".opportunity-section-header",
       ".section-header",
       ".flex.items-center.gap-3",
       ".flex.items-center.gap-4", 
@@ -155,6 +170,7 @@
     ],
     "tabs-navigation": [
       ".partner-tabs-navigation",
+      ".opportunity-tabs-navigation",
       "app-responsive-tabs",
       "p-tabView",
       ".p-tabview",

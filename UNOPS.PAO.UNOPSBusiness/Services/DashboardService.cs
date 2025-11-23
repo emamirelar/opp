@@ -12,11 +12,13 @@ using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDomain.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.OrganizationUnits;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Models.Interactions;
+using UNOPS.PAO.Models.Opportunities;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services;
 
@@ -338,6 +340,155 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
     }
 
     /// <summary>
+    /// Gets opportunities where the current user is a stakeholder (not just created/modified by)
+    /// and excludes Draft status opportunities with RBAC filtering
+    /// </summary>
+    public async Task<PaginationResponse<OpportunityModel>> GetMyOpportunitiesAsync(ClaimsPrincipal user, int pageSize = 1000)
+    {
+        var userId = GetCurrentUserId(user);
+        if (!userId.HasValue)
+        {
+            _logger.LogWarning("No valid user ID found for dashboard opportunities request");
+            return new PaginationResponse<OpportunityModel> { Records = new List<OpportunityModel>(), TotalCount = 0 };
+        }
+
+        _logger.LogInformation("Getting dashboard opportunities for user {UserId} (stakeholder-based) with RBAC filtering", userId.Value);
+
+        // Get opportunities where user is a stakeholder, including their role information
+        var userStakeholderRoles = await _context.Set<OpportunityStakeholder>()
+            .Include(os => os.EntityRole)
+            .Where(os => os.UserId == userId.Value)
+            .Select(os => new { os.OpportunityId, RoleName = os.EntityRole != null ? os.EntityRole.Name : null })
+            .ToListAsync();
+
+        var opportunityIdsFromStakeholders = userStakeholderRoles
+            .Select(os => os.OpportunityId)
+            .Distinct()
+            .ToList();
+
+        // Create a lookup dictionary for roles by opportunity ID
+        var rolesByOpportunityId = userStakeholderRoles
+            .Where(os => !string.IsNullOrEmpty(os.RoleName))
+            .GroupBy(os => os.OpportunityId)
+            .ToDictionary(
+                g => g.Key, 
+                g => string.Join(", ", g.Select(x => x.RoleName).Distinct())
+            );
+
+        var query = _context.Set<Opportunity>()
+            .Include(o => o.FundingPartners)
+            .Include(o => o.ClientPartners)
+            .Include(o => o.WorkflowStage)
+            .Where(o => opportunityIdsFromStakeholders.Contains(o.Id) 
+                       && o.Status != EntityStatus.Draft)
+            .OrderByDescending(o => o.LastModifiedDate ?? o.CreatedDate);
+
+        // Apply RBAC access control filters before counting and pagination
+        var filteredData = await ApplyAccessControlFiltersWithEntityName(query, user, "read", "Opportunity");
+        
+        var opportunityArray = filteredData.ToArray();
+        var totalCount = opportunityArray.Length;
+        var paginatedEntities = opportunityArray.Take(pageSize).ToList();
+        
+        // Map entities to models to avoid circular references
+        var records = _mapper.Map<List<OpportunityModel>>(paginatedEntities);
+
+        // Add role information to each opportunity model
+        foreach (var record in records)
+        {
+            if (rolesByOpportunityId.TryGetValue(record.Id, out var roleName))
+            {
+                // Store the role name in a property that can be used by the frontend
+                // Note: OpportunityModel needs to have a UserRole or similar property
+                record.UserRole = roleName;
+            }
+        }
+
+        _logger.LogInformation("Found {Count} dashboard opportunities for user {UserId} (stakeholder-based) after RBAC filtering", records.Count, userId.Value);
+
+        return new PaginationResponse<OpportunityModel>
+        {
+            Records = records,
+            TotalCount = totalCount,
+            PageIndex = 1,
+            PageSize = pageSize
+        };
+    }
+
+    /// <summary>
+    /// Gets draft opportunities where the current user is a stakeholder with RBAC filtering
+    /// </summary>
+    public async Task<PaginationResponse<OpportunityModel>> GetMyDraftOpportunitiesAsync(ClaimsPrincipal user, int pageSize = 1000)
+    {
+        var userId = GetCurrentUserId(user);
+        if (!userId.HasValue)
+        {
+            _logger.LogWarning("No valid user ID found for draft opportunities request");
+            return new PaginationResponse<OpportunityModel> { Records = new List<OpportunityModel>(), TotalCount = 0 };
+        }
+
+        _logger.LogInformation("Getting draft opportunities for user {UserId} (stakeholder-based) with RBAC filtering", userId.Value);
+
+        // Get opportunities where user is a stakeholder, including their role information
+        var userStakeholderRoles = await _context.Set<OpportunityStakeholder>()
+            .Include(os => os.EntityRole)
+            .Where(os => os.UserId == userId.Value)
+            .Select(os => new { os.OpportunityId, RoleName = os.EntityRole != null ? os.EntityRole.Name : null })
+            .ToListAsync();
+
+        var opportunityIdsFromStakeholders = userStakeholderRoles
+            .Select(os => os.OpportunityId)
+            .Distinct()
+            .ToList();
+
+        // Create a lookup dictionary for roles by opportunity ID
+        var rolesByOpportunityId = userStakeholderRoles
+            .Where(os => !string.IsNullOrEmpty(os.RoleName))
+            .GroupBy(os => os.OpportunityId)
+            .ToDictionary(
+                g => g.Key, 
+                g => string.Join(", ", g.Select(x => x.RoleName).Distinct())
+            );
+
+        var query = _context.Set<Opportunity>()
+            .Include(o => o.FundingPartners)
+            .Include(o => o.ClientPartners)
+            .Include(o => o.WorkflowStage)
+            .Where(o => opportunityIdsFromStakeholders.Contains(o.Id) 
+                       && o.Status == EntityStatus.Draft)
+            .OrderByDescending(o => o.CreatedDate);
+
+        // Apply RBAC access control filters before counting and pagination
+        var filteredData = await ApplyAccessControlFiltersWithEntityName(query, user, "read", "Opportunity");
+        
+        var opportunityArray = filteredData.ToArray();
+        var totalCount = opportunityArray.Length;
+        var paginatedEntities = opportunityArray.Take(pageSize).ToList();
+        
+        // Map entities to models to avoid circular references
+        var records = _mapper.Map<List<OpportunityModel>>(paginatedEntities);
+
+        // Add role information to each opportunity model
+        foreach (var record in records)
+        {
+            if (rolesByOpportunityId.TryGetValue(record.Id, out var roleName))
+            {
+                record.UserRole = roleName;
+            }
+        }
+
+        _logger.LogInformation("Found {Count} draft opportunities for user {UserId} (stakeholder-based) after RBAC filtering", records.Count, userId.Value);
+
+        return new PaginationResponse<OpportunityModel>
+        {
+            Records = records,
+            TotalCount = totalCount,
+            PageIndex = 1,
+            PageSize = pageSize
+        };
+    }
+
+    /// <summary>
     /// Extracts the current user ID from the claims principal
     /// </summary>
     private int? GetCurrentUserId(ClaimsPrincipal user)
@@ -544,6 +695,48 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
             }).ToList();
 
             allUpdates.AddRange(recentInteractions);
+
+            // Get recent opportunities with org unit filtering
+            var opportunityQuery = _context.Set<Opportunity>()
+                .Where(o => o.LastModifiedDate.HasValue);
+
+            if (orgUnitIds != null && orgUnitIds.Any())
+            {
+                // Filter opportunities by org unit relationships
+                var validOpportunityIds = await _context.Set<OrganizationUnitRelationship>()
+                    .Where(orgRel => 
+                        orgRel.EntityType == "Opportunity" && 
+                        orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+                    .Select(orgRel => orgRel.EntityId)
+                    .ToListAsync();
+
+                opportunityQuery = opportunityQuery.Where(o => validOpportunityIds.Contains(o.Id));
+            }
+
+            // Apply RBAC filtering for opportunities
+            var filteredOpportunities = await ApplyAccessControlFiltersWithEntityName(
+                opportunityQuery.OrderByDescending(o => o.LastModifiedDate).Take(20),
+                user, "read", "Opportunity");
+
+            var recentOpportunities = filteredOpportunities.Select(o =>
+            {
+                var userId = o.LastModifiedBy != 0 ? o.LastModifiedBy : o.CreatedBy;
+                return new RecentUpdateModel
+                {
+                    Id = o.Id,
+                    Name = o.Name ?? "Untitled Opportunity",
+                    Type = "Opportunity",
+                    LastModifiedDate = o.LastModifiedDate,
+                    LastModifiedBy = userId,
+                    LastModifiedByName = userNameLookup.ContainsKey(userId)
+                        ? userNameLookup[userId]
+                        : $"User {userId}",
+                    Status = o.Status.ToString(),
+                    EntityData = null
+                };
+            }).ToList();
+
+            allUpdates.AddRange(recentOpportunities);
 
             // Combine all updates, sort by most recent, and take the requested page size
             var sortedUpdates = allUpdates

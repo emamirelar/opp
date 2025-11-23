@@ -78,5 +78,10 @@ public class OpportunityFundingPartner
     /// Whether this partner's contribution is part of pooled funding
     /// </summary>
     public bool IsPooledContribution { get; set; }
+    
+    /// <summary>
+    /// Selected Partner Agreement Number for this funding relationship (AC9)
+    /// </summary>
+    [MaxLength(50)]
+    public string? SelectedPartnerAgreementNumber { get; set; }
 }
-

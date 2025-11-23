@@ -172,9 +172,11 @@ public class APIDictionary
     public const string DashboardMyPartners = Dashboard + "/my-partners";
     public const string DashboardMyContacts = Dashboard + "/my-contacts";
     public const string DashboardMyInteractions = Dashboard + "/my-interactions";
+    public const string DashboardMyOpportunities = Dashboard + "/my-opportunities";
     public const string DashboardMyDraftPartners = Dashboard + "/my-draft-partners";
     public const string DashboardMyDraftContacts = Dashboard + "/my-draft-contacts";
     public const string DashboardMyDraftInteractions = Dashboard + "/my-draft-interactions";
+    public const string DashboardMyDraftOpportunities = Dashboard + "/my-draft-opportunities";
     public const string DashboardOrgUnitRecentUpdates = Dashboard + "/org-unit-recent-updates";
 
     // Opportunity

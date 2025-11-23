@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UNOPS.PAO.Domain.Entities;
@@ -15,5 +16,10 @@ public class OpportunityClientPartner
     
     public int? DocumentId { get; set; }
     public virtual Document? Document { get; set; }
+    
+    /// <summary>
+    /// Selected Partner Agreement Number for this client relationship (AC9)
+    /// </summary>
+    [MaxLength(50)]
+    public string? SelectedPartnerAgreementNumber { get; set; }
 }
-

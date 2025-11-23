@@ -174,6 +174,15 @@
                   <i class="material-symbols-outlined text-unops-lg mr-unops-xs">chat</i>
                   {{ 'dashboard.newInteraction' | translate }}
                 </button>
+                <button 
+                  *ngIf="opportunityPermissions().permissions.canCreate"
+                  pButton 
+                  type="button" 
+                  class="p-button-sm unops-button-primary flex items-center"
+                  (click)="openNewOpportunityModal()">
+                  <i class="material-symbols-outlined text-unops-lg mr-unops-xs">business_center</i>
+                  {{ 'dashboard.newOpportunity' | translate }}
+                </button>
               </div>
             </div>
             <div class="flex items-center space-x-unops-md">
@@ -246,6 +255,15 @@
                 (click)="openNewInteractionModal()">
                 <i class="material-symbols-outlined text-unops-lg mr-unops-xs">chat</i>
                 {{ 'dashboard.newInteraction' | translate }}
+              </button>
+              <button
+                *ngIf="opportunityPermissions().permissions.canCreate"
+                pButton
+                type="button"
+                class="p-button-sm unops-button-primary flex items-center justify-center w-full"
+                (click)="openNewOpportunityModal()">
+                <i class="material-symbols-outlined text-unops-lg mr-unops-xs">business_center</i>
+                {{ 'dashboard.newOpportunity' | translate }}
               </button>
             </div>
             
@@ -360,10 +378,17 @@
                                 <div class="w-2 h-2 bg-red-500 rounded-full"></div>
                               } @else if (getDraftActionEntityType(item) === 'Contact') {
                                 <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                              } @else if (getDraftActionEntityType(item) === 'Opportunity') {
+                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
                               } @else {
                                 <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
                               }
                               <span class="text-unops-label-small text-unops-neutral-500">{{ ('dashboard.' + getDraftActionEntityType(item).toLowerCase()) | translate }}</span>
+                              @if (getDraftActionEntityType(item) === 'Opportunity' && item.userRole) {
+                                <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-accent-purple/10 text-unops-accent-purple ml-unops-xs">
+                                  {{ item.userRole }}
+                                </span>
+                              }
                             </div>
                             <h4 class="font-unops-body text-unops-body-large font-unops-medium text-unops-neutral-900 mb-2 mt-0 line-clamp-2">
                               {{ getDraftActionDisplayName(item) }}
@@ -464,13 +489,15 @@
                            (click)="navigateToEntity(update.type, update.id)">
                         <div class="flex items-start space-x-unops-sm mb-unops-sm">
                           <div class="flex-shrink-0 mt-1">
-                            @if (update.type === 'Partner') {
-                              <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-                            } @else if (update.type === 'Contact') {
-                              <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                            } @else {
-                              <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
-                            }
+                              @if (update.type === 'Partner') {
+                                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                              } @else if (update.type === 'Contact') {
+                                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                              } @else if (update.type === 'Opportunity') {
+                                <div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                              } @else {
+                                <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+                              }
                           </div>
                           <div class="flex-1 min-w-0">
                             <div class="flex items-center space-x-unops-sm mb-2">
@@ -484,7 +511,8 @@
                                     [ngClass]="{
                                       'bg-unops-info/10 text-unops-info': update.type === 'Partner',
                                       'bg-unops-success/10 text-unops-success': update.type === 'Contact',
-                                      'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
+                                      'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction',
+                                      'bg-unops-accent-purple/10 text-unops-accent-purple': update.type === 'Opportunity'
                                     }">
                                 {{ ('dashboard.' + update.type.toLowerCase()) | translate }}
                               </span>
@@ -758,10 +786,17 @@
                             <div class="w-2 h-2 bg-red-500 rounded-full"></div>
                           } @else if (getDraftActionEntityType(item) === 'Contact') {
                             <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          } @else if (getDraftActionEntityType(item) === 'Opportunity') {
+                            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
                           } @else {
                             <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
                           }
                           <span class="text-unops-label-small text-unops-neutral-500">{{ ('dashboard.' + getDraftActionEntityType(item).toLowerCase()) | translate }}</span>
+                          @if (getDraftActionEntityType(item) === 'Opportunity' && item.userRole) {
+                            <span class="inline-flex items-center px-unops-xs py-0.5 rounded-unops-sm text-unops-label-small font-unops-medium bg-unops-accent-purple/10 text-unops-accent-purple ml-unops-xs">
+                              {{ item.userRole }}
+                            </span>
+                          }
                         </div>
                         <h4 class="font-unops-body text-unops-body-medium font-unops-medium text-unops-neutral-900 mb-1 mt-0 line-clamp-1">
                           {{ getDraftActionDisplayName(item) }}
@@ -806,6 +841,8 @@
                         <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
                       } @else if (update.type === 'Contact') {
                         <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                      } @else if (update.type === 'Opportunity') {
+                        <div class="w-2 h-2 bg-indigo-500 rounded-full"></div>
                       } @else {
                         <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
                       }
@@ -822,7 +859,8 @@
                               [ngClass]="{
                                 'bg-unops-info/10 text-unops-info': update.type === 'Partner',
                                 'bg-unops-success/10 text-unops-success': update.type === 'Contact',
-                                'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction'
+                                'bg-unops-accent-orange/10 text-unops-accent-orange': update.type === 'Interaction',
+                                'bg-unops-accent-purple/10 text-unops-accent-purple': update.type === 'Opportunity'
                               }">
                           {{ ('dashboard.' + update.type.toLowerCase()) | translate }}
                         </span>
@@ -972,3 +1010,10 @@
 
   </div>
 </div>
+
+<!-- Create Opportunity Dialog -->
+<app-create-opportunity-from-interactions-dialog
+  [(visible)]="showCreateOpportunityDialog"
+  [config]="createOpportunityConfig()"
+  (opportunityCreated)="handleOpportunityCreated($event)">
+</app-create-opportunity-from-interactions-dialog>
