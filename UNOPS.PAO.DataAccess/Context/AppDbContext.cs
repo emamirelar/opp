@@ -63,6 +63,8 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<OpportunitySDG> OpportunitySDGs { get; set; }
     public DbSet<OpportunitySDGTarget> OpportunitySDGTargets { get; set; }
     public DbSet<OpportunitySDGIndicator> OpportunitySDGIndicators { get; set; }
+    public DbSet<OpportunityUNCFOutcome> OpportunityUNCFOutcomes { get; set; }
+    public DbSet<OpportunityUNCFIndicator> OpportunityUNCFIndicators { get; set; }
     public DbSet<OpportunityInteraction> OpportunityInteractions { get; set; }
 
     // Infrastructure entities
@@ -521,10 +523,54 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasOne(x => x.SDGIndicator)
                 .WithMany()
                 .HasForeignKey(x => x.SDGIndicatorId);
-                
+
             entity.HasIndex(x => x.OpportunityId);
             entity.HasIndex(x => x.OpportunitySDGTargetId);
             entity.HasIndex(x => x.SDGIndicatorId);
+        });
+
+        // OpportunityUNCFOutcome configuration (cascades delete from OpportunityCountry)
+        modelBuilder.Entity<OpportunityUNCFOutcome>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.UNCFOutcomes)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.OpportunityCountry)
+                .WithMany(x => x.UNCFOutcomes)
+                .HasForeignKey(x => x.OpportunityCountryId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.UNCFOutcome)
+                .WithMany()
+                .HasForeignKey(x => x.UNCFOutcomeId);
+                
+            entity.HasIndex(x => x.OpportunityId);
+            entity.HasIndex(x => x.OpportunityCountryId);
+            entity.HasIndex(x => x.UNCFOutcomeId);
+        });
+
+        // OpportunityUNCFIndicator configuration (cascades delete from OpportunityUNCFOutcome)
+        modelBuilder.Entity<OpportunityUNCFIndicator>(entity =>
+        {
+            entity.HasOne(x => x.Opportunity)
+                .WithMany(x => x.UNCFIndicators)
+                .HasForeignKey(x => x.OpportunityId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.OpportunityUNCFOutcome)
+                .WithMany(x => x.Indicators)
+                .HasForeignKey(x => x.OpportunityUNCFOutcomeId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasOne(x => x.UNCFIndicator)
+                .WithMany()
+                .HasForeignKey(x => x.UNCFIndicatorId);
+
+            entity.HasIndex(x => x.OpportunityId);
+            entity.HasIndex(x => x.OpportunityUNCFOutcomeId);
+            entity.HasIndex(x => x.UNCFIndicatorId);
         });
 
         // WorkflowStage configuration

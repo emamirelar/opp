@@ -84,6 +84,10 @@ public class Opportunity : ModifiableDeletableEntity
     
     public virtual ICollection<OpportunitySDGIndicator> SDGIndicators { get; set; } = new HashSet<OpportunitySDGIndicator>();
     
+    public virtual ICollection<OpportunityUNCFOutcome> UNCFOutcomes { get; set; } = new HashSet<OpportunityUNCFOutcome>();
+    
+    public virtual ICollection<OpportunityUNCFIndicator> UNCFIndicators { get; set; } = new HashSet<OpportunityUNCFIndicator>();
+    
     public virtual List<Document>? Documents { get; set; }
     
     [NotMapped]

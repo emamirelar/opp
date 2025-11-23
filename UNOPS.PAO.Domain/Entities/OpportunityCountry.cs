@@ -22,5 +22,10 @@ public class OpportunityCountry
     
     [Column(TypeName = "decimal(3, 1)")]
     public decimal? RiskScore { get; set; }
+    
+    /// <summary>
+    /// UNCF Outcomes associated with this country for the opportunity
+    /// </summary>
+    public virtual ICollection<OpportunityUNCFOutcome> UNCFOutcomes { get; set; } = new HashSet<OpportunityUNCFOutcome>();
 }
 
