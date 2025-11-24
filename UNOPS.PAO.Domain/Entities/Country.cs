@@ -58,4 +58,7 @@ public class Country : IBaseBusinessEntity<int>
     
     [NotMapped]
     public int LiaisonOfficeCount { get; set; } // Will be populated by service
+    
+    [NotMapped]
+    public int UNCFOutcomeCount { get; set; } // Will be populated by service - count of UNCF outcomes for this country
 }

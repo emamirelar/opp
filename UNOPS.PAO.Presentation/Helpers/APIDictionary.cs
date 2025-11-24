@@ -32,6 +32,8 @@ public class APIDictionary
     public const string SDGs = APIPrefix + "values/sdgs";
     public const string SDGTargets = APIPrefix + "values/sdg-targets";
     public const string SDGIndicators = APIPrefix + "values/sdg-indicators";
+    public const string UNCFOutcomes = APIPrefix + "values/uncf-outcomes";
+    public const string UNCFIndicators = APIPrefix + "values/uncf-indicators";
     public const string Country = APIPrefix + "values/country";
     public const string Partners = APIPrefix + "values/partners";
     public const string EntityRoles = APIPrefix + "values/entity-roles";

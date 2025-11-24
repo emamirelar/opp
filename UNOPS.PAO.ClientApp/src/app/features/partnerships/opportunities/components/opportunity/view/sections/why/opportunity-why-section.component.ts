@@ -21,9 +21,9 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { AccordionModule } from 'primeng/accordion';
 
 // Services and Models
-import { ValuesService, SDG, SDGTarget, SDGIndicator } from '@shared/services/api/values.service';
+import { ValuesService, SDG, SDGTarget, SDGIndicator, UNCFOutcome, UNCFIndicator } from '@shared/services/api/values.service';
 import { OpportunityService } from '../../../../../services/opportunity.service';
-import { Opportunity, OpportunitySDG, OpportunitySDGTarget, OpportunitySDGIndicator } from '@shared/models/opportunity.model';
+import { Opportunity, OpportunitySDG, OpportunitySDGTarget, OpportunitySDGIndicator, OpportunityUNCFOutcome, OpportunityUNCFIndicator, OpportunityCountry } from '@shared/models/opportunity.model';
 import { FeedbackDialogService } from '@shared/services/ui';
 
 /**
@@ -120,9 +120,49 @@ export class OpportunityWhySectionComponent implements OnInit {
     this.opportunity().sdGs?.find(sdg => sdg.isPrimary) || null
   );
 
+  // UNCF data - country-specific outcomes
+  readonly countriesWithUNCF = computed(() => {
+    const countries = this.opportunity().countries || [];
+    return countries.filter(c => c.country?.hasActiveUNSDCF);
+  });
+  
+  // UNCF outcomes grouped by country
+  uncfOutcomesByCountry = signal<Map<number, UNCFOutcome[]>>(new Map());
+  
+  // Available UNCF indicators for selected outcomes
+  availableUNCFIndicators = signal<Map<number, UNCFIndicator[]>>(new Map());
+  
+  // Loading states for UNCF
+  loadingUNCFOutcomes = signal<boolean>(false);
+  loadingUNCFIndicatorsForOutcome = signal<Set<number>>(new Set());
+
+  // UNCF dialog (similar to SDG dialog)
+  showUNCFDialog = signal<boolean>(false);
+  selectedCountryForUNCF = signal<OpportunityCountry | null>(null);
+  availableUNCFOutcomes = signal<UNCFOutcome[]>([]);
+  loadingUNCFOutcomesForDialog = signal<boolean>(false);
+  isEditingUNCFCountry = signal<boolean>(false);
+  editingUNCFCountryIndex = signal<number | null>(null);
+  
+  // Selected outcomes and indicators for the current country being added/edited
+  selectedUNCFOutcomes = signal<Map<number, Set<number>>>(new Map());  // Map<outcomeId, Set<indicatorIds>>
+  
+  // Track which outcomes are currently loading indicators
+  loadingIndicatorsForUNCFOutcomes = signal<Set<number>>(new Set());
+  showUNCFValidationError = signal<boolean>(false);
+
+  // Computed property for UNCF count
+  readonly uncfCount = computed(() => {
+    const opp = this.opportunity();
+    return opp.uncfOutcomes?.length || 0;
+  });
+
   ngOnInit(): void {
     // Load SDGs on initialization
     this.loadSDGs();
+    
+    // Load UNCF outcomes for countries with active UNSDCF
+    this.loadUNCFOutcomesForCountries();
     
     // Watch for changes to skipTargetsControl
     this.skipTargetsControl.valueChanges.subscribe((skipValue) => {
@@ -250,6 +290,12 @@ export class OpportunityWhySectionComponent implements OnInit {
           notes: target.notes,
           sdgIndicatorDatabaseIds: target.indicators?.map(indicator => indicator.sdgIndicatorDatabaseId) || []  // Flat array of indicator IDs
         })) || [])
+      })),
+      uncfOutcomes: opp.uncfOutcomes?.map(uncfOutcome => ({
+        opportunityCountryId: uncfOutcome.opportunityCountryId,
+        uncfOutcomeId: uncfOutcome.uncfOutcomeId,  // Use the integer database ID
+        notes: uncfOutcome.notes,
+        uncfIndicatorIds: uncfOutcome.indicators?.map(indicator => indicator.uncfIndicatorId) || []  // Flat array of indicator IDs
       }))
     };
 
@@ -817,6 +863,507 @@ export class OpportunityWhySectionComponent implements OnInit {
    */
   getSDGChipLabel(isPrimary: boolean): string {
     return isPrimary ? 'Primary' : 'Secondary';
+  }
+
+  /**
+   * @description Open UNCF dialog for a specific country
+   */
+  openUNCFDialog(oppCountry: OpportunityCountry): void {
+    this.selectedCountryForUNCF.set(oppCountry);
+    this.isEditingUNCFCountry.set(false);
+    this.editingUNCFCountryIndex.set(null);
+    this.showUNCFValidationError.set(false);
+    
+    // Load available outcomes for this country
+    if (oppCountry.country?.iso2Code) {
+      this.loadingUNCFOutcomesForDialog.set(true);
+      this.valuesService.getUNCFOutcomes(oppCountry.country.iso2Code).subscribe({
+        next: (outcomes) => {
+          this.availableUNCFOutcomes.set(outcomes);
+          this.loadingUNCFOutcomesForDialog.set(false);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error loading UNCF outcomes:', error);
+          this.loadingUNCFOutcomesForDialog.set(false);
+          this.availableUNCFOutcomes.set([]);
+        }
+      });
+    }
+    
+    this.selectedUNCFOutcomes.set(new Map());
+    this.loadingIndicatorsForUNCFOutcomes.set(new Set());
+    this.showUNCFDialog.set(true);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Edit existing UNCF outcomes for a country
+   */
+  editUNCFForCountry(oppCountry: OpportunityCountry, index: number): void {
+    this.selectedCountryForUNCF.set(oppCountry);
+    this.isEditingUNCFCountry.set(true);
+    this.editingUNCFCountryIndex.set(index);
+    this.showUNCFValidationError.set(false);
+    
+    // Load available outcomes for this country
+    if (oppCountry.country?.iso2Code) {
+      this.loadingUNCFOutcomesForDialog.set(true);
+      this.valuesService.getUNCFOutcomes(oppCountry.country.iso2Code).subscribe({
+        next: (outcomes) => {
+          this.availableUNCFOutcomes.set(outcomes);
+          this.loadingUNCFOutcomesForDialog.set(false);
+          
+          // Pre-select existing outcomes and indicators
+          const opp = this.opportunity();
+          const existingUNCFOutcomes = opp.uncfOutcomes?.filter(
+            uo => uo.opportunityCountryId === oppCountry.id
+          ) || [];
+          
+          if (existingUNCFOutcomes.length > 0) {
+            const selectedMap = new Map<number, Set<number>>();
+            
+            // Load indicators for all existing outcomes
+            const indicatorRequests = existingUNCFOutcomes.map(uo => 
+              this.valuesService.getUNCFIndicators(uo.uncfOutcomeId)
+            );
+            
+            if (indicatorRequests.length > 0) {
+              import('rxjs').then(rxjs => {
+                rxjs.forkJoin(indicatorRequests).subscribe({
+                  next: (allIndicators) => {
+                    const flatIndicators = allIndicators.flat();
+                    
+                    // Store indicators for each outcome
+                    existingUNCFOutcomes.forEach((uo, idx) => {
+                      const outcomeIndicators = allIndicators[idx];
+                      const indicatorMap = new Map(this.availableUNCFIndicators());
+                      indicatorMap.set(uo.uncfOutcomeId, outcomeIndicators);
+                      this.availableUNCFIndicators.set(indicatorMap);
+                      
+                      // Pre-select indicators
+                      const indicatorIds = new Set<number>();
+                      uo.indicators?.forEach(ind => {
+                        indicatorIds.add(ind.uncfIndicatorId);
+                      });
+                      selectedMap.set(uo.uncfOutcomeId, indicatorIds);
+                    });
+                    
+                    this.selectedUNCFOutcomes.set(selectedMap);
+                    this.cdr.detectChanges();
+                  }
+                });
+              });
+            }
+          }
+          
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error loading UNCF outcomes:', error);
+          this.loadingUNCFOutcomesForDialog.set(false);
+          this.availableUNCFOutcomes.set([]);
+        }
+      });
+    }
+    
+    this.showUNCFDialog.set(true);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Cancel UNCF dialog and reset state
+   */
+  cancelUNCFDialog(): void {
+    this.showUNCFDialog.set(false);
+    this.selectedCountryForUNCF.set(null);
+    this.availableUNCFOutcomes.set([]);
+    this.showUNCFValidationError.set(false);
+    this.isEditingUNCFCountry.set(false);
+    this.editingUNCFCountryIndex.set(null);
+    this.selectedUNCFOutcomes.set(new Map());
+    this.loadingIndicatorsForUNCFOutcomes.set(new Set());
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Toggle UNCF outcome selection and load indicators
+   */
+  toggleUNCFOutcome(outcome: UNCFOutcome): void {
+    const currentSelection = new Map(this.selectedUNCFOutcomes());
+    
+    if (currentSelection.has(outcome.id)) {
+      // Remove outcome and its indicators
+      currentSelection.delete(outcome.id);
+      this.selectedUNCFOutcomes.set(currentSelection);
+      this.cdr.detectChanges();
+    } else {
+      // Add outcome with empty indicator set
+      currentSelection.set(outcome.id, new Set());
+      this.selectedUNCFOutcomes.set(currentSelection);
+      
+      // Mark this outcome as loading
+      const loadingSet = new Set(this.loadingIndicatorsForUNCFOutcomes());
+      loadingSet.add(outcome.id);
+      this.loadingIndicatorsForUNCFOutcomes.set(loadingSet);
+      
+      // Load indicators for this outcome
+      this.valuesService.getUNCFIndicators(outcome.id).subscribe({
+        next: (indicators) => {
+          // Remove from loading set
+          const loadingSet = new Set(this.loadingIndicatorsForUNCFOutcomes());
+          loadingSet.delete(outcome.id);
+          this.loadingIndicatorsForUNCFOutcomes.set(loadingSet);
+          
+          // Store available indicators
+          const indicatorMap = new Map(this.availableUNCFIndicators());
+          indicatorMap.set(outcome.id, indicators);
+          this.availableUNCFIndicators.set(indicatorMap);
+          
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error loading UNCF indicators for outcome:', outcome.id, error);
+          const loadingSet = new Set(this.loadingIndicatorsForUNCFOutcomes());
+          loadingSet.delete(outcome.id);
+          this.loadingIndicatorsForUNCFOutcomes.set(loadingSet);
+          this.cdr.detectChanges();
+        }
+      });
+    }
+  }
+
+  /**
+   * @description Toggle UNCF indicator selection for an outcome
+   */
+  toggleUNCFIndicator(outcomeId: number, indicatorId: number): void {
+    const currentSelection = new Map(this.selectedUNCFOutcomes());
+    
+    if (currentSelection.has(outcomeId)) {
+      const indicators = currentSelection.get(outcomeId)!;
+      if (indicators.has(indicatorId)) {
+        indicators.delete(indicatorId);
+      } else {
+        indicators.add(indicatorId);
+      }
+      currentSelection.set(outcomeId, indicators);
+    }
+    
+    this.selectedUNCFOutcomes.set(currentSelection);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Check if a UNCF outcome is selected
+   */
+  isUNCFOutcomeSelected(outcomeId: number): boolean {
+    return this.selectedUNCFOutcomes().has(outcomeId);
+  }
+
+  /**
+   * @description Check if indicators are loading for a UNCF outcome
+   */
+  isLoadingUNCFIndicators(outcomeId: number): boolean {
+    return this.loadingIndicatorsForUNCFOutcomes().has(outcomeId);
+  }
+
+  /**
+   * @description Check if a UNCF indicator is selected for an outcome
+   */
+  isUNCFIndicatorSelected(outcomeId: number, indicatorId: number): boolean {
+    const outcome = this.selectedUNCFOutcomes().get(outcomeId);
+    return outcome ? outcome.has(indicatorId) : false;
+  }
+
+  /**
+   * @description Get UNCF indicators for a specific outcome
+   */
+  getIndicatorsForUNCFOutcome(outcomeId: number): UNCFIndicator[] {
+    return this.availableUNCFIndicators().get(outcomeId) || [];
+  }
+
+  /**
+   * @description Add UNCF outcomes for a country
+   */
+  addUNCFOutcomes(): void {
+    const selectedOutcomes = this.selectedUNCFOutcomes();
+    const selectedCountry = this.selectedCountryForUNCF();
+
+    // Validation
+    if (!selectedCountry || selectedOutcomes.size === 0) {
+      this.showUNCFValidationError.set(true);
+      return;
+    }
+
+    const opp = this.opportunity();
+    const currentUNCFOutcomes = [...(opp.uncfOutcomes || [])];
+
+    // Build outcomes array from selected outcomes and indicators
+    const outcomes: OpportunityUNCFOutcome[] = [];
+    
+    for (const [outcomeId, indicatorIds] of selectedOutcomes.entries()) {
+      const outcomeInfo = this.availableUNCFOutcomes().find(o => o.id === outcomeId);
+      if (outcomeInfo) {
+        const indicators: OpportunityUNCFIndicator[] = [];
+        
+        // Add selected indicators for this outcome
+        for (const indicatorId of indicatorIds) {
+          const indicatorInfo = this.getIndicatorsForUNCFOutcome(outcomeId).find(i => i.id === indicatorId);
+          if (indicatorInfo) {
+            indicators.push({
+              id: 0,
+              opportunityId: opp.id!,
+              opportunityUNCFOutcomeId: 0,  // Will be set by backend
+              uncfIndicatorId: indicatorInfo.id,
+              uncfIndicatorExternalId: indicatorInfo.uncfIndicatorExternalId,
+              uncfIndicatorName: indicatorInfo.name,
+              notes: null
+            });
+          }
+        }
+        
+        outcomes.push({
+          id: 0,
+          opportunityId: opp.id!,
+          opportunityCountryId: selectedCountry.id,
+          uncfOutcomeId: outcomeInfo.id,
+          uncfOutcomeExternalId: outcomeInfo.uncfOutcomeExternalId,
+          uncfOutcomeName: outcomeInfo.name,
+          versionNo: outcomeInfo.versionNo,
+          country: outcomeInfo.country,
+          notes: null,
+          indicators: indicators
+        });
+      }
+    }
+    
+    // Add new UNCF outcomes
+    currentUNCFOutcomes.push(...outcomes);
+
+    // Update opportunity
+    const updatedOpportunity = {
+      ...opp,
+      uncfOutcomes: currentUNCFOutcomes
+    };
+
+    // Emit updated opportunity to parent
+    this.opportunityUpdated.emit(updatedOpportunity);
+
+    // Reset dialog state
+    this.cancelUNCFDialog();
+  }
+
+  /**
+   * @description Update UNCF outcomes for a country
+   */
+  updateUNCFOutcomes(): void {
+    const selectedOutcomes = this.selectedUNCFOutcomes();
+    const selectedCountry = this.selectedCountryForUNCF();
+
+    if (!selectedCountry || selectedOutcomes.size === 0) {
+      this.showUNCFValidationError.set(true);
+      return;
+    }
+
+    const opp = this.opportunity();
+    let currentUNCFOutcomes = [...(opp.uncfOutcomes || [])];
+
+    // Remove existing outcomes for this country
+    currentUNCFOutcomes = currentUNCFOutcomes.filter(
+      uo => uo.opportunityCountryId !== selectedCountry.id
+    );
+
+    // Build new outcomes array
+    const outcomes: OpportunityUNCFOutcome[] = [];
+    
+    for (const [outcomeId, indicatorIds] of selectedOutcomes.entries()) {
+      const outcomeInfo = this.availableUNCFOutcomes().find(o => o.id === outcomeId);
+      if (outcomeInfo) {
+        const indicators: OpportunityUNCFIndicator[] = [];
+        
+        for (const indicatorId of indicatorIds) {
+          const indicatorInfo = this.getIndicatorsForUNCFOutcome(outcomeId).find(i => i.id === indicatorId);
+          if (indicatorInfo) {
+            indicators.push({
+              id: 0,
+              opportunityId: opp.id!,
+              opportunityUNCFOutcomeId: 0,
+              uncfIndicatorId: indicatorInfo.id,
+              uncfIndicatorExternalId: indicatorInfo.uncfIndicatorExternalId,
+              uncfIndicatorName: indicatorInfo.name,
+              notes: null
+            });
+          }
+        }
+        
+        outcomes.push({
+          id: 0,
+          opportunityId: opp.id!,
+          opportunityCountryId: selectedCountry.id,
+          uncfOutcomeId: outcomeInfo.id,
+          uncfOutcomeExternalId: outcomeInfo.uncfOutcomeExternalId,
+          uncfOutcomeName: outcomeInfo.name,
+          versionNo: outcomeInfo.versionNo,
+          country: outcomeInfo.country,
+          notes: null,
+          indicators: indicators
+        });
+      }
+    }
+    
+    // Add updated outcomes
+    currentUNCFOutcomes.push(...outcomes);
+
+    // Update opportunity
+    const updatedOpportunity = {
+      ...opp,
+      uncfOutcomes: currentUNCFOutcomes
+    };
+
+    // Emit updated opportunity to parent
+    this.opportunityUpdated.emit(updatedOpportunity);
+
+    // Reset dialog state
+    this.cancelUNCFDialog();
+  }
+
+  /**
+   * @description Remove UNCF outcomes for a country
+   */
+  removeUNCFForCountry(oppCountry: OpportunityCountry): void {
+    const opp = this.opportunity();
+    const currentUNCFOutcomes = [...(opp.uncfOutcomes || [])];
+
+    // Remove outcomes for this country
+    const updatedUNCFOutcomes = currentUNCFOutcomes.filter(
+      uo => uo.opportunityCountryId !== oppCountry.id
+    );
+
+    const updatedOpportunity = {
+      ...opp,
+      uncfOutcomes: updatedUNCFOutcomes
+    };
+
+    // Emit updated opportunity to parent
+    this.opportunityUpdated.emit(updatedOpportunity);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * @description Get UNCF outcomes for a specific opportunity country
+   */
+  getUNCFOutcomesForOpportunityCountry(oppCountryId: number): OpportunityUNCFOutcome[] {
+    return this.opportunity().uncfOutcomes?.filter(
+      uo => uo.opportunityCountryId === oppCountryId
+    ) || [];
+  }
+
+  /**
+   * @description Load UNCF outcomes for countries with active UNSDCF
+   */
+  loadUNCFOutcomesForCountries(): void {
+    const countries = this.countriesWithUNCF();
+    
+    if (countries.length === 0) {
+      return;
+    }
+
+    this.loadingUNCFOutcomes.set(true);
+    const outcomeMap = new Map<number, UNCFOutcome[]>();
+    let loadedCount = 0;
+
+    countries.forEach(oppCountry => {
+      if (!oppCountry.country?.iso2Code) return;
+      
+      this.valuesService.getUNCFOutcomes(oppCountry.country.iso2Code).subscribe({
+        next: (outcomes) => {
+          if (outcomes.length > 0) {
+            outcomeMap.set(oppCountry.country!.id, outcomes);
+          }
+          
+          loadedCount++;
+          if (loadedCount === countries.length) {
+            this.uncfOutcomesByCountry.set(outcomeMap);
+            this.loadingUNCFOutcomes.set(false);
+            this.cdr.detectChanges();
+          }
+        },
+        error: (error) => {
+          console.error('Error loading UNCF outcomes for country:', oppCountry.country?.name, error);
+          loadedCount++;
+          if (loadedCount === countries.length) {
+            this.uncfOutcomesByCountry.set(outcomeMap);
+            this.loadingUNCFOutcomes.set(false);
+            this.cdr.detectChanges();
+          }
+        }
+      });
+    });
+  }
+
+  /**
+   * @description Get UNCF outcomes for a specific country
+   */
+  getUNCFOutcomesForCountry(countryId: number): UNCFOutcome[] {
+    return this.uncfOutcomesByCountry().get(countryId) || [];
+  }
+
+  /**
+   * @description Get UNCF indicators for a specific outcome
+   */
+  getUNCFIndicatorsForOutcome(outcomeId: number): UNCFIndicator[] {
+    return this.availableUNCFIndicators().get(outcomeId) || [];
+  }
+
+  /**
+   * @description Load UNCF indicators for an outcome
+   */
+  loadUNCFIndicatorsForOutcome(outcomeId: number): void {
+    const loadingSet = new Set(this.loadingUNCFIndicatorsForOutcome());
+    loadingSet.add(outcomeId);
+    this.loadingUNCFIndicatorsForOutcome.set(loadingSet);
+
+    this.valuesService.getUNCFIndicators(outcomeId).subscribe({
+      next: (indicators) => {
+        const indicatorMap = new Map(this.availableUNCFIndicators());
+        indicatorMap.set(outcomeId, indicators);
+        this.availableUNCFIndicators.set(indicatorMap);
+
+        const loadingSet = new Set(this.loadingUNCFIndicatorsForOutcome());
+        loadingSet.delete(outcomeId);
+        this.loadingUNCFIndicatorsForOutcome.set(loadingSet);
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading UNCF indicators for outcome:', outcomeId, error);
+        const loadingSet = new Set(this.loadingUNCFIndicatorsForOutcome());
+        loadingSet.delete(outcomeId);
+        this.loadingUNCFIndicatorsForOutcome.set(loadingSet);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * @description Check if UNCF outcomes are being loaded
+   */
+  isLoadingUNCFOutcomes(): boolean {
+    return this.loadingUNCFOutcomes();
+  }
+
+  /**
+   * @description Check if UNCF indicators are being loaded for an outcome
+   */
+  isLoadingUNCFIndicatorsForOutcome(outcomeId: number): boolean {
+    return this.loadingUNCFIndicatorsForOutcome().has(outcomeId);
+  }
+
+  /**
+   * @description Get country name by ID
+   */
+  getCountryNameById(countryId: number): string {
+    const country = this.opportunity().countries?.find(c => c.country?.id === countryId);
+    return country?.country?.name || 'Unknown Country';
   }
 }
 

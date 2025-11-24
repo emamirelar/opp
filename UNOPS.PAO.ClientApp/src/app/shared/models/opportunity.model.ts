@@ -48,6 +48,7 @@ export interface Opportunity {
   deliverables: OpportunityDeliverable[];
   countries: OpportunityCountry[];
   sdGs: OpportunitySDG[];
+  uncfOutcomes?: OpportunityUNCFOutcome[];
   stats: OpportunityStats | null;
   isNewValueRangeForOrgUnit: boolean | null;
   orgUnitHistoricalMaxValue: number | null;
@@ -255,6 +256,37 @@ export interface OpportunitySDGIndicator {
   sdgIndicatorDatabaseId: number;  // Database FK
   sdgIndicatorId: string;  // String identifier like "1.1.1", "3.3.2"
   sdgIndicatorLongDescription: string | null;
+  notes: string | null;
+}
+
+/**
+ * UNCF Outcome model for opportunity
+ * Linked through OpportunityCountry (country-specific)
+ */
+export interface OpportunityUNCFOutcome {
+  id: number;
+  opportunityId: number;
+  opportunityCountryId: number;
+  uncfOutcomeId: number;  // Database FK
+  uncfOutcomeExternalId: string | null;  // String identifier from external system
+  uncfOutcomeName: string | null;
+  versionNo: number | null;
+  country: string | null;  // ISO2 code
+  notes: string | null;
+  indicators?: OpportunityUNCFIndicator[];
+}
+
+/**
+ * UNCF Indicator model for opportunity
+ * Child relationship of OpportunityUNCFOutcome
+ */
+export interface OpportunityUNCFIndicator {
+  id: number;
+  opportunityId: number;
+  opportunityUNCFOutcomeId: number;
+  uncfIndicatorId: number;  // Database FK
+  uncfIndicatorExternalId: string | null;  // String identifier from external system
+  uncfIndicatorName: string | null;
   notes: string | null;
 }
 

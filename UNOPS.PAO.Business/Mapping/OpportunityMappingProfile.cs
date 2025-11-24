@@ -24,7 +24,8 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.ExternalStakeholders, opt => opt.MapFrom(src => src.ExternalStakeholders))
             .ForMember(dest => dest.Deliverables, opt => opt.MapFrom(src => src.Deliverables))
             .ForMember(dest => dest.Countries, opt => opt.MapFrom(src => src.Countries))
-            .ForMember(dest => dest.SDGs, opt => opt.MapFrom(src => src.SDGs));
+            .ForMember(dest => dest.SDGs, opt => opt.MapFrom(src => src.SDGs))
+            .ForMember(dest => dest.UNCFOutcomes, opt => opt.MapFrom(src => src.UNCFOutcomes));
             
         CreateMap<OpportunityRequest, Opportunity>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
@@ -34,7 +35,8 @@ public class OpportunityMappingProfile : Profile
             .ForMember(dest => dest.Stakeholders, opt => opt.Ignore())
             .ForMember(dest => dest.Deliverables, opt => opt.Ignore())
             .ForMember(dest => dest.Countries, opt => opt.Ignore())
-            .ForMember(dest => dest.SDGs, opt => opt.Ignore());
+            .ForMember(dest => dest.SDGs, opt => opt.Ignore())
+            .ForMember(dest => dest.UNCFOutcomes, opt => opt.Ignore());
             
         CreateMap<UpdateOpportunityRequest, Opportunity>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
@@ -213,6 +215,41 @@ public class OpportunityMappingProfile : Profile
         // =================================================================
         CreateMap<SDGTarget, SDGTargetModel>();
         CreateMap<SDGIndicator, SDGIndicatorModel>();
+        
+        // =================================================================
+        // OpportunityUNCFOutcome mappings
+        // =================================================================
+        CreateMap<OpportunityUNCFOutcome, OpportunityUNCFOutcomeModel>()
+            .ForMember(dest => dest.UNCFOutcomeId, opt => opt.MapFrom(src => src.UNCFOutcomeId))
+            .ForMember(dest => dest.UNCFOutcomeExternalId, opt => opt.MapFrom(src => 
+                src.UNCFOutcome != null ? src.UNCFOutcome.UNCFOutcomeId : null))
+            .ForMember(dest => dest.UNCFOutcomeName, opt => opt.MapFrom(src => 
+                src.UNCFOutcome != null ? src.UNCFOutcome.Name : null))
+            .ForMember(dest => dest.VersionNo, opt => opt.MapFrom(src => 
+                src.UNCFOutcome != null ? src.UNCFOutcome.UNCooperationFrameworkVersionNo : null))
+            .ForMember(dest => dest.Country, opt => opt.MapFrom(src => 
+                src.UNCFOutcome != null ? src.UNCFOutcome.Country : null))
+            .ForMember(dest => dest.Indicators, opt => opt.MapFrom(src => src.Indicators));
+        
+        // =================================================================
+        // OpportunityUNCFIndicator mappings
+        // =================================================================
+        CreateMap<OpportunityUNCFIndicator, OpportunityUNCFIndicatorModel>()
+            .ForMember(dest => dest.UNCFIndicatorId, opt => opt.MapFrom(src => src.UNCFIndicatorId))
+            .ForMember(dest => dest.UNCFIndicatorExternalId, opt => opt.MapFrom(src => 
+                src.UNCFIndicator != null ? src.UNCFIndicator.UNCFIndicatorId : null))
+            .ForMember(dest => dest.UNCFIndicatorName, opt => opt.MapFrom(src => 
+                src.UNCFIndicator != null ? src.UNCFIndicator.Name : null));
+        
+        // =================================================================
+        // UNCF reference data mappings
+        // =================================================================
+        CreateMap<UNCFOutcome, Models.UNCF.UNCFOutcomeModel>()
+            .ForMember(dest => dest.UNCFOutcomeExternalId, opt => opt.MapFrom(src => src.UNCFOutcomeId))
+            .ForMember(dest => dest.VersionNo, opt => opt.MapFrom(src => src.UNCooperationFrameworkVersionNo));
+        CreateMap<UNCFIndicator, Models.UNCF.UNCFIndicatorModel>()
+            .ForMember(dest => dest.UNCFIndicatorExternalId, opt => opt.MapFrom(src => src.UNCFIndicatorId))
+            .ForMember(dest => dest.VersionNo, opt => opt.MapFrom(src => src.UNCooperationFrameworkVersionNo));
     }
     
     /// <summary>

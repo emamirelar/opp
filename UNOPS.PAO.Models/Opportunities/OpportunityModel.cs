@@ -35,6 +35,7 @@ public class OpportunityModel
     public List<OpportunityDeliverableModel>? Deliverables { get; set; }
     public List<OpportunityCountryModel>? Countries { get; set; }
     public List<OpportunitySDGModel>? SDGs { get; set; }
+    public List<OpportunityUNCFOutcomeModel>? UNCFOutcomes { get; set; }
     
     public OpportunityStats? Stats { get; set; }
     

@@ -16,6 +16,7 @@ using UNOPS.PAO.Models.Shared;
 using UNOPS.PAO.Models.Contacts;
 using UNOPS.PAO.Models.Values;
 using UNOPS.PAO.Models.SDG;
+using UNOPS.PAO.Models.UNCF;
 
 public class ValuesManager : IApplicationService
 {
@@ -101,6 +102,18 @@ public class ValuesManager : IApplicationService
 
     public IEnumerable<SDGIndicatorModel> GetSDGIndicatorsByTargetId(string targetId)
          => repository.GetSDGIndicatorsByTargetId(targetId).Select(mapper.Map<SDGIndicatorModel>);
+
+    public IEnumerable<UNCFOutcomeModel> GetUNCFOutcomes()
+         => repository.GetUNCFOutcomes().Select(mapper.Map<UNCFOutcomeModel>);
+
+    public IEnumerable<UNCFOutcomeModel> GetUNCFOutcomesByCountry(string countryCode)
+         => repository.GetUNCFOutcomesByCountry(countryCode).Select(mapper.Map<UNCFOutcomeModel>);
+
+    public IEnumerable<UNCFIndicatorModel> GetUNCFIndicators()
+         => repository.GetUNCFIndicators().Select(mapper.Map<UNCFIndicatorModel>);
+
+    public IEnumerable<UNCFIndicatorModel> GetUNCFIndicatorsByOutcomeId(int outcomeId)
+         => repository.GetUNCFIndicatorsByOutcomeId(outcomeId).Select(mapper.Map<UNCFIndicatorModel>);
 
     public async Task<IEnumerable<SimpleValueModel>> GetEntityRolesAsync(string entityType)
          => await repository.GetEntityRolesAsync(entityType);

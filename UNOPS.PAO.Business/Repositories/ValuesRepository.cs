@@ -331,6 +331,40 @@ public class ValuesRepository
     public IEnumerable<SDGIndicator> GetSDGIndicatorsByTargetId(string targetId)
         => context.SDGIndicators.Where(x => x.SDGTargetId == targetId && x.Status == EntityStatus.Active);
 
+    public IEnumerable<UNCFOutcome> GetUNCFOutcomes()
+    {
+        // Return only latest version for each outcome-country combination
+        return context.UNCFOutcomes
+            .Where(x => x.Status == EntityStatus.Active)
+            .GroupBy(x => new { x.UNCFOutcomeId, x.Country })
+            .Select(g => g.OrderByDescending(x => x.UNCooperationFrameworkVersionNo).First());
+    }
+
+    public IEnumerable<UNCFOutcome> GetUNCFOutcomesByCountry(string countryCode)
+    {
+        // Return only latest version for each outcome-country combination
+        return context.UNCFOutcomes
+            .Where(x => x.Country == countryCode && x.Status == EntityStatus.Active)
+            .GroupBy(x => new { x.UNCFOutcomeId, x.Country })
+            .Select(g => g.OrderByDescending(x => x.UNCooperationFrameworkVersionNo).First());
+    }
+
+    public IEnumerable<UNCFIndicator> GetUNCFIndicators()
+        => context.UNCFIndicators.Where(x => x.Status == EntityStatus.Active);
+
+    public IEnumerable<UNCFIndicator> GetUNCFIndicatorsByOutcomeId(int outcomeId)
+    {
+        // Get the outcome first to determine its external ID and version
+        var outcome = context.UNCFOutcomes.FirstOrDefault(x => x.Id == outcomeId);
+        if (outcome == null) return Enumerable.Empty<UNCFIndicator>();
+        
+        // Return indicators matching the outcome's external ID and version
+        return context.UNCFIndicators
+            .Where(x => x.UNCFOutcomeExternalId == outcome.UNCFOutcomeId 
+                     && x.UNCooperationFrameworkVersionNo == outcome.UNCooperationFrameworkVersionNo
+                     && x.Status == EntityStatus.Active);
+    }
+
     public async Task<IEnumerable<Models.Shared.SimpleValueModel>> GetEntityRolesAsync(string entityType)
     {
         return await context.EntityRoles

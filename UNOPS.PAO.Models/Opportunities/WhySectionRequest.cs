@@ -35,5 +35,10 @@ public class WhySectionRequest
     /// List of SDG alignments for the opportunity
     /// </summary>
     public List<OpportunitySDGRequest>? SdGs { get; set; }
+
+    /// <summary>
+    /// List of UNCF Outcome alignments for the opportunity (country-specific)
+    /// </summary>
+    public List<OpportunityUNCFOutcomeRequest>? UncfOutcomes { get; set; }
 }
 

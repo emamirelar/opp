@@ -96,6 +96,31 @@ export interface SDGIndicator {
 }
 
 /**
+ * @interface UNCFOutcome
+ * @description UN Cooperation Framework (UNCF) Outcome reference model
+ */
+export interface UNCFOutcome {
+  id: number;
+  name: string;
+  uncfOutcomeExternalId: string | null;  // External ID from source system
+  versionNo: number | null;  // Version number
+  country: string | null;  // ISO2 country code
+}
+
+/**
+ * @interface UNCFIndicator
+ * @description UNCF Indicator reference model
+ */
+export interface UNCFIndicator {
+  id: number;
+  name: string;
+  uncfIndicatorExternalId: string | null;  // External ID from source system
+  uncfOutcomeExternalId: string | null;  // Parent Outcome External ID
+  versionNo: number | null;  // Version number
+  country: string | null;  // ISO2 country code
+}
+
+/**
  * @interface CountrySearchResult
  * @description Country search result with match context
  */
@@ -249,6 +274,32 @@ export class ValuesService {
       ? `${this.baseUrl}/sdg-indicators?targetId=${targetId}`
       : `${this.baseUrl}/sdg-indicators`;
     return this.http.get<SDGIndicator[]>(url);
+  }
+
+  /**
+   * @description Get all UNCF Outcomes (latest version only), optionally filtered by country
+   * @param {string} countryCode - Optional ISO2 country code to filter outcomes
+   * @returns {Observable<UNCFOutcome[]>}
+   * @since 1.0.0
+   */
+  getUNCFOutcomes(countryCode?: string): Observable<UNCFOutcome[]> {
+    const url = countryCode
+      ? `${this.baseUrl}/uncf-outcomes?countryCode=${countryCode}`
+      : `${this.baseUrl}/uncf-outcomes`;
+    return this.http.get<UNCFOutcome[]>(url);
+  }
+
+  /**
+   * @description Get all UNCF Indicators, optionally filtered by Outcome ID
+   * @param {number} outcomeId - Optional Outcome ID (database ID) to filter indicators
+   * @returns {Observable<UNCFIndicator[]>}
+   * @since 1.0.0
+   */
+  getUNCFIndicators(outcomeId?: number): Observable<UNCFIndicator[]> {
+    const url = outcomeId
+      ? `${this.baseUrl}/uncf-indicators?outcomeId=${outcomeId}`
+      : `${this.baseUrl}/uncf-indicators`;
+    return this.http.get<UNCFIndicator[]>(url);
   }
 
   /**
