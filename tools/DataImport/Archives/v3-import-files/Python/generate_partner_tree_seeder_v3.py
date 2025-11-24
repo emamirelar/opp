@@ -68,6 +68,7 @@ using System.Threading.Tasks;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
 {
@@ -77,8 +78,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
         {
             Console.WriteLine("Starting PartnerTree seeding process (v3)...");
             
-            int skippedCount = 0;
+            int updatedCount = 0;
             int createdCount = 0;
+            var updatedRecordIds = new List<int>();
             var createdRecordIds = new List<int>();
             
             // Begin transaction to ensure atomicity
@@ -105,8 +107,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {{
-                        Console.WriteLine($"Skipped: PartnerTree with Code '{code}' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "{name}";
+                        existingRecord.Description = "{description}";
+                        existingRecord.Type = "{type_value}";
+                        existingRecord.Parent = {parent};
+                        existingRecord.PartnerCategoryCode = {category_code};
+                        existingRecord.PartnerGroupCode = {group_code};
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code '{code}' - {name}");
+                        updatedCount++;
                     }}
                     else
                     {{
@@ -143,16 +159,17 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 await transaction.CommitAsync();
                 
                 Console.WriteLine($"\\nPartnerTree seeding completed successfully.");
-                Console.WriteLine($"Total records processed: {skippedCount + createdCount}");
-                Console.WriteLine($"Records skipped (already exist): {skippedCount}");
+                Console.WriteLine($"Total records processed: {updatedCount + createdCount}");
+                Console.WriteLine($"Records updated: {updatedCount}");
                 Console.WriteLine($"Records created: {createdCount}");
                 
-                // Fix audit data for newly created records
+                // Fix audit data for updated and newly created records
                 // Note: SaveChangesAsync triggers audit interceptor which overwrites CreatedBy/LastModifiedBy
                 // We need to fix these values after the transaction commits
-                if (createdCount > 0)
+                var allRecordIds = createdRecordIds.Concat(updatedRecordIds).ToList();
+                if (allRecordIds.Count > 0)
                 {
-                    await FixAuditDataAsync(context, createdRecordIds);
+                    await FixAuditDataAsync(context, allRecordIds);
                 }
             }
             catch (Exception ex)
@@ -216,7 +233,10 @@ if __name__ == "__main__":
     # Define file paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
     csv_file = os.path.join(script_dir, "Partner_Category_Group_Import_File_v3 - Sheet4.csv")
-    output_file = os.path.join(script_dir, "..", "..", "SeederFiles", "PartnerTreeSeeder_v3.cs")
+    
+    # Navigate to project root and then to the seeder file location
+    project_root = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
+    output_file = os.path.join(project_root, "UNOPS.PAO.UNOPSDataAccess", "Seed", "Seeders", "PartnerTreeSeeder_v3.cs")
     
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)

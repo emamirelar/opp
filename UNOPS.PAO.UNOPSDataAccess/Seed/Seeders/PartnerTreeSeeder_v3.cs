@@ -16,8 +16,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
         {
             Console.WriteLine("Starting PartnerTree seeding process (v3)...");
             
-            int skippedCount = 0;
+            int updatedCount = 0;
             int createdCount = 0;
+            var updatedRecordIds = new List<int>();
             var createdRecordIds = new List<int>();
             
             // Begin transaction to ensure atomicity
@@ -32,8 +33,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'PRIVATE_SECTOR' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Private Sector";
+                        existingRecord.Description = "Private Sector";
+                        existingRecord.Type = "Level_1";
+                        existingRecord.Parent = null;
+                        existingRecord.PartnerCategoryCode = "PRIVATE_SECTOR";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'PRIVATE_SECTOR' - Private Sector");
+                        updatedCount++;
                     }
                     else
                     {
@@ -70,8 +85,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CC001' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Cygnum Capital";
+                        existingRecord.Description = "Cygnum Capital Asset Management";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "PRIVATE_SECTOR";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "CC001";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CC001' - Cygnum Capital");
+                        updatedCount++;
                     }
                     else
                     {
@@ -108,8 +137,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'OTHER' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Other";
+                        existingRecord.Description = "Other";
+                        existingRecord.Type = "Level_1";
+                        existingRecord.Parent = null;
+                        existingRecord.PartnerCategoryCode = "OTHER";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OTHER' - Other");
+                        updatedCount++;
                     }
                     else
                     {
@@ -146,8 +189,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'COG01' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Comité Olimpico Guatemalteco";
+                        existingRecord.Description = "Comité Olimpico Guatemalteco (COG)";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "OTHER";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "COG01";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'COG01' - Comité Olimpico Guatemalteco");
+                        updatedCount++;
                     }
                     else
                     {
@@ -184,8 +241,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MULTILATERAL' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Multilateral";
+                        existingRecord.Description = "Multilateral";
+                        existingRecord.Type = "Level_1";
+                        existingRecord.Parent = null;
+                        existingRecord.PartnerCategoryCode = "MULTILATERAL";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MULTILATERAL' - Multilateral");
+                        updatedCount++;
                     }
                     else
                     {
@@ -222,8 +293,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'IFI' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "IFI";
+                        existingRecord.Description = "IFI International Financial Institutions";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "MULTILATERAL";
+                        existingRecord.PartnerCategoryCode = "IFI";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'IFI' - IFI");
+                        updatedCount++;
                     }
                     else
                     {
@@ -260,8 +345,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'REG_OTH_FI' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Reg & other Financial Insitutions";
+                        existingRecord.Description = "Regional and other Financial Insitutions";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "IFI";
+                        existingRecord.PartnerCategoryCode = "REG_OTH_FI";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'REG_OTH_FI' - Reg & other Financial Insitutions");
+                        updatedCount++;
                     }
                     else
                     {
@@ -298,8 +397,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CAF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "CAF";
+                        existingRecord.Description = "CAF Development Bank of Latin America";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "CAF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CAF' - CAF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -336,8 +449,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'IMF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "IMF";
+                        existingRecord.Description = "IMF International Monetary Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "IMF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'IMF' - IMF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -374,8 +501,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'AFDB' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "AFDB";
+                        existingRecord.Description = "AfDB African Development Bank";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "AFDB";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'AFDB' - AFDB");
+                        updatedCount++;
                     }
                     else
                     {
@@ -412,8 +553,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'ADB' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "ADB";
+                        existingRecord.Description = "ADB Asian Development Bank";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "ADB";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'ADB' - ADB");
+                        updatedCount++;
                     }
                     else
                     {
@@ -450,8 +605,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CDB' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "CDB";
+                        existingRecord.Description = "CDB Caribbean Development Bank";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "CDB";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CDB' - CDB");
+                        updatedCount++;
                     }
                     else
                     {
@@ -488,8 +657,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CFC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "CFC";
+                        existingRecord.Description = "CFC Common Fund for Commodities";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "CFC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CFC' - CFC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -526,8 +709,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'EBRD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "EBRD";
+                        existingRecord.Description = "EBRD European Bank for Reconstruction and Development";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "EBRD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'EBRD' - EBRD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -564,8 +761,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'IsDB' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "IsDB";
+                        existingRecord.Description = "IsDB Islamic Development Bank";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "IsDB";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'IsDB' - IsDB");
+                        updatedCount++;
                     }
                     else
                     {
@@ -602,8 +813,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'AFESD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "AFESD";
+                        existingRecord.Description = "AFESD Arab Fund for Economic and Social Development";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "AFESD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'AFESD' - AFESD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -640,8 +865,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'AIIB' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "AIIB";
+                        existingRecord.Description = "AIIB Asian Infrastructure Investment Bank";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "AIIB";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'AIIB' - AIIB");
+                        updatedCount++;
                     }
                     else
                     {
@@ -678,8 +917,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'OFID' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "OFID";
+                        existingRecord.Description = "OFID OPEC Fund for International Development";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "OFID";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OFID' - OFID");
+                        updatedCount++;
                     }
                     else
                     {
@@ -716,8 +969,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'BOAD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "BOAD";
+                        existingRecord.Description = "West African Development Bank";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_OTH_FI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "BOAD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'BOAD' - BOAD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -754,8 +1021,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MAI001' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Maisha";
+                        existingRecord.Description = "Maisha";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "PRIVATE_SECTOR";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MAI001";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MAI001' - Maisha");
+                        updatedCount++;
                     }
                     else
                     {
@@ -785,15 +1066,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 22: MPI
+                // Record 21: MPI
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MPI");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MPI' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "MPI";
+                        existingRecord.Description = "Multi-partner initiatives";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "MULTILATERAL";
+                        existingRecord.PartnerCategoryCode = "MPI";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MPI' - MPI");
+                        updatedCount++;
                     }
                     else
                     {
@@ -823,15 +1118,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 23: EIF
+                // Record 22: EIF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "EIF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'EIF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "EIF";
+                        existingRecord.Description = "EIF Enhanced Integrated Framework";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "MPI";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "EIF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'EIF' - EIF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -861,15 +1170,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 24: NGO
+                // Record 23: NGO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "NGO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'NGO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "NGO";
+                        existingRecord.Description = "Non-governmental Organizations";
+                        existingRecord.Type = "Level_1";
+                        existingRecord.Parent = null;
+                        existingRecord.PartnerCategoryCode = "NGO";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'NGO' - NGO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -899,15 +1222,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 25: NEH001
+                // Record 24: NEH001
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "NEH001");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'NEH001' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Nehemia";
+                        existingRecord.Description = "Nehemia";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "NGO";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "NEH001";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'NEH001' - Nehemia");
+                        updatedCount++;
                     }
                     else
                     {
@@ -937,15 +1274,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 26: GOVERNMENT
+                // Record 25: GOVERNMENT
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "GOVERNMENT");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'GOVERNMENT' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Government";
+                        existingRecord.Description = "Government";
+                        existingRecord.Type = "Level_1";
+                        existingRecord.Parent = null;
+                        existingRecord.PartnerCategoryCode = "GOVERNMENT";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'GOVERNMENT' - Government");
+                        updatedCount++;
                     }
                     else
                     {
@@ -975,15 +1326,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 27: NON_OECD_DAC
+                // Record 26: NON_OECD_DAC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "NON_OECD_DAC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'NON_OECD_DAC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Gov: Non-OECD/DAC";
+                        existingRecord.Description = "Non-OECD/DAC Government";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "GOVERNMENT";
+                        existingRecord.PartnerCategoryCode = "NON_OECD_DAC";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'NON_OECD_DAC' - Gov: Non-OECD/DAC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1013,15 +1378,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 28: PNG001
+                // Record 27: PNG001
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "PNG001");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'PNG001' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Papua New Guinea";
+                        existingRecord.Description = "Papua New Guinea";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "NON_OECD_DAC";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "PNG001";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'PNG001' - Papua New Guinea");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1032,8 +1411,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                             Description = "Papua New Guinea",
                             Type = "Level_3",
                             Parent = "NON_OECD_DAC",
-                            PartnerCategoryCode = "PNG001",
-                            PartnerGroupCode = null,
+                            PartnerCategoryCode = null,
+                            PartnerGroupCode = "PNG001",
                             Status = (EntityStatus)1,
                             CreatedBy = -1,
                             CreatedDate = DateTime.UtcNow,
@@ -1051,15 +1430,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 29: PAR001
+                // Record 28: PAR001
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "PAR001");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'PAR001' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Parexel";
+                        existingRecord.Description = "Parexel";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "PRIVATE_SECTOR";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "PAR001";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'PAR001' - Parexel");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1089,15 +1482,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 30: REG_OTH_INGO
+                // Record 29: REG_OTH_INGO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "REG_OTH_INGO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'REG_OTH_INGO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Regional & Other IGO";
+                        existingRecord.Description = "Regional and other Intergovernmental Organizations";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "MULTILATERAL";
+                        existingRecord.PartnerCategoryCode = "REG_OTH_INGO";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'REG_OTH_INGO' - Regional & Other IGO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1127,15 +1534,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 31: EU
+                // Record 30: EU
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "EU");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'EU' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "EU";
+                        existingRecord.Description = "EU European Union";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "REG_OTH_INGO";
+                        existingRecord.PartnerCategoryCode = "EU";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'EU' - EU");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1165,15 +1586,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 32: EC
+                // Record 31: EC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "EC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'EC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "EC";
+                        existingRecord.Description = "EC European Commission";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "EU";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "EC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'EC' - EC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1203,15 +1638,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 33: AU
+                // Record 32: AU
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "AU");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'AU' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "AU";
+                        existingRecord.Description = "AU African Union";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "REG_OTH_INGO";
+                        existingRecord.PartnerCategoryCode = "AU";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'AU' - AU");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1241,15 +1690,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 34: UNAMID
+                // Record 33: UNAMID
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNAMID");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNAMID' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNAMID";
+                        existingRecord.Description = "UNAMID African Union-United Nations Hybrid Operation in Darfur";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "AU";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNAMID";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNAMID' - UNAMID");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1279,15 +1742,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 35: EBY
+                // Record 34: EBY
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "EBY");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'EBY' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "EBY";
+                        existingRecord.Description = "EBY Entidad Binacional Yacyretá";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "REG_OTH_INGO";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "EBY";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'EBY' - EBY");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1317,15 +1794,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 36: EU_DG_MENA
+                // Record 35: EU_DG_MENA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "EU_DG_MENA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'EU_DG_MENA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "EU DG MENA";
+                        existingRecord.Description = "EU DG MENA, Directorate-General for the Middle East, North Africa and the Gulf";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "EU";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "EU_DG_MENA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'EU_DG_MENA' - EU DG MENA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1355,15 +1846,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 37: EU_DG_CLIMA
+                // Record 36: EU_DG_CLIMA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "EU_DG_CLIMA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'EU_DG_CLIMA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "EU DG CLIMA";
+                        existingRecord.Description = "EU DG CLIMA, Directorate-General for Climate Action";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "EU";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "EU_DG_CLIMA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'EU_DG_CLIMA' - EU DG CLIMA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1393,15 +1898,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 38: ACADEMIC_TRAINING_RESEARC
+                // Record 37: ACADEMIC_TRAINING_RESEARC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "ACADEMIC_TRAINING_RESEARC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'ACADEMIC_TRAINING_RESEARC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Academic, Training and Research";
+                        existingRecord.Description = "Academic, Training and Research";
+                        existingRecord.Type = "Level_1";
+                        existingRecord.Parent = null;
+                        existingRecord.PartnerCategoryCode = "ACADEMIC_TRAINING_RESEARC";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'ACADEMIC_TRAINING_RESEARC' - Academic, Training and Research");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1431,15 +1950,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 39: UCD001
+                // Record 38: UCD001
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UCD001");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UCD001' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UC Davis";
+                        existingRecord.Description = "UC Davis";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "ACADEMIC_TRAINING_RESEARC";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UCD001";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UCD001' - UC Davis");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1469,15 +2002,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 40: UNITED_NATIONS
+                // Record 39: UNITED_NATIONS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNITED_NATIONS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNITED_NATIONS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN";
+                        existingRecord.Description = "United Nations";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "MULTILATERAL";
+                        existingRecord.PartnerCategoryCode = "UNITED_NATIONS";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNITED_NATIONS' - UN");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1507,15 +2054,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 41: UN_INTER_POOLED_FUND
+                // Record 40: UN_INTER_POOLED_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_INTER_POOLED_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_INTER_POOLED_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN inter-agency pooled funds incl. JPs";
+                        existingRecord.Description = "United Nations inter-agency pooled funds incl. Joint Programmes";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_INTER_POOLED_FUND' - UN inter-agency pooled funds incl. JPs");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1545,15 +2106,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 42: SSHF
+                // Record 41: SSHF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "SSHF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'SSHF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "SSHF";
+                        existingRecord.Description = "SSHF South Sudan Common Humanitarian Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "SSHF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'SSHF' - SSHF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1583,15 +2158,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 43: EBOLA_RESPONSE_MPTF
+                // Record 42: EBOLA_RESPONSE_MPTF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "EBOLA_RESPONSE_MPTF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'EBOLA_RESPONSE_MPTF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Ebola Response MPTF";
+                        existingRecord.Description = "Ebola Response MPTF";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "EBOLA_RESPONSE_MPTF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'EBOLA_RESPONSE_MPTF' - Ebola Response MPTF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1621,15 +2210,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 44: SYRIA_EMERGENCY_RESPONSE
+                // Record 43: SYRIA_EMERGENCY_RESPONSE
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "SYRIA_EMERGENCY_RESPONSE");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'SYRIA_EMERGENCY_RESPONSE' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Syria Emergency Response Fund";
+                        existingRecord.Description = "Syria Emergency Response Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "SYRIA_EMERGENCY_RESPONSE";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'SYRIA_EMERGENCY_RESPONSE' - Syria Emergency Response Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1659,15 +2262,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 45: SOMALIA_UN_MPTF
+                // Record 44: SOMALIA_UN_MPTF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "SOMALIA_UN_MPTF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'SOMALIA_UN_MPTF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Somalia UN MPTF";
+                        existingRecord.Description = "UN Multi-Partner Trust Fund for Somalia (Somalia UN MPTF)";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "SOMALIA_UN_MPTF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'SOMALIA_UN_MPTF' - Somalia UN MPTF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1697,15 +2314,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 46: UNDF
+                // Record 45: UNDF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNDF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNDF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNDF";
+                        existingRecord.Description = "UNDF United Nations Fund for Recovery Reconstruction and Development in Darfur";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNDF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNDF' - UNDF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1735,15 +2366,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 47: UN_GENERAL_TRUST_FUND
+                // Record 46: UN_GENERAL_TRUST_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_GENERAL_TRUST_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_GENERAL_TRUST_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN General Trust Fund";
+                        existingRecord.Description = "UN General Trust Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_GENERAL_TRUST_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_GENERAL_TRUST_FUND' - UN General Trust Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1773,15 +2418,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 48: CERF
+                // Record 47: CERF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "CERF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CERF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "CERF";
+                        existingRecord.Description = "CERF Central Emergency Response Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "CERF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CERF' - CERF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1811,15 +2470,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 49: UNPBF
+                // Record 48: UNPBF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNPBF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNPBF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNPBF";
+                        existingRecord.Description = "UNPBF United Nations Peacebuilding Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNPBF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNPBF' - UNPBF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1849,15 +2522,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 50: UNVFTC
+                // Record 49: UNVFTC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNVFTC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNVFTC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNVFTC";
+                        existingRecord.Description = "UNVFTC United Nations Voluntary Fund for Technical Co-operation in the Field of Human Rights";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNVFTC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNVFTC' - UNVFTC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1887,15 +2574,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 51: UNVFVT
+                // Record 50: UNVFVT
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNVFVT");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNVFVT' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNVFVT";
+                        existingRecord.Description = "UNVFVT United Nations Voluntary Fund for Victims of Torture";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNVFVT";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNVFVT' - UNVFVT");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1925,15 +2626,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 52: UNVFD
+                // Record 51: UNVFD
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNVFD");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNVFD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNVFD";
+                        existingRecord.Description = "UNVFD United Nations Voluntary Fund on Disability";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNVFD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNVFD' - UNVFD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -1963,15 +2678,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 53: UNDEF
+                // Record 52: UNDEF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNDEF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNDEF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNDEF";
+                        existingRecord.Description = "UNDEF United Nations Democracy Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNDEF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNDEF' - UNDEF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2001,15 +2730,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 54: UNFIP
+                // Record 53: UNFIP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNFIP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNFIP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNFIP";
+                        existingRecord.Description = "UNFIP United Nations Fund for International Partnerships";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNFIP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNFIP' - UNFIP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2039,15 +2782,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 55: UN-WATER
+                // Record 54: UN-WATER
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN-WATER");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN-WATER' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN-Water";
+                        existingRecord.Description = "UN-Water Inter-agency Trust Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN-WATER";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN-WATER' - UN-Water");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2077,15 +2834,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 56: ALBANIA_ONE_UNCF
+                // Record 55: ALBANIA_ONE_UNCF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "ALBANIA_ONE_UNCF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'ALBANIA_ONE_UNCF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Albania One UNCF";
+                        existingRecord.Description = "Albania One UN Coherence Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "ALBANIA_ONE_UNCF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'ALBANIA_ONE_UNCF' - Albania One UNCF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2115,15 +2886,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 57: BHUTAN_UNCF
+                // Record 56: BHUTAN_UNCF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "BHUTAN_UNCF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'BHUTAN_UNCF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Bhutan UNCF";
+                        existingRecord.Description = "Bhutan UN Country Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "BHUTAN_UNCF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'BHUTAN_UNCF' - Bhutan UNCF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2153,15 +2938,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 58: BOTSWANA_UNCF
+                // Record 57: BOTSWANA_UNCF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "BOTSWANA_UNCF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'BOTSWANA_UNCF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Botswana UNCF";
+                        existingRecord.Description = "Botswana UN Country Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "BOTSWANA_UNCF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'BOTSWANA_UNCF' - Botswana UNCF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2191,15 +2990,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 59: CAPE_VERDE_TRANSITION_FU
+                // Record 58: CAPE_VERDE_TRANSITION_FU
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "CAPE_VERDE_TRANSITION_FU");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CAPE_VERDE_TRANSITION_FU' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Cape Verde Transition Fund";
+                        existingRecord.Description = "Cape Verde Transition Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "CAPE_VERDE_TRANSITION_FU";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CAPE_VERDE_TRANSITION_FU' - Cape Verde Transition Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2229,15 +3042,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 60: CAR_HF
+                // Record 59: CAR_HF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "CAR_HF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CAR_HF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "CAR HF";
+                        existingRecord.Description = "Central African Republic Common Humanitarian Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "CAR_HF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CAR_HF' - CAR HF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2267,15 +3094,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 61: CFIA
+                // Record 60: CFIA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "CFIA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CFIA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "CFIA";
+                        existingRecord.Description = "CFIA United Nations Central Fund for Influenza Action";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "CFIA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CFIA' - CFIA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2305,15 +3146,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 62: CBA_CC
+                // Record 61: CBA_CC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "CBA_CC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CBA_CC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "CBA CC";
+                        existingRecord.Description = "Community-based Based Adaptation to Climate Change";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "CBA_CC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CBA_CC' - CBA CC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2343,15 +3198,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 63: COMOROS_ONE_UN_FUND
+                // Record 62: COMOROS_ONE_UN_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "COMOROS_ONE_UN_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'COMOROS_ONE_UN_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Comoros One UN Fund";
+                        existingRecord.Description = "Comoros One UN Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "COMOROS_ONE_UN_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'COMOROS_ONE_UN_FUND' - Comoros One UN Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2381,15 +3250,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 64: DCPSF
+                // Record 63: DCPSF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "DCPSF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'DCPSF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "DCPSF";
+                        existingRecord.Description = "DCPSF Darfur Community Peace and Stability Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "DCPSF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'DCPSF' - DCPSF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2419,15 +3302,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 65: DRC_POOLED_FUND
+                // Record 64: DRC_POOLED_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "DRC_POOLED_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'DRC_POOLED_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "DRC Pooled Fund";
+                        existingRecord.Description = "DRC Pooled Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "DRC_POOLED_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'DRC_POOLED_FUND' - DRC Pooled Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2457,15 +3354,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 66: DRC_STABILIZATION_AND_RE
+                // Record 65: DRC_STABILIZATION_AND_RE
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "DRC_STABILIZATION_AND_RE");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'DRC_STABILIZATION_AND_RE' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "DRC Stabilization and Recovery";
+                        existingRecord.Description = "DRC Stabilization and Recovery";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "DRC_STABILIZATION_AND_RE";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'DRC_STABILIZATION_AND_RE' - DRC Stabilization and Recovery");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2495,15 +3406,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 67: ETHIOPIA_ONE_UN_FUND
+                // Record 66: ETHIOPIA_ONE_UN_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "ETHIOPIA_ONE_UN_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'ETHIOPIA_ONE_UN_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Ethiopia One UN Fund";
+                        existingRecord.Description = "Ethiopia One UN Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "ETHIOPIA_ONE_UN_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'ETHIOPIA_ONE_UN_FUND' - Ethiopia One UN Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2533,15 +3458,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 68: HRM_FUND
+                // Record 67: HRM_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "HRM_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'HRM_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "HRM Fund";
+                        existingRecord.Description = "Human Rights Mainstreaming Trust Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "HRM_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'HRM_FUND' - HRM Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2571,15 +3510,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 69: INDONESIA_DR_TF
+                // Record 68: INDONESIA_DR_TF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "INDONESIA_DR_TF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'INDONESIA_DR_TF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Indonesia DR TF";
+                        existingRecord.Description = "Indonesia Disaster Recovery Trust Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "INDONESIA_DR_TF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'INDONESIA_DR_TF' - Indonesia DR TF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2609,15 +3562,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 70: IRAQ_UNDAF_TRUST_FUND
+                // Record 69: IRAQ_UNDAF_TRUST_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "IRAQ_UNDAF_TRUST_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'IRAQ_UNDAF_TRUST_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Iraq UNDAF Trust Fund";
+                        existingRecord.Description = "Iraq UNDAF Trust Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "IRAQ_UNDAF_TRUST_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'IRAQ_UNDAF_TRUST_FUND' - Iraq UNDAF Trust Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2647,15 +3614,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 71: JP_ARMED_VIOLENCE_PREVEN
+                // Record 70: JP_ARMED_VIOLENCE_PREVEN
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_ARMED_VIOLENCE_PREVEN");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_ARMED_VIOLENCE_PREVEN' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Armed Violence Prevention";
+                        existingRecord.Description = "JP Armed Violence Prevention";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_ARMED_VIOLENCE_PREVEN";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_ARMED_VIOLENCE_PREVEN' - JP Armed Violence Prevention");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2685,15 +3666,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 72: JP_BANGLADESH_LGSP–LIC
+                // Record 71: JP_BANGLADESH_LGSP–LIC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_BANGLADESH_LGSP–LIC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_BANGLADESH_LGSP–LIC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Bangladesh LGSP–LIC";
+                        existingRecord.Description = "JP LGSP-LIC Bangladesh Local Governance Support Project – Learning and Innovation Component";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_BANGLADESH_LGSP–LIC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_BANGLADESH_LGSP–LIC' - JP Bangladesh LGSP–LIC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2723,15 +3718,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 73: JP_CHAD_DIS_SECURITY
+                // Record 72: JP_CHAD_DIS_SECURITY
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_CHAD_DIS_SECURITY");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_CHAD_DIS_SECURITY' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Chad DIS Security";
+                        existingRecord.Description = "JP Chad DIS Security";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_CHAD_DIS_SECURITY";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_CHAD_DIS_SECURITY' - JP Chad DIS Security");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2761,15 +3770,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 74: JP_DRC_MICROFINANCE_II
+                // Record 73: JP_DRC_MICROFINANCE_II
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_DRC_MICROFINANCE_II");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_DRC_MICROFINANCE_II' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP DRC Microfinance II";
+                        existingRecord.Description = "JP DRC Microfinance II";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_DRC_MICROFINANCE_II";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_DRC_MICROFINANCE_II' - JP DRC Microfinance II");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2799,15 +3822,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 75: JP_DRC_SECURITY_SECT_REF
+                // Record 74: JP_DRC_SECURITY_SECT_REF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_DRC_SECURITY_SECT_REF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_DRC_SECURITY_SECT_REF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP DRC Security Sect Reform";
+                        existingRecord.Description = "JP DRC Security Sect Reform";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_DRC_SECURITY_SECT_REF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_DRC_SECURITY_SECT_REF' - JP DRC Security Sect Reform");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2837,15 +3874,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 76: JP_GUATEMALA_MAYA_PROGRA
+                // Record 75: JP_GUATEMALA_MAYA_PROGRA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_GUATEMALA_MAYA_PROGRA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_GUATEMALA_MAYA_PROGRA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Guatemala Maya Programme";
+                        existingRecord.Description = "JP Guatemala Maya Programme";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_GUATEMALA_MAYA_PROGRA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_GUATEMALA_MAYA_PROGRA' - JP Guatemala Maya Programme");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2875,15 +3926,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 77: JP_GUATEMALA_RURAL_DEV
+                // Record 76: JP_GUATEMALA_RURAL_DEV
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_GUATEMALA_RURAL_DEV");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_GUATEMALA_RURAL_DEV' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Guatemala Rural Dev";
+                        existingRecord.Description = "JP Guatemala Rural Dev";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_GUATEMALA_RURAL_DEV";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_GUATEMALA_RURAL_DEV' - JP Guatemala Rural Dev");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2913,15 +3978,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 78: JP_KAZAKHSTAN_INNOV_APRC
+                // Record 77: JP_KAZAKHSTAN_INNOV_APRC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_KAZAKHSTAN_INNOV_APRC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_KAZAKHSTAN_INNOV_APRC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Kazakhstan Innov Aprch RPSS";
+                        existingRecord.Description = "JP Kazakhstan Innov Aprch RPSS";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_KAZAKHSTAN_INNOV_APRC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_KAZAKHSTAN_INNOV_APRC' - JP Kazakhstan Innov Aprch RPSS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2951,15 +4030,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 79: JP_KENYA_HIV_AND_AIDS
+                // Record 78: JP_KENYA_HIV_AND_AIDS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_KENYA_HIV_AND_AIDS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_KENYA_HIV_AND_AIDS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Kenya HIV and AIDS";
+                        existingRecord.Description = "JP Kenya HIV and AIDS";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_KENYA_HIV_AND_AIDS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_KENYA_HIV_AND_AIDS' - JP Kenya HIV and AIDS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -2989,15 +4082,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 80: JP_KOSOVO_DOMESTIC_VIOLE
+                // Record 79: JP_KOSOVO_DOMESTIC_VIOLE
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_KOSOVO_DOMESTIC_VIOLE");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_KOSOVO_DOMESTIC_VIOLE' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Kosovo Domestic Violence";
+                        existingRecord.Description = "JP Kosovo Domestic Violence";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_KOSOVO_DOMESTIC_VIOLE";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_KOSOVO_DOMESTIC_VIOLE' - JP Kosovo Domestic Violence");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3027,15 +4134,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 81: JP_LAO_GOVERN/PUBLIC_ADM
+                // Record 80: JP_LAO_GOVERN/PUBLIC_ADM
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_LAO_GOVERN/PUBLIC_ADM");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_LAO_GOVERN/PUBLIC_ADM' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Lao Govern/Public Admin";
+                        existingRecord.Description = "JP Lao Governance and Public Administration Reform";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_LAO_GOVERN/PUBLIC_ADM";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_LAO_GOVERN/PUBLIC_ADM' - JP Lao Govern/Public Admin");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3065,15 +4186,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 82: JP_LIBERIA_FOOD_SECURITY
+                // Record 81: JP_LIBERIA_FOOD_SECURITY
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_LIBERIA_FOOD_SECURITY");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_LIBERIA_FOOD_SECURITY' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Liberia Food Security";
+                        existingRecord.Description = "JP Liberia Food Security";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_LIBERIA_FOOD_SECURITY";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_LIBERIA_FOOD_SECURITY' - JP Liberia Food Security");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3103,15 +4238,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 83: JP_LIBERIA_GENDER_EQUALI
+                // Record 82: JP_LIBERIA_GENDER_EQUALI
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_LIBERIA_GENDER_EQUALI");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_LIBERIA_GENDER_EQUALI' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Liberia Gender Equality";
+                        existingRecord.Description = "JP Liberia Gender Equality";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_LIBERIA_GENDER_EQUALI";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_LIBERIA_GENDER_EQUALI' - JP Liberia Gender Equality");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3141,15 +4290,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 84: JP_MALI_AGRO_PASTORAL_PR
+                // Record 83: JP_MALI_AGRO_PASTORAL_PR
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_MALI_AGRO_PASTORAL_PR");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_MALI_AGRO_PASTORAL_PR' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Mali Agro Pastoral Products";
+                        existingRecord.Description = "JP Mali Agro Pastoral Products";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_MALI_AGRO_PASTORAL_PR";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_MALI_AGRO_PASTORAL_PR' - JP Mali Agro Pastoral Products");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3179,15 +4342,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 85: JP_MOLDOVA_JILDP
+                // Record 84: JP_MOLDOVA_JILDP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_MOLDOVA_JILDP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_MOLDOVA_JILDP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Moldova JILDP";
+                        existingRecord.Description = "JP Moldova Integrated Local Development Programme";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_MOLDOVA_JILDP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_MOLDOVA_JILDP' - JP Moldova JILDP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3217,15 +4394,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 86: JP_NEPAL_LGCDP
+                // Record 85: JP_NEPAL_LGCDP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_NEPAL_LGCDP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_NEPAL_LGCDP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Nepal LGCDP";
+                        existingRecord.Description = "JP Nepal LGCDP Local Governance and Community Development Programme";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_NEPAL_LGCDP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_NEPAL_LGCDP' - JP Nepal LGCDP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3255,15 +4446,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 87: JP_SERBIA_SCILD
+                // Record 86: JP_SERBIA_SCILD
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_SERBIA_SCILD");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_SERBIA_SCILD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Serbia SCILD";
+                        existingRecord.Description = "JP Serbia SCILD Strengthening Capacity for Inclusive Local Development";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_SERBIA_SCILD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_SERBIA_SCILD' - JP Serbia SCILD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3293,15 +4498,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 88: JP_SOLOMON_ISLANDS
+                // Record 87: JP_SOLOMON_ISLANDS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_SOLOMON_ISLANDS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_SOLOMON_ISLANDS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Solomon Islands";
+                        existingRecord.Description = "JP Solomon Islands PGSP Provincial Governance Strengthening Programme";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_SOLOMON_ISLANDS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_SOLOMON_ISLANDS' - JP Solomon Islands");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3331,15 +4550,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 89: JP_SOMALIA
+                // Record 88: JP_SOMALIA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_SOMALIA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_SOMALIA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Somalia";
+                        existingRecord.Description = "JP Somalia Local Governance and Decentralized Service Delivery";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_SOMALIA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_SOMALIA' - JP Somalia");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3369,15 +4602,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 90: JP_MACEDONIA
+                // Record 89: JP_MACEDONIA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_MACEDONIA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_MACEDONIA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Macedonia";
+                        existingRecord.Description = "JP TFYR SNC PDV Macedonia Strengthening National Capacities to Prevent Domestic Violence";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_MACEDONIA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_MACEDONIA' - JP Macedonia");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3407,15 +4654,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 91: JP_TIMOR-LESTE_INFUSE
+                // Record 90: JP_TIMOR-LESTE_INFUSE
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_TIMOR-LESTE_INFUSE");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_TIMOR-LESTE_INFUSE' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Timor-Leste INFUSE";
+                        existingRecord.Description = "JP Timor-Leste INFUSE Inclusive Finance for Under-Served Economy";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_TIMOR-LESTE_INFUSE";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_TIMOR-LESTE_INFUSE' - JP Timor-Leste INFUSE");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3445,15 +4706,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 92: JP_TIMOR-LESTE_LGSP
+                // Record 91: JP_TIMOR-LESTE_LGSP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_TIMOR-LESTE_LGSP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_TIMOR-LESTE_LGSP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Timor-Leste LGSP";
+                        existingRecord.Description = "JP Timor-Leste LGSP Local Governance Support Programme";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_TIMOR-LESTE_LGSP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_TIMOR-LESTE_LGSP' - JP Timor-Leste LGSP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3483,15 +4758,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 93: JP_UGANDA_GENDER_EQUALIT
+                // Record 92: JP_UGANDA_GENDER_EQUALIT
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_UGANDA_GENDER_EQUALIT");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_UGANDA_GENDER_EQUALIT' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Uganda Gender Equality";
+                        existingRecord.Description = "JP Uganda Gender Equality";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_UGANDA_GENDER_EQUALIT";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_UGANDA_GENDER_EQUALIT' - JP Uganda Gender Equality");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3521,15 +4810,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 94: JP_UGANDA_SUPPORT_FOR_AI
+                // Record 93: JP_UGANDA_SUPPORT_FOR_AI
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "JP_UGANDA_SUPPORT_FOR_AI");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'JP_UGANDA_SUPPORT_FOR_AI' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "JP Uganda Support for AIDS";
+                        existingRecord.Description = "JP Uganda Support for AIDS";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "JP_UGANDA_SUPPORT_FOR_AI";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_UGANDA_SUPPORT_FOR_AI' - JP Uganda Support for AIDS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3559,15 +4862,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 95: KIRIBATI_ONE_UN_FUND
+                // Record 94: KIRIBATI_ONE_UN_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "KIRIBATI_ONE_UN_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'KIRIBATI_ONE_UN_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Kiribati One UN Fund";
+                        existingRecord.Description = "Kiribati One UN Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "KIRIBATI_ONE_UN_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'KIRIBATI_ONE_UN_FUND' - Kiribati One UN Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3597,15 +4914,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 96: KYRGYZSTAN_ONE_FUND
+                // Record 95: KYRGYZSTAN_ONE_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "KYRGYZSTAN_ONE_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'KYRGYZSTAN_ONE_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Kyrgyzstan One Fund";
+                        existingRecord.Description = "Kyrgyzstan One Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "KYRGYZSTAN_ONE_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'KYRGYZSTAN_ONE_FUND' - Kyrgyzstan One Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3635,15 +4966,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 97: LEBANON_RECOVERY_FUND
+                // Record 96: LEBANON_RECOVERY_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "LEBANON_RECOVERY_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'LEBANON_RECOVERY_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Lebanon Recovery Fund";
+                        existingRecord.Description = "Lebanon Recovery Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "LEBANON_RECOVERY_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'LEBANON_RECOVERY_FUND' - Lebanon Recovery Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3673,15 +5018,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 98: LESOTHO_ONE_UN_FUND
+                // Record 97: LESOTHO_ONE_UN_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "LESOTHO_ONE_UN_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'LESOTHO_ONE_UN_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Lesotho One UN Fund";
+                        existingRecord.Description = "Lesotho One UN Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "LESOTHO_ONE_UN_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'LESOTHO_ONE_UN_FUND' - Lesotho One UN Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3711,15 +5070,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 99: MALAWI_ONE_UN_FUND
+                // Record 98: MALAWI_ONE_UN_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MALAWI_ONE_UN_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MALAWI_ONE_UN_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Malawi One UN Fund";
+                        existingRecord.Description = "Malawi One UN Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MALAWI_ONE_UN_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MALAWI_ONE_UN_FUND' - Malawi One UN Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3749,15 +5122,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 100: MALDIVES_ONE_UN_FUND
+                // Record 99: MALDIVES_ONE_UN_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MALDIVES_ONE_UN_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MALDIVES_ONE_UN_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Maldives One UN Fund";
+                        existingRecord.Description = "Maldives One UN Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MALDIVES_ONE_UN_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MALDIVES_ONE_UN_FUND' - Maldives One UN Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3787,15 +5174,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 101: MDG_ACHIEVEMENT_FUND
+                // Record 100: MDG_ACHIEVEMENT_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MDG_ACHIEVEMENT_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MDG_ACHIEVEMENT_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "MDG Achievement Fund";
+                        existingRecord.Description = "MDG Achievement Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MDG_ACHIEVEMENT_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MDG_ACHIEVEMENT_FUND' - MDG Achievement Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3825,15 +5226,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 102: MONTENEGRO_UN_COUNTRY_FU
+                // Record 101: MONTENEGRO_UN_COUNTRY_FU
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MONTENEGRO_UN_COUNTRY_FU");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MONTENEGRO_UN_COUNTRY_FU' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Montenegro UN Country Fund";
+                        existingRecord.Description = "Montenegro UN Country Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MONTENEGRO_UN_COUNTRY_FU";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MONTENEGRO_UN_COUNTRY_FU' - Montenegro UN Country Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3863,15 +5278,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 103: MOZAMBIQUE_ONE_UN_FUND
+                // Record 102: MOZAMBIQUE_ONE_UN_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MOZAMBIQUE_ONE_UN_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MOZAMBIQUE_ONE_UN_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Mozambique One UN Fund";
+                        existingRecord.Description = "Mozambique One UN Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MOZAMBIQUE_ONE_UN_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MOZAMBIQUE_ONE_UN_FUND' - Mozambique One UN Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3901,15 +5330,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 104: NEPAL_-_UN_PEACE_FUND
+                // Record 103: NEPAL_-_UN_PEACE_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "NEPAL_-_UN_PEACE_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'NEPAL_-_UN_PEACE_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Nepal - UN Peace Fund";
+                        existingRecord.Description = "Nepal - UN Peace Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "NEPAL_-_UN_PEACE_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'NEPAL_-_UN_PEACE_FUND' - Nepal - UN Peace Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3939,15 +5382,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 105: PAKISTAN_ONE_FUND
+                // Record 104: PAKISTAN_ONE_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "PAKISTAN_ONE_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'PAKISTAN_ONE_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Pakistan One Fund";
+                        existingRecord.Description = "Pakistan One Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "PAKISTAN_ONE_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'PAKISTAN_ONE_FUND' - Pakistan One Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -3977,15 +5434,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 106: PBF
+                // Record 105: PBF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "PBF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'PBF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "PBF";
+                        existingRecord.Description = "PBF Peacebuilding Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "PBF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'PBF' - PBF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4015,15 +5486,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 107: PNG_UN_COUNTRY_FUND
+                // Record 106: PNG_UN_COUNTRY_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "PNG_UN_COUNTRY_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'PNG_UN_COUNTRY_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "PNG UN Country Fund";
+                        existingRecord.Description = "PNG UN Country Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "PNG_UN_COUNTRY_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'PNG_UN_COUNTRY_FUND' - PNG UN Country Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4053,15 +5538,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 108: REDD+_JP_PARTNERSHIP_SUP
+                // Record 107: REDD+_JP_PARTNERSHIP_SUP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "REDD+_JP_PARTNERSHIP_SUP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'REDD+_JP_PARTNERSHIP_SUP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "REDD+ JP Partnership Support";
+                        existingRecord.Description = "REDD+ JP Partnership Support";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "REDD+_JP_PARTNERSHIP_SUP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'REDD+_JP_PARTNERSHIP_SUP' - REDD+ JP Partnership Support");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4091,15 +5590,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 109: RWANDA_ONE_UN_FUND
+                // Record 108: RWANDA_ONE_UN_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "RWANDA_ONE_UN_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'RWANDA_ONE_UN_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Rwanda One UN Fund";
+                        existingRecord.Description = "Rwanda One UN Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "RWANDA_ONE_UN_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'RWANDA_ONE_UN_FUND' - Rwanda One UN Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4129,15 +5642,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 110: SIERRA_LEONE_MDTF
+                // Record 109: SIERRA_LEONE_MDTF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "SIERRA_LEONE_MDTF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'SIERRA_LEONE_MDTF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Sierra Leone MDTF";
+                        existingRecord.Description = "Sierra Leone MDTF";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "SIERRA_LEONE_MDTF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'SIERRA_LEONE_MDTF' - Sierra Leone MDTF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4167,15 +5694,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 111: SOMALIA_COMMON_HUMANITAR
+                // Record 110: SOMALIA_COMMON_HUMANITAR
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "SOMALIA_COMMON_HUMANITAR");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'SOMALIA_COMMON_HUMANITAR' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Somalia Common Humanitarian Fd";
+                        existingRecord.Description = "Somalia Common Humanitarian Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "SOMALIA_COMMON_HUMANITAR";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'SOMALIA_COMMON_HUMANITAR' - Somalia Common Humanitarian Fd");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4205,15 +5746,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 112: SSRF
+                // Record 111: SSRF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "SSRF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'SSRF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "SSRF";
+                        existingRecord.Description = "SSRF South Sudan Recovery Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "SSRF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'SSRF' - SSRF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4243,15 +5798,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 113: SUDAN_COMMON_HUMANITARIA
+                // Record 112: SUDAN_COMMON_HUMANITARIA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "SUDAN_COMMON_HUMANITARIA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'SUDAN_COMMON_HUMANITARIA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Sudan Common Humanitarian Fund";
+                        existingRecord.Description = "Sudan Common Humanitarian Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "SUDAN_COMMON_HUMANITARIA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'SUDAN_COMMON_HUMANITARIA' - Sudan Common Humanitarian Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4281,15 +5850,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 114: TANZANIA_ONE_UN_FUND
+                // Record 113: TANZANIA_ONE_UN_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "TANZANIA_ONE_UN_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'TANZANIA_ONE_UN_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Tanzania One UN Fund";
+                        existingRecord.Description = "Tanzania One UN Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "TANZANIA_ONE_UN_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'TANZANIA_ONE_UN_FUND' - Tanzania One UN Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4319,15 +5902,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 115: UN_ACTION
+                // Record 114: UN_ACTION
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_ACTION");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_ACTION' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Action";
+                        existingRecord.Description = "UN Action Against Sexual Violence in Conflict";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_ACTION";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_ACTION' - UN Action");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4357,15 +5954,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 116: UN_CIVIL_SOCIETY_TRUST_F
+                // Record 115: UN_CIVIL_SOCIETY_TRUST_F
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_CIVIL_SOCIETY_TRUST_F");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_CIVIL_SOCIETY_TRUST_F' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Civil Society Trust Fund";
+                        existingRecord.Description = "UN Civil Society Trust Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_CIVIL_SOCIETY_TRUST_F";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_CIVIL_SOCIETY_TRUST_F' - UN Civil Society Trust Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4395,15 +6006,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 117: UNIPP
+                // Record 116: UNIPP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNIPP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNIPP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNIPP";
+                        existingRecord.Description = "UNIPP United Nations Indigenous Peoples’ Partnership";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNIPP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNIPP' - UNIPP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4433,15 +6058,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 118: UNTFHS
+                // Record 117: UNTFHS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNTFHS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNTFHS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNTFHS";
+                        existingRecord.Description = "UN Trust Fund for Human Security";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNTFHS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNTFHS' - UNTFHS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4471,15 +6110,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 119: UN_TRUST_FUND
+                // Record 118: UN_TRUST_FUND
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_TRUST_FUND");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_TRUST_FUND' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Trust Fund";
+                        existingRecord.Description = "UN Trust Fund to End Volence Against Women";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_TRUST_FUND";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_TRUST_FUND' - UN Trust Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4509,15 +6162,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 120: UNDG_HRF
+                // Record 119: UNDG_HRF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNDG_HRF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNDG_HRF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNDG HRF";
+                        existingRecord.Description = "Haiti Reconstruction Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNDG_HRF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNDG_HRF' - UNDG HRF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4547,15 +6214,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 121: UNDG_ITF
+                // Record 120: UNDG_ITF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNDG_ITF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNDG_ITF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNDG ITF";
+                        existingRecord.Description = "UNDG Iraq Trust Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNDG_ITF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNDG_ITF' - UNDG ITF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4585,15 +6266,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 122: UN-REDD
+                // Record 121: UN-REDD
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN-REDD");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN-REDD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN-REDD";
+                        existingRecord.Description = "UN-REDD Programme Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN-REDD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN-REDD' - UN-REDD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4623,15 +6318,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 123: URUGUAY_ONE_UN_COHERENCE
+                // Record 122: URUGUAY_ONE_UN_COHERENCE
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "URUGUAY_ONE_UN_COHERENCE");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'URUGUAY_ONE_UN_COHERENCE' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Uruguay One UN Coherence Fund";
+                        existingRecord.Description = "Uruguay One UN Coherence Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "URUGUAY_ONE_UN_COHERENCE";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'URUGUAY_ONE_UN_COHERENCE' - Uruguay One UN Coherence Fund");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4661,15 +6370,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 124: VIET_NAM_ONE_FUND_I
+                // Record 123: VIET_NAM_ONE_FUND_I
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "VIET_NAM_ONE_FUND_I");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'VIET_NAM_ONE_FUND_I' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Viet Nam One Plan Fund I";
+                        existingRecord.Description = "Viet Nam One Plan Fund I";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "VIET_NAM_ONE_FUND_I";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'VIET_NAM_ONE_FUND_I' - Viet Nam One Plan Fund I");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4699,15 +6422,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 125: VIET_NAM_ONE_FUND_II
+                // Record 124: VIET_NAM_ONE_FUND_II
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "VIET_NAM_ONE_FUND_II");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'VIET_NAM_ONE_FUND_II' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Viet Nam One Plan Fund II";
+                        existingRecord.Description = "Viet Nam One Plan Fund II";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "VIET_NAM_ONE_FUND_II";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'VIET_NAM_ONE_FUND_II' - Viet Nam One Plan Fund II");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4737,15 +6474,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 126: OTHER_UNDP_MDTF
+                // Record 125: OTHER_UNDP_MDTF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "OTHER_UNDP_MDTF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'OTHER_UNDP_MDTF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Other UNDP MDTF";
+                        existingRecord.Description = "Other UNDP MDTF";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "OTHER_UNDP_MDTF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OTHER_UNDP_MDTF' - Other UNDP MDTF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4775,15 +6526,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 127: OTHER_UNDP_JP
+                // Record 126: OTHER_UNDP_JP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "OTHER_UNDP_JP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'OTHER_UNDP_JP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Other UNDP JP";
+                        existingRecord.Description = "Other UNDP JP";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "OTHER_UNDP_JP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OTHER_UNDP_JP' - Other UNDP JP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4813,15 +6578,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 128: UNSO
+                // Record 127: UNSO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNSO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNSO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNSO";
+                        existingRecord.Description = "UN Fund for Sudano-Sahelian Activities";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNSO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNSO' - UNSO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4851,15 +6630,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 129: UN_VTF
+                // Record 128: UN_VTF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_VTF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_VTF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN VTF";
+                        existingRecord.Description = "VTF UN Voluntary Trust Fund for Assistance in Mine Action";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_VTF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_VTF' - UN VTF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4889,15 +6682,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 130: UN_HAITI_CHOLERA_MPTF
+                // Record 129: UN_HAITI_CHOLERA_MPTF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_HAITI_CHOLERA_MPTF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_HAITI_CHOLERA_MPTF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Haiti Cholera MPTF";
+                        existingRecord.Description = "UN Haiti Cholera Response Multi-Partner Trust Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_HAITI_CHOLERA_MPTF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_HAITI_CHOLERA_MPTF' - UN Haiti Cholera MPTF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4927,15 +6734,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 131: UNITLIFE
+                // Record 130: UNITLIFE
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNITLIFE");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNITLIFE' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNITLIFE";
+                        existingRecord.Description = "UNITLIFE United Nations Initiative Fighting Chronic Malnutrition Through Innovation";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNITLIFE";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNITLIFE' - UNITLIFE");
+                        updatedCount++;
                     }
                     else
                     {
@@ -4965,15 +6786,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 132: UN_MPTF_OFFICE
+                // Record 131: UN_MPTF_OFFICE
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_MPTF_OFFICE");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_MPTF_OFFICE' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN MPTF Office";
+                        existingRecord.Description = "United Nations Multi-Partner Trust Fund Office";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_MPTF_OFFICE";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_MPTF_OFFICE' - UN MPTF Office");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5003,15 +6838,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 133: UN_SRI_LANKA_SDG_MPTF
+                // Record 132: UN_SRI_LANKA_SDG_MPTF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_SRI_LANKA_SDG_MPTF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_SRI_LANKA_SDG_MPTF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Sri Lanka SDG MPTF";
+                        existingRecord.Description = "United Nations Sri Lanka SDG Multi-Partner Trust Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_INTER_POOLED_FUND";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_SRI_LANKA_SDG_MPTF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_SRI_LANKA_SDG_MPTF' - UN Sri Lanka SDG MPTF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5041,15 +6890,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 134: UNISID1
+                // Record 133: UNISID1
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNISID1");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNISID1' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Sidney University";
+                        existingRecord.Description = "The University of Sidney";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "ACADEMIC_TRAINING_RESEARC";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNISID1";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNISID1' - Sidney University");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5079,15 +6942,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 135: SUBSIDIARY_ORG
+                // Record 134: SUBSIDIARY_ORG
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "SUBSIDIARY_ORG");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'SUBSIDIARY_ORG' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Subsidiary Organs";
+                        existingRecord.Description = "United Nations Subsidiary Organs";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'SUBSIDIARY_ORG' - UN Subsidiary Organs");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5117,15 +6994,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 136: BINUCA
+                // Record 135: BINUCA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "BINUCA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'BINUCA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "BINUCA";
+                        existingRecord.Description = "BINUCA United Nations Integrated Peacebuilding Office in the Central African Republic";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "BINUCA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'BINUCA' - BINUCA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5155,15 +7046,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 137: UN_COORD
+                // Record 136: UN_COORD
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_COORD");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_COORD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Coordination Mechanisms";
+                        existingRecord.Description = "United Nations Coordination Mechanisms";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "UN_COORD";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_COORD' - UN Coordination Mechanisms");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5193,15 +7098,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 138: CEB
+                // Record 137: CEB
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "CEB");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CEB' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "CEB";
+                        existingRecord.Description = "CEB United Nations System Chief Executives Board for Coordination";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_COORD";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "CEB";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CEB' - CEB");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5231,15 +7150,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 139: MENUB
+                // Record 138: MENUB
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MENUB");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MENUB' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "MENUB";
+                        existingRecord.Description = "MENUB United Nations Electoral Observation Mission in Burundi";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MENUB";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MENUB' - MENUB");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5269,15 +7202,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 140: MINURSO
+                // Record 139: MINURSO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MINURSO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MINURSO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "MINURSO";
+                        existingRecord.Description = "MINURSO United Nations Mission for the Referendum in Western Sahara";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MINURSO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MINURSO' - MINURSO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5307,15 +7254,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 141: MINUSCA
+                // Record 140: MINUSCA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MINUSCA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MINUSCA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "MINUSCA";
+                        existingRecord.Description = "MINUSCA United Nations Multidimensional Integrated Stabilization Mission in the Central African Republic";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MINUSCA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MINUSCA' - MINUSCA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5345,15 +7306,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 142: MINUSMA
+                // Record 141: MINUSMA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MINUSMA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MINUSMA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "MINUSMA";
+                        existingRecord.Description = "MINUSMA United Nations Multidimensional Integrated Stabilization Mission in Mali";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MINUSMA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MINUSMA' - MINUSMA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5383,15 +7358,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 143: MINUSTAH
+                // Record 142: MINUSTAH
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MINUSTAH");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MINUSTAH' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "MINUSTAH";
+                        existingRecord.Description = "MINUSTAH United Nations Stabilization Mission in Haiti";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MINUSTAH";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MINUSTAH' - MINUSTAH");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5421,15 +7410,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 144: MONUSCO
+                // Record 143: MONUSCO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MONUSCO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MONUSCO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "MONUSCO";
+                        existingRecord.Description = "MONUSCO United Nations Organization Stabilization Mission in the Democratic Republic of the Congo";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MONUSCO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MONUSCO' - MONUSCO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5459,15 +7462,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 145: UNAKRT
+                // Record 144: UNAKRT
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNAKRT");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNAKRT' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNAKRT";
+                        existingRecord.Description = "UNAKRT United Nations Assistance to the Khmer Rouge Trials";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNAKRT";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNAKRT' - UNAKRT");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5497,15 +7514,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 146: UNAMA
+                // Record 145: UNAMA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNAMA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNAMA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNAMA";
+                        existingRecord.Description = "UNAMA United Nations Assistance Mission in Afghanistan";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNAMA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNAMA' - UNAMA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5535,15 +7566,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 147: UNAMI
+                // Record 146: UNAMI
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNAMI");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNAMI' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNAMI";
+                        existingRecord.Description = "UNAMI United Nations Assistance Mission for Iraq";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNAMI";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNAMI' - UNAMI");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5573,15 +7618,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 148: UNFICYP
+                // Record 147: UNFICYP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNFICYP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNFICYP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNFICYP";
+                        existingRecord.Description = "UNFICYP United Nations Peacekeeping Force in Cyprus";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNFICYP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNFICYP' - UNFICYP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5611,15 +7670,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 149: UNIFIL
+                // Record 148: UNIFIL
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNIFIL");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNIFIL' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNIFIL";
+                        existingRecord.Description = "UNIFIL United Nations Interim Force in Lebanon";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNIFIL";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNIFIL' - UNIFIL");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5649,15 +7722,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 150: UNIPSIL
+                // Record 149: UNIPSIL
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNIPSIL");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNIPSIL' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNIPSIL";
+                        existingRecord.Description = "UNIPSIL United Nations Integrated Peacebuilding Office in Sierra Leone";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNIPSIL";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNIPSIL' - UNIPSIL");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5687,15 +7774,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 151: UNISFA
+                // Record 150: UNISFA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNISFA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNISFA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNISFA";
+                        existingRecord.Description = "UNISFA United Nations Interim Security Force in Abyei";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNISFA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNISFA' - UNISFA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5725,15 +7826,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 152: UNMIL
+                // Record 151: UNMIL
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNMIL");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNMIL' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNMIL";
+                        existingRecord.Description = "UNMIL United Nations Mission in Liberia";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNMIL";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNMIL' - UNMIL");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5763,15 +7878,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 153: UNMISS
+                // Record 152: UNMISS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNMISS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNMISS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNMISS";
+                        existingRecord.Description = "UNMISS United Nations Mission in the Republic of South Sudan";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNMISS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNMISS' - UNMISS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5801,15 +7930,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 154: UNMIT
+                // Record 153: UNMIT
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNMIT");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNMIT' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNMIT";
+                        existingRecord.Description = "UNMIT United Nations Integrated Mission in Timor-Leste";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNMIT";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNMIT' - UNMIT");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5839,15 +7982,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 155: UNMOGIP
+                // Record 154: UNMOGIP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNMOGIP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNMOGIP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNMOGIP";
+                        existingRecord.Description = "UNMOGIP United Nations Military Observer Group in India and Pakistan";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNMOGIP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNMOGIP' - UNMOGIP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5877,15 +8034,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 156: DEPARTMENT_OFFICE
+                // Record 155: DEPARTMENT_OFFICE
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "DEPARTMENT_OFFICE");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'DEPARTMENT_OFFICE' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Departments and Offices";
+                        existingRecord.Description = "United Nations Departments and Offices";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'DEPARTMENT_OFFICE' - UN Departments and Offices");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5915,15 +8086,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 157: UNOAU
+                // Record 156: UNOAU
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNOAU");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNOAU' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNOAU";
+                        existingRecord.Description = "UNOAU United Nations Office to the African Union";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNOAU";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNOAU' - UNOAU");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5953,15 +8138,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 158: UNOCA
+                // Record 157: UNOCA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNOCA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNOCA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNOCA";
+                        existingRecord.Description = "UNOCA United Nations Regional Office for Central Africa";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNOCA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNOCA' - UNOCA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -5991,15 +8190,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 159: UNOCI
+                // Record 158: UNOCI
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNOCI");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNOCI' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNOCI";
+                        existingRecord.Description = "UNOCI United Nations Operation in Côte d\'Ivoire";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNOCI";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNOCI' - UNOCI");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6029,15 +8242,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 160: OTHER_ENTITIES
+                // Record 159: OTHER_ENTITIES
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "OTHER_ENTITIES");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'OTHER_ENTITIES' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Other Entities";
+                        existingRecord.Description = "United Nations Other Entities";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "OTHER_ENTITIES";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OTHER_ENTITIES' - UN Other Entities");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6067,15 +8294,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 161: ITC
+                // Record 160: ITC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "ITC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'ITC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "ITC";
+                        existingRecord.Description = "ITC International Trade Centre";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "OTHER_ENTITIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "ITC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'ITC' - ITC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6105,15 +8346,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 162: UNHCR
+                // Record 161: UNHCR
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNHCR");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNHCR' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNHCR";
+                        existingRecord.Description = "UNHCR Office of the United Nations High Commissioner for Refugees";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "OTHER_ENTITIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNHCR";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNHCR' - UNHCR");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6143,15 +8398,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 163: FUND_PROGRAMME
+                // Record 162: FUND_PROGRAMME
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "FUND_PROGRAMME");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'FUND_PROGRAMME' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Funds and Programmes";
+                        existingRecord.Description = "United Nations Funds and Programmes";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "FUND_PROGRAMME";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'FUND_PROGRAMME' - UN Funds and Programmes");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6181,15 +8450,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 164: UNCDF
+                // Record 163: UNCDF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNCDF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNCDF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNCDF";
+                        existingRecord.Description = "UNCDF United Nations Capital Development Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "FUND_PROGRAMME";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNCDF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNCDF' - UNCDF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6219,15 +8502,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 165: UNICEF
+                // Record 164: UNICEF
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNICEF");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNICEF' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNICEF";
+                        existingRecord.Description = "UNICEF United Nations Children\'s Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "FUND_PROGRAMME";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNICEF";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNICEF' - UNICEF");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6257,15 +8554,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 166: UNCTAD
+                // Record 165: UNCTAD
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNCTAD");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNCTAD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNCTAD";
+                        existingRecord.Description = "UNCTAD United Nations Conference on Trade and Development";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "OTHER_ENTITIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNCTAD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNCTAD' - UNCTAD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6295,15 +8606,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 167: UNEP
+                // Record 166: UNEP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNEP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNEP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNEP";
+                        existingRecord.Description = "UNEP United Nations Environment Programme";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "FUND_PROGRAMME";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNEP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNEP' - UNEP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6333,15 +8658,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 168: UN-HABITAT
+                // Record 167: UN-HABITAT
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN-HABITAT");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN-HABITAT' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN-HABITAT";
+                        existingRecord.Description = "UN-HABITAT United Nations Human Settlements Programme";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "FUND_PROGRAMME";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN-HABITAT";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN-HABITAT' - UN-HABITAT");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6371,15 +8710,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 169: UNODC
+                // Record 168: UNODC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNODC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNODC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNODC";
+                        existingRecord.Description = "UNODC United Nations Office on Drugs and Crime";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNODC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNODC' - UNODC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6409,15 +8762,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 170: UNFPA
+                // Record 169: UNFPA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNFPA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNFPA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNFPA";
+                        existingRecord.Description = "UNFPA United Nations Population Fund";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "FUND_PROGRAMME";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNFPA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNFPA' - UNFPA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6447,15 +8814,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 171: UNRWA
+                // Record 170: UNRWA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNRWA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNRWA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNRWA";
+                        existingRecord.Description = "UNRWA United Nations Relief and Works Agency for Palestine Refugees in the Near East";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "OTHER_ENTITIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNRWA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNRWA' - UNRWA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6485,15 +8866,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 172: UNV
+                // Record 171: UNV
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNV");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNV' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNV";
+                        existingRecord.Description = "UNV United Nations Volunteers";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "FUND_PROGRAMME";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNV";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNV' - UNV");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6523,15 +8918,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 173: WFP
+                // Record 172: WFP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "WFP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'WFP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "WFP";
+                        existingRecord.Description = "WFP United Nations World Food Programme";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "FUND_PROGRAMME";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "WFP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'WFP' - WFP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6561,15 +8970,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 174: UN_DESA
+                // Record 173: UN_DESA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_DESA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_DESA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN DESA";
+                        existingRecord.Description = "UN DESA Department of Economic and Social Affairs";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_DESA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_DESA' - UN DESA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6599,15 +9022,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 175: UN_DGACM
+                // Record 174: UN_DGACM
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_DGACM");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_DGACM' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN DGACM";
+                        existingRecord.Description = "UN DGACM Department for General Assembly and Conference Management";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_DGACM";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_DGACM' - UN DGACM");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6637,15 +9074,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 176: UN_DMSPC
+                // Record 175: UN_DMSPC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_DMSPC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_DMSPC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN DMSPC";
+                        existingRecord.Description = "UN DMSPC Department of Management Strategy, Policy and Compliance";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_DMSPC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_DMSPC' - UN DMSPC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6675,15 +9126,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 177: UN_DGC
+                // Record 176: UN_DGC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_DGC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_DGC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN DGC";
+                        existingRecord.Description = "UN DGC Department of Global Communications";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_DGC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_DGC' - UN DGC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6713,15 +9178,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 178: UNDSS
+                // Record 177: UNDSS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNDSS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNDSS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNDSS";
+                        existingRecord.Description = "UNDSS Department of Safety and Security";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNDSS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNDSS' - UNDSS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6751,15 +9230,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 179: UN_OCHA
+                // Record 178: UN_OCHA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_OCHA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_OCHA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN OCHA";
+                        existingRecord.Description = "UN OCHA Office for the Coordination of Humanitarian Affairs";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_OCHA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_OCHA' - UN OCHA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6789,15 +9282,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 180: UN_OHCHR
+                // Record 179: UN_OHCHR
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_OHCHR");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_OHCHR' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN OHCHR";
+                        existingRecord.Description = "UN OHCHR Office of the United Nations High Commissioner for Human Rights";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_OHCHR";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_OHCHR' - UN OHCHR");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6827,15 +9334,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 181: OIOS
+                // Record 180: OIOS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "OIOS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'OIOS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "OIOS";
+                        existingRecord.Description = "OIOS Office of Internal Oversight Services";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "OIOS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OIOS' - OIOS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6865,15 +9386,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 182: UN_OLA
+                // Record 181: UN_OLA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_OLA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_OLA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN OLA";
+                        existingRecord.Description = "UN OLA Office of Legal Affairs";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_OLA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_OLA' - UN OLA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6903,15 +9438,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 183: OSAA
+                // Record 182: OSAA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "OSAA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'OSAA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "OSAA";
+                        existingRecord.Description = "OSAA Office of the Special Adviser on Africa";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "OSAA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OSAA' - OSAA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6941,15 +9490,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 184: SRSG_CAAC
+                // Record 183: SRSG_CAAC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "SRSG_CAAC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'SRSG_CAAC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "SRSG CAAC";
+                        existingRecord.Description = "SRSG CAAC Office of the Special Representative of the Secretary-General for Children and Armed Conflict";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "SRSG_CAAC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'SRSG_CAAC' - SRSG CAAC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -6979,15 +9542,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 185: UNODA
+                // Record 184: UNODA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNODA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNODA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNODA";
+                        existingRecord.Description = "UNODA Office for Disarmament Affairs";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNODA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNODA' - UNODA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7017,15 +9594,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 186: UNOG
+                // Record 185: UNOG
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNOG");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNOG' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNOG";
+                        existingRecord.Description = "UNOG United Nations Office at Geneva";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNOG";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNOG' - UNOG");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7055,15 +9646,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 187: UN-OHRLLS
+                // Record 186: UN-OHRLLS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN-OHRLLS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN-OHRLLS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN-OHRLLS";
+                        existingRecord.Description = "UN-OHRLLS Office of the High Representative for the Least Developed Countries, Landlocked Developing Countries and Small Island Developing States";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN-OHRLLS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN-OHRLLS' - UN-OHRLLS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7093,15 +9698,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 188: UNON
+                // Record 187: UNON
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNON");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNON' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNON";
+                        existingRecord.Description = "UNON United Nations Office at Nairobi";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNON";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNON' - UNON");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7131,15 +9750,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 189: UNOV
+                // Record 188: UNOV
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNOV");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNOV' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNOV";
+                        existingRecord.Description = "UNOV United Nations Office at Vienna";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNOV";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNOV' - UNOV");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7169,15 +9802,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 190: UN_ICC
+                // Record 189: UN_ICC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_ICC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_ICC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN ICC";
+                        existingRecord.Description = "ICC International Computing Centre";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "OTHER_ENTITIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_ICC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_ICC' - UN ICC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7207,15 +9854,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 191: OTHER_BODIES
+                // Record 190: OTHER_BODIES
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "OTHER_BODIES");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'OTHER_BODIES' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Other Bodies";
+                        existingRecord.Description = "United Nations Other Bodies";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "OTHER_BODIES";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OTHER_BODIES' - UN Other Bodies");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7245,15 +9906,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 192: UNAIDS
+                // Record 191: UNAIDS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNAIDS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNAIDS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNAIDS";
+                        existingRecord.Description = "UNAIDS Joint United Nations Programme on HIV/AIDS";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "OTHER_BODIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNAIDS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNAIDS' - UNAIDS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7283,15 +9958,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 193: UN_WOMEN
+                // Record 192: UN_WOMEN
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_WOMEN");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_WOMEN' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN WOMEN";
+                        existingRecord.Description = "UN WOMEN United Nations Entity for Gender Equality and the Empowerment of Women";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "OTHER_ENTITIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_WOMEN";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_WOMEN' - UN WOMEN");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7321,15 +10010,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 194: UNDRR
+                // Record 193: UNDRR
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNDRR");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNDRR' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNDRR";
+                        existingRecord.Description = "UNDRR United Nations Office for Disaster Risk Reduction";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNDRR";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNDRR' - UNDRR");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7359,15 +10062,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 195: RESEARCH_TRAINING
+                // Record 194: RESEARCH_TRAINING
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "RESEARCH_TRAINING");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'RESEARCH_TRAINING' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Research and Training";
+                        existingRecord.Description = "United Nations Research and Training";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "RESEARCH_TRAINING";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'RESEARCH_TRAINING' - UN Research and Training");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7397,15 +10114,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 196: UNSSC
+                // Record 195: UNSSC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNSSC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNSSC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNSSC";
+                        existingRecord.Description = "UNSSC United Nations System Staff College";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "RESEARCH_TRAINING";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNSSC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNSSC' - UNSSC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7435,15 +10166,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 197: UNU
+                // Record 196: UNU
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNU");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNU' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNU";
+                        existingRecord.Description = "UNU United Nations University";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "RESEARCH_TRAINING";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNU";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNU' - UNU");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7473,15 +10218,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 198: REG_COMMISSION
+                // Record 197: REG_COMMISSION
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "REG_COMMISSION");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'REG_COMMISSION' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Regional Commissions";
+                        existingRecord.Description = "United Nations Regional Commissions";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "REG_COMMISSION";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'REG_COMMISSION' - UN Regional Commissions");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7511,15 +10270,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 199: UN_ESCAP
+                // Record 198: UN_ESCAP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_ESCAP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_ESCAP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN ESCAP";
+                        existingRecord.Description = "UN ESCAP Economic and Social Commission for Asia and the Pacific";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_COMMISSION";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_ESCAP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_ESCAP' - UN ESCAP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7549,15 +10322,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 200: UN_ESCWA
+                // Record 199: UN_ESCWA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_ESCWA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_ESCWA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN ESCWA";
+                        existingRecord.Description = "UN ESCWA Economic and Social Commission for Western Asia";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_COMMISSION";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_ESCWA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_ESCWA' - UN ESCWA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7587,15 +10374,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 201: UN_ECA
+                // Record 200: UN_ECA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_ECA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_ECA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN ECA";
+                        existingRecord.Description = "UN ECA Economic Commission for Africa";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_COMMISSION";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_ECA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_ECA' - UN ECA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7625,15 +10426,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 202: UN_ECLAC
+                // Record 201: UN_ECLAC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_ECLAC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_ECLAC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN ECLAC";
+                        existingRecord.Description = "UN ECLAC Economic Commission for Latin America and the Caribbean";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_COMMISSION";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_ECLAC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_ECLAC' - UN ECLAC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7663,15 +10478,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 203: UNDG
+                // Record 202: UNDG
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNDG");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNDG' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNDG";
+                        existingRecord.Description = "UNSDG United Nations Sustainable Development Group (formerly UNDG)";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_COORD";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNDG";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNDG' - UNDG");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7701,15 +10530,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 204: UN_ECE
+                // Record 203: UN_ECE
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_ECE");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_ECE' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN ECE";
+                        existingRecord.Description = "UN ECE Economic Commission for Europe";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "REG_COMMISSION";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_ECE";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_ECE' - UN ECE");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7739,15 +10582,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 205: UNIOGBIS
+                // Record 204: UNIOGBIS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNIOGBIS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNIOGBIS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNIOGBIS";
+                        existingRecord.Description = "UNIOGBIS United Nations Integrated Peacebuilding Office in Guinea-Bissau";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNIOGBIS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNIOGBIS' - UNIOGBIS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7777,15 +10634,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 206: UNSCN
+                // Record 205: UNSCN
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNSCN");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNSCN' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNSCN";
+                        existingRecord.Description = "UNSCN United Nations System Standing Committee on Nutrition";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNSCN";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNSCN' - UNSCN");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7815,15 +10686,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 207: CONVENTION_FRAMEWORK
+                // Record 206: CONVENTION_FRAMEWORK
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "CONVENTION_FRAMEWORK");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CONVENTION_FRAMEWORK' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Conventions and Frameworks";
+                        existingRecord.Description = "United Nations Conventions and Frameworks";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "CONVENTION_FRAMEWORK";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CONVENTION_FRAMEWORK' - UN Conventions and Frameworks");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7853,15 +10738,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 208: CRPD
+                // Record 207: CRPD
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "CRPD");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'CRPD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "CRPD";
+                        existingRecord.Description = "CRPD Convention on the Rights of Persons with Disabilities";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "CONVENTION_FRAMEWORK";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "CRPD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'CRPD' - CRPD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7891,15 +10790,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 209: SPECIALIZED_AGENCIES
+                // Record 208: SPECIALIZED_AGENCIES
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "SPECIALIZED_AGENCIES");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'SPECIALIZED_AGENCIES' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Specialized Agencies";
+                        existingRecord.Description = "United Nations Specialized Agencies";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'SPECIALIZED_AGENCIES' - UN Specialized Agencies");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7929,15 +10842,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 210: FAO
+                // Record 209: FAO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "FAO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'FAO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "FAO";
+                        existingRecord.Description = "FAO Food and Agriculture Organization of the United Nations";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "FAO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'FAO' - FAO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -7967,15 +10894,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 211: RELATED_ORG
+                // Record 210: RELATED_ORG
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "RELATED_ORG");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'RELATED_ORG' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN Related Organizations";
+                        existingRecord.Description = "United Nations Related Organizations";
+                        existingRecord.Type = "Level_3";
+                        existingRecord.Parent = "UNITED_NATIONS";
+                        existingRecord.PartnerCategoryCode = "RELATED_ORG";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'RELATED_ORG' - UN Related Organizations");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8005,15 +10946,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 212: IAEA
+                // Record 211: IAEA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "IAEA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'IAEA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "IAEA";
+                        existingRecord.Description = "IAEA International Atomic Energy Agency";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "RELATED_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "IAEA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'IAEA' - IAEA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8043,15 +10998,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 213: ICAO
+                // Record 212: ICAO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "ICAO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'ICAO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "ICAO";
+                        existingRecord.Description = "ICAO International Civil Aviation Organization";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "ICAO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'ICAO' - ICAO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8081,15 +11050,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 214: IFAD
+                // Record 213: IFAD
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "IFAD");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'IFAD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "IFAD";
+                        existingRecord.Description = "IFAD International Fund for Agricultural Development";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "IFAD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'IFAD' - IFAD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8119,15 +11102,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 215: ILO
+                // Record 214: ILO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "ILO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'ILO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "ILO";
+                        existingRecord.Description = "ILO International Labour Organization";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "ILO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'ILO' - ILO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8157,15 +11154,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 216: IMO
+                // Record 215: IMO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "IMO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'IMO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "IMO";
+                        existingRecord.Description = "IMO International Maritime Organization";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "IMO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'IMO' - IMO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8195,15 +11206,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 217: ITU
+                // Record 216: ITU
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "ITU");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'ITU' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "ITU";
+                        existingRecord.Description = "ITU International Telecommunication Union";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "ITU";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'ITU' - ITU");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8233,15 +11258,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 218: OPCW
+                // Record 217: OPCW
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "OPCW");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'OPCW' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "OPCW";
+                        existingRecord.Description = "OPCW Organisation for the Prohibition of Chemical Weapons";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "RELATED_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "OPCW";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OPCW' - OPCW");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8271,15 +11310,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 219: UNCCD
+                // Record 218: UNCCD
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNCCD");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNCCD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNCCD";
+                        existingRecord.Description = "UNCCD United Nations Convention to Combat Desertification";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "CONVENTION_FRAMEWORK";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNCCD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNCCD' - UNCCD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8309,15 +11362,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 220: UNESCO
+                // Record 219: UNESCO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNESCO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNESCO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNESCO";
+                        existingRecord.Description = "UNESCO United Nations Educational, Scientific and Cultural Organization";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNESCO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNESCO' - UNESCO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8347,15 +11414,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 221: UNFCCC
+                // Record 220: UNFCCC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNFCCC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNFCCC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNFCCC";
+                        existingRecord.Description = "UNFCCC United Nations Framework Convention on Climate Change";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "CONVENTION_FRAMEWORK";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNFCCC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNFCCC' - UNFCCC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8385,15 +11466,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 222: UNIDO
+                // Record 221: UNIDO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNIDO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNIDO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNIDO";
+                        existingRecord.Description = "UNIDO United Nations Industrial Development Organization";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNIDO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNIDO' - UNIDO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8423,15 +11518,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 223: UPU
+                // Record 222: UPU
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UPU");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UPU' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UPU";
+                        existingRecord.Description = "UPU Universal Postal Union";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UPU";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UPU' - UPU");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8461,15 +11570,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 224: WIPO
+                // Record 223: WIPO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "WIPO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'WIPO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "WIPO";
+                        existingRecord.Description = "WIPO World Intellectual Property Organization";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "WIPO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'WIPO' - WIPO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8499,15 +11622,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 225: WMO
+                // Record 224: WMO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "WMO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'WMO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "WMO";
+                        existingRecord.Description = "WMO World Meteorological Organization";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "WMO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'WMO' - WMO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8537,15 +11674,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 226: UNWTO
+                // Record 225: UNWTO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNWTO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNWTO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNWTO";
+                        existingRecord.Description = "UNWTO World Tourism Organization";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SPECIALIZED_AGENCIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNWTO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNWTO' - UNWTO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8575,15 +11726,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 227: WTO
+                // Record 226: WTO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "WTO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'WTO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "WTO";
+                        existingRecord.Description = "WTO World Trade Organization";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "RELATED_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "WTO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'WTO' - WTO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8613,15 +11778,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 228: UNIDIR
+                // Record 227: UNIDIR
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNIDIR");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNIDIR' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNIDIR";
+                        existingRecord.Description = "UNIDIR United Nations Institute for Disarmament Research";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "RESEARCH_TRAINING";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNIDIR";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNIDIR' - UNIDIR");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8651,15 +11830,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 229: UNITAR
+                // Record 228: UNITAR
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNITAR");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNITAR' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNITAR";
+                        existingRecord.Description = "UNITAR United Nations Institute for Training and Research";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "RESEARCH_TRAINING";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNITAR";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNITAR' - UNITAR");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8689,15 +11882,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 230: UNICRI
+                // Record 229: UNICRI
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNICRI");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNICRI' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNICRI";
+                        existingRecord.Description = "UNICRI United Nations Interregional Crime and Justice Research Institute";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "RESEARCH_TRAINING";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNICRI";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNICRI' - UNICRI");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8727,15 +11934,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 231: UNRISD
+                // Record 230: UNRISD
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNRISD");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNRISD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNRISD";
+                        existingRecord.Description = "UNRISD United Nations Research Institute for Social Development";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "RESEARCH_TRAINING";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNRISD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNRISD' - UNRISD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8765,15 +11986,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 232: UNOIP
+                // Record 231: UNOIP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNOIP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNOIP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNOIP";
+                        existingRecord.Description = "UNOIP United Nations Office of the Iraq Programme";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNOIP";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNOIP' - UNOIP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8803,15 +12038,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 233: UNROD
+                // Record 232: UNROD
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNROD");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNROD' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNROD";
+                        existingRecord.Description = "UNROD United Nations Register of Damage";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNROD";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNROD' - UNROD");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8841,15 +12090,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 234: UNMIS
+                // Record 233: UNMIS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNMIS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNMIS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNMIS";
+                        existingRecord.Description = "UNMIS United Nations Mission in Sudan";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNMIS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNMIS' - UNMIS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8879,15 +12142,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 235: IOM
+                // Record 234: IOM
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "IOM");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'IOM' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "IOM";
+                        existingRecord.Description = "IOM International Organization for Migration";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "RELATED_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "IOM";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'IOM' - IOM");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8917,15 +12194,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 236: UNMIK
+                // Record 235: UNMIK
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNMIK");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNMIK' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNMIK";
+                        existingRecord.Description = "UNMIK United Nations Interim Administration Mission in Kosovo";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNMIK";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNMIK' - UNMIK");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8955,15 +12246,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 237: UN_UNITED_NATIONS
+                // Record 236: UN_UNITED_NATIONS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_UNITED_NATIONS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_UNITED_NATIONS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "United Nations";
+                        existingRecord.Description = "UN United Nations";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_UNITED_NATIONS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_UNITED_NATIONS' - United Nations");
+                        updatedCount++;
                     }
                     else
                     {
@@ -8993,15 +12298,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 238: UNIFEM
+                // Record 237: UNIFEM
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNIFEM");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNIFEM' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNIFEM";
+                        existingRecord.Description = "UNIFEM United Nations Development Fund for Women";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "OTHER_ENTITIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNIFEM";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNIFEM' - UNIFEM");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9031,15 +12350,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 239: UNORCID
+                // Record 238: UNORCID
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNORCID");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNORCID' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNORCID";
+                        existingRecord.Description = "UNORCID United Nations Office for REDD+ Coordination in Indonesia";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNORCID";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNORCID' - UNORCID");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9069,15 +12402,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 240: UNOWA
+                // Record 239: UNOWA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNOWA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNOWA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNOWA";
+                        existingRecord.Description = "UNOWA United Nations Office for West Africa";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNOWA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNOWA' - UNOWA");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9107,15 +12454,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 241: UNSCEAR
+                // Record 240: UNSCEAR
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNSCEAR");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNSCEAR' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNSCEAR";
+                        existingRecord.Description = "UNSCEAR United Nations Scientific Committee on the Effects of Atomic Radiation";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNSCEAR";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNSCEAR' - UNSCEAR");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9145,15 +12506,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 242: UNSMIL
+                // Record 241: UNSMIL
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNSMIL");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNSMIL' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNSMIL";
+                        existingRecord.Description = "UNSMIL United Nations Support Mission in Libya";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNSMIL";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNSMIL' - UNSMIL");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9183,15 +12558,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 243: UNSOS
+                // Record 242: UNSOS
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNSOS");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNSOS' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNSOS";
+                        existingRecord.Description = "UNSOS United Nations Support Office in Somalia";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNSOS";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNSOS' - UNSOS");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9221,15 +12610,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 244: UNSOM
+                // Record 243: UNSOM
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNSOM");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNSOM' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNSOM";
+                        existingRecord.Description = "UNSOM United Nations Assistance Mission in Somalia";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNSOM";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNSOM' - UNSOM");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9259,15 +12662,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 245: UNTSO
+                // Record 244: UNTSO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNTSO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNTSO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNTSO";
+                        existingRecord.Description = "UNTSO United Nations Truce Supervision";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNTSO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNTSO' - UNTSO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9297,15 +12714,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 246: MINUJUSTH
+                // Record 245: MINUJUSTH
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "MINUJUSTH");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'MINUJUSTH' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "MINUJUSTH";
+                        existingRecord.Description = "MINUJUSTH United Nations Mission for Justice Support in Haiti";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "MINUJUSTH";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'MINUJUSTH' - MINUJUSTH");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9335,15 +12766,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 247: UN_DCO
+                // Record 246: UN_DCO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_DCO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_DCO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN DCO";
+                        existingRecord.Description = "UN DCO United Nations Development Coordination Office";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_DCO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_DCO' - UN DCO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9373,15 +12818,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 248: UNGM
+                // Record 247: UNGM
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNGM");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNGM' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNGM";
+                        existingRecord.Description = "UNGM United Nations Global Marketplace";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "OTHER_ENTITIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNGM";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNGM' - UNGM");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9411,15 +12870,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 249: UN_TBLDC
+                // Record 248: UN_TBLDC
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UN_TBLDC");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UN_TBLDC' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UN TBLDC";
+                        existingRecord.Description = "UN Technology Bank for LDC";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "FUND_PROGRAMME";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UN_TBLDC";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UN_TBLDC' - UN TBLDC");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9449,15 +12922,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 250: UNRCO_-_SRI_LANKA
+                // Record 249: UNRCO_-_SRI_LANKA
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNRCO_-_SRI_LANKA");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNRCO_-_SRI_LANKA' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNRCo - Sri Lanka";
+                        existingRecord.Description = "United Nations Resident Coordinator Office - Sri Lanka";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "UN_COORD";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNRCO_-_SRI_LANKA";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNRCO_-_SRI_LANKA' - UNRCo - Sri Lanka");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9487,15 +12974,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 251: UNOCT
+                // Record 250: UNOCT
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNOCT");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNOCT' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNOCT";
+                        existingRecord.Description = "UNOCT United Nations Office of Counter-Terrorism";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "SUBSIDIARY_ORG";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNOCT";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNOCT' - UNOCT");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9525,15 +13026,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 252: OSGEY
+                // Record 251: OSGEY
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "OSGEY");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'OSGEY' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "OSGEY";
+                        existingRecord.Description = "Office of the Secretary-General’s Envoy on Youth";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "OSGEY";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OSGEY' - OSGEY");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9563,15 +13078,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 253: UNIRMCT
+                // Record 252: UNIRMCT
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNIRMCT");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNIRMCT' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNIRMCT";
+                        existingRecord.Description = "UNIRMCT United Nations International Residual Mechanism for Criminal Tribunals";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "DEPARTMENT_OFFICE";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNIRMCT";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNIRMCT' - UNIRMCT");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9601,15 +13130,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 254: UNDP
+                // Record 253: UNDP
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNDP");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNDP' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNDP";
+                        existingRecord.Description = "UNDP United Nations Development Programme";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "FUND_PROGRAMME";
+                        existingRecord.PartnerCategoryCode = "UNDP";
+                        existingRecord.PartnerGroupCode = null;
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNDP' - UNDP");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9639,15 +13182,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 255: UNDP_MPTFO
+                // Record 254: UNDP_MPTFO
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "UNDP_MPTFO");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'UNDP_MPTFO' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "UNDP MPTFO";
+                        existingRecord.Description = "UNDP Multi-Partner Trust Fund Office";
+                        existingRecord.Type = "Level_5";
+                        existingRecord.Parent = "UNDP";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "UNDP_MPTFO";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'UNDP_MPTFO' - UNDP MPTFO");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9677,15 +13234,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 256: IPSAS_ACCOUNTING
+                // Record 255: IPSAS_ACCOUNTING
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "IPSAS_ACCOUNTING");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'IPSAS_ACCOUNTING' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "IPSAS Accounting";
+                        existingRecord.Description = "IPSAS Accounting";
+                        existingRecord.Type = "Level_4";
+                        existingRecord.Parent = "OTHER_ENTITIES";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "IPSAS_ACCOUNTING";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'IPSAS_ACCOUNTING' - IPSAS Accounting");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9715,15 +13286,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     }
                 }
                 
-                // Record 257: OTHER_PRIVATE_SECTOR
+                // Record 256: OTHER_PRIVATE_SECTOR
                 {
                     var existingRecord = await context.PartnerTrees
                         .FirstOrDefaultAsync(pt => pt.Code == "OTHER_PRIVATE_SECTOR");
                     
                     if (existingRecord != null)
                     {
-                        Console.WriteLine($"Skipped: PartnerTree with Code 'OTHER_PRIVATE_SECTOR' already exists.");
-                        skippedCount++;
+                        existingRecord.Name = "Other Private Sector";
+                        existingRecord.Description = "Other Private Sector";
+                        existingRecord.Type = "Level_2";
+                        existingRecord.Parent = "PRIVATE_SECTOR";
+                        existingRecord.PartnerCategoryCode = null;
+                        existingRecord.PartnerGroupCode = "OTHER_PRIVATE_SECTOR";
+                        existingRecord.Status = (EntityStatus)1;
+                        existingRecord.LastModifiedBy = -1;
+                        existingRecord.LastModifiedDate = DateTime.UtcNow;
+                        existingRecord.IsDeleted = false;
+                        
+                        context.PartnerTrees.Update(existingRecord);
+                        await context.SaveChangesAsync();
+                        updatedRecordIds.Add(existingRecord.Id);
+                        Console.WriteLine($"Updated: PartnerTree with Code 'OTHER_PRIVATE_SECTOR' - Other Private Sector");
+                        updatedCount++;
                     }
                     else
                     {
@@ -9757,16 +13342,17 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 await transaction.CommitAsync();
                 
                 Console.WriteLine($"\nPartnerTree seeding completed successfully.");
-                Console.WriteLine($"Total records processed: {skippedCount + createdCount}");
-                Console.WriteLine($"Records skipped (already exist): {skippedCount}");
+                Console.WriteLine($"Total records processed: {updatedCount + createdCount}");
+                Console.WriteLine($"Records updated: {updatedCount}");
                 Console.WriteLine($"Records created: {createdCount}");
                 
-                // Fix audit data for newly created records
+                // Fix audit data for updated and newly created records
                 // Note: SaveChangesAsync triggers audit interceptor which overwrites CreatedBy/LastModifiedBy
                 // We need to fix these values after the transaction commits
-                if (createdCount > 0)
+                var allRecordIds = createdRecordIds.Concat(updatedRecordIds).ToList();
+                if (allRecordIds.Count > 0)
                 {
-                    await FixAuditDataAsync(context, createdRecordIds);
+                    await FixAuditDataAsync(context, allRecordIds);
                 }
             }
             catch (Exception ex)
