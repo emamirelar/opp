@@ -1,4 +1,5 @@
 using UNOPS.PAO.Models.Documents;
+using UNOPS.PAO.Models.Partners;
 
 namespace UNOPS.PAO.Models;
 
@@ -47,5 +48,14 @@ public class OpportunityClientPartnerModel
     /// Computed: Whether DD expires before opportunity end
     /// </summary>
     public bool? DDExpiresBeforeOpportunityEnd { get; set; }
+    
+    /// <summary>
+    /// Selected Partner Agreement Number (AC9)
+    /// </summary>
+    public string? SelectedPartnerAgreementNumber { get; set; }
+    
+    /// <summary>
+    /// Available partner agreements for this partner (AC9)
+    /// </summary>
+    public List<PartnerAgreementInfo>? AvailableAgreements { get; set; }
 }
-

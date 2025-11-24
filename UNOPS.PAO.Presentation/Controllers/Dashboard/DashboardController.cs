@@ -121,6 +121,36 @@ public class DashboardController : BaseController
     }
 
     /// <summary>
+    /// Gets opportunities for the current user's dashboard (created by or modified by current user, excluding drafts)
+    /// </summary>
+    /// <param name="pageSize">Number of records to return (default: 1000)</param>
+    /// <returns>Opportunities related to the current user</returns>
+    [HttpGet(APIDictionary.DashboardMyOpportunities)]
+    public async Task<ActionResult> GetMyOpportunities([FromQuery] int pageSize = 1000)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _dashboardService.GetMyOpportunitiesAsync(User, pageSize);
+            return result;
+        });
+    }
+
+    /// <summary>
+    /// Gets draft opportunities for the current user's dashboard (created by or modified by current user, draft status only)
+    /// </summary>
+    /// <param name="pageSize">Number of records to return (default: 1000)</param>
+    /// <returns>Draft opportunities related to the current user</returns>
+    [HttpGet(APIDictionary.DashboardMyDraftOpportunities)]
+    public async Task<ActionResult> GetMyDraftOpportunities([FromQuery] int pageSize = 1000)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var result = await _dashboardService.GetMyDraftOpportunitiesAsync(User, pageSize);
+            return result;
+        });
+    }
+
+    /// <summary>
     /// Gets recent updates from all entity types in the org unit (Partners, Contacts, Interactions)
     /// </summary>
     /// <param name="pageSize">Number of records to return (default: 10)</param>

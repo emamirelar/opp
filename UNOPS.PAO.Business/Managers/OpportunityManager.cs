@@ -7,6 +7,7 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.Models.Search;
 
 namespace UNOPS.PAO.Business.Managers;
 
@@ -900,6 +901,11 @@ public class OpportunityManager : IOpportunityManager
     public Task<IEnumerable<OpportunityModel>> GetOpportunitiesByPartnerIdAsync(int partnerId)
     {
         throw new NotImplementedException("GetOpportunitiesByPartnerIdAsync is only implemented in UNOPSOpportunityManager");
+    }
+
+    public List<SearchFieldInfo> GetOpportunitySearchFields()
+    {
+        throw new NotImplementedException("GetOpportunitySearchFields is only implemented in UNOPSOpportunityManager");
     }
 }
 

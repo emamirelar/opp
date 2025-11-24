@@ -414,7 +414,7 @@ BEGIN
                 WHEN fields.field_value ILIKE word_pattern THEN 'Word Match'
                 ELSE 'Similarity Match'
             END::TEXT as match_criteria,
-            left(fields.field_value, snippet_length)::TEXT as snippet
+            left(fields.field_value, snippet_length)::TEXT as snippet   
         FROM public."Opportunities" o
         LEFT JOIN public."WorkflowStages" ws ON o."WorkflowStageId" = ws."Id"
         LEFT JOIN public."OrganizationHierarchies" org ON o."ResponsibleOrgUnitId" = org."Id"
