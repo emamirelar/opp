@@ -4137,16 +4137,17 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 // Record 80: JP_LAO_GOVERN/PUBLIC_ADM
                 {
                     var existingRecord = await context.PartnerTrees
-                        .FirstOrDefaultAsync(pt => pt.Code == "JP_LAO_GOVERN/PUBLIC_ADM");
+                        .FirstOrDefaultAsync(pt => pt.Code == "JP_LAO_GOVERN/PUBLIC_ADM" || pt.Code == "JP_LAO_GOVERN_PUBLIC_ADM");
                     
                     if (existingRecord != null)
                     {
+                        existingRecord.Code = "JP_LAO_GOVERN_PUBLIC_ADM";
                         existingRecord.Name = "JP Lao Govern/Public Admin.";
                         existingRecord.Description = "JP Lao Governance and Public Administration Reform";
                         existingRecord.Type = "Level_4";
                         existingRecord.Parent = "UN_INTER_POOLED_FUND";
                         existingRecord.PartnerCategoryCode = null;
-                        existingRecord.PartnerGroupCode = "JP_LAO_GOVERN/PUBLIC_ADM";
+                        existingRecord.PartnerGroupCode = "JP_LAO_GOVERN_PUBLIC_ADM";
                         existingRecord.Status = (EntityStatus)1;
                         existingRecord.LastModifiedBy = -1;
                         existingRecord.LastModifiedDate = DateTime.UtcNow;
@@ -4155,7 +4156,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                         context.PartnerTrees.Update(existingRecord);
                         await context.SaveChangesAsync();
                         updatedRecordIds.Add(existingRecord.Id);
-                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_LAO_GOVERN/PUBLIC_ADM' - JP Lao Govern/Public Admin.");
+                        Console.WriteLine($"Updated: PartnerTree with Code 'JP_LAO_GOVERN_PUBLIC_ADM' - JP Lao Govern/Public Admin.");
                         updatedCount++;
                     }
                     else
