@@ -143,6 +143,109 @@
       </div>
     </div>
 
+    <!-- AC2 (WHAT Section) - Partner Results Framework Status & Extraction -->
+    <div class="border-t border-gray-200 pt-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        {{ 'label.opportunity.productsServices' | translate }}
+      </h3>
+
+      <!-- Framework Status Warning (No frameworks tagged) -->
+      @if (showFrameworkWarning()) {
+        <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200 mb-4">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-exclamation-triangle text-yellow-600 text-lg mt-0.5"></i>
+            <div class="flex-1">
+              <h4 class="text-sm font-semibold text-gray-900 mb-1">
+                {{ 'label.partnerFrameworkNotDefined' | translate }}
+              </h4>
+              <p class="text-sm text-gray-700">
+                {{ 'message.tagFrameworkFirst' | translate }}
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Framework Status Info (Frameworks tagged) -->
+      @if (showFrameworkInfo()) {
+        <div class="bg-green-50 rounded-lg p-4 border border-green-200 mb-4">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-check-circle text-green-600 text-lg mt-0.5"></i>
+            <div class="flex-1">
+              <h4 class="text-sm font-semibold text-gray-900 mb-2">
+                {{ 'label.partnerFrameworkAvailable' | translate }}
+              </h4>
+              <p class="text-sm text-gray-700 mb-3">
+                {{ 'message.frameworkDocumentsIdentified' | translate: {count: frameworkStatus()?.taggedFrameworks?.length || 0} }}
+              </p>
+              
+              <!-- List of tagged framework documents -->
+              @if (frameworkStatus()?.taggedFrameworks && frameworkStatus()!.taggedFrameworks.length > 0) {
+                <div class="space-y-2 mt-2">
+                  @for (framework of frameworkStatus()!.taggedFrameworks; track framework.documentId) {
+                    <div class="bg-white rounded p-2 border border-green-100">
+                      <div class="flex items-center gap-2">
+                        <i class="pi pi-file-pdf text-red-500 text-sm"></i>
+                        <span class="text-xs font-medium text-gray-900">{{ framework.documentName }}</span>
+                        <p-chip 
+                          [label]="framework.partnerName" 
+                          styleClass="text-xs ml-auto"
+                          [style]="{ 'background-color': framework.partnerType === 'Funding' ? '#dbeafe' : '#fef3c7', 'color': framework.partnerType === 'Funding' ? '#1e40af' : '#92400e' }"
+                        />
+                        <span class="text-xs text-gray-500">({{ framework.partnerType }} Partner)</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Extract Button -->
+      <div class="flex justify-start mb-4">
+        <p-button
+          [label]="'button.extractProductsServices' | translate"
+          icon="pi pi-sparkles"
+          [loading]="isExtracting()"
+          [disabled]="isExtracting() || isCheckingFramework()"
+          (onClick)="extractProductsAndServices()"
+          styleClass="p-button-outlined"
+        />
+      </div>
+
+      <!-- Extracted Products/Services -->
+      @if (extractedDeliverables() && extractedDeliverables().length > 0) {
+        <div class="bg-blue-50 rounded-lg p-4 border border-blue-200 mb-4">
+          <h4 class="text-sm font-semibold text-gray-900 mb-3">
+            {{ 'message.extractionComplete' | translate }} ({{ extractedDeliverables().length }} items)
+          </h4>
+          <div class="space-y-2">
+            @for (item of extractedDeliverables(); track $index) {
+              <div class="bg-white rounded p-3 border border-blue-100">
+                <div class="flex items-start gap-2">
+                  @if (item.isPrioritySource) {
+                    <i class="pi pi-star-fill text-yellow-500 text-sm mt-0.5" pTooltip="{{ 'label.prioritySource' | translate }}"></i>
+                  } @else {
+                    <i class="pi pi-file text-gray-400 text-sm mt-0.5" pTooltip="{{ 'label.fallbackSource' | translate }}"></i>
+                  }
+                  <div class="flex-1">
+                    <p class="text-sm text-gray-900">{{ item.description }}</p>
+                    @if (item.sourceDocumentName) {
+                      <p class="text-xs text-gray-500 mt-1">
+                        Source: {{ item.sourceDocumentName }}
+                      </p>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
     <!-- Deliverables -->
     <div>
       <div class="flex items-center justify-between mb-4">

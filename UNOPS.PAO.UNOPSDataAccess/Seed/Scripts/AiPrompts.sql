@@ -2217,6 +2217,13 @@ Return ONLY a JSON array of exactly 5 risk objects with "title", "description", 
    - Note good partner diversity
    - Identify unique value propositions
 
+6. **Partner Results Framework & Products/Services (AC2)**:
+   - Check if Partner Results Framework has been defined in WHY section
+   - If no deliverables/products exist but framework is available, suggest using it as primary source for WHAT section
+   - If neither framework nor deliverables exist, recommend completing Partner Results Framework first
+   - If deliverables exist without framework, assess completeness and suggest enhancement
+   - Flag opportunities to leverage uploaded documents for extracting products and services
+
 **INSIGHT TYPES**:
 - **"success"**: Positive observations (strong alignment, complete data, good partnership mix)
 - **"warning"**: Issues requiring attention (missing data, timeline concerns, budget risks)
@@ -2281,6 +2288,18 @@ Return a JSON object with this exact structure (NO actionLabel field):
       "priority": "high"
     },
     {
+      "title": "Partner Results Framework Not Defined",
+      "description": "Partner Results Framework in WHY section is not defined. This is a key source for identifying products and services in WHAT section.",
+      "type": "warning",
+      "priority": "high"
+    },
+    {
+      "title": "Missing Deliverables - Define Products and Services",
+      "description": "No deliverables/products defined in WHAT section. Use Partner Results Framework or uploaded documents to extract and define products and services.",
+      "type": "warning",
+      "priority": "high"
+    },
+    {
       "title": "Budget-Timeline Alignment Concern",
       "description": "$65M budget with 4-year timeline may be ambitious given scope. Similar infrastructure projects typically allocate 18-24 months per $20M.",
       "type": "warning",
@@ -2301,29 +2320,39 @@ Return a JSON object with this exact structure (NO actionLabel field):
   ],
   "suggestions": [
     {
+      "title": "Complete Partner Results Framework in WHY Section",
+      "description": "Define Partner Results Framework as foundation for identifying products and services. This is the primary source for WHAT section content.",
+      "actionTarget": "WHY"
+    },
+    {
+      "title": "Extract Products from Partner Framework or Documents",
+      "description": "Use Partner Results Framework outputs description or AI-transcribe uploaded documents to identify and add products/services to WHAT section.",
+      "actionTarget": "WHAT"
+    },
+    {
       "title": "Add Target Signing Date to Enable Workflow Progression",
       "description": "Set target signing date in WHEN section. Based on current workflow stage, suggest Q4 2025 to allow time for approvals and partner coordination.",
-      "actionLabel": "Set Signing Date"
+      "actionTarget": "WHEN"
     },
     {
       "title": "Include SDG 13 (Climate Action) Based on Deliverables",
       "description": "Deliverables mention climate-resilient infrastructure. Adding SDG 13 would strengthen strategic alignment and improve funding opportunities.",
-      "actionLabel": "Add SDG 13"
+      "actionTarget": "WHY"
     },
     {
       "title": "Diversify Funding Partners for Risk Mitigation",
       "description": "Currently 4 funding partners. Consider adding 1-2 bilateral donors or private sector partners to reduce funding concentration risk and increase sustainability.",
-      "actionLabel": "Add Partners"
+      "actionTarget": "WHO"
     },
     {
       "title": "Extend Timeline by 6 Months for Realistic Delivery",
       "description": "Based on budget and complexity, consider extending delivery date to Q2 2030 to accommodate procurement delays, monsoon season constraints, and training programs.",
-      "actionLabel": "Update Timeline"
+      "actionTarget": "WHEN"
     },
     {
       "title": "Complete WHO Section with Stakeholder Details",
       "description": "Add contact details and roles for the 3 stakeholders listed. This will facilitate coordination and demonstrate strong local engagement.",
-      "actionLabel": "Update WHO Section"
+      "actionTarget": "WHO"
     }
   ],
   "analysisConfidence": 0.92,
@@ -2368,6 +2397,11 @@ Return a JSON object with this exact structure (NO actionLabel field):
 - Intended Impact & Outcomes: {intendedImpactOutcomes}
 - Expected Beneficiaries: {expectedBeneficiaries}
 
+**Partner Results Framework (WHY Section):**
+- Framework Availability: {partnerFrameworkAvailability}
+- Framework Description: {partnerFrameworkDescription}
+- Outputs Description: {partnerFrameworkOutputs}
+
 **Partners & Stakeholders:**
 - Funding Partners: {fundingPartners}
 - Client Partners: {clientPartners}
@@ -2400,10 +2434,12 @@ Return a JSON object with this exact structure (NO actionLabel field):
 
 **INSTRUCTIONS**: 
 1. Analyze the opportunity data for completeness, quality, strategic alignment, and potential issues
-2. Generate 3-5 insights covering strengths, concerns, and observations
-3. Generate 3-5 actionable suggestions with specific recommendations
-4. Reference actual data values in your analysis
-5. Return ONLY valid JSON with the specified structure',
+2. **CHECK PARTNER RESULTS FRAMEWORK STATUS (AC2)**: If Partner Results Framework is not defined or incomplete AND deliverables are missing, generate HIGH PRIORITY warning and suggestion to complete framework first
+3. **CHECK DELIVERABLES STATUS (AC2)**: If deliverables are missing but Partner Results Framework exists, suggest extracting products from framework. If both are missing, prioritize framework completion
+4. Generate 3-5 insights covering strengths, concerns, and observations
+5. Generate 3-5 actionable suggestions with specific recommendations
+6. Reference actual data values in your analysis
+7. Return ONLY valid JSON with the specified structure',
         NOW(),
         'Opportunity',
         1,
@@ -3209,5 +3245,148 @@ For each person, add a "relevanceExplanation" field with a one-line explanation 
         1440
     );
 
-    RAISE NOTICE 'AI prompts inserted successfully: 28 records';
+    -- Insert opportunity_extract_products_from_framework prompt (AC2)
+    INSERT INTO public."AiPrompt" (
+        "Type", "SystemInstructions", "UserPrompt", "CreatedAt", "Name", "Status", "ContentConfig", 
+        "GenerationConfig", "Location", "Model", "Project", "SafetySettings", 
+        "ToolsConfig", "DataRetrievalMethod", "Description", "AdminCanChange", 
+        "Feature", "UseCache", "CacheInvalidationMinutes"
+    ) VALUES (
+        'opportunity_extract_products_from_framework',
+        'You are an AI assistant specialized in analyzing Partner Results Framework documents and project documents to extract products and services that partners are requesting from UNOPS.
+
+**YOUR TASK**: Analyze ALL provided documents and extract mentions of products, services, deliverables, or outputs that the partner is requesting or expecting UNOPS to deliver.
+
+**CRITICAL INSTRUCTIONS**:
+1. **PRESERVE EXACT PARTNER LANGUAGE**: Use the EXACT wording from the documents - do not paraphrase or translate to UNOPS terminology yet
+2. **PROVIDE CONTEXT**: For each extracted item, note WHERE in the document it was found (section, page, output number, etc.)
+3. **EXTRACT FROM ALL SOURCES**: Analyze all documents provided (both priority and fallback sources)
+4. **FOCUS ON DELIVERABLES**: Look for concrete products, services, outputs, or deliverables that UNOPS is expected to provide
+5. **INCLUDE CONFIDENCE SCORES**: Rate your confidence (0.0-1.0) based on how explicitly the item is mentioned
+
+**WHAT TO EXTRACT**:
+- Products or services explicitly requested (e.g., "construction of water treatment plant", "technical advisory services")
+- Outputs mentioned in results frameworks (e.g., "Output 2.1: Enhanced national digital service delivery systems")
+- Deliverables listed in project documents (e.g., "feasibility study", "training program", "infrastructure design")
+- Technical assistance areas (e.g., "capacity building for procurement", "policy advisory support")
+- Implementation support mentioned (e.g., "project management services", "monitoring and evaluation")
+
+**WHAT NOT TO EXTRACT**:
+- Generic goals or outcomes without specific deliverables (e.g., "improved health outcomes" → too vague)
+- Partner''s own responsibilities (focus on what UNOPS is expected to deliver)
+- Background information or context without clear deliverables
+
+**CONTEXT CLUES TO LOOK FOR**:
+- Sections titled: "Outputs", "Deliverables", "Expected Results", "Scope of Work", "Terms of Reference"
+- Phrases like: "UNOPS will...", "UNOPS is expected to...", "Deliverables include...", "Services required..."
+- Numbered outputs or deliverables in results frameworks
+- Tables or lists of project components
+
+**JSON OUTPUT FORMAT**:
+Return a JSON array with this exact structure:
+
+```json
+[
+  {
+    "partnerLanguage": "Enhanced national digital service delivery systems",
+    "context": "Output 2.3 in Partner Results Framework, page 12",
+    "sourceDocumentName": "UNDP Results Framework 2025-2027.pdf",
+    "sourceDocumentId": 123,
+    "isPrioritySource": true,
+    "confidence": 0.95,
+    "reasoning": "Explicitly listed as Output 2.3 in the results framework"
+  },
+  {
+    "partnerLanguage": "Capacity building for national procurement systems",
+    "context": "Section 4.2 - Technical Assistance, mentioned on page 8",
+    "sourceDocumentName": "Project Concept Note.pdf",
+    "sourceDocumentId": 124,
+    "isPrioritySource": false,
+    "confidence": 0.85,
+    "reasoning": "Clearly stated as a technical assistance requirement"
+  }
+]
+```
+
+**FIELD DEFINITIONS**:
+- **partnerLanguage** (required): EXACT wording from document - preserve partner''s terminology
+- **context** (required): WHERE in document this was found (section, page, output number)
+- **sourceDocumentName** (required): Name of the document this came from
+- **sourceDocumentId** (required): Document ID from the provided context
+- **isPrioritySource** (required): true if from tagged Partner Results Framework, false otherwise
+- **confidence** (required): 0.0-1.0 score based on how explicit the mention is
+- **reasoning** (required): Brief explanation of why you extracted this item
+
+**CONFIDENCE SCORING GUIDE**:
+- **0.9-1.0**: Explicitly listed as a deliverable/output with clear UNOPS responsibility
+- **0.7-0.89**: Strongly implied but not explicitly stated as UNOPS deliverable
+- **0.5-0.69**: Mentioned as part of project but UNOPS role not entirely clear
+- **Below 0.5**: Do not extract (too vague or unclear)
+
+**EXAMPLE EXTRACTIONS**:
+
+**High Confidence (0.9+)**:
+- "Output 2.1: Construction of 3 water treatment plants" → Clear deliverable with quantity
+- "UNOPS will provide project management services for the entire program" → Explicit UNOPS service
+
+**Medium Confidence (0.7-0.89)**:
+- "Technical support for infrastructure development" → Service implied but not fully detailed
+- "Capacity building programs for local staff" → Clear intent but specifics missing
+
+**CRITICAL RULES**:
+1. **Minimum 3 extractions** if ANY relevant content is found
+2. **Return empty array []** if NO products/services can be identified
+3. **ALWAYS preserve exact partner wording** - do not translate to UNOPS terminology
+4. **ALWAYS include context** - WHERE in document this was found
+5. **Order by confidence** - highest confidence items first
+6. Return ONLY valid JSON, no additional text or explanation',
+        'Analyze the following documents to extract products and services that the partner is requesting from UNOPS.
+
+**Opportunity Context:**
+- Opportunity ID: {opportunityId}
+- Opportunity Name: {opportunityName}
+- Opportunity Description: {opportunityDescription}
+
+**Document Analysis Priority:**
+The documents are provided in priority order:
+1. **PRIORITY SOURCES** (analyze first): Partner Results Framework documents tagged to funding/client partners
+2. **FALLBACK SOURCES** (analyze if needed): All other uploaded documents
+
+**Documents to Analyze:**
+
+**Priority Sources (Tagged Partner Results Framework):**
+{priorityDocuments}
+
+**Fallback Sources (Other Uploaded Documents):**
+{fallbackDocuments}
+
+**INSTRUCTIONS**:
+1. Analyze ALL provided documents (both priority and fallback sources)
+2. Extract products, services, deliverables, or outputs mentioned
+3. Preserve EXACT partner language/wording
+4. Provide context (section, page, output number)
+5. Assign confidence scores (0.0-1.0)
+6. Mark isPrioritySource = true for framework docs, false for others
+7. Return structured JSON array
+
+Focus on concrete deliverables that UNOPS is expected to provide, not vague goals or partner responsibilities.',
+        NOW(),
+        'Opportunity',
+        1,
+        '{"role":"user","parts":[{"text":"{promptData}"}]}',
+        '{"temperature":0.2,"top_p":0.3,"max_output_tokens":65535,"responseMimeType":"application/json"}',
+        'europe-west4',
+        'gemini-2.5-flash-lite',
+        '{{PROJECT_ID}}',
+        NULL,
+        '[]',
+        'GetOpportunityDocumentsForExtractionAsync',
+        'Extracts products and services from Partner Results Framework and project documents, preserving exact partner language for later matching to UNOPS taxonomy.',
+        true,
+        'Opportunity',
+        false,
+        60
+    );
+
+    RAISE NOTICE 'AI prompts inserted successfully: 29 records';
 END $$;

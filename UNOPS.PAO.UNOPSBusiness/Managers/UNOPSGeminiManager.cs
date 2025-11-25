@@ -52,6 +52,8 @@ using UNOPS.PAO.Models.Interactions;
 using UNOPS.PAO.Models.Partners;
 using UNOPS.PAO.Models.AI;
 using UNOPS.PAO.Models.Shared;
+using UNOPS.PAO.Models.Opportunities;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -4151,6 +4153,272 @@ public class UNOPSGeminiManager : IGeminiManager
                 _logger.LogWarning(ex, $"⚠️ Failed to extract JSON from Gemini response: {ex.Message}");
                 return geminiResponse; // Return original if extraction fails
             }
+        }
+
+        #region AC2: Partner Results Framework & Products/Services Extraction
+
+        /// <summary>
+        /// AC2: Extracts products and services from Partner Results Framework documents and other sources.
+        /// Priority: Tagged framework docs first, then fallback to all other documents if needed.
+        /// Returns temporary extraction data for user verification (not saved to database).
+        /// </summary>
+        /// <param name="opportunityId">Opportunity ID</param>
+        /// <returns>List of extracted deliverables with partner language, source, and confidence scores</returns>
+        public async Task<List<ExtractedDeliverableInfo>> ExtractDeliverablesWithFrameworkPriorityAsync(int opportunityId)
+        {
+            _logger.LogInformation($"🔍 AC2: Starting deliverable extraction for opportunity {opportunityId}");
+
+            // Step 1: Get opportunity with documents and partner relationships
+            var opportunity = await _context.Opportunities
+                .Include(o => o.FundingPartners)
+                .Include(o => o.ClientPartners)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(o => o.Id == opportunityId);
+
+            if (opportunity == null)
+            {
+                throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+            }
+
+            // Step 2: Get tagged Partner Results Framework documents (PRIORITY SOURCES)
+            var taggedFrameworkDocs = await GetTaggedFrameworkDocumentsAsync(opportunityId);
+            
+            // Step 3: Get all other documents (FALLBACK SOURCES)
+            var allDocuments = await _context.DocumentRelationships
+                .Where(dr => dr.EntityType == "Opportunity" && dr.EntityId == opportunityId && dr.Document != null && !dr.Document.IsDeleted)
+                .Include(dr => dr.Document)
+                .Select(dr => new 
+                {
+                    Id = dr.Document!.Id,
+                    Name = dr.Document.Name,
+                    StoragePath = dr.Document.StoragePath
+                })
+                .ToListAsync();
+
+            var untaggedDocs = allDocuments
+                .Where(d => !taggedFrameworkDocs.Any(tf => tf.DocumentId == d.Id))
+                .ToList();
+
+            _logger.LogInformation($"📊 Found {taggedFrameworkDocs.Count} tagged framework docs, {untaggedDocs.Count} untagged docs");
+
+            if (taggedFrameworkDocs.Count == 0 && untaggedDocs.Count == 0)
+            {
+                _logger.LogWarning($"⚠️ No documents found for opportunity {opportunityId}");
+                return new List<ExtractedDeliverableInfo>();
+            }
+
+            // Step 4: Get AI prompt for extraction
+            var prompts = await GetPromptData("opportunity_extract_products_services");
+            var prompt = prompts.FirstOrDefault();
+
+            if (prompt == null)
+            {
+                throw new BusinessException("AI prompt 'opportunity_extract_products_services' not found.");
+            }
+
+            // Step 5: Build context data for AI
+            var contextData = new
+            {
+                opportunityId = opportunity.Id,
+                opportunityName = opportunity.Name,
+                opportunityDescription = opportunity.Description,
+                priorityDocuments = taggedFrameworkDocs.Select(tf => new
+                {
+                    documentId = tf.DocumentId,
+                    documentName = tf.DocumentName,
+                    storagePath = tf.DocumentStoragePath,
+                    partnerName = tf.PartnerName
+                }).ToList(),
+                fallbackDocuments = untaggedDocs.Select(d => new
+                {
+                    documentId = d.Id,
+                    documentName = d.Name,
+                    storagePath = d.StoragePath
+                }).ToList()
+            };
+
+            var contextJson = System.Text.Json.JsonSerializer.Serialize(contextData);
+
+            // Step 6: Call AI with all documents
+            // Note: We're using the first document's storage path for the AI call
+            // The AI will analyze all documents listed in the context
+            var primaryDoc = taggedFrameworkDocs.FirstOrDefault()?.DocumentStoragePath 
+                            ?? untaggedDocs.FirstOrDefault()?.StoragePath;
+
+            if (string.IsNullOrEmpty(primaryDoc))
+            {
+                _logger.LogWarning($"⚠️ No valid document storage paths found");
+                return new List<ExtractedDeliverableInfo>();
+            }
+
+            var primaryMimeType = taggedFrameworkDocs.FirstOrDefault()?.DocumentStoragePath != null
+                ? "application/pdf" // Framework docs are typically PDFs
+                : "application/pdf"; // Default to PDF
+
+            _logger.LogInformation($"📝 Calling AI for extraction with primary doc: {primaryDoc}");
+
+            string aiResponse;
+            try
+            {
+                // Use FetchResultFromGeminiWithDocument to pass document URIs to AI
+                aiResponse = await _aiService.FetchResultFromGeminiWithDocument(
+                    prompt,
+                    contextJson,
+                    primaryDoc,
+                    primaryMimeType,
+                    opportunityId.ToString()
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ AI extraction failed for opportunity {opportunityId}");
+                throw new InvalidOperationException($"AI extraction failed: {ex.Message}", ex);
+            }
+
+            // Step 7: Parse AI response
+            var extracted = ParseExtractionResponse(aiResponse);
+
+            _logger.LogInformation($"✅ AC2: Extracted {extracted.Count} deliverables for opportunity {opportunityId}");
+
+            return extracted;
+        }
+
+        /// <summary>
+        /// Gets tagged Partner Results Framework documents from funding/client partners.
+        /// </summary>
+        private async Task<List<TaggedFrameworkInfo>> GetTaggedFrameworkDocumentsAsync(int opportunityId)
+        {
+            var opportunity = await _context.Opportunities
+                .Include(o => o.FundingPartners)
+                .Include(o => o.ClientPartners)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(o => o.Id == opportunityId);
+
+            if (opportunity == null)
+                return new List<TaggedFrameworkInfo>();
+
+            var taggedFrameworks = new List<TaggedFrameworkInfo>();
+
+            // Get framework docs from funding partners
+            foreach (var fp in opportunity.FundingPartners.Where(fp => fp.PartnerResultsFrameworkDocumentId.HasValue))
+            {
+                var doc = await _context.Documents
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.Id == fp.PartnerResultsFrameworkDocumentId.Value);
+
+                if (doc != null)
+                {
+                    taggedFrameworks.Add(new TaggedFrameworkInfo
+                    {
+                        PartnerId = fp.PartnerId,
+                        PartnerName = fp.Partner?.Name ?? "Unknown Partner",
+                        DocumentId = doc.Id,
+                        DocumentName = doc.Name,
+                        DocumentStoragePath = doc.StoragePath,
+                        PartnerType = "Funding"
+                    });
+                }
+            }
+
+            // Get framework docs from client partners
+            foreach (var cp in opportunity.ClientPartners.Where(cp => cp.PartnerResultsFrameworkDocumentId.HasValue))
+            {
+                var doc = await _context.Documents
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.Id == cp.PartnerResultsFrameworkDocumentId.Value);
+
+                if (doc != null)
+                {
+                    taggedFrameworks.Add(new TaggedFrameworkInfo
+                    {
+                        PartnerId = cp.PartnerId,
+                        PartnerName = cp.Partner?.Name ?? "Unknown Partner",
+                        DocumentId = doc.Id,
+                        DocumentName = doc.Name,
+                        DocumentStoragePath = doc.StoragePath,
+                        PartnerType = "Client"
+                    });
+                }
+            }
+
+            return taggedFrameworks;
+        }
+
+        /// <summary>
+        /// Parses AI extraction response JSON into ExtractedDeliverableInfo list.
+        /// </summary>
+        private List<ExtractedDeliverableInfo> ParseExtractionResponse(string aiResponse)
+        {
+            try
+            {
+                // Extract JSON from Gemini response (handles markdown wrapping)
+                var jsonContent = ExtractJsonFromGeminiResponse(aiResponse);
+
+                if (string.IsNullOrEmpty(jsonContent))
+                {
+                    _logger.LogWarning("⚠️ Empty JSON content from AI response");
+                    return new List<ExtractedDeliverableInfo>();
+                }
+
+                // Parse JSON array
+                var extracted = System.Text.Json.JsonSerializer.Deserialize<List<ExtractedDeliverableInfo>>(
+                    jsonContent,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                );
+
+                return extracted ?? new List<ExtractedDeliverableInfo>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ Failed to parse AI extraction response: {ex.Message}");
+                return new List<ExtractedDeliverableInfo>();
+            }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Gets the status of Partner Results Framework documents for an opportunity (AC2 - WHAT section)
+        /// </summary>
+        public async Task<FrameworkStatusResponse> GetFrameworkStatusAsync(int opportunityId)
+        {
+            var response = new FrameworkStatusResponse();
+
+            // Get funding partner frameworks
+            var fundingPartnerFrameworks = await _context.OpportunityFundingPartners
+                .Where(fp => fp.OpportunityId == opportunityId && fp.PartnerResultsFrameworkDocumentId.HasValue)
+                .Include(fp => fp.Partner)
+                .Include(fp => fp.PartnerResultsFrameworkDocument)
+                .Select(fp => new TaggedFrameworkInfo
+                {
+                    PartnerId = fp.PartnerId,
+                    PartnerName = fp.Partner!.Name,
+                    DocumentId = fp.PartnerResultsFrameworkDocumentId!.Value,
+                    DocumentName = fp.PartnerResultsFrameworkDocument!.Name,
+                    DocumentStoragePath = fp.PartnerResultsFrameworkDocument!.StoragePath
+                })
+                .ToListAsync();
+
+            // Get client partner frameworks
+            var clientPartnerFrameworks = await _context.OpportunityClientPartners
+                .Where(cp => cp.OpportunityId == opportunityId && cp.PartnerResultsFrameworkDocumentId.HasValue)
+                .Include(cp => cp.Partner)
+                .Include(cp => cp.PartnerResultsFrameworkDocument)
+                .Select(cp => new TaggedFrameworkInfo
+                {
+                    PartnerId = cp.PartnerId,
+                    PartnerName = cp.Partner!.Name,
+                    DocumentId = cp.PartnerResultsFrameworkDocumentId!.Value,
+                    DocumentName = cp.PartnerResultsFrameworkDocument!.Name,
+                    DocumentStoragePath = cp.PartnerResultsFrameworkDocument!.StoragePath
+                })
+                .ToListAsync();
+
+            response.TaggedFrameworks.AddRange(fundingPartnerFrameworks);
+            response.TaggedFrameworks.AddRange(clientPartnerFrameworks);
+            response.HasTaggedFrameworks = response.TaggedFrameworks.Any();
+
+            return response;
         }
 
         #endregion

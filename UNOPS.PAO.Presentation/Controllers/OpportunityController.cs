@@ -1111,6 +1111,26 @@ public class OpportunityController : BaseController
                 request.NewDocumentStoragePaths?.Count ?? 0,
                 request.ExistingDocumentIds?.Count ?? 0);
 
+            // Log detailed document information
+            if (request.NewDocumentStoragePaths != null && request.NewDocumentStoragePaths.Any())
+            {
+                _logger.LogInformation("📄 [API] New document storage paths received:");
+                for (int i = 0; i < request.NewDocumentStoragePaths.Count; i++)
+                {
+                    var mimeType = request.NewDocumentMimeTypes != null && i < request.NewDocumentMimeTypes.Count 
+                        ? request.NewDocumentMimeTypes[i] 
+                        : "unknown";
+                    _logger.LogInformation("  [{Index}] Path: {Path}, MimeType: {MimeType}", 
+                        i + 1, 
+                        request.NewDocumentStoragePaths[i], 
+                        mimeType);
+                }
+            }
+            else
+            {
+                _logger.LogInformation("ℹ️ [API] No new document storage paths in request");
+            }
+
             // Validate request - at least one source is required
             if ((request.InteractionIds == null || !request.InteractionIds.Any()) &&
                 (request.NewDocumentStoragePaths == null || !request.NewDocumentStoragePaths.Any()) &&
@@ -1383,6 +1403,133 @@ public class OpportunityController : BaseController
         {
             _logger.LogError(ex, "Error creating opportunity from interactions");
             return StatusCode(500, new { error = "Internal server error while creating opportunity", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// AC2: Gets Partner Results Framework status for an opportunity
+    /// Returns tagged framework documents and total document count
+    /// </summary>
+    [HttpGet(APIDictionary.Opportunity + "/{id}/framework-status")]
+    [AccessControlled(EntityTypes.Opportunity, "read")]
+    public async Task<ActionResult> GetFrameworkStatus(int id)
+    {
+        try
+        {
+            _logger.LogInformation("🔍 AC2: Getting framework status for opportunity {OpportunityId}", id);
+
+            // Get opportunity with partners
+            var opportunity = await _context.Opportunities
+                .Include(o => o.FundingPartners).ThenInclude(fp => fp.Partner)
+                .Include(o => o.ClientPartners).ThenInclude(cp => cp.Partner)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (opportunity == null)
+            {
+                return NotFound(new { error = $"Opportunity with ID {id} not found" });
+            }
+
+            var taggedFrameworks = new List<TaggedFrameworkInfo>();
+
+            // Get framework docs from funding partners
+            foreach (var fp in opportunity.FundingPartners.Where(fp => fp.PartnerResultsFrameworkDocumentId.HasValue))
+            {
+                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == fp.PartnerResultsFrameworkDocumentId.Value);
+                if (doc != null)
+                {
+                    taggedFrameworks.Add(new TaggedFrameworkInfo
+                    {
+                        PartnerId = fp.PartnerId,
+                        PartnerName = fp.Partner?.Name ?? "Unknown Partner",
+                        DocumentId = doc.Id,
+                        DocumentName = doc.Name,
+                        DocumentStoragePath = doc.StoragePath,
+                        PartnerType = "Funding"
+                    });
+                }
+            }
+
+            // Get framework docs from client partners
+            foreach (var cp in opportunity.ClientPartners.Where(cp => cp.PartnerResultsFrameworkDocumentId.HasValue))
+            {
+                var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == cp.PartnerResultsFrameworkDocumentId.Value);
+                if (doc != null)
+                {
+                    taggedFrameworks.Add(new TaggedFrameworkInfo
+                    {
+                        PartnerId = cp.PartnerId,
+                        PartnerName = cp.Partner?.Name ?? "Unknown Partner",
+                        DocumentId = doc.Id,
+                        DocumentName = doc.Name,
+                        DocumentStoragePath = doc.StoragePath,
+                        PartnerType = "Client"
+                    });
+                }
+            }
+
+            // Get total document count
+            var totalDocs = await _context.DocumentRelationships
+                .CountAsync(dr => dr.EntityType == "Opportunity" && dr.EntityId == id && !dr.Document.IsDeleted);
+
+            var response = new FrameworkStatusResponse
+            {
+                HasTaggedFrameworks = taggedFrameworks.Any(),
+                TaggedFrameworks = taggedFrameworks,
+                AllDocumentsCount = totalDocs
+            };
+
+            _logger.LogInformation("✅ AC2: Framework status - {Count} tagged frameworks, {TotalDocs} total docs",
+                taggedFrameworks.Count, totalDocs);
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting framework status for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while getting framework status", details = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// AC2: Extracts products and services from Partner Results Framework and other documents using AI
+    /// Returns temporary extraction data for user verification (not saved to database)
+    /// </summary>
+    [HttpPost(APIDictionary.Opportunity + "/{id}/extract-deliverables")]
+    [AccessControlled(EntityTypes.Opportunity, "update")]
+    public async Task<ActionResult> ExtractDeliverablesFromSources(int id)
+    {
+        try
+        {
+            _logger.LogInformation("🤖 AC2: Starting AI extraction for opportunity {OpportunityId}", id);
+
+            // Verify opportunity exists
+            var opportunity = await _manager.GetOpportunityAsync(id);
+            if (opportunity == null)
+            {
+                return NotFound(new { error = $"Opportunity with ID {id} not found" });
+            }
+
+            // Call Gemini manager for extraction
+            var extracted = await _geminiManager.ExtractDeliverablesWithFrameworkPriorityAsync(id);
+
+            _logger.LogInformation("✅ AC2: Extracted {Count} deliverables for opportunity {OpportunityId}", 
+                extracted.Count, id);
+
+            return Ok(extracted);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(ex, "AI extraction error for opportunity {OpportunityId}", id);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error extracting deliverables for opportunity {OpportunityId}", id);
+            return StatusCode(500, new { error = "Internal server error while extracting deliverables", details = ex.Message });
         }
     }
 

@@ -18,7 +18,9 @@ import {
   DSTRecommendationsResponse,
   RiskCreateRequest,
   Risk,
-  OpportunityInsightsResponse
+  OpportunityInsightsResponse,
+  FrameworkStatusResponse,
+  ExtractedDeliverableInfo
 } from '@shared/models/opportunity.model';
 
 /**
@@ -307,6 +309,26 @@ export class OpportunityService {
    */
   updateDSTRisk(id: number, riskId: number, request: RiskCreateRequest): Observable<Risk> {
     return this.http.put<Risk>(`${this.apiUrl}/${id}/dst-risks/${riskId}`, request);
+  }
+
+  /**
+   * AC2 (WHAT Section) - Get Partner Results Framework status for an opportunity
+   * Checks if Partner Results Framework documents are tagged to funding/client partners
+   * @param id - Opportunity ID
+   * @returns Observable with framework status information
+   */
+  getFrameworkStatus(id: number): Observable<FrameworkStatusResponse> {
+    return this.http.get<FrameworkStatusResponse>(`${this.apiUrl}/${id}/what/framework-status`);
+  }
+
+  /**
+   * AC2 (WHAT Section) - Trigger AI extraction of products and services from documents
+   * Extracts deliverables from documents, prioritizing tagged Partner Results Framework documents
+   * @param id - Opportunity ID
+   * @returns Observable with array of extracted deliverable information
+   */
+  extractProductsAndServices(id: number): Observable<ExtractedDeliverableInfo[]> {
+    return this.http.post<ExtractedDeliverableInfo[]>(`${this.apiUrl}/${id}/what/extract-products-services`, {});
   }
 }
 

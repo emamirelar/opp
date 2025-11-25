@@ -2613,5 +2613,18 @@
 	"label.geography": "Geography",
 	"label.selectAgreement": "Select applicable agreement",
 	"message.info.multipleAgreementsAvailable": "{{count}} agreements available - please select which applies",
-	"message.info.noAgreementFound": "No MoU or Partnership Agreement found. Please upload to partner record if one exists."
+	"message.info.noAgreementFound": "No MoU or Partnership Agreement found. Please upload to partner record if one exists.",
+	"label.partnerFrameworkNotDefined": "Partner Results Framework Not Defined",
+	"label.partnerFrameworkAvailable": "Partner Results Framework Available",
+	"message.tagFrameworkFirst": "No Partner Results Framework document is tagged in the WHO section. Please tag a framework document first for best results, or continue with all uploaded documents.",
+	"message.frameworkDocumentsIdentified": "{{count}} Partner Results Framework document(s) identified and will be prioritized for extraction.",
+	"label.prioritySource": "Priority Source (Framework)",
+	"label.fallbackSource": "Other Documents",
+	"button.extractProductsServices": "Extract Products & Services",
+	"button.continueAnyway": "Continue Anyway",
+	"message.extracting": "Extracting products and services from documents...",
+	"message.extractionComplete": "Extraction complete. Review the suggested products and services below.",
+	"message.noProductsExtracted": "No products or services could be extracted from the documents.",
+	"message.error.extractionFailed": "Failed to extract products and services. Please try again.",
+	"label.opportunity.productsServices": "Products & Services"
 }

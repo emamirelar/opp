@@ -642,3 +642,36 @@ export interface DSTRecommendationsResponse {
   executionTimeMs: number;
 }
 
+/**
+ * AC2 (WHAT Section) - Framework Status Models
+ * Response from framework status check endpoint
+ */
+export interface FrameworkStatusResponse {
+  hasTaggedFrameworks: boolean;
+  taggedFrameworks: TaggedFrameworkInfo[];
+  allDocumentsCount: number;
+}
+
+/**
+ * Information about a tagged Partner Results Framework document
+ */
+export interface TaggedFrameworkInfo {
+  partnerId: number;
+  partnerName: string;
+  documentId: number;
+  documentName: string;
+  documentStoragePath: string;
+  partnerType: 'Funding' | 'Client';
+}
+
+/**
+ * AC2 (WHAT Section) - Extracted Deliverable Models
+ * Temporary model for AI-extracted products/services (not yet saved to database)
+ */
+export interface ExtractedDeliverableInfo {
+  description: string;
+  isPrioritySource: boolean; // True if extracted from tagged Partner Results Framework
+  sourceDocumentId: number | null;
+  sourceDocumentName: string | null;
+}
+

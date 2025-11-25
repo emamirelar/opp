@@ -47,6 +47,18 @@ public interface IGeminiManager
     /// Generates AI-powered opportunity proposal from multiple sources (interactions, documents, etc.)
     /// </summary>
     Task<OpportunityProposalResponse> GenerateOpportunityProposalAsync(OpportunityProposalRequest request, ClaimsPrincipal user = null);
+    
+    /// <summary>
+    /// AC2 (WHAT section): Extracts products and services from Partner Results Framework documents and other sources.
+    /// Priority: Tagged framework docs first, then fallback to all other documents if needed.
+    /// Returns temporary extraction data for user verification (not saved to database).
+    /// </summary>
+    Task<List<ExtractedDeliverableInfo>> ExtractDeliverablesWithFrameworkPriorityAsync(int opportunityId);
+    
+    /// <summary>
+    /// AC2 (WHAT section): Gets the status of Partner Results Framework documents for an opportunity.
+    /// </summary>
+    Task<FrameworkStatusResponse> GetFrameworkStatusAsync(int opportunityId);
 }
 
 /// <summary>

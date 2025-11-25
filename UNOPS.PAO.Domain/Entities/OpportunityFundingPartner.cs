@@ -84,4 +84,10 @@ public class OpportunityFundingPartner
     /// </summary>
     [MaxLength(50)]
     public string? SelectedPartnerAgreementNumber { get; set; }
+    
+    /// <summary>
+    /// Link to Partner Results Framework document (AC2 - WHAT section)
+    /// </summary>
+    public int? PartnerResultsFrameworkDocumentId { get; set; }
+    public virtual Document? PartnerResultsFrameworkDocument { get; set; }
 }

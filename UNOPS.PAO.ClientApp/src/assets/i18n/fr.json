@@ -2517,5 +2517,18 @@
 	"label.geography": "Géographie",
 	"label.selectAgreement": "Sélectionner l'accord applicable",
 	"message.info.multipleAgreementsAvailable": "{{count}} accords disponibles - veuillez sélectionner celui qui s'applique",
-	"message.info.noAgreementFound": "Aucun protocole d'accord ou accord de partenariat trouvé. Veuillez télécharger sur le dossier du partenaire s'il en existe un."
+	"message.info.noAgreementFound": "Aucun protocole d'accord ou accord de partenariat trouvé. Veuillez télécharger sur le dossier du partenaire s'il en existe un.",
+	"label.partnerFrameworkNotDefined": "Cadre de Résultats du Partenaire Non Défini",
+	"label.partnerFrameworkAvailable": "Cadre de Résultats du Partenaire Disponible",
+	"message.tagFrameworkFirst": "Aucun document de Cadre de Résultats du Partenaire n'est étiqueté dans la section QUI. Veuillez d'abord étiqueter un document-cadre pour de meilleurs résultats, ou continuer avec tous les documents téléchargés.",
+	"message.frameworkDocumentsIdentified": "{{count}} document(s) de Cadre de Résultats du Partenaire identifié(s) et sera priorisé pour l'extraction.",
+	"label.prioritySource": "Source Prioritaire (Cadre)",
+	"label.fallbackSource": "Autres Documents",
+	"button.extractProductsServices": "Extraire Produits et Services",
+	"button.continueAnyway": "Continuer Quand Même",
+	"message.extracting": "Extraction des produits et services des documents...",
+	"message.extractionComplete": "Extraction terminée. Examinez les produits et services suggérés ci-dessous.",
+	"message.noProductsExtracted": "Aucun produit ou service n'a pu être extrait des documents.",
+	"message.error.extractionFailed": "Échec de l'extraction des produits et services. Veuillez réessayer.",
+	"label.opportunity.productsServices": "Produits et Services"
 }

@@ -2510,5 +2510,18 @@
 	"label.geography": "Geografía",
 	"label.selectAgreement": "Seleccionar acuerdo aplicable",
 	"message.info.multipleAgreementsAvailable": "{{count}} acuerdos disponibles - por favor seleccione cuál aplica",
-	"message.info.noAgreementFound": "No se encontró ningún Memorando de Entendimiento o Acuerdo de Asociación. Por favor cargue en el registro del socio si existe uno."
+	"message.info.noAgreementFound": "No se encontró ningún Memorando de Entendimiento o Acuerdo de Asociación. Por favor cargue en el registro del socio si existe uno.",
+	"label.partnerFrameworkNotDefined": "Marco de Resultados del Socio No Definido",
+	"label.partnerFrameworkAvailable": "Marco de Resultados del Socio Disponible",
+	"message.tagFrameworkFirst": "No hay ningún documento de Marco de Resultados del Socio etiquetado en la sección QUIÉN. Por favor, etiquete primero un documento de marco para obtener mejores resultados, o continúe con todos los documentos cargados.",
+	"message.frameworkDocumentsIdentified": "Se identificaron {{count}} documento(s) de Marco de Resultados del Socio y se priorizarán para la extracción.",
+	"label.prioritySource": "Fuente Prioritaria (Marco)",
+	"label.fallbackSource": "Otros Documentos",
+	"button.extractProductsServices": "Extraer Productos y Servicios",
+	"button.continueAnyway": "Continuar de Todos Modos",
+	"message.extracting": "Extrayendo productos y servicios de los documentos...",
+	"message.extractionComplete": "Extracción completada. Revise los productos y servicios sugeridos a continuación.",
+	"message.noProductsExtracted": "No se pudieron extraer productos o servicios de los documentos.",
+	"message.error.extractionFailed": "Error al extraer productos y servicios. Por favor, inténtelo de nuevo.",
+	"label.opportunity.productsServices": "Productos y Servicios"
 }

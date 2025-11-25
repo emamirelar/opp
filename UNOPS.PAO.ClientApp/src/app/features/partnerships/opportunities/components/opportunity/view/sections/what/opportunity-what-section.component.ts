@@ -22,7 +22,7 @@ import { DialogModule } from 'primeng/dialog';
 // Services and Models
 import { ValuesService, SimpleValue, OrganizationUnit, Output } from '@shared/services/api/values.service';
 import { OpportunityService } from '../../../../../services/opportunity.service';
-import { Opportunity, OpportunityDeliverable } from '@shared/models/opportunity.model';
+import { Opportunity, OpportunityDeliverable, FrameworkStatusResponse, ExtractedDeliverableInfo } from '@shared/models/opportunity.model';
 import { FeedbackDialogService } from '@shared/services/ui';
 
 /**
@@ -108,6 +108,20 @@ export class OpportunityWhatSectionComponent implements OnInit {
   initiativeTypes = signal<SimpleValue[]>([]);
   outputs = signal<Output[]>([]);
 
+  // AC2 (WHAT Section) - Framework status and extraction
+  frameworkStatus = signal<FrameworkStatusResponse | null>(null);
+  isCheckingFramework = signal<boolean>(false);
+  isExtracting = signal<boolean>(false);
+  extractedDeliverables = signal<ExtractedDeliverableInfo[]>([]);
+  showFrameworkWarning = computed(() => {
+    const status = this.frameworkStatus();
+    return status && !status.hasTaggedFrameworks;
+  });
+  showFrameworkInfo = computed(() => {
+    const status = this.frameworkStatus();
+    return status && status.hasTaggedFrameworks;
+  });
+
   // Deliverables dialog
   showDeliverablesDialog = signal<boolean>(false);
   selectedOutput = signal<Output | null>(null);
@@ -177,6 +191,9 @@ export class OpportunityWhatSectionComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+
+    // AC2: Check framework status on load
+    this.checkFrameworkStatus();
   }
 
   /**
@@ -300,6 +317,80 @@ export class OpportunityWhatSectionComponent implements OnInit {
     
     // Force change detection to update the template
     this.cdr.detectChanges();
+  }
+
+  /**
+   * AC2 (WHAT Section) - Check if Partner Results Framework documents are tagged
+   * @description Checks the status of Partner Results Framework documents for this opportunity
+   */
+  checkFrameworkStatus(): void {
+    const opp = this.opportunity();
+    if (!opp || !opp.id) return;
+
+    this.isCheckingFramework.set(true);
+    this.opportunityService.getFrameworkStatus(opp.id).subscribe({
+      next: (status) => {
+        this.frameworkStatus.set(status);
+        this.isCheckingFramework.set(false);
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error checking framework status:', error);
+        this.isCheckingFramework.set(false);
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * AC2 (WHAT Section) - Extract products and services from documents
+   * @description Triggers AI extraction of deliverables from documents, prioritizing tagged frameworks
+   */
+  extractProductsAndServices(): void {
+    const opp = this.opportunity();
+    if (!opp || !opp.id) return;
+
+    this.isExtracting.set(true);
+    this.feedbackService.showInfoToast({
+      summary: this.translateService.instant('message.extracting'),
+      detail: this.translateService.instant('message.extracting'),
+      life: 3000
+    });
+
+    this.opportunityService.extractProductsAndServices(opp.id).subscribe({
+      next: (extracted) => {
+        this.extractedDeliverables.set(extracted);
+        this.isExtracting.set(false);
+        
+        if (extracted && extracted.length > 0) {
+          this.feedbackService.showSuccessToast({
+            summary: this.translateService.instant('message.extractionComplete'),
+            detail: this.translateService.instant('message.extractionComplete'),
+            life: 5000
+          });
+        } else {
+          this.feedbackService.showWarningToast({
+            summary: this.translateService.instant('message.noProductsExtracted'),
+            detail: this.translateService.instant('message.noProductsExtracted'),
+            life: 5000
+          });
+        }
+        
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error extracting products and services:', error);
+        this.isExtracting.set(false);
+        
+        this.feedbackService.showErrorToast({
+          summary: this.translateService.instant('message.error.extractionFailed'),
+          detail: error?.error?.detail || error?.message || this.translateService.instant('message.error.extractionFailed'),
+          life: 5000
+        });
+        
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   /**

@@ -1157,24 +1157,42 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
     try {
       // Step 1: Upload files to GCS if any selected (local or Google Drive)
       let uploadedDocs: {gcsPath: string, mimeType: string, name: string, documentTypeId: number | null}[] = [];
-      if (this.selectedFiles().length > 0 || this.selectedGoogleDriveFiles().length > 0) {
+      const localFilesCount = this.selectedFiles().length;
+      const driveFilesCount = this.selectedGoogleDriveFiles().length;
+      
+      console.log('📝 [GenerateProposal] Document state before upload:', {
+        localFiles: localFilesCount,
+        driveFiles: driveFilesCount,
+        existingDocumentIds: this.selectedExistingDocumentIds().length
+      });
+      
+      if (localFilesCount > 0 || driveFilesCount > 0) {
+        console.log('📤 [GenerateProposal] Starting document upload to GCS...');
         try {
           uploadedDocs = await this.uploadFilesToGCS();
-        } catch (uploadError) {
-          console.error('Error uploading files:', uploadError);
+          console.log('✅ [GenerateProposal] Upload complete:', {
+            uploadedCount: uploadedDocs.length,
+            documents: uploadedDocs.map(d => ({ name: d.name, gcsPath: d.gcsPath, documentTypeId: d.documentTypeId }))
+          });
+        } catch (uploadError: any) {
+          console.error('❌ [GenerateProposal] Error uploading files:', uploadError);
           this.feedbackDialogService.showErrorToast({
             summary: this.translateService.instant('common.error.title'),
-            detail: this.translateService.instant('message.error.uploadingDocuments')
+            detail: uploadError?.message || this.translateService.instant('message.error.uploadingDocuments')
           });
           this.generating.set(false);
           return;
         }
+      } else {
+        console.log('ℹ️ [GenerateProposal] No local or Drive files to upload');
       }
       
       // Step 2: Get selected interaction IDs
       const interactionIds = this.selectedInteractions()
         .filter(i => i.selected !== false)
         .map(i => i.id);
+      
+      console.log('📋 [GenerateProposal] Selected interactions:', interactionIds);
       
       // Step 3: Prepare request with all sources
       const request: ProposeOpportunityRequest = {
@@ -1189,10 +1207,14 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         existingDocumentIds: this.selectedExistingDocumentIds().length > 0 ? this.selectedExistingDocumentIds() : undefined
       };
       
-      console.log('📤 Sending proposal request:', {
+      console.log('📤 [GenerateProposal] Sending proposal request:', {
+        opportunityName: request.opportunityName,
         interactions: request.interactionIds?.length || 0,
-        newDocs: request.newDocumentStoragePaths?.length || 0,
-        existingDocs: request.existingDocumentIds?.length || 0
+        newDocPaths: request.newDocumentStoragePaths?.length || 0,
+        newDocPathsList: request.newDocumentStoragePaths || [],
+        newDocMimeTypes: request.newDocumentMimeTypes || [],
+        existingDocs: request.existingDocumentIds?.length || 0,
+        partnerId: request.partnerId
       });
 
       // Step 4: Call backend API to generate AI proposal
@@ -1206,7 +1228,7 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       if (!rawResponse) {
         throw new Error('No response from server');
       }
-
+      
       // Step 5: Parse stringified JSON fields from backend
       console.log('📥 Raw response from backend:', rawResponse);
       
@@ -1255,7 +1277,13 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       
       console.log('✅ Parsed response with typed collections:', parsedResponse);
       this.proposedOpportunity.set(parsedResponse);
-      this.uploadedDocuments.set(uploadedDocs); // Store for later
+      
+      // Store uploaded documents for later use when creating opportunity
+      this.uploadedDocuments.set(uploadedDocs);
+      console.log('💾 [GenerateProposal] Stored uploaded documents for opportunity creation:', {
+        count: uploadedDocs.length,
+        documents: uploadedDocs.map(d => ({ name: d.name, hasGcsPath: !!d.gcsPath, documentTypeId: d.documentTypeId }))
+      });
       
       // Initialize field selection - auto-select all fields
       this.initializeFieldSelection();
@@ -1412,6 +1440,17 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
       console.log('📤 Creating opportunity from proposal:', proposal);
       console.log('📝 Selected fields:', Array.from(this.selectedFields().entries()).filter(([_, selected]) => selected).map(([field]) => field));
       
+      // Check if uploaded documents are still available
+      const storedDocs = this.uploadedDocuments();
+      console.log('💾 [CreateOpportunity] Checking stored documents:', {
+        count: storedDocs.length,
+        documents: storedDocs.map(d => ({ name: d.name, hasGcsPath: !!d.gcsPath, documentTypeId: d.documentTypeId }))
+      });
+      
+      if (storedDocs.length === 0) {
+        console.warn('⚠️ [CreateOpportunity] No uploaded documents found in signal - documents may have been lost!');
+      }
+      
       // Build create request with only user-selected fields
       const createRequest: any = {
         // Required fields (always included)
@@ -1423,12 +1462,17 @@ export class CreateOpportunityFromInteractionsDialogComponent implements OnInit 
         sourceInteractionIds: proposal.sourceInteractionIds || [],
         
         // Include uploaded documents as structured array
-        documents: this.uploadedDocuments().map(d => ({
+        documents: storedDocs.map(d => ({
           gcsPath: d.gcsPath,
           mimeType: d.mimeType,
           documentTypeId: d.documentTypeId
         }))
       };
+      
+      console.log('📤 [CreateOpportunity] Documents in create request:', {
+        count: createRequest.documents.length,
+        documents: createRequest.documents
+      });
       
       // Add optional fields only if selected
       if (this.isFieldSelected('partnerReference') && proposal.opportunity.partnerReference) {
