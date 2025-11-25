@@ -1,0 +1,110 @@
+<!-- STATEMENT - Opportunity Statement -->
+<p-panel [toggleable]="true" [collapsed]="false" class="{{generatingStatement() ? 'opacity-50 pointer-events-none' : ''}}">
+  <ng-template pTemplate="header">
+    <div class="flex items-center justify-between w-full pr-4">
+      <span class="font-semibold">📄 {{ 'label.opportunityStatement' | translate }}</span>
+      <div class="flex items-center gap-2">
+        @if (generatingStatement()) {
+          <i class="pi pi-spin pi-spinner text-xl text-primary"></i>
+        }
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="min-h-[300px]">
+    @if (!opportunity().opportunityStatementMarkdown) {
+      <!-- Show generate button if no statement exists -->
+      <div class="flex flex-col items-center justify-center min-h-[300px] gap-4">
+        <div class="text-center text-gray-500 mb-4">
+          <i class="pi pi-file-edit text-6xl mb-4 text-gray-300"></i>
+          <p class="text-lg">{{ 'message.opportunity.noStatement' | translate }}</p>
+          <p class="text-sm mt-2">{{ 'message.opportunity.generateStatementPrompt' | translate }}</p>
+        </div>
+        <p-button
+          [label]="generatingStatement() ? ('button.generating' | translate) : ('button.generateOpportunityStatement' | translate)"
+          icon="pi pi-sparkles"
+          [loading]="generatingStatement()"
+          [disabled]="generatingStatement()"
+          (onClick)="generateOpportunityStatement()"
+          styleClass="p-button-lg"
+        />
+      </div>
+    } @else {
+      <!-- Show regenerate button, export button, and markdown content -->
+      <div class="space-y-4">
+        <div class="flex justify-end gap-2">
+          <p-button
+            [label]="isExporting() ? ('button.exporting' | translate) : ('button.exportToGoogleDoc' | translate)"
+            icon="pi pi-google"
+            [loading]="isExporting()"
+            [disabled]="isExporting() || generatingStatement()"
+            (onClick)="exportToGoogleDoc()"
+            severity="secondary"
+            [outlined]="true"
+          />
+          <p-button
+            [label]="generatingStatement() ? ('button.regenerating' | translate) : ('button.regenerateOpportunityStatement' | translate)"
+            icon="pi pi-refresh"
+            [loading]="generatingStatement()"
+            [disabled]="generatingStatement() || isExporting()"
+            (onClick)="generateOpportunityStatement()"
+            severity="secondary"
+            [outlined]="true"
+          />
+        </div>
+        
+        <!-- Display markdown content -->
+        <div class="prose max-w-none markdown-content">
+          <markdown 
+            [data]="opportunity().opportunityStatementMarkdown"
+            (ready)="onMarkdownReady()"
+          ></markdown>
+        </div>
+      </div>
+    }
+  </div>
+</p-panel>
+
+<!-- Export Success Dialog -->
+<p-dialog
+  [(visible)]="showExportSuccessDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '32rem' }"
+  [header]="'title.exportSuccess' | translate"
+>
+  <div class="flex flex-col gap-4">
+    <div class="flex items-start gap-3">
+      <i class="pi pi-check-circle text-4xl text-green-500"></i>
+      <div class="flex-1">
+        <p class="text-gray-700 mb-2">{{ 'message.opportunity.exportSuccessDetail' | translate }}</p>
+        <p class="text-sm text-gray-500">{{ 'message.opportunity.exportClickToOpen' | translate }}</p>
+      </div>
+    </div>
+    
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <i class="pi pi-google text-blue-600"></i>
+          <span class="text-sm text-gray-700 truncate">{{ opportunity().name }}</span>
+        </div>
+        <p-button
+          [label]="'button.openDoc' | translate"
+          icon="pi pi-external-link"
+          size="small"
+          (onClick)="openExportedDoc()"
+        />
+      </div>
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <p-button
+      [label]="'button.close' | translate"
+      severity="secondary"
+      (onClick)="closeExportDialog()"
+    />
+  </ng-template>
+</p-dialog>
+

@@ -4422,6 +4422,200 @@ public class UNOPSGeminiManager : IGeminiManager
         }
 
         #endregion
+
+        #region Opportunity Statement Generation
+
+        /// <summary>
+        /// Generates a comprehensive opportunity statement in markdown format following the UNOPS template
+        /// Retrieves opportunity details and attached documents, sends to Gemini for analysis
+        /// Caches the result and saves to the Opportunity entity
+        /// </summary>
+        /// <param name="opportunityId">The opportunity ID to generate statement for</param>
+        /// <param name="user">Current user context</param>
+        /// <returns>Generated opportunity statement in markdown format</returns>
+        public async Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal? user = null)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            try
+            {
+                _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Starting statement generation for opportunity {opportunityId}");
+
+                // Step 1: Get opportunity manager
+                var opportunityManager = _managerWrapper.OpportunityManager as UNOPSOpportunityManager;
+                if (opportunityManager == null)
+                {
+                    throw new InvalidOperationException("UNOPSOpportunityManager is required for statement generation");
+                }
+
+                // Step 2: Get comprehensive opportunity data
+                var opportunityDetails = await opportunityManager.GetOpportunityDetailsForAIAsync(opportunityId);
+
+                if (opportunityDetails == null || !opportunityDetails.Any())
+                {
+                    throw new KeyNotFoundException($"Opportunity with ID {opportunityId} not found");
+                }
+
+                _logger.LogInformation($"📊 [OPPORTUNITY-STATEMENT] Retrieved opportunity details with {opportunityDetails.Count} fields");
+
+                // Step 3: Get attached document GCS URIs through DocumentRelationships
+                var documents = await _context.DocumentRelationships
+                    .Where(dr => dr.EntityType == "Opportunity" && 
+                                dr.EntityId == opportunityId)
+                    .Include(dr => dr.Document)
+                    .Where(dr => dr.Document != null &&
+                                !string.IsNullOrEmpty(dr.Document.StoragePath) && 
+                                dr.Document.StoragePath.StartsWith("gs://"))
+                    .Select(dr => new 
+                    { 
+                        storagePath = dr.Document!.StoragePath, 
+                        mimeType = dr.Document.Type ?? "application/pdf",
+                        name = dr.Document.Name
+                    })
+                    .ToListAsync();
+
+                var documentCount = documents.Count;
+                _logger.LogInformation($"📄 [OPPORTUNITY-STATEMENT] Found {documentCount} attached documents");
+
+                // Step 4: Get the statement generation prompt
+                var promptData = await _aiService.GetPromptData("opportunity_generate_statement");
+                var statementPrompt = promptData.FirstOrDefault();
+                
+                if (statementPrompt == null)
+                {
+                    throw new InvalidOperationException("Statement generation prompt 'opportunity_generate_statement' not found in database");
+                }
+
+                // Step 5: Prepare opportunity context and document metadata for the prompt
+                var opportunityContextJson = JsonConvert.SerializeObject(opportunityDetails, Formatting.Indented);
+                var documentsMetadata = documents.Select((doc, index) => new
+                {
+                    index = index + 1,
+                    name = doc.name,
+                    storagePath = doc.storagePath,
+                    mimeType = doc.mimeType
+                }).ToList();
+                var documentsJson = JsonConvert.SerializeObject(documentsMetadata, Formatting.Indented);
+
+                // Build prompt context
+                var promptContext = new Dictionary<string, object>
+                {
+                    { "opportunityDetails", opportunityContextJson },
+                    { "documents", documentsJson },
+                    { "hasDocuments", documents.Any() },
+                    { "documentCount", documentCount }
+                };
+
+                var promptJson = JsonConvert.SerializeObject(promptContext);
+                
+                // Process placeholders in system instructions
+                var systemInstructionsTemplate = statementPrompt.SystemInstructions ?? string.Empty;
+                var fullyFormedSystemInstructions = _aiService.ProcessPlaceholders(systemInstructionsTemplate, promptJson);
+                
+                // Process placeholders in user prompt
+                var userPromptTemplate = statementPrompt.UserPrompt ?? string.Empty;
+                var fullyFormedUserPrompt = _aiService.ProcessPlaceholders(userPromptTemplate, promptJson);
+
+                _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Calling Gemini AI with {documentCount} document(s)");
+
+                // Step 6: Build parts array for Gemini API (text + document URIs)
+                var parts = new List<object>
+                {
+                    new { text = fullyFormedUserPrompt }
+                };
+
+                // Add each document as a fileData part
+                foreach (var doc in documents)
+                {
+                    parts.Add(new 
+                    { 
+                        fileData = new
+                        {
+                            fileUri = doc.storagePath,
+                            mimeType = doc.mimeType
+                        }
+                    });
+                }
+
+                // Build user content with parts array
+                var userContent = new
+                {
+                    role = "user",
+                    parts = parts.ToArray()
+                };
+                
+                // Step 7: Call Gemini API with caching support (use opportunityId as cache key)
+                var aiResponse = await _aiService.CallGeminiApi(userContent, statementPrompt, fullyFormedSystemInstructions);
+
+                _logger.LogInformation($"📄 [OPPORTUNITY-STATEMENT] Received AI response (length: {aiResponse?.Length ?? 0} chars)");
+
+                // Step 8: Extract markdown from Gemini response
+                string statementMarkdown;
+                try
+                {
+                    if (string.IsNullOrEmpty(aiResponse))
+                    {
+                        throw new InvalidOperationException("AI response is empty");
+                    }
+                    
+                    var geminiResponse = JObject.Parse(aiResponse);
+                    var textContent = geminiResponse["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
+                    
+                    if (string.IsNullOrEmpty(textContent))
+                    {
+                        throw new InvalidOperationException("No text content found in Gemini response");
+                    }
+
+                    // Remove markdown code block wrapping if present (```markdown ... ```)
+                    var markdownMatch = System.Text.RegularExpressions.Regex.Match(
+                        textContent, 
+                        @"```(?:markdown)?\s*\n?(.*?)\n?```", 
+                        System.Text.RegularExpressions.RegexOptions.Singleline
+                    );
+                    
+                    if (markdownMatch.Success)
+                    {
+                        statementMarkdown = markdownMatch.Groups[1].Value.Trim();
+                    }
+                    else
+                    {
+                        statementMarkdown = textContent.Trim();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"❌ [OPPORTUNITY-STATEMENT] Failed to parse Gemini response: {ex.Message}");
+                    throw new InvalidOperationException("Failed to parse AI response", ex);
+                }
+
+                // Step 9: Save the generated statement to the Opportunity entity
+                var opportunity = await _context.Opportunities.FindAsync(opportunityId);
+                if (opportunity != null)
+                {
+                    opportunity.OpportunityStatementMarkdown = statementMarkdown;
+                    _context.Opportunities.Update(opportunity);
+                    await _context.SaveChangesAsync();
+                    
+                    _logger.LogInformation($"💾 [OPPORTUNITY-STATEMENT] Saved statement to database for opportunity {opportunityId}");
+                }
+
+                stopwatch.Stop();
+
+                _logger.LogInformation(
+                    $"✅ [OPPORTUNITY-STATEMENT] Generated opportunity statement for opportunity {opportunityId} in {stopwatch.ElapsedMilliseconds}ms"
+                );
+
+                return statementMarkdown;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ [OPPORTUNITY-STATEMENT] Error generating opportunity statement for opportunity {opportunityId}: {ex.Message}");
+                stopwatch.Stop();
+                throw;
+            }
+        }
+
+        #endregion
     }
 
 

@@ -24,6 +24,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { FileUploadModule } from 'primeng/fileupload';
 import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
+import { MarkdownModule } from 'ngx-markdown';
 
 // Services
 import { FeedbackDialogService } from '@shared/services/ui';
@@ -41,6 +42,7 @@ import { OpportunityWhenSectionComponent } from './sections/when/opportunity-whe
 import { OpportunityDstSectionComponent } from './sections/dst/opportunity-dst-section.component';
 import { OpportunityRelatedItemsComponent } from './sections/related/opportunity-related-items.component';
 import { OpportunityDocumentsComponent } from './sections/document/opportunity-documents.component';
+import { OpportunityStatementSectionComponent } from './sections/statement/opportunity-statement-section.component';
 import { ValuesService } from '@app/shared/services/api/values.service';
 
 /**
@@ -76,6 +78,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     FileUploadModule,
     TooltipModule,
     DropdownModule,
+    MarkdownModule,
     OpportunityCollaborationComponent,
     OpportunityAnalysisSectionComponent,
     OpportunityWhatSectionComponent,
@@ -86,6 +89,7 @@ import { ValuesService } from '@app/shared/services/api/values.service';
     OpportunityDstSectionComponent,
     OpportunityRelatedItemsComponent,
     OpportunityDocumentsComponent,
+    OpportunityStatementSectionComponent,
   ],
   templateUrl: './opportunity-view.component.html',
   styleUrls: ['./opportunity-view.component.scss'],
@@ -120,6 +124,14 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   chipsContainer?: ElementRef;
   @ViewChild('relatedItemsComponent')
   relatedItemsComponent?: OpportunityRelatedItemsComponent;
+  @ViewChild(OpportunityDstSectionComponent)
+  dstSectionComponent?: OpportunityDstSectionComponent;
+  @ViewChild(OpportunityAnalysisSectionComponent)
+  analysisSectionComponent?: OpportunityAnalysisSectionComponent;
+  @ViewChild(OpportunityWhySectionComponent)
+  whySectionComponent?: OpportunityWhySectionComponent;
+  @ViewChild(OpportunityDocumentsComponent)
+  documentsComponent?: OpportunityDocumentsComponent;
 
   private checkTimeout?: number;
   private resizeObserver?: ResizeObserver;
@@ -131,6 +143,11 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   private isScrolling = false; // Flag to prevent URL updates during programmatic scrolling
   private scrollTimeout?: number; // Debounce timeout for scroll spy
   private lastManualNavigationTime: number = 0; // Track last manual navigation
+  private isInitialLoad = true; // Track if this is the initial page load
+  private isProgrammaticDropdownUpdate = false; // Flag to indicate scroll spy is updating dropdown
+  private pendingScrollTarget: string | null = null; // Store pending scroll target
+  private scrollCheckInterval?: number; // Interval to check if content is loaded
+  private shouldScrollAfterDataLoad = false; // Flag to allow scrolling after data loads (only set on initial load with section in URL)
 
   // Section navigation configuration
   sections = [
@@ -143,6 +160,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     { id: 'dst', label: 'DST', icon: 'pi-chart-line' },
     { id: 'related', label: 'Related', icon: 'pi-link' },
     { id: 'collaboration', label: 'Comments', icon: 'pi-comments' },
+    { id: 'statement', label: 'Statement', icon: 'pi-file-edit' },
   ];
 
   // Permission management using utility service
@@ -272,6 +290,7 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     this.allSuggestions().filter(s => s.actionTarget === 'WHEN')
   );
 
+
   // Filtered stakeholder lists
   internalStakeholders = computed(() => {
     const opp = this.opportunity();
@@ -340,23 +359,25 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
           this.updateSelectedSection();
         }
         
-        // Only reload data if recordId actually changed
-        if (newRecordId && newRecordId !== this.recordId) {
+        // Check for initial load FIRST (when recordId is empty or undefined)
+        if (newRecordId && (!this.recordId || this.recordId === '')) {
+          // Initial load - allow scrolling to specified section after data loads
           this.recordId = newRecordId;
+          this.shouldScrollAfterDataLoad = section ? true : false;
           this._loadRecordDetails(section || 'analysis');
-        } else if (newRecordId && !this.recordId) {
-          // Initial load
+        } else if (newRecordId && newRecordId !== this.recordId) {
+          // Record ID changed (navigating to different record) - don't auto-scroll
           this.recordId = newRecordId;
+          this.shouldScrollAfterDataLoad = false;
           this._loadRecordDetails(section || 'analysis');
         }
 
-        // Handle section scrolling (without reloading data)
-        if (section && this.isValidSection(section)) {
-          // If data is already loaded, scroll immediately
-          if (!this.loading()) {
-            setTimeout(() => this.scrollToSectionInternal(section), 100);
-          }
-        } else if (!section && !this.activeSection()) {
+        // NOTE: Section scrolling is handled in two places ONLY:
+        // 1. Initial load with section in URL: _loadRecordDetails() with shouldScrollAfterDataLoad=true
+        // 2. User clicking section chips: scrollToSection() method
+        // We do NOT scroll on URL changes from scroll spy to avoid infinite scroll loops
+        
+        if (!section && !this.activeSection()) {
           // Default to analysis if no section in URL and no section already set
           const currentUrl = this.router.url.split('?')[0];
           // Only navigate if we're not already at analysis
@@ -387,6 +408,10 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
     }
+    // Cleanup scroll check interval
+    if (this.scrollCheckInterval) {
+      clearInterval(this.scrollCheckInterval);
+    }
     // Cleanup scroll timeout
     if (this.scrollTimeout) {
       clearTimeout(this.scrollTimeout);
@@ -407,11 +432,17 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
         // Load AI suggestions for sections
         this._loadSuggestions();
         
-        // If a target section was specified, scroll to it after data loads
-        if (targetSection && this.isValidSection(targetSection)) {
-          setTimeout(() => {
-            this.scrollToSectionInternal(targetSection);
-          }, 500); // Longer delay to ensure DOM is fully rendered
+        // Only scroll after data loads if this is the initial page load with a section in the URL
+        // This prevents scrolling on every data reload when navigating between sections
+        if (this.shouldScrollAfterDataLoad && targetSection && this.isValidSection(targetSection)) {
+          this.pendingScrollTarget = targetSection;
+          this.shouldScrollAfterDataLoad = false;
+          
+          // Wait for ALL section content to load before scrolling
+          this.waitForContentAndScroll();
+        } else {
+          // Mark initial load as complete even if we didn't scroll
+          this.isInitialLoad = false;
         }
       },
       error: (error) => {
@@ -525,11 +556,10 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
    * @returns {void}
    */
   reloadOpportunity(): void {
-    console.log('🔄 Reloading opportunity data...');
     if (this.recordId) {
-      // Get the current active section to maintain scroll position
-      const currentSection = this.activeSection();
-      this._loadRecordDetails(currentSection);
+      // Reload data without scrolling (user's scroll position is maintained)
+      this.shouldScrollAfterDataLoad = false;
+      this._loadRecordDetails();
     }
   }
 
@@ -673,8 +703,15 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
 
   /**
    * Handle section dropdown change
+   * ONLY triggered by user interaction with the dropdown
    */
   onSectionDropdownChange(event: any): void {
+    // Ignore dropdown changes that were triggered programmatically by scroll spy
+    // Only scroll if this is a genuine user interaction
+    if (this.isProgrammaticDropdownUpdate) {
+      return;
+    }
+    
     if (event.value) {
       this.activeSection.set(event.value.id);
       this.scrollToSection(event.value.id);
@@ -734,10 +771,89 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   /**
+   * Wait for all section content to load before scrolling
+   * Polls until all asynchronous content has finished loading
+   */
+  private waitForContentAndScroll(): void {
+    // Wait 500ms for ViewChild components to initialize before starting polling
+    setTimeout(() => {
+      let checkCount = 0;
+      const maxChecks = 100; // Maximum 10 seconds (100 * 100ms)
+      
+      this.scrollCheckInterval = window.setInterval(() => {
+      checkCount++;
+      
+      // Check main opportunity loading
+      const mainLoading = this.loading();
+      
+      // Check DST section loading (risks, recommendations, similar opportunities, projects, people)
+      let dstLoading = false;
+      let dstDetails = '';
+      if (this.dstSectionComponent) {
+        const risks = this.dstSectionComponent.loadingRisks();
+        const recs = this.dstSectionComponent.loadingRecommendations();
+        const simOps = this.dstSectionComponent.loadingSimilarOpportunities();
+        const simProjs = this.dstSectionComponent.loadingSimilarProjects();
+        const people = this.dstSectionComponent.loadingRelevantPeople();
+        dstLoading = risks || recs || simOps || simProjs || people;
+        dstDetails = `[risks=${risks}, recs=${recs}, simOps=${simOps}, simProjs=${simProjs}, people=${people}]`;
+      } else {
+        dstDetails = '[component not initialized]';
+      }
+      
+      // Check Analysis section loading (AI insights)
+      const analysisLoading = this.analysisSectionComponent
+        ? this.analysisSectionComponent.loadingInsights()
+        : false;
+      
+      // Check Why section loading (targets, indicators)
+      const whyLoading = this.whySectionComponent
+        ? this.whySectionComponent.loadingTargets()
+        : false;
+      
+      // Check Documents section loading
+      const documentsLoading = this.documentsComponent
+        ? this.documentsComponent.loading() || this.documentsComponent.uploading()
+        : false;
+      
+      // Check Related Items section loading
+      const relatedItemsLoading = this.relatedItemsComponent
+        ? this.relatedItemsComponent.isLoading()
+        : false;
+      
+      const allContentLoaded = !mainLoading && !dstLoading && !analysisLoading && !whyLoading && !documentsLoading && !relatedItemsLoading;
+      
+      // If all content is loaded OR we've exceeded max checks, scroll now
+      if (allContentLoaded || checkCount >= maxChecks) {
+        clearInterval(this.scrollCheckInterval);
+        this.scrollCheckInterval = undefined;
+        
+        if (this.pendingScrollTarget) {
+          const target = this.pendingScrollTarget;
+          this.pendingScrollTarget = null;
+          
+          // Don't auto-reset isScrolling flag - we'll control it manually with longer delay
+          this.scrollToSectionInternal(target, false);
+          this.isInitialLoad = false;
+          
+          // Extend the isScrolling flag for longer (3 seconds) after initial route-based scroll
+          // to prevent scroll spy from immediately detecting other visible sections while content settles
+          setTimeout(() => {
+            this.isScrolling = false;
+          }, 3000);
+        }
+      }
+      }, 100); // Check every 100ms
+    }, 500); // Wait 500ms for ViewChild initialization
+  }
+
+  /**
    * Internal scroll to section logic
    * Called for both programmatic navigation and URL-based navigation
+   * @param sectionId - The section to scroll to
+   * @param resetScrollingFlag - If true, resets isScrolling flag after animation (default: true)
    */
-  private scrollToSectionInternal(sectionId: string): void {
+  private scrollToSectionInternal(sectionId: string, resetScrollingFlag: boolean = true): void {
     // Track manual navigation time to prevent scroll spy interference
     this.lastManualNavigationTime = Date.now();
     this.isScrolling = true;
@@ -749,10 +865,12 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
         headerElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
       
-      // Reset scrolling flag after animation - shorter delay
-      setTimeout(() => {
-        this.isScrolling = false;
-      }, 800); // Reduced from 1500ms to 800ms
+      // Reset scrolling flag after animation if requested
+      if (resetScrollingFlag) {
+        setTimeout(() => {
+          this.isScrolling = false;
+        }, 800);
+      }
       return;
     }
 
@@ -762,10 +880,12 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    // Reset scrolling flag after animation - shorter delay
-    setTimeout(() => {
-      this.isScrolling = false;
-    }, 800); // Reduced from 1500ms to 800ms
+    // Reset scrolling flag after animation if requested
+    if (resetScrollingFlag) {
+      setTimeout(() => {
+        this.isScrolling = false;
+      }, 800);
+    }
   }
 
   /**
@@ -822,7 +942,11 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
           // Only update if it's a different section
           if (sectionId && this.isValidSection(sectionId) && sectionId !== this.activeSection()) {
             this.activeSection.set(sectionId);
+            
+            // Set flag to indicate this is a programmatic update (not user interaction)
+            this.isProgrammaticDropdownUpdate = true;
             this.updateSelectedSection();
+            this.isProgrammaticDropdownUpdate = false;
 
             // Update URL without causing a scroll
             const currentUrl = this.router.url.split('?')[0];
@@ -856,7 +980,6 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     });
 
     this.hasScrollSpyInitialized = true;
-    console.log(`Scroll spy initialized and observing ${observedCount} sections`);
   }
 
   /**
@@ -901,5 +1024,6 @@ export class OpportunityViewComponent implements OnInit, AfterViewInit, OnDestro
     console.log('File uploaded:', event);
     // TODO: Implement file upload
   }
+
 }
 

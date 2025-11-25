@@ -312,7 +312,7 @@ export class OpportunityService {
   }
 
   /**
-   * AC2 (WHAT Section) - Get Partner Results Framework status for an opportunity
+   * Get Partner Results Framework status for an opportunity
    * Checks if Partner Results Framework documents are tagged to funding/client partners
    * @param id - Opportunity ID
    * @returns Observable with framework status information
@@ -322,13 +322,22 @@ export class OpportunityService {
   }
 
   /**
-   * AC2 (WHAT Section) - Trigger AI extraction of products and services from documents
+   * Trigger AI extraction of products and services from documents
    * Extracts deliverables from documents, prioritizing tagged Partner Results Framework documents
    * @param id - Opportunity ID
    * @returns Observable with array of extracted deliverable information
    */
   extractProductsAndServices(id: number): Observable<ExtractedDeliverableInfo[]> {
     return this.http.post<ExtractedDeliverableInfo[]>(`${this.apiUrl}/${id}/what/extract-products-services`, {});
+  }
+
+  /**
+   * Generate AI-powered opportunity statement in markdown format
+   * @param id - Opportunity ID
+   * @returns Observable with generated statement markdown
+   */
+  generateOpportunityStatement(id: number): Observable<{ opportunityId: number; statementMarkdown: string; message: string }> {
+    return this.http.post<{ opportunityId: number; statementMarkdown: string; message: string }>(`${this.apiUrl}/${id}/generate-statement`, {});
   }
 }
 

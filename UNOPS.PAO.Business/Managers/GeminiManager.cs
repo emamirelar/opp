@@ -202,7 +202,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    // AC2 (WHAT section) - Default stub implementations (overridden in UNOPSGeminiManager)
+    //Default stub implementations (overridden in UNOPSGeminiManager)
     public virtual Task<List<ExtractedDeliverableInfo>> ExtractDeliverablesWithFrameworkPriorityAsync(int opportunityId)
     {
         throw new NotImplementedException("This method should be implemented in UNOPSGeminiManager");
@@ -211,5 +211,10 @@ public class GeminiManager : IGeminiManager
     public virtual Task<FrameworkStatusResponse> GetFrameworkStatusAsync(int opportunityId)
     {
         throw new NotImplementedException("This method should be implemented in UNOPSGeminiManager");
+    }
+    
+    public Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null)
+    {
+        throw new NotImplementedException();
     }
 }
