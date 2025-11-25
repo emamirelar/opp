@@ -62,6 +62,7 @@ export interface Opportunity {
   intendedImpactOutcomes: string | null;
   expectedBeneficiaries: string | null;
   challenges: string | null;
+  opportunityStatementMarkdown: string | null;
   isPooledFunding: boolean;
   fundingPartners: OpportunityFundingPartner[];
   clientPartners: OpportunityClientPartner[];

@@ -188,6 +188,7 @@ public class APIDictionary
     public const string OpportunityWhen = Opportunity + "/{id}/when";
     public const string OpportunityRelated = Opportunity + "/{id}/related";
     public const string OpportunityApplyAiChanges = Opportunity + "/{id}/apply-ai-changes";
+    public const string OpportunityGenerateStatement = Opportunity + "/{id}/generate-statement";
 
     // Comment
     public const string Comment = APIPrefix + "comment";
