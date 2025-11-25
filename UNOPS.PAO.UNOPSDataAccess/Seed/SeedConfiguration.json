@@ -149,6 +149,22 @@
         },
         {
             "order": 17,
+            "name": "PartnerTreeSeeder_DummyName_v3",
+            "type": "seeder",
+            "className": "PartnerTreeSeeder_DummyName_v3",
+            "methodName": "SeedPartnerTreeDummyNameAsync",
+            "filePath": "Seeders/PartnerTreeSeeder_DummyName_v3.cs"
+        },
+        {
+            "order": 18,
+            "name": "UnapprovedPartnerTreeSeeder_DummyName_v3",
+            "type": "seeder",
+            "className": "UnapprovedPartnerTreeSeeder_DummyName_v3",
+            "methodName": "SeedUnapprovedPartnerTreeDummyNameAsync",
+            "filePath": "Seeders/UnapprovedPartnerTreeSeeder_DummyName_v3.cs"
+        },
+        {
+            "order": 19,
             "name": "PartnerTreeSeeder_v3",
             "type": "seeder",
             "className": "PartnerTreeSeeder_v3",
@@ -156,7 +172,7 @@
             "filePath": "Seeders/PartnerTreeSeeder_v3.cs"
         },
         {
-            "order": 18,
+            "order": 20,
             "name": "UnapprovedPartnerTreeSeeder_v3",
             "type": "seeder",
             "className": "UnapprovedPartnerTreeSeeder_v3",
@@ -164,7 +180,23 @@
             "filePath": "Seeders/UnapprovedPartnerTreeSeeder_v3.cs"
         },
         {
-            "order": 19,
+            "order": 21,
+            "name": "PartnerTree_Partner_Update_DummyName_v3",
+            "type": "seeder",
+            "className": "PartnerTree_Partner_Update_DummyName_v3",
+            "methodName": "UpdatePartnersDummyNameAsync",
+            "filePath": "Seeders/PartnerTree_Partner_Update_DummyName_v3.cs"
+        },
+        {
+            "order": 22,
+            "name": "PartnerTree_Partner_Update_Name_v3",
+            "type": "seeder",
+            "className": "PartnerTree_Partner_Update_Name_v3",
+            "methodName": "UpdatePartnersNameAsync",
+            "filePath": "Seeders/PartnerTree_Partner_Update_Name_v3.cs"
+        },
+        {
+            "order": 23,
             "name": "SequenceResync",
             "type": "seeder",
             "className": "SequenceResyncSeeder",
