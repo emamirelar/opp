@@ -47,6 +47,11 @@ public interface IGeminiManager
     /// Generates AI-powered opportunity proposal from multiple sources (interactions, documents, etc.)
     /// </summary>
     Task<OpportunityProposalResponse> GenerateOpportunityProposalAsync(OpportunityProposalRequest request, ClaimsPrincipal user = null);
+    
+    /// <summary>
+    /// Generates a comprehensive opportunity statement in markdown format following the UNOPS template
+    /// </summary>
+    Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
 }
 
 /// <summary>

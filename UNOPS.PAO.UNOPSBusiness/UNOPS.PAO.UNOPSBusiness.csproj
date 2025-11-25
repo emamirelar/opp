@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Castle.Core" Version="5.1.1" />
-    <PackageReference Include="Google.Apis.Drive.v3" Version="1.69.0.3759" />
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.72.0.3970" />
     <PackageReference Include="Google.Apis.Sheets.v4" Version="1.69.0.3694" />
     <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.21.0" />
     <PackageReference Include="Google.Cloud.PubSub.V1" Version="3.24.0" />

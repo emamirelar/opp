@@ -308,5 +308,14 @@ export class OpportunityService {
   updateDSTRisk(id: number, riskId: number, request: RiskCreateRequest): Observable<Risk> {
     return this.http.put<Risk>(`${this.apiUrl}/${id}/dst-risks/${riskId}`, request);
   }
+
+  /**
+   * Generate AI-powered opportunity statement in markdown format
+   * @param id - Opportunity ID
+   * @returns Observable with generated statement markdown
+   */
+  generateOpportunityStatement(id: number): Observable<{ opportunityId: number; statementMarkdown: string; message: string }> {
+    return this.http.post<{ opportunityId: number; statementMarkdown: string; message: string }>(`${this.apiUrl}/${id}/generate-statement`, {});
+  }
 }
 

@@ -24,6 +24,11 @@ public class OpportunityModel
     public string? ExpectedBeneficiaries { get; set; }
     public string? Challenges { get; set; }
     
+    /// <summary>
+    /// AI-generated opportunity statement in markdown format
+    /// </summary>
+    public string? OpportunityStatementMarkdown { get; set; }
+    
     public bool IsPooledFunding { get; set; }
     
     public List<OpportunityFundingPartnerModel>? FundingPartners { get; set; }

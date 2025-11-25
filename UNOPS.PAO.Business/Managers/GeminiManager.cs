@@ -201,4 +201,9 @@ public class GeminiManager : IGeminiManager
     {
         throw new NotImplementedException();
     }
+    
+    public Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null)
+    {
+        throw new NotImplementedException();
+    }
 }
