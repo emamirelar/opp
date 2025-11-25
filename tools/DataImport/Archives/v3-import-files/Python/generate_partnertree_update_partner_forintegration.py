@@ -5,7 +5,7 @@ from datetime import datetime
 def process_csv_and_generate_seeder(csv_file_path, output_cs_file_path):
     """
     Process the partner CSV file and generate C# seeder code to update Partner records
-    by ErpDimValue, removing one '.' at the end of the Name if it exists.
+    by ErpDimValue, setting LastModifiedBy to -1 and LastModifiedDate to DateTime.UtcNow.
     """
     
     partner_records = []
@@ -53,15 +53,14 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
 {
-    public static class PartnerTree_Partner_Update_Name_v3
+    public static class PartnerTree_Update_Partner_ForIntegration_v3
     {
-        public static async Task UpdatePartnersNameAsync(UNOPSAppDbContext context)
+        public static async Task UpdatePartnersForIntegrationAsync(UNOPSAppDbContext context)
         {
-            Console.WriteLine("Starting Partner Name update process (v3) - Removing trailing dot...");
+            Console.WriteLine("Starting Partner update for integration (v3) - Setting LastModifiedBy and LastModifiedDate...");
             
             int updatedCount = 0;
             int notFoundCount = 0;
-            int skippedCount = 0;
             var updatedRecordIds = new List<int>();
             
             // Begin transaction to ensure atomicity
@@ -82,24 +81,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                     
                     if (existingPartner != null)
                     {{
-                        // Read existing Name from database and remove one '.' at the end if it exists
-                        string originalName = existingPartner.Name ?? string.Empty;
-                        
-                        if (originalName.EndsWith("."))
-                        {{
-                            existingPartner.Name = originalName.Substring(0, originalName.Length - 1);
-                            
-                            context.Partners.Update(existingPartner);
-                            await context.SaveChangesAsync();
-                            updatedRecordIds.Add(existingPartner.Id);
-                            Console.WriteLine($"Updated: Partner with ErpDimValue '{erp_dim_value}' - {{originalName}} -> {{existingPartner.Name}}");
-                            updatedCount++;
-                        }}
-                        else
-                        {{
-                            Console.WriteLine($"Skipped: Partner with ErpDimValue '{erp_dim_value}' - Name does not end with '.'");
-                            skippedCount++;
-                        }}
+                        updatedRecordIds.Add(existingPartner.Id);
+                        Console.WriteLine($"Found: Partner with ErpDimValue '{erp_dim_value}' - {{existingPartner.Name}}");
+                        updatedCount++;
                     }}
                     else
                     {{
@@ -110,14 +94,13 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
                 
 """
     
-    # Add the audit data fix logic and closing code
+    # Add the closing code
     cs_code += """                // Commit transaction
                 await transaction.CommitAsync();
                 
-                Console.WriteLine($"\\nPartner Name update completed successfully.");
-                Console.WriteLine($"Total records processed: {updatedCount + notFoundCount + skippedCount}");
+                Console.WriteLine($"\\nPartner update for integration completed successfully.");
+                Console.WriteLine($"Total records processed: {updatedCount + notFoundCount}");
                 Console.WriteLine($"Records updated: {updatedCount}");
-                Console.WriteLine($"Records skipped (no trailing dot): {skippedCount}");
                 Console.WriteLine($"Records not found: {notFoundCount}");
                 
                 // Fix audit data for updated records
@@ -132,7 +115,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed.Seeders
             {
                 // Rollback transaction if any error occurred
                 await transaction.RollbackAsync();
-                Console.WriteLine($"Error during Partner Name update: {ex.Message}");
+                Console.WriteLine($"Error during Partner update for integration: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 throw;
             }
@@ -186,7 +169,7 @@ if __name__ == "__main__":
     
     # Navigate to project root and then to the seeder file location
     project_root = os.path.abspath(os.path.join(script_dir, "..", "..", "..", ".."))
-    output_file = os.path.join(project_root, "UNOPS.PAO.UNOPSDataAccess", "Seed", "Seeders", "PartnerTree_Partner_Update_Name_v3.cs")
+    output_file = os.path.join(project_root, "UNOPS.PAO.UNOPSDataAccess", "Seed", "Seeders", "PartnerTree_Update_Partner_ForIntegration_v3.cs")
     
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
