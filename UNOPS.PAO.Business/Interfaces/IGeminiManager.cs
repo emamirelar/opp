@@ -52,6 +52,11 @@ public interface IGeminiManager
     /// Generates a comprehensive opportunity statement in markdown format following the UNOPS template
     /// </summary>
     Task<string> GenerateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
+    
+    /// <summary>
+    /// Validates whether the opportunity statement is aligned with the structured data in the opportunity record
+    /// </summary>
+    Task<OpportunityStatementValidationResponse> ValidateOpportunityStatementAsync(int opportunityId, ClaimsPrincipal user = null);
 }
 
 /// <summary>

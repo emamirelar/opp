@@ -834,5 +834,34 @@ public class GeminiController : BaseController
         });
     }
 
+    /// <summary>
+    /// Validates whether the opportunity statement is aligned with the structured data in the opportunity record
+    /// Uses Gemini AI to analyze the statement content against actual opportunity fields
+    /// Returns whether the statement is aligned and specific misalignment items if not aligned
+    /// </summary>
+    /// <param name="id">Opportunity ID</param>
+    /// <example_uses>
+    /// Validate opportunity statement alignment for opportunity 123
+    /// Check if statement matches structured data
+    /// Find discrepancies between statement and opportunity fields
+    /// </example_uses>
+    /// <when_to_use>Use this when the user needs to verify that the opportunity statement accurately reflects the structured data in the opportunity record.</when_to_use>
+    /// <returns>Validation response with alignment status and misalignment items</returns>
+    [HttpPost(APIDictionary.OpportunityValidateStatement)]
+    public async Task<ActionResult> ValidateOpportunityStatement(int id)
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var validationResult = await _manager.ValidateOpportunityStatementAsync(id, User);
+            
+            if (validationResult == null)
+            {
+                throw new BusinessException("Failed to validate opportunity statement. AI analysis returned no results.");
+            }
+
+            return validationResult;
+        });
+    }
+
     #endregion
 }
