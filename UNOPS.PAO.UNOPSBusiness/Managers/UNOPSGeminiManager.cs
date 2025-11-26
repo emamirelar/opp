@@ -4290,13 +4290,52 @@ public class UNOPSGeminiManager : IGeminiManager
                         throw new InvalidOperationException("AI response is empty");
                     }
                     
-                    var geminiResponse = JObject.Parse(aiResponse);
-                    var textContent = geminiResponse["candidates"]?[0]?["content"]?["parts"]?[0]?["text"]?.ToString();
+                    // Log the first 500 characters of the response for debugging
+                    _logger.LogDebug($"📋 [OPPORTUNITY-STATEMENT] Response preview: {aiResponse.Substring(0, Math.Min(500, aiResponse.Length))}");
                     
+                    var geminiResponse = JObject.Parse(aiResponse);
+                    
+                    // Check for error in the response
+                    var error = geminiResponse["error"];
+                    if (error != null)
+                    {
+                        var errorMessage = error["message"]?.ToString() ?? "Unknown error";
+                        var errorCode = error["code"]?.ToString() ?? "UNKNOWN";
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] Gemini API returned error - Code: {errorCode}, Message: {errorMessage}");
+                        throw new InvalidOperationException($"Gemini API error: {errorMessage}");
+                    }
+                    
+                    // Navigate through the JSON structure safely
+                    var candidates = geminiResponse["candidates"];
+                    if (candidates == null || !candidates.Any())
+                    {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No candidates found in response. Response structure: {geminiResponse.ToString(Newtonsoft.Json.Formatting.None).Substring(0, Math.Min(200, geminiResponse.ToString().Length))}");
+                        throw new InvalidOperationException("No candidates found in Gemini response");
+                    }
+                    
+                    var firstCandidate = candidates[0];
+                    var content = firstCandidate?["content"];
+                    if (content == null)
+                    {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No content found in first candidate. Candidate structure: {firstCandidate?.ToString(Newtonsoft.Json.Formatting.None)}");
+                        throw new InvalidOperationException("No content found in Gemini response candidate");
+                    }
+                    
+                    var parts = content["parts"];
+                    if (parts == null || !parts.Any())
+                    {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No parts found in content. Content structure: {content.ToString(Newtonsoft.Json.Formatting.None)}");
+                        throw new InvalidOperationException("No parts found in Gemini response content");
+                    }
+                    
+                    var textContent = parts[0]?["text"]?.ToString();
                     if (string.IsNullOrEmpty(textContent))
                     {
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No text found in first part. Part structure: {parts[0]?.ToString(Newtonsoft.Json.Formatting.None)}");
                         throw new InvalidOperationException("No text content found in Gemini response");
                     }
+
+                    _logger.LogInformation($"✅ [OPPORTUNITY-STATEMENT] Successfully extracted text content (length: {textContent.Length} chars)");
 
                     // Remove markdown code block wrapping if present (```markdown ... ```)
                     var markdownMatch = System.Text.RegularExpressions.Regex.Match(
@@ -4308,16 +4347,23 @@ public class UNOPSGeminiManager : IGeminiManager
                     if (markdownMatch.Success)
                     {
                         statementMarkdown = markdownMatch.Groups[1].Value.Trim();
+                        _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Extracted markdown from code block (length: {statementMarkdown.Length} chars)");
                     }
                     else
                     {
                         statementMarkdown = textContent.Trim();
+                        _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Using raw text content (length: {statementMarkdown.Length} chars)");
                     }
+                }
+                catch (JsonException jsonEx)
+                {
+                    _logger.LogError(jsonEx, $"❌ [OPPORTUNITY-STATEMENT] Failed to parse JSON response. Response: {aiResponse?.Substring(0, Math.Min(1000, aiResponse?.Length ?? 0))}");
+                    throw new InvalidOperationException("Failed to parse AI response as JSON", jsonEx);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"❌ [OPPORTUNITY-STATEMENT] Failed to parse Gemini response: {ex.Message}");
-                    throw new InvalidOperationException("Failed to parse AI response", ex);
+                    _logger.LogError(ex, $"❌ [OPPORTUNITY-STATEMENT] Failed to extract text from Gemini response: {ex.Message}");
+                    throw new InvalidOperationException($"Failed to process AI response: {ex.Message}", ex);
                 }
 
                 // Step 9: Save the generated statement to the Opportunity entity
