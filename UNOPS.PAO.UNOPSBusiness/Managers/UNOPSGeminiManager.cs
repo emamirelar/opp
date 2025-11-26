@@ -4321,17 +4321,17 @@ public class UNOPSGeminiManager : IGeminiManager
                         throw new InvalidOperationException("No content found in Gemini response candidate");
                     }
                     
-                    var parts = content["parts"];
-                    if (parts == null || !parts.Any())
+                    var responseParts = content["parts"];
+                    if (responseParts == null || !responseParts.Any())
                     {
                         _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No parts found in content. Content structure: {content.ToString(Newtonsoft.Json.Formatting.None)}");
                         throw new InvalidOperationException("No parts found in Gemini response content");
                     }
                     
-                    var textContent = parts[0]?["text"]?.ToString();
+                    var textContent = responseParts[0]?["text"]?.ToString();
                     if (string.IsNullOrEmpty(textContent))
                     {
-                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No text found in first part. Part structure: {parts[0]?.ToString(Newtonsoft.Json.Formatting.None)}");
+                        _logger.LogError($"❌ [OPPORTUNITY-STATEMENT] No text found in first part. Part structure: {responseParts[0]?.ToString(Newtonsoft.Json.Formatting.None)}");
                         throw new InvalidOperationException("No text content found in Gemini response");
                     }
 
@@ -4355,7 +4355,7 @@ public class UNOPSGeminiManager : IGeminiManager
                         _logger.LogInformation($"📝 [OPPORTUNITY-STATEMENT] Using raw text content (length: {statementMarkdown.Length} chars)");
                     }
                 }
-                catch (JsonException jsonEx)
+                catch (Newtonsoft.Json.JsonException jsonEx)
                 {
                     _logger.LogError(jsonEx, $"❌ [OPPORTUNITY-STATEMENT] Failed to parse JSON response. Response: {aiResponse?.Substring(0, Math.Min(1000, aiResponse?.Length ?? 0))}");
                     throw new InvalidOperationException("Failed to parse AI response as JSON", jsonEx);
